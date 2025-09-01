@@ -111,16 +111,27 @@ export default function Home() {
         // No type filters, show all Pokémon
         setFilteredPokemon(pokemonList)
       } else {
-        // Still have other type filters, fetch those types
+        // Still have other type filters, fetch those types with AND logic
         setTypeLoading(true)
         try {
           const typePokemon = await Promise.all(
             newTypes.map(t => getPokemonByType(t))
           )
+          // Find Pokémon that appear in ALL selected types (AND logic)
+          const pokemonCounts = new Map<number, number>()
+          typePokemon.forEach(pokemonList => {
+            pokemonList.forEach(pokemon => {
+              pokemonCounts.set(pokemon.id, (pokemonCounts.get(pokemon.id) || 0) + 1)
+            })
+          })
+          
+          // Only include Pokémon that appear in all selected types
           const allTypePokemon = typePokemon.flat()
-          const uniquePokemon = allTypePokemon.filter((pokemon, index, self) => 
-            index === self.findIndex(p => p.id === pokemon.id)
-          )
+          const uniquePokemon = allTypePokemon.filter((pokemon, index, self) => {
+            const isFirstOccurrence = index === self.findIndex(p => p.id === pokemon.id)
+            if (!isFirstOccurrence) return false
+            return pokemonCounts.get(pokemon.id) === newTypes.length
+          })
           setFilteredPokemon(uniquePokemon)
         } catch (err) {
           console.error('Type filter error:', err)
@@ -138,10 +149,21 @@ export default function Home() {
         const typePokemon = await Promise.all(
           newTypes.map(t => getPokemonByType(t))
         )
+        // Find Pokémon that appear in ALL selected types (AND logic)
+        const pokemonCounts = new Map<number, number>()
+        typePokemon.forEach(pokemonList => {
+          pokemonList.forEach(pokemon => {
+            pokemonCounts.set(pokemon.id, (pokemonCounts.get(pokemon.id) || 0) + 1)
+          })
+        })
+        
+        // Only include Pokémon that appear in all selected types
         const allTypePokemon = typePokemon.flat()
-        const uniquePokemon = allTypePokemon.filter((pokemon, index, self) => 
-          index === self.findIndex(p => p.id === pokemon.id)
-        )
+        const uniquePokemon = allTypePokemon.filter((pokemon, index, self) => {
+          const isFirstOccurrence = index === self.findIndex(p => p.id === pokemon.id)
+          if (!isFirstOccurrence) return false
+          return pokemonCounts.get(pokemon.id) === newTypes.length
+        })
         setFilteredPokemon(uniquePokemon)
       } catch (err) {
         console.error('Type filter error:', err)
@@ -524,7 +546,7 @@ export default function Home() {
             >
               Clear Filters
             </button>
-          </div>
+        </div>
         )}
       </main>
     </div>

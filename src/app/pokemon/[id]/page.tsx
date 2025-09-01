@@ -227,7 +227,7 @@ export default function PokemonDetailPage() {
         {/* Name and Type Section */}
         <div className="text-center px-4">
           {/* Type chips above name */}
-          <div className="mb-2 flex flex-wrap justify-center gap-2">
+          <div className="mb-3 flex flex-wrap justify-center gap-3">
             {pokemon.types.map((type) => (
               <TypeBadge key={type.type.name} type={type.type.name} />
             ))}
@@ -247,7 +247,7 @@ export default function PokemonDetailPage() {
               <button
                 onClick={() => handleSpriteToggle('default')}
                 className={cn(
-                  "px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
+                  "px-4 py-2 text-sm font-medium rounded-md transition-colors",
                   selectedSprite === 'default'
                     ? "bg-poke-blue text-white"
                     : "text-muted hover:text-text"
@@ -259,7 +259,7 @@ export default function PokemonDetailPage() {
               <button
                 onClick={() => handleSpriteToggle('shiny')}
                 className={cn(
-                  "px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
+                  "px-4 py-2 text-sm font-medium rounded-md transition-colors",
                   selectedSprite === 'shiny'
                     ? "bg-poke-yellow text-white"
                     : "text-muted hover:text-text"

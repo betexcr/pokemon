@@ -107,7 +107,9 @@ export default function ModernPokedexLayout({
         // Apply additional filters
         if (advancedFilters.types.length > 0 && results.length > 0) {
           results = results.filter(pokemon =>
-            pokemon.types.some(type => advancedFilters.types.includes(type.type.name))
+            advancedFilters.types.every(selectedType => 
+              pokemon.types.some(type => type.type.name === selectedType)
+            )
           )
         }
 

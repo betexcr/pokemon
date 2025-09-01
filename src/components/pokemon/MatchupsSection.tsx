@@ -15,9 +15,9 @@ export default function MatchupsSection({ groups }: { groups: Group[] }) {
       <h3 className="text-lg font-semibold">Type Matchups</h3>
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {groups.map((g)=>(
-          <div key={g.title} className={`rounded-2xl border p-4 ${toneBg(g.tone)}`}>
+          <div key={g.title} className={`rounded-2xl border p-5 ${toneBg(g.tone)}`}>
             <div className="font-semibold mb-2">{g.title}</div>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-2">
               {g.types.length ? g.types.map((t, index) => <TypeBadge key={`${t}-${index}`} type={t}/>) : <span className="text-sm text-muted">None</span>}
             </div>
           </div>
