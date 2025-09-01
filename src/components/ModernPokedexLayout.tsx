@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Pokemon, FilterState } from '@/types/pokemon'
 import { formatPokemonName, typeColors } from '@/lib/utils'
 import { useSearch } from '@/hooks/useSearch'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { getPokemonByGeneration, getPokemonByType } from '@/lib/api'
 import ThemeToggle from './ThemeToggle'
 import VirtualizedPokemonGrid from './VirtualizedPokemonGrid'
@@ -40,7 +40,6 @@ export default function ModernPokedexLayout({
   setFilters
 }: ModernPokedexLayoutProps) {
   const router = useRouter()
-  const searchParams = useSearchParams()
   
   // Advanced filters state
   const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilters>({
@@ -75,31 +74,13 @@ export default function ModernPokedexLayout({
   })
 
   // URL state management
-  useEffect(() => {
-    const urlFilters = searchParams.get('filters')
-    if (urlFilters) {
-      try {
-        const parsed = JSON.parse(urlFilters)
-        setAdvancedFilters(parsed)
-      } catch (e) {
-        console.error('Failed to parse URL filters:', e)
-      }
-    }
-  }, [searchParams])
+  // URL parsing removed to prevent state conflicts
+  // Filters start with default values
 
 
 
-  // Update URL when advanced filters change
-  useEffect(() => {
-    const params = new URLSearchParams(searchParams)
-    const currentFilters = params.get('filters')
-    const newFiltersString = JSON.stringify(advancedFilters)
-    
-    if (currentFilters !== newFiltersString) {
-      params.set('filters', newFiltersString)
-      router.push(`?${params.toString()}`, { scroll: false })
-    }
-  }, [advancedFilters, router, searchParams])
+  // URL state management removed to prevent infinite re-renders
+  // Filters are now managed locally only
 
   // API-driven filtering effect
   useEffect(() => {
@@ -360,11 +341,23 @@ export default function ModernPokedexLayout({
                 <button
                   key={type}
                   onClick={() => toggleTypeFilter(type)}
-                  className={`px-3 py-1 rounded-full text-sm font-medium border transition-all duration-200 whitespace-nowrap ${
-                    advancedFilters.types.includes(type)
-                      ? `${typeColors[type].bg} ${typeColors[type].text} ${typeColors[type].border}`
-                      : `${typeColors[type].bg} ${typeColors[type].text} ${typeColors[type].border} opacity-40 hover:opacity-80`
-                  }`}
+                  className={`px-3 py-1 rounded-full text-sm font-medium border transition-all duration-200 whitespace-nowrap`}
+                  style={{
+                    backgroundColor: `var(--type-${type})`,
+                    color: typeColors[type].text === 'text-white' ? 'white' : 'black',
+                    borderColor: `var(--type-${type})`,
+                    opacity: advancedFilters.types.includes(type) ? 1 : 0.4
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!advancedFilters.types.includes(type)) {
+                      e.currentTarget.style.opacity = '0.8'
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!advancedFilters.types.includes(type)) {
+                      e.currentTarget.style.opacity = '0.4'
+                    }
+                  }}
                 >
                   {formatPokemonName(type)}
                 </button>

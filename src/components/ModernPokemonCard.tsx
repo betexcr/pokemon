@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Pokemon } from '@/types/pokemon'
 import { formatPokemonName, typeColors } from '@/lib/utils'
@@ -34,12 +33,12 @@ export default function ModernPokemonCard({
   const router = useRouter()
 
   const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault()
-    
     if (onSelect) {
+      e.preventDefault()
       onSelect(pokemon)
-    } else {
-      // Navigate to detail page
+    }
+    // If no onSelect, navigate to detail page
+    if (!onSelect) {
       router.push(`/pokemon/${pokemon.id}`)
     }
   }
@@ -78,14 +77,21 @@ export default function ModernPokemonCard({
   }
 
   return (
-    <Link
-      href={`/pokemon/${pokemon.id}`}
+    <div
       onClick={handleClick}
       className={getCardClasses()}
       style={{
         viewTransitionName: onSelect ? undefined : `pokemon-${pokemon.id}`
       }}
       aria-label={`View details for ${formatPokemonName(pokemon.name)}`}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          handleClick(e as any)
+        }
+      }}
     >
       {/* Type accent bar */}
       <div
@@ -253,6 +259,6 @@ export default function ModernPokemonCard({
           </div>
         </div>
       )}
-    </Link>
+    </div>
   )
 }
