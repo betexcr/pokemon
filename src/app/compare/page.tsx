@@ -1,15 +1,15 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ArrowLeft, Scale, TrendingUp, Shield, X, RotateCcw } from 'lucide-react'
+import { ArrowLeft, Scale, X } from 'lucide-react'
 import Link from 'next/link'
 import { getPokemon } from '@/lib/api'
-import { formatPokemonName, formatPokemonNumber, cn, formatHeight, formatWeight } from '@/lib/utils'
+import { formatPokemonName } from '@/lib/utils'
 import { Pokemon } from '@/types/pokemon'
 import TypeBadge from '@/components/TypeBadge'
 import Button from '@/components/ui/Button'
 import MultiPokemonRadarChart from '@/components/MultiPokemonRadarChart'
-import StatsSlider from '@/components/pokemon/StatsSlider'
+
 
 export default function ComparePage() {
   const [pokemons, setPokemons] = useState<Pokemon[]>([])
@@ -70,9 +70,7 @@ export default function ComparePage() {
     localStorage.removeItem('pokemon-comparison')
   }
 
-  const getPrimaryType = (pokemon: Pokemon) => {
-    return pokemon.types[0]?.type.name || 'normal'
-  }
+
 
   if (loading) {
     return (
@@ -194,11 +192,13 @@ export default function ComparePage() {
                     <tr key={pokemon.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
                       <td className="py-3 px-4">
                         <div className="flex items-center space-x-3">
-                          <img
-                            src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`}
-                            alt={formatPokemonName(pokemon.name)}
-                            className="w-8 h-8 object-contain"
-                          />
+                          <Link href={`/pokemon/${pokemon.id}`}>
+                            <img
+                              src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`}
+                              alt={formatPokemonName(pokemon.name)}
+                              className="w-8 h-8 object-contain cursor-pointer hover:scale-110 transition-transform"
+                            />
+                          </Link>
                           <div>
                             <div className="font-medium text-text capitalize">
                               {formatPokemonName(pokemon.name)}
@@ -254,81 +254,12 @@ export default function ComparePage() {
           <h2 className="text-2xl font-bold text-text mb-6 text-center tracking-tight">
             Stats Comparison
           </h2>
-          <MultiPokemonRadarChart pokemons={pokemons} />
-        </div>
-
-        {/* Detailed Stats Table */}
-        <div className="bg-white rounded-2xl shadow-card border border-border/60 p-6">
-          <h3 className="text-lg font-semibold text-text mb-6 flex items-center">
-            <TrendingUp className="h-5 w-5 mr-2 text-poke-blue" />
-            Detailed Stats Comparison
-          </h3>
-          
-          <div className="space-y-6">
-            {['hp', 'attack', 'defense', 'special-attack', 'special-defense', 'speed'].map((statName) => {
-              const stats = pokemons.map(pokemon => {
-                const stat = pokemon.stats.find(s => s.stat.name === statName)
-                return stat?.base_stat || 0
-              })
-              const maxStat = Math.max(...stats)
-              
-              // Get stat label
-              const getStatLabel = (statName: string) => {
-                switch (statName.toLowerCase()) {
-                  case 'hp': return 'HP';
-                  case 'attack': return 'ATK';
-                  case 'defense': return 'DEF';
-                  case 'special-attack': return 'SPA';
-                  case 'special-defense': return 'SPD';
-                  case 'speed': return 'SPE';
-                  default: return statName.toUpperCase();
-                }
-              };
-              
-              return (
-                <div key={statName} className="space-y-3">
-                  <h4 className="text-sm font-medium text-muted capitalize">
-                    {statName.replace('-', ' ')}
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {pokemons.map((pokemon, index) => {
-                      const stat = pokemon.stats.find(s => s.stat.name === statName)
-                      const value = stat?.base_stat || 0
-                      const color = ['bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-yellow-500', 'bg-purple-500', 'bg-pink-500', 'bg-cyan-500', 'bg-lime-500', 'bg-orange-500', 'bg-indigo-500'][index % 10]
-                      
-                      return (
-                        <div key={pokemon.id} className="flex items-center gap-3">
-                          <div className="w-16">
-                            <span className="text-sm font-medium capitalize">
-                              {formatPokemonName(pokemon.name)}
-                            </span>
-                          </div>
-                          <div className="flex-1">
-                            <StatsSlider
-                              label=""
-                              value={value}
-                              max={255}
-                              colorClass={color}
-                              className="mb-0"
-                            />
-                          </div>
-                          <div className="w-12 text-right">
-                            <span className={cn(
-                              "text-sm font-semibold tabular-nums",
-                              value === maxStat ? "text-green-600" : "text-text"
-                            )}>
-                              {value}
-                            </span>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )
-            })}
+          <div className="flex justify-center">
+            <MultiPokemonRadarChart pokemons={pokemons} />
           </div>
         </div>
+
+
       </main>
     </div>
   )

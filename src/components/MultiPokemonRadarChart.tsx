@@ -95,6 +95,19 @@ export default function MultiPokemonRadarChart({ pokemons }: MultiPokemonRadarCh
     )
   })
 
+  // Get stat abbreviation
+  const getStatAbbreviation = (statName: string) => {
+    switch (statName.toLowerCase()) {
+      case 'hp': return 'HP';
+      case 'attack': return 'ATK';
+      case 'defense': return 'DEF';
+      case 'special-attack': return 'SPA';
+      case 'special-defense': return 'SPD';
+      case 'speed': return 'SPE';
+      default: return statName.toUpperCase();
+    }
+  };
+
   // Generate stat labels
   const statLabels = stats.map((stat, index) => {
     const angle = (index * 2 * Math.PI) / stats.length - Math.PI / 2
@@ -111,7 +124,7 @@ export default function MultiPokemonRadarChart({ pokemons }: MultiPokemonRadarCh
         dominantBaseline="middle"
         className="text-xs font-medium fill-gray-600"
       >
-        {stat.toUpperCase().replace('-', ' ')}
+        {getStatAbbreviation(stat)}
       </text>
     )
   })
@@ -141,6 +154,7 @@ export default function MultiPokemonRadarChart({ pokemons }: MultiPokemonRadarCh
             setHoveredPokemon(null)
           }}
           style={{ cursor: 'pointer' }}
+          pointerEvents="all"
         />
         {points.map((point, pointIndex) => (
           <circle
@@ -162,6 +176,7 @@ export default function MultiPokemonRadarChart({ pokemons }: MultiPokemonRadarCh
               setHoveredPokemon(null)
             }}
             style={{ cursor: 'pointer' }}
+            pointerEvents="all"
           />
         ))}
       </g>
@@ -187,20 +202,21 @@ export default function MultiPokemonRadarChart({ pokemons }: MultiPokemonRadarCh
       {/* Tooltip */}
       {hoveredPokemon && (
         <div
-          className="absolute z-10 bg-gray-900 text-white px-3 py-2 rounded-lg text-sm shadow-lg pointer-events-none"
+          className="absolute z-10 text-white px-3 py-2 rounded-lg text-sm shadow-lg pointer-events-none border border-white/20"
           style={{
             left: mousePosition.x + 10,
             top: mousePosition.y - 10,
-            transform: 'translateY(-100%)'
+            transform: 'translateY(-100%)',
+            backgroundColor: colors[pokemons.findIndex(p => p.id === hoveredPokemon.id) % colors.length]
           }}
         >
           <div className="font-semibold capitalize">
             {formatPokemonName(hoveredPokemon.name)}
           </div>
-          <div className="text-xs text-gray-300">
+          <div className="text-xs text-white/90">
             {hoveredPokemon.stats.map(stat => (
-              <div key={stat.stat.name} className="capitalize">
-                {stat.stat.name.replace('-', ' ')}: {stat.base_stat}
+              <div key={stat.stat.name}>
+                {getStatAbbreviation(stat.stat.name)}: {stat.base_stat}
               </div>
             ))}
           </div>
