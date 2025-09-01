@@ -234,7 +234,7 @@ export default function RubyPokedexLayout({
           <div className="relative">
             <input
               type="text"
-              placeholder="Search Pokémon..."
+                              placeholder="Search Pokémon by name or #..."
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);

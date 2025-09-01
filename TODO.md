@@ -1,109 +1,68 @@
-# TODO - Missing Features Implementation
+# PokéDex TODO
 
-## 🎯 **Priority Order (excluding GraphQL)**
+## 🎮 New Features to Implement
 
-### 1. **Advanced Search & Filtering** 🔍
-- [x] **Full-text search** with fuzzy matching
-- [x] **Generation filtering** (Kanto, Johto, etc.)
-- [x] **Habitat filtering** (Cave, Forest, etc.)
-- [x] **Legendary/Mythical filters**
-- [x] **Advanced type combinations** (dual-type filtering)
-- [x] **Height/Weight range filters**
-- [x] **Stat-based filtering** (min/max stats)
+### 1. Team Builder
+- [ ] Pokémon level selector for correct team abilities/stats
+- [ ] Team composition interface
+- [ ] Save/load team configurations
+- [ ] Team validation (type coverage, etc.)
 
-### 2. **Team Builder** 👥
-- [ ] **Create Pokémon teams** (6 Pokémon max)
-- [ ] **Team validation** (no duplicates, type coverage analysis)
-- [ ] **Team sharing** (URL-based sharing)
-- [ ] **Team import/export** (JSON format)
-- [ ] **Team templates** (pre-built teams)
-- [ ] **Team analysis** (weaknesses, resistances, coverage)
+### 2. Battle Simulator
+- [ ] Gym Leaders from all games
+- [ ] Elite Four battles
+- [ ] Boss battles
+- [ ] AI opponent system
+- [ ] Use saved teams in battles
+- [ ] Battle mechanics implementation
+- [ ] Win/loss tracking
 
-### 3. **Battle Simulator** ⚔️
-- [ ] **Simple battle mechanics** (turn-based)
-- [ ] **Move selection** and damage calculation
-- [ ] **Type effectiveness** in battles
-- [ ] **HP tracking** and status effects
-- [ ] **Battle history** and replay
-- [ ] **AI opponent** (basic strategy)
+### 3. Retro Sprites
+- [ ] Pokémon Red sprites (original images when in Red theme)
+- [ ] Pokémon Gold sprites (original images when in Gold theme)
+- [ ] Pokémon Ruby sprites (original images when in Ruby theme)
+- [ ] Sprite switching based on theme selection
 
-### 4. **Offline Support** 📱
-- [ ] **Service Worker** implementation
-- [ ] **Offline data caching** (essential Pokémon data)
-- [ ] **Offline search** functionality
-- [ ] **Progressive Web App** features
-- [ ] **Background sync** when online
+### 4. Pokémon Fun Facts Page
+- [ ] Random facts database
+- [ ] Fact display interface
+- [ ] Fact categories
+- [ ] Random fact generator
+- [ ] User-submitted facts system
 
-### 5. **Social Features** 🌐
-- [ ] **Share teams** on social media
-- [ ] **Community teams** (public team library)
-- [ ] **Team ratings** and comments
-- [ ] **User profiles** (optional)
-- [ ] **Favorites sharing** (public favorites lists)
+## 🔧 Current Issues & Improvements
 
-### 6. **Enhanced UI/UX** 🎨
-- [ ] **Dark mode** toggle
-- [ ] **Animations** (Framer Motion integration)
-- [ ] **Sound effects** (optional)
-- [ ] **Keyboard shortcuts** for navigation
-- [ ] **Accessibility improvements** (screen reader support)
-- [ ] **Internationalization** (i18n support)
+### ✅ Recently Fixed
+- [x] Comparison list persistence across page reloads
+- [x] Comparison functionality for search results
+- [x] Stats slider component implementation
+- [x] Tab styling improvements
+- [x] Type filtering with AND logic
+- [x] Navigation from main page to detail pages
 
-### 7. **Advanced Features** 🚀
-- [ ] **Pokémon breeding** calculator
-- [ ] **IV/EV calculator** (stat optimization)
-- [ ] **Nature effects** display
-- [ ] **Item database** and effects
-- [ ] **Ability database** with detailed descriptions
-- [ ] **Move database** with power/accuracy/PP
+### 🚧 In Progress
+- [ ] Performance optimization for large Pokémon lists
+- [ ] Mobile responsiveness improvements
+- [ ] Accessibility enhancements
 
-### 8. **Performance & Infrastructure** ⚡
-- [ ] **Redis integration** for production caching
-- [ ] **CDN setup** for images and assets
-- [ ] **Analytics** integration
-- [ ] **Error tracking** (Sentry)
-- [ ] **Performance monitoring**
-- [ ] **SEO optimization**
+### 📋 Future Enhancements
+- [ ] Advanced search filters
+- [ ] Pokémon evolution chains visualization
+- [ ] Type effectiveness calculator
+- [ ] Move database with detailed information
+- [ ] User accounts and favorites
+- [ ] Social features (sharing teams, etc.)
+- [ ] Offline mode support
+- [ ] PWA capabilities
 
-### 9. **GraphQL Integration** (Last Priority) 🔗
-- [ ] **GraphQL endpoint** setup
-- [ ] **Apollo Client** integration
-- [ ] **GraphQL queries** for Pokémon data
-- [ ] **Real-time updates** (subscriptions)
-- [ ] **Hybrid REST/GraphQL** approach
+## 🎯 Priority Order
+1. **Team Builder** - Core feature for competitive players
+2. **Battle Simulator** - Engaging gameplay feature
+3. **Retro Sprites** - Visual enhancement for theme modes
+4. **Fun Facts Page** - Educational and entertaining content
 
-## 📋 **Implementation Notes**
-
-### Current Status
-- ✅ **Core discovery and search** - Complete
-- ✅ **Detailed Pokémon pages** - Complete
-- ✅ **Comparison tool** - Complete
-- ✅ **Basic API integration** - Complete
-- ✅ **Modern UI/UX** - Complete
-- ✅ **Advanced Search & Filtering** - Complete
-- ✅ **Pokémon styling & design system** - Complete
-- ✅ **Pagination & Load More** - Complete
-
-### Next Steps
-1. Start with **Advanced Search & Filtering** (most impactful for users)
-2. Move to **Team Builder** (highly requested feature)
-3. Implement **Battle Simulator** (fun interactive feature)
-4. Add **Offline Support** (improves user experience)
-5. Enhance with **Social Features** (community aspect)
-
-### Technical Considerations
-- Each feature should be implemented as a separate module
-- Maintain TypeScript strict mode
-- Add proper error handling and loading states
+## 📝 Notes
+- All features should maintain the current theme system (Light/Dark/Red/Gold/Ruby)
 - Ensure responsive design for all new features
-- Follow existing code patterns and architecture
-
-## 🎯 **Current Focus: Team Builder**
-
-**Next Implementation:**
-- [ ] Create team builder page
-- [ ] Implement team validation (6 Pokémon max, no duplicates)
-- [ ] Add type coverage analysis
-- [ ] Create team sharing functionality
-- [ ] Add team import/export features
-- [ ] Implement team templates
+- Maintain performance with large datasets
+- Follow accessibility best practices

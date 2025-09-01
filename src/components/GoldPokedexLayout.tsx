@@ -191,7 +191,7 @@ export default function GoldPokedexLayout({
           <div className="bg-white border-2 border-gray-600 p-2">
             <input
               type="text"
-              placeholder="Search Pokémon..."
+                              placeholder="Search Pokémon by name or #..."
               value={filters.search}
               onChange={(e) => setFilters({ ...filters, search: e.target.value })}
               className="w-full bg-transparent outline-none font-gameboy text-sm text-black"

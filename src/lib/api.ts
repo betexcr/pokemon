@@ -274,14 +274,37 @@ export async function getPokemonByType(type: string): Promise<Pokemon[]> {
   }
 }
 
-// Search Pokémon by name using API
+// Search Pokémon by name or number using API
 export async function searchPokemonByName(searchTerm: string): Promise<Pokemon[]> {
   const cacheKey = getCacheKey(`search/${searchTerm}`);
   const cached = getCache(cacheKey);
   if (cached) return cached as Pokemon[];
 
   try {
-    // Get more Pokémon to search through (up to 1000 to include Lugia and others)
+    // Check if search term is a number (Pokémon ID)
+    const isNumberSearch = /^\d+$/.test(searchTerm.trim());
+    
+    if (isNumberSearch) {
+      // Direct number search - fetch the specific Pokémon
+      const pokemonId = parseInt(searchTerm.trim());
+      
+      // Validate Pokémon ID range (1-1025 for current generations)
+      if (pokemonId >= 1 && pokemonId <= 1025) {
+        try {
+          const pokemon = await getPokemon(pokemonId);
+          setCache(cacheKey, [pokemon], CACHE_TTL.POKEMON_DETAIL);
+          return [pokemon];
+        } catch (error) {
+          console.error(`Error fetching Pokémon with ID ${pokemonId}:`, error);
+          return [];
+        }
+      } else {
+        // Invalid Pokémon ID
+        return [];
+      }
+    }
+
+    // Name search - get more Pokémon to search through (up to 1000 to include Lugia and others)
     const allPokemon = await getPokemonList(1000, 0);
     
     // Filter by search term

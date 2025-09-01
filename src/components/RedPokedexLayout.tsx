@@ -208,7 +208,7 @@ export default function RedPokedexLayout({
         <div className="bg-white border-4 border-red-600 p-2">
           <input
             type="text"
-            placeholder="Search Pokémon..."
+                            placeholder="Search Pokémon by name or #..."
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);

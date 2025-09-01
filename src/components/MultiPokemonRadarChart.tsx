@@ -15,7 +15,6 @@ interface Point {
 
 export default function MultiPokemonRadarChart({ pokemons }: MultiPokemonRadarChartProps) {
   const [hoveredPokemon, setHoveredPokemon] = useState<Pokemon | null>(null)
-  const [mousePosition, setMousePosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
 
   if (pokemons.length === 0) return null
 
@@ -143,12 +142,8 @@ export default function MultiPokemonRadarChart({ pokemons }: MultiPokemonRadarCh
           fillOpacity="0.2"
           stroke={color}
           strokeWidth="2"
-          onMouseEnter={(e) => {
+          onMouseEnter={() => {
             setHoveredPokemon(pokemon)
-            setMousePosition({ x: e.clientX, y: e.clientY })
-          }}
-          onMouseMove={(e) => {
-            setMousePosition({ x: e.clientX, y: e.clientY })
           }}
           onMouseLeave={() => {
             setHoveredPokemon(null)
@@ -165,12 +160,8 @@ export default function MultiPokemonRadarChart({ pokemons }: MultiPokemonRadarCh
             fill={color}
             stroke="white"
             strokeWidth="2"
-            onMouseEnter={(e) => {
+            onMouseEnter={() => {
               setHoveredPokemon(pokemon)
-              setMousePosition({ x: e.clientX, y: e.clientY })
-            }}
-            onMouseMove={(e) => {
-              setMousePosition({ x: e.clientX, y: e.clientY })
             }}
             onMouseLeave={() => {
               setHoveredPokemon(null)
@@ -204,9 +195,9 @@ export default function MultiPokemonRadarChart({ pokemons }: MultiPokemonRadarCh
         <div
           className="absolute z-10 text-white px-3 py-2 rounded-lg text-sm shadow-lg pointer-events-none border border-white/20"
           style={{
-            left: mousePosition.x + 10,
-            top: mousePosition.y - 10,
-            transform: 'translateY(-100%)',
+            left: '50%',
+            top: '50%',
+            transform: 'translate(-50%, -50%)',
             backgroundColor: colors[pokemons.findIndex(p => p.id === hoveredPokemon.id) % colors.length]
           }}
         >

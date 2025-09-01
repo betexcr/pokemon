@@ -5,7 +5,7 @@ import { Pokemon, FilterState } from '@/types/pokemon'
 import { formatPokemonName, typeColors } from '@/lib/utils'
 import { useSearch } from '@/hooks/useSearch'
 import { useRouter } from 'next/navigation'
-import { getPokemonByGeneration, getPokemonByType } from '@/lib/api'
+import { getPokemonByGeneration, getPokemonByType, getPokemon } from '@/lib/api'
 import ThemeToggle from './ThemeToggle'
 import VirtualizedPokemonGrid from './VirtualizedPokemonGrid'
 import { Search, Filter, X, Scale, ArrowRight } from 'lucide-react'
@@ -56,6 +56,7 @@ export default function ModernPokedexLayout({
   const [filteredPokemon, setFilteredPokemon] = useState<Pokemon[]>([])
   const [isFiltering, setIsFiltering] = useState(false)
   const [cardDensity, setCardDensity] = useState<'cozy' | 'compact' | 'ultra'>('compact')
+  const [comparisonPokemon, setComparisonPokemon] = useState<Pokemon[]>([])
 
   // Enhanced search hook
   const {
@@ -158,6 +159,50 @@ export default function ModernPokedexLayout({
 
     applyFilters()
   }, [searchResults, pokemonList, advancedFilters])
+
+  // Fetch comparison Pokémon that aren't in current filtered results
+  useEffect(() => {
+    const fetchComparisonPokemon = async () => {
+      if (comparisonList.length === 0) {
+        setComparisonPokemon([])
+        return
+      }
+
+      // Get all available Pokémon IDs (from filtered results and pokemon list)
+      const availableIds = new Set([
+        ...filteredPokemon.map(p => p.id),
+        ...pokemonList.map(p => p.id)
+      ])
+
+      // Find comparison Pokémon that aren't available
+      const missingIds = comparisonList.filter(id => !availableIds.has(id))
+
+      if (missingIds.length === 0) {
+        // All comparison Pokémon are available in current results
+        const availableComparison = filteredPokemon.filter(p => comparisonList.includes(p.id))
+        setComparisonPokemon(availableComparison)
+        return
+      }
+
+      try {
+        // Fetch missing Pokémon
+        const fetchedPokemon = await Promise.all(
+          missingIds.map(id => getPokemon(id))
+        )
+
+        // Combine with available comparison Pokémon
+        const availableComparison = filteredPokemon.filter(p => comparisonList.includes(p.id))
+        setComparisonPokemon([...availableComparison, ...fetchedPokemon])
+      } catch (error) {
+        console.error('Error fetching comparison Pokémon:', error)
+        // Fallback to only available Pokémon
+        const availableComparison = filteredPokemon.filter(p => comparisonList.includes(p.id))
+        setComparisonPokemon(availableComparison)
+      }
+    }
+
+    fetchComparisonPokemon()
+  }, [comparisonList, filteredPokemon, pokemonList])
 
   // Sort filtered results
   const sortedPokemon = useMemo(() => {
@@ -511,13 +556,11 @@ export default function ModernPokedexLayout({
                 <div className="space-y-3">
                   {/* Selected Pokémon List */}
                   <div className="max-h-48 overflow-y-auto bg-gray-800 rounded-lg border border-gray-700">
-                    {pokemonList
-                      .filter(pokemon => comparisonList.includes(pokemon.id))
-                      .map((pokemon, index) => (
+                    {comparisonPokemon.map((pokemon, index) => (
                         <div
                           key={pokemon.id}
                           className={`flex items-center px-3 py-2 ${
-                            index < pokemonList.filter(p => comparisonList.includes(p.id)).length - 1 
+                            index < comparisonPokemon.length - 1 
                               ? 'border-b border-gray-700' 
                               : ''
                           }`}
