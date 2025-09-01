@@ -1,10 +1,27 @@
-import { TYPE_LABELS, typeChipClasses } from '@/lib/typeColors'
+import { typeColors } from '@/lib/utils';
 
-export default function TypeBadge({ type }: { type: string }) {
-  const label = TYPE_LABELS[type.toLowerCase()] ?? type;
+interface TypeBadgeProps {
+  type: string;
+  className?: string;
+}
+
+export default function TypeBadge({ type, className = '' }: TypeBadgeProps) {
+  const colorClasses = typeColors[type] || typeColors.normal;
+  
   return (
-    <span className={typeChipClasses(type)} aria-label={`Type: ${label}`}>
-      {label}
+    <span
+      className={`
+        inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+        ${colorClasses.bg} ${colorClasses.text} ${colorClasses.border}
+        ${className}
+      `}
+      style={{ 
+        backgroundColor: `var(--type-${type})`,
+        color: 'white',
+        textShadow: '0 1px 2px rgba(0,0,0,0.3)'
+      }}
+    >
+      {type.charAt(0).toUpperCase() + type.slice(1)}
     </span>
-  )
+  );
 }
