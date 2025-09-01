@@ -8,7 +8,7 @@ import { useTheme } from './ThemeProvider'
 interface VirtualizedPokemonGridProps {
   pokemonList: Pokemon[]
   onToggleFavorite: (id: number) => void
-  onSelectPokemon: (pokemon: Pokemon) => void
+  onSelectPokemon?: (pokemon: Pokemon) => void
   selectedPokemon: Pokemon | null
   favorites: number[]
   density: 'cozy' | 'compact' | 'ultra'
@@ -59,12 +59,7 @@ export default function VirtualizedPokemonGrid({
             pokemon={pokemon}
             isFavorite={favorites.includes(pokemon.id)}
             onToggleFavorite={onToggleFavorite}
-            onSelect={(pokemon) => {
-              const fullPokemon = pokemonList.find(p => p.id === pokemon.id)
-              if (fullPokemon) {
-                onSelectPokemon(fullPokemon)
-              }
-            }}
+            onSelect={undefined}
             isSelected={selectedPokemon?.id === pokemon.id}
             viewMode={viewMode}
             density={density}

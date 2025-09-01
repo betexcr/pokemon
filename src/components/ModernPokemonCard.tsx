@@ -43,6 +43,17 @@ export default function ModernPokemonCard({
     }
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      if (onSelect) {
+        onSelect(pokemon)
+      } else {
+        router.push(`/pokemon/${pokemon.id}`)
+      }
+    }
+  }
+
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
@@ -86,12 +97,7 @@ export default function ModernPokemonCard({
       aria-label={`View details for ${formatPokemonName(pokemon.name)}`}
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          handleClick(e as any)
-        }
-      }}
+      onKeyDown={handleKeyDown}
     >
       {/* Type accent bar */}
       <div

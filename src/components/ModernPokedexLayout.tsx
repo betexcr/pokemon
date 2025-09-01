@@ -551,8 +551,8 @@ export default function ModernPokedexLayout({
               <VirtualizedPokemonGrid
                 pokemonList={sortedPokemon}
                 onToggleFavorite={onToggleFavorite}
-                onSelectPokemon={onSelectPokemon}
-                selectedPokemon={selectedPokemon}
+                onSelectPokemon={undefined}
+                selectedPokemon={null}
                 favorites={favorites}
                 density={cardDensity}
                 viewMode={viewMode}
