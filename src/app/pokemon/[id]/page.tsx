@@ -41,14 +41,15 @@ export default function PokemonDetailPage() {
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [favorites, setFavorites] = useState<number[]>([])
+  const [comparisonList, setComparisonList] = useState<number[]>([])
   const [selectedSprite, setSelectedSprite] = useState<'default' | 'shiny'>('default')
+  const [activeTab, setActiveTab] = useState<'overview' | 'stats' | 'moves' | 'evolution' | 'matchups'>('overview')
 
   useEffect(() => {
     loadPokemonData()
-    const savedFavorites = localStorage.getItem('pokemon-favorites')
-    if (savedFavorites) {
-      setFavorites(JSON.parse(savedFavorites))
+    const savedComparison = localStorage.getItem('pokemon-comparison')
+    if (savedComparison) {
+      setComparisonList(JSON.parse(savedComparison))
     }
     
     // Load saved sprite preference
@@ -86,13 +87,13 @@ export default function PokemonDetailPage() {
     }
   }
 
-  const toggleFavorite = (pokemonId: number) => {
-    const newFavorites = favorites.includes(pokemonId)
-      ? favorites.filter(id => id !== pokemonId)
-      : [...favorites, pokemonId]
+  const toggleComparison = (pokemonId: number) => {
+    const newComparison = comparisonList.includes(pokemonId)
+      ? comparisonList.filter(id => id !== pokemonId)
+      : [...comparisonList, pokemonId]
     
-    setFavorites(newFavorites)
-    localStorage.setItem('pokemon-favorites', JSON.stringify(newFavorites))
+    setComparisonList(newComparison)
+    localStorage.setItem('pokemon-comparison', JSON.stringify(newComparison))
   }
 
   const handleSpriteToggle = (sprite: 'default' | 'shiny') => {
@@ -151,7 +152,7 @@ export default function PokemonDetailPage() {
   return (
     <div className="min-h-screen bg-bg">
       {/* Header */}
-      <header className="bg-surface/80 backdrop-blur-sm border-b border-border sticky top-0 z-50">
+      <header className="bg-surface/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Link 
@@ -174,18 +175,21 @@ export default function PokemonDetailPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => toggleFavorite(pokemon.id)}
+                onClick={() => toggleComparison(pokemon.id)}
                 className={cn(
-                  isFavorite && "scale-110 ring-2 ring-poke-red"
+                  comparisonList.includes(pokemon.id) && "scale-110 ring-2 ring-blue-500"
                 )}
-                aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+                aria-label={comparisonList.includes(pokemon.id) ? "Remove from comparison" : "Add to comparison"}
               >
-                <Heart 
+                <svg 
                   className={cn(
                     "h-5 w-5 transition-colors",
-                    isFavorite ? "fill-red-500 text-red-500" : "text-muted hover:text-red-500"
-                  )} 
-                />
+                    comparisonList.includes(pokemon.id) ? "fill-blue-500 text-blue-500" : "text-muted hover:text-blue-500"
+                  )}
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M9 3l-1.5 1.5L6 3 4.5 4.5 3 3v18l1.5-1.5L6 21l1.5-1.5L9 21V3zm6 0l-1.5 1.5L12 3l-1.5 1.5L9 3v18l1.5-1.5L12 21l1.5-1.5L15 21V3z"/>
+                </svg>
               </Button>
             </div>
           </div>
@@ -195,7 +199,7 @@ export default function PokemonDetailPage() {
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
                 {/* Hero Section */}
         <section 
-          className="relative rounded-xl border border-border bg-surface overflow-hidden mx-4"
+          className="relative rounded-xl bg-surface overflow-hidden mx-4"
           style={{ 
             background: `linear-gradient(180deg, color-mix(in oklab, var(--type-${primaryType}) 14%, transparent) 0%, transparent 60%)`
           }}
@@ -274,136 +278,147 @@ export default function PokemonDetailPage() {
 
 
 
-        {/* New Tab Components */}
-        <Tabs />
+        {/* Tab Navigation */}
+        <Tabs activeTab={activeTab} onTabChange={setActiveTab} />
         
-        <OverviewSection
-          types={pokemon.types.map(t => t.type.name)}
-          abilities={pokemon.abilities.map(a => ({ name: a.ability.name, is_hidden: a.is_hidden }))}
-          flavorText={species?.flavor_text_entries.find(entry => entry.language.name === 'en')?.flavor_text || 'No description available.'}
-          genus={species?.genera.find(genus => genus.language.name === 'en')?.genus}
-          heightM={pokemon.height / 10}
-          weightKg={pokemon.weight / 10}
-          baseExp={pokemon.base_experience || 0}
-        />
+        {/* Tab Content */}
+        {activeTab === 'overview' && (
+          <OverviewSection
+            types={pokemon.types.map(t => t.type.name)}
+            abilities={pokemon.abilities.map(a => ({ name: a.ability.name, is_hidden: a.is_hidden }))}
+            flavorText={species?.flavor_text_entries.find(entry => entry.language.name === 'en')?.flavor_text || 'No description available.'}
+            genus={species?.genera.find(genus => genus.language.name === 'en')?.genus}
+            heightM={pokemon.height / 10}
+            weightKg={pokemon.weight / 10}
+            baseExp={pokemon.base_experience || 0}
+          />
+        )}
 
-        <StatsSection stats={pokemon.stats.map(s => ({ name: s.stat.name, value: s.base_stat }))} />
+        {activeTab === 'stats' && (
+          <StatsSection stats={pokemon.stats.map(s => ({ name: s.stat.name, value: s.base_stat }))} />
+        )}
 
-        <MovesSection moves={pokemon.moves
-          .filter(move => move.version_group_details.some(detail => detail.move_learn_method.name === 'level-up'))
-          .map(move => {
-            const levelUpDetail = move.version_group_details.find(detail => detail.move_learn_method.name === 'level-up');
-            return {
-              name: move.move.name,
-              type: 'normal', // We'll need to fetch this from the move API
-              damage_class: 'physical' as const, // We'll need to fetch this from the move API
-              power: null,
-              accuracy: null,
-              pp: null,
-              level_learned_at: levelUpDetail?.level_learned_at || null
-            };
-          })
-          .filter((move, index, self) => 
-            index === self.findIndex(m => m.name === move.name)
-          ) // Remove duplicates
-        } />
+        {activeTab === 'moves' && (
+          <MovesSection moves={pokemon.moves
+            .filter(move => move.version_group_details.some(detail => detail.move_learn_method.name === 'level-up'))
+            .map(move => {
+              const levelUpDetail = move.version_group_details.find(detail => detail.move_learn_method.name === 'level-up');
+              return {
+                name: move.move.name,
+                type: 'normal', // We'll need to fetch this from the move API
+                damage_class: 'physical' as const, // We'll need to fetch this from the move API
+                power: null,
+                accuracy: null,
+                pp: null,
+                level_learned_at: levelUpDetail?.level_learned_at || null
+              };
+            })
+            .filter((move, index, self) => 
+              index === self.findIndex(m => m.name === move.name)
+            ) // Remove duplicates
+          } />
+        )}
 
-        <EvolutionSection chain={evolutionChain ? (() => {
-          const chain: Array<{id: number; name: string; types: string[]; condition?: string}> = [];
-          
-          // Add the base evolution
-          const baseId = parseInt(evolutionChain.chain.species.url.split('/').slice(-2)[0]);
-          chain.push({
-            id: baseId,
-            name: evolutionChain.chain.species.name,
-            types: ['normal'], // We'll need to fetch this
-            condition: undefined
-          });
-          
-          // Add first evolution if it exists
-          if (evolutionChain.chain.evolves_to.length > 0) {
-            const firstEvo = evolutionChain.chain.evolves_to[0];
-            const firstEvoId = parseInt(firstEvo.species.url.split('/').slice(-2)[0]);
+        {activeTab === 'evolution' && (
+          <EvolutionSection chain={evolutionChain ? (() => {
+            const chain: Array<{id: number; name: string; types: string[]; condition?: string}> = [];
+            
+            // Add the base evolution
+            const baseId = parseInt(evolutionChain.chain.species.url.split('/').slice(-2)[0]);
             chain.push({
-              id: firstEvoId,
-              name: firstEvo.species.name,
+              id: baseId,
+              name: evolutionChain.chain.species.name,
               types: ['normal'], // We'll need to fetch this
-              condition: firstEvo.evolution_details[0]?.trigger?.name || undefined
+              condition: undefined
             });
             
-            // Add second evolution if it exists
-            if (firstEvo.evolves_to.length > 0) {
-              const secondEvo = firstEvo.evolves_to[0];
-              const secondEvoId = parseInt(secondEvo.species.url.split('/').slice(-2)[0]);
+            // Add first evolution if it exists
+            if (evolutionChain.chain.evolves_to.length > 0) {
+              const firstEvo = evolutionChain.chain.evolves_to[0];
+              const firstEvoId = parseInt(firstEvo.species.url.split('/').slice(-2)[0]);
               chain.push({
-                id: secondEvoId,
-                name: secondEvo.species.name,
+                id: firstEvoId,
+                name: firstEvo.species.name,
                 types: ['normal'], // We'll need to fetch this
-                condition: secondEvo.evolution_details[0]?.trigger?.name || undefined
+                condition: firstEvo.evolution_details[0]?.trigger?.name || undefined
               });
+              
+              // Add second evolution if it exists
+              if (firstEvo.evolves_to.length > 0) {
+                const secondEvo = firstEvo.evolves_to[0];
+                const secondEvoId = parseInt(secondEvo.species.url.split('/').slice(-2)[0]);
+                chain.push({
+                  id: secondEvoId,
+                  name: secondEvo.species.name,
+                  types: ['normal'], // We'll need to fetch this
+                  condition: secondEvo.evolution_details[0]?.trigger?.name || undefined
+                });
+              }
             }
-          }
-          
-          return chain;
-        })() : []} />
+            
+            return chain;
+          })() : []} />
+        )}
 
-        <MatchupsSection groups={(() => {
-          const types = pokemon.types.map(t => t.type.name);
-          const weakTo: string[] = [];
-          const resistantTo: string[] = [];
-          const immuneTo: string[] = [];
-          
-          // This is a simplified type effectiveness calculation
-          // In a real implementation, you'd fetch the type effectiveness data from PokeAPI
-          const typeChart: Record<string, Record<string, number>> = {
-            normal: { rock: 0.5, ghost: 0, steel: 0.5 },
-            fire: { fire: 0.5, water: 0.5, grass: 2, ice: 2, bug: 2, rock: 0.5, dragon: 0.5, steel: 2 },
-            water: { fire: 2, water: 0.5, grass: 0.5, ground: 2, rock: 2, dragon: 0.5 },
-            electric: { water: 2, electric: 0.5, grass: 0.5, ground: 0, flying: 2, dragon: 0.5 },
-            grass: { fire: 0.5, water: 2, grass: 0.5, poison: 0.5, ground: 2, flying: 0.5, bug: 0.5, rock: 2, dragon: 0.5, steel: 0.5 },
-            ice: { fire: 0.5, water: 0.5, grass: 2, ice: 0.5, ground: 2, flying: 2, dragon: 2, steel: 0.5 },
-            fighting: { normal: 2, ice: 2, poison: 0.5, flying: 0.5, psychic: 0.5, bug: 0.5, rock: 2, ghost: 0, steel: 2, fairy: 0.5 },
-            poison: { grass: 2, poison: 0.5, ground: 0.5, rock: 0.5, ghost: 0.5, steel: 0, fairy: 2 },
-            ground: { fire: 2, electric: 2, grass: 0.5, poison: 2, flying: 0, bug: 0.5, rock: 2, steel: 2 },
-            flying: { electric: 0.5, grass: 2, fighting: 2, bug: 2, rock: 0.5, steel: 0.5 },
-            psychic: { fighting: 2, poison: 2, psychic: 0.5, dark: 0, steel: 0.5 },
-            bug: { fire: 0.5, grass: 2, fighting: 0.5, poison: 0.5, flying: 0.5, psychic: 2, ghost: 0.5, dark: 2, steel: 0.5, fairy: 0.5 },
-            rock: { fire: 2, ice: 2, fighting: 0.5, ground: 0.5, flying: 2, bug: 2, steel: 0.5 },
-            ghost: { normal: 0, psychic: 2, ghost: 2, dark: 0.5 },
-            dragon: { dragon: 2, steel: 0.5, fairy: 0 },
-            dark: { fighting: 0.5, psychic: 2, ghost: 2, dark: 0.5, fairy: 0.5 },
-            steel: { fire: 0.5, water: 0.5, electric: 0.5, ice: 2, rock: 2, steel: 0.5, fairy: 2 },
-            fairy: { fighting: 2, poison: 0.5, dragon: 2, dark: 2, steel: 0.5 }
-          };
-          
-          const allTypes = ['normal', 'fire', 'water', 'electric', 'grass', 'ice', 'fighting', 'poison', 'ground', 'flying', 'psychic', 'bug', 'rock', 'ghost', 'dragon', 'dark', 'steel', 'fairy'];
-          
-          allTypes.forEach(type => {
-            let effectiveness = 1;
-            types.forEach(pokemonType => {
-              if (typeChart[pokemonType] && typeChart[pokemonType][type] !== undefined) {
-                effectiveness *= typeChart[pokemonType][type];
+        {activeTab === 'matchups' && (
+          <MatchupsSection groups={(() => {
+            const types = pokemon.types.map(t => t.type.name);
+            const weakTo: string[] = [];
+            const resistantTo: string[] = [];
+            const immuneTo: string[] = [];
+            
+            // This is a simplified type effectiveness calculation
+            // In a real implementation, you'd fetch the type effectiveness data from PokeAPI
+            const typeChart: Record<string, Record<string, number>> = {
+              normal: { rock: 0.5, ghost: 0, steel: 0.5 },
+              fire: { fire: 0.5, water: 0.5, grass: 2, ice: 2, bug: 2, rock: 0.5, dragon: 0.5, steel: 2 },
+              water: { fire: 2, water: 0.5, grass: 0.5, ground: 2, rock: 2, dragon: 0.5 },
+              electric: { water: 2, electric: 0.5, grass: 0.5, ground: 0, flying: 2, dragon: 0.5 },
+              grass: { fire: 0.5, water: 2, grass: 0.5, poison: 0.5, ground: 2, flying: 0.5, bug: 0.5, rock: 2, dragon: 0.5, steel: 0.5 },
+              ice: { fire: 0.5, water: 0.5, grass: 2, ice: 0.5, ground: 2, flying: 2, dragon: 2, steel: 0.5 },
+              fighting: { normal: 2, ice: 2, poison: 0.5, flying: 0.5, psychic: 0.5, bug: 0.5, rock: 2, ghost: 0, steel: 2, fairy: 0.5 },
+              poison: { grass: 2, poison: 0.5, ground: 0.5, rock: 0.5, ghost: 0.5, steel: 0, fairy: 2 },
+              ground: { fire: 2, electric: 2, grass: 0.5, poison: 2, flying: 0, bug: 0.5, rock: 2, steel: 2 },
+              flying: { electric: 0.5, grass: 2, fighting: 2, bug: 2, rock: 0.5, steel: 0.5 },
+              psychic: { fighting: 2, poison: 2, psychic: 0.5, dark: 0, steel: 0.5 },
+              bug: { fire: 0.5, grass: 2, fighting: 0.5, poison: 0.5, flying: 0.5, psychic: 2, ghost: 0.5, dark: 2, steel: 0.5, fairy: 0.5 },
+              rock: { fire: 2, ice: 2, fighting: 0.5, ground: 0.5, flying: 2, bug: 2, steel: 0.5 },
+              ghost: { normal: 0, psychic: 2, ghost: 2, dark: 0.5 },
+              dragon: { dragon: 2, steel: 0.5, fairy: 0 },
+              dark: { fighting: 0.5, psychic: 2, ghost: 2, dark: 0.5, fairy: 0.5 },
+              steel: { fire: 0.5, water: 0.5, electric: 0.5, ice: 2, rock: 2, steel: 0.5, fairy: 2 },
+              fairy: { fighting: 2, poison: 0.5, dragon: 2, dark: 2, steel: 0.5 }
+            };
+            
+            const allTypes = ['normal', 'fire', 'water', 'electric', 'grass', 'ice', 'fighting', 'poison', 'ground', 'flying', 'psychic', 'bug', 'rock', 'ghost', 'dragon', 'dark', 'steel', 'fairy'];
+            
+            allTypes.forEach(type => {
+              let effectiveness = 1;
+              types.forEach(pokemonType => {
+                if (typeChart[pokemonType] && typeChart[pokemonType][type] !== undefined) {
+                  effectiveness *= typeChart[pokemonType][type];
+                }
+              });
+              
+              if (effectiveness > 1) {
+                weakTo.push(type);
+              } else if (effectiveness < 1 && effectiveness > 0) {
+                resistantTo.push(type);
+              } else if (effectiveness === 0) {
+                immuneTo.push(type);
               }
             });
             
-            if (effectiveness > 1) {
-              weakTo.push(type);
-            } else if (effectiveness < 1 && effectiveness > 0) {
-              resistantTo.push(type);
-            } else if (effectiveness === 0) {
-              immuneTo.push(type);
-            }
-          });
-          
-          return [
-            { title: "Weak to (2×)", types: weakTo, tone: "danger" as const },
-            { title: "Resistant to (½×)", types: resistantTo, tone: "ok" as const },
-            { title: "Immune to (0×)", types: immuneTo, tone: "immune" as const }
-          ];
-        })()} />
+            return [
+              { title: "Weak to (2×)", types: weakTo, tone: "danger" as const },
+              { title: "Resistant to (½×)", types: resistantTo, tone: "ok" as const },
+              { title: "Immune to (0×)", types: immuneTo, tone: "immune" as const }
+            ];
+          })()} />
+        )}
 
         {/* Page Footer / Navigation */}
-        <footer className="border-t border-border pt-8">
+        <footer className="pt-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Button

@@ -25,7 +25,7 @@ export default function Home() {
   const [density, setDensity] = useState<'cozy' | 'compact' | 'ultra'>('compact')
 
 
-  const [favorites, setFavorites] = useState<number[]>([])
+  const [comparisonList, setComparisonList] = useState<number[]>([])
   const [selectedPokemon, setSelectedPokemon] = useState<Pokemon | null>(null)
   const [typeLoading, setTypeLoading] = useState(false)
 
@@ -73,11 +73,11 @@ export default function Home() {
     }
   }, [])
 
-  // Load favorites from localStorage
+  // Load comparison list from localStorage
   useEffect(() => {
-    const savedFavorites = localStorage.getItem('pokemon-favorites')
-    if (savedFavorites) {
-      setFavorites(JSON.parse(savedFavorites))
+    const savedComparison = localStorage.getItem('pokemon-comparison')
+    if (savedComparison) {
+      setComparisonList(JSON.parse(savedComparison))
     }
   }, [])
 
@@ -194,13 +194,13 @@ export default function Home() {
 
 
 
-  const toggleFavorite = (id: number) => {
-    const newFavorites = favorites.includes(id)
-      ? favorites.filter(favId => favId !== id)
-      : [...favorites, id]
+  const toggleComparison = (id: number) => {
+    const newComparison = comparisonList.includes(id)
+      ? comparisonList.filter(compId => compId !== id)
+      : [...comparisonList, id]
     
-    setFavorites(newFavorites)
-    localStorage.setItem('pokemon-favorites', JSON.stringify(newFavorites))
+    setComparisonList(newComparison)
+    localStorage.setItem('pokemon-comparison', JSON.stringify(newComparison))
   }
 
   if (loading) {
@@ -240,8 +240,8 @@ export default function Home() {
         pokemonList={sortedPokemon}
         selectedPokemon={selectedPokemon}
         onSelectPokemon={setSelectedPokemon}
-        onToggleFavorite={toggleFavorite}
-        favorites={favorites}
+        onToggleComparison={toggleComparison}
+        comparisonList={comparisonList}
         filters={filters}
         setFilters={setFilters}
       />
@@ -255,8 +255,8 @@ export default function Home() {
         pokemonList={sortedPokemon}
         selectedPokemon={selectedPokemon}
         onSelectPokemon={setSelectedPokemon}
-        onToggleFavorite={toggleFavorite}
-        favorites={favorites}
+        onToggleComparison={toggleComparison}
+        comparisonList={comparisonList}
         filters={filters}
         setFilters={setFilters}
       />
@@ -269,8 +269,8 @@ export default function Home() {
         pokemonList={sortedPokemon}
         selectedPokemon={selectedPokemon}
         onSelectPokemon={setSelectedPokemon}
-        onToggleFavorite={toggleFavorite}
-        favorites={favorites}
+        onToggleComparison={toggleComparison}
+        comparisonList={comparisonList}
         filters={filters}
         setFilters={setFilters}
       />
@@ -283,8 +283,8 @@ export default function Home() {
         pokemonList={sortedPokemon}
         selectedPokemon={selectedPokemon}
         onSelectPokemon={setSelectedPokemon}
-        onToggleFavorite={toggleFavorite}
-        favorites={favorites}
+        onToggleComparison={toggleComparison}
+        comparisonList={comparisonList}
         filters={filters}
         setFilters={setFilters}
       />

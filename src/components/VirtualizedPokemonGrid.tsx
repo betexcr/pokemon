@@ -7,20 +7,20 @@ import { useTheme } from './ThemeProvider'
 
 interface VirtualizedPokemonGridProps {
   pokemonList: Pokemon[]
-  onToggleFavorite: (id: number) => void
+  onToggleComparison: (id: number) => void
   onSelectPokemon?: (pokemon: Pokemon) => void
   selectedPokemon: Pokemon | null
-  favorites: number[]
+  comparisonList: number[]
   density: 'cozy' | 'compact' | 'ultra'
   className?: string
 }
 
 export default function VirtualizedPokemonGrid({
   pokemonList,
-  onToggleFavorite,
+  onToggleComparison,
   onSelectPokemon,
   selectedPokemon,
-  favorites,
+  comparisonList,
   density,
   className = ''
 }: VirtualizedPokemonGridProps) {
@@ -46,13 +46,13 @@ export default function VirtualizedPokemonGrid({
 
   return (
     <div className={`${className}`}>
-      <div className={`grid gap-4 ${getGridColumns()}`}>
+      <div className={`grid gap-6 ${getGridColumns()}`}>
         {pokemonList.map((pokemon) => (
           <ModernPokemonCard
             key={pokemon.id}
             pokemon={pokemon}
-            isFavorite={favorites.includes(pokemon.id)}
-            onToggleFavorite={onToggleFavorite}
+            isInComparison={comparisonList.includes(pokemon.id)}
+            onToggleComparison={onToggleComparison}
             onSelect={undefined}
             isSelected={selectedPokemon?.id === pokemon.id}
             density={density}

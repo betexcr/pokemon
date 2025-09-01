@@ -122,8 +122,8 @@ export default function RadarChart({ data, size = 300, className = '' }: RadarCh
             cx={center}
             cy={center}
             r={maxRadius}
-            fill="rgba(59, 130, 246, 0.1)"
-            stroke="rgba(59, 130, 246, 0.3)"
+            fill="rgba(59, 130, 246, 0.15)"
+            stroke="rgba(59, 130, 246, 0.4)"
             strokeWidth="1"
           />
         )}
@@ -144,7 +144,7 @@ export default function RadarChart({ data, size = 300, className = '' }: RadarCh
             theme === 'red' ? '#FF0000' :
             theme === 'gold' ? '#FFD700' :
             theme === 'ruby' ? '#FF69B4' :
-            '#3B82F6'
+            '#2563EB'
           )
           
           return (
@@ -153,7 +153,7 @@ export default function RadarChart({ data, size = 300, className = '' }: RadarCh
               <polygon
                 points={points}
                 fill={color}
-                opacity={isRetro ? 0.3 : 0.2}
+                opacity={isRetro ? 0.3 : 0.3}
               />
               {/* Border polygon */}
               <polygon
@@ -161,7 +161,7 @@ export default function RadarChart({ data, size = 300, className = '' }: RadarCh
                 fill="none"
                 stroke={color}
                 strokeWidth={isRetro ? "3" : "2"}
-                opacity={isRetro ? 0.8 : 1}
+                opacity={isRetro ? 0.8 : 0.8}
               />
             </g>
           )
@@ -175,7 +175,7 @@ export default function RadarChart({ data, size = 300, className = '' }: RadarCh
             <div key={pokemon.name} className="flex items-center gap-2">
               <div 
                 className="w-3 h-3 rounded-full"
-                style={{ backgroundColor: pokemon.color || '#3B82F6' }}
+                style={{ backgroundColor: pokemon.color || '#2563EB' }}
               />
               <span className="text-sm font-medium capitalize">
                 {pokemon.name}

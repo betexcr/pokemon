@@ -6,11 +6,12 @@ import { Pokemon } from '@/types/pokemon'
 import { formatPokemonName, typeColors } from '@/lib/utils'
 import { getPokemonImageUrl } from '@/lib/api'
 import { Star, ChevronRight, Heart } from 'lucide-react'
+import TypeBadge from './TypeBadge'
 
 interface ModernPokemonCardProps {
   pokemon: Pokemon
-  isFavorite: boolean
-  onToggleFavorite: (id: number) => void
+  isInComparison: boolean
+  onToggleComparison: (id: number) => void
   onSelect?: (pokemon: Pokemon) => void
   isSelected?: boolean
   className?: string
@@ -19,8 +20,8 @@ interface ModernPokemonCardProps {
 
 export default function ModernPokemonCard({
   pokemon,
-  isFavorite,
-  onToggleFavorite,
+  isInComparison,
+  onToggleComparison,
   onSelect,
   isSelected = false,
   className = '',
@@ -52,10 +53,10 @@ export default function ModernPokemonCard({
     }
   }
 
-  const handleFavoriteClick = (e: React.MouseEvent) => {
+  const handleComparisonClick = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    onToggleFavorite(pokemon.id)
+    onToggleComparison(pokemon.id)
   }
 
   const primaryType = pokemon.types[0]?.type.name || 'normal'
@@ -108,18 +109,20 @@ export default function ModernPokemonCard({
               #{String(pokemon.id).padStart(3, '0')}
             </span>
             <button
-              onClick={handleFavoriteClick}
+              onClick={handleComparisonClick}
               className={`
                 p-1.5 rounded-full transition-all duration-200
-                ${isFavorite 
-                  ? 'bg-red-500 text-white shadow-lg' 
-                  : 'bg-white/80 text-gray-400 hover:bg-red-500 hover:text-white'
+                ${isInComparison 
+                  ? 'bg-blue-500 text-white shadow-lg' 
+                  : 'bg-white/80 text-gray-400 hover:bg-blue-500 hover:text-white'
                 }
-                focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1
+                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1
               `}
-              aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+              aria-label={isInComparison ? 'Remove from comparison' : 'Add to comparison'}
             >
-              <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
+              <svg className={`h-4 w-4 ${isInComparison ? 'fill-current' : ''}`} viewBox="0 0 24 24">
+                <path d="M9 3l-1.5 1.5L6 3 4.5 4.5 3 3v18l1.5-1.5L6 21l1.5-1.5L9 21V3zm6 0l-1.5 1.5L12 3l-1.5 1.5L9 3v18l1.5-1.5L12 21l1.5-1.5L15 21V3z"/>
+              </svg>
             </button>
           </div>
 
@@ -160,30 +163,19 @@ export default function ModernPokemonCard({
             </h3>
 
             {/* Type badges */}
-            <div className="flex flex-wrap gap-1 justify-center">
+            <div className="flex flex-wrap gap-2 justify-center">
               {pokemon.types.map((type) => (
-                <span
+                <TypeBadge
                   key={type.type.name}
-                  className={`
-                    font-medium rounded-full border
-                    ${density === 'ultra' ? 'px-1 py-0.5 text-[10px]' : 'px-2 py-1 text-xs'}
-                    ${typeColors[type.type.name].bg} ${typeColors[type.type.name].text} 
-                    ${typeColors[type.type.name].border}
-                    transition-transform duration-200 group-hover:scale-105
-                  `}
-                  style={{ 
-                    backgroundColor: `var(--type-${type.type.name})`,
-                    color: 'white',
-                    textShadow: '0 1px 2px rgba(0,0,0,0.3)'
-                  }}
-                >
-                  {formatPokemonName(type.type.name)}
-                </span>
+                  type={type.type.name}
+                  className={`transition-transform duration-200 group-hover:scale-105 ${
+                    density === 'ultra' ? 'text-[10px]' : 'text-xs'
+                  }`}
+                />
               ))}
             </div>
           </div>
         </div>
-      )}
     </div>
   )
 }

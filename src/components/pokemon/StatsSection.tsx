@@ -5,10 +5,10 @@ type Stat = { name: string; value: number }; // HP, attack, defense, special-att
 export default function StatsSection({ stats }: { stats: Stat[] }) {
   const cap = (s:string)=>s.replace("-", " ");
   
-  // Calculate max stat for proper scaling
-  const maxStat = Math.max(...stats.map(s => s.value));
+  // Use fixed max stat of 255 for proper scaling
+  const maxStat = 255;
   
-  // Stat colors based on type
+  // Stat colors based on type - using reddish-orange like in the image
   const getStatColor = (statName: string) => {
     switch (statName.toLowerCase()) {
       case 'hp': return 'bg-red-500';
@@ -17,7 +17,20 @@ export default function StatsSection({ stats }: { stats: Stat[] }) {
       case 'special-attack': return 'bg-purple-500';
       case 'special-defense': return 'bg-green-500';
       case 'speed': return 'bg-yellow-500';
-      default: return 'bg-poke-red';
+      default: return 'bg-red-500';
+    }
+  };
+
+  // Get stat abbreviations like in the image
+  const getStatAbbreviation = (statName: string) => {
+    switch (statName.toLowerCase()) {
+      case 'hp': return 'HP';
+      case 'attack': return 'ATK';
+      case 'defense': return 'DEF';
+      case 'special-attack': return 'SPA';
+      case 'special-defense': return 'SPD';
+      case 'speed': return 'SPE';
+      default: return statName.toUpperCase();
     }
   };
 
@@ -39,25 +52,22 @@ export default function StatsSection({ stats }: { stats: Stat[] }) {
       <h3 className="text-lg font-semibold">Base Stats</h3>
       <ul className="space-y-3">
         {stats.map(s => (
-          <li key={s.name} className="grid grid-cols-[140px_1fr_auto] items-center gap-3">
-            <span className="capitalize text-sm text-muted">{cap(s.name)}</span>
-            <div className="h-2 rounded bg-border/50">
+          <li key={s.name} className="flex items-center gap-3">
+            <span className="text-sm font-bold w-20">{getStatAbbreviation(s.name)}</span>
+            <span className="text-sm tabular-nums font-bold w-8">{s.value}</span>
+            <div className="flex-1 h-3 rounded-full bg-gray-200 overflow-hidden">
               <div
-                className={`h-2 rounded transition-[width] duration-700 ${getStatColor(s.name)}`}
+                className={`h-full rounded-full transition-all duration-700 ${getStatColor(s.name)}`}
                 style={{ width: `${(s.value / maxStat) * 100}%` }}
               />
             </div>
-            <span className="text-sm tabular-nums">{s.value}</span>
           </li>
         ))}
       </ul>
 
       {/* Radar Chart */}
-      <div className="rounded-2xl border border-border bg-surface p-6">
-        <h4 className="text-sm font-semibold mb-4 text-center">Stat Distribution</h4>
-        <div className="flex justify-center">
-          <RadarChart data={radarData} size={300} />
-        </div>
+      <div className="flex justify-center">
+        <RadarChart data={radarData} size={300} />
       </div>
     </section>
   );

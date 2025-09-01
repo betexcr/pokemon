@@ -14,8 +14,8 @@ interface ModernPokedexLayoutProps {
   pokemonList: Pokemon[]
   selectedPokemon: Pokemon | null
   onSelectPokemon: (pokemon: Pokemon) => void
-  onToggleFavorite: (id: number) => void
-  favorites: number[]
+  onToggleComparison: (id: number) => void
+  comparisonList: number[]
   filters: FilterState
   setFilters: (filters: FilterState) => void
 }
@@ -34,8 +34,8 @@ export default function ModernPokedexLayout({
   pokemonList,
   selectedPokemon,
   onSelectPokemon,
-  onToggleFavorite,
-  favorites,
+  onToggleComparison,
+  comparisonList,
   filters,
   setFilters
 }: ModernPokedexLayoutProps) {
@@ -213,17 +213,17 @@ export default function ModernPokedexLayout({
       {/* Sticky Header */}
       <header className="sticky top-0 z-50 bg-surface/95 backdrop-blur-sm border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-20 py-2">
             {/* Title */}
             <div className="flex items-center">
               <h1 className="text-2xl font-bold text-text">PokéDex</h1>
-              <span className="text-sm text-muted hidden sm:inline ml-4">
+              <span className="text-sm text-muted hidden sm:inline ml-6">
                 {pokemonList.length} Pokémon discovered
               </span>
             </div>
 
             {/* Search Bar */}
-            <div className="flex-1 max-w-md mx-8">
+            <div className="flex-1 max-w-md mx-12">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted" />
                 <input
@@ -244,7 +244,7 @@ export default function ModernPokedexLayout({
             </div>
 
             {/* Card Density Controls */}
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-6">
               <span className="text-xs text-muted">Size:</span>
               <div className="flex items-center bg-surface border border-border rounded-lg p-1">
                 <button
@@ -518,7 +518,7 @@ export default function ModernPokedexLayout({
 
         {/* Main Content Area */}
         <div className="flex-1">
-          <div className="p-6">
+          <div className="p-8">
             {/* Pokémon Grid */}
             {isFiltering ? (
               <div className="text-center py-12">
@@ -528,10 +528,10 @@ export default function ModernPokedexLayout({
             ) : sortedPokemon.length > 0 ? (
               <VirtualizedPokemonGrid
                 pokemonList={sortedPokemon}
-                onToggleFavorite={onToggleFavorite}
+                onToggleComparison={onToggleComparison}
                 onSelectPokemon={undefined}
                 selectedPokemon={null}
-                favorites={favorites}
+                comparisonList={comparisonList}
                 density={cardDensity}
               />
             ) : (
