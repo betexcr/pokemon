@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation'
 import { getPokemonByGeneration, getPokemonByType } from '@/lib/api'
 import ThemeToggle from './ThemeToggle'
 import VirtualizedPokemonGrid from './VirtualizedPokemonGrid'
-import { Search, Filter, X, Grid, List } from 'lucide-react'
+import { Search, Filter, X } from 'lucide-react'
 
 interface ModernPokedexLayoutProps {
   pokemonList: Pokemon[]
@@ -57,7 +57,6 @@ export default function ModernPokedexLayout({
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
   const [filteredPokemon, setFilteredPokemon] = useState<Pokemon[]>([])
   const [isFiltering, setIsFiltering] = useState(false)
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [cardDensity, setCardDensity] = useState<'cozy' | 'compact' | 'ultra'>('compact')
 
   // Enhanced search hook
@@ -216,15 +215,15 @@ export default function ModernPokedexLayout({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Title */}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center">
               <h1 className="text-2xl font-bold text-text">PokéDex</h1>
-              <span className="text-sm text-muted hidden sm:inline">
+              <span className="text-sm text-muted hidden sm:inline ml-4">
                 {pokemonList.length} Pokémon discovered
               </span>
             </div>
 
             {/* Search Bar */}
-            <div className="flex-1 max-w-md mx-4">
+            <div className="flex-1 max-w-md mx-8">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted" />
                 <input
@@ -244,57 +243,34 @@ export default function ModernPokedexLayout({
               </div>
             </div>
 
-            {/* Sort and Filter Controls */}
-            <div className="flex items-center space-x-2">
-              {/* View Mode Toggle */}
+            {/* Card Density Controls */}
+            <div className="flex items-center space-x-3">
+              <span className="text-xs text-muted">Size:</span>
               <div className="flex items-center bg-surface border border-border rounded-lg p-1">
                 <button
-                  onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded transition-colors ${
-                    viewMode === 'grid' ? 'bg-poke-blue text-white' : 'hover:bg-white/50'
+                  onClick={() => setCardDensity('cozy')}
+                  className={`px-2 py-1 text-xs rounded transition-colors ${
+                    cardDensity === 'cozy' ? 'bg-poke-blue text-white' : 'hover:bg-white/50'
                   }`}
                 >
-                  <Grid className="h-4 w-4" />
+                  Cozy
                 </button>
                 <button
-                  onClick={() => setViewMode('list')}
-                  className={`p-2 rounded transition-colors ${
-                    viewMode === 'list' ? 'bg-poke-blue text-white' : 'hover:bg-white/50'
+                  onClick={() => setCardDensity('compact')}
+                  className={`px-2 py-1 text-xs rounded transition-colors ${
+                    cardDensity === 'compact' ? 'bg-poke-blue text-white' : 'hover:bg-white/50'
                   }`}
                 >
-                  <List className="h-4 w-4" />
+                  Compact
                 </button>
-              </div>
-
-              {/* Card Density Slider */}
-              <div className="flex items-center space-x-2">
-                <span className="text-xs text-muted">Size:</span>
-                <div className="flex items-center bg-surface border border-border rounded-lg p-1">
-                  <button
-                    onClick={() => setCardDensity('cozy')}
-                    className={`px-2 py-1 text-xs rounded transition-colors ${
-                      cardDensity === 'cozy' ? 'bg-poke-blue text-white' : 'hover:bg-white/50'
-                    }`}
-                  >
-                    Cozy
-                  </button>
-                  <button
-                    onClick={() => setCardDensity('compact')}
-                    className={`px-2 py-1 text-xs rounded transition-colors ${
-                      cardDensity === 'compact' ? 'bg-poke-blue text-white' : 'hover:bg-white/50'
-                    }`}
-                  >
-                    Compact
-                  </button>
-                  <button
-                    onClick={() => setCardDensity('ultra')}
-                    className={`px-2 py-1 text-xs rounded transition-colors ${
-                      cardDensity === 'ultra' ? 'bg-poke-blue text-white' : 'hover:bg-white/50'
-                    }`}
-                  >
-                    Ultra
-                  </button>
-                </div>
+                <button
+                  onClick={() => setCardDensity('ultra')}
+                  className={`px-2 py-1 text-xs rounded transition-colors ${
+                    cardDensity === 'ultra' ? 'bg-poke-blue text-white' : 'hover:bg-white/50'
+                  }`}
+                >
+                  Ultra
+                </button>
               </div>
 
               {/* Sort Dropdown */}
@@ -557,7 +533,6 @@ export default function ModernPokedexLayout({
                 selectedPokemon={null}
                 favorites={favorites}
                 density={cardDensity}
-                viewMode={viewMode}
               />
             ) : (
               <div className="text-center py-12">

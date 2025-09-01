@@ -12,7 +12,6 @@ interface VirtualizedPokemonGridProps {
   selectedPokemon: Pokemon | null
   favorites: number[]
   density: 'cozy' | 'compact' | 'ultra'
-  viewMode: 'grid' | 'list'
   className?: string
 }
 
@@ -23,7 +22,6 @@ export default function VirtualizedPokemonGrid({
   selectedPokemon,
   favorites,
   density,
-  viewMode,
   className = ''
 }: VirtualizedPokemonGridProps) {
   const [isLoading, setIsLoading] = useState(false)
@@ -36,12 +34,8 @@ export default function VirtualizedPokemonGrid({
     // Theme provider not available, use default
   }
 
-  // Calculate grid columns based on density and view mode
+  // Calculate grid columns based on density
   const getGridColumns = () => {
-    if (viewMode === 'list') {
-      return 'grid-cols-1'
-    }
-    
     switch (density) {
       case 'cozy': return 'grid-cols-3'
       case 'compact': return 'grid-cols-6'
@@ -52,7 +46,7 @@ export default function VirtualizedPokemonGrid({
 
   return (
     <div className={`${className}`}>
-      <div className={`grid gap-4 ${getGridColumns()} ${viewMode === 'list' ? 'gap-2' : ''}`}>
+      <div className={`grid gap-4 ${getGridColumns()}`}>
         {pokemonList.map((pokemon) => (
           <ModernPokemonCard
             key={pokemon.id}
@@ -61,7 +55,6 @@ export default function VirtualizedPokemonGrid({
             onToggleFavorite={onToggleFavorite}
             onSelect={undefined}
             isSelected={selectedPokemon?.id === pokemon.id}
-            viewMode={viewMode}
             density={density}
           />
         ))}

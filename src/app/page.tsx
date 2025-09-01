@@ -11,11 +11,11 @@ import GoldPokedexLayout from '@/components/GoldPokedexLayout'
 import RubyPokedexLayout from '@/components/RubyPokedexLayout'
 import ModernPokedexLayout from '@/components/ModernPokedexLayout'
 import PokemonComparison from '@/components/PokemonComparison'
-import VirtualizedPokemonList from '@/components/VirtualizedPokemonList'
+
 import VirtualizedPokemonGrid from '@/components/VirtualizedPokemonGrid'
 import ViewTransition from '@/components/ViewTransition'
 import { useSearch } from '@/hooks/useSearch'
-import { Search, Grid3X3, List, Zap, X } from 'lucide-react'
+import { Search, Grid3X3, Zap, X } from 'lucide-react'
 
 export default function Home() {
   const [pokemonList, setPokemonList] = useState<Pokemon[]>([])
@@ -23,7 +23,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [density, setDensity] = useState<'cozy' | 'compact' | 'ultra'>('compact')
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+
 
   const [favorites, setFavorites] = useState<number[]>([])
   const [selectedPokemon, setSelectedPokemon] = useState<Pokemon | null>(null)
@@ -346,23 +346,7 @@ export default function Home() {
 
 
 
-              {/* View Mode Toggle */}
-              <button
-                onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-                className={`p-2 rounded-lg transition-colors ${
-                  theme === 'gold' 
-                    ? 'hover:bg-gold-accent/20 text-gold-accent'
-                    : theme === 'green'
-                    ? 'hover:bg-green-accent/20 text-green-accent'
-                    : theme === 'red'
-                    ? 'hover:bg-red-accent/20 text-red-accent'
-                    : theme === 'ruby'
-                    ? 'hover:bg-ruby-accent/20 text-ruby-accent'
-                    : 'hover:bg-white/50 text-muted hover:text-text'
-                }`}
-              >
-                {viewMode === 'grid' ? <List className="h-5 w-5" /> : <Grid3X3 className="h-5 w-5" />}
-              </button>
+
 
               {/* Theme Toggle */}
               <ThemeToggle />
@@ -510,27 +494,17 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Pokémon Grid/List */}
+        {/* Pokémon Grid */}
         <ViewTransition transitionName="pokemon-grid">
-          {viewMode === 'grid' ? (
-            <VirtualizedPokemonGrid
-              pokemonList={sortedPokemon}
-              onToggleFavorite={toggleFavorite}
-              onSelectPokemon={setSelectedPokemon}
-              selectedPokemon={selectedPokemon}
-              favorites={favorites}
-              density={density}
-              viewMode="grid"
-            />
-          ) : (
-            <VirtualizedPokemonList
-              pokemonList={sortedPokemon}
-              onSelectPokemon={setSelectedPokemon}
-              selectedPokemon={selectedPokemon}
-              containerHeight={600}
-              itemHeight={80}
-            />
-          )}
+          <VirtualizedPokemonGrid
+            pokemonList={sortedPokemon}
+            onToggleFavorite={toggleFavorite}
+            onSelectPokemon={setSelectedPokemon}
+            selectedPokemon={selectedPokemon}
+            favorites={favorites}
+            density={density}
+            viewMode="grid"
+          />
         </ViewTransition>
 
         {/* No Results */}

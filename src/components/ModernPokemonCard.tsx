@@ -14,7 +14,6 @@ interface ModernPokemonCardProps {
   onSelect?: (pokemon: Pokemon) => void
   isSelected?: boolean
   className?: string
-  viewMode?: 'grid' | 'list'
   density?: 'cozy' | 'compact' | 'ultra'
 }
 
@@ -25,7 +24,6 @@ export default function ModernPokemonCard({
   onSelect,
   isSelected = false,
   className = '',
-  viewMode = 'grid',
   density = 'compact'
 }: ModernPokemonCardProps) {
   const [imageLoaded, setImageLoaded] = useState(false)
@@ -63,7 +61,7 @@ export default function ModernPokemonCard({
   const primaryType = pokemon.types[0]?.type.name || 'normal'
   const accentColor = `var(--type-${primaryType})`
 
-  // Calculate card styling based on view mode and density
+  // Calculate card styling based on density
   const getCardClasses = () => {
     const baseClasses = `
       group relative bg-surface border border-border overflow-hidden
@@ -72,10 +70,6 @@ export default function ModernPokemonCard({
       ${isSelected ? 'ring-2 ring-poke-blue ring-offset-2' : ''}
       ${className}
     `
-
-    if (viewMode === 'list') {
-      return `${baseClasses} rounded-lg flex items-center p-3 hover:scale-[1.01]`
-    }
 
     // Grid view with different densities
     const densityClasses = {
@@ -107,81 +101,6 @@ export default function ModernPokemonCard({
       />
 
       {/* Card content */}
-      {viewMode === 'list' ? (
-        <div className="flex items-center w-full">
-          {/* Pokémon Image */}
-          <div className="relative h-12 w-12 bg-gradient-to-br from-white/20 to-white/5 rounded-lg flex items-center justify-center overflow-hidden mr-4">
-            {!imageLoaded && !imageError && (
-              <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse" />
-            )}
-            
-            {!imageError ? (
-              <img
-                src={getPokemonImageUrl(pokemon.id)}
-                alt={formatPokemonName(pokemon.name)}
-                className={`
-                  w-full h-full object-contain transition-opacity duration-300
-                  ${imageLoaded ? 'opacity-100' : 'opacity-0'}
-                `}
-                onLoad={() => setImageLoaded(true)}
-                onError={() => setImageError(true)}
-                loading="lazy"
-              />
-            ) : (
-              <div className="flex items-center justify-center text-muted">
-                <span className="text-sm">?</span>
-              </div>
-            )}
-          </div>
-
-          {/* Pokémon Info */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold text-text group-hover:text-poke-blue transition-colors truncate">
-                  {formatPokemonName(pokemon.name)}
-                </h3>
-                <span className="text-xs font-mono text-muted">
-                  #{String(pokemon.id).padStart(3, '0')}
-                </span>
-              </div>
-              
-              {/* Type badges */}
-              <div className="flex gap-1 mr-4">
-                {pokemon.types.map((type) => (
-                  <span
-                    key={type.type.name}
-                    className={`px-2 py-1 text-xs font-medium rounded-full border`}
-                    style={{ 
-                      backgroundColor: `var(--type-${type.type.name})`,
-                      color: 'white',
-                      textShadow: '0 1px 2px rgba(0,0,0,0.3)'
-                    }}
-                  >
-                    {formatPokemonName(type.type.name)}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Favorite Button */}
-          <button
-            onClick={handleFavoriteClick}
-            className={`
-              p-1.5 rounded-full transition-all duration-200 ml-2
-              ${isFavorite 
-                ? 'bg-red-500 text-white shadow-lg' 
-                : 'bg-white/80 text-gray-400 hover:bg-red-500 hover:text-white'
-              }
-              focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1
-            `}
-            aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-          >
-            <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
-          </button>
-        </div>
-      ) : (
         <div className="p-4">
           {/* Header: ID and Favorite */}
           <div className="flex items-center justify-between mb-3">
