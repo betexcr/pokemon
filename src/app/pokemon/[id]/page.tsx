@@ -165,7 +165,7 @@ export default function PokemonDetailPage() {
             
             <div className="flex items-center space-x-4">
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={sharePokemon}
                 aria-label="Share Pokémon"
@@ -173,7 +173,7 @@ export default function PokemonDetailPage() {
                 <Share2 className="h-5 w-5" />
               </Button>
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={() => toggleComparison(pokemon.id)}
                 className={cn(
