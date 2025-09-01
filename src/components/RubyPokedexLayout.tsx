@@ -13,8 +13,8 @@ interface RubyPokedexLayoutProps {
   pokemonList: Pokemon[];
   selectedPokemon: Pokemon | null;
   onSelectPokemon: (pokemon: Pokemon) => void;
-  onToggleFavorite: (id: number) => void;
-  favorites: number[];
+  onToggleComparison: (id: number) => void;
+  comparisonList: number[];
   filters: FilterState;
   setFilters: (filters: FilterState) => void;
 }
@@ -23,8 +23,8 @@ export default function RubyPokedexLayout({
   pokemonList,
   selectedPokemon,
   onSelectPokemon,
-  onToggleFavorite,
-  favorites,
+  onToggleComparison,
+  comparisonList,
   filters,
   setFilters
 }: RubyPokedexLayoutProps) {
@@ -101,14 +101,14 @@ export default function RubyPokedexLayout({
                   />
                   {/* Favorite Button */}
                   <button
-                    onClick={() => onToggleFavorite(selectedPokemon.id)}
+                    onClick={() => onToggleComparison(selectedPokemon.id)}
                     className={`absolute top-2 right-2 w-8 h-8 rounded-full border-2 border-border flex items-center justify-center transition-colors ${
-                      favorites.includes(selectedPokemon.id)
+                      comparisonList.includes(selectedPokemon.id)
                         ? 'bg-red-500 text-white'
                         : 'bg-white/80 text-gray-600 hover:bg-red-500 hover:text-white'
                     }`}
                   >
-                    {favorites.includes(selectedPokemon.id) ? '❤️' : '♡'}
+                    {comparisonList.includes(selectedPokemon.id) ? '❤️' : '♡'}
                   </button>
                 </div>
               </div>

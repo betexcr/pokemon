@@ -26,8 +26,6 @@ interface AdvancedFilters {
   habitat: string
   heightRange: [number, number]
   weightRange: [number, number]
-  legendary: boolean
-  mythical: boolean
 }
 
 export default function ModernPokedexLayout({
@@ -47,9 +45,7 @@ export default function ModernPokedexLayout({
     generation: '',
     habitat: '',
     heightRange: [0, 20],
-    weightRange: [0, 1000],
-    legendary: false,
-    mythical: false
+    weightRange: [0, 1000]
   })
   
   const [showSidebar, setShowSidebar] = useState(true) // Advanced filters open by default
@@ -122,16 +118,7 @@ export default function ModernPokedexLayout({
                  weight <= advancedFilters.weightRange[1]
         })
 
-        // Legendary/Mythical filters (simplified - would need species data)
-        if (advancedFilters.legendary) {
-          // This would need species data to be accurate
-          // For now, we'll skip this filter
-        }
 
-        if (advancedFilters.mythical) {
-          // This would need species data to be accurate
-          // For now, we'll skip this filter
-        }
 
         setFilteredPokemon(results)
       } catch (error) {
@@ -189,9 +176,7 @@ export default function ModernPokedexLayout({
       generation: '',
       habitat: '',
       heightRange: [0, 20],
-      weightRange: [0, 1000],
-      legendary: false,
-      mythical: false
+      weightRange: [0, 1000]
     })
     setFilteredPokemon(pokemonList)
     clearSearch()
@@ -481,38 +466,7 @@ export default function ModernPokedexLayout({
               </div>
             </div>
 
-            {/* Legendary/Mythical Toggles */}
-            <div className="space-y-3">
-              <label className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={advancedFilters.legendary}
-                  onChange={(e) => {
-                    setAdvancedFilters(prev => ({
-                      ...prev, 
-                      legendary: e.target.checked 
-                    }))
-                  }}
-                  className="rounded"
-                />
-                <span className="text-sm">Legendary</span>
-              </label>
-              
-              <label className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={advancedFilters.mythical}
-                  onChange={(e) => {
-                    setAdvancedFilters(prev => ({
-                      ...prev, 
-                      mythical: e.target.checked 
-                    }))
-                  }}
-                  className="rounded"
-                />
-                <span className="text-sm">Mythical</span>
-              </label>
-            </div>
+
           </div>
         </div>
 

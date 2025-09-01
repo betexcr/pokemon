@@ -498,12 +498,11 @@ export default function Home() {
         <ViewTransition transitionName="pokemon-grid">
           <VirtualizedPokemonGrid
             pokemonList={sortedPokemon}
-            onToggleFavorite={toggleFavorite}
+            onToggleComparison={toggleComparison}
             onSelectPokemon={setSelectedPokemon}
             selectedPokemon={selectedPokemon}
-            favorites={favorites}
+            comparisonList={comparisonList}
             density={density}
-            viewMode="grid"
           />
         </ViewTransition>
 

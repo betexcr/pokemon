@@ -143,7 +143,7 @@ export default function PokemonDetailPage() {
     )
   }
 
-  const isFavorite = favorites.includes(pokemon.id)
+  const isInComparison = comparisonList.includes(pokemon.id)
   const primaryType = pokemon.types[0]?.type.name || 'normal'
   const imageUrl = selectedSprite === 'shiny' 
     ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/shiny/${pokemon.id}.png`
@@ -422,7 +422,7 @@ export default function PokemonDetailPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Button
-                variant="ghost"
+                variant="outline"
                 onClick={() => navigateToPokemon(Math.max(1, pokemon.id - 1))}
                 disabled={pokemon.id <= 1}
                 aria-label="Previous Pokémon"
@@ -431,7 +431,7 @@ export default function PokemonDetailPage() {
                 Previous
               </Button>
               <Button
-                variant="ghost"
+                variant="outline"
                 onClick={() => navigateToPokemon(pokemon.id + 1)}
                 aria-label="Next Pokémon"
               >
@@ -442,7 +442,7 @@ export default function PokemonDetailPage() {
             
             <div className="flex items-center space-x-4">
               <Button
-                variant="secondary"
+                variant="outline"
                 onClick={sharePokemon}
                 aria-label="Share Pokémon"
               >

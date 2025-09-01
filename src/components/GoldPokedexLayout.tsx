@@ -12,8 +12,8 @@ interface GoldPokedexLayoutProps {
   pokemonList: Pokemon[];
   selectedPokemon: Pokemon | null;
   onSelectPokemon: (pokemon: Pokemon) => void;
-  onToggleFavorite: (id: number) => void;
-  favorites: number[];
+  onToggleComparison: (id: number) => void;
+  comparisonList: number[];
   filters: FilterState;
   setFilters: (filters: FilterState) => void;
 }
@@ -22,8 +22,8 @@ export default function GoldPokedexLayout({
   pokemonList,
   selectedPokemon,
   onSelectPokemon,
-  onToggleFavorite,
-  favorites,
+  onToggleComparison,
+  comparisonList,
   filters,
   setFilters
 }: GoldPokedexLayoutProps) {
@@ -59,7 +59,7 @@ export default function GoldPokedexLayout({
             </div>
             <div className="text-white font-bold">OWN</div>
             <div className="text-black bg-white px-2 py-1 text-right font-mono text-lg">
-              {favorites.length}
+              {comparisonList.length}
             </div>
           </div>
         </div>

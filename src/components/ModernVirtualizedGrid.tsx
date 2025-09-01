@@ -7,20 +7,20 @@ import ModernPokemonCard from './ModernPokemonCard'
 
 interface ModernVirtualizedGridProps {
   pokemonList: Pokemon[]
-  onToggleFavorite: (id: number) => void
+  onToggleComparison: (id: number) => void
   onSelectPokemon: (pokemon: Pokemon) => void
   selectedPokemon: Pokemon | null
-  favorites: number[]
+  comparisonList: number[]
   className?: string
   containerHeight?: number
 }
 
 export default function ModernVirtualizedGrid({
   pokemonList,
-  onToggleFavorite,
+  onToggleComparison,
   onSelectPokemon,
   selectedPokemon,
-  favorites,
+  comparisonList,
   className = '',
   containerHeight = 600
 }: ModernVirtualizedGridProps) {
@@ -99,8 +99,8 @@ export default function ModernVirtualizedGrid({
                     <ModernPokemonCard
                       key={pokemon.id}
                       pokemon={pokemon}
-                      isFavorite={favorites.includes(pokemon.id)}
-                      onToggleFavorite={onToggleFavorite}
+                      isInComparison={comparisonList.includes(pokemon.id)}
+                      onToggleComparison={onToggleComparison}
                       onSelect={onSelectPokemon}
                       isSelected={selectedPokemon?.id === pokemon.id}
                     />

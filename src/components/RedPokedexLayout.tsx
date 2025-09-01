@@ -13,8 +13,8 @@ interface RedPokedexLayoutProps {
   pokemonList: Pokemon[];
   selectedPokemon: Pokemon | null;
   onSelectPokemon: (pokemon: Pokemon) => void;
-  onToggleFavorite: (id: number) => void;
-  favorites: number[];
+  onToggleComparison: (id: number) => void;
+  comparisonList: number[];
   filters: FilterState;
   setFilters: (filters: FilterState) => void;
 }
@@ -23,8 +23,8 @@ export default function RedPokedexLayout({
   pokemonList,
   selectedPokemon,
   onSelectPokemon,
-  onToggleFavorite,
-  favorites,
+  onToggleComparison,
+  comparisonList,
   filters,
   setFilters
 }: RedPokedexLayoutProps) {
@@ -81,7 +81,7 @@ export default function RedPokedexLayout({
               <div className="mb-6">
                 <div className="text-sm space-y-1">
                   <div>SEEN {pokemonList.length}</div>
-                  <div>OWN {favorites.length}</div>
+                  <div>OWN {comparisonList.length}</div>
                 </div>
                 <div className="border-t-2 border-black my-2"></div>
               </div>
