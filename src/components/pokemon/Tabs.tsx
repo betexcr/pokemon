@@ -24,9 +24,9 @@ export default function Tabs({ activeTab, onTabChange }: TabsProps) {
                 // Default inactive style
                 "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300",
                 "hover:bg-gray-100 dark:hover:bg-gray-700",
-                "focus:outline-none focus-visible:ring-2 focus-visible:ring-poke-red",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500",
                 // Active tab
-                activeTab === id && "bg-poke-red text-white border-poke-red"
+                activeTab === id && "bg-red-500 text-white border-red-500"
               )}
             >
               {capitalize(id)}
