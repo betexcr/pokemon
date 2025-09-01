@@ -9,10 +9,11 @@ import {
   ChevronLeft,
   ChevronRight,
   ExternalLink,
-  ArrowLeft
+  ArrowLeft,
+  Scale
 } from 'lucide-react'
 import Link from 'next/link'
-import { getPokemon, getPokemonSpecies, getEvolutionChain } from '@/lib/api'
+import { getPokemon, getPokemonSpecies, getEvolutionChain, getMove } from '@/lib/api'
 import { formatPokemonName, formatPokemonNumber, cn } from '@/lib/utils'
 import { Pokemon, PokemonSpecies, EvolutionChain } from '@/types/pokemon'
 import Button from '@/components/ui/Button'
@@ -23,6 +24,80 @@ import MovesSection from '@/components/pokemon/MovesSection'
 import EvolutionSection from '@/components/pokemon/EvolutionSection'
 import MatchupsSection from '@/components/pokemon/MatchupsSection'
 import TypeBadge from '@/components/TypeBadge'
+
+// Component to fetch and display move data
+function MovesSectionWithData({ pokemon }: { pokemon: Pokemon }) {
+  const [moves, setMoves] = useState<Array<{
+    name: string;
+    type: string;
+    damage_class: "physical" | "special" | "status";
+    power: number | null;
+    accuracy: number | null;
+    pp: number | null;
+    level_learned_at?: number | null;
+  }>>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMoves = async () => {
+      try {
+        setLoading(true);
+        
+        // Get level-up moves only
+        const levelUpMoves = pokemon.moves
+          .filter(move => move.version_group_details.some(detail => detail.move_learn_method.name === 'level-up'))
+          .map(move => {
+            const levelUpDetail = move.version_group_details.find(detail => detail.move_learn_method.name === 'level-up');
+            return {
+              moveName: move.move.name,
+              level_learned_at: levelUpDetail?.level_learned_at || null
+            };
+          })
+          .filter((move, index, self) => 
+            index === self.findIndex(m => m.moveName === move.moveName)
+          ); // Remove duplicates
+
+        // Fetch move details for each move
+        const movePromises = levelUpMoves.map(async ({ moveName, level_learned_at }) => {
+          const moveData = await getMove(moveName);
+          return {
+            name: moveData.name,
+            type: moveData.type.name,
+            damage_class: moveData.damage_class.name as "physical" | "special" | "status",
+            power: moveData.power,
+            accuracy: moveData.accuracy,
+            pp: moveData.pp,
+            level_learned_at
+          };
+        });
+
+        const moveResults = await Promise.all(movePromises);
+        setMoves(moveResults);
+      } catch (error) {
+        console.error('Error fetching moves:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (pokemon) {
+      fetchMoves();
+    }
+  }, [pokemon]);
+
+  if (loading) {
+    return (
+      <section id="moves" className="mx-auto max-w-5xl px-4 py-8 space-y-4">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-poke-blue mx-auto mb-4"></div>
+          <p className="text-muted">Loading moves...</p>
+        </div>
+      </section>
+    );
+  }
+
+  return <MovesSection moves={moves} />;
+}
 
 
 
@@ -43,7 +118,7 @@ export default function PokemonDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [comparisonList, setComparisonList] = useState<number[]>([])
   const [selectedSprite, setSelectedSprite] = useState<'default' | 'shiny'>('default')
-  const [activeTab, setActiveTab] = useState<'overview' | 'stats' | 'moves' | 'evolution' | 'matchups'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'stats' | 'moves' | 'evolution' | 'matchups'>('stats')
 
   useEffect(() => {
     loadPokemonData()
@@ -165,7 +240,7 @@ export default function PokemonDetailPage() {
             
             <div className="flex items-center space-x-4">
               <Button
-                variant="outline"
+                variant="secondary"
                 size="sm"
                 onClick={sharePokemon}
                 aria-label="Share Pokémon"
@@ -173,7 +248,7 @@ export default function PokemonDetailPage() {
                 <Share2 className="h-5 w-5" />
               </Button>
               <Button
-                variant="outline"
+                variant="secondary"
                 size="sm"
                 onClick={() => toggleComparison(pokemon.id)}
                 className={cn(
@@ -181,15 +256,12 @@ export default function PokemonDetailPage() {
                 )}
                 aria-label={comparisonList.includes(pokemon.id) ? "Remove from comparison" : "Add to comparison"}
               >
-                <svg 
+                <Scale 
                   className={cn(
                     "h-5 w-5 transition-colors",
                     comparisonList.includes(pokemon.id) ? "fill-blue-500 text-blue-500" : "text-muted hover:text-blue-500"
                   )}
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M9 3l-1.5 1.5L6 3 4.5 4.5 3 3v18l1.5-1.5L6 21l1.5-1.5L9 21V3zm6 0l-1.5 1.5L12 3l-1.5 1.5L9 3v18l1.5-1.5L12 21l1.5-1.5L15 21V3z"/>
-                </svg>
+                />
               </Button>
             </div>
           </div>
@@ -299,24 +371,7 @@ export default function PokemonDetailPage() {
         )}
 
         {activeTab === 'moves' && (
-          <MovesSection moves={pokemon.moves
-            .filter(move => move.version_group_details.some(detail => detail.move_learn_method.name === 'level-up'))
-            .map(move => {
-              const levelUpDetail = move.version_group_details.find(detail => detail.move_learn_method.name === 'level-up');
-              return {
-                name: move.move.name,
-                type: 'normal', // We'll need to fetch this from the move API
-                damage_class: 'physical' as const, // We'll need to fetch this from the move API
-                power: null,
-                accuracy: null,
-                pp: null,
-                level_learned_at: levelUpDetail?.level_learned_at || null
-              };
-            })
-            .filter((move, index, self) => 
-              index === self.findIndex(m => m.name === move.name)
-            ) // Remove duplicates
-          } />
+          <MovesSectionWithData pokemon={pokemon} />
         )}
 
         {activeTab === 'evolution' && (
@@ -422,7 +477,7 @@ export default function PokemonDetailPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Button
-                variant="outline"
+                variant="secondary"
                 onClick={() => navigateToPokemon(Math.max(1, pokemon.id - 1))}
                 disabled={pokemon.id <= 1}
                 aria-label="Previous Pokémon"
@@ -431,7 +486,7 @@ export default function PokemonDetailPage() {
                 Previous
               </Button>
               <Button
-                variant="outline"
+                variant="secondary"
                 onClick={() => navigateToPokemon(pokemon.id + 1)}
                 aria-label="Next Pokémon"
               >
@@ -442,7 +497,7 @@ export default function PokemonDetailPage() {
             
             <div className="flex items-center space-x-4">
               <Button
-                variant="outline"
+                variant="secondary"
                 onClick={sharePokemon}
                 aria-label="Share Pokémon"
               >

@@ -11,6 +11,7 @@ import GoldPokedexLayout from '@/components/GoldPokedexLayout'
 import RubyPokedexLayout from '@/components/RubyPokedexLayout'
 import ModernPokedexLayout from '@/components/ModernPokedexLayout'
 import PokemonComparison from '@/components/PokemonComparison'
+import ComparisonOverlay from '@/components/ComparisonOverlay'
 
 import VirtualizedPokemonGrid from '@/components/VirtualizedPokemonGrid'
 import ViewTransition from '@/components/ViewTransition'
@@ -241,6 +242,10 @@ export default function Home() {
         selectedPokemon={selectedPokemon}
         onSelectPokemon={setSelectedPokemon}
         onToggleComparison={toggleComparison}
+        onClearComparison={() => {
+          setComparisonList([])
+          localStorage.removeItem('pokemon-comparison')
+        }}
         comparisonList={comparisonList}
         filters={filters}
         setFilters={setFilters}
@@ -522,6 +527,17 @@ export default function Home() {
         </div>
         )}
       </main>
+
+      {/* Comparison Overlay */}
+      <ComparisonOverlay
+        comparisonList={comparisonList}
+        pokemonList={pokemonList}
+        onRemoveFromComparison={toggleComparison}
+        onClearComparison={() => {
+          setComparisonList([])
+          localStorage.removeItem('pokemon-comparison')
+        }}
+      />
     </div>
   )
 }

@@ -308,15 +308,15 @@ export async function searchPokemonByName(searchTerm: string): Promise<Pokemon[]
   }
 }
 
-// Get all Pokémon (for virtualized lists)
+// Get all Pokémon (original 151 for initial load)
 export async function getAllPokemon(): Promise<Pokemon[]> {
   const cacheKey = getCacheKey('all-pokemon');
   const cached = getCache(cacheKey);
   if (cached) return cached as Pokemon[];
 
   try {
-    // Get more Pokémon to support better filtering (up to 500 to include more generations)
-    const allPokemon = await getPokemonList(500, 0);
+    // Load only the original 151 Pokémon initially
+    const allPokemon = await getPokemonList(151, 0);
     
     // Fetch full data for all Pokémon
     const pokemonPromises = allPokemon.results.map(async (pokemonRef) => {

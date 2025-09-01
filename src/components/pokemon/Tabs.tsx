@@ -10,19 +10,19 @@ export default function Tabs({ activeTab, onTabChange }: TabsProps) {
   const items = ["overview","stats","moves","evolution","matchups"] as const;
 
   return (
-    <nav className="sticky top-16 z-30 bg-bg/80 backdrop-blur">
+    <nav className="sticky top-16 z-30 bg-gray-800 border-b border-gray-700">
       <div className="flex justify-center py-4">
-        <ul className="flex gap-3">
+        <ul className="flex gap-2">
           {items.map((id) => (
             <li key={id}>
               <button
                 onClick={() => onTabChange(id)}
                 className={cn(
-                  "rounded-lg px-5 py-2.5 text-sm font-semibold transition-colors",
-                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-poke-blue",
+                  "px-4 py-2 text-sm font-medium transition-colors rounded",
+                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
                   activeTab === id
-                    ? "bg-red-500 text-white shadow-sm"
-                    : "text-text hover:bg-gray-100"
+                    ? "bg-gray-700 text-white"
+                    : "text-gray-300 hover:text-white hover:bg-gray-700"
                 )}
               >
                 {capitalize(id)}

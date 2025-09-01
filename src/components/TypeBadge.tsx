@@ -11,14 +11,13 @@ export default function TypeBadge({ type, className = '' }: TypeBadgeProps) {
   return (
     <span
       className={`
-        inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
-        ${colorClasses.bg} ${colorClasses.text} ${colorClasses.border}
+        inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border
         ${className}
       `}
       style={{ 
         backgroundColor: `var(--type-${type})`,
-        color: 'white',
-        textShadow: '0 1px 2px rgba(0,0,0,0.3)'
+        color: colorClasses.text === 'text-white' ? 'white' : 'black',
+        borderColor: `var(--type-${type})`
       }}
     >
       {type.charAt(0).toUpperCase() + type.slice(1)}

@@ -8,13 +8,14 @@ import { useRouter } from 'next/navigation'
 import { getPokemonByGeneration, getPokemonByType } from '@/lib/api'
 import ThemeToggle from './ThemeToggle'
 import VirtualizedPokemonGrid from './VirtualizedPokemonGrid'
-import { Search, Filter, X } from 'lucide-react'
+import { Search, Filter, X, Scale, ArrowRight } from 'lucide-react'
 
 interface ModernPokedexLayoutProps {
   pokemonList: Pokemon[]
   selectedPokemon: Pokemon | null
   onSelectPokemon: (pokemon: Pokemon) => void
   onToggleComparison: (id: number) => void
+  onClearComparison: () => void
   comparisonList: number[]
   filters: FilterState
   setFilters: (filters: FilterState) => void
@@ -33,6 +34,7 @@ export default function ModernPokedexLayout({
   selectedPokemon,
   onSelectPokemon,
   onToggleComparison,
+  onClearComparison,
   comparisonList,
   filters,
   setFilters
@@ -491,6 +493,73 @@ export default function ModernPokedexLayout({
               </div>
             </div>
 
+            {/* Comparison Section */}
+            <div className="border-t border-border pt-6">
+              <h3 className="text-lg font-semibold mb-4 flex items-center">
+                <Scale className="h-5 w-5 mr-2 text-blue-500" />
+                Compare Pokémon
+              </h3>
+              
+              {comparisonList.length === 0 ? (
+                <div className="text-center py-6">
+                  <p className="text-sm text-muted mb-3">
+                    Select Pokémon to compare their stats
+                  </p>
+                  <div className="text-4xl mb-2">⚖️</div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {/* Selected Pokémon List */}
+                  <div className="max-h-48 overflow-y-auto bg-gray-800 rounded-lg border border-gray-700">
+                    {pokemonList
+                      .filter(pokemon => comparisonList.includes(pokemon.id))
+                      .map((pokemon, index) => (
+                        <div
+                          key={pokemon.id}
+                          className={`flex items-center px-3 py-2 ${
+                            index < pokemonList.filter(p => comparisonList.includes(p.id)).length - 1 
+                              ? 'border-b border-gray-700' 
+                              : ''
+                          }`}
+                        >
+                          <img
+                            src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`}
+                            alt={formatPokemonName(pokemon.name)}
+                            className="w-8 h-8 object-contain mr-3"
+                          />
+                          <span className="text-white text-sm">
+                            {formatPokemonName(pokemon.name)}#{pokemon.id}
+                          </span>
+                          <button
+                            onClick={() => onToggleComparison(pokemon.id)}
+                            className="ml-auto p-1 rounded hover:bg-red-600 transition-colors"
+                            aria-label={`Remove ${formatPokemonName(pokemon.name)} from comparison`}
+                          >
+                            <X className="h-3 w-3 text-red-400" />
+                          </button>
+                        </div>
+                      ))}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="space-y-2 pt-2 border-t border-border">
+                    <button
+                      onClick={onClearComparison}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      Clear All
+                    </button>
+                    <button
+                      onClick={() => window.location.href = '/compare'}
+                      className="w-full px-3 py-2 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center"
+                    >
+                      <ArrowRight className="h-4 w-4 mr-2" />
+                      Go to Comparison
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
 
           </div>
         </div>
@@ -540,6 +609,7 @@ export default function ModernPokedexLayout({
           </div>
         </div>
       )}
+
     </div>
   )
 }

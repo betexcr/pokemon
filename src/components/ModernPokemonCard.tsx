@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Pokemon } from '@/types/pokemon'
 import { formatPokemonName, typeColors } from '@/lib/utils'
 import { getPokemonImageUrl } from '@/lib/api'
-import { Star, ChevronRight, Heart } from 'lucide-react'
+import { Star, ChevronRight, Heart, Scale } from 'lucide-react'
 import TypeBadge from './TypeBadge'
 
 interface ModernPokemonCardProps {
@@ -120,9 +120,7 @@ export default function ModernPokemonCard({
               `}
               aria-label={isInComparison ? 'Remove from comparison' : 'Add to comparison'}
             >
-              <svg className={`h-4 w-4 ${isInComparison ? 'fill-current' : ''}`} viewBox="0 0 24 24">
-                <path d="M9 3l-1.5 1.5L6 3 4.5 4.5 3 3v18l1.5-1.5L6 21l1.5-1.5L9 21V3zm6 0l-1.5 1.5L12 3l-1.5 1.5L9 3v18l1.5-1.5L12 21l1.5-1.5L15 21V3z"/>
-              </svg>
+              <Scale className={`h-4 w-4 ${isInComparison ? 'fill-current' : ''}`} />
             </button>
           </div>
 
