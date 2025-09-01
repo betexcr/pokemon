@@ -88,24 +88,47 @@ export default function ModernPokedexLayout({
         // If we have search results, use those as base
         if (searchResults.length > 0) {
           results = searchResults
-        } else if (advancedFilters.generation) {
-          // Fetch by generation
+        } else if (advancedFilters.generation && advancedFilters.generation !== 'all') {
+          // Fetch by generation only if not "all"
           results = await getPokemonByGeneration(advancedFilters.generation)
+          
+          // Apply type filters to generation results
+          if (advancedFilters.types.length > 0 && results.length > 0) {
+            results = results.filter(pokemon => {
+              const pokemonTypes = new Set(pokemon.types.map(type => type.type.name))
+              return advancedFilters.types.every(selectedType => pokemonTypes.has(selectedType))
+            })
+          }
         } else if (advancedFilters.types.length > 0) {
-          // Fetch by type (use first type for now, could be enhanced for multiple types)
-          results = await getPokemonByType(advancedFilters.types[0])
-        } else {
-          // Use base pokemon list
-          results = pokemonList
-        }
-
-        // Apply additional filters
-        if (advancedFilters.types.length > 0 && results.length > 0) {
-          results = results.filter(pokemon =>
-            advancedFilters.types.every(selectedType => 
-              pokemon.types.some(type => type.type.name === selectedType)
+          // "All generations" with type filter - fetch ALL Pokémon of the selected types
+          if (advancedFilters.types.length === 1) {
+            // Single type - fetch all Pokémon of that type
+            results = await getPokemonByType(advancedFilters.types[0])
+          } else {
+            // Multiple types - fetch all Pokémon of each type and find intersection
+            const typePokemonLists = await Promise.all(
+              advancedFilters.types.map(type => getPokemonByType(type))
             )
-          )
+            
+            // Find Pokémon that appear in ALL selected types (AND logic)
+            const pokemonCounts = new Map<number, number>()
+            typePokemonLists.forEach(pokemonList => {
+              pokemonList.forEach(pokemon => {
+                pokemonCounts.set(pokemon.id, (pokemonCounts.get(pokemon.id) || 0) + 1)
+              })
+            })
+            
+            // Only include Pokémon that appear in all selected types
+            const allTypePokemon = typePokemonLists.flat()
+            results = allTypePokemon.filter((pokemon, index, self) => {
+              const isFirstOccurrence = index === self.findIndex(p => p.id === pokemon.id)
+              if (!isFirstOccurrence) return false
+              return pokemonCounts.get(pokemon.id) === advancedFilters.types.length
+            })
+          }
+        } else {
+          // No filters - use base pokemon list
+          results = pokemonList
         }
 
         // Height and weight filters
@@ -124,6 +147,8 @@ export default function ModernPokedexLayout({
       } catch (error) {
         console.error('Error applying filters:', error)
         setFilteredPokemon([])
+        // Show a more user-friendly error message
+        console.warn('Filtering failed, showing empty results. Try refreshing the page.')
       } finally {
         setIsFiltering(false)
       }

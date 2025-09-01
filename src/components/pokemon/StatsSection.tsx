@@ -8,17 +8,10 @@ export default function StatsSection({ stats }: { stats: Stat[] }) {
   // Use fixed max stat of 255 for proper scaling
   const maxStat = 255;
   
-  // Stat colors based on type - using reddish-orange like in the image
+  // Stat colors - using reddish-brown like in Pokemon Red theme
   const getStatColor = (statName: string) => {
-    switch (statName.toLowerCase()) {
-      case 'hp': return 'bg-red-500';
-      case 'attack': return 'bg-orange-500';
-      case 'defense': return 'bg-blue-500';
-      case 'special-attack': return 'bg-purple-500';
-      case 'special-defense': return 'bg-green-500';
-      case 'speed': return 'bg-yellow-500';
-      default: return 'bg-red-500';
-    }
+    // Use consistent reddish-brown color for all stats like in the image
+    return 'bg-red-600';
   };
 
   // Get stat abbreviations like in the image

@@ -315,8 +315,8 @@ export async function getAllPokemon(): Promise<Pokemon[]> {
   if (cached) return cached as Pokemon[];
 
   try {
-    // Get only the first 151 Pokémon initially
-    const allPokemon = await getPokemonList(151, 0);
+    // Get more Pokémon to support better filtering (up to 500 to include more generations)
+    const allPokemon = await getPokemonList(500, 0);
     
     // Fetch full data for all Pokémon
     const pokemonPromises = allPokemon.results.map(async (pokemonRef) => {

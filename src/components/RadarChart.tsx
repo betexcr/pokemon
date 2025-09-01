@@ -54,8 +54,8 @@ export default function RadarChart({ data, size = 300, className = '' }: RadarCh
   const center = size / 2
   const maxRadius = center * 0.8
 
-  // Generate grid circles for retro themes
-  const gridCircles = isRetro ? Array.from({ length: 5 }, (_, i) => {
+  // Generate grid circles for retro themes - always show them
+  const gridCircles = Array.from({ length: 5 }, (_, i) => {
     const radius = (maxRadius * (i + 1)) / 5
     return (
       <circle
@@ -64,15 +64,15 @@ export default function RadarChart({ data, size = 300, className = '' }: RadarCh
         cy={center}
         r={radius}
         fill="none"
-        stroke={theme === 'red' ? '#8B0000' : theme === 'gold' ? '#B8860B' : '#FF69B4'}
+        stroke={theme === 'red' ? '#8B0000' : theme === 'gold' ? '#B8860B' : theme === 'ruby' ? '#FF69B4' : '#666666'}
         strokeWidth="1"
         opacity="0.3"
       />
     )
-  }) : []
+  })
 
-  // Generate stat lines for retro themes
-  const statLines = isRetro ? Array.from({ length: 6 }, (_, i) => {
+  // Generate stat lines for retro themes - always show them
+  const statLines = Array.from({ length: 6 }, (_, i) => {
     const angle = (i * Math.PI * 2) / 6 - Math.PI / 2
     const x = center + maxRadius * Math.cos(angle)
     const y = center + maxRadius * Math.sin(angle)
@@ -83,15 +83,15 @@ export default function RadarChart({ data, size = 300, className = '' }: RadarCh
         y1={center}
         x2={x}
         y2={y}
-        stroke={theme === 'red' ? '#8B0000' : theme === 'gold' ? '#B8860B' : '#FF69B4'}
+        stroke={theme === 'red' ? '#8B0000' : theme === 'gold' ? '#B8860B' : theme === 'ruby' ? '#FF69B4' : '#666666'}
         strokeWidth="1"
         opacity="0.3"
       />
     )
-  }) : []
+  })
 
-  // Stat labels for retro themes
-  const statLabels = isRetro ? ['HP', 'ATK', 'DEF', 'SPA', 'SPD', 'SPE'].map((label, i) => {
+  // Stat labels for retro themes - always show them
+  const statLabels = ['HP', 'ATK', 'DEF', 'SPA', 'SPD', 'SPE'].map((label, i) => {
     const angle = (i * Math.PI * 2) / 6 - Math.PI / 2
     const x = center + (maxRadius + 20) * Math.cos(angle)
     const y = center + (maxRadius + 20) * Math.sin(angle)
@@ -105,13 +105,14 @@ export default function RadarChart({ data, size = 300, className = '' }: RadarCh
         className={`text-xs font-bold ${
           theme === 'red' ? 'fill-red-800' : 
           theme === 'gold' ? 'fill-yellow-800' : 
-          'fill-pink-800'
+          theme === 'ruby' ? 'fill-pink-800' :
+          'fill-gray-800'
         }`}
       >
         {label}
       </text>
     )
-  }) : []
+  })
 
   return (
     <div className={`relative ${className}`}>
@@ -153,15 +154,15 @@ export default function RadarChart({ data, size = 300, className = '' }: RadarCh
               <polygon
                 points={points}
                 fill={color}
-                opacity={isRetro ? 0.3 : 0.3}
+                opacity={0.3}
               />
               {/* Border polygon */}
               <polygon
                 points={points}
                 fill="none"
                 stroke={color}
-                strokeWidth={isRetro ? "3" : "2"}
-                opacity={isRetro ? 0.8 : 0.8}
+                strokeWidth="3"
+                opacity={0.8}
               />
             </g>
           )
