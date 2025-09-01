@@ -1,26 +1,109 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@import "./styles/tokens.css";
+
+:root { 
+  color-scheme: light dark; 
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+html, body { 
+  height: 100%; 
+  background: var(--color-bg); 
+  color: var(--color-text); 
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Focus states for accessibility */
+*:focus-visible { 
+  outline: 2px solid var(--color-poke-blue); 
+  outline-offset: 2px; 
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Global link styles */
+a { 
+  color: inherit; 
+  text-decoration: none;
 }
+a:hover { 
+  text-decoration: underline; 
+  text-underline-offset: 2px; 
+}
+
+/* Better typography */
+h1, h2, h3 { 
+  letter-spacing: -0.01em; 
+}
+
+/* Smooth transitions */
+* {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* Retro pixelated image rendering for gold theme */
+.image-render-pixel {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+/* Authentic Game Boy fonts */
+.font-gameboy {
+  font-family: 'Courier New', 'Courier', monospace;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+}
+
+.font-gbc {
+  font-family: 'Courier New', 'Courier', monospace;
+  font-weight: bold;
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.font-gba {
+  font-family: 'Courier New', 'Courier', monospace;
+  font-weight: bold;
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+/* Authentic Pokémon colors and styling */
+.pokemon-red-bg {
+  background: linear-gradient(135deg, #FF6B6B 0%, #FF8E8E 50%, #FF6B6B 100%);
+}
+
+.pokemon-gold-bg {
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FFD700 100%);
+}
+
+.pokemon-ruby-bg {
+  background: linear-gradient(135deg, #FF69B4 0%, #FF1493 50%, #FF69B4 100%);
+}
+
+/* Card artwork height presets */
+.art-ultra-grid { height: 120px; }
+@media (min-width: 640px) { .art-ultra-grid { height: 128px; } }
+@media (min-width: 768px) { .art-ultra-grid { height: 136px; } }
+
+.art-ultra-list { height: 160px; }
+@media (min-width: 640px) { .art-ultra-list { height: 168px; } }
+@media (min-width: 768px) { .art-ultra-list { height: 176px; } }
+
+.art-compact-grid { height: 168px; }
+@media (min-width: 640px) { .art-compact-grid { height: 184px; } }
+@media (min-width: 768px) { .art-compact-grid { height: 196px; } }
+
+.art-compact-list { height: 188px; }
+@media (min-width: 640px) { .art-compact-list { height: 200px; } }
+@media (min-width: 768px) { .art-compact-list { height: 208px; } }
+
+.art-cozy-grid { height: 184px; }
+@media (min-width: 640px) { .art-cozy-grid { height: 200px; } }
+@media (min-width: 768px) { .art-cozy-grid { height: 212px; } }
+
+.art-cozy-list { height: 204px; }
+@media (min-width: 640px) { .art-cozy-list { height: 216px; } }
+@media (min-width: 768px) { .art-cozy-list { height: 228px; } }
