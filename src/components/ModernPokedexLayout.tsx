@@ -539,8 +539,11 @@ export default function ModernPokedexLayout({
 
       {/* Mobile Menu Overlay - Only on small screens */}
       {showMobileMenu && isMobile && (
-        <div className="md:hidden fixed inset-0 z-50 bg-black/95 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="mobile-menu fixed right-0 top-0 h-full w-full bg-bg border-l border-border shadow-2xl animate-in slide-in-from-right duration-300">
+        <div className="md:hidden fixed inset-0 z-50 bg-black/95 animate-in fade-in duration-200">
+          <div
+            className="mobile-menu fixed right-0 top-0 h-full w-full bg-bg bg-opacity-100 border-l border-border shadow-2xl animate-in slide-in-from-right duration-300"
+            style={{ backgroundColor: 'var(--color-bg)' }}
+          >
             <div className="p-6 space-y-6">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-text">Quick Actions</h3>
