@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Pokemon, FilterState } from '@/types/pokemon';
 import { formatPokemonName, getPokemonDescription } from '@/lib/utils';
@@ -35,6 +35,8 @@ export default function RedPokedexLayout({
   const [searchLoading, setSearchLoading] = useState(false);
   const [filteredPokemon, setFilteredPokemon] = useState<Pokemon[]>(pokemonList);
   const [showDesktopMenu, setShowDesktopMenu] = useState(false);
+  const [sortBy, setSortBy] = useState<'id'|'name'|'stats'|'hp'|'attack'|'defense'|'special-attack'|'special-defense'|'speed'>('id');
+  const [sortOrder, setSortOrder] = useState<'asc'|'desc'>('asc');
 
   const menuOptions = [
     { id: 'data', label: 'DATA' },
@@ -67,8 +69,53 @@ export default function RedPokedexLayout({
           </div>
           
           <div className="space-y-1 max-h-[calc(100vh-200px)]">
+            {/* Sort controls */}
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-xs font-bold text-red-800">SORT</span>
+              <select
+                value={sortBy}
+                onChange={(e)=>setSortBy(e.target.value as any)}
+                className="px-2 py-1 bg-white border-2 border-red-600 text-red-800 text-xs font-bold"
+              >
+                <option value="id">Number</option>
+                <option value="name">Name</option>
+                <option value="stats">Total</option>
+                <option value="hp">HP</option>
+                <option value="attack">Attack</option>
+                <option value="defense">Defense</option>
+                <option value="special-attack">Sp. Atk</option>
+                <option value="special-defense">Sp. Def</option>
+                <option value="speed">Speed</option>
+              </select>
+              <button
+                onClick={()=>setSortOrder(prev=>prev==='asc'?'desc':'asc')}
+                className="px-2 py-1 border-2 border-red-600 bg-white text-red-800 text-xs font-bold flex items-center gap-2"
+                title={`Sort ${sortOrder==='asc'?'Descending':'Ascending'}`}
+              >
+                <span>{sortOrder==='asc'?'ASC':'DESC'}</span>
+                <span className="inline-block transform" style={{ transform: sortOrder==='asc'?'rotate(0deg)':'rotate(180deg)' }}>▲</span>
+              </button>
+            </div>
             <VirtualizedPokemonList
-              pokemonList={filteredPokemon}
+              key={`${sortBy}-${sortOrder}`}
+              pokemonList={useMemo(()=>{
+                const data=[...filteredPokemon];
+                const cmp=(a:Pokemon,b:Pokemon)=>{
+                  let c=0;
+                  if(sortBy==='name'){c=a.name.localeCompare(b.name)}
+                  else if(sortBy==='stats'){
+                    const as=a.stats.reduce((s,t)=>s+t.base_stat,0);
+                    const bs=b.stats.reduce((s,t)=>s+t.base_stat,0);
+                    c=as-bs;
+                  } else if(sortBy==='hp'||sortBy==='attack'||sortBy==='defense'||sortBy==='special-attack'||sortBy==='special-defense'||sortBy==='speed'){
+                    const av=a.stats.find(s=>s.stat.name===sortBy)?.base_stat||0;
+                    const bv=b.stats.find(s=>s.stat.name===sortBy)?.base_stat||0;
+                    c=av-bv;
+                  } else {c=a.id-b.id}
+                  return sortOrder==='desc'?-c:c;
+                };
+                return data.sort(cmp);
+              },[filteredPokemon,sortBy,sortOrder])}
               onSelectPokemon={onSelectPokemon}
               selectedPokemon={selectedPokemon}
               containerHeight={400}

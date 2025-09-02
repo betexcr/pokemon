@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { Pokemon, FilterState } from '@/types/pokemon'
 import { formatPokemonName, typeColors } from '@/lib/utils'
@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation'
 import { getPokemonByGeneration, getPokemonByType, getPokemon } from '@/lib/api'
 import ThemeToggle from './ThemeToggle'
 import VirtualizedPokemonGrid from './VirtualizedPokemonGrid'
-import { Search, Filter, X, Scale, ArrowRight, Menu } from 'lucide-react'
+import { Search, Filter, X, Scale, ArrowRight, Menu, LayoutGrid, Grid3X3, Rows } from 'lucide-react'
 
 interface ModernPokedexLayoutProps {
   pokemonList: Pokemon[]
@@ -52,7 +52,7 @@ export default function ModernPokedexLayout({
   })
   
   const [showSidebar, setShowSidebar] = useState(true) // Advanced filters open by default
-  const [sortBy, setSortBy] = useState<'id' | 'name' | 'stats' | 'hp' | 'attack' | 'defense'>('id')
+  const [sortBy, setSortBy] = useState<'id' | 'name' | 'stats' | 'hp' | 'attack' | 'defense' | 'special-attack' | 'special-defense' | 'speed'>('id')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
   const [filteredPokemon, setFilteredPokemon] = useState<Pokemon[]>([])
   const [isFiltering, setIsFiltering] = useState(false)
@@ -62,6 +62,8 @@ export default function ModernPokedexLayout({
   const [showDesktopMenu, setShowDesktopMenu] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [isClient, setIsClient] = useState(false)
+  const [detailsCache, setDetailsCache] = useState<Map<number, Pokemon>>(new Map())
+  const fetchingRef = useRef<Set<number>>(new Set())
 
   // Close mobile menu when clicking outside
   useEffect(() => {
@@ -109,15 +111,10 @@ export default function ModernPokedexLayout({
     }
   }, [showMobileMenu])
 
-  // Prevent background scroll when desktop menu is open
+  // Desktop: no separate menu; keep page scroll default
   useEffect(() => {
     if (showDesktopMenu) {
-      console.log('[DesktopDrawer] rendering, showDesktopMenu=true')
-      const original = document.body.style.overflow
-      document.body.style.overflow = 'hidden'
-      return () => {
-        document.body.style.overflow = original
-      }
+      console.log('[DesktopDrawer] ignored on desktop – header provides controls')
     }
   }, [showDesktopMenu])
 
@@ -223,6 +220,30 @@ export default function ModernPokedexLayout({
     applyFilters()
   }, [searchResults, pokemonList, advancedFilters])
 
+  // Ensure full stats are available when sorting by stats in Modern
+  useEffect(() => {
+    const statKeys = new Set(['hp','attack','defense','special-attack','special-defense','speed','stats'])
+    if (!statKeys.has(sortBy)) return
+    const source = filteredPokemon.length ? filteredPokemon : pokemonList
+    const missing = source
+      .filter(p => (p.stats?.length || 0) === 0 && !detailsCache.has(p.id))
+      .map(p => p.id)
+      .filter(id => !(fetchingRef.current as Set<number>).has(id))
+    if (missing.length === 0) return
+    missing.forEach(id => (fetchingRef.current as Set<number>).add(id))
+    Promise.all(missing.map(id => getPokemon(id).catch(() => null)))
+      .then(results => {
+        setDetailsCache(prev => {
+          const next = new Map(prev)
+          results.forEach(p => { if (p) next.set(p.id, p) })
+          return next
+        })
+      })
+      .finally(() => {
+        missing.forEach(id => (fetchingRef.current as Set<number>).delete(id))
+      })
+  }, [sortBy, filteredPokemon, pokemonList])
+
   // Fetch comparison Pokémon that aren't in current filtered results
   useEffect(() => {
     const fetchComparisonPokemon = async () => {
@@ -267,8 +288,9 @@ export default function ModernPokedexLayout({
     fetchComparisonPokemon()
   }, [comparisonList, filteredPokemon, pokemonList])
 
-  // Sort filtered results
+  // Sort filtered results (uses cached details when needed)
   const sortedPokemon = useMemo(() => {
+    const withSource = (p: Pokemon) => (p.stats?.length ? p : (detailsCache.get(p.id) || p))
     return [...filteredPokemon].sort((a, b) => {
       let comparison = 0
       
@@ -277,24 +299,27 @@ export default function ModernPokedexLayout({
           comparison = a.name.localeCompare(b.name)
           break
         case 'stats':
-          const aStats = a.stats.reduce((sum, stat) => sum + stat.base_stat, 0)
-          const bStats = b.stats.reduce((sum, stat) => sum + stat.base_stat, 0)
+          const aStats = (withSource(a).stats || []).reduce((sum, stat) => sum + stat.base_stat, 0)
+          const bStats = (withSource(b).stats || []).reduce((sum, stat) => sum + stat.base_stat, 0)
           comparison = aStats - bStats
           break
         case 'hp':
-          const aHp = a.stats.find(s => s.stat.name === 'hp')?.base_stat || 0
-          const bHp = b.stats.find(s => s.stat.name === 'hp')?.base_stat || 0
-          comparison = aHp - bHp
+          comparison = ((withSource(a).stats || []).find(s => s.stat.name === 'hp')?.base_stat || 0) - ((withSource(b).stats || []).find(s => s.stat.name === 'hp')?.base_stat || 0)
           break
         case 'attack':
-          const aAtk = a.stats.find(s => s.stat.name === 'attack')?.base_stat || 0
-          const bAtk = b.stats.find(s => s.stat.name === 'attack')?.base_stat || 0
-          comparison = aAtk - bAtk
+          comparison = ((withSource(a).stats || []).find(s => s.stat.name === 'attack')?.base_stat || 0) - ((withSource(b).stats || []).find(s => s.stat.name === 'attack')?.base_stat || 0)
           break
         case 'defense':
-          const aDef = a.stats.find(s => s.stat.name === 'defense')?.base_stat || 0
-          const bDef = b.stats.find(s => s.stat.name === 'defense')?.base_stat || 0
-          comparison = aDef - bDef
+          comparison = ((withSource(a).stats || []).find(s => s.stat.name === 'defense')?.base_stat || 0) - ((withSource(b).stats || []).find(s => s.stat.name === 'defense')?.base_stat || 0)
+          break
+        case 'special-attack':
+          comparison = ((withSource(a).stats || []).find(s => s.stat.name === 'special-attack')?.base_stat || 0) - ((withSource(b).stats || []).find(s => s.stat.name === 'special-attack')?.base_stat || 0)
+          break
+        case 'special-defense':
+          comparison = ((withSource(a).stats || []).find(s => s.stat.name === 'special-defense')?.base_stat || 0) - ((withSource(b).stats || []).find(s => s.stat.name === 'special-defense')?.base_stat || 0)
+          break
+        case 'speed':
+          comparison = ((withSource(a).stats || []).find(s => s.stat.name === 'speed')?.base_stat || 0) - ((withSource(b).stats || []).find(s => s.stat.name === 'speed')?.base_stat || 0)
           break
         default:
           comparison = a.id - b.id
@@ -302,7 +327,7 @@ export default function ModernPokedexLayout({
       
       return sortOrder === 'desc' ? -comparison : comparison
     })
-  }, [filteredPokemon, sortBy, sortOrder])
+  }, [filteredPokemon, sortBy, sortOrder, detailsCache])
 
   // Clear all filters
   const clearAllFilters = useCallback(() => {
@@ -408,24 +433,35 @@ export default function ModernPokedexLayout({
             {/* Enhanced Desktop Controls Section */}
             <div className="flex items-center space-x-4">
               {/* Card Density Controls */}
-              <div className="hidden md:flex items-center space-x-2">
+              <div className="flex items-center space-x-2">
                 <span className="text-xs font-medium text-muted uppercase tracking-wider">Size</span>
                 <div className="flex items-center bg-surface border border-border rounded-xl p-1 shadow-sm">
                   {[
-                    { id: 'cozy', label: 'Cozy', icon: '🟢' },
-                    { id: 'compact', label: 'Compact', icon: '🟡' },
-                    { id: 'ultra', label: 'Ultra', icon: '🔴' }
-                  ].map(({ id, label, icon }) => (
+                    // Keep icons/labels in current visual order, rotate functionality: 2nd->1st, 3rd->2nd, 1st->3rd
+                    { visual: 'ultra', label: 'Ultra', target: 'cozy' },
+                    { visual: 'cozy', label: 'Cozy', target: 'compact' },
+                    { visual: 'compact', label: 'Compact', target: 'ultra' }
+                  ].map(({ visual, label, target }) => (
                     <button
-                      key={id}
-                      onClick={() => setCardDensity(id as 'cozy' | 'compact' | 'ultra')}
+                      key={visual}
+                      onClick={() => setCardDensity(target as 'cozy' | 'compact' | 'ultra')}
                       className={`px-3 py-2 text-xs font-medium rounded-lg transition-all duration-200 flex items-center space-x-2 ${
-                        cardDensity === id 
+                        cardDensity === target 
                           ? 'bg-poke-blue text-white shadow-lg scale-105' 
                           : 'text-muted hover:text-text hover:bg-white/50'
                       }`}
                     >
-                      <span>{icon}</span>
+                      <span className="inline-flex items-center justify-center">
+                        {visual === 'cozy' && (
+                          <LayoutGrid className="w-4 h-4" />
+                        )}
+                        {visual === 'compact' && (
+                          <Grid3X3 className="w-4 h-4" />
+                        )}
+                        {visual === 'ultra' && (
+                          <Rows className="w-4 h-4" />
+                        )}
+                      </span>
                       <span className="hidden xl:inline">{label}</span>
                     </button>
                   ))}
@@ -433,12 +469,12 @@ export default function ModernPokedexLayout({
               </div>
 
               {/* Sort Controls */}
-              <div className="hidden md:flex items-center space-x-2">
+              <div className="flex items-center space-x-2">
                 <span className="text-xs font-medium text-muted uppercase tracking-wider">Sort</span>
                 <div className="flex items-center space-x-2">
                   <select
                     value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as 'id' | 'name' | 'stats' | 'hp' | 'attack' | 'defense')}
+                    onChange={(e) => setSortBy(e.target.value as any)}
                     className="px-3 py-2 bg-surface border border-border rounded-xl text-text text-sm font-medium focus:ring-2 focus:ring-poke-blue focus:border-poke-blue focus:outline-none transition-all duration-200 shadow-sm hover:shadow-md"
                   >
                     <option value="id">Number</option>
@@ -447,11 +483,14 @@ export default function ModernPokedexLayout({
                     <option value="hp">HP</option>
                     <option value="attack">Attack</option>
                     <option value="defense">Defense</option>
+                    <option value="special-attack">Sp. Attack</option>
+                    <option value="special-defense">Sp. Defense</option>
+                    <option value="speed">Speed</option>
                   </select>
                   
                   <button
                     onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-                    className="p-2 rounded-xl bg-surface border border-border hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md group"
+                    className="flex items-center gap-2 px-2 py-1 rounded-xl bg-surface border border-border hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md group"
                     title={`Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`}
                   >
                     <div className={`transform transition-transform duration-200 ${sortOrder === 'asc' ? 'rotate-0' : 'rotate-180'}`}>
@@ -459,6 +498,7 @@ export default function ModernPokedexLayout({
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
                       </svg>
                     </div>
+                    <span className="text-xs font-medium text-muted group-hover:text-poke-blue">{sortOrder === 'asc' ? 'ASC' : 'DESC'}</span>
                   </button>
                 </div>
               </div>
@@ -511,8 +551,11 @@ export default function ModernPokedexLayout({
               </button>
 
               {/* Theme Toggle */}
-              <div className="hidden sm:block">
-                <ThemeToggle />
+              <div className="hidden md:flex items-center">
+                <span className="text-xs font-medium text-muted uppercase tracking-wider mr-2">Theme</span>
+                <div className="p-1 rounded-xl bg-surface border border-border shadow-sm">
+                  <ThemeToggle />
+                </div>
               </div>
 
               {/* Desktop Comparison Button */}
@@ -539,24 +582,14 @@ export default function ModernPokedexLayout({
                 <Scale className="h-5 w-5" />
               </button>
 
-              {/* Mobile Menu Toggle - Only on small screens */}
-              {/* Menu toggle: mobile opens mobile menu, desktop opens desktop panel */}
+              {/* Mobile Menu Toggle - hidden on desktop and mobile for now */}
               <button
                 type="button"
-                onClick={() => {
-                  const isMobileNow = typeof window !== 'undefined' ? window.innerWidth < 768 : isMobile
-                  console.log('[MenuToggle] click', { isMobileNow, showMobileMenu, showDesktopMenu })
-                  if (isMobileNow) {
-                    setShowMobileMenu(prev => !prev)
-                  } else {
-                    console.log('[MenuToggle] toggle desktop drawer')
-                    setShowDesktopMenu(prev => !prev)
-                  }
-                }}
-                className="p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
+                onClick={() => { setShowMobileMenu(prev => !prev) }}
+                className="hidden p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
                 title="Toggle menu"
-                aria-expanded={(typeof window !== 'undefined' ? window.innerWidth < 768 : isMobile) ? showMobileMenu : showDesktopMenu}
-                aria-controls={(typeof window !== 'undefined' ? window.innerWidth < 768 : isMobile) ? 'mobile-drawer' : 'desktop-drawer'}
+                aria-expanded={showMobileMenu}
+                aria-controls={'mobile-drawer'}
               >
                 <Menu className="h-5 w-5" />
               </button>
@@ -787,138 +820,7 @@ export default function ModernPokedexLayout({
         </div>
       )}
 
-      {/* Desktop Menu Drawer */}
-      {isClient && showDesktopMenu && (
-        <div id="desktop-drawer" data-testid="desktop-drawer" className="fixed inset-0 pointer-events-auto" style={{ zIndex: 2147483647 }}>
-          {/* Full-screen debug overlay to make rendering obvious */}
-          <div className="fixed inset-0" style={{ backgroundColor: 'rgba(255,0,0,0.15)', zIndex: 2147483646, pointerEvents: 'auto' }} onClick={() => setShowDesktopMenu(false)} />
-          {/* Debug badge to verify rendering when open */}
-          <div className="fixed top-2 right-[400px] z-[2147483647] px-2 py-1 text-xs font-bold text-white bg-red-600 rounded">
-            DESKTOP MENU OPEN
-          </div>
-          <aside role="dialog" aria-modal="true" aria-label="Desktop menu" className="fixed right-0 top-0 h-full w-96 overflow-y-auto bg-white border-l border-poke-blue/50 shadow-2xl ring-2 ring-poke-blue p-6 space-y-6" style={{ backgroundColor: '#ffffff', opacity: 1, isolation: 'isolate', zIndex: 2147483647, pointerEvents: 'auto', width: '384px', boxShadow: '0 20px 50px rgba(0,0,0,0.45)' }}>
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">Menu</h3>
-              <button onClick={() => setShowDesktopMenu(false)} className="p-2 rounded-lg hover:bg-white/20"><X className="h-5 w-5"/></button>
-            </div>
-            {/* Desktop drawer content mirrors mobile features */}
-            {/* Search */}
-            <div className="space-y-3">
-              <label htmlFor="desktop-search" className="text-sm font-medium text-muted">Search</label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
-                <input
-                  id="desktop-search"
-                  type="text"
-                  placeholder="Search by name, number, or type"
-                  value={searchTerm}
-                  onChange={(e) => { handleSearchChange(e.target.value) }}
-                  className="w-full pl-10 pr-4 py-3 border border-border rounded-xl bg-white text-text placeholder:text-muted focus:ring-2 focus:ring-poke-blue focus:border-poke-blue focus:outline-none text-sm"
-                />
-              </div>
-            </div>
-
-            {/* Card Size */}
-            <div className="space-y-3">
-              <h4 className="text-sm font-semibold uppercase tracking-wider">Card Size</h4>
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  { id: 'cozy', label: 'Cozy', icon: '🟢' },
-                  { id: 'compact', label: 'Compact', icon: '🟡' },
-                  { id: 'ultra', label: 'Ultra', icon: '🔴' }
-                ].map(({ id, label, icon }) => (
-                  <button
-                    key={id}
-                    onClick={() => setCardDensity(id as 'cozy' | 'compact' | 'ultra')}
-                    className={`p-3 rounded-xl text-sm font-medium transition-all duration-200 flex flex-col items-center space-y-2 ${
-                      cardDensity === id 
-                        ? 'bg-poke-blue text-white shadow-lg' 
-                        : 'bg-surface border border-border text-text hover:bg-gray-50'
-                    }`}
-                  >
-                    <span className="text-lg">{icon}</span>
-                    <span>{label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Quick Type Filters + Clear */}
-            <div className="space-y-3">
-              <h4 className="text-sm font-semibold uppercase tracking-wider">Quick Type Filters</h4>
-              <div className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto">
-                {Object.keys(typeColors).slice(0, 12).map(type => (
-                  <button
-                    key={type}
-                    onClick={() => toggleTypeFilter(type)}
-                    className={`px-2 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
-                      advancedFilters.types.includes(type) ? 'ring-2 ring-white shadow-lg scale-105' : 'opacity-80 hover:opacity-100'
-                    }`}
-                    style={{ backgroundColor: `var(--type-${type})`, color: (typeColors as any)[type]?.text==='text-white'?'white':'black' }}
-                  >
-                    {formatPokemonName(type)}
-                  </button>
-                ))}
-              </div>
-              {(advancedFilters.types.length > 0 || searchTerm || advancedFilters.generation) && (
-                <button onClick={clearAllFilters} className="text-poke-blue hover:text-poke-blue/80 hover:underline font-medium text-sm">Clear all</button>
-              )}
-            </div>
-
-            {/* Generation & Range sliders (reuse sidebar state) */}
-            <div className="space-y-3">
-              <h4 className="text-sm font-semibold uppercase tracking-wider">Filters</h4>
-              <button onClick={() => setShowSidebar(!showSidebar)} className={`w-full p-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center space-x-2 ${
-                showSidebar ? 'bg-poke-blue text-white shadow-lg' : 'bg-white border border-border text-text hover:bg-gray-50'
-              }`}>
-                <Filter className="h-5 w-5" />
-                <span>{showSidebar ? 'Hide Filters' : 'Show Filters'}</span>
-              </button>
-            </div>
-
-            {/* Sort segmented + direction */}
-            <div className="space-y-3">
-              <h4 className="text-sm font-semibold uppercase tracking-wider">Sort</h4>
-              <div role="group" aria-label="Sort by" className="grid grid-cols-3 gap-2">
-                {[
-                  { id: 'id', label: 'Number' },
-                  { id: 'name', label: 'Name' },
-                  { id: 'stats', label: 'Total' },
-                ].map(opt => (
-                  <button key={opt.id} onClick={() => setSortBy(opt.id as 'id' | 'name' | 'stats')} className={`px-3 py-2 rounded-lg text-sm font-medium border transition ${sortBy===opt.id? 'bg-poke-blue text-white border-poke-blue' : 'bg-white text-text border-border'}`} aria-pressed={sortBy===opt.id}>
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted">Direction</span>
-                <button onClick={() => setSortOrder(prev => prev==='asc'?'desc':'asc')} className="px-3 py-2 rounded-lg text-sm font-medium border border-border bg-white flex items-center space-x-2">
-                  <span>{sortOrder==='asc'?'Ascending':'Descending'}</span>
-                  <svg className={`w-4 h-4 transform ${sortOrder==='asc'?'rotate-0':'rotate-180'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" /></svg>
-                </button>
-              </div>
-            </div>
-
-            {/* Comparison links */}
-            <div className="space-y-3">
-              <h4 className="text-sm font-semibold uppercase tracking-wider">Comparison</h4>
-              <div className="space-y-2">
-                <button onClick={() => { router.push('/compare'); setShowDesktopMenu(false); }} className="w-full p-3 rounded-xl bg-poke-blue text-white font-medium transition-all duration-200 hover:bg-poke-blue/80 flex items-center justify-center space-x-2">
-                  <Scale className="h-5 w-5" />
-                  <span>Go to Comparison</span>
-                  {comparisonList.length > 0 && (
-                    <span className="ml-2 px-2 py-1 bg-white text-poke-blue text-xs rounded-full font-bold">{comparisonList.length}</span>
-                  )}
-                </button>
-                {comparisonList.length > 0 && (
-                  <button onClick={() => { onClearComparison(); setShowDesktopMenu(false); }} className="w-full p-2 rounded-lg bg-white border border-border text-text hover:bg-gray-50 transition-all duration-200 text-sm">Clear Comparison</button>
-                )}
-              </div>
-            </div>
-
-          </aside>
-        </div>
-      )}
+      {/* Desktop Menu Drawer disabled: header has inline controls */}
 
       {/* Mobile Search Bar - Only on small screens */}
       <div className="md:hidden border-b border-border bg-surface">

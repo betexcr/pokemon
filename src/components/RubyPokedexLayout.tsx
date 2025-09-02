@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Pokemon, FilterState } from '@/types/pokemon';
 import { formatPokemonName, getPokemonDescription } from '@/lib/utils';
-import { searchPokemonByName } from '@/lib/api';
+import { searchPokemonByName, getPokemon } from '@/lib/api';
 import ThemeToggle from './ThemeToggle';
 import PokemonComparison from './PokemonComparison';
 import RadarChart from './RadarChart';
@@ -36,6 +36,33 @@ export default function RubyPokedexLayout({
   const [searchLoading, setSearchLoading] = useState(false);
   const [filteredPokemon, setFilteredPokemon] = useState<Pokemon[]>(pokemonList);
   const [showDesktopMenu, setShowDesktopMenu] = useState(false);
+  const [sortBy, setSortBy] = useState<'id' | 'name' | 'stats' | 'hp' | 'attack' | 'defense' | 'special-attack' | 'special-defense' | 'speed'>('id');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [detailsCache, setDetailsCache] = useState<Map<number, Pokemon>>(new Map());
+  const fetchingRef = useRef<Set<number>>(new Set());
+
+  // Ensure we have full stats when sorting by a specific stat
+  useEffect(() => {
+    const statKeys = new Set(['hp','attack','defense','special-attack','special-defense','speed']);
+    if (!statKeys.has(sortBy)) return;
+    const missing = filteredPokemon
+      .filter(p => (p.stats?.length || 0) === 0 && !detailsCache.has(p.id))
+      .map(p => p.id)
+      .filter(id => !fetchingRef.current.has(id));
+    if (missing.length === 0) return;
+    missing.forEach(id => fetchingRef.current.add(id));
+    Promise.all(missing.map(id => getPokemon(id).catch(() => null)))
+      .then(results => {
+        setDetailsCache(prev => {
+          const next = new Map(prev);
+          results.forEach(p => { if (p) next.set(p.id, p); });
+          return next;
+        });
+      })
+      .finally(() => {
+        missing.forEach(id => fetchingRef.current.delete(id));
+      });
+  }, [sortBy, filteredPokemon, detailsCache]);
 
   const menuOptions = [
     { id: 'page', label: 'PAGE' },
@@ -53,7 +80,7 @@ export default function RubyPokedexLayout({
       
       {/* Top Menu Bar */}
       <div className="bg-surface border-b-4 border-border p-3 flex flex-wrap items-center justify-between gap-2 relative">
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 items-center">
           {menuOptions.map((option) => (
             <button
               key={option.id}
@@ -67,6 +94,34 @@ export default function RubyPokedexLayout({
               {option.label}
             </button>
           ))}
+
+          {/* Sort controls */}
+          <div className="ml-4 flex items-center gap-2">
+            <span className="text-xs font-bold tracking-wider">SORT</span>
+            <select
+              value={sortBy}
+              onChange={(e)=>setSortBy(e.target.value as typeof sortBy)}
+              className="px-2 py-1 bg-surface border-2 border-border text-white text-sm font-bold"
+            >
+              <option value="id">Number</option>
+              <option value="name">Name</option>
+              <option value="stats">Total</option>
+              <option value="hp">HP</option>
+              <option value="attack">Attack</option>
+              <option value="defense">Defense</option>
+              <option value="special-attack">Sp. Atk</option>
+              <option value="special-defense">Sp. Def</option>
+              <option value="speed">Speed</option>
+            </select>
+            <button
+              onClick={()=>setSortOrder(prev=>prev==='asc'?'desc':'asc')}
+              title={`Sort ${sortOrder==='asc'?'Descending':'Ascending'}`}
+              className="px-2 py-1 border-2 border-border text-white text-sm font-bold bg-surface hover:bg-ruby-tab/20 flex items-center gap-2"
+            >
+              <span>{sortOrder==='asc'?'ASC':'DESC'}</span>
+              <span className="inline-block transform" style={{ transform: sortOrder==='asc'?'rotate(0deg)':'rotate(180deg)' }}>▲</span>
+            </button>
+          </div>
         </div>
         
         <div className="flex items-center gap-2">
@@ -223,7 +278,32 @@ export default function RubyPokedexLayout({
             POKéMON LIST ({filteredPokemon.length})
           </div>
           <VirtualizedPokemonList
-            pokemonList={filteredPokemon}
+            key={`${sortBy}-${sortOrder}`}
+            pokemonList={useMemo(() => {
+              const data = [...filteredPokemon];
+              const cmp = (a: Pokemon, b: Pokemon) => {
+                let comparison = 0;
+                if (sortBy === 'name') {
+                  comparison = a.name.localeCompare(b.name);
+                } else if (sortBy === 'stats') {
+                  const aSrc = (a.stats?.length ? a : (detailsCache.get(a.id) || a));
+                  const bSrc = (b.stats?.length ? b : (detailsCache.get(b.id) || b));
+                  const aStats = (aSrc.stats || []).reduce((sum, s) => sum + s.base_stat, 0);
+                  const bStats = (bSrc.stats || []).reduce((sum, s) => sum + s.base_stat, 0);
+                  comparison = aStats - bStats;
+                } else if (sortBy === 'hp' || sortBy === 'attack' || sortBy === 'defense' || sortBy === 'special-attack' || sortBy === 'special-defense' || sortBy === 'speed') {
+                  const aSrc = (a.stats?.length ? a : (detailsCache.get(a.id) || a));
+                  const bSrc = (b.stats?.length ? b : (detailsCache.get(b.id) || b));
+                  const aVal = (aSrc.stats || []).find(s => s.stat.name === sortBy)?.base_stat || 0;
+                  const bVal = (bSrc.stats || []).find(s => s.stat.name === sortBy)?.base_stat || 0;
+                  comparison = aVal - bVal;
+                } else {
+                  comparison = a.id - b.id;
+                }
+                return sortOrder === 'desc' ? -comparison : comparison;
+              };
+              return data.sort(cmp);
+            }, [filteredPokemon, sortBy, sortOrder, detailsCache])}
             onSelectPokemon={onSelectPokemon}
             selectedPokemon={selectedPokemon}
             containerHeight={300}
