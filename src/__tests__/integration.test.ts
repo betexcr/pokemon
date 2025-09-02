@@ -1,4 +1,4 @@
-import { getPokemonList, getPokemon, getAllTypes } from '@/lib/api'
+import { getPokemonList } from '@/lib/api'
 
 // These are real integration tests that test actual API calls
 describe.skip('Real API Integration Tests', () => {

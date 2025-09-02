@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from 'react';
+import Image from 'next/image';
 import { createPortal } from 'react-dom';
 import { Pokemon, FilterState } from '@/types/pokemon';
 import { formatPokemonName, getPokemonDescription } from '@/lib/utils';
@@ -75,9 +76,11 @@ export default function GoldPokedexLayout({
         <div className="w-1/2 bg-gradient-to-b from-yellow-800 to-yellow-900 p-4 flex flex-col justify-center">
           {selectedPokemon && (
             <div className="text-center">
-              <img
+              <Image
                 src={selectedPokemon.sprites.other['official-artwork'].front_default || selectedPokemon.sprites.front_default || ''}
                 alt={selectedPokemon.name}
+                width={128}
+                height={128}
                 className="w-32 h-32 object-contain image-render-pixel mx-auto mb-4"
               />
               <div className="text-white font-bold text-lg">
@@ -95,7 +98,7 @@ export default function GoldPokedexLayout({
               <span className="text-yellow-800 text-xs font-bold">SORT</span>
               <select
                 value={sortBy}
-                onChange={(e)=>setSortBy(e.target.value as any)}
+                onChange={(e)=>setSortBy(e.target.value as typeof sortBy)}
                 className="px-2 py-1 bg-yellow-100 border-2 border-yellow-600 text-yellow-800 text-xs font-bold"
               >
                 <option value="id">Number</option>
