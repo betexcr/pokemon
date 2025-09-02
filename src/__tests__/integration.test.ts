@@ -1,4 +1,4 @@
-import { getPokemonList } from '@/lib/api'
+// Integration test scaffold retained intentionally; unused imports removed
 
 // These are real integration tests that test actual API calls
 describe.skip('Real API Integration Tests', () => {

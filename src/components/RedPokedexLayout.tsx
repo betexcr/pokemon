@@ -74,7 +74,7 @@ export default function RedPokedexLayout({
               <span className="text-xs font-bold text-red-800">SORT</span>
               <select
                 value={sortBy}
-                onChange={(e)=>setSortBy(e.target.value as any)}
+                onChange={(e)=>setSortBy(e.target.value as typeof sortBy)}
                 className="px-2 py-1 bg-white border-2 border-red-600 text-red-800 text-xs font-bold"
               >
                 <option value="id">Number</option>

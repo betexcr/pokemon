@@ -89,10 +89,13 @@ export default function ComparisonOverlay({
                   key={pokemon.id}
                   className="flex items-center space-x-3 p-2 rounded-lg bg-gray-50 dark:bg-gray-800"
                 >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={getPokemonMainPageImage(pokemon.id)}
                     alt={formatPokemonName(pokemon.name)}
                     className="w-8 h-8 object-contain"
+                    loading="lazy"
+                    decoding="async"
                   />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">
