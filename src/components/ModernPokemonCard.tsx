@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Pokemon } from '@/types/pokemon'
 import { formatPokemonName, typeColors } from '@/lib/utils'
-import { getPokemonImageUrl } from '@/lib/api'
+import { getPokemonMainPageImage } from '@/lib/api'
 import { Star, ChevronRight, Heart, Scale } from 'lucide-react'
 import TypeBadge from './TypeBadge'
 
@@ -134,7 +134,7 @@ export default function ModernPokemonCard({
             
             {!imageError ? (
               <img
-                src={getPokemonImageUrl(pokemon.id)}
+                src={getPokemonMainPageImage(pokemon.id)}
                 alt={formatPokemonName(pokemon.name)}
                 className={`
                   w-full h-full object-contain transition-opacity duration-300
@@ -166,9 +166,7 @@ export default function ModernPokemonCard({
                 <TypeBadge
                   key={type.type.name}
                   type={type.type.name}
-                  className={`transition-transform duration-200 group-hover:scale-105 ${
-                    density === 'ultra' ? 'text-[10px]' : 'text-xs'
-                  }`}
+                  className="transition-transform duration-200 group-hover:scale-105"
                 />
               ))}
             </div>

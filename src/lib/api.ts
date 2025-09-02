@@ -1,5 +1,6 @@
 import { 
   Pokemon, 
+  BasicPokemon,
   NamedAPIResourceList, 
   Type, 
   PokemonSpecies, 
@@ -13,18 +14,23 @@ import {
 
 const POKEAPI_BASE_URL = 'https://pokeapi.co/api/v2';
 
+// Development mode - more aggressive caching
+const IS_DEVELOPMENT = process.env.NODE_ENV === 'development';
+
 // Cache configuration
 const CACHE_TTL = {
-  POKEMON_LIST: 6 * 60 * 60 * 1000, // 6 hours
-  POKEMON_DETAIL: 24 * 60 * 60 * 1000, // 24 hours
-  TYPES: 24 * 60 * 60 * 1000, // 24 hours
-  SPECIES: 24 * 60 * 60 * 1000, // 24 hours
-  EVOLUTION: 24 * 60 * 60 * 1000, // 24 hours
-  MOVES: 12 * 60 * 60 * 1000, // 12 hours
+  POKEMON_LIST: IS_DEVELOPMENT ? 1 * 60 * 1000 : 6 * 60 * 60 * 1000, // 1 min dev, 6 hours prod
+  POKEMON_DETAIL: IS_DEVELOPMENT ? 2 * 60 * 1000 : 24 * 60 * 60 * 1000, // 2 min dev, 24 hours prod
+  TYPES: IS_DEVELOPMENT ? 5 * 60 * 1000 : 24 * 60 * 60 * 1000, // 5 min dev, 24 hours prod
+  SPECIES: IS_DEVELOPMENT ? 5 * 60 * 1000 : 24 * 60 * 60 * 1000, // 5 min dev, 24 hours prod
+  EVOLUTION: IS_DEVELOPMENT ? 5 * 60 * 1000 : 24 * 60 * 60 * 1000, // 5 min dev, 24 hours prod
+  MOVES: IS_DEVELOPMENT ? 5 * 60 * 1000 : 12 * 60 * 60 * 1000, // 5 min dev, 12 hours prod
 };
 
 // Simple in-memory cache (in production, use Redis)
 const cache = new Map<string, { data: unknown; timestamp: number; ttl: number }>();
+// In-flight requests de-duplication map to avoid duplicate fetches for the same URL
+const inFlightRequests = new Map<string, Promise<unknown>>();
 
 function getCacheKey(endpoint: string, params?: Record<string, unknown>): string {
   const paramString = params ? `?${new URLSearchParams(params as Record<string, string>).toString()}` : '';
@@ -64,7 +70,7 @@ function checkRateLimit(): boolean {
   return requestCount <= RATE_LIMIT;
 }
 
-// Generic fetch function with error handling and retries
+// Generic fetch function with error handling, retries, and in-flight de-duplication
 async function fetchWithRetry<T>(
   url: string, 
   options: RequestInit = {}, 
@@ -74,7 +80,19 @@ async function fetchWithRetry<T>(
     throw new Error('Rate limit exceeded. Please try again later.');
   }
 
-  for (let i = 0; i < retries; i++) {
+  // De-duplicate concurrent requests to the same URL
+  const existingRequest = inFlightRequests.get(url);
+  if (existingRequest) {
+    return existingRequest as Promise<T>;
+  }
+
+  const requestPromise = (async () => {
+    // Log API calls in development (only when making the actual request)
+    if (IS_DEVELOPMENT) {
+      console.log(`🌐 API Call: ${url}`);
+    }
+
+    for (let i = 0; i < retries; i++) {
     try {
       const response = await fetch(url, {
         ...options,
@@ -99,8 +117,17 @@ async function fetchWithRetry<T>(
       if (i === retries - 1) throw error;
       await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
     }
+    }
+    throw new Error('Max retries exceeded');
+  })() as Promise<T>;
+
+  inFlightRequests.set(url, requestPromise);
+  try {
+    const result = await requestPromise;
+    return result;
+  } finally {
+    inFlightRequests.delete(url);
   }
-  throw new Error('Max retries exceeded');
 }
 
 // API functions
@@ -248,7 +275,7 @@ export async function getGeneration(nameOrId: string | number): Promise<Generati
   return data;
 }
 
-// Get all Pokémon of a specific type
+// Get all Pokémon of a specific type - OPTIMIZED VERSION
 export async function getPokemonByType(type: string): Promise<Pokemon[]> {
   const cacheKey = getCacheKey(`type/${type}/pokemon`);
   const cached = getCache(cacheKey);
@@ -258,15 +285,52 @@ export async function getPokemonByType(type: string): Promise<Pokemon[]> {
     // First get the type data
     const typeData = await getType(type);
     
-    // Extract Pokémon from the type data
-    const pokemonPromises = typeData.pokemon.map(async (pokemonRef) => {
+    // Instead of making individual API calls, create basic Pokémon objects
+    // This reduces API calls from potentially hundreds to just 1
+    const pokemonList = typeData.pokemon.map((pokemonRef) => {
       const pokemonId = pokemonRef.pokemon.url.split('/').slice(-2)[0];
-      return await getPokemon(parseInt(pokemonId));
+      return {
+        id: parseInt(pokemonId),
+        name: pokemonRef.pokemon.name,
+        base_experience: 0,
+        height: 0,
+        weight: 0,
+        is_default: true,
+        order: parseInt(pokemonId),
+        abilities: [],
+        forms: [],
+        game_indices: [],
+        held_items: [],
+        location_area_encounters: '',
+        moves: [],
+        sprites: {
+          // Use the smallest, most efficient sprites for main page
+          front_default: getPokemonFallbackImage(parseInt(pokemonId)),
+          front_shiny: null,
+          front_female: null,
+          front_shiny_female: null,
+          back_default: null,
+          back_shiny: null,
+          back_female: null,
+          back_shiny_female: null,
+          other: {
+            dream_world: { front_default: null, front_female: null },
+            home: { front_default: null, front_female: null, front_shiny: null, front_shiny_female: null },
+            // Use home sprites instead of official artwork for main page (much smaller)
+            'official-artwork': {
+              front_default: getPokemonMainPageImage(parseInt(pokemonId)),
+              front_shiny: null
+            }
+          }
+        },
+        stats: [],
+        types: [{ slot: 1, type: { name: type, url: '' } }],
+        species: { name: '', url: '' },
+        evolution_chain: { name: '', url: '' }
+      } as Pokemon;
     });
-
-    const pokemonList = await Promise.all(pokemonPromises);
     
-    setCache(cacheKey, pokemonList, CACHE_TTL.POKEMON_DETAIL);
+    setCache(cacheKey, pokemonList, CACHE_TTL.POKEMON_LIST);
     return pokemonList;
   } catch (error) {
     console.error(`Error fetching Pokémon for type ${type}:`, error);
@@ -304,8 +368,17 @@ export async function searchPokemonByName(searchTerm: string): Promise<Pokemon[]
       }
     }
 
-    // Name search - get more Pokémon to search through (up to 1000 to include Lugia and others)
-    const allPokemon = await getPokemonList(1000, 0);
+    // Name search - use cached basic Pokémon list if available
+    const basicPokemonCache = getCache('all-pokemon');
+    let allPokemon;
+    
+    if (basicPokemonCache) {
+      // Use cached basic data instead of making new API calls
+      allPokemon = { results: basicPokemonCache as Pokemon[] };
+    } else {
+      // Fallback: get basic list (only 1 API call instead of 1000+)
+      allPokemon = await getPokemonList(151, 0);
+    }
     
     // Filter by search term
     const matchingPokemon = allPokemon.results.filter(pokemon =>
@@ -315,13 +388,55 @@ export async function searchPokemonByName(searchTerm: string): Promise<Pokemon[]
     // Limit results to first 20 to avoid too many API calls
     const limitedResults = matchingPokemon.slice(0, 20);
 
-    // Fetch full data for matching Pokémon (individual Pokémon are cached in getPokemon)
-    const pokemonPromises = limitedResults.map(async (pokemonRef) => {
-      const pokemonId = pokemonRef.url.split('/').slice(-2)[0];
-      return await getPokemon(parseInt(pokemonId));
+    // For search results, we can use basic data if available, or fetch minimal data
+    const pokemonList = limitedResults.map((pokemonRef) => {
+      if ('id' in pokemonRef) {
+        // This is already a basic Pokémon object
+        return pokemonRef as Pokemon;
+      } else {
+        // This is a reference, create basic object
+        const pokemonId = pokemonRef.url.split('/').slice(-2)[0];
+        return {
+          id: parseInt(pokemonId),
+          name: pokemonRef.name,
+          base_experience: 0,
+          height: 0,
+          weight: 0,
+          is_default: true,
+          order: parseInt(pokemonId),
+          abilities: [],
+          forms: [],
+          game_indices: [],
+          held_items: [],
+          location_area_encounters: '',
+          moves: [],
+          sprites: {
+            // Use the smallest, most efficient sprites for main page
+            front_default: getPokemonFallbackImage(parseInt(pokemonId)),
+            front_shiny: null,
+            front_female: null,
+            front_shiny_female: null,
+            back_default: null,
+            back_shiny: null,
+            back_female: null,
+            back_shiny_female: null,
+            other: {
+              dream_world: { front_default: null, front_female: null },
+              home: { front_default: null, front_female: null, front_shiny: null, front_shiny_female: null },
+              // Use home sprites instead of official artwork for main page (much smaller)
+              'official-artwork': {
+                front_default: getPokemonMainPageImage(parseInt(pokemonId)),
+                front_shiny: null
+              }
+            }
+          },
+          stats: [],
+          types: [],
+          species: { name: '', url: '' },
+          evolution_chain: { name: '', url: '' }
+        } as Pokemon;
+      }
     });
-
-    const pokemonList = await Promise.all(pokemonPromises);
     
     setCache(cacheKey, pokemonList, CACHE_TTL.POKEMON_DETAIL);
     return pokemonList;
@@ -331,7 +446,7 @@ export async function searchPokemonByName(searchTerm: string): Promise<Pokemon[]
   }
 }
 
-// Get all Pokémon (original 151 for initial load)
+// Get all Pokémon (original 151 for initial load) - OPTIMIZED VERSION
 export async function getAllPokemon(): Promise<Pokemon[]> {
   const cacheKey = getCacheKey('all-pokemon');
   const cached = getCache(cacheKey);
@@ -341,16 +456,53 @@ export async function getAllPokemon(): Promise<Pokemon[]> {
     // Load only the original 151 Pokémon initially
     const allPokemon = await getPokemonList(151, 0);
     
-    // Fetch full data for all Pokémon
-    const pokemonPromises = allPokemon.results.map(async (pokemonRef) => {
+    // For initial page load, we only need basic info, not full data
+    // This reduces API calls from 151 to just 1
+    const basicPokemonList = allPokemon.results.map((pokemonRef, index) => {
       const pokemonId = pokemonRef.url.split('/').slice(-2)[0];
-      return await getPokemon(parseInt(pokemonId));
+      return {
+        id: parseInt(pokemonId),
+        name: pokemonRef.name,
+        base_experience: 0,
+        height: 0,
+        weight: 0,
+        is_default: true,
+        order: parseInt(pokemonId),
+        abilities: [],
+        forms: [],
+        game_indices: [],
+        held_items: [],
+        location_area_encounters: '',
+        moves: [],
+        sprites: {
+          // Use the smallest, most efficient sprites for main page
+          front_default: getPokemonFallbackImage(parseInt(pokemonId)),
+          front_shiny: null,
+          front_female: null,
+          front_shiny_female: null,
+          back_default: null,
+          back_shiny: null,
+          back_female: null,
+          back_shiny_female: null,
+          other: {
+            dream_world: { front_default: null, front_female: null },
+            home: { front_default: null, front_female: null, front_shiny: null, front_shiny_female: null },
+            // Use home sprites instead of official artwork for main page (much smaller)
+            'official-artwork': {
+              front_default: getPokemonMainPageImage(parseInt(pokemonId)),
+              front_shiny: null
+            }
+          }
+        },
+        stats: [],
+        types: [],
+        species: { name: '', url: '' },
+        evolution_chain: { name: '', url: '' }
+      } as Pokemon;
     });
-
-    const pokemonList = await Promise.all(pokemonPromises);
     
-    setCache(cacheKey, pokemonList, CACHE_TTL.POKEMON_DETAIL);
-    return pokemonList;
+    setCache(cacheKey, basicPokemonList, CACHE_TTL.POKEMON_LIST);
+    return basicPokemonList;
   } catch (error) {
     console.error('Error fetching all Pokémon:', error);
     return [];
@@ -401,16 +553,47 @@ export async function getPokemonByGeneration(generation: string): Promise<Pokemo
 
 
 
-// Utility functions
+// Lazy load full Pokémon data when needed
+export async function getPokemonFullData(id: number): Promise<Pokemon> {
+  const cacheKey = getCacheKey(`pokemon-full-${id}`);
+  const cached = getCache(cacheKey);
+  if (cached) return cached as Pokemon;
+
+  try {
+    const fullPokemon = await getPokemon(id);
+    setCache(cacheKey, fullPokemon, CACHE_TTL.POKEMON_DETAIL);
+    return fullPokemon;
+  } catch (error) {
+    console.error(`Error fetching full data for Pokémon ${id}:`, error);
+    throw error;
+  }
+}
+
+// Optimized image functions for different contexts
 export function getPokemonImageUrl(id: number, variant: 'default' | 'shiny' = 'default'): string {
+  // For detail pages, use high-quality official artwork
   const baseUrl = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork';
   return `${baseUrl}/${id}.png`;
 }
 
 export function getPokemonSpriteUrl(id: number, variant: 'default' | 'shiny' = 'default'): string {
+  // For main page grid/list, use small sprites
   const baseUrl = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon';
   const suffix = variant === 'shiny' ? 'shiny' : '';
   return `${baseUrl}/${suffix}/${id}.png`;
+}
+
+// NEW: Get the most appropriate image for main page (smallest file size)
+export function getPokemonMainPageImage(id: number): string {
+  // Use home sprites for main page - they're much smaller than official artwork
+  // but still look good in grid/list views
+  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${id}.png`;
+}
+
+// NEW: Get fallback image if home sprite doesn't exist
+export function getPokemonFallbackImage(id: number): string {
+  // Fallback to regular sprites if home sprites aren't available
+  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
 }
 
 // Type effectiveness calculation

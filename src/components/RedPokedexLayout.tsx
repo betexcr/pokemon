@@ -50,7 +50,7 @@ export default function RedPokedexLayout({
       
       {/* Authentic GBC PokéDex Header */}
       <div className="bg-red-100 border-b-4 border-red-600 p-4">
-        <h1 className="text-2xl font-bold text-center text-red-800">POKéDEX</h1>
+        <h1 className="font-['Pocket_Monk'] text-2xl font-bold text-center text-red-800 tracking-wider">POKéDEX</h1>
       </div>
 
       {/* Main PokéDex Interface - Split Panel Design */}

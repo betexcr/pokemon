@@ -11,6 +11,7 @@ type Move = {
   accuracy: number | null;
   pp: number | null;
   level_learned_at?: number | null;
+  short_effect?: string | null;
 };
 
 const categories = ["physical","special","status"] as const;
@@ -19,6 +20,7 @@ export default function MovesSection({ moves }: { moves: Move[] }) {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<null | Move["damage_class"]>(null);
   const [type, setType] = useState<string>("");
+  const [openIdx, setOpenIdx] = useState<number | null>(null);
 
   const filtered = useMemo(() => {
     let rows = moves;
@@ -66,7 +68,20 @@ export default function MovesSection({ moves }: { moves: Move[] }) {
           <tbody className="[&>tr]:border-b [&>tr]:border-border">
             {filtered.map((m, index) => (
               <tr key={`${m.name}-${index}`} className="[&>td]:px-3 [&>td]:py-2">
-                <td className="font-medium capitalize">{m.name}</td>
+                <td className="font-medium capitalize">
+                  <span
+                    className="relative group cursor-help"
+                    onClick={() => setOpenIdx(openIdx === index ? null : index)}
+                  >
+                    {m.name}
+                    {m.short_effect && (
+                      <span className={`pointer-events-none absolute left-0 top-full z-10 mt-1 w-[20rem] max-w-[80vw] rounded-md bg-black/90 p-3 text-sm leading-snug text-white shadow-xl ring-1 ring-black/40 ${openIdx===index ? 'block' : 'hidden sm:group-hover:block'}`}
+                      >
+                        {m.short_effect}
+                      </span>
+                    )}
+                  </span>
+                </td>
                 <td><TypeBadge type={m.type} /></td>
                 <td className="capitalize">{m.damage_class}</td>
                 <td>{m.power ?? "—"}</td>

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 import clsx from "clsx";
 import TypeBadge from "./TypeBadge";
-import { getPokemonImageUrl } from "@/lib/api";
+import { getPokemonMainPageImage } from "@/lib/api";
 import { useRouter } from "next/navigation";
 
 /**
@@ -36,7 +36,7 @@ export default function PokemonCard({
   cardSize?: 'cozy' | 'compact' | 'ultra';
 }) {
   const title = `${formatPokemonName(pokemon.name)} #${String(pokemon.id).padStart(4, "0")}`;
-  const img = getPokemonImageUrl(pokemon.id);
+  const img = getPokemonMainPageImage(pokemon.id);
   const types = pokemon.types.map(t => t.type.name);
 
   // primary type color -> use as accent + gradient

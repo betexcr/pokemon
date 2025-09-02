@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { 
@@ -13,7 +13,7 @@ import {
   Scale
 } from 'lucide-react'
 import Link from 'next/link'
-import { getPokemon, getPokemonSpecies, getEvolutionChain, getMove } from '@/lib/api'
+import { getPokemon, getPokemonSpecies, getEvolutionChain, getMove, getAbility } from '@/lib/api'
 import { formatPokemonName, formatPokemonNumber, cn } from '@/lib/utils'
 import { Pokemon, PokemonSpecies, EvolutionChain } from '@/types/pokemon'
 import Button from '@/components/ui/Button'
@@ -25,6 +25,83 @@ import EvolutionSection from '@/components/pokemon/EvolutionSection'
 import MatchupsSection from '@/components/pokemon/MatchupsSection'
 import TypeBadge from '@/components/TypeBadge'
 
+// Component to fetch and display evolution data with correct types
+function EvolutionSectionWithData({ evolutionChain, selectedSprite }: { evolutionChain: EvolutionChain | null; selectedSprite: 'default' | 'shiny' }) {
+  const [chain, setChain] = useState<Array<{id: number; name: string; types: string[]; condition?: string}>>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchEvolutionData = async () => {
+      if (!evolutionChain) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const chainData: Array<{id: number; name: string; types: string[]; condition?: string}> = [];
+        
+        // Add the base evolution
+        const baseId = parseInt(evolutionChain.chain.species.url.split('/').slice(-2)[0]);
+        const basePokemon = await getPokemon(baseId.toString());
+        chainData.push({
+          id: baseId,
+          name: evolutionChain.chain.species.name,
+          types: basePokemon.types.map(t => t.type.name),
+          condition: undefined
+        });
+        
+        // Add first evolution if it exists
+        if (evolutionChain.chain.evolves_to.length > 0) {
+          const firstEvo = evolutionChain.chain.evolves_to[0];
+          const firstEvoId = parseInt(firstEvo.species.url.split('/').slice(-2)[0]);
+          const firstEvoPokemon = await getPokemon(firstEvoId.toString());
+          chainData.push({
+            id: firstEvoId,
+            name: firstEvo.species.name,
+            types: firstEvoPokemon.types.map(t => t.type.name),
+            condition: firstEvo.evolution_details[0]?.trigger?.name || undefined
+          });
+          
+          // Add second evolution if it exists
+          if (firstEvo.evolves_to.length > 0) {
+            const secondEvo = firstEvo.evolves_to[0];
+            const secondEvoId = parseInt(secondEvo.species.url.split('/').slice(-2)[0]);
+            const secondEvoPokemon = await getPokemon(secondEvoId.toString());
+            chainData.push({
+              id: secondEvoId,
+              name: secondEvo.species.name,
+              types: secondEvoPokemon.types.map(t => t.type.name),
+              condition: secondEvo.evolution_details[0]?.trigger?.name || undefined
+            });
+          }
+        }
+        
+        setChain(chainData);
+      } catch (error) {
+        console.error('Error fetching evolution data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEvolutionData();
+  }, [evolutionChain]);
+
+  if (loading) {
+    return (
+      <section id="evolution" className="mx-auto max-w-5xl px-4 py-4 space-y-4">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-poke-blue mx-auto mb-4"></div>
+          <p className="text-muted">Loading evolution chain...</p>
+        </div>
+      </section>
+    );
+  }
+
+  return <EvolutionSection chain={chain} selectedSprite={selectedSprite} />;
+}
+
 // Component to fetch and display move data
 function MovesSectionWithData({ pokemon }: { pokemon: Pokemon }) {
   const [moves, setMoves] = useState<Array<{
@@ -35,6 +112,7 @@ function MovesSectionWithData({ pokemon }: { pokemon: Pokemon }) {
     accuracy: number | null;
     pp: number | null;
     level_learned_at?: number | null;
+    short_effect?: string | null;
   }>>([]);
   const [loading, setLoading] = useState(true);
 
@@ -60,6 +138,7 @@ function MovesSectionWithData({ pokemon }: { pokemon: Pokemon }) {
         // Fetch move details for each move
         const movePromises = levelUpMoves.map(async ({ moveName, level_learned_at }) => {
           const moveData = await getMove(moveName);
+          const englishEffect = (moveData.effect_entries || []).find((e: { language: { name: string }; short_effect?: string; effect?: string }) => e.language?.name === 'en');
           return {
             name: moveData.name,
             type: moveData.type.name,
@@ -67,7 +146,8 @@ function MovesSectionWithData({ pokemon }: { pokemon: Pokemon }) {
             power: moveData.power,
             accuracy: moveData.accuracy,
             pp: moveData.pp,
-            level_learned_at
+            level_learned_at,
+            short_effect: englishEffect?.short_effect || englishEffect?.effect || null
           };
         });
 
@@ -113,6 +193,7 @@ export default function PokemonDetailPage() {
   const [pokemon, setPokemon] = useState<Pokemon | null>(null)
   const [species, setSpecies] = useState<PokemonSpecies | null>(null)
   const [evolutionChain, setEvolutionChain] = useState<EvolutionChain | null>(null)
+  const [abilityDetails, setAbilityDetails] = useState<Array<{ name: string; is_hidden?: boolean; description?: string | null }>>([])
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -121,7 +202,13 @@ export default function PokemonDetailPage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'stats' | 'moves' | 'evolution' | 'matchups'>('stats')
 
   useEffect(() => {
-    loadPokemonData()
+    // Avoid double-invocation on mount (Strict Mode) and rapid route changes
+    const hasLoadedRef = (loadPokemonData as unknown as { __loaded?: Record<string, boolean> }).__loaded || {}
+    ;(loadPokemonData as unknown as { __loaded?: Record<string, boolean> }).__loaded = hasLoadedRef
+    if (!hasLoadedRef[pokemonId]) {
+      hasLoadedRef[pokemonId] = true
+      loadPokemonData()
+    }
     const savedComparison = localStorage.getItem('pokemon-comparison')
     if (savedComparison) {
       setComparisonList(JSON.parse(savedComparison))
@@ -142,8 +229,26 @@ export default function PokemonDetailPage() {
         getPokemonSpecies(pokemonId)
       ])
       
-      setPokemon(pokemonData)
+      // Fetch ability descriptions for tooltips
+      const abilities = await Promise.all(
+        pokemonData.abilities.map(async (a) => {
+          try {
+            const ability = await getAbility(a.ability.name);
+            const entry = (ability.effect_entries as Array<{ effect: string; short_effect: string; language: { name: string } }>).find(e => e.language.name === 'en');
+            return {
+              name: a.ability.name,
+              is_hidden: a.is_hidden,
+              description: (entry?.short_effect || entry?.effect || '').replace(/\f|\n|\r/g, ' ')
+            };
+          } catch {
+            return { name: a.ability.name, is_hidden: a.is_hidden, description: null as string | null };
+          }
+        })
+      );
+
+      setPokemon({ ...pokemonData, abilities: pokemonData.abilities });
       setSpecies(speciesData)
+      setAbilityDetails(abilities)
 
       // Load evolution chain
       if (speciesData.evolution_chain?.url) {
@@ -357,7 +462,7 @@ export default function PokemonDetailPage() {
         {activeTab === 'overview' && (
           <OverviewSection
             types={pokemon.types.map(t => t.type.name)}
-            abilities={pokemon.abilities.map(a => ({ name: a.ability.name, is_hidden: a.is_hidden }))}
+            abilities={abilityDetails}
             flavorText={species?.flavor_text_entries.find(entry => entry.language.name === 'en')?.flavor_text || 'No description available.'}
             genus={species?.genera.find(genus => genus.language.name === 'en')?.genus}
             heightM={pokemon.height / 10}
@@ -375,44 +480,7 @@ export default function PokemonDetailPage() {
         )}
 
         {activeTab === 'evolution' && (
-          <EvolutionSection chain={evolutionChain ? (() => {
-            const chain: Array<{id: number; name: string; types: string[]; condition?: string}> = [];
-            
-            // Add the base evolution
-            const baseId = parseInt(evolutionChain.chain.species.url.split('/').slice(-2)[0]);
-            chain.push({
-              id: baseId,
-              name: evolutionChain.chain.species.name,
-              types: ['normal'], // We'll need to fetch this
-              condition: undefined
-            });
-            
-            // Add first evolution if it exists
-            if (evolutionChain.chain.evolves_to.length > 0) {
-              const firstEvo = evolutionChain.chain.evolves_to[0];
-              const firstEvoId = parseInt(firstEvo.species.url.split('/').slice(-2)[0]);
-              chain.push({
-                id: firstEvoId,
-                name: firstEvo.species.name,
-                types: ['normal'], // We'll need to fetch this
-                condition: firstEvo.evolution_details[0]?.trigger?.name || undefined
-              });
-              
-              // Add second evolution if it exists
-              if (firstEvo.evolves_to.length > 0) {
-                const secondEvo = firstEvo.evolves_to[0];
-                const secondEvoId = parseInt(secondEvo.species.url.split('/').slice(-2)[0]);
-                chain.push({
-                  id: secondEvoId,
-                  name: secondEvo.species.name,
-                  types: ['normal'], // We'll need to fetch this
-                  condition: secondEvo.evolution_details[0]?.trigger?.name || undefined
-                });
-              }
-            }
-            
-            return chain;
-          })() : []} />
+          <EvolutionSectionWithData evolutionChain={evolutionChain} selectedSprite={selectedSprite} />
         )}
 
         {activeTab === 'matchups' && (

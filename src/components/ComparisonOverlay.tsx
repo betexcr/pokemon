@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Pokemon } from '@/types/pokemon'
 import { formatPokemonName } from '@/lib/utils'
-import { getPokemonImageUrl } from '@/lib/api'
+import { getPokemonMainPageImage } from '@/lib/api'
 import { Scale, X, ChevronUp, ChevronDown } from 'lucide-react'
 import Button from './ui/Button'
 
@@ -90,7 +90,7 @@ export default function ComparisonOverlay({
                   className="flex items-center space-x-3 p-2 rounded-lg bg-gray-50 dark:bg-gray-800"
                 >
                   <img
-                    src={getPokemonImageUrl(pokemon.id)}
+                    src={getPokemonMainPageImage(pokemon.id)}
                     alt={formatPokemonName(pokemon.name)}
                     className="w-8 h-8 object-contain"
                   />

@@ -9,18 +9,16 @@ export default function TypeBadge({ type, className = '' }: TypeBadgeProps) {
   const colorClasses = typeColors[type] || typeColors.normal;
   
   return (
-    <span
-      className={`
-        inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border
-        ${className}
-      `}
-      style={{ 
+    <button
+      type="button"
+      className={`px-3 py-1 rounded-full text-sm font-medium border transition-all duration-200 whitespace-nowrap ${className}`}
+      style={{
         backgroundColor: `var(--type-${type})`,
         color: colorClasses.text === 'text-white' ? 'white' : 'black',
         borderColor: `var(--type-${type})`
       }}
     >
       {type.charAt(0).toUpperCase() + type.slice(1)}
-    </span>
+    </button>
   );
 }

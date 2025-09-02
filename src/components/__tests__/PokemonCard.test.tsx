@@ -1,6 +1,20 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import PokemonCard from '../PokemonCard'
 
+// Mock Next.js router
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    prefetch: jest.fn(),
+    back: jest.fn(),
+    forward: jest.fn(),
+    refresh: jest.fn(),
+  }),
+  usePathname: () => '/',
+  useSearchParams: () => new URLSearchParams(),
+}))
+
 const mockPokemon = {
   id: 1,
   name: 'bulbasaur',
@@ -34,7 +48,7 @@ describe('PokemonCard', () => {
       />
     )
 
-    expect(screen.getByText('bulbasaur')).toBeInTheDocument()
+    expect(screen.getByText('Bulbasaur')).toBeInTheDocument()
     expect(screen.getByText('#0001')).toBeInTheDocument()
     expect(screen.getByText('Grass')).toBeInTheDocument()
     expect(screen.getByText('Poison')).toBeInTheDocument()
@@ -50,8 +64,7 @@ describe('PokemonCard', () => {
     )
 
     const heartButton = screen.getByRole('button', { name: /favorite/i })
-    const heartIcon = heartButton.querySelector('svg')
-    expect(heartIcon).toHaveClass('text-red-500')
+    expect(heartButton).toHaveTextContent('❤️')
   })
 
   it('should call onToggleFavorite when heart is clicked', () => {
@@ -78,8 +91,8 @@ describe('PokemonCard', () => {
       />
     )
 
-    const image = screen.getByAltText('bulbasaur')
-    expect(image).toHaveAttribute('src', 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1.png')
+    const image = screen.getByAltText('Bulbasaur')
+    expect(image).toHaveAttribute('src', 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/1.png')
   })
 
   it('should have correct link href', () => {
@@ -104,7 +117,7 @@ describe('PokemonCard', () => {
       />
     )
 
-    expect(screen.getByText('pikachu')).toBeInTheDocument()
+    expect(screen.getByText('Pikachu')).toBeInTheDocument()
     expect(screen.getByText('#0025')).toBeInTheDocument()
     expect(screen.getByText('Electric')).toBeInTheDocument()
   })
@@ -118,7 +131,7 @@ describe('PokemonCard', () => {
       />
     )
 
-    expect(screen.getByText('bulbasaur')).toBeInTheDocument()
+    expect(screen.getByText('Bulbasaur')).toBeInTheDocument()
     expect(screen.getByText('#0001')).toBeInTheDocument()
   })
 })

@@ -47,23 +47,22 @@ export default function StatsSection({ stats }: { stats: Stat[] }) {
   }];
 
   return (
-    <section id="stats" className="mx-auto max-w-5xl px-4 py-8 space-y-6">
-      <h3 className="text-lg font-semibold">Base Stats</h3>
-      <div className="space-y-4">
+    <section id="stats" className="mx-auto max-w-5xl px-4 py-4 space-y-6">
+      <div className="space-y-6">
         {stats.map(s => (
           <StatsSlider
             key={s.name}
             label={getStatLabel(s.name)}
             value={s.value}
             max={maxStat}
-            className="py-2"
+            className="py-1"
             colorClass={getStatColor(s.name)}
           />
         ))}
       </div>
 
       {/* Radar Chart */}
-      <div className="flex justify-center">
+      <div className="flex justify-center pt-8">
         <RadarChart data={radarData} size={300} />
       </div>
     </section>

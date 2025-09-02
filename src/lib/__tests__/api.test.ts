@@ -2,8 +2,6 @@ import {
   getPokemonList, 
   getPokemon, 
   getAllTypes, 
-  getAllGenerations, 
-  getAllHabitats,
   getPokemonImageUrl,
   calculateTypeEffectiveness
 } from '../api'
@@ -17,7 +15,7 @@ describe('API Functions', () => {
   })
 
   describe('getPokemonList', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       // Clear cache before each test
       const { clearCache } = await import('../api')
       clearCache()
@@ -116,29 +114,7 @@ describe('API Functions', () => {
     })
   })
 
-  describe('getAllGenerations', () => {
-    it('should fetch generations with fallback data', async () => {
-      ;(fetch as jest.Mock).mockRejectedValueOnce(new Error('API error'))
 
-      const result = await getAllGenerations()
-
-      expect(result.count).toBe(9)
-      expect(result.results).toHaveLength(9)
-      expect(result.results[0].name).toBe('generation-i')
-    })
-  })
-
-  describe('getAllHabitats', () => {
-    it('should fetch habitats with fallback data', async () => {
-      ;(fetch as jest.Mock).mockRejectedValueOnce(new Error('API error'))
-
-      const result = await getAllHabitats()
-
-      expect(result.count).toBe(9)
-      expect(result.results).toHaveLength(9)
-      expect(result.results[0].name).toBe('cave')
-    })
-  })
 
   describe('getPokemonImageUrl', () => {
     it('should return correct image URL', () => {

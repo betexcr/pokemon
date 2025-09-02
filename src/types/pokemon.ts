@@ -76,6 +76,29 @@ export interface PokemonMove {
   }[];
 }
 
+// Basic Pokémon type for initial page load (minimal data)
+export interface BasicPokemon {
+  id: number;
+  name: string;
+  sprites: PokemonSprites;
+  types: PokemonType[];
+  height: number;
+  weight: number;
+  stats: PokemonStat[];
+  abilities: PokemonAbility[];
+  moves: PokemonMove[];
+  species: NamedAPIResource | null;
+  evolution_chain: NamedAPIResource | null;
+  // Make all Pokemon fields optional to be compatible
+  base_experience?: number;
+  is_default?: boolean;
+  order?: number;
+  forms?: NamedAPIResource[];
+  game_indices?: unknown[];
+  held_items?: unknown[];
+  location_area_encounters?: string;
+}
+
 export interface Pokemon {
   id: number;
   name: string;

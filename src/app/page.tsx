@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Pokemon, FilterState } from '@/types/pokemon'
 import { getPokemonByType, getAllPokemon } from '@/lib/api'
 import { formatPokemonName, typeColors, cn } from '@/lib/utils'
@@ -58,8 +58,15 @@ export default function Home() {
     // Theme provider not available, use default
   }
 
-  // Load initial data
+  // Load initial data with caching
   const loadInitialData = useCallback(async () => {
+    // Check if we already have data in state (from navigation back)
+    if (pokemonList.length > 0) {
+      setFilteredPokemon(pokemonList)
+      setLoading(false)
+      return
+    }
+
     try {
       setLoading(true)
       setError(null)
@@ -72,7 +79,7 @@ export default function Home() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [pokemonList.length])
 
   // Load comparison list from localStorage
   useEffect(() => {
@@ -94,12 +101,31 @@ export default function Home() {
 
   // Update filtered Pokémon based on search results
   useEffect(() => {
-    if (searchResults.length > 0 || filters.search.trim()) {
+    // Only apply search results if there's an actual search term
+    if (filters.search.trim() && searchResults.length > 0) {
       setFilteredPokemon(searchResults)
+    } else if (filters.search.trim() && searchResults.length === 0) {
+      // Search term exists but no results found
+      setFilteredPokemon([])
     } else {
+      // No search term, show all Pokémon
       setFilteredPokemon(pokemonList)
     }
   }, [searchResults, filters.search, pokemonList])
+
+  // Memoize filtered Pokémon to prevent unnecessary re-renders and improve performance
+  const memoizedFilteredPokemon = useMemo(() => {
+    // Only apply search results if there's an actual search term
+    if (filters.search.trim() && searchResults.length > 0) {
+      return searchResults
+    } else if (filters.search.trim() && searchResults.length === 0) {
+      // Search term exists but no results found
+      return []
+    } else {
+      // No search term, show all Pokémon
+      return pokemonList
+    }
+  }, [searchResults, pokemonList, filters.search])
 
   // Handle type filter changes
   const handleTypeFilter = useCallback(async (type: string) => {
@@ -110,7 +136,7 @@ export default function Home() {
       
       if (newTypes.length === 0) {
         // No type filters, show all Pokémon
-        setFilteredPokemon(pokemonList)
+        setFilteredPokemon(memoizedFilteredPokemon)
       } else {
         // Still have other type filters, fetch those types with AND logic
         setTypeLoading(true)
@@ -174,8 +200,8 @@ export default function Home() {
     }
   }, [filters.types, pokemonList])
 
-  // Sort Pokémon
-  const sortedPokemon = [...filteredPokemon].sort((a, b) => {
+  // Sort Pokémon using memoized filtered Pokémon for better performance
+  const sortedPokemon = [...memoizedFilteredPokemon].sort((a, b) => {
     let comparison = 0
     switch (filters.sortBy) {
       case 'name':

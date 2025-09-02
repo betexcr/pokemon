@@ -39,7 +39,7 @@ export default function GoldPokedexLayout({
       
       {/* Authentic GBC PokéDex Header */}
       <div className="bg-yellow-200 border-b-4 border-yellow-600 p-2">
-        <h1 className="text-xl font-bold text-center text-yellow-800">POKéDEX</h1>
+        <h1 className="font-['Pocket_Monk'] text-xl font-bold text-center text-yellow-800 tracking-wider">POKéDEX</h1>
       </div>
 
       {/* Main PokéDex Interface - Three Panel Design */}
