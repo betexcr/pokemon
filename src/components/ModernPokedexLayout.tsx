@@ -58,6 +58,7 @@ export default function ModernPokedexLayout({
   const [cardDensity, setCardDensity] = useState<'cozy' | 'compact' | 'ultra'>('compact')
   const [comparisonPokemon, setComparisonPokemon] = useState<Pokemon[]>([])
   const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const [showDesktopMenu, setShowDesktopMenu] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
 
   // Close mobile menu when clicking outside
@@ -520,15 +521,19 @@ export default function ModernPokedexLayout({
               </button>
 
               {/* Mobile Menu Toggle - Only on small screens */}
+              {/* Menu toggle: mobile opens mobile menu, desktop opens desktop panel */}
               <button
                 onClick={() => {
-                  // Only allow mobile menu on small screens
-                  // if (isMobile) {
+                  if (isMobile) {
                     setShowMobileMenu(!showMobileMenu)
-                  // }
+                  } else {
+                    setShowDesktopMenu(!showDesktopMenu)
+                  }
                 }}
-                className="mobile-menu md:hidden p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
-                title="Toggle mobile menu"
+                className="p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
+                title="Toggle menu"
+                aria-expanded={isMobile ? showMobileMenu : showDesktopMenu}
+                aria-controls={isMobile ? 'mobile-drawer' : 'desktop-drawer'}
               >
                 <Menu className="h-5 w-5" />
               </button>
@@ -539,7 +544,7 @@ export default function ModernPokedexLayout({
 
       {/* Mobile Menu Overlay - Only on small screens */}
       {showMobileMenu && isMobile && (
-        <div className="md:hidden fixed inset-0 z-50 bg-black/95 animate-in fade-in duration-200">
+        <div id="mobile-drawer" className="md:hidden fixed inset-0 z-50 bg-black/95 animate-in fade-in duration-200">
           <div
             className="mobile-menu fixed right-0 top-0 h-full w-full bg-bg bg-opacity-100 border-l border-border shadow-2xl animate-in slide-in-from-right duration-300"
             style={{ backgroundColor: 'var(--color-bg)' }}
@@ -557,17 +562,18 @@ export default function ModernPokedexLayout({
               
               {/* Mobile Search Section */}
               <div className="space-y-3">
-                <h4 className="text-sm font-semibold text-text uppercase tracking-wider">Search</h4>
+                <label htmlFor="mobile-search" className="text-sm font-medium text-muted">Search</label>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-text" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
                   <input
+                    id="mobile-search"
                     type="text"
-                    placeholder="Quick search..."
+                    placeholder="Search by name, number, or type"
                     value={searchTerm}
-                    onChange={(e) => {
-                      handleSearchChange(e.target.value)
-                    }}
-                    className="w-full pl-10 pr-4 py-2 border border-border rounded-lg bg-surface text-text placeholder:text-muted focus:ring-2 focus:ring-poke-blue focus:border-poke-blue focus:outline-none transition-all duration-200 text-sm"
+                    onChange={(e) => { handleSearchChange(e.target.value) }}
+                    className="w-full pl-10 pr-4 py-3 border border-border rounded-xl bg-white text-text placeholder:text-muted focus:ring-2 focus:ring-poke-blue focus:border-poke-blue focus:outline-none transition-all duration-200 text-sm"
+                    inputMode="search"
+                    aria-label="Search Pokémon"
                   />
                 </div>
               </div>
@@ -664,31 +670,34 @@ export default function ModernPokedexLayout({
                 </button>
               </div>
 
-              {/* Mobile Sort Controls */}
+              {/* Mobile Sort Controls - Segmented control */}
               <div className="space-y-3">
-                <h4 className="text-sm font-semibold text-text uppercase tracking-wider">Sort By</h4>
-                <div className="space-y-2">
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as 'id' | 'name' | 'stats' | 'hp' | 'attack' | 'defense')}
-                    className="w-full px-3 py-2 bg-white border border-border rounded-xl text-text text-sm font-medium focus:ring-2 focus:ring-poke-blue focus:border-poke-blue focus:outline-none transition-all duration-200"
-                  >
-                    <option value="id">Number</option>
-                    <option value="name">Name</option>
-                    <option value="stats">Total Stats</option>
-                    <option value="hp">HP</option>
-                    <option value="attack">Attack</option>
-                    <option value="defense">Defense</option>
-                  </select>
-                  
+                <h4 className="text-sm font-semibold text-text uppercase tracking-wider">Sort</h4>
+                <div role="group" aria-label="Sort by" className="grid grid-cols-3 gap-2">
+                  {[
+                    { id: 'id', label: 'Number' },
+                    { id: 'name', label: 'Name' },
+                    { id: 'stats', label: 'Total' },
+                  ].map(opt => (
+                    <button
+                      key={opt.id}
+                      onClick={() => setSortBy(opt.id as 'id' | 'name' | 'stats')}
+                      className={`px-3 py-2 rounded-lg text-sm font-medium border transition ${sortBy===opt.id? 'bg-poke-blue text-white border-poke-blue' : 'bg-white text-text border-border'}`}
+                      aria-pressed={sortBy===opt.id}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted">Direction</span>
                   <button
                     onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-                    className="w-full p-2 rounded-xl bg-white border border-border hover:bg-gray-50 hover:border-poke-blue transition-all duration-200 flex items-center justify-center space-x-2"
+                    className="px-3 py-2 rounded-lg text-sm font-medium border border-border bg-white flex items-center space-x-2"
+                    aria-label={`Sort ${sortOrder==='asc'?'descending':'ascending'}`}
                   >
-                    <span className="text-sm font-medium">
-                      {sortOrder === 'asc' ? 'Ascending' : 'Descending'}
-                    </span>
-                    <svg className={`w-4 h-4 transform transition-transform duration-200 ${sortOrder === 'asc' ? 'rotate-0' : 'rotate-180'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <span>{sortOrder === 'asc' ? 'Ascending' : 'Descending'}</span>
+                    <svg className={`w-4 h-4 transform ${sortOrder === 'asc' ? 'rotate-0' : 'rotate-180'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
                     </svg>
                   </button>
@@ -745,6 +754,79 @@ export default function ModernPokedexLayout({
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Desktop Menu Drawer */}
+      {!isMobile && showDesktopMenu && (
+        <div id="desktop-drawer" className="fixed inset-0 z-[9998]">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowDesktopMenu(false)} />
+          <aside className="fixed right-0 top-0 h-full w-[360px] bg-white border-l border-border shadow-2xl p-6 space-y-6 z-[9999]" style={{ backgroundColor: '#ffffff', opacity: 1, isolation: 'isolate' }}>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">Menu</h3>
+              <button onClick={() => setShowDesktopMenu(false)} className="p-2 rounded-lg hover:bg-white/20"><X className="h-5 w-5"/></button>
+            </div>
+
+            {/* Reuse sections from mobile: Search, Sort (segmented), Quick Type Filters */}
+            <div className="space-y-3">
+              <label htmlFor="desktop-search" className="text-sm font-medium text-muted">Search</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
+                <input
+                  id="desktop-search"
+                  type="text"
+                  placeholder="Search by name, number, or type"
+                  value={searchTerm}
+                  onChange={(e) => { handleSearchChange(e.target.value) }}
+                  className="w-full pl-10 pr-4 py-2 border border-border rounded-lg bg-white text-text placeholder:text-muted focus:ring-2 focus:ring-poke-blue focus:border-poke-blue focus:outline-none text-sm"
+                />
+              </div>
+            </div>
+
+            {/* Sort */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold uppercase tracking-wider">Sort</h4>
+              <div role="group" aria-label="Sort by" className="grid grid-cols-3 gap-2">
+                {[
+                  { id: 'id', label: 'Number' },
+                  { id: 'name', label: 'Name' },
+                  { id: 'stats', label: 'Total' },
+                ].map(opt => (
+                  <button
+                    key={opt.id}
+                    onClick={() => setSortBy(opt.id as 'id' | 'name' | 'stats')}
+                    className={`px-3 py-2 rounded-lg text-sm font-medium border transition ${sortBy===opt.id? 'bg-poke-blue text-white border-poke-blue' : 'bg-white text-text border-border'}`}
+                    aria-pressed={sortBy===opt.id}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted">Direction</span>
+                <button onClick={() => setSortOrder(prev => prev==='asc'?'desc':'asc')} className="px-3 py-2 rounded-lg text-sm font-medium border border-border bg-white flex items-center space-x-2">
+                  <span>{sortOrder==='asc'?'Ascending':'Descending'}</span>
+                  <svg className={`w-4 h-4 transform ${sortOrder==='asc'?'rotate-0':'rotate-180'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" /></svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Quick type filters */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold uppercase tracking-wider">Quick Type Filters</h4>
+              <div className="flex flex-wrap gap-2">
+                {Object.keys(typeColors).slice(0, 12).map(type => (
+                  <button key={type} onClick={() => toggleTypeFilter(type)} className={`px-2 py-1 rounded-lg text-xs font-medium transition ${advancedFilters.types.includes(type)?'ring-2 ring-white scale-105':''}`} style={{backgroundColor:`var(--type-${type})`, color: (typeColors as any)[type]?.text==='text-white'?'white':'black'}}>
+                    {formatPokemonName(type)}
+                  </button>
+                ))}
+                {(advancedFilters.types.length>0 || searchTerm) && (
+                  <button onClick={clearAllFilters} className="text-xs text-poke-blue hover:underline">Clear all</button>
+                )}
+              </div>
+            </div>
+
+          </aside>
         </div>
       )}
 

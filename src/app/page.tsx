@@ -230,16 +230,6 @@ export default function Home() {
     localStorage.setItem('pokemon-comparison', JSON.stringify(newComparison))
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-bg">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-poke-blue mx-auto mb-4"></div>
-          <p className="text-muted">Loading Pokémon...</p>
-        </div>
-      </div>
-    )
-  }
 
   if (error) {
     return (
@@ -262,6 +252,17 @@ export default function Home() {
 
   // Render modern layout for light/dark themes
   if (isModernTheme) {
+    if (loading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-bg">
+          <div className="text-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/loading.gif" width={100} height={100} alt="Loading" className="mx-auto mb-4" />
+            <p className="text-muted">Loading Pokémon...</p>
+          </div>
+        </div>
+      )
+    }
     return (
       <ModernPokedexLayout
         pokemonList={sortedPokemon}
@@ -281,6 +282,17 @@ export default function Home() {
 
   // Render retro layouts for game themes
   if (theme === 'red') {
+    if (loading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-bg">
+          <div className="text-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/loading.gif" width={100} height={100} alt="Loading" className="mx-auto mb-4" />
+            <p className="text-muted">Loading Pokémon...</p>
+          </div>
+        </div>
+      )
+    }
     return (
       <RedPokedexLayout
         pokemonList={sortedPokemon}
@@ -295,6 +307,17 @@ export default function Home() {
   }
 
   if (theme === 'gold') {
+    if (loading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-bg">
+          <div className="text-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/loading.gif" width={100} height={100} alt="Loading" className="mx-auto mb-4" />
+            <p className="text-muted">Loading Pokémon...</p>
+          </div>
+        </div>
+      )
+    }
     return (
       <GoldPokedexLayout
         pokemonList={sortedPokemon}
@@ -309,6 +332,17 @@ export default function Home() {
   }
 
   if (theme === 'ruby') {
+    if (loading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-bg">
+          <div className="text-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/loading.gif" width={100} height={100} alt="Loading" className="mx-auto mb-4" />
+            <p className="text-muted">Loading Pokémon...</p>
+          </div>
+        </div>
+      )
+    }
     return (
       <RubyPokedexLayout
         pokemonList={sortedPokemon}
@@ -325,7 +359,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-bg">
       {/* Header */}
-      <header className={`sticky top-0 z-50 border-b border-border bg-surface/80 backdrop-blur-sm`}>
+      <header className={`sticky top-0 z-50 border-b border-border bg-surface`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">

@@ -199,7 +199,7 @@ export default function PokemonDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [comparisonList, setComparisonList] = useState<number[]>([])
   const [selectedSprite, setSelectedSprite] = useState<'default' | 'shiny'>('default')
-  const [activeTab, setActiveTab] = useState<'overview' | 'stats' | 'moves' | 'evolution' | 'matchups'>('stats')
+  const [activeTab, setActiveTab] = useState<'overview' | 'stats' | 'moves' | 'evolution' | 'matchups'>('overview')
 
   useEffect(() => {
     // Avoid double-invocation on mount (Strict Mode) and rapid route changes
@@ -224,6 +224,10 @@ export default function PokemonDetailPage() {
   const loadPokemonData = async () => {
     try {
       setLoading(true)
+      // Scroll to top when opening a new detail page
+      if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior })
+      }
       const [pokemonData, speciesData] = await Promise.all([
         getPokemon(pokemonId),
         getPokemonSpecies(pokemonId)
@@ -301,7 +305,8 @@ export default function PokemonDetailPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-bg">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-poke-blue mx-auto mb-4"></div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/loading.gif" width={100} height={100} alt="Loading" className="mx-auto mb-4" />
           <p className="text-muted">Loading Pokémon...</p>
         </div>
       </div>
@@ -332,7 +337,7 @@ export default function PokemonDetailPage() {
   return (
     <div className="min-h-screen bg-bg">
       {/* Header */}
-      <header className="bg-surface/80 backdrop-blur-sm sticky top-0 z-50">
+      <header className="bg-surface sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Link 

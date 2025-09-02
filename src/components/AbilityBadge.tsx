@@ -128,7 +128,7 @@ export default function AbilityBadge({ ability, className = '' }: AbilityBadgePr
       >
         {formatAbilityName(ability.name)}
         {ability.description && (
-          <span className="ability-tooltip pointer-events-none absolute left-0 top-full z-10 mt-1 hidden w-64 rounded-md bg-black/90 p-2 text-xs text-white group-hover:block">
+          <span className="ability-tooltip pointer-events-auto absolute left-0 top-full z-20 mt-1 hidden w-72 max-w-[80vw] rounded-md bg-black p-3 text-xs text-white shadow-xl ring-1 ring-black/40 group-hover:block">
             {ability.description}
           </span>
         )}

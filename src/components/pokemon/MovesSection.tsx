@@ -60,7 +60,7 @@ export default function MovesSection({ moves }: { moves: Move[] }) {
 
       <div className="overflow-x-auto rounded-2xl border border-border">
         <table className="w-full text-sm">
-          <thead className="sticky top-0 bg-bg/90 backdrop-blur border-b border-border z-10">
+          <thead className="sticky top-0 bg-bg border-b border-border z-10">
             <tr className="[&>th]:px-3 [&>th]:py-2 text-left text-muted">
               <th>Move</th><th>Type</th><th>Cat.</th><th>Power</th><th>Acc.</th><th>PP</th><th>Lvl</th>
             </tr>
@@ -75,7 +75,7 @@ export default function MovesSection({ moves }: { moves: Move[] }) {
                   >
                     {m.name}
                     {m.short_effect && (
-                      <span className={`pointer-events-none absolute left-0 top-full z-10 mt-1 w-[20rem] max-w-[80vw] rounded-md bg-black/90 p-3 text-sm leading-snug text-white shadow-xl ring-1 ring-black/40 ${openIdx===index ? 'block' : 'hidden sm:group-hover:block'}`}
+                      <span className={`pointer-events-auto absolute left-0 top-full z-20 mt-1 w-[22rem] max-w-[90vw] rounded-md bg-black p-3 text-sm leading-snug text-white shadow-xl ring-1 ring-black/40 ${openIdx===index ? 'block' : 'hidden sm:group-hover:block'}`}
                       >
                         {m.short_effect}
                       </span>
