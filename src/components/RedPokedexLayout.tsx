@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Pokemon, FilterState } from '@/types/pokemon';
 import { formatPokemonName, getPokemonDescription } from '@/lib/utils';
 import { searchPokemonByName } from '@/lib/api';
@@ -33,6 +34,7 @@ export default function RedPokedexLayout({
   const [searchTerm, setSearchTerm] = useState('');
   const [searchLoading, setSearchLoading] = useState(false);
   const [filteredPokemon, setFilteredPokemon] = useState<Pokemon[]>(pokemonList);
+  const [showDesktopMenu, setShowDesktopMenu] = useState(false);
 
   const menuOptions = [
     { id: 'data', label: 'DATA' },
@@ -49,8 +51,11 @@ export default function RedPokedexLayout({
       </div>
       
       {/* Authentic GBC PokéDex Header */}
-      <div className="bg-red-100 border-b-4 border-red-600 p-4">
+      <div className="bg-red-100 border-b-4 border-red-600 p-4 relative">
         <h1 className="font-['Pocket_Monk'] text-2xl font-bold text-center text-red-800 tracking-wider">POKéDEX</h1>
+        <div className="absolute top-2 right-2">
+          <button onClick={() => setShowDesktopMenu(true)} className="px-3 py-1 bg-white text-red-800 border-2 border-red-600 rounded font-bold">MENU</button>
+        </div>
       </div>
 
       {/* Main PokéDex Interface - Split Panel Design */}
@@ -202,6 +207,26 @@ export default function RedPokedexLayout({
           )}
         </div>
       </div>
+
+      {/* Desktop Drawer (Retro) */}
+      {typeof window !== 'undefined' && showDesktopMenu && createPortal(
+        <div id="desktop-drawer" className="fixed inset-0" style={{ zIndex: 2147483000 }}>
+          <div className="fixed inset-0" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 2147483000 }} onClick={() => setShowDesktopMenu(false)} />
+          <aside className="fixed right-0 top-0 h-full w-[320px] overflow-y-auto bg-white border-l-4 border-red-600 p-4 space-y-4" style={{ zIndex: 2147483001 }}>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-red-800">MENU</h3>
+              <button onClick={() => setShowDesktopMenu(false)} className="px-2 py-1 border-2 border-red-600 text-red-800 rounded">CLOSE</button>
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-red-800 mb-1">Search</label>
+              <input type="text" className="w-full border-2 border-red-600 p-2 text-black" placeholder="Search..." value={searchTerm} onChange={(e)=>setSearchTerm(e.target.value)} />
+            </div>
+            <div>
+              <button onClick={()=>window.location.href='/compare'} className="w-full px-3 py-2 bg-red-600 text-white font-bold">GO TO COMPARISON</button>
+            </div>
+          </aside>
+        </div>, document.body)
+      }
 
       {/* Search Bar (Authentic Style) */}
       <div className="absolute bottom-4 left-4 right-4">

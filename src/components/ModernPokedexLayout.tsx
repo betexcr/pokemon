@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import { Pokemon, FilterState } from '@/types/pokemon'
 import { formatPokemonName, typeColors } from '@/lib/utils'
 import { useSearch } from '@/hooks/useSearch'
@@ -60,6 +61,7 @@ export default function ModernPokedexLayout({
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [showDesktopMenu, setShowDesktopMenu] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const [isClient, setIsClient] = useState(false)
 
   // Close mobile menu when clicking outside
   useEffect(() => {
@@ -91,6 +93,11 @@ export default function ModernPokedexLayout({
     return () => window.removeEventListener('resize', handleResize)
   }, [showMobileMenu])
 
+  // Mark client-side mount for portal safety
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+
   // Prevent background scroll when mobile menu is open
   useEffect(() => {
     if (showMobileMenu) {
@@ -101,6 +108,18 @@ export default function ModernPokedexLayout({
       }
     }
   }, [showMobileMenu])
+
+  // Prevent background scroll when desktop menu is open
+  useEffect(() => {
+    if (showDesktopMenu) {
+      console.log('[DesktopDrawer] rendering, showDesktopMenu=true')
+      const original = document.body.style.overflow
+      document.body.style.overflow = 'hidden'
+      return () => {
+        document.body.style.overflow = original
+      }
+    }
+  }, [showDesktopMenu])
 
   // Enhanced search hook
   const {
@@ -523,17 +542,21 @@ export default function ModernPokedexLayout({
               {/* Mobile Menu Toggle - Only on small screens */}
               {/* Menu toggle: mobile opens mobile menu, desktop opens desktop panel */}
               <button
+                type="button"
                 onClick={() => {
-                  if (isMobile) {
-                    setShowMobileMenu(!showMobileMenu)
+                  const isMobileNow = typeof window !== 'undefined' ? window.innerWidth < 768 : isMobile
+                  console.log('[MenuToggle] click', { isMobileNow, showMobileMenu, showDesktopMenu })
+                  if (isMobileNow) {
+                    setShowMobileMenu(prev => !prev)
                   } else {
-                    setShowDesktopMenu(!showDesktopMenu)
+                    console.log('[MenuToggle] toggle desktop drawer')
+                    setShowDesktopMenu(prev => !prev)
                   }
                 }}
                 className="p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
                 title="Toggle menu"
-                aria-expanded={isMobile ? showMobileMenu : showDesktopMenu}
-                aria-controls={isMobile ? 'mobile-drawer' : 'desktop-drawer'}
+                aria-expanded={(typeof window !== 'undefined' ? window.innerWidth < 768 : isMobile) ? showMobileMenu : showDesktopMenu}
+                aria-controls={(typeof window !== 'undefined' ? window.innerWidth < 768 : isMobile) ? 'mobile-drawer' : 'desktop-drawer'}
               >
                 <Menu className="h-5 w-5" />
               </button>
@@ -541,6 +564,13 @@ export default function ModernPokedexLayout({
           </div>
         </div>
       </header>
+
+      {/* Fallback on-screen marker (non-portal) to prove render path */}
+      {showDesktopMenu && (
+        <div id="desktop-drawer-fallback" data-testid="desktop-drawer-fallback" className="fixed top-4 left-4 z-[2147483647] px-2 py-1 text-xs font-bold text-white bg-red-700 rounded">
+          DESKTOP MENU MARKER
+        </div>
+      )}
 
       {/* Mobile Menu Overlay - Only on small screens */}
       {showMobileMenu && isMobile && (
@@ -758,16 +788,21 @@ export default function ModernPokedexLayout({
       )}
 
       {/* Desktop Menu Drawer */}
-      {!isMobile && showDesktopMenu && (
-        <div id="desktop-drawer" className="fixed inset-0 z-[9998]">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setShowDesktopMenu(false)} />
-          <aside className="fixed right-0 top-0 h-full w-[360px] bg-white border-l border-border shadow-2xl p-6 space-y-6 z-[9999]" style={{ backgroundColor: '#ffffff', opacity: 1, isolation: 'isolate' }}>
+      {isClient && showDesktopMenu && (
+        <div id="desktop-drawer" data-testid="desktop-drawer" className="fixed inset-0 pointer-events-auto" style={{ zIndex: 2147483647 }}>
+          {/* Full-screen debug overlay to make rendering obvious */}
+          <div className="fixed inset-0" style={{ backgroundColor: 'rgba(255,0,0,0.15)', zIndex: 2147483646, pointerEvents: 'auto' }} onClick={() => setShowDesktopMenu(false)} />
+          {/* Debug badge to verify rendering when open */}
+          <div className="fixed top-2 right-[400px] z-[2147483647] px-2 py-1 text-xs font-bold text-white bg-red-600 rounded">
+            DESKTOP MENU OPEN
+          </div>
+          <aside role="dialog" aria-modal="true" aria-label="Desktop menu" className="fixed right-0 top-0 h-full w-96 overflow-y-auto bg-white border-l border-poke-blue/50 shadow-2xl ring-2 ring-poke-blue p-6 space-y-6" style={{ backgroundColor: '#ffffff', opacity: 1, isolation: 'isolate', zIndex: 2147483647, pointerEvents: 'auto', width: '384px', boxShadow: '0 20px 50px rgba(0,0,0,0.45)' }}>
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold">Menu</h3>
               <button onClick={() => setShowDesktopMenu(false)} className="p-2 rounded-lg hover:bg-white/20"><X className="h-5 w-5"/></button>
             </div>
-
-            {/* Reuse sections from mobile: Search, Sort (segmented), Quick Type Filters */}
+            {/* Desktop drawer content mirrors mobile features */}
+            {/* Search */}
             <div className="space-y-3">
               <label htmlFor="desktop-search" className="text-sm font-medium text-muted">Search</label>
               <div className="relative">
@@ -778,12 +813,70 @@ export default function ModernPokedexLayout({
                   placeholder="Search by name, number, or type"
                   value={searchTerm}
                   onChange={(e) => { handleSearchChange(e.target.value) }}
-                  className="w-full pl-10 pr-4 py-2 border border-border rounded-lg bg-white text-text placeholder:text-muted focus:ring-2 focus:ring-poke-blue focus:border-poke-blue focus:outline-none text-sm"
+                  className="w-full pl-10 pr-4 py-3 border border-border rounded-xl bg-white text-text placeholder:text-muted focus:ring-2 focus:ring-poke-blue focus:border-poke-blue focus:outline-none text-sm"
                 />
               </div>
             </div>
 
-            {/* Sort */}
+            {/* Card Size */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold uppercase tracking-wider">Card Size</h4>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { id: 'cozy', label: 'Cozy', icon: '🟢' },
+                  { id: 'compact', label: 'Compact', icon: '🟡' },
+                  { id: 'ultra', label: 'Ultra', icon: '🔴' }
+                ].map(({ id, label, icon }) => (
+                  <button
+                    key={id}
+                    onClick={() => setCardDensity(id as 'cozy' | 'compact' | 'ultra')}
+                    className={`p-3 rounded-xl text-sm font-medium transition-all duration-200 flex flex-col items-center space-y-2 ${
+                      cardDensity === id 
+                        ? 'bg-poke-blue text-white shadow-lg' 
+                        : 'bg-surface border border-border text-text hover:bg-gray-50'
+                    }`}
+                  >
+                    <span className="text-lg">{icon}</span>
+                    <span>{label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Quick Type Filters + Clear */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold uppercase tracking-wider">Quick Type Filters</h4>
+              <div className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto">
+                {Object.keys(typeColors).slice(0, 12).map(type => (
+                  <button
+                    key={type}
+                    onClick={() => toggleTypeFilter(type)}
+                    className={`px-2 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
+                      advancedFilters.types.includes(type) ? 'ring-2 ring-white shadow-lg scale-105' : 'opacity-80 hover:opacity-100'
+                    }`}
+                    style={{ backgroundColor: `var(--type-${type})`, color: (typeColors as any)[type]?.text==='text-white'?'white':'black' }}
+                  >
+                    {formatPokemonName(type)}
+                  </button>
+                ))}
+              </div>
+              {(advancedFilters.types.length > 0 || searchTerm || advancedFilters.generation) && (
+                <button onClick={clearAllFilters} className="text-poke-blue hover:text-poke-blue/80 hover:underline font-medium text-sm">Clear all</button>
+              )}
+            </div>
+
+            {/* Generation & Range sliders (reuse sidebar state) */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold uppercase tracking-wider">Filters</h4>
+              <button onClick={() => setShowSidebar(!showSidebar)} className={`w-full p-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center space-x-2 ${
+                showSidebar ? 'bg-poke-blue text-white shadow-lg' : 'bg-white border border-border text-text hover:bg-gray-50'
+              }`}>
+                <Filter className="h-5 w-5" />
+                <span>{showSidebar ? 'Hide Filters' : 'Show Filters'}</span>
+              </button>
+            </div>
+
+            {/* Sort segmented + direction */}
             <div className="space-y-3">
               <h4 className="text-sm font-semibold uppercase tracking-wider">Sort</h4>
               <div role="group" aria-label="Sort by" className="grid grid-cols-3 gap-2">
@@ -792,12 +885,7 @@ export default function ModernPokedexLayout({
                   { id: 'name', label: 'Name' },
                   { id: 'stats', label: 'Total' },
                 ].map(opt => (
-                  <button
-                    key={opt.id}
-                    onClick={() => setSortBy(opt.id as 'id' | 'name' | 'stats')}
-                    className={`px-3 py-2 rounded-lg text-sm font-medium border transition ${sortBy===opt.id? 'bg-poke-blue text-white border-poke-blue' : 'bg-white text-text border-border'}`}
-                    aria-pressed={sortBy===opt.id}
-                  >
+                  <button key={opt.id} onClick={() => setSortBy(opt.id as 'id' | 'name' | 'stats')} className={`px-3 py-2 rounded-lg text-sm font-medium border transition ${sortBy===opt.id? 'bg-poke-blue text-white border-poke-blue' : 'bg-white text-text border-border'}`} aria-pressed={sortBy===opt.id}>
                     {opt.label}
                   </button>
                 ))}
@@ -811,17 +899,19 @@ export default function ModernPokedexLayout({
               </div>
             </div>
 
-            {/* Quick type filters */}
+            {/* Comparison links */}
             <div className="space-y-3">
-              <h4 className="text-sm font-semibold uppercase tracking-wider">Quick Type Filters</h4>
-              <div className="flex flex-wrap gap-2">
-                {Object.keys(typeColors).slice(0, 12).map(type => (
-                  <button key={type} onClick={() => toggleTypeFilter(type)} className={`px-2 py-1 rounded-lg text-xs font-medium transition ${advancedFilters.types.includes(type)?'ring-2 ring-white scale-105':''}`} style={{backgroundColor:`var(--type-${type})`, color: (typeColors as any)[type]?.text==='text-white'?'white':'black'}}>
-                    {formatPokemonName(type)}
-                  </button>
-                ))}
-                {(advancedFilters.types.length>0 || searchTerm) && (
-                  <button onClick={clearAllFilters} className="text-xs text-poke-blue hover:underline">Clear all</button>
+              <h4 className="text-sm font-semibold uppercase tracking-wider">Comparison</h4>
+              <div className="space-y-2">
+                <button onClick={() => { router.push('/compare'); setShowDesktopMenu(false); }} className="w-full p-3 rounded-xl bg-poke-blue text-white font-medium transition-all duration-200 hover:bg-poke-blue/80 flex items-center justify-center space-x-2">
+                  <Scale className="h-5 w-5" />
+                  <span>Go to Comparison</span>
+                  {comparisonList.length > 0 && (
+                    <span className="ml-2 px-2 py-1 bg-white text-poke-blue text-xs rounded-full font-bold">{comparisonList.length}</span>
+                  )}
+                </button>
+                {comparisonList.length > 0 && (
+                  <button onClick={() => { onClearComparison(); setShowDesktopMenu(false); }} className="w-full p-2 rounded-lg bg-white border border-border text-text hover:bg-gray-50 transition-all duration-200 text-sm">Clear Comparison</button>
                 )}
               </div>
             </div>

@@ -124,8 +124,8 @@ A high-performance, modern Pokémon web application built with Next.js, TypeScri
    ```
 
 3. **Run the development server**
-   ```bash
-   npm run dev
+```bash
+npm run dev
    ```
 
 4. **Open your browser**
