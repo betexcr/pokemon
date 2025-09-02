@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { createPortal } from 'react-dom'
 import { Pokemon, FilterState } from '@/types/pokemon'
 import { formatPokemonName, typeColors } from '@/lib/utils'
 import { useSearch } from '@/hooks/useSearch'
@@ -32,13 +31,13 @@ interface AdvancedFilters {
 
 export default function ModernPokedexLayout({
   pokemonList,
-  selectedPokemon,
-  onSelectPokemon,
+  selectedPokemon: _selectedPokemon,
+  onSelectPokemon: _onSelectPokemon,
   onToggleComparison,
   onClearComparison,
   comparisonList,
-  filters,
-  setFilters
+  filters: _filters,
+  setFilters: _setFilters
 }: ModernPokedexLayoutProps) {
   const router = useRouter()
   
@@ -59,11 +58,10 @@ export default function ModernPokedexLayout({
   const [cardDensity, setCardDensity] = useState<'cozy' | 'compact' | 'ultra'>('compact')
   const [comparisonPokemon, setComparisonPokemon] = useState<Pokemon[]>([])
   const [showMobileMenu, setShowMobileMenu] = useState(false)
-  const [showDesktopMenu, setShowDesktopMenu] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
-  const [isClient, setIsClient] = useState(false)
   const [detailsCache, setDetailsCache] = useState<Map<number, Pokemon>>(new Map())
   const fetchingRef = useRef<Set<number>>(new Set())
+  const [themeSelection, setThemeSelection] = useState<'light'|'dark'|'red'|'gold'|'ruby'>('light')
 
   // Close mobile menu when clicking outside
   useEffect(() => {
@@ -95,10 +93,6 @@ export default function ModernPokedexLayout({
     return () => window.removeEventListener('resize', handleResize)
   }, [showMobileMenu])
 
-  // Mark client-side mount for portal safety
-  useEffect(() => {
-    setIsClient(true)
-  }, [])
 
   // Prevent background scroll when mobile menu is open
   useEffect(() => {
@@ -113,10 +107,8 @@ export default function ModernPokedexLayout({
 
   // Desktop: no separate menu; keep page scroll default
   useEffect(() => {
-    if (showDesktopMenu) {
-      console.log('[DesktopDrawer] ignored on desktop – header provides controls')
-    }
-  }, [showDesktopMenu])
+    // noop
+  }, [])
 
   // Enhanced search hook
   const {
@@ -242,7 +234,7 @@ export default function ModernPokedexLayout({
       .finally(() => {
         missing.forEach(id => (fetchingRef.current as Set<number>).delete(id))
       })
-  }, [sortBy, filteredPokemon, pokemonList])
+  }, [sortBy, filteredPokemon, pokemonList, detailsCache])
 
   // Fetch comparison Pokémon that aren't in current filtered results
   useEffect(() => {
@@ -351,6 +343,37 @@ export default function ModernPokedexLayout({
       
       return { ...prev, types: newTypes }
     })
+  }, [])
+
+  // Theme/layout selector (persists and reloads)
+  const applyThemeSelection = useCallback((value: 'light'|'dark'|'red'|'gold'|'ruby') => {
+    try {
+      // Persist under multiple keys to interop with existing providers
+      localStorage.setItem('theme', value)
+      localStorage.setItem('app_theme', value)
+      localStorage.setItem('layout', value)
+    } catch {}
+    setThemeSelection(value)
+    // Soft reload to let top-level layout react to theme
+    if (typeof window !== 'undefined') {
+      window.location.reload()
+    }
+  }, [])
+
+  // Initialize theme selector reliably when landing on Modern
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('app_theme') || localStorage.getItem('theme') || 'light'
+      const allowed = new Set(['light','dark','red','gold','ruby'])
+      let normalized = allowed.has(stored || '') ? (stored as 'light'|'dark'|'red'|'gold'|'ruby') : 'light'
+      // If returning from retro themes into Modern layout, default to light unless explicit dark
+      if (normalized === 'red' || normalized === 'gold' || normalized === 'ruby') {
+        normalized = 'light'
+      }
+      setThemeSelection(normalized)
+    } catch {
+      setThemeSelection('light')
+    }
   }, [])
 
   return (
@@ -474,7 +497,7 @@ export default function ModernPokedexLayout({
                 <div className="flex items-center space-x-2">
                   <select
                     value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as any)}
+                    onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
                     className="px-3 py-2 bg-surface border border-border rounded-xl text-text text-sm font-medium focus:ring-2 focus:ring-poke-blue focus:border-poke-blue focus:outline-none transition-all duration-200 shadow-sm hover:shadow-md"
                   >
                     <option value="id">Number</option>
@@ -501,6 +524,23 @@ export default function ModernPokedexLayout({
                     <span className="text-xs font-medium text-muted group-hover:text-poke-blue">{sortOrder === 'asc' ? 'ASC' : 'DESC'}</span>
                   </button>
                 </div>
+              </div>
+
+              {/* Theme/Layout Selector */}
+              <div className="flex items-center space-x-2">
+                <span className="text-xs font-medium text-muted uppercase tracking-wider">Theme</span>
+                <select
+                  onChange={(e) => applyThemeSelection(e.target.value as 'light'|'dark'|'red'|'gold'|'ruby')}
+                  value={themeSelection}
+                  className="px-3 py-2 bg-surface border border-border rounded-xl text-text text-sm font-medium focus:ring-2 focus:ring-poke-blue focus:border-poke-blue focus:outline-none transition-all duration-200 shadow-sm hover:shadow-md"
+                  title="Change theme"
+                >
+                  <option value="light">Light</option>
+                  <option value="dark">Dark</option>
+                  <option value="red">Red</option>
+                  <option value="gold">Gold</option>
+                  <option value="ruby">Ruby</option>
+                </select>
               </div>
 
               {/* Quick Type Filters - Desktop */}
@@ -598,12 +638,7 @@ export default function ModernPokedexLayout({
         </div>
       </header>
 
-      {/* Fallback on-screen marker (non-portal) to prove render path */}
-      {showDesktopMenu && (
-        <div id="desktop-drawer-fallback" data-testid="desktop-drawer-fallback" className="fixed top-4 left-4 z-[2147483647] px-2 py-1 text-xs font-bold text-white bg-red-700 rounded">
-          DESKTOP MENU MARKER
-        </div>
-      )}
+      {/* Fallback marker removed; no desktop drawer */}
 
       {/* Mobile Menu Overlay - Only on small screens */}
       {showMobileMenu && isMobile && (
@@ -1063,11 +1098,15 @@ export default function ModernPokedexLayout({
                               : ''
                           }`}
                         >
-                          <img
-                            src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`}
-                            alt={formatPokemonName(pokemon.name)}
-                            className="w-8 h-8 object-contain mr-3"
-                          />
+                          <picture className="mr-3">
+                            <img
+                              src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`}
+                              alt={formatPokemonName(pokemon.name)}
+                              className="w-8 h-8 object-contain"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          </picture>
                           <span className="text-white text-sm">
                             {formatPokemonName(pokemon.name)}#{pokemon.id}
                           </span>

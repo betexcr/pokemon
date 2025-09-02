@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import Image from 'next/image';
 import { createPortal } from 'react-dom';
 import { Pokemon, FilterState } from '@/types/pokemon';
 import { formatPokemonName, getPokemonDescription } from '@/lib/utils';
@@ -26,8 +27,8 @@ export default function RubyPokedexLayout({
   onSelectPokemon,
   onToggleComparison,
   comparisonList,
-  filters,
-  setFilters
+  filters: _filters,
+  setFilters: _setFilters
 }: RubyPokedexLayoutProps) {
   const [menuSelection, setMenuSelection] = useState<'page' | 'area' | 'cry' | 'size'>('page');
   const [currentPage, setCurrentPage] = useState(1);
@@ -154,9 +155,11 @@ export default function RubyPokedexLayout({
               {/* Left Side - Pokémon Sprite */}
               <div className="flex justify-center lg:w-1/2">
                 <div className="relative">
-                  <img
+                  <Image
                     src={selectedPokemon.sprites.other['official-artwork'].front_default || selectedPokemon.sprites.front_default || ''}
                     alt={selectedPokemon.name}
+                    width={256}
+                    height={256}
                     className="w-48 h-48 lg:w-64 lg:h-64 object-contain image-render-pixel"
                   />
                   {/* Favorite Button */}

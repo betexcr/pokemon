@@ -1,10 +1,15 @@
 import React from 'react'
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import '@testing-library/jest-dom'
 import ModernPokedexLayout from '@/components/ModernPokedexLayout'
 import ThemeProvider from '@/components/ThemeProvider'
 
+// Skip when jest globals are missing (allow linting in editor)
+const maybeJest: any = (globalThis as any).jest
+const mock = maybeJest?.fn ? maybeJest.fn : (() => () => {})
 jest.mock('next/navigation', () => ({
-  useRouter: () => ({ push: jest.fn() })
+  useRouter: () => ({ push: mock() })
 }))
 
 // Avoid ThemeContext requirement in ThemeToggle for these UI tests
@@ -68,12 +73,12 @@ describe('ModernPokedexLayout desktop menu', () => {
         <ModernPokedexLayout
           pokemonList={pokemonList}
           selectedPokemon={null}
-          onSelectPokemon={jest.fn()}
-          onToggleComparison={jest.fn()}
-          onClearComparison={jest.fn()}
+          onSelectPokemon={maybeJest?.fn?.() || (()=>{})}
+          onToggleComparison={maybeJest?.fn?.() || (()=>{})}
+          onClearComparison={maybeJest?.fn?.() || (()=>{})}
           comparisonList={[]}
-          filters={{ search: '', types: [], sortBy: 'id', sortOrder: 'asc' }}
-          setFilters={jest.fn()}
+          filters={{ search: '', types: [], sortBy: 'id', sortOrder: 'asc', generation: '' }}
+          setFilters={maybeJest?.fn?.() || (()=>{})}
         />
       </ThemeProvider>
     )
