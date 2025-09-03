@@ -22,6 +22,8 @@ export default function ComparisonOverlay({
   onClearComparison
 }: ComparisonOverlayProps) {
   const [isExpanded, setIsExpanded] = useState(false)
+  const [sortBy, setSortBy] = useState<'total' | 'hp' | 'attack' | 'defense' | 'special-attack' | 'special-defense' | 'speed'>('total')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const router = useRouter()
 
   if (comparisonList.length === 0) {
@@ -33,7 +35,8 @@ export default function ComparisonOverlay({
   )
 
   const handleGoToComparison = () => {
-    router.push('/compare')
+    const params = new URLSearchParams({ sort: sortBy, order: sortOrder })
+    router.push(`/compare?${params.toString()}`)
   }
 
   return (
@@ -82,6 +85,30 @@ export default function ComparisonOverlay({
         {/* Content */}
         {isExpanded && (
           <div className="p-3 space-y-3">
+            {/* Sorting Controls */}
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-muted">Sort by</label>
+              <select
+                className="flex-1 h-8 rounded-md border border-border bg-surface px-2 text-xs"
+                value={sortBy}
+                onChange={(e)=> setSortBy(e.target.value as typeof sortBy)}
+              >
+                <option value="total">Total</option>
+                <option value="hp">HP</option>
+                <option value="attack">Attack</option>
+                <option value="defense">Defense</option>
+                <option value="special-attack">Sp. Atk</option>
+                <option value="special-defense">Sp. Def</option>
+                <option value="speed">Speed</option>
+              </select>
+              <button
+                className="h-8 px-2 rounded-md border border-border text-xs"
+                onClick={()=> setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                aria-label="Toggle sort order"
+              >
+                {sortOrder === 'asc' ? 'ASC' : 'DESC'}
+              </button>
+            </div>
             {/* Pokémon List */}
             <div className="space-y-2 max-h-64 overflow-y-auto">
               {selectedPokemon.map((pokemon) => (

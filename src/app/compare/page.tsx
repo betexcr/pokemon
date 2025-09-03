@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ArrowLeft, Scale, X } from 'lucide-react'
+import { ArrowLeft, Scale, X, Zap } from 'lucide-react'
 import Link from 'next/link'
+import { useTheme } from '@/components/ThemeProvider'
 import { getPokemon } from '@/lib/api'
 import { formatPokemonName } from '@/lib/utils'
 import { Pokemon } from '@/types/pokemon'
@@ -12,6 +13,15 @@ import MultiPokemonRadarChart from '@/components/MultiPokemonRadarChart'
 
 
 export default function ComparePage() {
+  
+  let theme = 'light'
+  try {
+    const themeContext = useTheme()
+    theme = themeContext.theme
+  } catch {
+    // Theme provider not available, use default
+  }
+  
   const [pokemons, setPokemons] = useState<Pokemon[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -89,13 +99,14 @@ export default function ComparePage() {
         <header className="bg-white/80 backdrop-blur border-b border-border/60 sticky top-0 z-50 shadow-sm">
           <div className="mx-auto max-w-6xl px-4 md:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
-              <Link 
-                href="/"
+              <button
+                onClick={() => window.location.href = '/'}
                 className="flex items-center space-x-2 text-muted hover:text-text transition-colors"
+                title="Back to PokéDex"
               >
                 <ArrowLeft className="h-5 w-5" />
                 <span className="font-medium">Back to PokéDex</span>
-              </Link>
+              </button>
               
               <div className="flex items-center space-x-3">
                 <Scale className="h-6 w-6 text-poke-blue" />
@@ -129,13 +140,14 @@ export default function ComparePage() {
       <header className="bg-white/80 backdrop-blur border-b border-border/60 sticky top-0 z-50 shadow-sm">
         <div className="mx-auto max-w-6xl px-4 md:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <Link 
-              href="/"
+            <button
+              onClick={() => window.location.href = '/'}
               className="flex items-center space-x-2 text-muted hover:text-text transition-colors"
+              title="Back to PokéDex"
             >
               <ArrowLeft className="h-5 w-5" />
               <span className="font-medium">Back to PokéDex</span>
-            </Link>
+            </button>
             
             <div className="flex items-center space-x-3">
               <Scale className="h-6 w-6 text-poke-blue" />

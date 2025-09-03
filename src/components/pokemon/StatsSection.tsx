@@ -47,7 +47,7 @@ export default function StatsSection({ stats }: { stats: Stat[] }) {
   }];
 
   return (
-    <section id="stats" className="mx-auto max-w-5xl px-4 py-4 space-y-6">
+    <section id="stats" className="mx-auto w-full px-4 py-4 space-y-6 text-center">
       <div className="space-y-6">
         {stats.map(s => (
           <StatsSlider

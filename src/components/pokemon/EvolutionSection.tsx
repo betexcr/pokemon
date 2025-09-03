@@ -7,7 +7,7 @@ type Node = { id:number; name:string; types:string[]; condition?:string };
 export default function EvolutionSection({ chain, selectedSprite = 'default' }: { chain: Node[]; selectedSprite?: 'default' | 'shiny' }) {
   if (!chain.length) return null;
   return (
-    <section id="evolution" className="mx-auto max-w-5xl px-4 py-4 space-y-4">
+    <section id="evolution" className="mx-auto w-full px-4 py-4 space-y-4 text-center">
       <div className="flex flex-wrap justify-center gap-4">
         {chain.map((n, i) => {
           const primaryType = n.types[0] || 'normal';

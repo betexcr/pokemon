@@ -245,7 +245,7 @@ export default function PokemonComparison({ pokemonList, className = '' }: Pokem
               <div className="flex justify-center">
                 <RadarChart 
                   data={comparisonData} 
-                  size={400}
+                  size={480}
                   className="mb-6"
                 />
               </div>

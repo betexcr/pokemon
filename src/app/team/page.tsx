@@ -6,22 +6,46 @@ import { getPokemonList, getPokemon, getMove } from '@/lib/api'
 import { formatPokemonName } from '@/lib/utils'
 import Image from 'next/image'
 import TypeBadge from '@/components/TypeBadge'
+import Tooltip from '@/components/Tooltip'
+import PokemonSearch from '@/components/PokemonSearch'
+import { useRouter } from 'next/navigation'
+import { ArrowLeft } from 'lucide-react'
+import { useTheme } from '@/components/ThemeProvider'
 
-type TeamSlot = { id: number | null; level: number; moves: string[] }
+type MoveData = {
+  name: string
+  type: string
+  damage_class: "physical" | "special" | "status"
+  power: number | null
+  accuracy: number | null
+  pp: number | null
+  level_learned_at: number | null
+  short_effect?: string | null
+}
+
+type TeamSlot = { id: number | null; level: number; moves: MoveData[] }
 type SavedTeam = { id: string; name: string; slots: TeamSlot[] }
 
-const STORAGE_KEY = 'saved-teams'
+const STORAGE_KEY = 'pokemon-team-builder'
 
 export default function TeamBuilderPage() {
+  const router = useRouter()
+  
+  let theme = 'light'
+  try {
+    const themeContext = useTheme()
+    theme = themeContext.theme
+  } catch {
+    // Theme provider not available, use default
+  }
+  
   const [allPokemon, setAllPokemon] = useState<Pokemon[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [search, setSearch] = useState('')
   const [fetchingPokemon, setFetchingPokemon] = useState<Set<number>>(new Set())
   const [availableMoves, setAvailableMoves] = useState<Record<number, Array<{ name: string; type: string; damage_class: "physical" | "special" | "status"; power: number | null; accuracy: number | null; pp: number | null; level_learned_at: number | null; short_effect?: string | null }>>>({})
-  const [openMoveTooltip, setOpenMoveTooltip] = useState<{ slotIndex: number; moveIndex: number } | null>(null)
   const [teamSlots, setTeamSlots] = useState<TeamSlot[]>(
-    Array.from({ length: 6 }, () => ({ id: null, level: 50, moves: [] }))
+    Array.from({ length: 6 }, () => ({ id: null, level: 50, moves: [] as MoveData[] }))
   )
   const [savedTeams, setSavedTeams] = useState<SavedTeam[]>([])
   const [teamName, setTeamName] = useState('')
@@ -34,49 +58,93 @@ export default function TeamBuilderPage() {
         // Get more Pokémon for Team Builder (up to 500 to cover more generations)
         const pokemonList = await getPokemonList(500, 0)
         
-        // Create basic Pokémon objects with IDs and names
-        const basicPokemon = pokemonList.results.map((pokemonRef, index) => {
+        // Create basic Pokémon objects with IDs and names, and fetch basic type info
+        const basicPokemonPromises = pokemonList.results.map(async (pokemonRef, index) => {
           const pokemonId = pokemonRef.url.split('/').slice(-2)[0]
-          return {
-            id: parseInt(pokemonId),
-            name: pokemonRef.name,
-            base_experience: 0,
-            height: 0,
-            weight: 0,
-            is_default: true,
-            order: parseInt(pokemonId),
-            abilities: [],
-            forms: [],
-            game_indices: [],
-            held_items: [],
-            location_area_encounters: '',
-            moves: [],
-            sprites: {
-              front_default: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemonId}.png`,
-              front_shiny: null,
-              front_female: null,
-              front_shiny_female: null,
-              back_default: null,
-              back_shiny: null,
-              back_female: null,
-              back_shiny_female: null,
-              other: {
-                dream_world: { front_default: null, front_female: null },
-                home: { front_default: null, front_female: null, front_shiny: null, front_shiny_female: null },
-                'official-artwork': {
-                  front_default: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemonId}.png`,
-                  front_shiny: null
+          const id = parseInt(pokemonId)
+          
+          try {
+            // Fetch basic Pokémon data to get types
+            const pokemonData = await getPokemon(id)
+            return {
+              id,
+              name: pokemonRef.name,
+              base_experience: pokemonData.base_experience || 0,
+              height: pokemonData.height || 0,
+              weight: pokemonData.weight || 0,
+              is_default: pokemonData.is_default || true,
+              order: pokemonData.order || id,
+              abilities: pokemonData.abilities || [],
+              forms: pokemonData.forms || [],
+              game_indices: pokemonData.game_indices || [],
+              held_items: pokemonData.held_items || [],
+              location_area_encounters: pokemonData.location_area_encounters || '',
+              moves: pokemonData.moves || [],
+              sprites: pokemonData.sprites || {
+                front_default: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemonId}.png`,
+                front_shiny: null,
+                front_female: null,
+                front_shiny_female: null,
+                back_default: null,
+                back_shiny: null,
+                back_female: null,
+                back_shiny_female: null,
+                other: {
+                  dream_world: { front_default: null, front_female: null },
+                  home: { front_default: null, front_female: null, front_shiny: null, front_shiny_female: null },
+                  'official-artwork': {
+                    front_default: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemonId}.png`,
+                    front_shiny: null
+                  }
                 }
-              }
-            },
-            stats: [],
-            types: [],
-            species: { name: '', url: '' },
-            evolution_chain: { name: '', url: '' }
-          } as Pokemon
+              },
+              stats: pokemonData.stats || [],
+              types: pokemonData.types || [],
+              species: pokemonData.species || { name: '', url: '' }
+            } as Pokemon
+          } catch (error) {
+            console.error(`Failed to fetch basic data for Pokémon ${id}:`, error)
+            // Fallback to basic object without types
+            return {
+              id,
+              name: pokemonRef.name,
+              base_experience: 0,
+              height: 0,
+              weight: 0,
+              is_default: true,
+              order: id,
+              abilities: [],
+              forms: [],
+              game_indices: [],
+              held_items: [],
+              location_area_encounters: '',
+              moves: [],
+              sprites: {
+                front_default: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemonId}.png`,
+                front_shiny: null,
+                front_female: null,
+                front_shiny_female: null,
+                back_default: null,
+                back_shiny: null,
+                back_female: null,
+                back_shiny_female: null,
+                other: {
+                  dream_world: { front_default: null, front_female: null },
+                  home: { front_default: null, front_female: null, front_shiny: null, front_shiny_female: null },
+                  'official-artwork': {
+                    front_default: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemonId}.png`,
+                    front_shiny: null
+                  }
+                }
+              },
+              stats: [],
+              types: [],
+              species: { name: '', url: '' }
+            } as Pokemon
+          }
         })
-        
 
+        const basicPokemon = await Promise.all(basicPokemonPromises)
         setAllPokemon(basicPokemon)
       } catch (e) {
         console.error('Error loading Pokémon:', e)
@@ -101,27 +169,7 @@ export default function TeamBuilderPage() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(teams)) } catch {}
   }, [])
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase()
-    if (!q) return []
-    
-    // Search by ID (exact match if it's a number)
-    if (/^\d+$/.test(q)) {
-      const id = parseInt(q)
-      if (id >= 1 && id <= 500) {
-        const exactMatch = allPokemon.find(p => p.id === id)
-        if (exactMatch) return [exactMatch]
-      }
-    }
-    
-    // Search by name (partial match)
-    const results = allPokemon.filter(p => 
-      formatPokemonName(p.name).toLowerCase().includes(q) ||
-      p.id.toString().includes(q)
-    )
-    
-    return results.slice(0, 50) // Limit results for better performance
-  }, [allPokemon, search])
+
 
   const setSlot = async (idx: number, patch: Partial<TeamSlot>) => {
     if (patch.id && typeof patch.id === 'number') {
@@ -156,7 +204,7 @@ export default function TeamBuilderPage() {
     setTeamSlots(prev => prev.map((s, i) => i === idx ? { ...s, ...patch } : s))
   }
 
-  const clearTeam = () => setTeamSlots(Array.from({ length: 6 }, () => ({ id: null, level: 50, moves: [] })))
+  const clearTeam = () => setTeamSlots(Array.from({ length: 6 }, () => ({ id: null, level: 50, moves: [] as MoveData[] })))
 
   const saveTeam = () => {
     const name = teamName.trim() || `Team ${new Date().toLocaleString()}`
@@ -287,16 +335,16 @@ export default function TeamBuilderPage() {
   const capitalize = (s: string) => s[0].toUpperCase() + s.slice(1)
 
   // Handle move selection
-  const toggleMove = (slotIndex: number, moveName: string) => {
+  const toggleMove = (slotIndex: number, move: MoveData) => {
     setTeamSlots(prev => prev.map((slot, i) => {
       if (i === slotIndex) {
         const currentMoves = slot.moves
-        if (currentMoves.includes(moveName)) {
+        if (currentMoves.some(m => m.name === move.name)) {
           // Remove move
-          return { ...slot, moves: currentMoves.filter(m => m !== moveName) }
+          return { ...slot, moves: currentMoves.filter(m => m.name !== move.name) }
         } else if (currentMoves.length < 4) {
           // Add move (max 4)
-          return { ...slot, moves: [...currentMoves, moveName] }
+          return { ...slot, moves: [...currentMoves, move] }
         }
       }
       return slot
@@ -304,7 +352,18 @@ export default function TeamBuilderPage() {
   }
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-bg text-text">Loading Team Builder…</div>
+    <div className="min-h-screen flex items-center justify-center bg-bg text-text">
+      <div className="text-center">
+        <img 
+          src="/loading.gif" 
+          alt="Loading Pokémon" 
+          width={100} 
+          height={100} 
+          className="mx-auto mb-4"
+        />
+        <p className="text-muted">Loading Team Builder...</p>
+      </div>
+    </div>
   )
   if (error) return (
     <div className="min-h-screen flex items-center justify-center bg-bg text-red-600">{error}</div>
@@ -312,18 +371,38 @@ export default function TeamBuilderPage() {
 
   return (
     <div className="min-h-screen bg-bg text-text">
-      <header className="sticky top-0 z-40 border-b border-border bg-surface">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-xl font-bold">Team Builder</h1>
-          <div className="flex items-center gap-2">
-            <input
-              value={teamName}
-              onChange={(e) => setTeamName(e.target.value)}
-              placeholder="Team name"
-              className="px-3 py-2 border border-border rounded-lg bg-surface"
-            />
-            <button onClick={saveTeam} className="px-3 py-2 rounded-lg bg-poke-blue text-white">Save Team</button>
-            <button onClick={clearTeam} className="px-3 py-2 rounded-lg border border-border">Clear</button>
+      <header className="sticky top-0 z-50 border-b border-border bg-surface">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => router.push('/')}
+                  className="flex items-center space-x-2 text-muted hover:text-text transition-colors"
+                  title="Back to PokéDex"
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                  <span className="font-medium">Back to PokéDex</span>
+                </button>
+              </div>
+              <span className="text-sm text-muted">
+                Team Builder
+              </span>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              {/* Team Management */}
+              <div className="flex items-center gap-2">
+                <input
+                  value={teamName}
+                  onChange={(e) => setTeamName(e.target.value)}
+                  placeholder="Team name"
+                  className="px-3 py-2 border border-border rounded-lg bg-surface text-text"
+                />
+                <button onClick={saveTeam} className="px-3 py-2 rounded-lg bg-poke-blue text-white hover:bg-poke-blue/90 transition-colors">Save Team</button>
+                <button onClick={clearTeam} className="px-3 py-2 rounded-lg border border-border text-text hover:bg-white/50 transition-colors">Clear</button>
+              </div>
+            </div>
           </div>
         </div>
       </header>
@@ -332,71 +411,19 @@ export default function TeamBuilderPage() {
         {/* Search & Add - Now at the top */}
         <section className="border border-border rounded-xl bg-surface p-4">
           <h2 className="text-lg font-semibold mb-4">Add Pokémon</h2>
-          <div className="relative">
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by name or # (e.g., 'Lugia', '249', 'char')"
-              className="w-full mb-3 px-3 py-2 pr-10 border border-border rounded-lg bg-white"
-            />
-            {search && (
-              <button
-                onClick={() => setSearch('')}
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded-full hover:bg-gray-200 transition-colors"
-                title="Clear search"
-              >
-                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            )}
-          </div>
-          <div className="max-h-96 overflow-y-auto divide-y divide-border">
-            {filtered.length === 0 && search.trim() ? (
-              <div className="py-4 text-center text-muted">
-                No Pokémon found. Try a different search term.
-              </div>
-            ) : filtered.length === 0 ? (
-              <div className="py-4 text-center text-muted">
-                Start typing to search for Pokémon...
-              </div>
-            ) : (
-              filtered.map(p => (
-                <button
-                  key={p.id}
-                  className="w-full text-left py-3 px-3 hover:bg-white/60 flex items-center gap-3"
-                  onClick={async () => {
-                    const firstEmpty = teamSlots.findIndex(s => s.id == null)
-                    if (firstEmpty >= 0) await setSlot(firstEmpty, { id: p.id })
-                  }}
-                >
-                  <div className="relative w-12 h-12 flex-shrink-0">
-                    <Image
-                      src={p.sprites.other['official-artwork'].front_default || p.sprites.front_default || ''}
-                      alt={p.name}
-                      width={48}
-                      height={48}
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium">#{p.id} {formatPokemonName(p.name)}</div>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {p.types?.length > 0 ? p.types.map(t => (
-                        <TypeBadge key={t.type.name} type={t.type.name} variant="span" />
-                      )) : null}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {fetchingPokemon.has(p.id) && (
-                      <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                    )}
-                    <span className="text-xs text-muted">Add</span>
-                  </div>
-                </button>
-              ))
-            )}
-          </div>
+          <PokemonSearch
+            onSelectPokemon={async (pokemon) => {
+              const slot = teamSlots.findIndex(s => s.id === null)
+              if (slot !== -1) {
+                await setSlot(slot, { id: pokemon.id })
+              }
+            }}
+            placeholder="Search by name or # (e.g., 'Lugia', '249', 'char')"
+            maxHeight="max-h-96"
+            showImages={true}
+            showTypes={true}
+            showStats={false}
+          />
         </section>
 
         {/* Team slots */}
@@ -491,30 +518,27 @@ export default function TeamBuilderPage() {
                               </tr>
                             </thead>
                             <tbody>
-                              {slot.moves.map((moveName, moveIdx) => {
-                                const moveData = availableMoves[idx]?.find(m => m.name === moveName);
-                                return (
-                                  <tr key={moveIdx} className="[&>td]:px-2 [&>td]:py-1 border-b border-gray-100">
-                                    <td className="font-medium capitalize">
-                                      <div className="flex items-center gap-2">
-                                        <span>{moveName}</span>
-                                        <button 
-                                          onClick={() => toggleMove(idx, moveName)}
-                                          className="text-red-500 hover:text-red-700 text-xs"
-                                          title="Remove move"
-                                        >
-                                          ✕
-                                        </button>
-                                      </div>
-                                    </td>
-                                    <td>{moveData ? <TypeBadge type={moveData.type} variant="span" /> : '—'}</td>
-                                    <td className="capitalize">{moveData?.damage_class || '—'}</td>
-                                    <td>{moveData?.power ?? '—'}</td>
-                                    <td>{moveData?.accuracy ?? '—'}</td>
-                                    <td>{moveData?.pp ?? '—'}</td>
-                                  </tr>
-                                );
-                              })}
+                              {slot.moves.map((move, moveIdx) => (
+                                <tr key={moveIdx} className="[&>td]:px-2 [&>td]:py-1 border-b border-gray-100">
+                                  <td className="font-medium capitalize">
+                                    <div className="flex items-center gap-2">
+                                      <span>{move.name}</span>
+                                      <button 
+                                        onClick={() => toggleMove(idx, move)}
+                                        className="text-red-500 hover:text-red-700 text-xs"
+                                        title="Remove move"
+                                      >
+                                        ✕
+                                      </button>
+                                    </div>
+                                  </td>
+                                  <td><TypeBadge type={move.type} variant="span" /></td>
+                                  <td className="capitalize">{move.damage_class}</td>
+                                  <td>{move.power ?? '—'}</td>
+                                  <td>{move.accuracy ?? '—'}</td>
+                                  <td>{move.pp ?? '—'}</td>
+                                </tr>
+                              ))}
                             </tbody>
                           </table>
                         </div>
@@ -533,23 +557,20 @@ export default function TeamBuilderPage() {
                               </thead>
                               <tbody>
                                 {availableMoves[idx]
-                                  .filter(move => !slot.moves.includes(move.name))
+                                  .filter(move => !slot.moves.some(slotMove => slotMove.name === move.name))
                                   .slice(0, 15)
                                   .map((move, moveIdx) => (
                                     <tr key={move.name} className="[&>td]:px-2 [&>td]:py-1 border-b border-gray-100 hover:bg-gray-50">
                                       <td className="font-medium capitalize">
-                                        <span
-                                          className="relative group cursor-help"
-                                          onClick={() => setOpenMoveTooltip(openMoveTooltip?.slotIndex === idx && openMoveTooltip?.moveIndex === moveIdx ? null : { slotIndex: idx, moveIndex: moveIdx })}
-                                        >
-                                          {move.name}
-                                          {move.short_effect && (
-                                            <span className={`pointer-events-auto absolute left-0 top-full z-20 mt-1 w-80 max-w-[90vw] rounded-md bg-black p-3 text-sm leading-snug text-white shadow-xl ring-1 ring-black/40 ${openMoveTooltip?.slotIndex === idx && openMoveTooltip?.moveIndex === moveIdx ? 'block' : 'hidden sm:group-hover:block'}`}
-                                            >
-                                              {move.short_effect}
+                                        {move.short_effect ? (
+                                          <Tooltip content={move.short_effect} maxWidth="w-80" variant="move" type={move.type}>
+                                            <span className="cursor-help">
+                                              {move.name}
                                             </span>
-                                          )}
-                                        </span>
+                                          </Tooltip>
+                                        ) : (
+                                          <span>{move.name}</span>
+                                        )}
                                       </td>
                                       <td><TypeBadge type={move.type} variant="span" /></td>
                                       <td className="capitalize">{move.damage_class}</td>
@@ -559,7 +580,7 @@ export default function TeamBuilderPage() {
                                       <td>{move.level_learned_at ?? '—'}</td>
                                       <td>
                                         <button
-                                          onClick={() => toggleMove(idx, move.name)}
+                                          onClick={() => toggleMove(idx, move)}
                                           disabled={slot.moves.length >= 4}
                                           className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:cursor-not-allowed"
                                           title={slot.moves.length >= 4 ? 'Maximum 4 moves reached' : 'Add move'}

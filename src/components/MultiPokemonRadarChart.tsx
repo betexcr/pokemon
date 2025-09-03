@@ -15,14 +15,16 @@ interface Point {
 
 export default function MultiPokemonRadarChart({ pokemons }: MultiPokemonRadarChartProps) {
   const [hoveredPokemon, setHoveredPokemon] = useState<Pokemon | null>(null)
+  const [hoveredStatIndex, setHoveredStatIndex] = useState<number | null>(null)
+  const [cursorPos, setCursorPos] = useState<{x:number;y:number}>({x:0,y:0})
 
   if (pokemons.length === 0) return null
 
   const stats = ['hp', 'attack', 'defense', 'special-attack', 'special-defense', 'speed']
   const maxStat = 255
-  const radius = 120
-  const centerX = 150
-  const centerY = 150
+  const radius = 144
+  const centerX = 180
+  const centerY = 180
 
   // Generate colors for each Pokémon
   const colors = [
@@ -37,6 +39,19 @@ export default function MultiPokemonRadarChart({ pokemons }: MultiPokemonRadarCh
     '#f97316', // orange
     '#6366f1', // indigo
   ]
+
+  // Match StatsSection slider colors
+  const getStatBaseColor = (statName: string) => {
+    switch (statName.toLowerCase()) {
+      case 'hp': return '#ef4444' // red-500
+      case 'attack': return '#f97316' // orange-500
+      case 'defense': return '#3b82f6' // blue-500
+      case 'special-attack': return '#8b5cf6' // purple-500
+      case 'special-defense': return '#10b981' // green-500
+      case 'speed': return '#eab308' // yellow-500
+      default: return '#6b7280' // gray-500
+    }
+  }
 
   // Calculate points for each stat
   const getStatPoints = (pokemon: Pokemon, color: string) => {
@@ -176,7 +191,33 @@ export default function MultiPokemonRadarChart({ pokemons }: MultiPokemonRadarCh
 
   return (
     <div className="relative">
-      <svg width="300" height="300" className="mx-auto">
+      <svg
+        width="360"
+        height="360"
+        className="mx-auto"
+        onMouseMove={(e) => {
+          const rect = (e.target as SVGElement).closest('svg')!.getBoundingClientRect()
+          const x = e.clientX - rect.left
+          const y = e.clientY - rect.top
+          setCursorPos({ x, y })
+          const dx = x - centerX
+          const dy = y - centerY
+          const distance = Math.sqrt(dx*dx + dy*dy)
+          // Only activate when near the radar area
+          if (distance > radius * 0.4 && distance < radius * 1.15) {
+            let angle = Math.atan2(dy, dx) // -PI..PI with 0 on +X
+            angle = angle < -Math.PI/2 ? angle + 2*Math.PI : angle // keep continuity around -PI/2
+            // Our axes start at -PI/2 (top) and proceed clockwise
+            const adjusted = angle + Math.PI/2
+            const sector = (adjusted + 2*Math.PI) % (2*Math.PI)
+            const index = Math.round((sector / (2*Math.PI)) * stats.length) % stats.length
+            setHoveredStatIndex(index)
+          } else {
+            setHoveredStatIndex(null)
+          }
+        }}
+        onMouseLeave={() => setHoveredStatIndex(null)}
+      >
         {/* Grid circles */}
         {gridCircles}
         
@@ -190,8 +231,44 @@ export default function MultiPokemonRadarChart({ pokemons }: MultiPokemonRadarCh
         {statLabels}
       </svg>
       
-      {/* Tooltip */}
-      {hoveredPokemon && (
+      {/* Tooltip: specific stat under cursor */}
+      {hoveredStatIndex !== null && (
+        <div
+          className="absolute z-10 text-gray-800 px-3 py-2 rounded-lg text-sm shadow-lg pointer-events-none border border-gray-200"
+          style={{
+            left: cursorPos.x,
+            top: cursorPos.y,
+            transform: 'translate(-50%, -120%)',
+            // White base with stat-colored overlay
+            background: `linear-gradient(180deg, ${getStatBaseColor(stats[hoveredStatIndex])}22 0%, transparent 60%), white`
+          }}
+        >
+          <div className="font-semibold mb-1">
+            {getStatAbbreviation(stats[hoveredStatIndex])}
+          </div>
+          <div className="text-xs text-gray-700 space-y-0.5">
+            {[...pokemons]
+              .map((p) => ({
+                p,
+                value: p.stats.find(s => s.stat.name === stats[hoveredStatIndex!])?.base_stat ?? 0
+              }))
+              .sort((a,b) => b.value - a.value)
+              .map(({p, value}, i) => {
+              const color = colors[i % colors.length]
+              return (
+                <div key={p.id} className="flex items-center gap-2">
+                  <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
+                  <span className="capitalize">{p.name}</span>
+                  <span className="ml-auto font-mono">{value}</span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Tooltip: full pokemon when hovering points/polygons */}
+      {hoveredPokemon && hoveredStatIndex === null && (
         <div
           className="absolute z-10 text-white px-3 py-2 rounded-lg text-sm shadow-lg pointer-events-none border border-white/20"
           style={{

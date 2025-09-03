@@ -11,7 +11,7 @@ export default function MatchupsSection({ groups }: { groups: Group[] }) {
     : "bg-gray-500/10 border-gray-500/30";
 
   return (
-    <section id="matchups" className="mx-auto max-w-5xl px-4 py-4 space-y-6">
+    <section id="matchups" className="mx-auto w-full px-4 py-4 space-y-6 text-center">
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {groups.map((g)=>(
           <div key={g.title} className={`rounded-2xl p-6 ${toneBg(g.tone)}`}>

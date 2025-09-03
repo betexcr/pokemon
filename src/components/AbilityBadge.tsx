@@ -1,4 +1,5 @@
 import { typeColors } from '@/lib/utils';
+import Tooltip from './Tooltip';
 
 interface AbilityBadgeProps {
   ability: { name: string; is_hidden?: boolean; description?: string | null };
@@ -110,29 +111,33 @@ export default function AbilityBadge({ ability, className = '' }: AbilityBadgePr
   
   return (
     <div className={`inline-flex items-center gap-2 ${className}`}>
-      <button
-        type="button"
-        className="relative group px-3 py-1 rounded-full text-sm font-medium border transition-all duration-200 whitespace-nowrap cursor-help"
-        style={{
-          backgroundColor: `var(--type-${abilityType})`,
-          color: colorClasses.text === 'text-white' ? 'white' : 'black',
-          borderColor: `var(--type-${abilityType})`
-        }}
-        onClick={(e)=>{
-          const tooltip = (e.currentTarget.querySelector('.ability-tooltip') as HTMLElement | null);
-          if (tooltip) {
-            const currentlyVisible = tooltip.style.display === 'block';
-            tooltip.style.display = currentlyVisible ? 'none' : 'block';
-          }
-        }}
-      >
-        {formatAbilityName(ability.name)}
-        {ability.description && (
-          <span className="ability-tooltip pointer-events-auto absolute left-0 top-full z-20 mt-1 hidden w-72 max-w-[80vw] rounded-md bg-black p-3 text-xs text-white shadow-xl ring-1 ring-black/40 group-hover:block">
-            {ability.description}
-          </span>
-        )}
-      </button>
+      {ability.description ? (
+        <Tooltip content={ability.description} maxWidth="w-72" variant="ability" type={abilityType}>
+          <button
+            type="button"
+            className="px-3 py-1 rounded-full text-sm font-medium border transition-all duration-200 whitespace-nowrap cursor-help"
+            style={{
+              backgroundColor: `var(--type-${abilityType})`,
+              color: colorClasses.text === 'text-white' ? 'white' : 'black',
+              borderColor: `var(--type-${abilityType})`
+            }}
+          >
+            {formatAbilityName(ability.name)}
+          </button>
+        </Tooltip>
+      ) : (
+        <button
+          type="button"
+          className="px-3 py-1 rounded-full text-sm font-medium border transition-all duration-200 whitespace-nowrap"
+          style={{
+            backgroundColor: `var(--type-${abilityType})`,
+            color: colorClasses.text === 'text-white' ? 'white' : 'black',
+            borderColor: `var(--type-${abilityType})`
+          }}
+        >
+          {formatAbilityName(ability.name)}
+        </button>
+      )}
       {ability.is_hidden && (
         <span className="px-2 py-1 text-xs rounded-full bg-gray-500 text-white">
           Hidden

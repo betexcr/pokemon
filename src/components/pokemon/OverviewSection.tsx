@@ -15,7 +15,7 @@ export default function OverviewSection({
   types, abilities, flavorText, genus, heightM, weightKg, baseExp
 }: Props) {
   return (
-    <section id="overview" className="mx-auto max-w-5xl px-4 py-8 space-y-8">
+    <section id="overview" className="mx-auto w-full px-4 py-8 space-y-8">
       {/* Quick stats row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-muted">
         <Stat label="Height" value={`${heightM} m`} icon="📏" />
@@ -25,9 +25,9 @@ export default function OverviewSection({
       </div>
 
       {/* Abilities */}
-      <div className="space-y-2">
+      <div className="space-y-2 text-center">
         <h3 className="text-lg font-semibold">Abilities</h3>
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-3 justify-center">
           {abilities.map((ability, index) => (
             <AbilityBadge 
               key={`${ability.name}-${index}`}
@@ -38,9 +38,9 @@ export default function OverviewSection({
       </div>
 
       {/* Description */}
-      <div className="space-y-2">
+      <div className="space-y-2 text-center">
         <h3 className="text-lg font-semibold">Description</h3>
-        <p className="max-w-2xl leading-7">{flavorText}</p>
+        <p className="leading-7">{flavorText}</p>
         {genus && (
           <span className="inline-block rounded-full px-4 py-2 text-sm bg-surface">
             {genus}

@@ -25,6 +25,10 @@
 - [x] Type badges, power, accuracy, PP, and category display
 - [x] Fixed nested button hydration errors
 - [x] Enhanced TypeBadge component with span variant
+- [x] Fixed type badges not appearing in search results
+- [x] Enhanced Pokémon loading to fetch types immediately
+- [x] Consistent header design across all pages
+- [x] POKÉDEX button navigation back to home page
 
 ### 2. Battle Simulator
 - [ ] Gym Leaders from all games

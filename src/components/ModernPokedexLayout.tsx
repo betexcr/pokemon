@@ -990,27 +990,32 @@ export default function ModernPokedexLayout({
         {/* Sidebar - Advanced Filters */}
         <div className={`${
           showSidebar ? 'block' : 'hidden'
-        } lg:block lg:w-80 border-r border-border bg-surface`}>
-          <div className="p-6 space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Advanced Filters</h2>
-              <button
-                onClick={() => setShowSidebar(false)}
-                className="lg:hidden p-1 rounded hover:bg-white/50"
-              >
-                <X className="h-5 w-5" />
-              </button>
+        } lg:block lg:w-80 border-r border-border bg-surface sticky top-0 min-h-screen overflow-hidden`}>
+          <div className="h-full flex flex-col">
+            {/* Header - Fixed */}
+            <div className="flex-shrink-0 p-6 border-b border-border bg-surface">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold">Advanced Filters</h2>
+                <button
+                  onClick={() => setShowSidebar(false)}
+                  className="lg:hidden p-1 rounded hover:bg-white/50"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              
+              {/* Results Count */}
+              <div className="text-sm text-muted mt-2">
+                {filteredPokemon.length} Pokémon found
+              </div>
             </div>
             
-            {/* Results Count */}
-            <div className="text-sm text-muted">
-              {filteredPokemon.length} Pokémon found
-            </div>
-
-            {/* Generation Filter */}
-            <div>
-              <label className="block text-sm font-medium mb-2">Generation</label>
-                              <select
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 space-y-6">
+              {/* Generation Filter */}
+              <div className="min-w-0">
+                <label className="block text-sm font-medium mb-2">Generation</label>
+                <select
                   value={advancedFilters.generation}
                   onChange={(e) => {
                     setAdvancedFilters(prev => ({
@@ -1018,70 +1023,70 @@ export default function ModernPokedexLayout({
                       generation: e.target.value 
                     }))
                   }}
-                className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text"
-              >
-                <option value="">All Generations</option>
-                <option value="1">Generation 1</option>
-                <option value="2">Generation 2</option>
-                <option value="3">Generation 3</option>
-                <option value="4">Generation 4</option>
-                <option value="5">Generation 5</option>
-                <option value="6">Generation 6</option>
-                <option value="7">Generation 7</option>
-                <option value="8">Generation 8</option>
-                <option value="9">Generation 9</option>
-              </select>
-            </div>
-
-            {/* Height Range */}
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Height: {advancedFilters.heightRange[0]}m - {advancedFilters.heightRange[1]}m
-              </label>
-              <div className="space-y-2">
-                <input
-                  type="range"
-                  min="0"
-                  max="20"
-                  step="0.1"
-                  value={advancedFilters.heightRange[0]}
-                                    onChange={(e) => {
-                    setAdvancedFilters(prev => ({
-                      ...prev, 
-                      heightRange: [parseFloat(e.target.value), prev.heightRange[1]] as [number, number]
-                    }))
-                  }}
-                  className="w-full"
-                />
-                <input
-                  type="range"
-                  min="0"
-                  max="20"
-                  step="0.1"
-                  value={advancedFilters.heightRange[1]}
-                                    onChange={(e) => {
-                    setAdvancedFilters(prev => ({
-                      ...prev, 
-                      heightRange: [prev.heightRange[0], parseFloat(e.target.value)] as [number, number]
-                    }))
-                  }}
-                  className="w-full"
-                />
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text"
+                >
+                  <option value="">All Generations</option>
+                  <option value="1">Generation 1</option>
+                  <option value="2">Generation 2</option>
+                  <option value="3">Generation 3</option>
+                  <option value="4">Generation 4</option>
+                  <option value="5">Generation 5</option>
+                  <option value="6">Generation 6</option>
+                  <option value="7">Generation 7</option>
+                  <option value="8">Generation 8</option>
+                  <option value="9">Generation 9</option>
+                </select>
               </div>
-            </div>
 
-            {/* Weight Range */}
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Weight: {advancedFilters.weightRange[0]}kg - {advancedFilters.weightRange[1]}kg
-              </label>
-              <div className="space-y-2">
-                <input
-                  type="range"
-                  min="0"
-                  max="1000"
-                  step="1"
-                  value={advancedFilters.weightRange[0]}
+              {/* Height Range */}
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Height: {advancedFilters.heightRange[0]}m - {advancedFilters.heightRange[1]}m
+                </label>
+                <div className="space-y-2">
+                  <input
+                    type="range"
+                    min="0"
+                    max="20"
+                    step="0.1"
+                    value={advancedFilters.heightRange[0]}
+                    onChange={(e) => {
+                      setAdvancedFilters(prev => ({
+                        ...prev, 
+                        heightRange: [parseFloat(e.target.value), prev.heightRange[1]] as [number, number]
+                      }))
+                    }}
+                    className="w-full"
+                  />
+                  <input
+                    type="range"
+                    min="0"
+                    max="20"
+                    step="0.1"
+                    value={advancedFilters.heightRange[1]}
+                    onChange={(e) => {
+                      setAdvancedFilters(prev => ({
+                        ...prev, 
+                        heightRange: [prev.heightRange[0], parseFloat(e.target.value)] as [number, number]
+                      }))
+                    }}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+
+              {/* Weight Range */}
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Weight: {advancedFilters.weightRange[0]}kg - {advancedFilters.weightRange[1]}kg
+                </label>
+                <div className="space-y-2">
+                  <input
+                    type="range"
+                    min="0"
+                    max="1000"
+                    step="1"
+                    value={advancedFilters.weightRange[0]}
                                     onChange={(e) => {
                     setAdvancedFilters(prev => ({
                       ...prev, 
@@ -1126,35 +1131,35 @@ export default function ModernPokedexLayout({
                   {/* Selected Pokémon List */}
                   <div className="max-h-48 overflow-y-auto bg-gray-800 rounded-lg border border-gray-700">
                     {comparisonPokemon.map((pokemon, index) => (
-                        <div
-                          key={pokemon.id}
-                          className={`flex items-center px-3 py-2 ${
-                            index < comparisonPokemon.length - 1 
-                              ? 'border-b border-gray-700' 
-                              : ''
-                          }`}
+                      <div
+                        key={pokemon.id}
+                        className={`flex items-center px-3 py-2 ${
+                          index < comparisonPokemon.length - 1 
+                            ? 'border-b border-gray-700' 
+                            : ''
+                        }`}
+                      >
+                        <picture className="mr-3">
+                          <img
+                            src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`}
+                            alt={formatPokemonName(pokemon.name)}
+                            className="w-8 h-8 object-contain"
+                            loading="lazy"
+                            decoding="async"
+                          />
+                        </picture>
+                        <span className="text-white text-sm">
+                          {formatPokemonName(pokemon.name)}#{pokemon.id}
+                        </span>
+                        <button
+                          onClick={() => onToggleComparison(pokemon.id)}
+                          className="ml-auto p-1 rounded hover:bg-red-600 transition-colors"
+                          aria-label={`Remove ${formatPokemonName(pokemon.name)} from comparison`}
                         >
-                          <picture className="mr-3">
-                            <img
-                              src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`}
-                              alt={formatPokemonName(pokemon.name)}
-                              className="w-8 h-8 object-contain"
-                              loading="lazy"
-                              decoding="async"
-                            />
-                          </picture>
-                          <span className="text-white text-sm">
-                            {formatPokemonName(pokemon.name)}#{pokemon.id}
-                          </span>
-                          <button
-                            onClick={() => onToggleComparison(pokemon.id)}
-                            className="ml-auto p-1 rounded hover:bg-red-600 transition-colors"
-                            aria-label={`Remove ${formatPokemonName(pokemon.name)} from comparison`}
-                          >
-                            <X className="h-3 w-3 text-red-400" />
-                          </button>
-                        </div>
-                      ))}
+                          <X className="h-3 w-3 text-red-400" />
+                        </button>
+                      </div>
+                    ))}
                   </div>
 
                   {/* Actions */}
@@ -1176,9 +1181,9 @@ export default function ModernPokedexLayout({
                 </div>
               )}
             </div>
-
           </div>
         </div>
+      </div>
 
         {/* Main Content Area */}
         <div className="flex-1">
@@ -1220,8 +1225,199 @@ export default function ModernPokedexLayout({
       {/* Mobile Filter Overlay */}
       {showSidebar && (
         <div className="lg:hidden fixed inset-0 bg-black/50 z-50" onClick={() => setShowSidebar(false)}>
-          <div className="absolute right-0 top-0 h-full w-80 bg-surface p-6" onClick={e => e.stopPropagation()}>
-            {/* Mobile sidebar content - same as desktop */}
+          <div className="absolute right-0 top-0 h-full w-80 bg-surface overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="h-full flex flex-col">
+              {/* Mobile Header - Fixed */}
+              <div className="flex-shrink-0 p-6 border-b border-border bg-surface">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold">Advanced Filters</h2>
+                  <button
+                    onClick={() => setShowSidebar(false)}
+                    className="p-1 rounded hover:bg-white/50"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+                
+                {/* Results Count */}
+                <div className="text-sm text-muted mt-2">
+                  {filteredPokemon.length} Pokémon found
+                </div>
+              </div>
+              
+              {/* Mobile Scrollable Content */}
+              <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 space-y-6">
+                {/* Generation Filter */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">Generation</label>
+                  <select
+                    value={advancedFilters.generation}
+                    onChange={(e) => {
+                      setAdvancedFilters(prev => ({
+                        ...prev, 
+                        generation: e.target.value 
+                      }))
+                    }}
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text"
+                  >
+                    <option value="">All Generations</option>
+                    <option value="1">Generation 1</option>
+                    <option value="2">Generation 2</option>
+                    <option value="3">Generation 3</option>
+                    <option value="4">Generation 4</option>
+                    <option value="5">Generation 5</option>
+                    <option value="6">Generation 6</option>
+                    <option value="7">Generation 7</option>
+                    <option value="8">Generation 8</option>
+                    <option value="9">Generation 9</option>
+                  </select>
+                </div>
+
+                {/* Height Range */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Height: {advancedFilters.heightRange[0]}m - {advancedFilters.heightRange[1]}m
+                  </label>
+                  <div className="space-y-2">
+                    <input
+                      type="range"
+                      min="0"
+                      max="20"
+                      step="0.1"
+                      value={advancedFilters.heightRange[0]}
+                      onChange={(e) => {
+                        setAdvancedFilters(prev => ({
+                          ...prev, 
+                          heightRange: [parseFloat(e.target.value), prev.heightRange[1]] as [number, number]
+                        }))
+                      }}
+                      className="w-full"
+                    />
+                    <input
+                      type="range"
+                      min="0"
+                      max="20"
+                      step="0.1"
+                      value={advancedFilters.heightRange[1]}
+                      onChange={(e) => {
+                        setAdvancedFilters(prev => ({
+                          ...prev, 
+                          heightRange: [prev.heightRange[0], parseFloat(e.target.value)] as [number, number]
+                        }))
+                      }}
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+
+                {/* Weight Range */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Weight: {advancedFilters.weightRange[0]}kg - {advancedFilters.weightRange[1]}kg
+                  </label>
+                  <div className="space-y-2">
+                    <input
+                      type="range"
+                      min="0"
+                      max="1000"
+                      step="1"
+                      value={advancedFilters.weightRange[0]}
+                      onChange={(e) => {
+                        setAdvancedFilters(prev => ({
+                          ...prev, 
+                          weightRange: [parseInt(e.target.value), prev.weightRange[1]] as [number, number]
+                        }))
+                      }}
+                      className="w-full"
+                    />
+                    <input
+                      type="range"
+                      min="0"
+                      max="1000"
+                      step="1"
+                      value={advancedFilters.weightRange[1]}
+                      onChange={(e) => {
+                        setAdvancedFilters(prev => ({
+                          ...prev, 
+                          weightRange: [prev.weightRange[0], parseInt(e.target.value)] as [number, number]
+                        }))
+                      }}
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+
+                {/* Comparison Section */}
+                <div className="border-t border-border pt-6">
+                  <h3 className="text-lg font-semibold mb-4 flex items-center">
+                    <Scale className="h-5 w-5 mr-2 text-blue-500" />
+                    Compare Pokémon
+                  </h3>
+                  
+                  {comparisonList.length === 0 ? (
+                    <div className="text-center py-6">
+                      <p className="text-sm text-muted mb-3">
+                        Select Pokémon to compare their stats
+                      </p>
+                      <div className="text-4xl mb-2">⚖️</div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {/* Selected Pokémon List */}
+                      <div className="max-h-48 overflow-y-auto bg-gray-800 rounded-lg border border-gray-700">
+                        {comparisonPokemon.map((pokemon, index) => (
+                          <div
+                            key={pokemon.id}
+                            className={`flex items-center px-3 py-2 ${
+                              index < comparisonPokemon.length - 1 
+                                ? 'border-b border-gray-700' 
+                                : ''
+                            }`}
+                          >
+                            <picture className="mr-3">
+                              <img
+                                src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`}
+                                alt={formatPokemonName(pokemon.name)}
+                                className="w-8 h-8 object-contain"
+                                loading="lazy"
+                                decoding="async"
+                              />
+                            </picture>
+                            <span className="text-white text-sm">
+                              {formatPokemonName(pokemon.name)}#{pokemon.id}
+                            </span>
+                            <button
+                              onClick={() => onToggleComparison(pokemon.id)}
+                              className="ml-auto p-1 rounded hover:bg-red-600 transition-colors"
+                              aria-label={`Remove ${formatPokemonName(pokemon.name)} from comparison`}
+                            >
+                              <X className="h-3 w-3 text-red-400" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Actions */}
+                      <div className="space-y-2 pt-2 border-t border-border">
+                        <button
+                          onClick={onClearComparison}
+                          className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                        >
+                          Clear All
+                        </button>
+                        <button
+                          onClick={() => window.location.href = '/compare'}
+                          className="w-full px-3 py-2 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center"
+                        >
+                          <ArrowRight className="h-4 w-4 mr-2" />
+                          Go to Comparison
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}

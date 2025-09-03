@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import TypeBadge from "@/components/TypeBadge";
+import Tooltip from "@/components/Tooltip";
 
 type Move = {
   name: string;
@@ -20,7 +21,7 @@ export default function MovesSection({ moves }: { moves: Move[] }) {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<null | Move["damage_class"]>(null);
   const [type, setType] = useState<string>("");
-  const [openIdx, setOpenIdx] = useState<number | null>(null);
+
 
   const filtered = useMemo(() => {
     let rows = moves;
@@ -37,8 +38,8 @@ export default function MovesSection({ moves }: { moves: Move[] }) {
   }, [moves, q, cat, type]);
 
   return (
-    <section id="moves" className="mx-auto max-w-5xl px-4 py-8 space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
+    <section id="moves" className="mx-auto w-full px-4 py-8 space-y-4 text-center">
+      <div className="flex flex-wrap items-center gap-2 justify-center">
         <input
           className="h-10 w-full sm:w-72 rounded-xl border border-border bg-white dark:bg-surface px-3 text-sm"
           placeholder="Search moves…"
@@ -69,18 +70,15 @@ export default function MovesSection({ moves }: { moves: Move[] }) {
             {filtered.map((m, index) => (
               <tr key={`${m.name}-${index}`} className="[&>td]:px-3 [&>td]:py-2">
                 <td className="font-medium capitalize">
-                  <span
-                    className="relative group cursor-help"
-                    onClick={() => setOpenIdx(openIdx === index ? null : index)}
-                  >
-                    {m.name}
-                    {m.short_effect && (
-                      <span className={`pointer-events-auto absolute left-0 top-full z-20 mt-1 w-[22rem] max-w-[90vw] rounded-md bg-black p-3 text-sm leading-snug text-white shadow-xl ring-1 ring-black/40 ${openIdx===index ? 'block' : 'hidden sm:group-hover:block'}`}
-                      >
-                        {m.short_effect}
+                  {m.short_effect ? (
+                    <Tooltip content={m.short_effect} maxWidth="w-[22rem]" variant="move" type={m.type}>
+                      <span className="cursor-help">
+                        {m.name}
                       </span>
-                    )}
-                  </span>
+                    </Tooltip>
+                  ) : (
+                    <span>{m.name}</span>
+                  )}
                 </td>
                 <td><TypeBadge type={m.type} /></td>
                 <td className="capitalize">{m.damage_class}</td>

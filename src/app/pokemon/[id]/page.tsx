@@ -338,7 +338,7 @@ export default function PokemonDetailPage() {
     <div className="min-h-screen bg-bg">
       {/* Header */}
       <header className="bg-surface sticky top-0 z-50">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Link 
               href="/"
@@ -378,10 +378,10 @@ export default function PokemonDetailPage() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <main className="mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 max-w-3xl lg:max-w-[77%]">
                 {/* Hero Section */}
         <section 
-          className="relative rounded-xl bg-surface overflow-hidden mx-4"
+          className="relative rounded-xl bg-surface overflow-hidden mx-0"
           style={{ 
             background: `linear-gradient(180deg, color-mix(in oklab, var(--type-${primaryType}) 14%, transparent) 0%, transparent 60%)`
           }}
@@ -461,7 +461,9 @@ export default function PokemonDetailPage() {
 
 
         {/* Tab Navigation */}
-        <Tabs activeTab={activeTab} onTabChange={setActiveTab} />
+        <div className="flex justify-center">
+          <Tabs activeTab={activeTab} onTabChange={setActiveTab} />
+        </div>
         
         {/* Tab Content */}
         {activeTab === 'overview' && (
