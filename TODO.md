@@ -2,11 +2,29 @@
 
 ## 🎮 New Features to Implement
 
-### 1. Team Builder
-- [ ] Pokémon level selector for correct team abilities/stats
-- [ ] Team composition interface
-- [ ] Save/load team configurations
-- [ ] Team validation (type coverage, etc.)
+### 1. Team Builder ✅ COMPLETED
+- [x] Pokémon level selector for correct team abilities/stats
+- [x] Team composition interface
+- [x] Save/load team configurations
+- [x] Team validation (type coverage, etc.)
+- [x] Named team saving
+- [x] Search functionality (by name or ID)
+- [x] Navigation links in all themes
+- [x] Responsive design
+- [x] Pokémon images in team slots
+- [x] Visual team overview with sprites
+- [x] Enhanced search results with images
+- [x] Colored type badges in team slots and search
+- [x] Individual save buttons for each team slot
+- [x] Enhanced team management with remove buttons
+- [x] Moveset selector based on Pokémon level
+- [x] Level-based move availability filtering
+- [x] Up to 4 moves per Pokémon slot
+- [x] Enhanced moveset table format matching Pokémon detail page
+- [x] Move tooltips with descriptions and effects
+- [x] Type badges, power, accuracy, PP, and category display
+- [x] Fixed nested button hydration errors
+- [x] Enhanced TypeBadge component with span variant
 
 ### 2. Battle Simulator
 - [ ] Gym Leaders from all games

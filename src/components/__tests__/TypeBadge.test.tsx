@@ -37,6 +37,47 @@ describe('TypeBadge', () => {
       unmount()
     })
   })
+
+  it('should render as button by default', () => {
+    render(<TypeBadge type="fire" />)
+    
+    const button = screen.getByRole('button')
+    expect(button).toBeInTheDocument()
+    expect(button).toHaveTextContent('Fire')
+  })
+
+  it('should render as span when variant is span', () => {
+    render(<TypeBadge type="water" variant="span" />)
+    
+    const span = screen.getByText('Water')
+    expect(span.tagName).toBe('SPAN')
+    expect(span).not.toHaveRole('button')
+  })
+
+  it('should apply same styling regardless of variant', () => {
+    const { container: buttonContainer } = render(<TypeBadge type="grass" />)
+    const { container: spanContainer } = render(<TypeBadge type="grass" variant="span" />)
+    
+    const button = buttonContainer.firstChild as HTMLElement
+    const span = spanContainer.firstChild as HTMLElement
+    
+    // Both should have the same base classes
+    expect(button).toHaveClass('rounded-full', 'border', 'text-sm', 'font-medium')
+    expect(span).toHaveClass('rounded-full', 'border', 'text-sm', 'font-medium')
+  })
+
+  it('should handle custom className with both variants', () => {
+    const customClass = 'custom-class'
+    
+    const { container: buttonContainer } = render(<TypeBadge type="electric" className={customClass} />)
+    const { container: spanContainer } = render(<TypeBadge type="electric" variant="span" className={customClass} />)
+    
+    const button = buttonContainer.firstChild as HTMLElement
+    const span = spanContainer.firstChild as HTMLElement
+    
+    expect(button).toHaveClass(customClass)
+    expect(span).toHaveClass(customClass)
+  })
 })
 
 

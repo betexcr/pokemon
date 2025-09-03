@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import { createPortal } from 'react-dom';
+import { useRouter } from 'next/navigation';
 import { Pokemon, FilterState } from '@/types/pokemon';
 import { formatPokemonName, getPokemonDescription } from '@/lib/utils';
 import { searchPokemonByName, getPokemon } from '@/lib/api';
@@ -30,6 +31,7 @@ export default function RubyPokedexLayout({
   filters: _filters,
   setFilters: _setFilters
 }: RubyPokedexLayoutProps) {
+  const router = useRouter()
   const [menuSelection, setMenuSelection] = useState<'page' | 'area' | 'cry' | 'size'>('page');
   const [currentPage, setCurrentPage] = useState(1);
   const [showComparison, setShowComparison] = useState(false);
@@ -126,6 +128,13 @@ export default function RubyPokedexLayout({
         </div>
         
         <div className="flex items-center gap-2">
+          <button 
+            onClick={() => router.push('/team')}
+            className="px-4 py-2 border-2 border-border text-white text-sm font-bold transition-colors bg-surface hover:bg-ruby-tab/20"
+            title="Go to Team Builder"
+          >
+            🎮 TEAM
+          </button>
           <button 
             onClick={() => setShowComparison(!showComparison)}
             className={`px-4 py-2 border-2 border-border text-white text-sm font-bold transition-colors ${

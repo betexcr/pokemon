@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation'
 import { getPokemonByGeneration, getPokemonByType, getPokemon } from '@/lib/api'
 import ThemeToggle from './ThemeToggle'
 import VirtualizedPokemonGrid from './VirtualizedPokemonGrid'
-import { Search, Filter, X, Scale, ArrowRight, Menu, LayoutGrid, Grid3X3, Rows } from 'lucide-react'
+import { Search, Filter, X, Scale, ArrowRight, Menu, LayoutGrid, Grid3X3, Rows, Users } from 'lucide-react'
 
 interface ModernPokedexLayoutProps {
   pokemonList: Pokemon[]
@@ -598,6 +598,16 @@ export default function ModernPokedexLayout({
                 </div>
               </div>
 
+              {/* Desktop Team Builder Button */}
+              <button
+                onClick={() => router.push('/team')}
+                className="hidden md:flex items-center space-x-2 px-4 py-2 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
+                title="Go to Team Builder"
+              >
+                <Users className="h-4 w-4" />
+                <span className="text-sm font-medium">Team</span>
+              </button>
+
               {/* Desktop Comparison Button */}
               <button
                 onClick={() => router.push('/compare')}
@@ -611,6 +621,15 @@ export default function ModernPokedexLayout({
                     {comparisonList.length}
                   </span>
                 )}
+              </button>
+
+              {/* Mobile Team Builder Button */}
+              <button
+                onClick={() => router.push('/team')}
+                className="lg:hidden p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
+                title="Go to Team Builder"
+              >
+                <Users className="h-5 w-5" />
               </button>
 
               {/* Mobile Comparison Button */}
@@ -832,6 +851,23 @@ export default function ModernPokedexLayout({
                       Clear Comparison
                     </button>
                   )}
+                </div>
+              </div>
+
+              {/* Mobile Team Builder Section */}
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold text-text uppercase tracking-wider">Team Builder</h4>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => {
+                      router.push('/team')
+                      setShowMobileMenu(false)
+                    }}
+                    className="w-full p-3 rounded-xl bg-poke-red text-white font-medium transition-all duration-200 hover:bg-poke-red/80 flex items-center justify-center space-x-2"
+                  >
+                    <Users className="h-5 w-5" />
+                    <span>Go to Team Builder</span>
+                  </button>
                 </div>
               </div>
 

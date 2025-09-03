@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import Image from 'next/image';
 import { createPortal } from 'react-dom';
+import { useRouter } from 'next/navigation';
 import { Pokemon, FilterState } from '@/types/pokemon';
 import { formatPokemonName, getPokemonDescription } from '@/lib/utils';
 import ThemeToggle from './ThemeToggle';
@@ -29,6 +30,7 @@ export default function GoldPokedexLayout({
   filters,
   setFilters
 }: GoldPokedexLayoutProps) {
+  const router = useRouter()
   const [showComparison, setShowComparison] = useState(false);
   const [filteredPokemon] = useState<Pokemon[]>(pokemonList);
   const [showDesktopMenu, setShowDesktopMenu] = useState(false);
@@ -45,7 +47,8 @@ export default function GoldPokedexLayout({
       {/* Authentic GBC PokéDex Header */}
       <div className="bg-yellow-200 border-b-4 border-yellow-600 p-2 relative">
         <h1 className="font-['Pocket_Monk'] text-xl font-bold text-center text-yellow-800 tracking-wider">POKéDEX</h1>
-        <div className="absolute top-2 right-2">
+        <div className="absolute top-2 right-2 flex items-center gap-2">
+          <button onClick={() => router.push('/team')} className="px-3 py-1 bg-white text-yellow-800 border-2 border-yellow-600 rounded font-bold" title="Go to Team Builder">🎮 TEAM</button>
           <button onClick={() => setShowDesktopMenu(true)} className="px-3 py-1 bg-white text-yellow-800 border-2 border-yellow-600 rounded font-bold">MENU</button>
         </div>
       </div>

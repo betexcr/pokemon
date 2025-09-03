@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import { Pokemon, FilterState } from '@/types/pokemon'
 import { getPokemonByType, getAllPokemon } from '@/lib/api'
 import { formatPokemonName, typeColors, cn } from '@/lib/utils'
@@ -16,9 +17,10 @@ import ComparisonOverlay from '@/components/ComparisonOverlay'
 import VirtualizedPokemonGrid from '@/components/VirtualizedPokemonGrid'
 import ViewTransition from '@/components/ViewTransition'
 import { useSearch } from '@/hooks/useSearch'
-import { Search, Grid3X3, Zap, X } from 'lucide-react'
+import { Search, Grid3X3, Zap, X, Users } from 'lucide-react'
 
 export default function Home() {
+  const router = useRouter()
   const [pokemonList, setPokemonList] = useState<Pokemon[]>([])
   const [filteredPokemon, setFilteredPokemon] = useState<Pokemon[]>([])
   const [loading, setLoading] = useState(true)
@@ -412,6 +414,16 @@ export default function Home() {
 
 
 
+
+              {/* Team Builder Link */}
+              <button
+                onClick={() => router.push('/team')}
+                className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-surface border border-border text-muted hover:text-text hover:bg-white/50 transition-all duration-200"
+                title="Go to Team Builder"
+              >
+                <Users className="h-4 w-4" />
+                <span className="text-sm font-medium">Team</span>
+              </button>
 
               {/* Theme Toggle */}
               <ThemeToggle />
