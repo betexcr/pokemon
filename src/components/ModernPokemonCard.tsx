@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Pokemon } from '@/types/pokemon'
 import { formatPokemonName, typeColors } from '@/lib/utils'
 import { getPokemonMainPageImage } from '@/lib/api'
+import { usePokemonImage } from '@/hooks/useCachedImage'
 import { Star, ChevronRight, Heart, Scale } from 'lucide-react'
 import TypeBadge from './TypeBadge'
 
@@ -28,8 +29,10 @@ export default function ModernPokemonCard({
   density = 'compact'
 }: ModernPokemonCardProps) {
   const [imageLoaded, setImageLoaded] = useState(false)
-  const [imageError, setImageError] = useState(false)
   const router = useRouter()
+  
+  // Use cached image hook
+  const { imageUrl, isLoading: imageLoading, hasError: imageError } = usePokemonImage(pokemon.id)
 
   const handleClick = (e: React.MouseEvent) => {
     if (onSelect) {
@@ -128,20 +131,19 @@ export default function ModernPokemonCard({
           <div className={`relative bg-gradient-to-br from-white/20 to-white/5 rounded-lg flex items-center justify-center overflow-hidden mb-3 ${
             density === 'cozy' ? 'h-44' : density === 'compact' ? 'h-36' : 'h-20'
           }`}>
-            {!imageLoaded && !imageError && (
+            {imageLoading && (
               <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse" />
             )}
             
             {!imageError ? (
               <img
-                src={getPokemonMainPageImage(pokemon.id)}
+                src={imageUrl}
                 alt={formatPokemonName(pokemon.name)}
                 className={`
                   w-full h-full object-contain transition-opacity duration-300
                   ${imageLoaded ? 'opacity-100' : 'opacity-0'}
                 `}
                 onLoad={() => setImageLoaded(true)}
-                onError={() => setImageError(true)}
                 loading="lazy"
               />
             ) : (

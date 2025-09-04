@@ -66,7 +66,7 @@ export default function RootLayout({
         <meta name="msapplication-TileColor" content="#3B4CCA" />
         <meta name="application-name" content="PokéDex" />
       </head>
-      <body suppressHydrationWarning className={`${inter.className} h-full bg-bg text-text`}>
+      <body suppressHydrationWarning className={`${inter.className} h-full bg-bg text-text pokeball-bg`}>
         <ThemeProvider>
           <div className="min-h-full">
             {children}

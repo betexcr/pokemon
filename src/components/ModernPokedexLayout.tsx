@@ -9,6 +9,8 @@ import { getPokemonByGeneration, getPokemonByType, getPokemon, getPokemonWithPag
 import ThemeToggle from './ThemeToggle'
 import VirtualizedPokemonGrid from './VirtualizedPokemonGrid'
 import { Search, Filter, X, Scale, ArrowRight, Menu, LayoutGrid, Grid3X3, Rows, Users, Swords } from 'lucide-react'
+import { createHeuristics } from '@/lib/heuristics/core'
+import { LocalStorageAdapter, MemoryStorage } from '@/lib/heuristics/storage'
 
 // Legendary and Mythical Pokémon lists
 const LEGENDARY_POKEMON = new Set([
@@ -117,6 +119,70 @@ export default function ModernPokedexLayout({
   const [isAllGenerations, setIsAllGenerations] = useState(false)
   const [themeSelection, setThemeSelection] = useState<'light'|'dark'|'red'|'gold'|'ruby'>('light')
   const lastLoadTimeRef = useRef<number>(0)
+
+  // Heuristics-driven render-only cap and moving window
+  const storage = typeof window !== 'undefined' ? new LocalStorageAdapter() : new MemoryStorage()
+  const heur = createHeuristics({ storage })
+  const [maxRenderCount, setMaxRenderCount] = useState<number>(300)
+  const [renderWindowStart, setRenderWindowStart] = useState<number>(0)
+
+  const computeMaxRenderCount = useCallback(async () => {
+    let cap = 300
+    try {
+      const state = await heur.load()
+      const dm = state.signals.deviceMemoryGB
+      if (typeof dm === 'number') {
+        if (dm <= 1) cap = 150
+        else if (dm <= 2) cap = 220
+        else if (dm <= 4) cap = 300
+        else cap = 420
+      }
+    } catch {}
+
+    const perfMem: any = (typeof performance !== 'undefined' && (performance as any).memory) ? (performance as any).memory : null
+    if (perfMem && typeof perfMem.jsHeapSizeLimit === 'number') {
+      const estimatedPerCard = 35 * 1024
+      const budget = Math.floor(perfMem.jsHeapSizeLimit * 0.015)
+      const capByHeap = Math.max(120, Math.floor(budget / estimatedPerCard))
+      cap = Math.min(cap, capByHeap)
+    }
+
+    const dpr = typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1
+    if (dpr >= 3) cap = Math.floor(cap * 0.7)
+    else if (dpr >= 2) cap = Math.floor(cap * 0.85)
+
+    cap = Math.max(120, Math.min(cap, 500))
+    setMaxRenderCount(cap)
+  }, [heur])
+
+  useEffect(() => {
+    computeMaxRenderCount()
+    const onResize = () => { computeMaxRenderCount(); updateRenderWindow() }
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [computeMaxRenderCount])
+
+  const updateRenderWindow = useCallback(() => {
+    if (!isAllGenerations) { setRenderWindowStart(0); return }
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop
+    const estimatedItemHeight = cardDensity === 'cozy' ? 360 : cardDensity === 'compact' ? 300 : 180
+    const estimatedCardWidth = cardDensity === 'cozy' ? 320 : cardDensity === 'compact' ? 200 : 120
+    const columns = Math.max(1, Math.floor(window.innerWidth / estimatedCardWidth))
+    const firstVisibleRow = Math.max(0, Math.floor(scrollTop / estimatedItemHeight))
+    const bufferRows = 3
+    const startRow = Math.max(0, firstVisibleRow - bufferRows)
+    const startIndex = startRow * columns
+    const totalItems = filteredPokemon.length || 0
+    const clampedStart = Math.min(startIndex, Math.max(0, totalItems - maxRenderCount))
+    setRenderWindowStart(clampedStart)
+  }, [cardDensity, maxRenderCount, filteredPokemon.length, isAllGenerations])
+
+  useEffect(() => {
+    updateRenderWindow()
+    const onScroll = () => updateRenderWindow()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [updateRenderWindow])
 
   // Initialize filteredPokemon with pokemonList on first load
   useEffect(() => {
@@ -1490,7 +1556,14 @@ export default function ModernPokedexLayout({
             ) : sortedPokemon.length > 0 ? (
               <>
                 <VirtualizedPokemonGrid
-                  pokemonList={sortedPokemon}
+                  pokemonList={
+                    isAllGenerations
+                      ? sortedPokemon.slice(
+                          Math.min(renderWindowStart, Math.max(0, sortedPokemon.length - maxRenderCount)),
+                          Math.min(sortedPokemon.length, Math.max(renderWindowStart, 0) + maxRenderCount)
+                        )
+                      : sortedPokemon
+                  }
                   onToggleComparison={onToggleComparison}
                   onSelectPokemon={undefined}
                   selectedPokemon={null}
@@ -1504,20 +1577,7 @@ export default function ModernPokedexLayout({
                     <p className="text-muted text-sm">Loading more Pokémon...</p>
                   </div>
                 )}
-                {/* Manual load more button */}
-                {isAllGenerations && !isLoadingMore && hasMorePokemon && (
-                  <div className="text-center py-8">
-                    <button
-                      onClick={loadMorePokemon}
-                      className="px-6 py-3 bg-poke-blue text-white rounded-lg hover:bg-poke-blue/90 transition-colors font-medium"
-                    >
-                      Load More Pokémon
-                    </button>
-                    <p className="text-muted text-sm mt-2">
-                      Scroll down or click to load more Pokémon
-                    </p>
-                  </div>
-                )}
+                {/* Manual load more removed: auto-infinite-scroll handles fetching */}
                 {/* End of list indicator */}
                 {isAllGenerations && !hasMorePokemon && !isLoadingMore && (
                   <div className="text-center py-8">
