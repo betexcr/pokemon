@@ -323,7 +323,13 @@ export default function ModernPokedexLayout({
             setAllGenerationsPokemon(initialPokemon)
             setCurrentOffset(30)
             // fetch total count once
-            try { const count = await getPokemonTotalCount(); setTotalPokemonCount(count || null) } catch {}
+            try { 
+              const count = await getPokemonTotalCount(); 
+              console.log('Fetched total Pokémon count:', count);
+              setTotalPokemonCount(count || null) 
+            } catch (error) {
+              console.error('Error fetching total count:', error);
+            }
             results = initialPokemon
           } else {
             results = allGenerationsPokemon
@@ -488,7 +494,10 @@ export default function ModernPokedexLayout({
 
   // Load more Pokémon for infinite scrolling with deduplication
   const loadMorePokemon = useCallback(async () => {
-    if (isLoadingMore || !hasMorePokemon || !isAllGenerations) return;
+    if (isLoadingMore || !hasMorePokemon || !isAllGenerations) {
+      console.log('Skipping load - isLoadingMore:', isLoadingMore, 'hasMorePokemon:', hasMorePokemon, 'isAllGenerations:', isAllGenerations);
+      return;
+    }
     
     // Additional protection against rapid calls
     const now = Date.now();
@@ -508,15 +517,15 @@ export default function ModernPokedexLayout({
       if (newPokemon.length === 0) {
         // If we know total count and haven't reached it, skip ahead and retry a few times
         const total = totalPokemonCount ?? 0
-        if (total && currentOffset < total && emptyBatchCountRef.current < 3) {
+        if (total && currentOffset < total && emptyBatchCountRef.current < 5) { // Increased retry limit
           emptyBatchCountRef.current += 1
           setCurrentOffset(prev => prev + pageSize)
-          console.log('Empty batch, advancing offset and retrying. Empty batches:', emptyBatchCountRef.current)
+          console.log('Empty batch, advancing offset and retrying. Empty batches:', emptyBatchCountRef.current, 'Current offset:', currentOffset, 'Total:', total)
           // small async retry
           setTimeout(() => { loadMorePokemon() }, 10)
           return;
         }
-        console.log('No more Pokémon to load')
+        console.log('No more Pokémon to load. Current offset:', currentOffset, 'Total count:', total)
         setHasMorePokemon(false);
       } else {
         emptyBatchCountRef.current = 0
@@ -552,8 +561,9 @@ export default function ModernPokedexLayout({
           return updated;
         });
         setCurrentOffset(prev => prev + pageSize);
-        // Stop when we reach total count if known
-        if (totalPokemonCount && currentOffset + pageSize >= totalPokemonCount) {
+        // Stop when we reach total count if known (be less conservative)
+        if (totalPokemonCount && currentOffset + pageSize >= totalPokemonCount - 10) { // Allow some buffer
+          console.log('Reaching total count limit. Current offset:', currentOffset + pageSize, 'Total:', totalPokemonCount)
           setHasMorePokemon(false)
         }
       }

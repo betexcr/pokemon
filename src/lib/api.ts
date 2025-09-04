@@ -157,10 +157,21 @@ export async function getPokemonTotalCount(): Promise<number> {
   const cached = getCache(cacheKey);
   if (cached) return cached as number;
 
-  const data = await getPokemonList(1, 0);
-  const count = typeof data.count === 'number' ? data.count : 0;
-  setCache(cacheKey, count, CACHE_TTL.POKEMON_LIST);
-  return count;
+  try {
+    // Fetch the Pokémon list endpoint directly to get the total count
+    const response = await fetchWithRetry<NamedAPIResourceList>(
+      `${POKEAPI_BASE_URL}/pokemon?limit=1&offset=0`
+    );
+    
+    const count = response.count || 0;
+    console.log('Total Pokémon count from API:', count);
+    setCache(cacheKey, count, CACHE_TTL.POKEMON_LIST);
+    return count;
+  } catch (error) {
+    console.error('Error fetching Pokémon total count:', error);
+    // Fallback to a reasonable estimate if API fails
+    return 1025; // Approximate count as of Gen 9
+  }
 }
 
 // Get Pokémon with pagination for infinite scrolling
