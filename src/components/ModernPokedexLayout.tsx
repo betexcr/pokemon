@@ -386,7 +386,14 @@ export default function ModernPokedexLayout({
     }
 
     applyFilters()
-  }, [searchResults, pokemonList, advancedFilters, allGenerationsPokemon])
+  }, [searchResults, pokemonList, advancedFilters])
+
+  // Handle allGenerationsPokemon updates separately to avoid infinite loops
+  useEffect(() => {
+    if (allGenerationsPokemon.length > 0) {
+      setFilteredPokemon(allGenerationsPokemon)
+    }
+  }, [allGenerationsPokemon])
 
   // Ensure full stats are available when sorting by stats in Modern
   useEffect(() => {

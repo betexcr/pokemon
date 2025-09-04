@@ -22,6 +22,10 @@ const mockPokemon1 = {
     { stat: { name: 'speed' }, base_stat: 45 }
   ],
   types: [{ type: { name: 'grass' } }, { type: { name: 'poison' } }],
+  abilities: [
+    { ability: { name: 'overgrow' }, is_hidden: false, slot: 1 },
+    { ability: { name: 'chlorophyll' }, is_hidden: true, slot: 3 }
+  ],
   sprites: {
     front_default: 'https://example.com/bulbasaur.png',
     back_default: 'https://example.com/bulbasaur-back.png'
@@ -40,6 +44,10 @@ const mockPokemon2 = {
     { stat: { name: 'speed' }, base_stat: 65 }
   ],
   types: [{ type: { name: 'fire' } }],
+  abilities: [
+    { ability: { name: 'blaze' }, is_hidden: false, slot: 1 },
+    { ability: { name: 'solar-power' }, is_hidden: true, slot: 3 }
+  ],
   sprites: {
     front_default: 'https://example.com/charmander.png',
     back_default: 'https://example.com/charmander-back.png'

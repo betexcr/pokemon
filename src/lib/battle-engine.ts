@@ -9,6 +9,10 @@ export type BattlePokemon = {
   status?: 'paralyzed' | 'poisoned' | 'burned' | 'frozen' | 'asleep' | 'confused';
   statusTurns?: number; // How many turns the status has been active
   flinched?: boolean; // Can't move this turn
+  // Ability system
+  currentAbility?: string;
+  originalAbility?: string;
+  abilityChanged?: boolean;
   statModifiers: {
     attack: number;
     defense: number;
@@ -21,7 +25,7 @@ export type BattlePokemon = {
 };
 
 export type BattleLogEntry = {
-  type: 'turn_start' | 'move_used' | 'damage_dealt' | 'status_applied' | 'status_damage' | 'status_effect' | 'pokemon_fainted' | 'pokemon_sent_out' | 'battle_start' | 'battle_end';
+  type: 'turn_start' | 'move_used' | 'damage_dealt' | 'status_applied' | 'status_damage' | 'status_effect' | 'pokemon_fainted' | 'pokemon_sent_out' | 'battle_start' | 'battle_end' | 'ability_changed' | 'healing';
   message: string;
   turn?: number;
   pokemon?: string;
@@ -29,6 +33,7 @@ export type BattleLogEntry = {
   damage?: number;
   effectiveness?: 'super_effective' | 'not_very_effective' | 'no_effect' | 'normal';
   status?: string;
+  healing?: number;
 };
 
 export type BattleTeam = {
@@ -107,6 +112,17 @@ export function getEffectivenessText(effectiveness: number): 'super_effective' |
   return 'normal';
 }
 
+// Get Pokémon's current ability
+export function getCurrentAbility(pokemon: BattlePokemon): string {
+  if (pokemon.currentAbility) {
+    return pokemon.currentAbility;
+  }
+  
+  // Get the first non-hidden ability from the Pokémon's abilities
+  const ability = pokemon.pokemon.abilities.find(a => !a.is_hidden);
+  return ability?.ability.name || 'none';
+}
+
 // Check if move can cause status effect
 export function canCauseStatusEffect(move: Move): string | null {
   const statusMoves: Record<string, string> = {
@@ -130,6 +146,66 @@ export function canCauseStatusEffect(move: Move): string | null {
   };
   
   return statusMoves[move.name] || null;
+}
+
+// Check if move changes abilities
+export function canChangeAbility(move: Move): string | null {
+  const abilityMoves: Record<string, string> = {
+    'worry-seed': 'insomnia',
+    'gastro-acid': 'none', // Suppresses ability
+    'simple-beam': 'simple',
+    'entrainment': 'none' // Copies user's ability
+  };
+  
+  return abilityMoves[move.name] || null;
+}
+
+// Check if Pokémon is immune to sleep
+export function isImmuneToSleep(pokemon: BattlePokemon): boolean {
+  const currentAbility = getCurrentAbility(pokemon);
+  const sleepImmuneAbilities = ['insomnia', 'vital-spirit', 'sweet-veil'];
+  return sleepImmuneAbilities.includes(currentAbility);
+}
+
+// Check if move is a healing move
+export function isHealingMove(move: Move): boolean {
+  const healingMoves = [
+    'recover', 'rest', 'soft-boiled', 'milk-drink', 'synthesis', 
+    'moonlight', 'morning-sun', 'roost', 'heal-bell', 'aromatherapy',
+    'wish', 'heal-pulse', 'life-dew', 'jungle-healing'
+  ];
+  return healingMoves.includes(move.name);
+}
+
+// Calculate healing amount for healing moves
+export function calculateHealing(user: BattlePokemon, move: Move): number {
+  const healingAmounts: Record<string, number> = {
+    'recover': 0.5,        // 50% of max HP
+    'rest': 1.0,           // 100% of max HP (but puts to sleep)
+    'soft-boiled': 0.5,    // 50% of max HP
+    'milk-drink': 0.5,     // 50% of max HP
+    'synthesis': 0.5,      // 50% of max HP (weather dependent)
+    'moonlight': 0.5,      // 50% of max HP (weather dependent)
+    'morning-sun': 0.5,    // 50% of max HP (weather dependent)
+    'roost': 0.5,          // 50% of max HP
+    'heal-pulse': 0.5,     // 50% of max HP (targets ally)
+    'life-dew': 0.25,      // 25% of max HP (affects all allies)
+    'jungle-healing': 0.25 // 25% of max HP (affects all allies)
+  };
+  
+  const healingPercentage = healingAmounts[move.name] || 0;
+  return Math.floor(user.maxHp * healingPercentage);
+}
+
+// Check if move is self-targeting
+export function isSelfTargetingMove(move: Move): boolean {
+  const selfTargetingMoves = [
+    'recover', 'rest', 'soft-boiled', 'milk-drink', 'synthesis',
+    'moonlight', 'morning-sun', 'roost', 'heal-bell', 'aromatherapy',
+    'wish', 'swords-dance', 'dragon-dance', 'calm-mind', 'bulk-up',
+    'nasty-plot', 'work-up', 'growth', 'hone-claws', 'coil'
+  ];
+  return selfTargetingMoves.includes(move.name);
 }
 
 // Check if move can cause flinch
@@ -354,59 +430,162 @@ export function executeAction(state: BattleState, action: BattleAction): BattleS
         });
         attacker.flinched = false;
       } else {
-        // Use detailed damage calculation
-        const damageResult = calculateDamageDetailed(attacker, defender, move);
-        const damage = damageResult.damage;
-        const oldHp = defender.currentHp;
-        defender.currentHp = Math.max(0, defender.currentHp - damage);
-        
-        // Calculate damage percentage
-        const damagePercent = calculateDamagePercentage(damage, defender.maxHp);
-        const remainingPercent = Math.round((defender.currentHp / defender.maxHp) * 100);
-        
-        // Log move usage
-        newState.battleLog.push({
-          type: 'move_used',
-          message: `${attacker.pokemon.name} used ${move.name}!`,
-          pokemon: String(attacker.pokemon.name),
-          move: String(move.name)
-        });
-        
-        // Log damage with effectiveness
-        const effectivenessText = getEffectivenessText(damageResult.effectiveness);
-        let damageMessage = `${defender.pokemon.name} took ${damagePercent}% damage (${remainingPercent}% HP left).`;
-        
-        if (effectivenessText === 'super_effective') {
-          damageMessage = `It's super effective! ${damageMessage}`;
-        } else if (effectivenessText === 'not_very_effective') {
-          damageMessage = `It's not very effective... ${damageMessage}`;
-        } else if (effectivenessText === 'no_effect') {
-          damageMessage = `It had no effect!`;
-        }
-        
-        newState.battleLog.push({
-          type: 'damage_dealt',
-          message: damageMessage,
-          pokemon: String(defender.pokemon.name),
-          damage: damagePercent,
-          effectiveness: effectivenessText
-        });
-        
-        // Apply status effects
-        if (damageResult.statusEffect && !defender.status) {
-          defender.status = damageResult.statusEffect as 'poisoned' | 'paralyzed' | 'asleep' | 'burned' | 'frozen';
-          defender.statusTurns = 0;
+        // Check if this is a healing move
+        if (isHealingMove(move)) {
+          // Handle healing moves
+          const healingAmount = calculateHealing(attacker, move);
+          const oldHp = attacker.currentHp;
+          attacker.currentHp = Math.min(attacker.maxHp, attacker.currentHp + healingAmount);
+          const actualHealing = attacker.currentHp - oldHp;
+          
+          // Log move usage
           newState.battleLog.push({
-            type: 'status_applied',
-            message: `${defender.pokemon.name} was ${damageResult.statusEffect}!`,
-            pokemon: String(defender.pokemon.name),
-            status: String(damageResult.statusEffect)
+            type: 'move_used',
+            message: `${attacker.pokemon.name} used ${move.name}!`,
+            pokemon: String(attacker.pokemon.name),
+            move: String(move.name)
           });
-        }
-        
-        // Apply flinch
-        if (damageResult.flinch) {
-          defender.flinched = true;
+          
+          // Log healing
+          if (actualHealing > 0) {
+            const healingPercent = Math.round((actualHealing / attacker.maxHp) * 100);
+            const remainingPercent = Math.round((attacker.currentHp / attacker.maxHp) * 100);
+            newState.battleLog.push({
+              type: 'healing',
+              message: `${attacker.pokemon.name} restored ${healingPercent}% HP (${remainingPercent}% HP left).`,
+              pokemon: String(attacker.pokemon.name),
+              healing: healingPercent
+            });
+          } else {
+            newState.battleLog.push({
+              type: 'healing',
+              message: `${attacker.pokemon.name} is already at full health!`,
+              pokemon: String(attacker.pokemon.name)
+            });
+          }
+          
+          // Handle special healing move effects
+          if (move.name === 'rest') {
+            // Rest puts the user to sleep and heals to full
+            attacker.status = 'asleep';
+            attacker.statusTurns = 0;
+            attacker.currentHp = attacker.maxHp;
+            newState.battleLog.push({
+              type: 'status_applied',
+              message: `${attacker.pokemon.name} fell asleep due to Rest!`,
+              pokemon: String(attacker.pokemon.name),
+              status: 'asleep'
+            });
+          } else if (move.name === 'heal-bell' || move.name === 'aromatherapy') {
+            // Heal Bell and Aromatherapy cure status conditions
+            if (attacker.status) {
+              const oldStatus = attacker.status;
+              attacker.status = undefined;
+              attacker.statusTurns = undefined;
+              newState.battleLog.push({
+                type: 'status_effect',
+                message: `${attacker.pokemon.name} was cured of ${oldStatus}!`,
+                pokemon: String(attacker.pokemon.name)
+              });
+            }
+          }
+        } else {
+          // Use detailed damage calculation for damaging moves
+          const damageResult = calculateDamageDetailed(attacker, defender, move);
+          const damage = damageResult.damage;
+          const oldHp = defender.currentHp;
+          defender.currentHp = Math.max(0, defender.currentHp - damage);
+          
+          // Calculate damage percentage
+          const damagePercent = calculateDamagePercentage(damage, defender.maxHp);
+          const remainingPercent = Math.round((defender.currentHp / defender.maxHp) * 100);
+          
+          // Log move usage
+          newState.battleLog.push({
+            type: 'move_used',
+            message: `${attacker.pokemon.name} used ${move.name}!`,
+            pokemon: String(attacker.pokemon.name),
+            move: String(move.name)
+          });
+          
+          // Log damage with effectiveness
+          const effectivenessText = getEffectivenessText(damageResult.effectiveness);
+          let damageMessage = `${defender.pokemon.name} took ${damagePercent}% damage (${remainingPercent}% HP left).`;
+          
+          if (effectivenessText === 'super_effective') {
+            damageMessage = `It's super effective! ${damageMessage}`;
+          } else if (effectivenessText === 'not_very_effective') {
+            damageMessage = `It's not very effective... ${damageMessage}`;
+          } else if (effectivenessText === 'no_effect') {
+            damageMessage = `It had no effect!`;
+          }
+          
+          newState.battleLog.push({
+            type: 'damage_dealt',
+            message: damageMessage,
+            pokemon: String(defender.pokemon.name),
+            damage: damagePercent,
+            effectiveness: effectivenessText
+          });
+          
+          // Apply status effects
+          if (damageResult.statusEffect && !defender.status) {
+            // Check if target is immune to sleep
+            if (damageResult.statusEffect === 'asleep' && isImmuneToSleep(defender)) {
+              newState.battleLog.push({
+                type: 'status_effect',
+                message: `${defender.pokemon.name} is immune to sleep due to its ${getCurrentAbility(defender)} ability!`,
+                pokemon: String(defender.pokemon.name)
+              });
+            } else {
+              defender.status = damageResult.statusEffect as 'poisoned' | 'paralyzed' | 'asleep' | 'burned' | 'frozen';
+              defender.statusTurns = 0;
+              newState.battleLog.push({
+                type: 'status_applied',
+                message: `${defender.pokemon.name} was ${damageResult.statusEffect}!`,
+                pokemon: String(defender.pokemon.name),
+                status: String(damageResult.statusEffect)
+              });
+            }
+          }
+          
+          // Apply ability changes (Worry Seed, etc.)
+          const newAbility = canChangeAbility(move);
+          if (newAbility) {
+            const oldAbility = getCurrentAbility(defender);
+            defender.currentAbility = newAbility;
+            defender.abilityChanged = true;
+            
+            if (newAbility === 'insomnia') {
+              // Worry Seed: Change to Insomnia and wake up if asleep
+              if (defender.status === 'asleep') {
+                defender.status = undefined;
+                defender.statusTurns = undefined;
+                newState.battleLog.push({
+                  type: 'status_effect',
+                  message: `${defender.pokemon.name} woke up due to Worry Seed!`,
+                  pokemon: String(defender.pokemon.name)
+                });
+              }
+              newState.battleLog.push({
+                type: 'ability_changed',
+                message: `${defender.pokemon.name}'s ability was changed to Insomnia by Worry Seed!`,
+                pokemon: String(defender.pokemon.name)
+              });
+            } else if (newAbility === 'none') {
+              // Gastro Acid: Suppress ability
+              newState.battleLog.push({
+                type: 'ability_changed',
+                message: `${defender.pokemon.name}'s ability was suppressed!`,
+                pokemon: String(defender.pokemon.name)
+              });
+            }
+          }
+          
+          // Apply flinch
+          if (damageResult.flinch) {
+            defender.flinched = true;
+          }
         }
       }
     }
