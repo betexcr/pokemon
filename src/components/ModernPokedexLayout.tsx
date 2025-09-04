@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation'
 import { getPokemonByGeneration, getPokemonByType, getPokemon } from '@/lib/api'
 import ThemeToggle from './ThemeToggle'
 import VirtualizedPokemonGrid from './VirtualizedPokemonGrid'
-import { Search, Filter, X, Scale, ArrowRight, Menu, LayoutGrid, Grid3X3, Rows, Users } from 'lucide-react'
+import { Search, Filter, X, Scale, ArrowRight, Menu, LayoutGrid, Grid3X3, Rows, Users, Swords } from 'lucide-react'
 
 interface ModernPokedexLayoutProps {
   pokemonList: Pokemon[]
@@ -608,6 +608,16 @@ export default function ModernPokedexLayout({
                 <span className="text-sm font-medium">Team</span>
               </button>
 
+              {/* Desktop Battle Button */}
+              <button
+                onClick={() => router.push('/battle')}
+                className="hidden md:flex items-center space-x-2 px-4 py-2 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
+                title="Go to AI Battle"
+              >
+                <Swords className="h-4 w-4" />
+                <span className="text-sm font-medium">Battle</span>
+              </button>
+
               {/* Desktop Comparison Button */}
               <button
                 onClick={() => router.push('/compare')}
@@ -630,6 +640,15 @@ export default function ModernPokedexLayout({
                 title="Go to Team Builder"
               >
                 <Users className="h-5 w-5" />
+              </button>
+
+              {/* Mobile Battle Button */}
+              <button
+                onClick={() => router.push('/battle')}
+                className="lg:hidden p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
+                title="Go to AI Battle"
+              >
+                <Swords className="h-5 w-5" />
               </button>
 
               {/* Mobile Comparison Button */}
@@ -867,6 +886,23 @@ export default function ModernPokedexLayout({
                   >
                     <Users className="h-5 w-5" />
                     <span>Go to Team Builder</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Mobile Battle Section */}
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold text-text uppercase tracking-wider">AI Battle</h4>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => {
+                      router.push('/battle')
+                      setShowMobileMenu(false)
+                    }}
+                    className="w-full p-3 rounded-xl bg-poke-blue text-white font-medium transition-all duration-200 hover:bg-poke-blue/80 flex items-center justify-center space-x-2"
+                  >
+                    <Swords className="h-5 w-5" />
+                    <span>Go to AI Battle</span>
                   </button>
                 </div>
               </div>

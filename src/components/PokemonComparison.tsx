@@ -13,6 +13,8 @@ interface PokemonComparisonProps {
 
 export default function PokemonComparison({ pokemonList, className = '' }: PokemonComparisonProps) {
   const [selectedPokemon, setSelectedPokemon] = useState<Pokemon[]>([])
+  const [showSelector, setShowSelector] = useState<boolean>(false)
+  const [search, setSearch] = useState<string>('')
   const [comparisonData, setComparisonData] = useState<Array<{
     name: string;
     stats: {
@@ -220,11 +222,7 @@ export default function PokemonComparison({ pokemonList, className = '' }: Pokem
                 {/* Add Pokémon Button */}
                 {selectedPokemon.length < maxPokemon && (
                   <button
-                    onClick={() => {
-                      // Show Pokémon selection modal or dropdown
-                      const randomPokemon = pokemonList[Math.floor(Math.random() * pokemonList.length)]
-                      addPokemon(randomPokemon)
-                    }}
+                    onClick={() => setShowSelector(v => !v)}
                     className={`p-4 rounded-lg border-2 border-dashed flex flex-col items-center justify-center ${
                       isRetro 
                         ? theme === 'red' ? 'border-red-400 text-red-600 hover:bg-red-100' 
@@ -234,11 +232,56 @@ export default function PokemonComparison({ pokemonList, className = '' }: Pokem
                     }`}
                   >
                     <Plus size={24} />
-                    <span className="text-sm mt-2">Add Pokémon</span>
+                    <span className="text-sm mt-2">{showSelector ? 'Hide Selector' : 'Add Pokémon'}</span>
                   </button>
                 )}
               </div>
             </div>
+
+            {/* Selector (minimized by default) */}
+            {showSelector && (
+              <div className={`mb-6 rounded-lg border ${isRetro ? 'border-gray-300' : 'border-gray-200'} bg-white p-4`}> 
+                <div className="flex items-center gap-2 mb-3">
+                  <input
+                    value={search}
+                    onChange={(e)=>setSearch(e.target.value)}
+                    placeholder="Search by name or # (e.g., 'Lugia', '249', 'char')"
+                    className="w-full h-10 rounded-md border border-border px-3 text-sm"
+                  />
+                  <button
+                    onClick={()=> setShowSelector(false)}
+                    className="h-10 px-3 rounded-md border border-border text-sm"
+                  >
+                    Close
+                  </button>
+                </div>
+                <div className="max-h-80 overflow-y-auto divide-y divide-gray-100">
+                  {pokemonList
+                    .filter(p => {
+                      if (!search) return true
+                      const q = search.toLowerCase()
+                      return p.name.toLowerCase().includes(q) || String(p.id).includes(q)
+                    })
+                    .map(p => (
+                      <button
+                        key={p.id}
+                        className="w-full text-left py-2 px-2 hover:bg-gray-50 flex items-center gap-3"
+                        onClick={() => { addPokemon(p); setShowSelector(false); setSearch('') }}
+                      >
+                        <img
+                          src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`}
+                          alt={p.name}
+                          className="w-8 h-8 object-contain"
+                          loading="lazy"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium truncate capitalize">{p.name}#{p.id}</div>
+                        </div>
+                      </button>
+                    ))}
+                </div>
+              </div>
+            )}
 
             {/* Radar Chart */}
             {comparisonData.length > 0 && (

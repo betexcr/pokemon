@@ -21,7 +21,7 @@ export default function ComparisonOverlay({
   onRemoveFromComparison,
   onClearComparison
 }: ComparisonOverlayProps) {
-  const [isExpanded, setIsExpanded] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(true)
   const [sortBy, setSortBy] = useState<'total' | 'hp' | 'attack' | 'defense' | 'special-attack' | 'special-defense' | 'speed'>('total')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const router = useRouter()
@@ -42,16 +42,16 @@ export default function ComparisonOverlay({
   return (
     <div className="fixed bottom-4 right-4 z-50">
       {/* Collapsible Container */}
-      <div className={`
-        bg-surface border border-border rounded-lg shadow-lg transition-all duration-300
-        ${isExpanded ? 'w-80' : 'w-16'}
-      `}>
+      <div         className={`
+          bg-surface border border-border rounded-lg shadow-lg transition-all duration-300
+          ${isExpanded ? 'w-16' : 'w-80'}
+        `}>
         
         {/* Header */}
         <div className="flex items-center justify-between p-3 border-b border-border">
           <div className="flex items-center space-x-2">
             <Scale className="h-5 w-5 text-blue-500" />
-            {isExpanded && (
+            {!isExpanded && (
               <span className="text-sm font-medium">
                 {comparisonList.length} Pokémon selected
               </span>
@@ -59,7 +59,7 @@ export default function ComparisonOverlay({
           </div>
           
           <div className="flex items-center space-x-1">
-            {isExpanded && (
+            {!isExpanded && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -74,16 +74,16 @@ export default function ComparisonOverlay({
               className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
               {isExpanded ? (
-                <ChevronDown className="h-4 w-4" />
-              ) : (
                 <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
               )}
             </button>
           </div>
         </div>
 
         {/* Content */}
-        {isExpanded && (
+        {!isExpanded && (
           <div className="p-3 space-y-3">
             {/* Sorting Controls */}
             <div className="flex items-center gap-2">

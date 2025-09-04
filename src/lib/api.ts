@@ -109,12 +109,19 @@ async function fetchWithRetry<T>(
           await new Promise(resolve => setTimeout(resolve, delay));
           continue;
         }
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`HTTP error! status: ${response.status} for URL: ${url}`);
       }
 
       return await response.json();
     } catch (error) {
-      if (i === retries - 1) throw error;
+      console.error(`API call failed (attempt ${i + 1}/${retries}):`, error);
+      if (i === retries - 1) {
+        // Provide more helpful error messages
+        if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+          throw new Error(`Network error: Unable to connect to ${url}. Please check your internet connection.`);
+        }
+        throw error;
+      }
       await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
     }
     }
