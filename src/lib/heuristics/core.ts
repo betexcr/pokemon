@@ -57,12 +57,12 @@ const detectEnv = (): HeuristicsState['env'] => {
   const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
   const isNode = typeof process !== 'undefined' && !!(process.versions?.node);
   const isNextServer = isNode && !isBrowser;
-  const isNextClient = isBrowser && !!(window as any).next;
+  const isNextClient = isBrowser && !!(window as { next?: unknown }).next;
   let ua: string | undefined;
   let platform: string | undefined;
   if (isBrowser) {
-    ua = (navigator as any)?.userAgent;
-    platform = (navigator as any)?.platform;
+    ua = (navigator as { userAgent?: string })?.userAgent;
+    platform = (navigator as { platform?: string })?.platform;
   } else if (isNode) {
     ua = `node/${process.versions.node} (${process.platform})`;
     platform = process.platform;
@@ -74,7 +74,7 @@ async function gatherSignals(): Promise<HeuristicsState['signals']> {
   const signals: HeuristicsState['signals'] = {};
   try {
     if (typeof navigator !== 'undefined') {
-      const anyNav = navigator as any;
+      const anyNav = navigator as { connection?: { effectiveType?: string; downlink?: number } };
 
       // Network Information API (not on iOS Safari)
       if (anyNav.connection) {
@@ -91,16 +91,16 @@ async function gatherSignals(): Promise<HeuristicsState['signals']> {
       }
 
       // Device Memory (Chrome-based)
-      if (typeof (anyNav as any).deviceMemory === 'number') {
-        signals.deviceMemoryGB = (anyNav as any).deviceMemory;
+      if (typeof (anyNav as { deviceMemory?: number }).deviceMemory === 'number') {
+        signals.deviceMemoryGB = (anyNav as { deviceMemory: number }).deviceMemory;
       }
     }
 
     // Battery Status API is widely unsupported; best-effort
     if (typeof navigator !== 'undefined' && 'getBattery' in navigator) {
       try {
-        // @ts-ignore
-        const bat = await (navigator as any).getBattery();
+        // @ts-expect-error - getBattery is not in standard Navigator type
+        const bat = await (navigator as { getBattery: () => Promise<{ charging: boolean; level: number }> }).getBattery();
         signals.lowPowerMode = (bat.charging === false && bat.level <= 0.2);
       } catch { /* ignore */ }
     }
@@ -217,7 +217,7 @@ export function createHeuristics(opts: CreateHeuristicsOpts = {}) {
   function getFrameBudgetHz(): 60 | 120 {
     // crude: if deviceMemory hint high and downlink ok, allow 120hz
     // browsers with high refresh will still only render as supported
-    return (typeof window !== 'undefined' && (window as any).matchMedia?.('(min-resolution: 2dppx)') && (window as any).matchMedia('(prefers-reduced-motion: no-preference)').matches)
+    return (typeof window !== 'undefined' && (window as { matchMedia?: (query: string) => { matches: boolean } }).matchMedia?.('(min-resolution: 2dppx)') && (window as { matchMedia: (query: string) => { matches: boolean } }).matchMedia('(prefers-reduced-motion: no-preference)').matches)
       ? 60 : 60; // keep conservative by default; adjust if you have device DB
   }
 

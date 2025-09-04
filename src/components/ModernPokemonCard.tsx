@@ -1,12 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Pokemon } from '@/types/pokemon'
-import { formatPokemonName, typeColors } from '@/lib/utils'
-import { getPokemonMainPageImage } from '@/lib/api'
+import { formatPokemonName } from '@/lib/utils'
 import { usePokemonImage } from '@/hooks/useCachedImage'
-import { Star, ChevronRight, Heart, Scale } from 'lucide-react'
+import { Scale } from 'lucide-react'
 import TypeBadge from './TypeBadge'
 
 interface ModernPokemonCardProps {
@@ -34,20 +33,6 @@ export default function ModernPokemonCard({
   // Use cached image hook
   const { imageUrl, isLoading: imageLoading, hasError: imageError } = usePokemonImage(pokemon.id)
   
-  // Temporary: Use direct URL for debugging
-  const directImageUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${pokemon.id}.png`
-  
-  // Debug logging for list view
-  useEffect(() => {
-    if (density === 'list') {
-      console.log(`List view - ${pokemon.name} (ID: ${pokemon.id}):`, {
-        imageUrl,
-        imageLoading,
-        imageError,
-        imageLoaded
-      })
-    }
-  }, [pokemon.name, pokemon.id, imageUrl, imageLoading, imageError, imageLoaded, density])
 
   const handleClick = (e: React.MouseEvent) => {
     if (onSelect) {
@@ -125,41 +110,18 @@ export default function ModernPokemonCard({
         // List layout
         <div className="flex items-center w-full p-3">
           {/* Pokémon Image */}
-          <div className="relative bg-gradient-to-br from-white/20 to-white/5 rounded-lg flex items-center justify-center overflow-hidden mr-4 w-16 h-16 flex-shrink-0 border-2 border-red-500">
+          <div className="relative bg-gradient-to-br from-white/20 to-white/5 rounded-lg flex items-center justify-center overflow-hidden mr-4 w-16 h-16 flex-shrink-0">
             {imageLoading && (
               <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse rounded-lg" />
             )}
             
-            {/* Test with multiple image sources */}
+            {/* Pokémon Image */}
             <img
               src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`}
               alt={formatPokemonName(pokemon.name)}
               className="w-full h-full object-contain"
-              onLoad={() => {
-                console.log('✅ Image loaded successfully for:', pokemon.name, 'ID:', pokemon.id);
-                setImageLoaded(true);
-              }}
-              onError={(e) => {
-                console.log('❌ Image failed to load for:', pokemon.name, 'ID:', pokemon.id);
-                console.log('Error event:', e);
-                // Try fallback
-                const img = e.target as HTMLImageElement;
-                img.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.id}.png`;
-              }}
+              onLoad={() => setImageLoaded(true)}
               loading="lazy"
-            />
-            
-            {/* Fallback image */}
-            <img
-              src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.id}.png`}
-              alt={`${formatPokemonName(pokemon.name)} (fallback)`}
-              className="w-full h-full object-contain opacity-0 absolute inset-0"
-              onLoad={() => {
-                console.log('✅ Fallback image loaded for:', pokemon.name);
-              }}
-              onError={() => {
-                console.log('❌ Fallback image also failed for:', pokemon.name);
-              }}
             />
             
             {/* Debug: Show loading state */}
@@ -169,10 +131,6 @@ export default function ModernPokemonCard({
               </div>
             )}
             
-            {/* Debug: Show container info */}
-            <div className="absolute top-0 left-0 text-xs bg-black text-white p-1 rounded">
-              {pokemon.id}
-            </div>
           </div>
 
           {/* Pokémon Info */}

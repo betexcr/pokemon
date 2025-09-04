@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, RotateCcw } from "lucide-react";
 import Image from "next/image";
 import { getPokemon, getMove } from "@/lib/api";
+import { Move } from "@/types/pokemon";
 import { GYM_CHAMPIONS } from "@/lib/gym_champions";
 import { 
   BattleState, 
@@ -261,19 +262,19 @@ export default function BattleRuntimePage() {
       const opponentPokemon = opponentResult.value;
 
       // Get moves for each Pokemon (simplified - use first 4 moves from their movepool)
-      const playerMoves = playerSlot.moves.slice(0, 4).map(m => m.name);
+      const playerMoves = (playerSlot.moves as { name: string }[]).slice(0, 4).map(m => m.name);
       const opponentMoves = ["tackle", "scratch", "quick-attack", "defense-curl"]; // More reliable move names
 
       // Fetch move data with error handling
       const [playerMoveData, opponentMoveData] = await Promise.all([
-        Promise.allSettled(playerMoves.map(name => getMove(name))),
-        Promise.allSettled(opponentMoves.map(name => getMove(name)))
+        Promise.allSettled(playerMoves.map(name => getMove(name))) as Promise<PromiseSettledResult<Move>[]>,
+        Promise.allSettled(opponentMoves.map(name => getMove(name))) as Promise<PromiseSettledResult<Move>[]>
       ]);
 
       // Filter out failed moves and create fallback moves
-      const getValidMoves = (results: PromiseSettledResult<unknown>[]) => {
+      const getValidMoves = (results: PromiseSettledResult<Move>[]) => {
         return results
-          .filter((result): result is PromiseFulfilledResult<unknown> => result.status === 'fulfilled')
+          .filter((result): result is PromiseFulfilledResult<Move> => result.status === 'fulfilled')
           .map(result => result.value)
           .filter(Boolean);
       };
@@ -301,6 +302,7 @@ export default function BattleRuntimePage() {
           }
         },
         contest_effect: {
+          name: 'tough',
           url: ''
         },
         contest_type: {
@@ -367,6 +369,7 @@ export default function BattleRuntimePage() {
         past_values: [],
         stat_changes: [],
         super_contest_effect: {
+          name: 'tough',
           url: ''
         },
         target: {
@@ -418,8 +421,8 @@ export default function BattleRuntimePage() {
               if (slot && slot.id) {
                 try {
                   const pokemon = await getPokemon(slot.id);
-                  const moves = slot.moves && Array.isArray(slot.moves) ? 
-                    slot.moves.slice(0, 4).map(m => createFallbackMove(m.name)) : [
+                  const moves: Move[] = slot.moves && Array.isArray(slot.moves) ? 
+                    (slot.moves as { name: string }[]).slice(0, 4).map(m => createFallbackMove(m.name)) : [
                     createFallbackMove('scratch'),
                     createFallbackMove('quick-attack'),
                     createFallbackMove('defense-curl', 'normal', 0)
@@ -454,7 +457,7 @@ export default function BattleRuntimePage() {
         if (slot.id) {
           try {
             const pokemon = await getPokemon(slot.id);
-            const moves = [
+            const moves: Move[] = [
               createFallbackMove('scratch'),
               createFallbackMove('quick-attack'),
               createFallbackMove('defense-curl', 'normal', 0)
@@ -482,10 +485,10 @@ export default function BattleRuntimePage() {
             return entry;
           } else if (entry && typeof entry === 'object' && 'message' in entry) {
             // Ensure all properties are strings or primitives
-            const sanitizedEntry: { type: string; message: string; pokemon?: string } = {
-              type: entry.type || 'default',
+            const sanitizedEntry = {
+              type: (entry.type || 'battle_start') as 'turn_start' | 'move_used' | 'damage_dealt' | 'status_applied' | 'status_damage' | 'status_effect' | 'pokemon_fainted' | 'pokemon_sent_out' | 'battle_start' | 'battle_end',
               message: String(entry.message || ''),
-            };
+            } as { type: 'turn_start' | 'move_used' | 'damage_dealt' | 'status_applied' | 'status_damage' | 'status_effect' | 'pokemon_fainted' | 'pokemon_sent_out' | 'battle_start' | 'battle_end'; message: string; pokemon?: string; move?: string; turn?: number; effectiveness?: string };
             
             // Add optional properties if they exist and are strings
             if (entry.pokemon && typeof entry.pokemon === 'string') {
@@ -512,9 +515,6 @@ export default function BattleRuntimePage() {
         })
       };
 
-      // Debug sprite data
-      console.log('Player Pokemon sprites:', sanitizedBattle.player.pokemon.sprites);
-      console.log('Opponent Pokemon sprites:', sanitizedBattle.opponent.pokemon.sprites);
       
       setBattleState(sanitizedBattle);
     } catch (err) {

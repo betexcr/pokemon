@@ -141,7 +141,7 @@ export default function ModernPokedexLayout({
       }
     } catch {}
 
-    const perfMem: any = (typeof performance !== 'undefined' && (performance as any).memory) ? (performance as any).memory : null
+    const perfMem: { jsHeapSizeLimit: number } | null = (typeof performance !== 'undefined' && (performance as { memory?: { jsHeapSizeLimit: number } }).memory) ? (performance as { memory: { jsHeapSizeLimit: number } }).memory : null
     if (perfMem && typeof perfMem.jsHeapSizeLimit === 'number') {
       const estimatedPerCard = 35 * 1024
       const budget = Math.floor(perfMem.jsHeapSizeLimit * 0.015)
@@ -1619,7 +1619,7 @@ export default function ModernPokedexLayout({
                 {/* End of list indicator */}
                 {isAllGenerations && !hasMorePokemon && !isLoadingMore && (
                   <div className="text-center py-8">
-                    <p className="text-muted text-sm">You've reached the end! All Pokémon loaded.</p>
+                    <p className="text-muted text-sm">You&apos;ve reached the end! All Pokémon loaded.</p>
                   </div>
                 )}
               </>

@@ -3,7 +3,7 @@ import type { KVStorage } from './storage';
 // Node-only file adapter (JSON single file)
 export class FileStorage implements KVStorage {
   private filePath: string;
-  private fs = require('fs');
+  private fs: typeof import('fs') = eval('require("fs")');
   constructor(filePath: string = '.heuristics.json') { this.filePath = filePath; }
   private read(): Record<string, string> {
     try {

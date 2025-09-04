@@ -328,15 +328,23 @@ export function initializeBattle(
   playerTeam: { pokemon: Pokemon; level: number; moves: Move[] }[],
   opponentTeam: { pokemon: Pokemon; level: number; moves: Move[] }[]
 ): BattleState {
+  // Get first Pokémon from each team
+  const playerPokemon = playerTeam[0]?.pokemon;
+  const opponentPokemon = opponentTeam[0]?.pokemon;
+  const playerLevel = playerTeam[0]?.level || 50;
+  const opponentLevel = opponentTeam[0]?.level || 50;
+  const playerMoves = playerTeam[0]?.moves || [];
+  const opponentMoves = opponentTeam[0]?.moves || [];
+  
   // Get HP stat from the stats array
-  const playerHpStat = playerPokemon.stats.find(stat => stat.stat.name === 'hp')?.base_stat || 50;
-  const opponentHpStat = opponentPokemon.stats.find(stat => stat.stat.name === 'hp')?.base_stat || 50;
+  const playerHpStat = playerPokemon!.stats.find(stat => stat.stat.name === 'hp')?.base_stat || 50;
+  const opponentHpStat = opponentPokemon!.stats.find(stat => stat.stat.name === 'hp')?.base_stat || 50;
   
   const playerHp = calculateHp(playerHpStat, playerLevel);
   const opponentHp = calculateHp(opponentHpStat, opponentLevel);
   
   const player: BattlePokemon = {
-    pokemon: playerPokemon,
+    pokemon: playerPokemon!,
     level: playerLevel,
     currentHp: playerHp,
     maxHp: playerHp,
@@ -353,7 +361,7 @@ export function initializeBattle(
   };
   
   const opponent: BattlePokemon = {
-    pokemon: opponentPokemon,
+    pokemon: opponentPokemon!,
     level: opponentLevel,
     currentHp: opponentHp,
     maxHp: opponentHp,
@@ -370,8 +378,8 @@ export function initializeBattle(
   };
   
   // Determine turn order based on speed
-  const playerSpeedStat = playerPokemon.stats.find(stat => stat.stat.name === 'speed')?.base_stat || 50;
-  const opponentSpeedStat = opponentPokemon.stats.find(stat => stat.stat.name === 'speed')?.base_stat || 50;
+  const playerSpeedStat = playerPokemon!.stats.find(stat => stat.stat.name === 'speed')?.base_stat || 50;
+  const opponentSpeedStat = opponentPokemon!.stats.find(stat => stat.stat.name === 'speed')?.base_stat || 50;
   const playerSpeed = calculateStat(playerSpeedStat, playerLevel);
   const opponentSpeed = calculateStat(opponentSpeedStat, opponentLevel);
   const turn = playerSpeed >= opponentSpeed ? 'player' : 'opponent';
@@ -458,7 +466,7 @@ export function executeAction(state: BattleState, action: BattleAction): BattleS
         
         // Apply status effects
         if (damageResult.statusEffect && !defender.status) {
-          defender.status = damageResult.statusEffect as any;
+          defender.status = damageResult.statusEffect as 'poison' | 'paralyze' | 'sleep' | 'burn' | 'freeze';
           defender.statusTurns = 0;
           newState.battleLog.push({
             type: 'status_applied',

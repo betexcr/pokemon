@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 
 export default function DebugSpritesPage() {
-  const [spriteData, setSpriteData] = useState<any>(null);
+  const [spriteData, setSpriteData] = useState<{ valid: string; invalid: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

@@ -564,7 +564,7 @@ export function executeTeamAction(state: BattleState, action: BattleAction): Bat
           
           // Apply status effects
           if (damageResult.statusEffect && !defender.status) {
-            defender.status = damageResult.statusEffect as any;
+            defender.status = damageResult.statusEffect as 'poison' | 'paralyze' | 'sleep' | 'burn' | 'freeze';
             defender.statusTurns = 0;
             newState.battleLog.push({
               type: 'status_applied',
