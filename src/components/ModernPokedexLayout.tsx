@@ -5,7 +5,7 @@ import { Pokemon, FilterState } from '@/types/pokemon'
 import { formatPokemonName, typeColors } from '@/lib/utils'
 import { useSearch } from '@/hooks/useSearch'
 import { useRouter } from 'next/navigation'
-import { getPokemonByGeneration, getPokemonByType, getPokemon, getPokemonWithPagination } from '@/lib/api'
+import { getPokemonByGeneration, getPokemonByType, getPokemon, getPokemonWithPagination, getPokemonTotalCount } from '@/lib/api'
 import ThemeToggle from './ThemeToggle'
 import VirtualizedPokemonGrid from './VirtualizedPokemonGrid'
 import { Search, Filter, X, Scale, ArrowRight, Menu, LayoutGrid, Grid3X3, Rows, Users, Swords } from 'lucide-react'
@@ -117,6 +117,8 @@ export default function ModernPokedexLayout({
   const [hasMorePokemon, setHasMorePokemon] = useState(true)
   const [currentOffset, setCurrentOffset] = useState(0)
   const [isAllGenerations, setIsAllGenerations] = useState(false)
+  const [totalPokemonCount, setTotalPokemonCount] = useState<number | null>(null)
+  const emptyBatchCountRef = useRef<number>(0)
   const [themeSelection, setThemeSelection] = useState<'light'|'dark'|'red'|'gold'|'ruby'>('light')
   const lastLoadTimeRef = useRef<number>(0)
 
@@ -320,6 +322,8 @@ export default function ModernPokedexLayout({
             const initialPokemon = await getPokemonWithPagination(30, 0)
             setAllGenerationsPokemon(initialPokemon)
             setCurrentOffset(30)
+            // fetch total count once
+            try { const count = await getPokemonTotalCount(); setTotalPokemonCount(count || null) } catch {}
             results = initialPokemon
           } else {
             results = allGenerationsPokemon
@@ -497,13 +501,25 @@ export default function ModernPokedexLayout({
     console.log('Loading more Pokémon, offset:', currentOffset);
     setIsLoadingMore(true);
     try {
-      const newPokemon = await getPokemonWithPagination(30, currentOffset);
+      const pageSize = 30
+      const newPokemon = await getPokemonWithPagination(pageSize, currentOffset);
       console.log('Loaded new Pokémon:', newPokemon.length, 'at offset:', currentOffset);
       
       if (newPokemon.length === 0) {
-        console.log('No more Pokémon to load');
+        // If we know total count and haven't reached it, skip ahead and retry a few times
+        const total = totalPokemonCount ?? 0
+        if (total && currentOffset < total && emptyBatchCountRef.current < 3) {
+          emptyBatchCountRef.current += 1
+          setCurrentOffset(prev => prev + pageSize)
+          console.log('Empty batch, advancing offset and retrying. Empty batches:', emptyBatchCountRef.current)
+          // small async retry
+          setTimeout(() => { loadMorePokemon() }, 10)
+          return;
+        }
+        console.log('No more Pokémon to load')
         setHasMorePokemon(false);
       } else {
+        emptyBatchCountRef.current = 0
         setAllGenerationsPokemon(prev => {
           // Enhanced deduplication by Pokémon ID and name
           const existingIds = new Set(prev.map(p => p.id));
@@ -535,14 +551,18 @@ export default function ModernPokedexLayout({
           console.log('Added', finalUniquePokemon.length, 'unique Pokémon. Total now:', updated.length);
           return updated;
         });
-        setCurrentOffset(prev => prev + 30);
+        setCurrentOffset(prev => prev + pageSize);
+        // Stop when we reach total count if known
+        if (totalPokemonCount && currentOffset + pageSize >= totalPokemonCount) {
+          setHasMorePokemon(false)
+        }
       }
     } catch (error) {
       console.error('Error loading more Pokémon:', error);
     } finally {
       setIsLoadingMore(false);
     }
-  }, [isLoadingMore, hasMorePokemon, currentOffset, isAllGenerations]);
+  }, [isLoadingMore, hasMorePokemon, currentOffset, isAllGenerations, totalPokemonCount]);
 
   // Infinite scroll effect with improved detection
   useEffect(() => {

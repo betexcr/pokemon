@@ -52,6 +52,17 @@ export default function TeamBuilderPage() {
   const [showDropdown, setShowDropdown] = useState(false)
   const [collapsedSlots, setCollapsedSlots] = useState<Set<number>>(new Set([0, 1, 2, 3, 4, 5]))
 
+  // First-click suggestions: original 151
+  const firstGenSuggestions = useMemo(() => {
+    return allPokemon
+      .filter(p => p.id >= 1 && p.id <= 151)
+      .sort((a, b) => a.id - b.id)
+      .slice(0, 151)
+  }, [allPokemon])
+
+  // Prefetch types for visible suggestions so badges are shown immediately
+  // (hook positioned after dependencies are defined below)
+
   // Filter Pokémon based on search term
   const filteredPokemon = useMemo(() => {
     if (!searchTerm.trim()) return []
@@ -84,6 +95,13 @@ export default function TeamBuilderPage() {
       console.error(`Failed to fetch types for Pokémon ${pokemonId}:`, error)
     }
   }, [])
+
+  // Prefetch types for visible suggestions so badges are shown immediately
+  useEffect(() => {
+    if (!showDropdown) return
+    const visible = (searchTerm.trim() ? filteredPokemon.slice(0, 50) : firstGenSuggestions)
+    visible.forEach(p => { if ((p.types?.length || 0) === 0) fetchPokemonTypes(p.id) })
+  }, [showDropdown, searchTerm, filteredPokemon, firstGenSuggestions, fetchPokemonTypes])
 
   // Close dropdown when clicking outside or pressing Escape
   useEffect(() => {
@@ -476,9 +494,9 @@ export default function TeamBuilderPage() {
 
       <main className="max-w-7xl mx-auto px-4 py-6 space-y-6">
         {/* Add Pokémon Search */}
-        <section className="border border-border rounded-xl bg-surface p-4 overflow-hidden">
+        <section className="border border-border rounded-xl bg-surface p-4 overflow-visible">
           <h2 className="text-lg font-semibold mb-4">Add Pokémon</h2>
-          <div className="relative search-dropdown-container max-w-full">
+          <div className="relative search-dropdown-container max-w-full z-[10000]">
             <input
               type="text"
               placeholder="Search Pokémon by name or # (e.g., 'Lugia', '249', 'char')"
@@ -489,10 +507,10 @@ export default function TeamBuilderPage() {
             />
             
             {showDropdown && (
-              <div className="absolute top-full left-0 w-full max-w-full mt-1 bg-white border border-border rounded-lg shadow-lg z-[9999] max-h-96 overflow-y-auto">
-                {filteredPokemon.length > 0 ? (
+              <div className="absolute top-full left-0 w-full max-w-full mt-1 bg-white border border-border rounded-lg shadow-2xl z-[10010] max-h-96 overflow-y-auto">
+                {(searchTerm.trim() ? filteredPokemon : firstGenSuggestions).length > 0 ? (
                   <div className="divide-y divide-border">
-                    {filteredPokemon.slice(0, 50).map((pokemon) => (
+                    {(searchTerm.trim() ? filteredPokemon.slice(0, 50) : firstGenSuggestions).map((pokemon) => (
                       <button
                         key={pokemon.id}
                         onClick={async () => {
@@ -502,27 +520,27 @@ export default function TeamBuilderPage() {
                             // Keep dropdown open and search term for multiple selections
                           }
                         }}
-                        className="w-full p-3 text-left hover:bg-gray-50 flex items-center gap-3 transition-colors"
+                        className="w-full text-left hover:bg-gray-50 flex items-center gap-1 transition-colors h-10 py-1"
                       >
-                        <div className="relative w-12 h-12 flex-shrink-0 bg-gray-100 rounded">
+                        <div className="relative w-6 h-6 flex-shrink-0 bg-gray-100 rounded">
                           <Image
                             src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`}
                             alt={pokemon.name}
-                            width={48}
-                            height={48}
+                            width={24}
+                            height={24}
                             className="w-full h-full object-contain"
                             unoptimized
                           />
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium capitalize text-text">
+                        <div className="flex-1 min-w-0 leading-none">
+                          <div className="font-medium capitalize text-text text-xs leading-none">
                             {formatPokemonName(pokemon.name)}
                           </div>
-                          <div className="text-sm text-muted">
+                          <div className="text-[10px] text-muted leading-none">
                             #{String(pokemon.id).padStart(4, '0')}
                           </div>
                         </div>
-                        <div className="flex gap-1">
+                        <div className="flex gap-1 items-center">
                           {pokemon.types.length > 0 ? (
                             pokemon.types.map((typeObj, index) => {
                               // Handle both object format { type: { name: "fire" } } and string format "fire"
@@ -532,7 +550,7 @@ export default function TeamBuilderPage() {
                               ) : null
                             })
                           ) : (
-                            <span className="text-xs text-muted">Loading...</span>
+                            <span className="text-xs text-muted">…</span>
                           )}
                         </div>
                       </button>
@@ -540,12 +558,10 @@ export default function TeamBuilderPage() {
                   </div>
                 ) : searchTerm.trim() ? (
                   <div className="p-4 text-center text-muted">
-                    No Pokémon found matching "{searchTerm}"
+                    No Pokémon found matching &quot;{searchTerm}&quot;
                   </div>
                 ) : (
-                  <div className="p-4 text-center text-muted">
-                    Start typing to search for Pokémon
-                  </div>
+                  <div className="p-4 text-center text-muted">No suggestions available</div>
                 )}
               </div>
             )}

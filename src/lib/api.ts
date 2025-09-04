@@ -151,6 +151,18 @@ export async function getPokemonList(limit = 20, offset = 0): Promise<NamedAPIRe
   return data;
 }
 
+// Get total count of Pokémon resources
+export async function getPokemonTotalCount(): Promise<number> {
+  const cacheKey = getCacheKey('pokemon-count');
+  const cached = getCache(cacheKey);
+  if (cached) return cached as number;
+
+  const data = await getPokemonList(1, 0);
+  const count = typeof data.count === 'number' ? data.count : 0;
+  setCache(cacheKey, count, CACHE_TTL.POKEMON_LIST);
+  return count;
+}
+
 // Get Pokémon with pagination for infinite scrolling
 export async function getPokemonWithPagination(limit = 50, offset = 0): Promise<Pokemon[]> {
   const cacheKey = getCacheKey('pokemon-paginated', { limit, offset });
