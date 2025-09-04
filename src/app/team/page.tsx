@@ -489,7 +489,7 @@ export default function TeamBuilderPage() {
             />
             
             {showDropdown && (
-              <div className="absolute top-full left-0 w-full max-w-full mt-1 bg-white border border-border rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
+              <div className="absolute top-full left-0 w-full max-w-full mt-1 bg-white border border-border rounded-lg shadow-lg z-[9999] max-h-96 overflow-y-auto">
                 {filteredPokemon.length > 0 ? (
                   <div className="divide-y divide-border">
                     {filteredPokemon.slice(0, 50).map((pokemon) => (

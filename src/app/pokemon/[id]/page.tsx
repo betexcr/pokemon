@@ -24,6 +24,7 @@ import MovesSection from '@/components/pokemon/MovesSection'
 import EvolutionSection from '@/components/pokemon/EvolutionSection'
 import MatchupsSection from '@/components/pokemon/MatchupsSection'
 import TypeBadge from '@/components/TypeBadge'
+import ImageModal from '@/components/ImageModal'
 
 // Component to fetch and display evolution data with correct types
 function EvolutionSectionWithData({ evolutionChain, selectedSprite }: { evolutionChain: EvolutionChain | null; selectedSprite: 'default' | 'shiny' }) {
@@ -200,6 +201,7 @@ export default function PokemonDetailPage() {
   const [comparisonList, setComparisonList] = useState<number[]>([])
   const [selectedSprite, setSelectedSprite] = useState<'default' | 'shiny'>('default')
   const [activeTab, setActiveTab] = useState<'overview' | 'stats' | 'moves' | 'evolution' | 'matchups'>('overview')
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false)
 
   useEffect(() => {
     // Avoid double-invocation on mount (Strict Mode) and rapid route changes
@@ -393,19 +395,29 @@ export default function PokemonDetailPage() {
           />
           
           <div className="flex justify-center items-center p-4">
-            <div className="relative w-48 h-48 md:w-64 md:h-64 flex items-center justify-center">
+            <div 
+              className="relative w-48 h-48 md:w-64 md:h-64 flex items-center justify-center cursor-pointer group transition-transform hover:scale-105"
+              onClick={() => setIsImageModalOpen(true)}
+              title="Click to view full-size image"
+            >
               <Image
                 src={imageUrl}
                 alt={formatPokemonName(pokemon.name)}
                 width={256}
                 height={256}
-                className="object-contain w-full h-full"
+                className="object-contain w-full h-full transition-opacity group-hover:opacity-90"
                 sizes="(max-width: 768px) 192px, 256px"
                 priority
                 onError={(e) => {
                   e.currentTarget.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`
                 }}
               />
+              {/* Hover overlay */}
+              <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                <div className="bg-white/90 dark:bg-gray-800/90 rounded-full p-2">
+                  <ExternalLink size={20} className="text-gray-700 dark:text-gray-300" />
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -596,6 +608,17 @@ export default function PokemonDetailPage() {
           </div>
         </footer>
       </main>
+      
+      {/* Image Modal */}
+      {pokemon && (
+        <ImageModal
+          isOpen={isImageModalOpen}
+          onClose={() => setIsImageModalOpen(false)}
+          imageUrl={imageUrl}
+          alt={formatPokemonName(pokemon.name)}
+          pokemonName={formatPokemonName(pokemon.name)}
+        />
+      )}
     </div>
   )
 }

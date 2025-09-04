@@ -151,6 +151,76 @@ export async function getPokemonList(limit = 20, offset = 0): Promise<NamedAPIRe
   return data;
 }
 
+// Get Pokémon with pagination for infinite scrolling
+export async function getPokemonWithPagination(limit = 50, offset = 0): Promise<Pokemon[]> {
+  const cacheKey = getCacheKey('pokemon-paginated', { limit, offset });
+  const cached = getCache(cacheKey);
+  if (cached) return cached as Pokemon[];
+
+  try {
+    const pokemonList = await getPokemonList(limit, offset);
+    
+    // Convert to full Pokémon objects with basic data
+    const pokemonData = await Promise.all(
+      pokemonList.results.map(async (pokemonRef) => {
+        const pokemonId = pokemonRef.url.split('/').slice(-2)[0];
+        const id = parseInt(pokemonId);
+        
+        return {
+          id,
+          name: pokemonRef.name,
+          base_experience: 0,
+          height: 0,
+          weight: 0,
+          is_default: true,
+          order: id,
+          abilities: [],
+          forms: [],
+          game_indices: [],
+          held_items: [],
+          location_area_encounters: '',
+          moves: [],
+          sprites: {
+            front_default: getPokemonFallbackImage(id),
+            back_default: null,
+            front_shiny: null,
+            back_shiny: null,
+            front_female: null,
+            back_female: null,
+            front_shiny_female: null,
+            back_shiny_female: null,
+            other: {
+              dream_world: { front_default: null, front_female: null },
+              home: { front_default: null, front_female: null, front_shiny: null, front_shiny_female: null },
+              'official-artwork': { front_default: null, front_shiny: null },
+              showdown: { front_default: null, front_female: null, front_shiny: null, front_shiny_female: null }
+            },
+            versions: {}
+          },
+          stats: [
+            { base_stat: 50, effort: 0, stat: { name: 'hp', url: '' } },
+            { base_stat: 50, effort: 0, stat: { name: 'attack', url: '' } },
+            { base_stat: 50, effort: 0, stat: { name: 'defense', url: '' } },
+            { base_stat: 50, effort: 0, stat: { name: 'special-attack', url: '' } },
+            { base_stat: 50, effort: 0, stat: { name: 'special-defense', url: '' } },
+            { base_stat: 50, effort: 0, stat: { name: 'speed', url: '' } }
+          ],
+          types: [
+            { slot: 1, type: { name: 'normal', url: '' } }
+          ],
+          past_types: []
+        } as Pokemon;
+      })
+    );
+
+    setCache(cacheKey, pokemonData, CACHE_TTL.POKEMON_LIST);
+    return pokemonData;
+  } catch (error) {
+    console.error('Error fetching paginated Pokémon:', error);
+    return [];
+  }
+}
+
 export async function getPokemon(nameOrId: string | number): Promise<Pokemon> {
   const cacheKey = getCacheKey(`pokemon/${nameOrId}`);
   const cached = getCache(cacheKey);

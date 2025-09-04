@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Pokemon } from '@/types/pokemon'
 import RadarChart from './RadarChart'
-import { X, Plus, BarChart3 } from 'lucide-react'
+import { X, Plus, BarChart3, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react'
 import { useTheme } from './ThemeProvider'
 
 interface PokemonComparisonProps {
@@ -28,6 +28,10 @@ export default function PokemonComparison({ pokemonList, className = '' }: Pokem
     color: string;
   }>>([])
   const [isOpen, setIsOpen] = useState(false)
+  const [sortConfig, setSortConfig] = useState<{
+    key: string | null;
+    direction: 'asc' | 'desc';
+  }>({ key: null, direction: 'asc' })
 
   let theme = 'light'
   try {
@@ -52,6 +56,53 @@ export default function PokemonComparison({ pokemonList, className = '' }: Pokem
 
   const clearAll = () => {
     setSelectedPokemon([])
+  }
+
+  // Sorting logic
+  const handleSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc'
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc'
+    }
+    setSortConfig({ key, direction })
+  }
+
+  // Get sorted comparison data
+  const sortedComparisonData = useMemo(() => {
+    if (!sortConfig.key) return comparisonData
+
+    return [...comparisonData].sort((a, b) => {
+      let aValue: number
+      let bValue: number
+
+      if (sortConfig.key === 'name') {
+        aValue = a.name.localeCompare(b.name)
+        bValue = 0
+        return sortConfig.direction === 'asc' ? aValue : -aValue
+      } else if (sortConfig.key === 'total') {
+        aValue = Object.values(a.stats).reduce((sum, stat) => sum + stat, 0)
+        bValue = Object.values(b.stats).reduce((sum, stat) => sum + stat, 0)
+      } else {
+        aValue = a.stats[sortConfig.key as keyof typeof a.stats] || 0
+        bValue = b.stats[sortConfig.key as keyof typeof b.stats] || 0
+      }
+
+      if (aValue < bValue) {
+        return sortConfig.direction === 'asc' ? -1 : 1
+      }
+      if (aValue > bValue) {
+        return sortConfig.direction === 'asc' ? 1 : -1
+      }
+      return 0
+    })
+  }, [comparisonData, sortConfig])
+
+  // Get sort icon for a column
+  const getSortIcon = (key: string) => {
+    if (sortConfig.key !== key) {
+      return <ChevronsUpDown size={16} className="opacity-50" />
+    }
+    return sortConfig.direction === 'asc' ? <ChevronUp size={16} /> : <ChevronDown size={16} />
   }
 
   // Generate colors for each Pokémon
@@ -312,66 +363,138 @@ export default function PokemonComparison({ pokemonList, className = '' }: Pokem
                         : 'bg-pink-200'
                         : 'bg-gray-100'
                     }`}>
-                      <th className={`p-3 text-left border ${
-                        isRetro 
-                          ? theme === 'red' ? 'border-red-600' 
-                          : theme === 'gold' ? 'border-yellow-600'
-                          : 'border-pink-600'
-                          : 'border-gray-300'
-                      }`}>Pokémon</th>
-                      <th className={`p-3 text-center border ${
-                        isRetro 
-                          ? theme === 'red' ? 'border-red-600' 
-                          : theme === 'gold' ? 'border-yellow-600'
-                          : 'border-pink-600'
-                          : 'border-gray-300'
-                      }`}>HP</th>
-                      <th className={`p-3 text-center border ${
-                        isRetro 
-                          ? theme === 'red' ? 'border-red-600' 
-                          : theme === 'gold' ? 'border-yellow-600'
-                          : 'border-pink-600'
-                          : 'border-gray-300'
-                      }`}>ATK</th>
-                      <th className={`p-3 text-center border ${
-                        isRetro 
-                          ? theme === 'red' ? 'border-red-600' 
-                          : theme === 'gold' ? 'border-yellow-600'
-                          : 'border-pink-600'
-                          : 'border-gray-300'
-                      }`}>DEF</th>
-                      <th className={`p-3 text-center border ${
-                        isRetro 
-                          ? theme === 'red' ? 'border-red-600' 
-                          : theme === 'gold' ? 'border-yellow-600'
-                          : 'border-pink-600'
-                          : 'border-gray-300'
-                      }`}>SPA</th>
-                      <th className={`p-3 text-center border ${
-                        isRetro 
-                          ? theme === 'red' ? 'border-red-600' 
-                          : theme === 'gold' ? 'border-yellow-600'
-                          : 'border-pink-600'
-                          : 'border-gray-300'
-                      }`}>SPD</th>
-                      <th className={`p-3 text-center border ${
-                        isRetro 
-                          ? theme === 'red' ? 'border-red-600' 
-                          : theme === 'gold' ? 'border-yellow-600'
-                          : 'border-pink-600'
-                          : 'border-gray-300'
-                      }`}>SPE</th>
-                      <th className={`p-3 text-center border ${
-                        isRetro 
-                          ? theme === 'red' ? 'border-red-600' 
-                          : theme === 'gold' ? 'border-yellow-600'
-                          : 'border-pink-600'
-                          : 'border-gray-300'
-                      }`}>Total</th>
+                      <th 
+                        className={`p-3 text-left border cursor-pointer hover:bg-opacity-80 transition-colors ${
+                          isRetro 
+                            ? theme === 'red' ? 'border-red-600 hover:bg-red-300' 
+                            : theme === 'gold' ? 'border-yellow-600 hover:bg-yellow-300'
+                            : 'border-pink-600 hover:bg-pink-300'
+                            : 'border-gray-300 hover:bg-gray-200'
+                        }`}
+                        onClick={() => handleSort('name')}
+                        title="Click to sort by name"
+                      >
+                        <div className="flex items-center gap-1">
+                          Pokémon
+                          {getSortIcon('name')}
+                        </div>
+                      </th>
+                      <th 
+                        className={`p-3 text-center border cursor-pointer hover:bg-opacity-80 transition-colors ${
+                          isRetro 
+                            ? theme === 'red' ? 'border-red-600 hover:bg-red-300' 
+                            : theme === 'gold' ? 'border-yellow-600 hover:bg-yellow-300'
+                            : 'border-pink-600 hover:bg-pink-300'
+                            : 'border-gray-300 hover:bg-gray-200'
+                        }`}
+                        onClick={() => handleSort('hp')}
+                        title="Click to sort by HP"
+                      >
+                        <div className="flex items-center justify-center gap-1">
+                          HP
+                          {getSortIcon('hp')}
+                        </div>
+                      </th>
+                      <th 
+                        className={`p-3 text-center border cursor-pointer hover:bg-opacity-80 transition-colors ${
+                          isRetro 
+                            ? theme === 'red' ? 'border-red-600 hover:bg-red-300' 
+                            : theme === 'gold' ? 'border-yellow-600 hover:bg-yellow-300'
+                            : 'border-pink-600 hover:bg-pink-300'
+                            : 'border-gray-300 hover:bg-gray-200'
+                        }`}
+                        onClick={() => handleSort('attack')}
+                        title="Click to sort by Attack"
+                      >
+                        <div className="flex items-center justify-center gap-1">
+                          ATK
+                          {getSortIcon('attack')}
+                        </div>
+                      </th>
+                      <th 
+                        className={`p-3 text-center border cursor-pointer hover:bg-opacity-80 transition-colors ${
+                          isRetro 
+                            ? theme === 'red' ? 'border-red-600 hover:bg-red-300' 
+                            : theme === 'gold' ? 'border-yellow-600 hover:bg-yellow-300'
+                            : 'border-pink-600 hover:bg-pink-300'
+                            : 'border-gray-300 hover:bg-gray-200'
+                        }`}
+                        onClick={() => handleSort('defense')}
+                        title="Click to sort by Defense"
+                      >
+                        <div className="flex items-center justify-center gap-1">
+                          DEF
+                          {getSortIcon('defense')}
+                        </div>
+                      </th>
+                      <th 
+                        className={`p-3 text-center border cursor-pointer hover:bg-opacity-80 transition-colors ${
+                          isRetro 
+                            ? theme === 'red' ? 'border-red-600 hover:bg-red-300' 
+                            : theme === 'gold' ? 'border-yellow-600 hover:bg-yellow-300'
+                            : 'border-pink-600 hover:bg-pink-300'
+                            : 'border-gray-300 hover:bg-gray-200'
+                        }`}
+                        onClick={() => handleSort('special-attack')}
+                        title="Click to sort by Special Attack"
+                      >
+                        <div className="flex items-center justify-center gap-1">
+                          SPA
+                          {getSortIcon('special-attack')}
+                        </div>
+                      </th>
+                      <th 
+                        className={`p-3 text-center border cursor-pointer hover:bg-opacity-80 transition-colors ${
+                          isRetro 
+                            ? theme === 'red' ? 'border-red-600 hover:bg-red-300' 
+                            : theme === 'gold' ? 'border-yellow-600 hover:bg-yellow-300'
+                            : 'border-pink-600 hover:bg-pink-300'
+                            : 'border-gray-300 hover:bg-gray-200'
+                        }`}
+                        onClick={() => handleSort('special-defense')}
+                        title="Click to sort by Special Defense"
+                      >
+                        <div className="flex items-center justify-center gap-1">
+                          SPD
+                          {getSortIcon('special-defense')}
+                        </div>
+                      </th>
+                      <th 
+                        className={`p-3 text-center border cursor-pointer hover:bg-opacity-80 transition-colors ${
+                          isRetro 
+                            ? theme === 'red' ? 'border-red-600 hover:bg-red-300' 
+                            : theme === 'gold' ? 'border-yellow-600 hover:bg-yellow-300'
+                            : 'border-pink-600 hover:bg-pink-300'
+                            : 'border-gray-300 hover:bg-gray-200'
+                        }`}
+                        onClick={() => handleSort('speed')}
+                        title="Click to sort by Speed"
+                      >
+                        <div className="flex items-center justify-center gap-1">
+                          SPE
+                          {getSortIcon('speed')}
+                        </div>
+                      </th>
+                      <th 
+                        className={`p-3 text-center border cursor-pointer hover:bg-opacity-80 transition-colors ${
+                          isRetro 
+                            ? theme === 'red' ? 'border-red-600 hover:bg-red-300' 
+                            : theme === 'gold' ? 'border-yellow-600 hover:bg-yellow-300'
+                            : 'border-pink-600 hover:bg-pink-300'
+                            : 'border-gray-300 hover:bg-gray-200'
+                        }`}
+                        onClick={() => handleSort('total')}
+                        title="Click to sort by Total Stats"
+                      >
+                        <div className="flex items-center justify-center gap-1">
+                          Total
+                          {getSortIcon('total')}
+                        </div>
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {comparisonData.map((pokemon, index) => {
+                    {sortedComparisonData.map((pokemon, index) => {
                       const total = Object.values(pokemon.stats).reduce((sum: number, stat: number) => sum + stat, 0)
                       return (
                         <tr key={pokemon.name} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>

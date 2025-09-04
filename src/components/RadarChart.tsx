@@ -106,6 +106,7 @@ export default function RadarChart({ data, size = 300, className = '' }: RadarCh
           theme === 'red' ? 'fill-red-800' : 
           theme === 'gold' ? 'fill-yellow-800' : 
           theme === 'ruby' ? 'fill-pink-800' :
+          theme === 'dark' ? 'fill-gray-200' :
           'fill-gray-800'
         }`}
       >

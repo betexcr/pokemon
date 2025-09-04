@@ -82,9 +82,10 @@ export default function MultiPokemonRadarChart({ pokemons }: MultiPokemonRadarCh
         cy={centerY}
         r={r}
         fill="none"
-        stroke="#e5e7eb"
+        stroke="currentColor"
         strokeWidth="1"
-        opacity="0.5"
+        opacity="0.2"
+        className="text-gray-400 dark:text-gray-600"
       />
     )
   })
@@ -102,9 +103,10 @@ export default function MultiPokemonRadarChart({ pokemons }: MultiPokemonRadarCh
         y1={centerY}
         x2={endX}
         y2={endY}
-        stroke="#e5e7eb"
+        stroke="currentColor"
         strokeWidth="1"
-        opacity="0.5"
+        opacity="0.2"
+        className="text-gray-400 dark:text-gray-600"
       />
     )
   })
@@ -136,7 +138,7 @@ export default function MultiPokemonRadarChart({ pokemons }: MultiPokemonRadarCh
         y={y}
         textAnchor="middle"
         dominantBaseline="middle"
-        className="text-xs font-medium fill-gray-600"
+        className="text-xs font-medium fill-gray-600 dark:fill-gray-300"
       >
         {getStatAbbreviation(stat)}
       </text>

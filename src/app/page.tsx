@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Pokemon, FilterState } from '@/types/pokemon'
-import { getPokemonByType, getAllPokemon } from '@/lib/api'
+import { getPokemonByType, getAllPokemon, getPokemonWithPagination } from '@/lib/api'
 import { formatPokemonName, typeColors, cn } from '@/lib/utils'
 import ThemeToggle from '@/components/ThemeToggle'
 import { useTheme } from '@/components/ThemeProvider'
@@ -72,9 +72,9 @@ export default function Home() {
     try {
       setLoading(true)
       setError(null)
-      const allPokemon = await getAllPokemon()
-      setPokemonList(allPokemon)
-      setFilteredPokemon(allPokemon)
+      const initialPokemon = await getPokemonWithPagination(30, 0)
+      setPokemonList(initialPokemon)
+      setFilteredPokemon(initialPokemon)
     } catch (err) {
       setError('Failed to load Pokémon data')
       console.error(err)
