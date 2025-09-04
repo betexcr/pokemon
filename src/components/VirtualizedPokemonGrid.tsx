@@ -11,7 +11,7 @@ interface VirtualizedPokemonGridProps {
   onSelectPokemon?: (pokemon: Pokemon) => void
   selectedPokemon: Pokemon | null
   comparisonList: number[]
-  density: 'cozy' | 'compact' | 'ultra'
+  density: 'cozy' | 'compact' | 'ultra' | 'list'
   className?: string
 }
 
@@ -34,19 +34,20 @@ export default function VirtualizedPokemonGrid({
     // Theme provider not available, use default
   }
 
-  // Calculate grid columns based on density
-  const getGridColumns = () => {
+  // Calculate layout based on density
+  const getLayoutClasses = () => {
     switch (density) {
-      case 'cozy': return 'grid-cols-3'
-      case 'compact': return 'grid-cols-6'
-      case 'ultra': return 'grid-cols-12'
-      default: return 'grid-cols-3'
+      case 'cozy': return 'grid grid-cols-3 gap-6'
+      case 'compact': return 'grid grid-cols-6 gap-6'
+      case 'ultra': return 'grid grid-cols-12 gap-6'
+      case 'list': return 'flex flex-col gap-2'
+      default: return 'grid grid-cols-3 gap-6'
     }
   }
 
   return (
     <div className={`${className}`}>
-      <div className={`grid gap-6 ${getGridColumns()}`}>
+      <div className={getLayoutClasses()}>
         {pokemonList.map((pokemon) => (
           <ModernPokemonCard
             key={pokemon.id}

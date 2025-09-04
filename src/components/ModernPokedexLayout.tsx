@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation'
 import { getPokemonByGeneration, getPokemonByType, getPokemon, getPokemonWithPagination, getPokemonTotalCount } from '@/lib/api'
 import ThemeToggle from './ThemeToggle'
 import VirtualizedPokemonGrid from './VirtualizedPokemonGrid'
-import { Search, Filter, X, Scale, ArrowRight, Menu, LayoutGrid, Grid3X3, Rows, Users, Swords } from 'lucide-react'
+import { Search, Filter, X, Scale, ArrowRight, Menu, LayoutGrid, Grid3X3, Rows, Users, Swords, List } from 'lucide-react'
 import { createHeuristics } from '@/lib/heuristics/core'
 import { LocalStorageAdapter, MemoryStorage } from '@/lib/heuristics/storage'
 
@@ -104,7 +104,7 @@ export default function ModernPokedexLayout({
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
   const [filteredPokemon, setFilteredPokemon] = useState<Pokemon[]>([])
   const [isFiltering, setIsFiltering] = useState(false)
-  const [cardDensity, setCardDensity] = useState<'cozy' | 'compact' | 'ultra'>('compact')
+  const [cardDensity, setCardDensity] = useState<'cozy' | 'compact' | 'ultra' | 'list'>('compact')
   const [comparisonPokemon, setComparisonPokemon] = useState<Pokemon[]>([])
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
@@ -211,7 +211,12 @@ export default function ModernPokedexLayout({
     const handleResize = () => {
       const isMobileScreen = window.innerWidth < 768
       setIsMobile(isMobileScreen)
-      
+
+      // If switching to mobile and current density is not available on mobile, switch to cozy
+      if (isMobileScreen && (cardDensity === 'compact' || cardDensity === 'ultra')) {
+        setCardDensity('cozy')
+      }
+
       if (!isMobileScreen && showMobileMenu) {
         setShowMobileMenu(false)
       }
@@ -778,14 +783,15 @@ export default function ModernPokedexLayout({
                 <span className="text-xs font-medium text-muted uppercase tracking-wider">Size</span>
                 <div className="flex items-center bg-surface border border-border rounded-xl p-1 shadow-sm">
                   {[
-                    // Keep icons/labels in current visual order, rotate functionality: 2nd->1st, 3rd->2nd, 1st->3rd
-                    { visual: 'ultra', label: 'Ultra', target: 'cozy' },
-                    { visual: 'cozy', label: 'Cozy', target: 'compact' },
-                    { visual: 'compact', label: 'Compact', target: 'ultra' }
-                  ].map(({ visual, label, target }) => (
+                    // Keep icons/labels in current visual order, rotate functionality: 2nd->1st, 3rd->2nd, 4th->3rd, 1st->4th
+                    { visual: 'ultra', label: 'Ultra', target: 'ultra', showOnMobile: false },
+                    { visual: 'cozy', label: 'Cozy', target: 'cozy', showOnMobile: true },
+                    { visual: 'compact', label: 'Compact', target: 'compact', showOnMobile: false },
+                    { visual: 'list', label: 'List', target: 'list', showOnMobile: true }
+                  ].filter(({ showOnMobile }) => !isMobile || showOnMobile).map(({ visual, label, target }) => (
                     <button
                       key={visual}
-                      onClick={() => setCardDensity(target as 'cozy' | 'compact' | 'ultra')}
+                      onClick={() => setCardDensity(target as 'cozy' | 'compact' | 'ultra' | 'list')}
                       className={`px-3 py-2 text-xs font-medium rounded-lg transition-all duration-200 flex items-center space-x-2 ${
                         cardDensity === target 
                           ? 'bg-poke-blue text-white shadow-lg scale-105' 
@@ -801,6 +807,9 @@ export default function ModernPokedexLayout({
                         )}
                         {visual === 'ultra' && (
                           <Rows className="w-4 h-4" />
+                        )}
+                        {visual === 'list' && (
+                          <List className="w-4 h-4" />
                         )}
                       </span>
                       <span className="hidden xl:inline">{label}</span>
@@ -1035,16 +1044,15 @@ export default function ModernPokedexLayout({
               {/* Mobile Card Density Controls */}
               <div className="space-y-3">
                 <h4 className="text-sm font-semibold text-text uppercase tracking-wider">Card Size</h4>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   {[
                     { id: 'cozy', label: 'Cozy', icon: '🟢' },
-                    { id: 'compact', label: 'Compact', icon: '🟡' },
-                    { id: 'ultra', label: 'Ultra', icon: '🔴' }
+                    { id: 'list', label: 'List', icon: '📋' }
                   ].map(({ id, label, icon }) => (
                     <button
                       key={id}
                       onClick={() => {
-                        setCardDensity(id as 'cozy' | 'compact' | 'ultra')
+                        setCardDensity(id as 'cozy' | 'compact' | 'ultra' | 'list')
                         setShowMobileMenu(false)
                       }}
                       className={`p-3 rounded-xl text-sm font-medium transition-all duration-200 flex flex-col items-center space-y-2 ${

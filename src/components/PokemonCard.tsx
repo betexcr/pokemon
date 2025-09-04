@@ -33,7 +33,7 @@ export default function PokemonCard({
   onSelect?: (pokemon: { id: number; name: string; types: Array<{ type: { name: string } }> }) => void;
   isSelected?: boolean;
   mode?: "grid" | "list";
-  cardSize?: 'cozy' | 'compact' | 'ultra';
+  cardSize?: 'cozy' | 'compact' | 'ultra' | 'list';
 }) {
   const title = `${formatPokemonName(pokemon.name)} #${String(pokemon.id).padStart(4, "0")}`;
   const img = getPokemonMainPageImage(pokemon.id);

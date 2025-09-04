@@ -25,7 +25,7 @@ export default function Home() {
   const [filteredPokemon, setFilteredPokemon] = useState<Pokemon[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [density, setDensity] = useState<'cozy' | 'compact' | 'ultra'>('compact')
+  const [density, setDensity] = useState<'cozy' | 'compact' | 'ultra' | 'list'>('compact')
 
 
   const [comparisonList, setComparisonList] = useState<number[]>([])
