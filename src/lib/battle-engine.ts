@@ -202,13 +202,13 @@ export function calculateDamageDetailed(
 
   // Type effectiveness
   const defenderTypes = defender.pokemon.types.map(type => 
-    typeof type === 'string' ? type : type.type?.name || type.name || ''
+    typeof type === 'string' ? type : type.type?.name || ''
   );
   const effectiveness = getTypeEffectiveness(moveType, defenderTypes);
   
   // STAB (Same Type Attack Bonus)
   const attackerTypes = attacker.pokemon.types.map(type => 
-    typeof type === 'string' ? type : type.type?.name || type.name || ''
+    typeof type === 'string' ? type : type.type?.name || ''
   );
   const stab = attackerTypes.includes(moveType) ? 1.5 : 1;
   
@@ -323,86 +323,14 @@ export function processEndOfTurnStatus(pokemon: BattlePokemon): number {
   return damage;
 }
 
-// Initialize battle state with teams
-export function initializeBattle(
-  playerTeam: { pokemon: Pokemon; level: number; moves: Move[] }[],
-  opponentTeam: { pokemon: Pokemon; level: number; moves: Move[] }[]
-): BattleState {
-  // Get first Pokémon from each team
-  const playerPokemon = playerTeam[0]?.pokemon;
-  const opponentPokemon = opponentTeam[0]?.pokemon;
-  const playerLevel = playerTeam[0]?.level || 50;
-  const opponentLevel = opponentTeam[0]?.level || 50;
-  const playerMoves = playerTeam[0]?.moves || [];
-  const opponentMoves = opponentTeam[0]?.moves || [];
-  
-  // Get HP stat from the stats array
-  const playerHpStat = playerPokemon!.stats.find(stat => stat.stat.name === 'hp')?.base_stat || 50;
-  const opponentHpStat = opponentPokemon!.stats.find(stat => stat.stat.name === 'hp')?.base_stat || 50;
-  
-  const playerHp = calculateHp(playerHpStat, playerLevel);
-  const opponentHp = calculateHp(opponentHpStat, opponentLevel);
-  
-  const player: BattlePokemon = {
-    pokemon: playerPokemon!,
-    level: playerLevel,
-    currentHp: playerHp,
-    maxHp: playerHp,
-    moves: playerMoves,
-    statModifiers: {
-      attack: 0,
-      defense: 0,
-      specialAttack: 0,
-      specialDefense: 0,
-      speed: 0,
-      accuracy: 0,
-      evasion: 0
-    }
-  };
-  
-  const opponent: BattlePokemon = {
-    pokemon: opponentPokemon!,
-    level: opponentLevel,
-    currentHp: opponentHp,
-    maxHp: opponentHp,
-    moves: opponentMoves,
-    statModifiers: {
-      attack: 0,
-      defense: 0,
-      specialAttack: 0,
-      specialDefense: 0,
-      speed: 0,
-      accuracy: 0,
-      evasion: 0
-    }
-  };
-  
-  // Determine turn order based on speed
-  const playerSpeedStat = playerPokemon!.stats.find(stat => stat.stat.name === 'speed')?.base_stat || 50;
-  const opponentSpeedStat = opponentPokemon!.stats.find(stat => stat.stat.name === 'speed')?.base_stat || 50;
-  const playerSpeed = calculateStat(playerSpeedStat, playerLevel);
-  const opponentSpeed = calculateStat(opponentSpeedStat, opponentLevel);
-  const turn = playerSpeed >= opponentSpeed ? 'player' : 'opponent';
-  
-  return {
-    player,
-    opponent,
-    turn,
-    turnNumber: 1,
-    battleLog: [{
-      type: 'battle_start',
-      message: `Battle Start!\nTrainer Red sends out ${playerPokemon.name}!\nTrainer Blue sends out ${opponentPokemon.name}!`,
-      pokemon: String(playerPokemon.name)
-    }],
-    isComplete: false
-  };
-}
 
 // Execute a battle action
 export function executeAction(state: BattleState, action: BattleAction): BattleState {
   const newState = { ...state, battleLog: [...state.battleLog] };
-  const attacker = newState.turn === 'player' ? newState.player : newState.opponent;
-  const defender = newState.turn === 'player' ? newState.opponent : newState.player;
+  const attackerTeam = newState.turn === 'player' ? newState.player : newState.opponent;
+  const defenderTeam = newState.turn === 'player' ? newState.opponent : newState.player;
+  const attacker = getCurrentPokemon(attackerTeam);
+  const defender = getCurrentPokemon(defenderTeam);
   
   if (action.type === 'move' && action.moveIndex !== undefined) {
     const move = attacker.moves[action.moveIndex];
@@ -466,7 +394,7 @@ export function executeAction(state: BattleState, action: BattleAction): BattleS
         
         // Apply status effects
         if (damageResult.statusEffect && !defender.status) {
-          defender.status = damageResult.statusEffect as 'poison' | 'paralyze' | 'sleep' | 'burn' | 'freeze';
+          defender.status = damageResult.statusEffect as 'poisoned' | 'paralyzed' | 'asleep' | 'burned' | 'frozen';
           defender.statusTurns = 0;
           newState.battleLog.push({
             type: 'status_applied',
@@ -485,52 +413,55 @@ export function executeAction(state: BattleState, action: BattleAction): BattleS
   }
   
   // Check if battle is over
-  if (newState.player.currentHp <= 0) {
+  const playerCurrentPokemon = getCurrentPokemon(newState.player);
+  const opponentCurrentPokemon = getCurrentPokemon(newState.opponent);
+  
+  if (playerCurrentPokemon.currentHp <= 0) {
     newState.isComplete = true;
     newState.winner = 'opponent';
     newState.battleLog.push({
       type: 'pokemon_fainted',
-      message: `${newState.player.pokemon.name} fainted!`,
-      pokemon: String(newState.player.pokemon.name)
+      message: `${playerCurrentPokemon.pokemon.name} fainted!`,
+      pokemon: String(playerCurrentPokemon.pokemon.name)
     });
-  } else if (newState.opponent.currentHp <= 0) {
+  } else if (opponentCurrentPokemon.currentHp <= 0) {
     newState.isComplete = true;
     newState.winner = 'player';
     newState.battleLog.push({
       type: 'pokemon_fainted',
-      message: `${newState.opponent.pokemon.name} fainted!`,
-      pokemon: String(newState.opponent.pokemon.name)
+      message: `${opponentCurrentPokemon.pokemon.name} fainted!`,
+      pokemon: String(opponentCurrentPokemon.pokemon.name)
     });
   } else {
     // Process end of turn status effects
-    const playerStatusDamage = processEndOfTurnStatus(newState.player);
-    const opponentStatusDamage = processEndOfTurnStatus(newState.opponent);
+    const playerStatusDamage = processEndOfTurnStatus(playerCurrentPokemon);
+    const opponentStatusDamage = processEndOfTurnStatus(opponentCurrentPokemon);
     
     if (playerStatusDamage > 0) {
-      const oldHp = newState.player.currentHp + playerStatusDamage;
-      const damagePercent = calculateDamagePercentage(playerStatusDamage, newState.player.maxHp);
-      const remainingPercent = Math.round((newState.player.currentHp / newState.player.maxHp) * 100);
+      const oldHp = playerCurrentPokemon.currentHp + playerStatusDamage;
+      const damagePercent = calculateDamagePercentage(playerStatusDamage, playerCurrentPokemon.maxHp);
+      const remainingPercent = Math.round((playerCurrentPokemon.currentHp / playerCurrentPokemon.maxHp) * 100);
       
       newState.battleLog.push({
         type: 'status_damage',
-        message: `${newState.player.pokemon.name} was hurt by its ${newState.player.status}! (${remainingPercent}% HP left)`,
-        pokemon: String(newState.player.pokemon.name),
+        message: `${playerCurrentPokemon.pokemon.name} was hurt by its ${playerCurrentPokemon.status}! (${remainingPercent}% HP left)`,
+        pokemon: String(playerCurrentPokemon.pokemon.name),
         damage: damagePercent,
-        status: String(newState.player.status)
+        status: String(playerCurrentPokemon.status)
       });
     }
     
     if (opponentStatusDamage > 0) {
-      const oldHp = newState.opponent.currentHp + opponentStatusDamage;
-      const damagePercent = calculateDamagePercentage(opponentStatusDamage, newState.opponent.maxHp);
-      const remainingPercent = Math.round((newState.opponent.currentHp / newState.opponent.maxHp) * 100);
+      const oldHp = opponentCurrentPokemon.currentHp + opponentStatusDamage;
+      const damagePercent = calculateDamagePercentage(opponentStatusDamage, opponentCurrentPokemon.maxHp);
+      const remainingPercent = Math.round((opponentCurrentPokemon.currentHp / opponentCurrentPokemon.maxHp) * 100);
       
       newState.battleLog.push({
         type: 'status_damage',
-        message: `${newState.opponent.pokemon.name} was hurt by its ${newState.opponent.status}! (${remainingPercent}% HP left)`,
-        pokemon: String(newState.opponent.pokemon.name),
+        message: `${opponentCurrentPokemon.pokemon.name} was hurt by its ${opponentCurrentPokemon.status}! (${remainingPercent}% HP left)`,
+        pokemon: String(opponentCurrentPokemon.pokemon.name),
         damage: damagePercent,
-        status: String(newState.opponent.status)
+        status: String(opponentCurrentPokemon.status)
       });
     }
     

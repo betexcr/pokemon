@@ -1,23 +1,14 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, RotateCcw } from "lucide-react";
 import Image from "next/image";
 import { getPokemon, getMove } from "@/lib/api";
 import { Move } from "@/types/pokemon";
 import { GYM_CHAMPIONS } from "@/lib/gym_champions";
-import { 
-  BattleState, 
-  BattlePokemon, 
-  initializeBattle, 
-  executeAction,
-  calculateHp,
-  calculateStat 
-} from "@/lib/battle-engine";
 import {
   BattleState as TeamBattleState,
-  BattleTeam,
   initializeTeamBattle,
   executeTeamAction,
   getCurrentPokemon,
@@ -34,7 +25,7 @@ type SavedTeam = {
   slots: Array<{ id: number | null; level: number; moves: unknown[] }>; 
 };
 
-export default function BattleRuntimePage() {
+function BattleRuntimePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -516,7 +507,7 @@ export default function BattleRuntimePage() {
       };
 
       
-      setBattleState(sanitizedBattle as BattleState);
+      setBattleState(sanitizedBattle as TeamBattleState);
     } catch (err) {
       console.error('Battle initialization error:', err);
       let errorMessage = "Failed to initialize battle";
@@ -901,5 +892,14 @@ export default function BattleRuntimePage() {
         </div>
       </main>
     </div>
+  );
+}
+
+// Wrapper component with Suspense boundary
+export default function BattleRuntimePageWrapper() {
+  return (
+    <Suspense fallback={<div>Loading battle...</div>}>
+      <BattleRuntimePage />
+    </Suspense>
   );
 }

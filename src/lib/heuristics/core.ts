@@ -87,7 +87,7 @@ async function gatherSignals(): Promise<HeuristicsState['signals']> {
             : 'unknown';
         }
         if (typeof c.downlink === 'number') signals.downlinkMbps = c.downlink;
-        if (typeof c.saveData === 'boolean') signals.saveData = c.saveData;
+        if ('saveData' in c && typeof (c as { saveData?: boolean }).saveData === 'boolean') signals.saveData = (c as { saveData: boolean }).saveData;
       }
 
       // Device Memory (Chrome-based)
@@ -99,7 +99,6 @@ async function gatherSignals(): Promise<HeuristicsState['signals']> {
     // Battery Status API is widely unsupported; best-effort
     if (typeof navigator !== 'undefined' && 'getBattery' in navigator) {
       try {
-        // @ts-expect-error - getBattery is not in standard Navigator type
         const bat = await (navigator as { getBattery: () => Promise<{ charging: boolean; level: number }> }).getBattery();
         signals.lowPowerMode = (bat.charging === false && bat.level <= 0.2);
       } catch { /* ignore */ }

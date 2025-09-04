@@ -1,10 +1,9 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { 
-  Heart, 
   Share2, 
   ChevronLeft,
   ChevronRight,
@@ -330,7 +329,6 @@ export default function PokemonDetailPage() {
     )
   }
 
-  const isInComparison = comparisonList.includes(pokemon.id)
   const primaryType = pokemon.types[0]?.type.name || 'normal'
   const imageUrl = selectedSprite === 'shiny' 
     ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/shiny/${pokemon.id}.png`

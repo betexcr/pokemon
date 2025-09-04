@@ -78,13 +78,13 @@ interface AdvancedFilters {
 
 export default function ModernPokedexLayout({
   pokemonList,
-  selectedPokemon: _selectedPokemon,
-  onSelectPokemon: _onSelectPokemon,
+  // selectedPokemon: _selectedPokemon,
+  // onSelectPokemon: _onSelectPokemon,
   onToggleComparison,
   onClearComparison,
   comparisonList,
-  filters: _filters,
-  setFilters: _setFilters
+  // filters: _filters,
+  // setFilters: _setFilters
 }: ModernPokedexLayoutProps) {
   const router = useRouter()
   
@@ -141,7 +141,7 @@ export default function ModernPokedexLayout({
       }
     } catch {}
 
-    const perfMem: { jsHeapSizeLimit: number } | null = (typeof performance !== 'undefined' && (performance as any).memory) ? (performance as any).memory : null
+    const perfMem: { jsHeapSizeLimit: number } | null = (typeof performance !== 'undefined' && (performance as unknown as { memory?: { jsHeapSizeLimit: number } }).memory) ? (performance as unknown as { memory: { jsHeapSizeLimit: number } }).memory : null
     if (perfMem && typeof perfMem.jsHeapSizeLimit === 'number') {
       const estimatedPerCard = 35 * 1024
       const budget = Math.floor(perfMem.jsHeapSizeLimit * 0.015)

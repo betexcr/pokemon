@@ -25,10 +25,10 @@ export default function RedPokedexLayout({
   pokemonList,
   selectedPokemon,
   onSelectPokemon,
-  onToggleComparison,
+  // onToggleComparison,
   comparisonList,
-  filters,
-  setFilters
+  // filters,
+  // setFilters
 }: RedPokedexLayoutProps) {
   const router = useRouter()
   const [menuSelection, setMenuSelection] = useState<'data' | 'cry' | 'area' | 'quit'>('data');

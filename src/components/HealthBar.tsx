@@ -24,11 +24,11 @@ export default function HealthBar({
     return '#ef4444'; // red-500
   };
 
-  const getHealthColorClass = (percentage: number) => {
-    if (percentage > 60) return 'bg-green-500';
-    if (percentage > 30) return 'bg-yellow-500';
-    return 'bg-red-500';
-  };
+  // const getHealthColorClass = (percentage: number) => {
+  //   if (percentage > 60) return 'bg-green-500';
+  //   if (percentage > 30) return 'bg-yellow-500';
+  //   return 'bg-red-500';
+  // };
 
   const fillColor = getHealthColor(hpPercentage);
   

@@ -49,7 +49,7 @@ export default function ImageModal({ isOpen, onClose, imageUrl, alt, pokemonName
           text: `Check out this amazing ${pokemonName} image!`,
           url: window.location.href
         })
-      } catch (error) {
+      } catch {
         console.log('Share cancelled')
       }
     } else {
@@ -58,7 +58,7 @@ export default function ImageModal({ isOpen, onClose, imageUrl, alt, pokemonName
         await navigator.clipboard.writeText(window.location.href)
         // You could add a toast notification here
         console.log('Link copied to clipboard')
-      } catch (error) {
+      } catch {
         console.error('Failed to copy link')
       }
     }

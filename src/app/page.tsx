@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Pokemon, FilterState } from '@/types/pokemon'
-import { getPokemonByType, getAllPokemon, getPokemonWithPagination } from '@/lib/api'
+import { getPokemonByType, getPokemonWithPagination } from '@/lib/api'
 import { formatPokemonName, typeColors, cn } from '@/lib/utils'
 import ThemeToggle from '@/components/ThemeToggle'
 import { useTheme } from '@/components/ThemeProvider'
@@ -17,12 +17,11 @@ import ComparisonOverlay from '@/components/ComparisonOverlay'
 import VirtualizedPokemonGrid from '@/components/VirtualizedPokemonGrid'
 import ViewTransition from '@/components/ViewTransition'
 import { useSearch } from '@/hooks/useSearch'
-import { Search, Grid3X3, Zap, X, Users } from 'lucide-react'
+import { Search, Zap, X, Users } from 'lucide-react'
 
 export default function Home() {
   const router = useRouter()
   const [pokemonList, setPokemonList] = useState<Pokemon[]>([])
-  const [filteredPokemon, setFilteredPokemon] = useState<Pokemon[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [density, setDensity] = useState<'cozy' | 'compact' | 'ultra' | 'list'>('compact')
@@ -64,7 +63,6 @@ export default function Home() {
   const loadInitialData = useCallback(async () => {
     // Check if we already have data in state (from navigation back)
     if (pokemonList.length > 0) {
-      setFilteredPokemon(pokemonList)
       setLoading(false)
       return
     }
@@ -74,7 +72,6 @@ export default function Home() {
       setError(null)
       const initialPokemon = await getPokemonWithPagination(30, 0)
       setPokemonList(initialPokemon)
-      setFilteredPokemon(initialPokemon)
     } catch (err) {
       setError('Failed to load Pokémon data')
       console.error(err)
@@ -101,19 +98,6 @@ export default function Home() {
     handleSearchChange(filters.search)
   }, [filters.search, handleSearchChange])
 
-  // Update filtered Pokémon based on search results
-  useEffect(() => {
-    // Only apply search results if there's an actual search term
-    if (filters.search.trim() && searchResults.length > 0) {
-      setFilteredPokemon(searchResults)
-    } else if (filters.search.trim() && searchResults.length === 0) {
-      // Search term exists but no results found
-      setFilteredPokemon([])
-    } else {
-      // No search term, show all Pokémon
-      setFilteredPokemon(pokemonList)
-    }
-  }, [searchResults, filters.search, pokemonList])
 
   // Memoize filtered Pokémon to prevent unnecessary re-renders and improve performance
   const memoizedFilteredPokemon = useMemo(() => {
@@ -138,7 +122,7 @@ export default function Home() {
       
       if (newTypes.length === 0) {
         // No type filters, show all Pokémon
-        setFilteredPokemon(memoizedFilteredPokemon)
+        // memoizedFilteredPokemon will handle this automatically
       } else {
         // Still have other type filters, fetch those types with AND logic
         setTypeLoading(true)
@@ -161,7 +145,7 @@ export default function Home() {
             if (!isFirstOccurrence) return false
             return pokemonCounts.get(pokemon.id) === newTypes.length
           })
-          setFilteredPokemon(uniquePokemon)
+          // uniquePokemon will be handled by memoizedFilteredPokemon
         } catch (err) {
           console.error('Type filter error:', err)
         } finally {
@@ -193,7 +177,7 @@ export default function Home() {
           if (!isFirstOccurrence) return false
           return pokemonCounts.get(pokemon.id) === newTypes.length
         })
-        setFilteredPokemon(uniquePokemon)
+        // uniquePokemon will be handled by memoizedFilteredPokemon
       } catch (err) {
         console.error('Type filter error:', err)
       } finally {
@@ -590,7 +574,6 @@ export default function Home() {
             <button
               onClick={() => {
                 setFilters({ search: '', types: [], generation: '', sortBy: 'id', sortOrder: 'asc' })
-                setFilteredPokemon(pokemonList)
               }}
               className="mt-4 px-4 py-2 bg-poke-blue text-white rounded-lg hover:bg-poke-blue/90"
             >

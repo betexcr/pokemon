@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { ArrowLeft, Swords } from "lucide-react";
 import { GYM_CHAMPIONS, Champion } from "@/lib/gym_champions";
 

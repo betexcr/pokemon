@@ -247,13 +247,13 @@ export function calculateDamageDetailed(
 
   // Type effectiveness
   const defenderTypes = defender.pokemon.types.map(type => 
-    typeof type === 'string' ? type : type.type?.name || type.name || ''
+    typeof type === 'string' ? type : type.type?.name || ''
   );
   const effectiveness = getTypeEffectiveness(moveType, defenderTypes);
   
   // STAB (Same Type Attack Bonus)
   const attackerTypes = attacker.pokemon.types.map(type => 
-    typeof type === 'string' ? type : type.type?.name || type.name || ''
+    typeof type === 'string' ? type : type.type?.name || ''
   );
   const stab = attackerTypes.includes(moveType) ? 1.5 : 1;
   
@@ -564,7 +564,7 @@ export function executeTeamAction(state: BattleState, action: BattleAction): Bat
           
           // Apply status effects
           if (damageResult.statusEffect && !defender.status) {
-            defender.status = damageResult.statusEffect as 'poison' | 'paralyze' | 'sleep' | 'burn' | 'freeze';
+            defender.status = damageResult.statusEffect as 'poisoned' | 'paralyzed' | 'asleep' | 'burned' | 'frozen';
             defender.statusTurns = 0;
             newState.battleLog.push({
               type: 'status_applied',

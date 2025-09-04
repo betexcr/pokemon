@@ -54,7 +54,7 @@ export default function MultiPokemonRadarChart({ pokemons }: MultiPokemonRadarCh
   }
 
   // Calculate points for each stat
-  const getStatPoints = (pokemon: Pokemon, color: string) => {
+  const getStatPoints = (pokemon: Pokemon) => {
     const points: Point[] = []
     
     stats.forEach((statName, index) => {
@@ -148,7 +148,7 @@ export default function MultiPokemonRadarChart({ pokemons }: MultiPokemonRadarCh
   // Generate polygons for each Pokémon
   const pokemonPolygons = pokemons.map((pokemon, index) => {
     const color = colors[index % colors.length]
-    const points = getStatPoints(pokemon, color)
+    const points = getStatPoints(pokemon)
     const pointsString = points.map(p => `${p.x},${p.y}`).join(' ')
     
     return (

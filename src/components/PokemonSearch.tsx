@@ -36,7 +36,7 @@ export default function PokemonSearch({
   const [loadingMore, setLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(true)
   const [currentOffset, setCurrentOffset] = useState(INITIAL_LOAD_COUNT)
-  const [searchLoading, setSearchLoading] = useState(false)
+  // const [searchLoading, setSearchLoading] = useState(false)
   const observerRef = useRef<IntersectionObserver | null>(null)
   const lastPokemonRef = useRef<HTMLDivElement | null>(null)
 
@@ -48,7 +48,7 @@ export default function PokemonSearch({
         const pokemonList = await getPokemonList(INITIAL_LOAD_COUNT, 0)
         
         // Fetch full Pokémon data for the first 50
-        const pokemonPromises = pokemonList.results.map(async (pokemonRef, index) => {
+        const pokemonPromises = pokemonList.results.map(async (pokemonRef) => {
           const pokemonId = pokemonRef.url.split('/').slice(-2)[0]
           const id = parseInt(pokemonId)
           
@@ -351,10 +351,10 @@ export default function PokemonSearch({
             Start typing to search for Pokémon...
           </div>
         ) : (
-          filteredPokemon.map((pokemon, index) => (
+          filteredPokemon.map((pokemon) => (
             <div
               key={pokemon.id}
-              ref={index === filteredPokemon.length - 1 ? lastPokemonRef : null}
+              ref={pokemon.id === filteredPokemon[filteredPokemon.length - 1]?.id ? lastPokemonRef : null}
               className="py-3 px-3 hover:bg-white/60 transition-colors cursor-pointer"
               onClick={() => onSelectPokemon(pokemon)}
             >

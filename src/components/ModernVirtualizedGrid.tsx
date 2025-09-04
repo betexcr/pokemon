@@ -27,10 +27,10 @@ export default function ModernVirtualizedGrid({
   const parentRef = useRef<HTMLDivElement>(null)
 
   // Calculate responsive grid columns
-  const getGridColumns = useMemo(() => {
-    // This will be handled by CSS grid with auto-fit
-    return 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
-  }, [])
+  // const getGridColumns = useMemo(() => {
+  //   // This will be handled by CSS grid with auto-fit
+  //   return 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
+  // }, [])
 
   // Calculate items per row based on container width
   const getItemsPerRow = useMemo(() => {

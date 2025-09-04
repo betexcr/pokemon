@@ -1,6 +1,6 @@
-import { render } from '@testing-library/react'
+// import { render } from '@testing-library/react'
 import { useRouter } from 'next/navigation'
-import PokemonDetailPage from '../pokemon/[id]/page'
+// import PokemonDetailPage from '../pokemon/[id]/page'
 
 // Mock Next.js router
 jest.mock('next/navigation', () => ({

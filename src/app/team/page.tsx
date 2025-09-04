@@ -9,7 +9,6 @@ import TypeBadge from '@/components/TypeBadge'
 import Tooltip from '@/components/Tooltip'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, ChevronDown, ChevronRight } from 'lucide-react'
-import { useTheme } from '@/components/ThemeProvider'
 
 type MoveData = {
   name: string
@@ -30,18 +29,10 @@ const STORAGE_KEY = 'pokemon-team-builder'
 export default function TeamBuilderPage() {
   const router = useRouter()
   
-  let theme = 'light'
-  try {
-    const themeContext = useTheme()
-    theme = themeContext.theme
-  } catch {
-    // Theme provider not available, use default
-  }
   
   const [allPokemon, setAllPokemon] = useState<Pokemon[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [fetchingPokemon, setFetchingPokemon] = useState<Set<number>>(new Set())
   const [availableMoves, setAvailableMoves] = useState<Record<number, Array<{ name: string; type: string; damage_class: "physical" | "special" | "status"; power: number | null; accuracy: number | null; pp: number | null; level_learned_at: number | null; short_effect?: string | null }>>>({})
   const [teamSlots, setTeamSlots] = useState<TeamSlot[]>(
     Array.from({ length: 6 }, () => ({ id: null, level: 50, moves: [] as MoveData[] }))
@@ -148,7 +139,7 @@ export default function TeamBuilderPage() {
         const pokemonList = await getPokemonList(1025, 0)
         
         // Create basic Pokémon objects with minimal data for search
-        const basicPokemon = pokemonList.results.map((pokemonRef, index) => {
+        const basicPokemon = pokemonList.results.map((pokemonRef) => {
           const pokemonId = pokemonRef.url.split('/').slice(-2)[0]
           const id = parseInt(pokemonId)
           
@@ -222,17 +213,10 @@ export default function TeamBuilderPage() {
       const existingPokemon = allPokemon.find(p => p.id === patch.id)
       if (existingPokemon && existingPokemon.types.length === 0) {
         try {
-          setFetchingPokemon(prev => new Set(prev).add(patch.id as number))
           const fullPokemon = await getPokemon(patch.id as number)
           setAllPokemon(prev => prev.map(p => p.id === patch.id ? fullPokemon : p))
         } catch (error) {
           console.error('Failed to fetch Pokémon details:', error)
-        } finally {
-          setFetchingPokemon(prev => {
-            const newSet = new Set(prev)
-            if (patch.id) newSet.delete(patch.id)
-            return newSet
-          })
         }
       }
     }
@@ -404,7 +388,6 @@ export default function TeamBuilderPage() {
   }, [allPokemon])
 
   // Helper function to capitalize strings
-  const capitalize = (s: string) => s[0].toUpperCase() + s.slice(1)
 
   // Toggle collapsed state for a team slot
   const toggleSlotCollapse = (slotIndex: number) => {
@@ -542,11 +525,11 @@ export default function TeamBuilderPage() {
                         </div>
                         <div className="flex gap-1 items-center">
                           {pokemon.types.length > 0 ? (
-                            pokemon.types.map((typeObj, index) => {
+                            pokemon.types.map((typeObj) => {
                               // Handle both object format { type: { name: "fire" } } and string format "fire"
                               const typeName = typeof typeObj === 'string' ? typeObj : typeObj.type?.name
                               return typeName ? (
-                                <TypeBadge key={`${pokemon.id}-${index}`} type={typeName} variant="span" />
+                                <TypeBadge key={`${pokemon.id}-${typeName}`} type={typeName} variant="span" />
                               ) : null
                             })
                           ) : (
@@ -686,8 +669,8 @@ export default function TeamBuilderPage() {
                               </tr>
                             </thead>
                             <tbody>
-                              {slot.moves.map((move, moveIdx) => (
-                                <tr key={moveIdx} className="[&>td]:px-2 [&>td]:py-1 border-b border-gray-100">
+                              {slot.moves.map((move) => (
+                                <tr key={move.name} className="[&>td]:px-2 [&>td]:py-1 border-b border-gray-100">
                                   <td className="font-medium capitalize">
                                     <div className="flex items-center gap-2">
                                       <span>{move.name}</span>
@@ -733,7 +716,7 @@ export default function TeamBuilderPage() {
                                     return aLevel - bLevel
                                   })
                                   .slice(0, 15)
-                                  .map((move, moveIdx) => (
+                                  .map((move) => (
                                     <tr key={move.name} className="[&>td]:px-2 [&>td]:py-1 border-b border-gray-100 hover:bg-gray-50">
                                       <td className="font-medium capitalize">
                                         {move.short_effect ? (

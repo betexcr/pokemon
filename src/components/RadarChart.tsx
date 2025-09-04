@@ -42,8 +42,9 @@ export default function RadarChart({ data, size = 300, className = '' }: RadarCh
     const statNames = ['hp', 'attack', 'defense', 'special-attack', 'special-defense', 'speed'] as const
     const maxStat = 255 // Maximum stat value in Pokémon
     
-    return statNames.map((stat, index) => {
-      const angle = (index * Math.PI * 2) / 6 - Math.PI / 2 // Start from top
+    return statNames.map((stat) => {
+      const statIndex = statNames.indexOf(stat)
+      const angle = (statIndex * Math.PI * 2) / 6 - Math.PI / 2 // Start from top
       const value = (stats[stat] / maxStat) * radius
       const x = center + value * Math.cos(angle)
       const y = center + value * Math.sin(angle)
@@ -140,7 +141,7 @@ export default function RadarChart({ data, size = 300, className = '' }: RadarCh
         {statLabels}
 
         {/* Pokémon polygons */}
-        {data.map((pokemon, index) => {
+        {data.map((pokemon) => {
           const points = calculatePoints(pokemon.stats, maxRadius, center)
           const color = pokemon.color || (
             theme === 'red' ? '#FF0000' :
@@ -173,7 +174,7 @@ export default function RadarChart({ data, size = 300, className = '' }: RadarCh
       {/* Legend for modern themes */}
       {!isRetro && (
         <div className="mt-4 flex flex-wrap gap-2 justify-center">
-          {data.map((pokemon, index) => (
+          {data.map((pokemon) => (
             <div key={pokemon.name} className="flex items-center gap-2">
               <div 
                 className="w-3 h-3 rounded-full"
@@ -194,7 +195,7 @@ export default function RadarChart({ data, size = 300, className = '' }: RadarCh
           theme === 'gold' ? 'text-yellow-800' : 
           'text-pink-800'
         }`}>
-          {data.map((pokemon, index) => (
+          {data.map((pokemon) => (
             <div key={pokemon.name} className="mb-1">
               {pokemon.name.toUpperCase()}
             </div>

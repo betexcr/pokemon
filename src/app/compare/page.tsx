@@ -1,9 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ArrowLeft, Scale, X, Zap } from 'lucide-react'
+import { ArrowLeft, Scale, X } from 'lucide-react'
 import Link from 'next/link'
-import { useTheme } from '@/components/ThemeProvider'
 import { getPokemon } from '@/lib/api'
 import { formatPokemonName } from '@/lib/utils'
 import { Pokemon } from '@/types/pokemon'
@@ -14,13 +13,6 @@ import MultiPokemonRadarChart from '@/components/MultiPokemonRadarChart'
 
 export default function ComparePage() {
   
-  let theme = 'light'
-  try {
-    const themeContext = useTheme()
-    theme = themeContext.theme
-  } catch {
-    // Theme provider not available, use default
-  }
   
   const [pokemons, setPokemons] = useState<Pokemon[]>([])
   const [loading, setLoading] = useState(true)

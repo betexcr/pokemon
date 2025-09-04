@@ -231,7 +231,8 @@ export async function getPokemonWithPagination(limit = 50, offset = 0): Promise<
           types: [
             { slot: 1, type: { name: 'normal', url: '' } }
           ],
-          past_types: []
+          past_types: [],
+          species: { name: pokemonRef.name, url: '' }
         } as Pokemon;
       })
     );

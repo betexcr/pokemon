@@ -25,7 +25,7 @@ export default function GoldPokedexLayout({
   pokemonList,
   selectedPokemon,
   onSelectPokemon,
-  onToggleComparison,
+  // onToggleComparison,
   comparisonList,
   filters,
   setFilters
