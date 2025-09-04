@@ -25,11 +25,12 @@ export const metadata: Metadata = {
     siteName: 'PokéDex',
     images: [
       {
-        url: '/pokedex.jpg',
+        url: 'https://pokemon.ultharcr.com/pokedex.jpg',
         width: 1200,
         height: 630,
         alt: 'PokéDex - Modern Pokémon Database',
         type: 'image/jpeg',
+        secureUrl: 'https://pokemon.ultharcr.com/pokedex.jpg',
       },
     ],
   },
@@ -37,13 +38,16 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'PokéDex - Modern Pokémon Database',
     description: 'Explore the world of Pokémon with our modern, high-performance PokéDex application. Search, discover, and learn about your favorite Pokémon with beautiful UI and real-time data from PokeAPI.',
-    images: ['/pokedex.jpg'],
+    images: ['https://pokemon.ultharcr.com/pokedex.jpg'],
     creator: '@pokemondex',
     site: '@pokemondex',
   },
   robots: {
     index: true,
     follow: true,
+  },
+  alternates: {
+    canonical: 'https://pokemon.ultharcr.com',
   },
 }
 
@@ -59,12 +63,19 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
         
-
+        {/* Facebook specific */}
+        <meta property="fb:app_id" content="your-facebook-app-id" />
         
         {/* Additional SEO */}
         <meta name="theme-color" content="#3B4CCA" />
         <meta name="msapplication-TileColor" content="#3B4CCA" />
         <meta name="application-name" content="PokéDex" />
+        <meta name="apple-mobile-web-app-title" content="PokéDex" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        
+        {/* PWA Manifest */}
+        <link rel="manifest" href="/manifest.json" />
       </head>
       <body suppressHydrationWarning className={`${inter.className} h-full bg-bg text-text pokeball-bg`}>
         <ThemeProvider>
