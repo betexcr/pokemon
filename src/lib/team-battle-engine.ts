@@ -387,6 +387,7 @@ export function handleAutomaticSwitching(state: BattleState): BattleState {
   const newLog = [...state.battleLog];
   
   // Check if player's current Pokémon is fainted and switch if needed
+  let pokemonSwitched = false;
   const playerCurrent = getCurrentPokemon(state.player);
   if (playerCurrent.currentHp <= 0) {
     const nextIndex = getNextAvailablePokemon(state.player);
@@ -398,6 +399,7 @@ export function handleAutomaticSwitching(state: BattleState): BattleState {
         message: `Go! ${newCurrent.pokemon.name}!`,
         pokemon: newCurrent.pokemon.name
       });
+      pokemonSwitched = true;
     }
   }
   
@@ -413,7 +415,30 @@ export function handleAutomaticSwitching(state: BattleState): BattleState {
         message: `${newCurrent.pokemon.name} was sent out!`,
         pokemon: newCurrent.pokemon.name
       });
+      pokemonSwitched = true;
     }
+  }
+  
+  // If a Pokémon was switched, recalculate turn order based on new Pokémon's Speed
+  if (pokemonSwitched) {
+    const newPlayerCurrent = getCurrentPokemon(newState.player);
+    const newOpponentCurrent = getCurrentPokemon(newState.opponent);
+    
+    const playerSpeedStat = newPlayerCurrent.pokemon.stats.find(stat => stat.stat.name === 'speed')?.base_stat || 50;
+    const opponentSpeedStat = newOpponentCurrent.pokemon.stats.find(stat => stat.stat.name === 'speed')?.base_stat || 50;
+    const playerSpeed = calculateStat(playerSpeedStat, newPlayerCurrent.level);
+    const opponentSpeed = calculateStat(opponentSpeedStat, newOpponentCurrent.level);
+    
+    // Determine new turn order based on Speed (with tie-breaking)
+    if (playerSpeed > opponentSpeed) {
+      newState.turn = 'player';
+    } else if (opponentSpeed > playerSpeed) {
+      newState.turn = 'opponent';
+    } else {
+      // Speed tie - randomize (50/50 chance)
+      newState.turn = Math.random() < 0.5 ? 'player' : 'opponent';
+    }
+    
   }
   
   newState.battleLog = newLog;
@@ -555,6 +580,7 @@ export function executeTeamAction(state: BattleState, action: BattleAction): Bat
   const opponentCurrent = getCurrentPokemon(newState.opponent);
   
   // Check if current Pokémon is fainted and switch if needed
+  let pokemonSwitched = false;
   if (playerCurrent.currentHp <= 0) {
     const nextIndex = getNextAvailablePokemon(newState.player);
     if (nextIndex !== null) {
@@ -565,6 +591,7 @@ export function executeTeamAction(state: BattleState, action: BattleAction): Bat
         message: `Go! ${newCurrent.pokemon.name}!`,
         pokemon: newCurrent.pokemon.name
       });
+      pokemonSwitched = true;
     }
   }
   
@@ -578,7 +605,30 @@ export function executeTeamAction(state: BattleState, action: BattleAction): Bat
         message: `${newCurrent.pokemon.name} was sent out!`,
         pokemon: newCurrent.pokemon.name
       });
+      pokemonSwitched = true;
     }
+  }
+  
+  // If a Pokémon was switched, recalculate turn order based on new Pokémon's Speed
+  if (pokemonSwitched) {
+    const newPlayerCurrent = getCurrentPokemon(newState.player);
+    const newOpponentCurrent = getCurrentPokemon(newState.opponent);
+    
+    const playerSpeedStat = newPlayerCurrent.pokemon.stats.find(stat => stat.stat.name === 'speed')?.base_stat || 50;
+    const opponentSpeedStat = newOpponentCurrent.pokemon.stats.find(stat => stat.stat.name === 'speed')?.base_stat || 50;
+    const playerSpeed = calculateStat(playerSpeedStat, newPlayerCurrent.level);
+    const opponentSpeed = calculateStat(opponentSpeedStat, newOpponentCurrent.level);
+    
+    // Determine new turn order based on Speed (with tie-breaking)
+    if (playerSpeed > opponentSpeed) {
+      newState.turn = 'player';
+    } else if (opponentSpeed > playerSpeed) {
+      newState.turn = 'opponent';
+    } else {
+      // Speed tie - randomize (50/50 chance)
+      newState.turn = Math.random() < 0.5 ? 'player' : 'opponent';
+    }
+    
   }
   
   // Execute the action with sophisticated battle logic
