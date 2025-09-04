@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import Home from '../page'
 
 // Mock Next.js router
@@ -210,7 +210,7 @@ jest.mock('@/hooks/useSearch', () => ({
 
 // Mock VirtualizedPokemonGrid component
 jest.mock('@/components/VirtualizedPokemonGrid', () => {
-  return function MockVirtualizedPokemonGrid({ pokemonList }: { pokemonList: any[] }) {
+  return function MockVirtualizedPokemonGrid({ pokemonList }: { pokemonList: Array<{ id: number; name: string }> }) {
     return (
       <div data-testid="virtualized-grid">
         {pokemonList.map((pokemon) => (
