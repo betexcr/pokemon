@@ -37,17 +37,17 @@ export default function ModernPokemonCard({
   // Temporary: Use direct URL for debugging
   const directImageUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${pokemon.id}.png`
   
-  // Debug logging
+  // Debug logging for list view
   useEffect(() => {
     if (density === 'list') {
-      console.log(`List view - ${pokemon.name}:`, {
+      console.log(`List view - ${pokemon.name} (ID: ${pokemon.id}):`, {
         imageUrl,
         imageLoading,
         imageError,
         imageLoaded
       })
     }
-  }, [pokemon.name, imageUrl, imageLoading, imageError, imageLoaded, density])
+  }, [pokemon.name, pokemon.id, imageUrl, imageLoading, imageError, imageLoaded, density])
 
   const handleClick = (e: React.MouseEvent) => {
     if (onSelect) {
@@ -130,57 +130,37 @@ export default function ModernPokemonCard({
               <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse rounded-lg" />
             )}
             
-            {/* Test with direct URL first */}
+            {/* Test with multiple image sources */}
             <img
-              src={directImageUrl}
+              src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`}
               alt={formatPokemonName(pokemon.name)}
               className="w-full h-full object-contain"
               onLoad={() => {
-                console.log('Direct image loaded successfully for:', pokemon.name);
+                console.log('✅ Image loaded successfully for:', pokemon.name, 'ID:', pokemon.id);
+                setImageLoaded(true);
               }}
-              onError={() => {
-                console.log('Direct image failed to load for:', pokemon.name, 'URL:', directImageUrl);
+              onError={(e) => {
+                console.log('❌ Image failed to load for:', pokemon.name, 'ID:', pokemon.id);
+                console.log('Error event:', e);
+                // Try fallback
+                const img = e.target as HTMLImageElement;
+                img.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.id}.png`;
               }}
               loading="lazy"
             />
             
-            {/* Original cached image as backup */}
-            {!imageError && (
-              <img
-                src={imageUrl}
-                alt={formatPokemonName(pokemon.name)}
-                className={`
-                  w-full h-full object-contain transition-opacity duration-300
-                  ${imageLoaded ? 'opacity-100' : 'opacity-0'}
-                `}
-                onLoad={() => {
-                  console.log('Cached image loaded successfully for:', pokemon.name);
-                  setImageLoaded(true);
-                }}
-                onError={() => {
-                  console.log('Cached image failed to load for:', pokemon.name, 'URL:', imageUrl);
-                }}
-                loading="lazy"
-              />
-            )}
-            
-            {imageError && (
-              <div className="flex items-center justify-center text-muted w-full h-full">
-                <span className="text-lg">?</span>
-              </div>
-            )}
-            
-            {/* Fallback image if main image fails */}
-            {imageError && (
-              <img
-                src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`}
-                alt={formatPokemonName(pokemon.name)}
-                className="w-full h-full object-contain"
-                onError={() => {
-                  console.log('Fallback image also failed for:', pokemon.name);
-                }}
-              />
-            )}
+            {/* Fallback image */}
+            <img
+              src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.id}.png`}
+              alt={`${formatPokemonName(pokemon.name)} (fallback)`}
+              className="w-full h-full object-contain opacity-0 absolute inset-0"
+              onLoad={() => {
+                console.log('✅ Fallback image loaded for:', pokemon.name);
+              }}
+              onError={() => {
+                console.log('❌ Fallback image also failed for:', pokemon.name);
+              }}
+            />
             
             {/* Debug: Show loading state */}
             {imageLoading && (
@@ -188,6 +168,11 @@ export default function ModernPokemonCard({
                 <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
               </div>
             )}
+            
+            {/* Debug: Show container info */}
+            <div className="absolute top-0 left-0 text-xs bg-black text-white p-1 rounded">
+              {pokemon.id}
+            </div>
           </div>
 
           {/* Pokémon Info */}
