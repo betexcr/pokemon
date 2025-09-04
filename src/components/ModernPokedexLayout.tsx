@@ -141,7 +141,7 @@ export default function ModernPokedexLayout({
       }
     } catch {}
 
-    const perfMem: { jsHeapSizeLimit: number } | null = (typeof performance !== 'undefined' && (performance as { memory?: { jsHeapSizeLimit: number } }).memory) ? (performance as { memory: { jsHeapSizeLimit: number } }).memory : null
+    const perfMem: { jsHeapSizeLimit: number } | null = (typeof performance !== 'undefined' && (performance as any).memory) ? (performance as any).memory : null
     if (perfMem && typeof perfMem.jsHeapSizeLimit === 'number') {
       const estimatedPerCard = 35 * 1024
       const budget = Math.floor(perfMem.jsHeapSizeLimit * 0.015)

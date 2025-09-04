@@ -29,15 +29,15 @@ export default function DebugSpritesPage() {
   if (error) return <div>Error: {error}</div>;
   if (!spriteData) return <div>No data</div>;
 
-  const sprites = spriteData.sprites;
+  const sprites = { valid: spriteData.valid, invalid: spriteData.invalid };
 
   return (
     <div className="p-8">
       <h1 className="text-2xl font-bold mb-4">Sprite Debug Page</h1>
       
       <div className="mb-4">
-        <h2 className="text-xl font-semibold mb-2">Pokemon: {spriteData.name}</h2>
-        <p>ID: {spriteData.id}</p>
+        <h2 className="text-xl font-semibold mb-2">Sprite Debug</h2>
+        <p>Testing sprite loading</p>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -46,11 +46,11 @@ export default function DebugSpritesPage() {
           <div className="space-y-2">
             <div>
               <p>front_default:</p>
-              <p className="text-sm text-gray-600 break-all">{sprites.front_default}</p>
-              {sprites.front_default && (
+              <p className="text-sm text-gray-600 break-all">{sprites.valid}</p>
+              {sprites.valid && (
                 <div className="w-24 h-24 border border-gray-300">
                   <Image
-                    src={sprites.front_default}
+                    src={sprites.valid}
                     alt="front_default"
                     width={96}
                     height={96}
@@ -64,11 +64,11 @@ export default function DebugSpritesPage() {
             
             <div>
               <p>front_shiny:</p>
-              <p className="text-sm text-gray-600 break-all">{sprites.front_shiny}</p>
-              {sprites.front_shiny && (
+              <p className="text-sm text-gray-600 break-all">{sprites.invalid}</p>
+              {sprites.invalid && (
                 <div className="w-24 h-24 border border-gray-300">
                   <Image
-                    src={sprites.front_shiny}
+                    src={sprites.invalid}
                     alt="front_shiny"
                     width={96}
                     height={96}
@@ -87,11 +87,11 @@ export default function DebugSpritesPage() {
           <div className="space-y-2">
             <div>
               <p>back_default:</p>
-              <p className="text-sm text-gray-600 break-all">{sprites.back_default}</p>
-              {sprites.back_default && (
+              <p className="text-sm text-gray-600 break-all">{sprites.valid}</p>
+              {sprites.valid && (
                 <div className="w-24 h-24 border border-gray-300">
                   <Image
-                    src={sprites.back_default}
+                    src={sprites.valid}
                     alt="back_default"
                     width={96}
                     height={96}
@@ -105,11 +105,11 @@ export default function DebugSpritesPage() {
             
             <div>
               <p>back_shiny:</p>
-              <p className="text-sm text-gray-600 break-all">{sprites.back_shiny}</p>
-              {sprites.back_shiny && (
+              <p className="text-sm text-gray-600 break-all">{sprites.invalid}</p>
+              {sprites.invalid && (
                 <div className="w-24 h-24 border border-gray-300">
                   <Image
-                    src={sprites.back_shiny}
+                    src={sprites.invalid}
                     alt="back_shiny"
                     width={96}
                     height={96}

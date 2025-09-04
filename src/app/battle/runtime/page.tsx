@@ -501,7 +501,7 @@ export default function BattleRuntimePage() {
               sanitizedEntry.turn = entry.turn;
             }
             if (entry.effectiveness && typeof entry.effectiveness === 'string') {
-              sanitizedEntry.effectiveness = entry.effectiveness;
+              sanitizedEntry.effectiveness = entry.effectiveness as 'normal' | 'super_effective' | 'not_very_effective' | 'no_effect';
             }
             
             return sanitizedEntry;
@@ -516,7 +516,7 @@ export default function BattleRuntimePage() {
       };
 
       
-      setBattleState(sanitizedBattle);
+      setBattleState(sanitizedBattle as BattleState);
     } catch (err) {
       console.error('Battle initialization error:', err);
       let errorMessage = "Failed to initialize battle";
@@ -690,7 +690,7 @@ export default function BattleRuntimePage() {
                   <p className="text-sm text-muted">Lv. {opponent.level}</p>
                   <div className="flex gap-1 mt-1 justify-end">
                     {opponent.pokemon.types.map((type, index) => {
-                      const typeName = typeof type === 'string' ? type : type.type?.name || type.name || 'unknown';
+                      const typeName = typeof type === 'string' ? type : type.type?.name || 'unknown';
                       return (
                         <TypeBadge
                           key={`${opponent.pokemon.id}-type-${index}`}
@@ -763,7 +763,7 @@ export default function BattleRuntimePage() {
                   <p className="text-sm text-muted">Lv. {player.level}</p>
                   <div className="flex gap-1 mt-1">
                     {player.pokemon.types.map((type, index) => {
-                      const typeName = typeof type === 'string' ? type : type.type?.name || type.name || 'unknown';
+                      const typeName = typeof type === 'string' ? type : type.type?.name || 'unknown';
                       return (
                         <TypeBadge
                           key={`${player.pokemon.id}-type-${index}`}
