@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, RotateCcw } from "lucide-react";
 import Image from "next/image";
@@ -14,30 +14,148 @@ import {
   calculateHp,
   calculateStat 
 } from "@/lib/battle-engine";
-import { getAIMove, Difficulty } from "@/lib/ai-battle";
+import {
+  BattleState as TeamBattleState,
+  BattleTeam,
+  initializeTeamBattle,
+  executeTeamAction,
+  getCurrentPokemon,
+  handleAutomaticSwitching
+} from "@/lib/team-battle-engine";
+import TypeBadge from "@/components/TypeBadge";
+import HealthBar from "@/components/HealthBar";
 
 const STORAGE_KEY = "pokemon-team-builder";
 
 type SavedTeam = { 
   id: string; 
   name: string; 
-  slots: Array<{ id: number | null; level: number; moves: any[] }>; 
+  slots: Array<{ id: number | null; level: number; moves: unknown[] }>; 
 };
 
 export default function BattleRuntimePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
-  const [battleState, setBattleState] = useState<BattleState | null>(null);
+  const [battleState, setBattleState] = useState<TeamBattleState | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedMove, setSelectedMove] = useState<number | null>(null);
   const [isAITurn, setIsAITurn] = useState(false);
+  const battleLogRef = useRef<HTMLDivElement>(null);
+  
+  // Animation states
+  const [playerAnimation, setPlayerAnimation] = useState<'enter' | 'idle' | 'faint'>('idle');
+  const [opponentAnimation, setOpponentAnimation] = useState<'enter' | 'idle' | 'faint'>('idle');
+  const [previousPlayerId, setPreviousPlayerId] = useState<number | null>(null);
+  const [previousOpponentId, setPreviousOpponentId] = useState<number | null>(null);
 
   const playerTeamId = searchParams.get("player");
   const opponentKind = searchParams.get("opponentKind");
   const opponentId = searchParams.get("opponentId");
-  const difficulty = (searchParams.get("difficulty") as Difficulty) || "normal";
+
+  // Animation class helpers
+  const getPlayerAnimationClasses = () => {
+    switch (playerAnimation) {
+      case 'enter':
+        return 'animate-slide-in-left';
+      case 'faint':
+        return 'animate-faint-down';
+      default:
+        return '';
+    }
+  };
+
+  const getOpponentAnimationClasses = () => {
+    switch (opponentAnimation) {
+      case 'enter':
+        return 'animate-slide-in-right';
+      case 'faint':
+        return 'animate-faint-down';
+      default:
+        return '';
+    }
+  };
+
+  // Auto-scroll battle log to top when it updates (since newest entries are at top)
+  useEffect(() => {
+    if (battleLogRef.current && battleState?.battleLog) {
+      battleLogRef.current.scrollTop = 0;
+    }
+  }, [battleState?.battleLog]);
+
+  // Handle Pokémon change animations
+  useEffect(() => {
+    if (!battleState) return;
+
+    const currentPlayer = getCurrentPokemon(battleState.player);
+    const currentOpponent = getCurrentPokemon(battleState.opponent);
+
+    // Check if player Pokémon changed
+    if (previousPlayerId !== null && previousPlayerId !== currentPlayer.pokemon.id) {
+      // New Pokémon entered
+      setPlayerAnimation('enter');
+      setTimeout(() => setPlayerAnimation('idle'), 800);
+    } else if (previousPlayerId === null) {
+      // Initial Pokémon
+      setPlayerAnimation('enter');
+      setTimeout(() => setPlayerAnimation('idle'), 800);
+    }
+
+    // Check if opponent Pokémon changed
+    if (previousOpponentId !== null && previousOpponentId !== currentOpponent.pokemon.id) {
+      // New Pokémon entered
+      setOpponentAnimation('enter');
+      setTimeout(() => setOpponentAnimation('idle'), 800);
+    } else if (previousOpponentId === null) {
+      // Initial Pokémon
+      setOpponentAnimation('enter');
+      setTimeout(() => setOpponentAnimation('idle'), 800);
+    }
+
+    // Check for fainting
+    if (currentPlayer.currentHp <= 0 && playerAnimation !== 'faint') {
+      setPlayerAnimation('faint');
+    }
+    if (currentOpponent.currentHp <= 0 && opponentAnimation !== 'faint') {
+      setOpponentAnimation('faint');
+    }
+
+    setPreviousPlayerId(currentPlayer.pokemon.id);
+    setPreviousOpponentId(currentOpponent.pokemon.id);
+  }, [battleState, previousPlayerId, previousOpponentId, playerAnimation, opponentAnimation]);
+
+  // Handle automatic switching when Pokémon faint
+  useEffect(() => {
+    if (!battleState || battleState.isComplete) return;
+
+    const currentPlayer = getCurrentPokemon(battleState.player);
+    const currentOpponent = getCurrentPokemon(battleState.opponent);
+
+    // Check if any Pokémon has fainted and needs to be switched
+    if (currentPlayer.currentHp <= 0 || currentOpponent.currentHp <= 0) {
+      const updatedState = handleAutomaticSwitching(battleState);
+      if (updatedState !== battleState) {
+        setBattleState(updatedState);
+      }
+    }
+  }, [battleState]);
+
+  // Debug logging for Pokémon changes
+  useEffect(() => {
+    if (!battleState) return;
+    
+    const player = getCurrentPokemon(battleState.player);
+    const playerTeam = battleState.player;
+    
+    console.log('Current player Pokémon:', {
+      name: player.pokemon.name,
+      hp: `${player.currentHp}/${player.maxHp}`,
+      currentIndex: playerTeam.currentIndex,
+      faintedCount: playerTeam.faintedCount,
+      teamSize: playerTeam.pokemon.length
+    });
+  }, [battleState]);
 
   const initializeBattleState = useCallback(async () => {
     try {
@@ -50,7 +168,7 @@ export default function BattleRuntimePage() {
       }
 
       // Load saved teams
-      let savedTeamsRaw = localStorage.getItem(STORAGE_KEY);
+      const savedTeamsRaw = localStorage.getItem(STORAGE_KEY);
       let savedTeams: SavedTeam[] = [];
       
       if (!savedTeamsRaw) {
@@ -111,7 +229,8 @@ export default function BattleRuntimePage() {
       }
 
       // Get first Pokemon from each team
-      const playerSlot = playerTeam.slots.find(s => s.id != null);
+      const playerSlotIndex = playerTeam.slots.findIndex(s => s.id != null);
+      const playerSlot = playerTeam.slots[playerSlotIndex];
       const opponentSlot = opponentTeam.slots[0];
       
       console.log('Player slot:', playerSlot);
@@ -152,9 +271,9 @@ export default function BattleRuntimePage() {
       ]);
 
       // Filter out failed moves and create fallback moves
-      const getValidMoves = (results: PromiseSettledResult<any>[]) => {
+      const getValidMoves = (results: PromiseSettledResult<unknown>[]) => {
         return results
-          .filter((result): result is PromiseFulfilledResult<any> => result.status === 'fulfilled')
+          .filter((result): result is PromiseFulfilledResult<unknown> => result.status === 'fulfilled')
           .map(result => result.value)
           .filter(Boolean);
       };
@@ -274,16 +393,84 @@ export default function BattleRuntimePage() {
         createFallbackMove('defense-curl', 'normal', 0)
       ];
 
-      // Initialize battle
-      console.log('Initializing battle...');
-      const battle = initializeBattle(
-        playerPokemon,
-        playerSlot.level,
-        finalPlayerMoves,
-        opponentPokemon,
-        opponentSlot.level,
-        finalOpponentMoves
-      );
+      // Initialize team battle
+      console.log('Initializing team battle...');
+      
+      // Create player team (use the selected Pokémon as first, add others from saved team)
+      const playerTeamData = [
+        {
+          pokemon: playerPokemon,
+          level: playerSlot.level,
+          moves: finalPlayerMoves
+        }
+      ];
+      
+      // Add other Pokémon from the saved team if available
+      console.log('Saved teams:', savedTeams);
+      console.log('Player team ID:', playerTeamId);
+      if (savedTeams.length > 0 && playerTeamId) {
+        const team = savedTeams.find(t => t.id === playerTeamId);
+        console.log('Found team:', team);
+        if (team && team.slots && Array.isArray(team.slots)) {
+          for (let i = 0; i < team.slots.length; i++) {
+            if (i !== playerSlotIndex) {
+              const slot = team.slots[i];
+              if (slot && slot.id) {
+                try {
+                  const pokemon = await getPokemon(slot.id);
+                  const moves = slot.moves && Array.isArray(slot.moves) ? 
+                    slot.moves.slice(0, 4).map(m => createFallbackMove(m.name)) : [
+                    createFallbackMove('scratch'),
+                    createFallbackMove('quick-attack'),
+                    createFallbackMove('defense-curl', 'normal', 0)
+                  ];
+                  playerTeamData.push({
+                    pokemon,
+                    level: slot.level || 50,
+                    moves
+                  });
+                } catch (err) {
+                  console.warn(`Failed to load Pokémon ${slot.id}:`, err);
+                }
+              }
+            }
+          }
+        }
+      }
+      
+      // Create opponent team with all Pokémon
+      const opponentTeamData = [];
+      
+      // Add the first Pokémon (already fetched)
+      opponentTeamData.push({
+        pokemon: opponentPokemon,
+        level: opponentSlot.level,
+        moves: finalOpponentMoves
+      });
+      
+      // Add remaining Pokémon from the opponent team
+      for (let i = 1; i < opponentTeam.slots.length; i++) {
+        const slot = opponentTeam.slots[i];
+        if (slot.id) {
+          try {
+            const pokemon = await getPokemon(slot.id);
+            const moves = [
+              createFallbackMove('scratch'),
+              createFallbackMove('quick-attack'),
+              createFallbackMove('defense-curl', 'normal', 0)
+            ];
+            opponentTeamData.push({
+              pokemon,
+              level: slot.level,
+              moves
+            });
+          } catch (err) {
+            console.warn(`Failed to load opponent Pokémon ${slot.id}:`, err);
+          }
+        }
+      }
+      
+      const battle = initializeTeamBattle(playerTeamData, opponentTeamData, playerTeam.name, opponentTeam.name);
       
       console.log('Battle initialized:', battle);
 
@@ -295,7 +482,7 @@ export default function BattleRuntimePage() {
             return entry;
           } else if (entry && typeof entry === 'object' && 'message' in entry) {
             // Ensure all properties are strings or primitives
-            const sanitizedEntry: any = {
+            const sanitizedEntry: { type: string; message: string; pokemon?: string } = {
               type: entry.type || 'default',
               message: String(entry.message || ''),
             };
@@ -325,6 +512,10 @@ export default function BattleRuntimePage() {
         })
       };
 
+      // Debug sprite data
+      console.log('Player Pokemon sprites:', sanitizedBattle.player.pokemon.sprites);
+      console.log('Opponent Pokemon sprites:', sanitizedBattle.opponent.pokemon.sprites);
+      
       setBattleState(sanitizedBattle);
     } catch (err) {
       console.error('Battle initialization error:', err);
@@ -366,7 +557,7 @@ export default function BattleRuntimePage() {
     setSelectedMove(moveIndex);
     
     // Execute player move
-    const newState = executeAction(battleState, { type: 'move', moveIndex });
+    const newState = executeTeamAction(battleState, { type: 'move', moveIndex });
     setBattleState(newState);
 
     if (newState.isComplete) {
@@ -377,8 +568,10 @@ export default function BattleRuntimePage() {
     // AI turn
     setIsAITurn(true);
     try {
-      const aiAction = await getAIMove(newState, difficulty, 1500);
-      const finalState = executeAction(newState, aiAction);
+      // For now, use a simple AI move selection
+      const currentOpponent = getCurrentPokemon(newState.opponent);
+      const aiMoveIndex = Math.floor(Math.random() * currentOpponent.moves.length);
+      const finalState = executeTeamAction(newState, { type: 'move', moveIndex: aiMoveIndex });
       setBattleState(finalState);
     } catch (err) {
       console.error("AI move failed:", err);
@@ -427,7 +620,11 @@ export default function BattleRuntimePage() {
 
   if (!battleState) return null;
 
-  const { player, opponent, turn, battleLog, isComplete, winner } = battleState;
+  const { player: playerTeam, opponent: opponentTeam, turn, battleLog, isComplete, winner } = battleState;
+  const player = getCurrentPokemon(playerTeam);
+  const opponent = getCurrentPokemon(opponentTeam);
+  const getTypeName = (t: string | { name?: string; type?: { name?: string } } | undefined) => 
+    (typeof t === 'string' ? t : (t?.name || t?.type?.name || 'unknown'));
 
   return (
     <div className="min-h-screen bg-bg text-text">
@@ -472,120 +669,146 @@ export default function BattleRuntimePage() {
           {isAITurn && <p className="text-muted">AI is thinking...</p>}
         </div>
 
-        {/* Battle Field */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        {/* Battle Field and Log side-by-side on large screens */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          <div className="lg:col-span-2 space-y-6">
           {/* Opponent Pokemon - Top */}
           <div className="bg-surface border border-border rounded-xl p-6">
             <div className="flex items-center gap-4 mb-4">
-              <div className="relative w-24 h-24">
-                <Image
-                  src={opponent.pokemon.sprites.front_default || '/placeholder-pokemon.png'}
-                  alt={opponent.pokemon.name}
-                  fill
-                  className="object-contain"
-                />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-xl font-semibold capitalize">{opponent.pokemon.name}</h3>
-                <p className="text-sm text-muted">Lv. {opponent.level}</p>
-                <div className="flex gap-1 mt-1">
-                  {opponent.pokemon.types.map((type, index) => (
-                    <span
-                      key={`${opponent.pokemon.id}-type-${index}`}
-                      className="px-2 py-1 text-xs rounded-full bg-gray-200 text-gray-800"
-                    >
-                      {typeof type === 'string' ? type : type.type?.name || type.name || 'unknown'}
-                    </span>
-                  ))}
+              {/* HP Count on the LEFT */}
+              <div className="text-right">
+                <div className="text-sm font-medium">
+                  {opponent.currentHp} / {opponent.maxHp}
                 </div>
-                {/* Status Ailment Badges */}
-                {opponent.status && (
-                  <div className="flex gap-1 mt-2">
-                    <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800 border border-red-200">
-                      {opponent.status}
-                    </span>
+                <div className="text-xs text-muted">HP</div>
+              </div>
+              
+              {/* Everything else on the RIGHT */}
+              <div className="flex-1 flex items-center justify-end gap-4">
+                <div className="text-right">
+                  <h3 className="text-xl font-semibold capitalize">{opponent.pokemon.name}</h3>
+                  <p className="text-sm text-muted">Lv. {opponent.level}</p>
+                  <div className="flex gap-1 mt-1 justify-end">
+                    {opponent.pokemon.types.map((type, index) => {
+                      const typeName = typeof type === 'string' ? type : type.type?.name || type.name || 'unknown';
+                      return (
+                        <TypeBadge
+                          key={`${opponent.pokemon.id}-type-${index}`}
+                          type={typeName}
+                          variant="span"
+                          className="text-xs px-2 py-1"
+                        />
+                      );
+                    })}
                   </div>
-                )}
+                  {/* Status Ailment Badges */}
+                  {opponent.status && (
+                    <div className="flex gap-1 mt-2 justify-end">
+                      <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800 border border-red-200">
+                        {opponent.status}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <div className="relative w-24 h-24 flex items-center justify-end">
+                  <Image
+                    src={opponent.pokemon.sprites.front_default || opponent.pokemon.sprites.front_shiny || '/placeholder-pokemon.png'}
+                    alt={opponent.pokemon.name}
+                    width={96}
+                    height={96}
+                    className={`object-contain ${getOpponentAnimationClasses()}`}
+                    onError={(e) => {
+                      console.error('Failed to load opponent sprite:', e.currentTarget.src);
+                    }}
+                    onLoad={() => {
+                      console.log('Successfully loaded opponent sprite:', opponent.pokemon.sprites.front_default);
+                    }}
+                  />
+                </div>
               </div>
             </div>
             
-            {/* HP Bar */}
+            {/* Health Bar */}
             <div className="mb-2">
-              <div className="flex justify-between text-sm mb-1">
-                <span>HP</span>
-                <span>{opponent.currentHp} / {opponent.maxHp}</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-3">
-                <div
-                  className={`h-3 rounded-full transition-all duration-500 ${
-                    opponent.currentHp / opponent.maxHp > 0.5 ? 'bg-green-500' :
-                    opponent.currentHp / opponent.maxHp > 0.25 ? 'bg-yellow-500' : 'bg-red-500'
-                  }`}
-                  style={{ width: `${(opponent.currentHp / opponent.maxHp) * 100}%` }}
-                />
-              </div>
+              <HealthBar 
+                currentHp={opponent.currentHp} 
+                maxHp={opponent.maxHp} 
+                size="md"
+              />
             </div>
           </div>
 
           {/* Player Pokemon - Bottom */}
           <div className="bg-surface border border-border rounded-xl p-6">
             <div className="flex items-center gap-4 mb-4">
-              <div className="relative w-24 h-24">
-                <Image
-                  src={player.pokemon.sprites.back_default || player.pokemon.sprites.front_default || '/placeholder-pokemon.png'}
-                  alt={player.pokemon.name}
-                  fill
-                  className="object-contain"
-                />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-xl font-semibold capitalize">{player.pokemon.name}</h3>
-                <p className="text-sm text-muted">Lv. {player.level}</p>
-                <div className="flex gap-1 mt-1">
-                  {player.pokemon.types.map((type, index) => (
-                    <span
-                      key={`${player.pokemon.id}-type-${index}`}
-                      className="px-2 py-1 text-xs rounded-full bg-gray-200 text-gray-800"
-                    >
-                      {typeof type === 'string' ? type : type.type?.name || type.name || 'unknown'}
-                    </span>
-                  ))}
+              {/* Everything on the LEFT */}
+              <div className="flex-1 flex items-center gap-4">
+                <div className="relative w-24 h-24 flex items-center justify-center">
+                  <Image
+                    src={player.pokemon.sprites.back_default || player.pokemon.sprites.back_shiny || player.pokemon.sprites.front_default || '/placeholder-pokemon.png'}
+                    alt={player.pokemon.name}
+                    width={96}
+                    height={96}
+                    className={`object-contain ${getPlayerAnimationClasses()}`}
+                    onError={(e) => {
+                      console.error('Failed to load player sprite:', e.currentTarget.src);
+                    }}
+                    onLoad={() => {
+                      console.log('Successfully loaded player sprite:', player.pokemon.sprites.back_default || player.pokemon.sprites.front_default);
+                    }}
+                  />
                 </div>
-                {/* Status Ailment Badges */}
-                {player.status && (
-                  <div className="flex gap-1 mt-2">
-                    <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800 border border-red-200">
-                      {player.status}
-                    </span>
+                <div>
+                  <h3 className="text-xl font-semibold capitalize">{player.pokemon.name}</h3>
+                  <p className="text-sm text-muted">Lv. {player.level}</p>
+                  <div className="flex gap-1 mt-1">
+                    {player.pokemon.types.map((type, index) => {
+                      const typeName = typeof type === 'string' ? type : type.type?.name || type.name || 'unknown';
+                      return (
+                        <TypeBadge
+                          key={`${player.pokemon.id}-type-${index}`}
+                          type={typeName}
+                          variant="span"
+                          className="text-xs px-2 py-1"
+                        />
+                      );
+                    })}
                   </div>
-                )}
+                  {/* Status Ailment Badges */}
+                  {player.status && (
+                    <div className="flex gap-1 mt-2">
+                      <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800 border border-red-200">
+                        {player.status}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* HP Count on the RIGHT */}
+              <div className="text-left">
+                <div className="text-sm font-medium">
+                  {player.currentHp} / {player.maxHp}
+                </div>
+                <div className="text-xs text-muted">HP</div>
               </div>
             </div>
             
-            {/* HP Bar */}
+            {/* Health Bar */}
             <div className="mb-2">
-              <div className="flex justify-between text-sm mb-1">
-                <span>HP</span>
-                <span>{player.currentHp} / {player.maxHp}</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-3">
-                <div
-                  className={`h-3 rounded-full transition-all duration-500 ${
-                    player.currentHp / player.maxHp > 0.5 ? 'bg-green-500' :
-                    player.currentHp / player.maxHp > 0.25 ? 'bg-yellow-500' : 'bg-red-500'
-                  }`}
-                  style={{ width: `${(player.currentHp / player.maxHp) * 100}%` }}
-                />
-              </div>
+              <HealthBar 
+                currentHp={player.currentHp} 
+                maxHp={player.maxHp} 
+                size="md"
+              />
             </div>
 
           </div>
+          </div>
 
-        </div>
-
-        {/* Move Selection */}
-        {!isComplete && turn === 'player' && (
-          <div className="bg-surface border border-border rounded-xl p-6 mb-6">
+          {/* Move Selection */}
+          {!isComplete && turn === 'player' && player.currentHp > 0 && (
+          <div className="bg-surface border border-border rounded-xl p-6">
             <h3 className="text-lg font-semibold mb-4">Select a Move</h3>
             <div className="grid grid-cols-2 gap-3">
               {player.moves.map((move, index) => (
@@ -603,18 +826,26 @@ export default function BattleRuntimePage() {
                   <div className="text-sm text-muted">
                     {move.power ? `Power: ${move.power}` : 'Status Move'} • {move.accuracy || 100}% accuracy
                   </div>
-                  <div className="text-xs text-muted capitalize">{move.type}</div>
+                  <div className="text-xs text-muted capitalize">{getTypeName(move.type)}</div>
                 </button>
               ))}
             </div>
           </div>
-        )}
+          )}
 
-        {/* Battle Log */}
-        <div className="bg-surface border border-border rounded-xl p-6">
-          <h3 className="text-lg font-semibold mb-4">Battle Log</h3>
-          <div className="space-y-2 max-h-64 overflow-y-auto">
-            {battleLog.filter(log => log != null).map((log, index) => {
+          {/* Pokémon Fainted Message */}
+          {!isComplete && turn === 'player' && player.currentHp <= 0 && (
+          <div className="bg-surface border border-border rounded-xl p-6">
+            <h3 className="text-lg font-semibold mb-4 text-red-600">{player.pokemon.name} has fainted!</h3>
+            <p className="text-muted">Waiting for next Pokémon to be sent out...</p>
+          </div>
+          )}
+
+          {/* Battle Log (sticky on large screens) */}
+          <div ref={battleLogRef} className="bg-surface border border-border rounded-xl p-6 lg:sticky lg:top-24 h-[420px] overflow-y-auto">
+            <h3 className="text-lg font-semibold mb-4">Battle Log</h3>
+            <div className="space-y-2">
+            {battleLog.filter(log => log != null).reverse().map((log, index) => {
               // Handle both old string format and new BattleLogEntry format
               let message = '';
               let type = 'default';
@@ -665,6 +896,7 @@ export default function BattleRuntimePage() {
                 </div>
               );
             })}
+            </div>
           </div>
         </div>
       </main>

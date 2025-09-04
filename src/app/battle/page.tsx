@@ -11,8 +11,6 @@ const STORAGE_KEY = "pokemon-team-builder";
 
 type SavedTeam = { id: string; name: string; slots: Array<{ id: number | null; level: number }>; };
 
-type Difficulty = "easy" | "normal" | "hard";
-
 export default function BattlePage() {
   const router = useRouter();
   const [savedTeams, setSavedTeams] = useState<SavedTeam[]>([]);
@@ -20,7 +18,7 @@ export default function BattlePage() {
   const [opponentType, setOpponentType] = useState<"champion" | "team">("champion");
   const [opponentChampionId, setOpponentChampionId] = useState<string>(GYM_CHAMPIONS[0]?.id ?? "");
   const [opponentTeamId, setOpponentTeamId] = useState<string>("");
-  const [difficulty, setDifficulty] = useState<Difficulty>("normal");
+  const [generationFilter, setGenerationFilter] = useState<string>("");
 
   useEffect(() => {
     try {
@@ -30,6 +28,25 @@ export default function BattlePage() {
   }, []);
 
   const playerTeamsOptions = useMemo(() => savedTeams.map(t => ({ id: t.id, name: t.name })), [savedTeams]);
+  
+  // Filter champions by generation
+  const filteredChampions = useMemo(() => {
+    if (!generationFilter) return GYM_CHAMPIONS;
+    return GYM_CHAMPIONS.filter(champion => champion.generation === generationFilter);
+  }, [generationFilter]);
+
+  // Reset selected champion when generation filter changes
+  useEffect(() => {
+    if (generationFilter && !filteredChampions.find(c => c.id === opponentChampionId)) {
+      setOpponentChampionId(filteredChampions[0]?.id ?? "");
+    }
+  }, [generationFilter, filteredChampions, opponentChampionId]);
+  
+  // Get unique generations for the filter dropdown
+  const availableGenerations = useMemo(() => {
+    const generations = [...new Set(GYM_CHAMPIONS.map(c => c.generation))];
+    return generations.sort();
+  }, []);
 
   const startBattle = () => {
     if (!playerTeamId) return alert("Select your team");
@@ -57,7 +74,6 @@ export default function BattlePage() {
       player: player.id,
       opponentKind: opponentType,
       opponentId: opponentType === "champion" ? opponentChampionId : (opponentTeamId || ""),
-      difficulty,
     });
     router.push(`/battle/runtime?${params.toString()}`);
   };
@@ -112,21 +128,45 @@ export default function BattlePage() {
               Gym Champion
             </label>
             <label className="flex items-center gap-2 text-sm">
-              <input type="radio" checked={opponentType === "team"} onChange={()=> setOpponentType("team")} />
+              <input type="radio" checked={opponentType === "team"} onChange={()=> {
+                setOpponentType("team");
+                setGenerationFilter(""); // Reset generation filter when switching to saved team
+              }} />
               Saved Team
             </label>
           </div>
 
           {opponentType === "champion" ? (
-            <select
-              className="w-full px-3 py-2 border border-border rounded-lg bg-white"
-              value={opponentChampionId}
-              onChange={(e)=> setOpponentChampionId(e.target.value)}
-            >
-              {GYM_CHAMPIONS.map((c: Champion) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
+            <div className="space-y-3">
+              {/* Generation Filter - only for Gym Champions */}
+              <div>
+                <label className="block text-sm font-medium mb-2">Generation Filter</label>
+                <select
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-white"
+                  value={generationFilter}
+                  onChange={(e) => setGenerationFilter(e.target.value)}
+                >
+                  <option value="">All Generations</option>
+                  {availableGenerations.map(generation => (
+                    <option key={generation} value={generation}>{generation}</option>
+                  ))}
+                </select>
+              </div>
+              
+              {/* Champion Selection */}
+              <div>
+                <label className="block text-sm font-medium mb-2">Select Champion</label>
+                <select
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-white"
+                  value={opponentChampionId}
+                  onChange={(e)=> setOpponentChampionId(e.target.value)}
+                >
+                  {filteredChampions.map((c: Champion) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
           ) : (
             <select
               className="w-full px-3 py-2 border border-border rounded-lg bg-white"
@@ -139,22 +179,6 @@ export default function BattlePage() {
               ))}
             </select>
           )}
-        </section>
-
-        {/* Difficulty */}
-        <section className="border border-border rounded-xl bg-surface p-4">
-          <h2 className="text-lg font-semibold mb-3">Difficulty</h2>
-          <div className="grid grid-cols-3 gap-2">
-            {(["easy","normal","hard"] as Difficulty[]).map(d => (
-              <button
-                key={d}
-                onClick={()=> setDifficulty(d)}
-                className={`px-3 py-2 rounded-lg border ${difficulty===d ? 'bg-poke-blue text-white border-poke-blue' : 'bg-white text-text border-border'}`}
-              >
-                {d[0].toUpperCase()+d.slice(1)}
-              </button>
-            ))}
-          </div>
         </section>
 
         <div className="flex justify-end">

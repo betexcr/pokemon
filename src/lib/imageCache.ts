@@ -32,7 +32,8 @@ class ImageCache {
 
   private loadFromStorage() {
     try {
-      const stored = localStorage.getItem('pokemon-image-cache')
+      if (typeof window === 'undefined') return
+      const stored = window.localStorage.getItem('pokemon-image-cache')
       if (stored) {
         const data = JSON.parse(stored)
         this.currentSize = data.size || 0
@@ -48,12 +49,13 @@ class ImageCache {
 
   private saveToStorage() {
     try {
+      if (typeof window === 'undefined') return
       const metadata = {
         size: this.currentSize,
         count: this.cache.size,
         timestamp: Date.now()
       }
-      localStorage.setItem('pokemon-image-cache', JSON.stringify(metadata))
+      window.localStorage.setItem('pokemon-image-cache', JSON.stringify(metadata))
     } catch (error) {
       console.warn('Failed to save image cache metadata:', error)
     }
@@ -61,9 +63,12 @@ class ImageCache {
 
   private startCleanupInterval() {
     // Clean up expired images every hour
-    setInterval(() => {
-      this.cleanup()
-    }, 60 * 60 * 1000)
+    if (typeof window !== 'undefined') {
+      // Temporarily disable cleanup to prevent errors
+      // setInterval(() => {
+      //   this.cleanup()
+      // }, 60 * 60 * 1000)
+    }
   }
 
   private cleanup() {
@@ -81,11 +86,12 @@ class ImageCache {
     expiredKeys.forEach(key => this.cache.delete(key))
     
     // Remove oldest images if we exceed size or count limits
+    let toRemove = 0
     if (this.currentSize > this.config.maxSize || this.cache.size > this.config.maxImages) {
       const sortedEntries = Array.from(this.cache.entries())
         .sort((a, b) => a[1].timestamp - b[1].timestamp)
       
-      const toRemove = Math.max(
+      toRemove = Math.max(
         this.cache.size - this.config.maxImages,
         Math.ceil((this.currentSize - this.config.maxSize) / (this.currentSize / this.cache.size))
       )
@@ -98,7 +104,7 @@ class ImageCache {
     }
     
     if (expiredKeys.length > 0 || toRemove > 0) {
-      console.log(`Image cache cleanup: removed ${expiredKeys.length + (toRemove || 0)} images`)
+      console.log(`Image cache cleanup: removed ${expiredKeys.length + toRemove} images`)
       this.saveToStorage()
     }
   }
@@ -189,7 +195,9 @@ class ImageCache {
     
     this.cache.clear()
     this.currentSize = 0
-    localStorage.removeItem('pokemon-image-cache')
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem('pokemon-image-cache')
+    }
     console.log('Image cache cleared')
   }
 }

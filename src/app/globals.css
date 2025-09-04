@@ -168,3 +168,53 @@ section { padding-top: 1rem; padding-bottom: 1rem; }
 .art-cozy-list { height: 204px; }
 @media (min-width: 640px) { .art-cozy-list { height: 216px; } }
 @media (min-width: 768px) { .art-cozy-list { height: 228px; } }
+
+/* Battle sprite animations */
+@keyframes slide-in-left {
+  0% {
+    transform: translateX(-100px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-right {
+  0% {
+    transform: translateX(100px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes faint-down {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(20px) rotate(-5deg);
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateY(60px) rotate(-10deg);
+    opacity: 0;
+  }
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.8s ease-out;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.8s ease-out;
+}
+
+.animate-faint-down {
+  animation: faint-down 1.2s ease-in forwards;
+}

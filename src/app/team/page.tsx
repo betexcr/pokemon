@@ -101,7 +101,7 @@ export default function TeamBuilderPage() {
     if (!showDropdown) return
     const visible = (searchTerm.trim() ? filteredPokemon.slice(0, 50) : firstGenSuggestions)
     visible.forEach(p => { if ((p.types?.length || 0) === 0) fetchPokemonTypes(p.id) })
-  }, [showDropdown, searchTerm, filteredPokemon, firstGenSuggestions, fetchPokemonTypes])
+  }, [showDropdown, searchTerm, /* filteredPokemon causes init order issue */ firstGenSuggestions, fetchPokemonTypes])
 
   // Close dropdown when clicking outside or pressing Escape
   useEffect(() => {

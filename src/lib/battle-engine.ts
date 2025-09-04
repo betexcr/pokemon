@@ -31,14 +31,21 @@ export type BattleLogEntry = {
   status?: string;
 };
 
+export type BattleTeam = {
+  pokemon: BattlePokemon[];
+  currentIndex: number; // Index of currently active Pokémon
+  faintedCount: number; // Number of fainted Pokémon
+};
+
 export type BattleState = {
-  player: BattlePokemon;
-  opponent: BattlePokemon;
+  player: BattleTeam;
+  opponent: BattleTeam;
   turn: 'player' | 'opponent';
   turnNumber: number;
   battleLog: BattleLogEntry[];
   isComplete: boolean;
   winner?: 'player' | 'opponent';
+  phase: 'battle' | 'switch'; // Current battle phase
 };
 
 export type BattleAction = {
@@ -50,6 +57,30 @@ export type BattleAction = {
 // Calculate HP based on level and base stats
 export function calculateHp(baseHp: number, level: number): number {
   return Math.floor(((2 * baseHp + 31) * level) / 100) + level + 10;
+}
+
+// Helper functions for team battles
+export function getCurrentPokemon(team: BattleTeam): BattlePokemon {
+  return team.pokemon[team.currentIndex];
+}
+
+export function isTeamDefeated(team: BattleTeam): boolean {
+  return team.faintedCount >= team.pokemon.length;
+}
+
+export function getNextAvailablePokemon(team: BattleTeam): number | null {
+  for (let i = 0; i < team.pokemon.length; i++) {
+    if (team.pokemon[i].currentHp > 0) {
+      return i;
+    }
+  }
+  return null;
+}
+
+export function switchToPokemon(team: BattleTeam, index: number): void {
+  if (index >= 0 && index < team.pokemon.length && team.pokemon[index].currentHp > 0) {
+    team.currentIndex = index;
+  }
 }
 
 // Calculate other stats based on level and base stats
@@ -292,14 +323,10 @@ export function processEndOfTurnStatus(pokemon: BattlePokemon): number {
   return damage;
 }
 
-// Initialize battle state
+// Initialize battle state with teams
 export function initializeBattle(
-  playerPokemon: Pokemon,
-  playerLevel: number,
-  playerMoves: Move[],
-  opponentPokemon: Pokemon,
-  opponentLevel: number,
-  opponentMoves: Move[]
+  playerTeam: { pokemon: Pokemon; level: number; moves: Move[] }[],
+  opponentTeam: { pokemon: Pokemon; level: number; moves: Move[] }[]
 ): BattleState {
   // Get HP stat from the stats array
   const playerHpStat = playerPokemon.stats.find(stat => stat.stat.name === 'hp')?.base_stat || 50;
