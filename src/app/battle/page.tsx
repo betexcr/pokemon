@@ -3,8 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Swords } from "lucide-react";
-import { GYM_CHAMPIONS, Champion } from "@/lib/gym_champions";
-import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import { GYM_CHAMPIONS } from "@/lib/gym_champions";
 import UserProfile from "@/components/auth/UserProfile";
 import TrainerRoster from "@/components/battle/TrainerRoster";
 import TeamSelector from "@/components/TeamSelector";
@@ -30,7 +29,7 @@ function BattlePage() {
     } catch {}
   }, []);
 
-  const playerTeamsOptions = useMemo(() => savedTeams.map(t => ({ id: t.id, name: t.name })), [savedTeams]);
+  // const playerTeamsOptions = useMemo(() => savedTeams.map(t => ({ id: t.id, name: t.name })), [savedTeams]);
 
   const startBattle = () => {
     if (!selectedPlayerTeam) return alert("Select your team");

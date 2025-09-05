@@ -31,8 +31,8 @@ type SavedTeam = {
 function BattleRuntimePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user } = useAuth();
-  const { toasts, addToast, removeToast, showChatNotification } = useToast();
+  // const { user } = useAuth();
+  const { toasts, removeToast, showChatNotification } = useToast();
   
   const [battleState, setBattleState] = useState<TeamBattleState | null>(null);
   const [loading, setLoading] = useState(true);
@@ -56,7 +56,7 @@ function BattleRuntimePage() {
   const opponentKind = searchParams.get("opponentKind");
   const opponentId = searchParams.get("opponentId");
   const multiplayerRoomId = searchParams.get("roomId");
-  const multiplayerTeamId = searchParams.get("teamId");
+  // const multiplayerTeamId = searchParams.get("teamId");
 
   // Initialize multiplayer mode
   useEffect(() => {
@@ -69,11 +69,11 @@ function BattleRuntimePage() {
   }, [multiplayerRoomId]);
 
   // Handle chat notifications
-  const handleChatNotification = useCallback((message: string) => {
-    if (!showChat) {
-      showChatNotification(message, () => setShowChat(true));
-    }
-  }, [showChat, showChatNotification]);
+  // const handleChatNotification = useCallback((message: string) => {
+  //   if (!showChat) {
+  //     showChatNotification(message, () => setShowChat(true));
+  //   }
+  // }, [showChat, showChatNotification]);
 
   // Animation class helpers
   const getPlayerAnimationClasses = () => {
