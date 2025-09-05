@@ -329,31 +329,36 @@ export default function ModernPokedexLayout({
           setIsAllGenerations(false)
         }
 
-        // Height and weight filters
-        results = results.filter(pokemon => {
-          const height = pokemon.height / 10
-          const weight = pokemon.weight / 10
-          return height >= advancedFilters.heightRange[0] && 
-                 height <= advancedFilters.heightRange[1] &&
-                 weight >= advancedFilters.weightRange[0] && 
-                 weight <= advancedFilters.weightRange[1]
-        })
-
-        // Legendary and Mythical filters
-        if (advancedFilters.legendary || advancedFilters.mythical) {
+        // Only apply height/weight/legendary/mythical filters if we have detailed data
+        // Skip these filters for "All Generations" mode with basic paginated data
+        const hasDetailedData = results.length > 0 && results[0].height > 0 && results[0].weight > 0;
+        if (!isAllGenerations || hasDetailedData) {
+          // Height and weight filters
           results = results.filter(pokemon => {
-            const isLegendary = LEGENDARY_POKEMON.has(pokemon.id)
-            const isMythical = MYTHICAL_POKEMON.has(pokemon.id)
-            
-            if (advancedFilters.legendary && advancedFilters.mythical) {
-              return isLegendary || isMythical
-            } else if (advancedFilters.legendary) {
-              return isLegendary
-            } else if (advancedFilters.mythical) {
-              return isMythical
-            }
-            return true
+            const height = pokemon.height / 10
+            const weight = pokemon.weight / 10
+            return height >= advancedFilters.heightRange[0] && 
+                   height <= advancedFilters.heightRange[1] &&
+                   weight >= advancedFilters.weightRange[0] && 
+                   weight <= advancedFilters.weightRange[1]
           })
+
+          // Legendary and Mythical filters
+          if (advancedFilters.legendary || advancedFilters.mythical) {
+            results = results.filter(pokemon => {
+              const isLegendary = LEGENDARY_POKEMON.has(pokemon.id)
+              const isMythical = MYTHICAL_POKEMON.has(pokemon.id)
+              
+              if (advancedFilters.legendary && advancedFilters.mythical) {
+                return isLegendary || isMythical
+              } else if (advancedFilters.legendary) {
+                return isLegendary
+              } else if (advancedFilters.mythical) {
+                return isMythical
+              }
+              return true
+            })
+          }
         }
 
 
