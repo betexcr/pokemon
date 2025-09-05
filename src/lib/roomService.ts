@@ -21,10 +21,10 @@ export interface RoomData {
   id: string;
   hostId: string;
   hostName: string;
-  hostTeam?: any; // Team data
+  hostTeam?: unknown; // Team data
   guestId?: string;
   guestName?: string;
-  guestTeam?: any; // Team data
+  guestTeam?: unknown; // Team data
   status: 'waiting' | 'ready' | 'battling' | 'finished';
   createdAt: Date;
   maxPlayers: number;
@@ -35,7 +35,7 @@ export interface RoomData {
 export interface RoomUpdate {
   guestId?: string;
   guestName?: string;
-  guestTeam?: any;
+  guestTeam?: unknown;
   status?: 'waiting' | 'ready' | 'battling' | 'finished';
   currentPlayers?: number;
   battleId?: string;
@@ -45,7 +45,7 @@ class RoomService {
   private roomsCollection = 'battle_rooms';
 
   // Create a new room
-  async createRoom(hostId: string, hostName: string, hostTeam?: any): Promise<string> {
+  async createRoom(hostId: string, hostName: string, hostTeam?: unknown): Promise<string> {
     if (!db) throw new Error('Firebase not initialized');
     
     const roomData = {
@@ -82,7 +82,7 @@ class RoomService {
   }
 
   // Join a room
-  async joinRoom(roomId: string, guestId: string, guestName: string, guestTeam?: any): Promise<boolean> {
+  async joinRoom(roomId: string, guestId: string, guestName: string, guestTeam?: unknown): Promise<boolean> {
     if (!db) throw new Error('Firebase not initialized');
     
     const roomRef = doc(db, this.roomsCollection, roomId);
