@@ -19,6 +19,9 @@ html, body {
   height: 100%; 
   /* Prevent horizontal overflow */
   overflow-x: hidden;
+  /* Hide scrollbar but keep scroll functionality */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
   width: 100%;
   /* Subtle vertical gradient background (light mode) */
   background: linear-gradient(to bottom, #f8fafc 0%, #e6f0ff 100%);
@@ -31,6 +34,12 @@ html, body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+}
+
+/* Hide scrollbar for WebKit browsers (Chrome, Safari, Edge) */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
 }
 
 /* Dark mode gradient */
