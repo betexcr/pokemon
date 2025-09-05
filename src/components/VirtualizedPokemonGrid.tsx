@@ -11,7 +11,7 @@ interface VirtualizedPokemonGridProps {
   onSelectPokemon?: (pokemon: Pokemon) => void
   selectedPokemon: Pokemon | null
   comparisonList: number[]
-  density: 'cozy' | 'compact' | 'ultra' | 'list'
+  density: '3cols' | '6cols' | '9cols' | 'list'
   className?: string
   isLoading?: boolean
 }
@@ -38,11 +38,11 @@ export default function VirtualizedPokemonGrid({
   // Calculate layout based on density
   const getLayoutClasses = () => {
     switch (density) {
-      case 'cozy': return 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-6'
-      case 'compact': return 'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2 sm:gap-3 md:gap-4'
-      case 'ultra': return 'grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-12 gap-2 sm:gap-3 md:gap-4'
+      case '3cols': return 'grid grid-cols-3 gap-4'
+      case '6cols': return 'grid grid-cols-6 gap-3'
+      case '9cols': return 'grid grid-cols-9 gap-2'
       case 'list': return 'flex flex-col gap-2'
-      default: return 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-6'
+      default: return 'grid grid-cols-6 gap-3'
     }
   }
 
