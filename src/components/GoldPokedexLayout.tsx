@@ -40,8 +40,8 @@ export default function GoldPokedexLayout({
 
   return (
     <div className="min-h-screen pokemon-gold-bg font-gbc text-white">
-      {/* Theme Toggle */}
-      <div className="absolute top-4 right-4 z-50">
+      {/* Theme Toggle - Hidden on mobile */}
+      <div className="hidden md:block absolute top-4 right-4 z-50">
         <ThemeToggle />
       </div>
       
@@ -56,9 +56,9 @@ export default function GoldPokedexLayout({
       </div>
 
       {/* Main PokéDex Interface - Three Panel Design */}
-      <div className="flex h-[calc(100vh-140px)]">
+      <div className="flex flex-col md:flex-row h-[calc(100vh-140px)]">
         {/* Left Panel - Stats and Background Graphic */}
-        <div className="w-1/4 bg-gradient-to-b from-yellow-800 to-yellow-900 p-4 relative">
+        <div className="w-full md:w-1/4 bg-gradient-to-b from-yellow-800 to-yellow-900 p-4 relative">
           {/* Background "G" graphic */}
           <div className="absolute inset-0 flex items-center justify-center opacity-10">
             <span className="text-8xl font-bold text-gray-600">G</span>
@@ -78,7 +78,7 @@ export default function GoldPokedexLayout({
         </div>
 
         {/* Central Panel - Pokémon Sprites */}
-        <div className="w-1/2 bg-gradient-to-b from-yellow-800 to-yellow-900 p-4 flex flex-col justify-center">
+        <div className="w-full md:w-1/2 bg-gradient-to-b from-yellow-800 to-yellow-900 p-4 flex flex-col justify-center">
           {selectedPokemon && (
             <div className="text-center">
               <Image
@@ -96,10 +96,10 @@ export default function GoldPokedexLayout({
         </div>
 
         {/* Right Panel - Pokémon List */}
-        <div className="w-1/4 bg-yellow-200 border-l-4 border-yellow-600">
+        <div className="w-full md:w-1/4 bg-yellow-200 border-l-0 md:border-l-4 border-t-4 md:border-t-0 border-yellow-600">
           <div className="h-full">
-            {/* Sort Controls */}
-            <div className="flex items-center gap-2 p-2 border-b-4 border-yellow-600">
+            {/* Sort Controls - Hidden on mobile */}
+            <div className="hidden md:flex items-center gap-2 p-2 border-b-4 border-yellow-600">
               <span className="text-yellow-800 text-xs font-bold">SORT</span>
               <select
                 value={sortBy}

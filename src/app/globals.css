@@ -17,6 +17,9 @@
 
 html, body { 
   height: 100%; 
+  /* Prevent horizontal overflow */
+  overflow-x: hidden;
+  width: 100%;
   /* Subtle vertical gradient background (light mode) */
   background: linear-gradient(to bottom, #f8fafc 0%, #e6f0ff 100%);
   background-repeat: no-repeat;
@@ -36,6 +39,12 @@ html.dark body {
   background-repeat: no-repeat;
   background-size: 100% 100%;
   background-attachment: fixed;
+}
+
+/* Prevent horizontal overflow on all elements */
+* {
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* Optional: Pokéball pattern overlay (enable by adding class="pokeball-bg" to body) */

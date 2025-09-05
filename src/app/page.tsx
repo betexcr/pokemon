@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Pokemon, FilterState } from '@/types/pokemon'
 import { getPokemonByType, getPokemonWithPagination } from '@/lib/api'
@@ -18,6 +18,7 @@ import VirtualizedPokemonGrid from '@/components/VirtualizedPokemonGrid'
 import ViewTransition from '@/components/ViewTransition'
 import { useSearch } from '@/hooks/useSearch'
 import { Search, Zap, X, Users } from 'lucide-react'
+import MobileHeader from '@/components/MobileHeader'
 
 export default function Home() {
   const router = useRouter()
@@ -25,6 +26,14 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [density, setDensity] = useState<'cozy' | 'compact' | 'ultra' | 'list'>('compact')
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(true)
+  const [currentOffset, setCurrentOffset] = useState(0)
+  
+  // Use refs to avoid dependency issues
+  const loadingMoreRef = useRef(false)
+  const hasMoreRef = useRef(true)
+  const currentOffsetRef = useRef(0)
 
 
   const [comparisonList, setComparisonList] = useState<number[]>([])
@@ -61,24 +70,23 @@ export default function Home() {
 
   // Load initial data with caching
   const loadInitialData = useCallback(async () => {
-    // Check if we already have data in state (from navigation back)
-    if (pokemonList.length > 0) {
-      setLoading(false)
-      return
-    }
-
     try {
       setLoading(true)
       setError(null)
       const initialPokemon = await getPokemonWithPagination(30, 0)
       setPokemonList(initialPokemon)
+      setCurrentOffset(30)
+      setHasMore(initialPokemon.length === 30)
+      // Update refs
+      currentOffsetRef.current = 30
+      hasMoreRef.current = initialPokemon.length === 30
     } catch (err) {
       setError('Failed to load Pokémon data')
       console.error(err)
     } finally {
       setLoading(false)
     }
-  }, [pokemonList.length])
+  }, [])
 
   // Load comparison list from localStorage
   useEffect(() => {
@@ -88,15 +96,61 @@ export default function Home() {
     }
   }, [])
 
+  // Update refs when state changes
+  useEffect(() => {
+    loadingMoreRef.current = loadingMore
+  }, [loadingMore])
+  
+  useEffect(() => {
+    hasMoreRef.current = hasMore
+  }, [hasMore])
+  
+  useEffect(() => {
+    currentOffsetRef.current = currentOffset
+  }, [currentOffset])
+
+  // Load more Pokemon function
+  const loadMorePokemon = useCallback(async () => {
+    if (loadingMoreRef.current || !hasMoreRef.current) return
+
+    try {
+      setLoadingMore(true)
+      const morePokemon = await getPokemonWithPagination(30, currentOffsetRef.current)
+      if (morePokemon.length === 0) {
+        setHasMore(false)
+      } else {
+        setPokemonList(prev => [...prev, ...morePokemon])
+        setCurrentOffset(prev => prev + 30)
+        setHasMore(morePokemon.length === 30)
+      }
+    } catch (err) {
+      console.error('Failed to load more Pokémon:', err)
+    } finally {
+      setLoadingMore(false)
+    }
+  }, []) // No dependencies to prevent recreation
+
   // Load initial data
   useEffect(() => {
     loadInitialData()
   }, [loadInitialData])
 
+  // Infinite scroll effect
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.innerHeight + document.documentElement.scrollTop >= document.documentElement.offsetHeight - 1000) {
+        loadMorePokemon()
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [loadMorePokemon])
+
   // Handle search changes
   useEffect(() => {
     handleSearchChange(filters.search)
-  }, [filters.search, handleSearchChange])
+  }, [filters.search]) // Remove handleSearchChange dependency to prevent infinite loop
 
 
   // Memoize filtered Pokémon to prevent unnecessary re-renders and improve performance
@@ -122,7 +176,12 @@ export default function Home() {
       
       if (newTypes.length === 0) {
         // No type filters, show all Pokémon
-        // memoizedFilteredPokemon will handle this automatically
+        // Reset to initial data and pagination
+        loadInitialData()
+        setCurrentOffset(30)
+        setHasMore(true)
+        currentOffsetRef.current = 30
+        hasMoreRef.current = true
       } else {
         // Still have other type filters, fetch those types with AND logic
         setTypeLoading(true)
@@ -178,6 +237,11 @@ export default function Home() {
           return pokemonCounts.get(pokemon.id) === newTypes.length
         })
         // uniquePokemon will be handled by memoizedFilteredPokemon
+        // Reset pagination state when filtering by type
+        setCurrentOffset(0)
+        setHasMore(false)
+        currentOffsetRef.current = 0
+        hasMoreRef.current = false
       } catch (err) {
         console.error('Type filter error:', err)
       } finally {
@@ -344,77 +408,13 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-bg">
-      {/* Header */}
-      <header className={`sticky top-0 z-50 border-b border-border bg-surface`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <Zap className={`h-8 w-8 ${
-                  theme === 'gold' ? 'text-gold-accent' 
-                  : theme === 'green' ? 'text-green-accent'
-                  : theme === 'red' ? 'text-red-accent'
-                  : theme === 'ruby' ? 'text-ruby-accent'
-                  : 'text-poke-yellow'
-                }`} />
-                <h1 className={`text-2xl font-bold ${
-                  theme === 'gold' ? 'font-retro text-gold-accent'
-                  : theme === 'green' ? 'font-gameboy text-green-accent'
-                  : theme === 'red' ? 'font-retro text-red-accent'
-                  : theme === 'ruby' ? 'font-retro text-ruby-accent'
-                  : 'text-text'
-                }`}>
-                  PokéDex
-                </h1>
-              </div>
-              <span className="text-sm text-muted">
-                {pokemonList?.length} Pokémon discovered
-              </span>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              {/* Density Controls */}
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-muted hidden sm:inline">Density:</span>
-                <div className="flex bg-surface border border-border rounded-lg p-1">
-                  {(['cozy', 'compact', 'ultra'] as const).map((d) => (
-                    <button
-                      key={d}
-                      onClick={() => setDensity(d)}
-                      className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
-                        density === d
-                          ? 'bg-poke-blue text-white'
-                          : 'text-muted hover:text-text hover:bg-white/50'
-                      }`}
-                    >
-                      {d.charAt(0).toUpperCase() + d.slice(1)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-
-
-
-
-
-
-              {/* Team Builder Link */}
-              <button
-                onClick={() => router.push('/team')}
-                className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-surface border border-border text-muted hover:text-text hover:bg-white/50 transition-all duration-200"
-                title="Go to Team Builder"
-              >
-                <Users className="h-4 w-4" />
-                <span className="text-sm font-medium">Team</span>
-              </button>
-
-              {/* Theme Toggle */}
-              <ThemeToggle />
-            </div>
-          </div>
-        </div>
-      </header>
+      {/* Mobile-Responsive Header */}
+      <MobileHeader 
+        theme={theme}
+        pokemonCount={pokemonList?.length || 0}
+        density={density}
+        onDensityChange={setDensity}
+      />
 
       {/* Search and Filters */}
       <div className={`border-b border-border ${
@@ -424,7 +424,7 @@ export default function Home() {
         : theme === 'ruby' ? 'bg-ruby-gradient'
         : 'bg-surface'
       }`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-4 overflow-hidden">
           <div className="flex flex-col sm:flex-row gap-4">
             {/* Search */}
             <div className="flex-1 relative">
@@ -461,23 +461,23 @@ export default function Home() {
             </div>
 
             {/* Type Filters */}
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1 sm:gap-2 overflow-hidden w-full">
               {Object.keys(typeColors).slice(0, 8).map(type => (
                 <button
                   key={type}
                   onClick={() => handleTypeFilter(type)}
                   disabled={typeLoading}
                   className={cn(
-                    'px-3 py-1 rounded-full text-sm font-medium border transition-colors',
+                    'px-1.5 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium border transition-colors whitespace-nowrap flex-shrink-0',
                     filters.types.includes(type)
                       ? `${typeColors[type].bg} ${typeColors[type].text} ${typeColors[type].border}`
                       : 'bg-surface text-muted border-border hover:bg-white/50 dark:hover:bg-white/10',
                     typeLoading && 'opacity-50 cursor-not-allowed'
                   )}
                 >
-                  {formatPokemonName(type)}
+                  <span className="truncate">{formatPokemonName(type)}</span>
                   {typeLoading && filters.types.includes(type) && (
-                    <div className="inline-block ml-2 animate-spin rounded-full h-3 w-3 border-b-2 border-current"></div>
+                    <div className="inline-block ml-1 sm:ml-2 animate-spin rounded-full h-3 w-3 border-b-2 border-current"></div>
                   )}
                 </button>
               ))}
@@ -487,11 +487,11 @@ export default function Home() {
       </div>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="w-full max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-8 overflow-hidden">
         {/* Results Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center space-x-4">
-            <h2 className={`text-xl font-semibold ${
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+            <h2 className={`text-lg sm:text-xl font-semibold ${
               theme === 'gold' ? 'font-retro text-gold-accent'
               : theme === 'green' ? 'font-gameboy text-green-accent'
               : theme === 'red' ? 'font-retro text-red-accent'
@@ -514,13 +514,13 @@ export default function Home() {
           </div>
 
           {/* Sort Controls */}
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             <PokemonComparison pokemonList={sortedPokemon} />
             
             <select
               value={filters.sortBy}
               onChange={(e) => setFilters(prev => ({ ...prev, sortBy: e.target.value as 'id' | 'name' | 'height' | 'weight' }))}
-              className={`px-3 py-1 border border-border rounded-lg bg-surface text-text ${
+              className={`px-2 sm:px-3 py-1 border border-border rounded-lg bg-surface text-text text-sm ${
                 theme === 'gold' ? 'font-retro'
                 : theme === 'green' ? 'font-gameboy'
                 : theme === 'red' ? 'font-retro'
@@ -556,16 +556,19 @@ export default function Home() {
         </div>
 
         {/* Pokémon Grid */}
-        <ViewTransition transitionName="pokemon-grid">
-          <VirtualizedPokemonGrid
-            pokemonList={sortedPokemon}
-            onToggleComparison={toggleComparison}
-            onSelectPokemon={setSelectedPokemon}
-            selectedPokemon={selectedPokemon}
-            comparisonList={comparisonList}
-            density={density}
-          />
-        </ViewTransition>
+        <div className="w-full overflow-hidden">
+          <ViewTransition transitionName="pokemon-grid">
+            <VirtualizedPokemonGrid
+              pokemonList={sortedPokemon}
+              onToggleComparison={toggleComparison}
+              onSelectPokemon={setSelectedPokemon}
+              selectedPokemon={selectedPokemon}
+              comparisonList={comparisonList}
+              density={density}
+              isLoading={loadingMore}
+            />
+          </ViewTransition>
+        </div>
 
         {/* No Results */}
         {sortedPokemon.length === 0 && !searchLoading && !typeLoading && (

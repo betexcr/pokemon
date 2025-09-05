@@ -587,63 +587,49 @@ export default function ModernPokedexLayout({
     }
   }, [isLoadingMore, hasMorePokemon, currentOffset, isAllGenerations, totalPokemonCount]);
 
-  // Infinite scroll effect with improved detection
+  // Infinite scroll effect using Intersection Observer (best practice)
   useEffect(() => {
-    let lastScrollTime = 0;
-    const throttleDelay = 50; // Reduced to 50ms for very responsive detection
+    if (!isAllGenerations || isLoadingMore || !hasMorePokemon) {
+      return;
+    }
+
+    // Create a sentinel element at the bottom of the list
+    const sentinel = document.createElement('div');
+    sentinel.style.height = '1px';
+    sentinel.style.width = '100%';
+    sentinel.setAttribute('data-infinite-scroll-sentinel', 'true');
     
-    const handleScroll = () => {
-      const now = Date.now();
-      if (now - lastScrollTime < throttleDelay) return;
-      lastScrollTime = now;
-      
-      if (!isAllGenerations || isLoadingMore || !hasMorePokemon) {
-        console.log('Scroll check skipped:', { isAllGenerations, isLoadingMore, hasMorePokemon });
-        return;
+    // Find the Pokemon grid container and append sentinel
+    const pokemonGrid = document.querySelector('[data-pokemon-grid]');
+    if (pokemonGrid) {
+      pokemonGrid.appendChild(sentinel);
+    }
+
+    // Intersection Observer to detect when sentinel comes into view
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry.isIntersecting && !isLoadingMore && hasMorePokemon) {
+          console.log('Bottom of list reached, loading more Pokémon...');
+          loadMorePokemon();
+        }
+      },
+      {
+        root: null, // Use viewport as root
+        rootMargin: '100px', // Trigger 100px before the sentinel comes into view
+        threshold: 0.1
       }
-      
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-      const windowHeight = window.innerHeight;
-      const documentHeight = document.documentElement.scrollHeight;
-      const distanceFromBottom = documentHeight - (scrollTop + windowHeight);
-      
-      // Calculate 15% threshold from bottom
-      const threshold15Percent = documentHeight * 0.15;
-      
-      console.log('Scroll check:', {
-        scrollTop,
-        windowHeight,
-        documentHeight,
-        distanceFromBottom,
-        threshold15Percent: Math.round(threshold15Percent),
-        percentageFromBottom: Math.round((distanceFromBottom / documentHeight) * 100)
-      });
-      
-      // Load more when user is within 15% of the bottom
-      if (distanceFromBottom <= threshold15Percent) {
-        console.log('15% threshold reached, loading more Pokémon...');
-        loadMorePokemon();
+    );
+
+    observer.observe(sentinel);
+
+    return () => {
+      observer.disconnect();
+      if (sentinel.parentNode) {
+        sentinel.parentNode.removeChild(sentinel);
       }
     };
-
-    if (isAllGenerations) {
-      // Also check on mount in case user is already at bottom
-      handleScroll();
-      
-      // Add both scroll and resize listeners for better detection
-      window.addEventListener('scroll', handleScroll, { passive: true });
-      window.addEventListener('resize', handleScroll, { passive: true });
-      
-      // Periodic check every 2 seconds as a fallback
-      const intervalId = setInterval(handleScroll, 2000);
-      
-      return () => {
-        window.removeEventListener('scroll', handleScroll);
-        window.removeEventListener('resize', handleScroll);
-        clearInterval(intervalId);
-      };
-    }
-  }, [isAllGenerations, isLoadingMore, hasMorePokemon, loadMorePokemon])
+  }, [isAllGenerations, isLoadingMore, hasMorePokemon, loadMorePokemon, pokemonList])
 
   // Clear all filters
   const clearAllFilters = useCallback(() => {
@@ -784,8 +770,8 @@ export default function ModernPokedexLayout({
               </div>
             </div>
 
-            {/* Enhanced Desktop Controls Section */}
-            <div className="flex items-center space-x-4">
+            {/* Enhanced Desktop Controls Section - Hidden on mobile */}
+            <div className="hidden md:flex items-center space-x-4">
               {/* Card Density Controls */}
               <div className="flex items-center space-x-2">
                 <span className="text-xs font-medium text-muted uppercase tracking-wider">Size</span>
@@ -1000,11 +986,14 @@ export default function ModernPokedexLayout({
                 <Scale className="h-5 w-5" />
               </button>
 
-              {/* Mobile Menu Toggle */}
+            </div>
+
+            {/* Mobile Menu Button - Only visible on mobile */}
+            <div className="md:hidden flex items-center">
               <button
                 type="button"
                 onClick={() => { setShowMobileMenu(prev => !prev) }}
-                className="md:hidden p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
+                className="p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
                 title="Toggle menu"
                 aria-expanded={showMobileMenu}
                 aria-controls={'mobile-drawer'}
