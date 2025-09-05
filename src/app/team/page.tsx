@@ -8,27 +8,25 @@ import Image from 'next/image'
 import TypeBadge from '@/components/TypeBadge'
 import Tooltip from '@/components/Tooltip'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, ChevronDown, ChevronRight } from 'lucide-react'
+import { ArrowLeft, ChevronDown, ChevronRight, Cloud, CloudOff, Save, Loader2 } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
+import { 
+  saveTeamToFirebase, 
+  deleteTeamFromFirebase, 
+  getUserTeams, 
+  syncTeamsWithFirebase,
+  type SavedTeam as FirebaseSavedTeam,
+  type TeamSlot,
+  type MoveData
+} from '@/lib/userTeams'
 
-type MoveData = {
-  name: string
-  type: string
-  damage_class: "physical" | "special" | "status"
-  power: number | null
-  accuracy: number | null
-  pp: number | null
-  level_learned_at: number | null
-  short_effect?: string | null
-}
-
-type TeamSlot = { id: number | null; level: number; moves: MoveData[] }
-type SavedTeam = { id: string; name: string; slots: TeamSlot[] }
+// Types are now imported from userTeams.ts
 
 const STORAGE_KEY = 'pokemon-team-builder'
 
 export default function TeamBuilderPage() {
   const router = useRouter()
-  
+  const { user, loading: authLoading } = useAuth()
   
   const [allPokemon, setAllPokemon] = useState<Pokemon[]>([])
   const [loading, setLoading] = useState(true)
@@ -37,11 +35,13 @@ export default function TeamBuilderPage() {
   const [teamSlots, setTeamSlots] = useState<TeamSlot[]>(
     Array.from({ length: 6 }, () => ({ id: null, level: 50, moves: [] as MoveData[] }))
   )
-  const [savedTeams, setSavedTeams] = useState<SavedTeam[]>([])
+  const [savedTeams, setSavedTeams] = useState<FirebaseSavedTeam[]>([])
   const [teamName, setTeamName] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
   const [showDropdown, setShowDropdown] = useState(false)
   const [collapsedSlots, setCollapsedSlots] = useState<Set<number>>(new Set([0, 1, 2, 3, 4, 5]))
+  const [saving, setSaving] = useState(false)
+  const [syncing, setSyncing] = useState(false)
 
   // First-click suggestions: original 151
   const firstGenSuggestions = useMemo(() => {
@@ -192,18 +192,60 @@ export default function TeamBuilderPage() {
     load()
   }, [])
 
-  // Load saved teams
+  // Load saved teams from Firebase or localStorage
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      if (raw) setSavedTeams(JSON.parse(raw))
-    } catch {}
-  }, [])
+    const loadTeams = async () => {
+      if (user) {
+        // User is authenticated, load from Firebase
+        try {
+          setSyncing(true)
+          const firebaseTeams = await getUserTeams(user.uid)
+          setSavedTeams(firebaseTeams)
+          
+          // Also sync any local teams to Firebase
+          try {
+            const localTeamsRaw = localStorage.getItem(STORAGE_KEY)
+            if (localTeamsRaw) {
+              const localTeams = JSON.parse(localTeamsRaw) as FirebaseSavedTeam[]
+              await syncTeamsWithFirebase(user.uid, localTeams)
+              // Clear local storage after sync
+              localStorage.removeItem(STORAGE_KEY)
+            }
+          } catch (error) {
+            console.error('Error syncing local teams:', error)
+          }
+        } catch (error) {
+          console.error('Error loading teams from Firebase:', error)
+          // Fallback to localStorage
+          try {
+            const raw = localStorage.getItem(STORAGE_KEY)
+            if (raw) setSavedTeams(JSON.parse(raw))
+          } catch {}
+        } finally {
+          setSyncing(false)
+        }
+      } else {
+        // User not authenticated, load from localStorage
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY)
+          if (raw) setSavedTeams(JSON.parse(raw))
+        } catch {}
+      }
+    }
 
-  const persistTeams = useCallback((teams: SavedTeam[]) => {
+    loadTeams()
+  }, [user])
+
+  const persistTeams = useCallback((teams: FirebaseSavedTeam[]) => {
     setSavedTeams(teams)
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(teams)) } catch {}
-  }, [])
+    if (user) {
+      // User is authenticated, save to Firebase
+      // Note: This is a local state update, actual saving happens in saveTeam function
+    } else {
+      // User not authenticated, save to localStorage
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(teams)) } catch {}
+    }
+  }, [user])
 
 
 
@@ -253,15 +295,58 @@ export default function TeamBuilderPage() {
     setCollapsedSlots(new Set([0, 1, 2, 3, 4, 5])) // Collapse all slots when clearing team
   }
 
-  const saveTeam = () => {
-    const name = teamName.trim() || `Team ${new Date().toLocaleString()}`
-    const id = `${Date.now()}`
-    const team: SavedTeam = { id, name, slots: teamSlots }
-    persistTeams([team, ...savedTeams])
-    setTeamName('')
+  const saveTeam = async () => {
+    if (!user) {
+      // User not authenticated, save to localStorage
+      const name = teamName.trim() || `Team ${new Date().toLocaleString()}`
+      const id = `local_${Date.now()}`
+      const team: FirebaseSavedTeam = { 
+        id, 
+        name, 
+        slots: teamSlots,
+        userId: 'anonymous',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+      persistTeams([team, ...savedTeams])
+      setTeamName('')
+      return
+    }
+
+    // User is authenticated, save to Firebase
+    setSaving(true)
+    try {
+      const name = teamName.trim() || `Team ${new Date().toLocaleString()}`
+      const teamData = {
+        name,
+        slots: teamSlots,
+        isPublic: false,
+        description: ''
+      }
+
+      const teamId = await saveTeamToFirebase(user.uid, teamData)
+      const newTeam: FirebaseSavedTeam = {
+        id: teamId,
+        name,
+        slots: teamSlots,
+        userId: user.uid,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        isPublic: false,
+        description: ''
+      }
+
+      setSavedTeams([newTeam, ...savedTeams])
+      setTeamName('')
+    } catch (error) {
+      console.error('Error saving team:', error)
+      setError('Failed to save team. Please try again.')
+    } finally {
+      setSaving(false)
+    }
   }
 
-  const loadTeam = (team: SavedTeam) => {
+  const loadTeam = (team: FirebaseSavedTeam) => {
     setTeamSlots(team.slots)
     setTeamName(team.name)
     
@@ -275,8 +360,21 @@ export default function TeamBuilderPage() {
     setCollapsedSlots(newCollapsedSlots)
   }
 
-  const deleteTeam = (id: string) => {
-    persistTeams(savedTeams.filter(t => t.id !== id))
+  const deleteTeam = async (id: string) => {
+    if (!user) {
+      // User not authenticated, delete from localStorage
+      persistTeams(savedTeams.filter(t => t.id !== id))
+      return
+    }
+
+    // User is authenticated, delete from Firebase
+    try {
+      await deleteTeamFromFirebase(id, user.uid)
+      setSavedTeams(savedTeams.filter(t => t.id !== id))
+    } catch (error) {
+      console.error('Error deleting team:', error)
+      setError('Failed to delete team. Please try again.')
+    }
   }
 
   // Get available moves for a Pokémon at a specific level
@@ -459,6 +557,27 @@ export default function TeamBuilderPage() {
             </div>
             
             <div className="flex items-center space-x-4">
+              {/* Authentication Status */}
+              <div className="flex items-center gap-2 text-sm">
+                {user ? (
+                  <div className="flex items-center gap-1 text-green-600">
+                    <Cloud className="h-4 w-4" />
+                    <span>Cloud Sync</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1 text-orange-600">
+                    <CloudOff className="h-4 w-4" />
+                    <span>Local Only</span>
+                  </div>
+                )}
+                {syncing && (
+                  <div className="flex items-center gap-1 text-blue-600">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Syncing...</span>
+                  </div>
+                )}
+              </div>
+
               {/* Team Management */}
               <div className="flex items-center gap-2">
                 <input
@@ -467,7 +586,23 @@ export default function TeamBuilderPage() {
                   placeholder="Team name"
                   className="px-3 py-2 border border-border rounded-lg bg-surface text-text"
                 />
-                <button onClick={saveTeam} className="px-3 py-2 rounded-lg bg-poke-blue text-white hover:bg-poke-blue/90 transition-colors">Save Team</button>
+                <button 
+                  onClick={saveTeam} 
+                  disabled={saving}
+                  className="px-3 py-2 rounded-lg bg-poke-blue text-white hover:bg-poke-blue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {saving ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4" />
+                      Save Team
+                    </>
+                  )}
+                </button>
                 <button onClick={clearTeam} className="px-3 py-2 rounded-lg border border-border text-text hover:bg-white/50 transition-colors">Clear</button>
               </div>
             </div>
@@ -764,15 +899,46 @@ export default function TeamBuilderPage() {
 
         {/* Saved teams */}
         <section className="border border-border rounded-xl bg-surface p-4">
-          <h2 className="text-lg font-semibold mb-4">Saved Teams</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">Saved Teams</h2>
+            {user ? (
+              <div className="flex items-center gap-1 text-sm text-green-600">
+                <Cloud className="h-4 w-4" />
+                <span>Synced to Cloud</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1 text-sm text-orange-600">
+                <CloudOff className="h-4 w-4" />
+                <span>Local Storage Only</span>
+              </div>
+            )}
+          </div>
           {savedTeams.length === 0 ? (
-            <p className="text-sm text-muted">No teams saved yet.</p>
+            <div className="text-center py-8">
+              <p className="text-sm text-muted mb-2">No teams saved yet.</p>
+              {!user && (
+                <p className="text-xs text-muted">
+                  Sign in to sync your teams across devices
+                </p>
+              )}
+            </div>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {savedTeams.map(team => (
                 <div key={team.id} className="border border-border rounded-lg p-3 bg-white/50">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium">{team.name}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{team.name}</span>
+                      {team.id.startsWith('local_') ? (
+                        <div title="Local only">
+                          <CloudOff className="h-3 w-3 text-orange-500" />
+                        </div>
+                      ) : (
+                        <div title="Synced to cloud">
+                          <Cloud className="h-3 w-3 text-green-500" />
+                        </div>
+                      )}
+                    </div>
                     <div className="flex items-center gap-2">
                       <button 
                         className="text-xs text-blue-600 hover:text-blue-800 px-2 py-1 rounded border border-blue-200 hover:bg-blue-50" 
@@ -793,6 +959,9 @@ export default function TeamBuilderPage() {
                     {team.slots.some(s => s.moves && s.moves.length > 0) && (
                       <span className="ml-2">• {team.slots.reduce((total, s) => total + (s.moves?.length || 0), 0)} moves</span>
                     )}
+                    <div className="text-xs text-gray-500 mt-1">
+                      {team.updatedAt.toLocaleDateString()}
+                    </div>
                   </div>
                   <div className="flex flex-wrap gap-1">
                     {team.slots.map((slot, idx) => {
