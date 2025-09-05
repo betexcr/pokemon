@@ -694,7 +694,7 @@ export default function ModernPokedexLayout({
   }, [])
 
   return (
-    <div className="min-h-screen bg-bg text-text">
+    <div className="min-h-screen bg-bg text-text flex flex-col">
       {/* Sticky Header */}
       <header className="sticky top-0 z-50 bg-gradient-to-r from-surface via-surface to-surface border-b border-border shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1359,7 +1359,7 @@ export default function ModernPokedexLayout({
       </div>
 
       {/* Main Content */}
-      <div className="flex max-w-7xl mx-auto">
+      <div className="flex max-w-7xl mx-auto flex-1">
         {/* Sidebar - Advanced Filters */}
         <div className={`${
           showSidebar ? 'block' : 'hidden'
