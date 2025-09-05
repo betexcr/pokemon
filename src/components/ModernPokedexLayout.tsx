@@ -801,16 +801,10 @@ export default function ModernPokedexLayout({
                     >
                       <span className="inline-flex items-center justify-center">
                         {visual === '3cols' && (
-                          <div className="w-4 h-4 grid grid-cols-3 gap-0.5">
-                            <div className="bg-current rounded-sm"></div>
-                            <div className="bg-current rounded-sm"></div>
-                            <div className="bg-current rounded-sm"></div>
-                          </div>
+                          <div className="w-4 h-4 bg-current rounded-sm"></div>
                         )}
                         {visual === '6cols' && (
-                          <div className="w-4 h-4 grid grid-cols-3 gap-0.5">
-                            <div className="bg-current rounded-sm"></div>
-                            <div className="bg-current rounded-sm"></div>
+                          <div className="w-4 h-4 grid grid-cols-2 gap-0.5">
                             <div className="bg-current rounded-sm"></div>
                             <div className="bg-current rounded-sm"></div>
                             <div className="bg-current rounded-sm"></div>
@@ -952,39 +946,43 @@ export default function ModernPokedexLayout({
                 <UserProfile />
               </div>
 
-              {/* Desktop Team Builder Button */}
+              {/* Action Buttons - Icon Only */}
               <button
                 onClick={() => router.push('/team')}
-                className="hidden md:flex items-center space-x-2 px-4 py-2 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
+                className="p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
                 title="Go to Team Builder"
               >
-                <Users className="h-4 w-4" />
-                <span className="text-sm font-medium">Team</span>
+                <Users className="h-5 w-5" />
               </button>
 
-              {/* Desktop Battle Button */}
               <button
                 onClick={() => router.push('/battle')}
-                className="hidden md:flex items-center space-x-2 px-4 py-2 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
+                className="p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
                 title="Go to AI Battle"
               >
-                <Swords className="h-4 w-4" />
-                <span className="text-sm font-medium">Battle</span>
+                <Swords className="h-5 w-5" />
               </button>
 
-              {/* Desktop Comparison Button */}
               <button
                 onClick={() => router.push('/compare')}
-                className="hidden md:flex relative items-center space-x-2 px-4 py-2 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
+                className="relative p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
                 title="Go to comparison"
               >
-                <Scale className="h-4 w-4" />
-                <span className="text-sm font-medium">Compare</span>
+                <Scale className="h-5 w-5" />
                 {comparisonList.length > 0 && (
-                  <span className="px-2 py-0.5 bg-poke-red text-white text-xs rounded-full font-bold">
+                  <span className="absolute -top-1 -right-1 px-1.5 py-0.5 bg-poke-red text-white text-xs rounded-full font-bold">
                     {comparisonList.length}
                   </span>
                 )}
+              </button>
+
+              {/* Hamburger Menu Button */}
+              <button
+                onClick={() => setShowMobileMenu(!showMobileMenu)}
+                className="p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
+                title="Toggle menu"
+              >
+                <Menu className="h-5 w-5" />
               </button>
 
               {/* Mobile Action Buttons - Only visible on mobile */}
@@ -1022,21 +1020,7 @@ export default function ModernPokedexLayout({
             </div>
             )}
 
-            {/* Mobile Menu Button - Only visible on mobile */}
-            {isMobile && (
-              <div className="flex items-center">
-                <button
-                  type="button"
-                  onClick={() => { setShowMobileMenu(prev => !prev) }}
-                  className="p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
-                  title="Toggle menu"
-                  aria-expanded={showMobileMenu}
-                  aria-controls={'mobile-drawer'}
-                >
-                  <Menu className="h-5 w-5" />
-                </button>
-              </div>
-            )}
+            {/* Mobile Menu Button removed - now part of desktop controls */}
           </div>
         </div>
       </header>
