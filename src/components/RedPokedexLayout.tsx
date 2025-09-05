@@ -63,7 +63,7 @@ export default function RedPokedexLayout({
         <div className="hidden md:flex absolute top-2 right-2 items-center gap-2">
           <UserProfile />
           <button onClick={() => router.push('/team')} className="px-3 py-1 bg-white text-red-800 border-2 border-red-600 rounded font-bold" title="Go to Team Builder">🎮 TEAM</button>
-          <button onClick={() => setShowDesktopMenu(true)} className="px-3 py-1 bg-white text-red-800 border-2 border-red-600 rounded font-bold">MENU</button>
+          <button onClick={() => setShowDesktopMenu(true)} className="md:hidden px-3 py-1 bg-white text-red-800 border-2 border-red-600 rounded font-bold">MENU</button>
         </div>
 
         {/* Mobile Menu Button - Only visible on mobile */}

@@ -153,7 +153,7 @@ export default function RubyPokedexLayout({
           <span className="text-white text-sm font-bold">CANCEL</span>
         </div>
         <div className="absolute top-2 right-2">
-          <button onClick={() => setShowDesktopMenu(true)} className="px-3 py-1 bg-white text-black border-2 border-border rounded font-bold">MENU</button>
+          <button onClick={() => setShowDesktopMenu(true)} className="md:hidden px-3 py-1 bg-white text-black border-2 border-border rounded font-bold">MENU</button>
         </div>
       </div>
 
