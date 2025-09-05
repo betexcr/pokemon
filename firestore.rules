@@ -12,12 +12,12 @@ service cloud.firestore {
     }
     
     function isValidTeamData() {
-      return request.resource.data.keys().hasAll(['name', 'pokemon', 'userId', 'createdAt', 'updatedAt']) &&
+      return request.resource.data.keys().hasAll(['name', 'slots', 'userId', 'createdAt', 'updatedAt']) &&
              request.resource.data.name is string &&
              request.resource.data.name.size() > 0 &&
              request.resource.data.name.size() <= 50 &&
-             request.resource.data.pokemon is list &&
-             request.resource.data.pokemon.size() <= 6 &&
+             request.resource.data.slots is list &&
+             request.resource.data.slots.size() <= 6 &&
              request.resource.data.userId == request.auth.uid &&
              request.resource.data.createdAt is timestamp &&
              request.resource.data.updatedAt is timestamp;
@@ -34,11 +34,28 @@ service cloud.firestore {
     
     // User teams collection
     match /userTeams/{teamId} {
-      // Users can only access their own teams
-      allow read, write: if isOwner(resource.data.userId);
+      // Users can read their own teams
+      allow read: if isAuthenticated() && 
+                     (resource.data.userId == request.auth.uid || 
+                      resource.data.isPublic == true);
+      
+      // Users can create teams with their own userId
       allow create: if isAuthenticated() && 
-                       isValidTeamData() &&
+                       request.resource.data.userId == request.auth.uid &&
+                       request.resource.data.name is string &&
+                       request.resource.data.name.size() > 0 &&
+                       request.resource.data.name.size() <= 50 &&
+                       request.resource.data.slots is list &&
+                       request.resource.data.slots.size() <= 6;
+      
+      // Users can update their own teams
+      allow update: if isAuthenticated() && 
+                       resource.data.userId == request.auth.uid &&
                        request.resource.data.userId == request.auth.uid;
+      
+      // Users can delete their own teams
+      allow delete: if isAuthenticated() && 
+                       resource.data.userId == request.auth.uid;
     }
     
     // Battle rooms collection
