@@ -23,9 +23,9 @@ export default async function PokemonDetailPage({ params }: PokemonDetailPagePro
 
   try {
     pokemon = await getPokemon(Number(params.id))
-  } catch (err) {
+    } catch (err) {
     error = 'Failed to load Pokémon data'
-    console.error(err)
+      console.error(err)
   }
 
   return <PokemonDetailClient pokemon={pokemon} error={error} />
