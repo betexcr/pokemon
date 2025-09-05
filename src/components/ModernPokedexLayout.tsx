@@ -160,32 +160,14 @@ export default function ModernPokedexLayout({
 
   useEffect(() => {
     computeMaxRenderCount()
-    const onResize = () => { computeMaxRenderCount(); updateRenderWindow() }
+    const onResize = () => { computeMaxRenderCount() }
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
   }, [computeMaxRenderCount])
 
-  const updateRenderWindow = useCallback(() => {
-    if (!isAllGenerations) { setRenderWindowStart(0); return }
-    const scrollTop = window.pageYOffset || document.documentElement.scrollTop
-    const estimatedItemHeight = cardDensity === '3cols' ? 360 : cardDensity === '6cols' ? 300 : cardDensity === '9cols' ? 180 : 200
-    const estimatedCardWidth = cardDensity === '3cols' ? 320 : cardDensity === '6cols' ? 200 : cardDensity === '9cols' ? 120 : 150
-    const columns = Math.max(1, Math.floor(window.innerWidth / estimatedCardWidth))
-    const firstVisibleRow = Math.max(0, Math.floor(scrollTop / estimatedItemHeight))
-    const bufferRows = 3
-    const startRow = Math.max(0, firstVisibleRow - bufferRows)
-    const startIndex = startRow * columns
-    const totalItems = filteredPokemon.length || 0
-    const clampedStart = Math.min(startIndex, Math.max(0, totalItems - maxRenderCount))
-    setRenderWindowStart(clampedStart)
-  }, [cardDensity, maxRenderCount, filteredPokemon.length, isAllGenerations])
+  // Removed updateRenderWindow - not needed for inner scroll only
 
-  useEffect(() => {
-    updateRenderWindow()
-    const onScroll = () => updateRenderWindow()
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [updateRenderWindow])
+  // Removed window scroll listener - not needed for inner scroll only
 
   // Initialize filteredPokemon with pokemonList on first load
   useEffect(() => {
@@ -608,12 +590,18 @@ export default function ModernPokedexLayout({
 
     // Check if user is already at bottom when sentinel is added
     const checkIfAtBottom = () => {
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-      const windowHeight = window.innerHeight;
-      const documentHeight = document.documentElement.scrollHeight;
+      const pokemonGrid = document.querySelector('[data-pokemon-grid]');
+      if (!pokemonGrid) return;
+      
+      const container = pokemonGrid.closest('.overflow-y-auto');
+      if (!container) return;
+      
+      const scrollTop = container.scrollTop;
+      const containerHeight = container.clientHeight;
+      const scrollHeight = container.scrollHeight;
       
       // If user is within 50px of bottom, trigger load
-      if (documentHeight - scrollTop - windowHeight < 50 && !isLoadingMore && hasMorePokemon) {
+      if (scrollHeight - scrollTop - containerHeight < 50 && !isLoadingMore && hasMorePokemon) {
         console.log('User already at bottom, loading more Pokémon...');
         loadMorePokemon();
       }
@@ -623,6 +611,8 @@ export default function ModernPokedexLayout({
     setTimeout(checkIfAtBottom, 100);
 
     // Intersection Observer to detect when sentinel comes into view
+    const scrollContainer = pokemonGrid?.closest('.overflow-y-auto');
+    
     const observer = new IntersectionObserver(
       (entries) => {
         const [entry] = entries;
@@ -632,7 +622,7 @@ export default function ModernPokedexLayout({
         }
       },
       {
-        root: null, // Use viewport as root
+        root: scrollContainer, // Use inner container as root instead of viewport
         rootMargin: '200px', // Increased from 100px to trigger earlier
         threshold: 0.1
       }
