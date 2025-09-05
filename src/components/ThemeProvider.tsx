@@ -68,10 +68,6 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
     }
   }, [theme, mounted]);
 
-  if (!mounted) {
-    return <>{children}</>;
-  }
-
   return (
     <ThemeContext.Provider value={{ theme, setTheme }}>
       {children}
