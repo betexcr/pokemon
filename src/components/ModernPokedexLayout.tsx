@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation'
 import { getPokemonByGeneration, getPokemonByType, getPokemon, getPokemonWithPagination, getPokemonTotalCount } from '@/lib/api'
 import ThemeToggle from './ThemeToggle'
 import VirtualizedPokemonGrid from './VirtualizedPokemonGrid'
-import { Search, Filter, X, Scale, ArrowRight, Menu, LayoutGrid, Grid3X3, Rows, Users, Swords, List } from 'lucide-react'
+import { Search, Filter, X, Scale, ArrowRight, Menu, Users, Swords, List } from 'lucide-react'
 import UserProfile from './auth/UserProfile'
 import { createHeuristics } from '@/lib/heuristics/core'
 import { LocalStorageAdapter, MemoryStorage } from '@/lib/heuristics/storage'
@@ -168,8 +168,8 @@ export default function ModernPokedexLayout({
   const updateRenderWindow = useCallback(() => {
     if (!isAllGenerations) { setRenderWindowStart(0); return }
     const scrollTop = window.pageYOffset || document.documentElement.scrollTop
-    const estimatedItemHeight = cardDensity === 'cozy' ? 360 : cardDensity === 'compact' ? 300 : 180
-    const estimatedCardWidth = cardDensity === 'cozy' ? 320 : cardDensity === 'compact' ? 200 : 120
+    const estimatedItemHeight = cardDensity === '3cols' ? 360 : cardDensity === '6cols' ? 300 : cardDensity === '9cols' ? 180 : 200
+    const estimatedCardWidth = cardDensity === '3cols' ? 320 : cardDensity === '6cols' ? 200 : cardDensity === '9cols' ? 120 : 150
     const columns = Math.max(1, Math.floor(window.innerWidth / estimatedCardWidth))
     const firstVisibleRow = Math.max(0, Math.floor(scrollTop / estimatedItemHeight))
     const bufferRows = 3
@@ -595,8 +595,9 @@ export default function ModernPokedexLayout({
 
     // Create a sentinel element at the bottom of the list
     const sentinel = document.createElement('div');
-    sentinel.style.height = '1px';
+    sentinel.style.height = '20px'; // Make it more visible
     sentinel.style.width = '100%';
+    sentinel.style.backgroundColor = 'transparent';
     sentinel.setAttribute('data-infinite-scroll-sentinel', 'true');
     
     // Find the Pokemon grid container and append sentinel
@@ -604,6 +605,22 @@ export default function ModernPokedexLayout({
     if (pokemonGrid) {
       pokemonGrid.appendChild(sentinel);
     }
+
+    // Check if user is already at bottom when sentinel is added
+    const checkIfAtBottom = () => {
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const windowHeight = window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
+      
+      // If user is within 50px of bottom, trigger load
+      if (documentHeight - scrollTop - windowHeight < 50 && !isLoadingMore && hasMorePokemon) {
+        console.log('User already at bottom, loading more Pokémon...');
+        loadMorePokemon();
+      }
+    };
+
+    // Check immediately when sentinel is added
+    setTimeout(checkIfAtBottom, 100);
 
     // Intersection Observer to detect when sentinel comes into view
     const observer = new IntersectionObserver(
@@ -616,7 +633,7 @@ export default function ModernPokedexLayout({
       },
       {
         root: null, // Use viewport as root
-        rootMargin: '100px', // Trigger 100px before the sentinel comes into view
+        rootMargin: '200px', // Increased from 100px to trigger earlier
         threshold: 0.1
       }
     );
