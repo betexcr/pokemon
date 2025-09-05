@@ -69,7 +69,7 @@ function LobbyPage() {
     return `${minutes} minutes ago`;
   };
 
-  const getStatusColor = (status: LobbyRoom['status']) => {
+  const getStatusColor = (status: RoomData['status']) => {
     switch (status) {
       case 'waiting': return 'text-yellow-600 bg-yellow-100';
       case 'ready': return 'text-green-600 bg-green-100';

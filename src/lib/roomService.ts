@@ -162,7 +162,7 @@ class RoomService {
     const roomRef = doc(db, this.roomsCollection, roomId);
     
     try {
-      await updateDoc(roomRef, updates);
+      await updateDoc(roomRef, updates as any);
       console.log('roomService.updateRoom completed successfully');
     } catch (error) {
       console.error('roomService.updateRoom failed:', error);

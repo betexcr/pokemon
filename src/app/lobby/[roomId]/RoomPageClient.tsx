@@ -390,7 +390,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
                     </div>
                     
                     <div className="text-blue-700">
-                      {room.hostTeam.slots.filter(slot => slot.id).length} Pokémon selected
+                      {(room.hostTeam as any)?.slots?.filter((slot: any) => slot.id).length || 0} Pokémon selected
                     </div>
                   </div>
                 </div>
@@ -456,7 +456,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
                         </div>
                         
                         <div className="text-green-700">
-                          {room.guestTeam.slots.filter(slot => slot.id).length} Pokémon selected
+                          {(room.guestTeam as any)?.slots?.filter((slot: any) => slot.id).length || 0} Pokémon selected
                         </div>
                       </div>
                     </div>

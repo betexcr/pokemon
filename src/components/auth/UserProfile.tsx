@@ -10,6 +10,7 @@ export default function UserProfile() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [buttonRect, setButtonRect] = useState<DOMRect | null>(null);
+  const [imageLoadError, setImageLoadError] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   const handleLogout = async () => {
@@ -20,6 +21,11 @@ export default function UserProfile() {
       console.error('Error signing out:', error);
     }
   };
+
+  // Reset image error state when user changes
+  useEffect(() => {
+    setImageLoadError(false);
+  }, [user?.uid]);
 
   // Update button position on scroll/resize
   useEffect(() => {
@@ -61,31 +67,6 @@ export default function UserProfile() {
 
   // Get user's profile picture or generate initials
   const getProfilePicture = () => {
-    console.log('UserProfile - User data:', {
-      displayName: user.displayName,
-      email: user.email,
-      photoURL: user.photoURL,
-      uid: user.uid
-    });
-    
-    if (user.photoURL) {
-      console.log('Using photoURL:', user.photoURL);
-      return (
-        <img
-          src={user.photoURL}
-          alt={user.displayName || user.email || 'User'}
-          className="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm"
-          onError={(e) => {
-            console.error('Failed to load profile image:', user.photoURL);
-            e.currentTarget.style.display = 'none';
-          }}
-          onLoad={() => {
-            console.log('Profile image loaded successfully');
-          }}
-        />
-      );
-    }
-    
     // Generate initials from display name or email
     const name = user.displayName || user.email || 'User';
     const initials = name
@@ -95,6 +76,25 @@ export default function UserProfile() {
       .toUpperCase()
       .slice(0, 2);
     
+    // If there's a photoURL and no error, try to show the image
+    if (user.photoURL && !imageLoadError) {
+      return (
+        <img
+          src={user.photoURL}
+          alt={user.displayName || user.email || 'User'}
+          className="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm"
+          onError={() => {
+            console.warn('Failed to load profile image, falling back to initials');
+            setImageLoadError(true);
+          }}
+          onLoad={() => {
+            console.log('Profile image loaded successfully');
+          }}
+        />
+      );
+    }
+    
+    // Fallback to initials (either no photoURL or image failed to load)
     return (
       <div className="w-8 h-8 rounded-full bg-gradient-to-br from-poke-blue to-poke-red flex items-center justify-center text-white text-sm font-bold border-2 border-white shadow-sm">
         {initials}
