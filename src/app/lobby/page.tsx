@@ -5,80 +5,57 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import UserProfile from '@/components/auth/UserProfile';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
-
-interface LobbyRoom {
-  id: string;
-  hostId: string;
-  hostName: string;
-  hostTeam?: string;
-  guestId?: string;
-  guestName?: string;
-  guestTeam?: string;
-  status: 'waiting' | 'ready' | 'battling' | 'finished';
-  createdAt: Date;
-  maxPlayers: number;
-  currentPlayers: number;
-}
+import { roomService, type RoomData } from '@/lib/roomService';
 
 function LobbyPage() {
   const { user } = useAuth();
   const router = useRouter();
-  const [rooms, setRooms] = useState<LobbyRoom[]>([]);
+  const [rooms, setRooms] = useState<RoomData[]>([]);
   const [loading, setLoading] = useState(true);
   const [creatingRoom, setCreatingRoom] = useState(false);
   const [roomCode, setRoomCode] = useState('');
 
-  // Mock data for now - will be replaced with Firebase/Firestore
+  // Load rooms from Firebase
   useEffect(() => {
-    const mockRooms: LobbyRoom[] = [
-      {
-        id: 'room1',
-        hostId: 'user1',
-        hostName: 'Trainer Red',
-        status: 'waiting',
-        createdAt: new Date(Date.now() - 1000 * 60 * 5), // 5 minutes ago
-        maxPlayers: 2,
-        currentPlayers: 1
-      },
-      {
-        id: 'room2',
-        hostId: 'user2',
-        hostName: 'Trainer Blue',
-        status: 'waiting',
-        createdAt: new Date(Date.now() - 1000 * 60 * 2), // 2 minutes ago
-        maxPlayers: 2,
-        currentPlayers: 1
-      }
-    ];
-    
-    setTimeout(() => {
-      setRooms(mockRooms);
+    if (!user) {
       setLoading(false);
-    }, 1000);
-  }, []);
+      return;
+    }
+
+    const unsubscribe = roomService.onRoomsChange((rooms) => {
+      setRooms(rooms);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
 
   const createRoom = async () => {
     if (!user) return;
     
     setCreatingRoom(true);
     try {
-      // Generate a random room code
-      const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-      setRoomCode(code);
+      // Create room in Firestore
+      const roomId = await roomService.createRoom(
+        user.uid,
+        user.displayName || 'Anonymous Trainer'
+      );
       
-      // TODO: Create room in Firestore
-      console.log('Creating room with code:', code);
+      setRoomCode(roomId);
+      console.log('Created room with ID:', roomId);
       
-      // For now, just redirect to the room
-      router.push(`/lobby/${code}`);
+      // Redirect to the room
+      router.push(`/lobby/${roomId}`);
     } catch (error) {
       console.error('Failed to create room:', error);
+      alert('Failed to create room. Please try again.');
     } finally {
       setCreatingRoom(false);
     }
   };
 
   const joinRoom = (roomId: string) => {
+    if (!user) return;
     router.push(`/lobby/${roomId}`);
   };
 

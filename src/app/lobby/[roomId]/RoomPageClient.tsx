@@ -9,6 +9,7 @@ import Chat from '@/components/Chat';
 import { Users, Copy, Check, MessageCircle } from 'lucide-react';
 import type { SavedTeam } from '@/lib/userTeams';
 import Image from 'next/image';
+import { roomService, type RoomData } from '@/lib/roomService';
 
 // Local storage team type (simpler version)
 interface LocalTeam {
@@ -23,19 +24,7 @@ const getPokemonImageUrl = (pokemonId: number | null): string => {
   return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemonId}.png`;
 };
 
-interface RoomData {
-  id: string;
-  hostId: string;
-  hostName: string;
-  hostTeam?: SavedTeam | LocalTeam;
-  guestId?: string;
-  guestName?: string;
-  guestTeam?: SavedTeam | LocalTeam;
-  status: 'waiting' | 'ready' | 'battling' | 'finished';
-  createdAt: Date;
-  maxPlayers: number;
-  currentPlayers: number;
-}
+// RoomData is now imported from roomService
 
 interface RoomPageClientProps {
   roomId: string;
@@ -53,22 +42,43 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
   const [showChat, setShowChat] = useState(true);
 
   useEffect(() => {
-    // Mock room data for now - will be replaced with Firebase/Firestore
-    const mockRoom: RoomData = {
-      id: roomId,
-      hostId: user?.uid || 'user1',
-      hostName: user?.displayName || 'Trainer Red',
-      status: 'waiting',
-      createdAt: new Date(),
-      maxPlayers: 2,
-      currentPlayers: 1
-    };
-    
-    setTimeout(() => {
-      setRoom(mockRoom);
+    if (!user) {
       setLoading(false);
-    }, 1000);
-  }, [roomId, user]);
+      return;
+    }
+
+    // Listen to room changes in real-time
+    const unsubscribe = roomService.onRoomChange(roomId, (room) => {
+      if (room) {
+        setRoom(room);
+        setLoading(false);
+      } else {
+        // Room doesn't exist or was deleted
+        setLoading(false);
+        router.push('/lobby');
+      }
+    });
+
+    return () => unsubscribe();
+  }, [roomId, user, router]);
+
+  // Cleanup when user leaves the room
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (user && room) {
+        roomService.leaveRoom(roomId, user.uid);
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      if (user && room) {
+        roomService.leaveRoom(roomId, user.uid);
+      }
+    };
+  }, [user, room, roomId]);
 
   const copyRoomCode = async () => {
     try {
@@ -81,23 +91,20 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
   };
 
   const joinRoom = async () => {
-    if (!user || !room) return;
+    if (!user || !room || !selectedTeam) return;
     
     setJoining(true);
     try {
-      // TODO: Join room in Firestore
-      console.log('Joining room:', roomId);
-      
-      // For now, just update local state
-      setRoom(prev => prev ? {
-        ...prev,
-        guestId: user.uid,
-        guestName: user.displayName || 'Guest',
-        currentPlayers: 2,
-        status: 'ready'
-      } : null);
+      await roomService.joinRoom(
+        roomId,
+        user.uid,
+        user.displayName || 'Anonymous Trainer',
+        selectedTeam
+      );
+      console.log('Successfully joined room:', roomId);
     } catch (error) {
       console.error('Failed to join room:', error);
+      alert('Failed to join room. Please try again.');
     } finally {
       setJoining(false);
     }
@@ -119,15 +126,25 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
     }
   };
 
-  const startBattle = () => {
-    if (!selectedTeam) {
+  const startBattle = async () => {
+    if (!selectedTeam || !room) {
       alert('Please select a team before starting the battle!');
       return;
     }
     
-    // TODO: Start battle and redirect to battle runtime
-    console.log('Starting battle for room:', roomId, 'with team:', selectedTeam);
-    router.push(`/battle/runtime?roomId=${roomId}&teamId=${selectedTeam.id}`);
+    try {
+      // Generate a unique battle ID
+      const battleId = `battle_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+      
+      // Update room status to battling and set battle ID
+      await roomService.startBattle(roomId, battleId);
+      
+      console.log('Starting battle for room:', roomId, 'with team:', selectedTeam);
+      router.push(`/battle/runtime?roomId=${roomId}&teamId=${selectedTeam.id}&battleId=${battleId}`);
+    } catch (error) {
+      console.error('Failed to start battle:', error);
+      alert('Failed to start battle. Please try again.');
+    }
   };
 
   const isHost = user?.uid === room?.hostId;
