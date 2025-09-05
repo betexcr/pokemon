@@ -15,6 +15,7 @@ import {
   type Unsubscribe
 } from 'firebase/firestore';
 import { db } from './firebase';
+import { battleService } from './battleService';
 
 export interface RoomData {
   id: string;
@@ -154,9 +155,28 @@ class RoomService {
     if (!db) throw new Error('Firebase not initialized');
     
     const roomRef = doc(db, this.roomsCollection, roomId);
+    const roomSnap = await getDoc(roomRef);
+    
+    if (!roomSnap.exists()) {
+      throw new Error('Room not found');
+    }
+    
+    const roomData = roomSnap.data();
+    
+    // Create battle in Firestore
+    const actualBattleId = await battleService.createBattle(
+      roomId,
+      roomData.hostId,
+      roomData.hostName,
+      roomData.hostTeam,
+      roomData.guestId,
+      roomData.guestName,
+      roomData.guestTeam
+    );
+    
     await updateDoc(roomRef, {
       status: 'battling',
-      battleId
+      battleId: actualBattleId
     });
   }
 
