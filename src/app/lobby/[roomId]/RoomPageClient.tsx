@@ -4,16 +4,19 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import UserProfile from '@/components/auth/UserProfile';
-import { Users, Copy, Check } from 'lucide-react';
+import TeamSelector from '@/components/TeamSelector';
+import Chat from '@/components/Chat';
+import { Users, Copy, Check, MessageCircle } from 'lucide-react';
+import type { SavedTeam } from '@/lib/userTeams';
 
 interface RoomData {
   id: string;
   hostId: string;
   hostName: string;
-  hostTeam?: string;
+  hostTeam?: SavedTeam;
   guestId?: string;
   guestName?: string;
-  guestTeam?: string;
+  guestTeam?: SavedTeam;
   status: 'waiting' | 'ready' | 'battling' | 'finished';
   createdAt: Date;
   maxPlayers: number;
@@ -32,6 +35,8 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [selectedTeam, setSelectedTeam] = useState<SavedTeam | null>(null);
+  const [showChat, setShowChat] = useState(true);
 
   useEffect(() => {
     // Mock room data for now - will be replaced with Firebase/Firestore
@@ -84,10 +89,31 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
     }
   };
 
+  const handleTeamSelect = (team: SavedTeam | null) => {
+    setSelectedTeam(team);
+    
+    // Update room data with selected team
+    if (room && user) {
+      const isHost = user.uid === room.hostId;
+      const isGuest = user.uid === room.guestId;
+      
+      setRoom(prev => prev ? {
+        ...prev,
+        ...(isHost && { hostTeam: team || undefined }),
+        ...(isGuest && { guestTeam: team || undefined })
+      } : null);
+    }
+  };
+
   const startBattle = () => {
+    if (!selectedTeam) {
+      alert('Please select a team before starting the battle!');
+      return;
+    }
+    
     // TODO: Start battle and redirect to battle runtime
-    console.log('Starting battle for room:', roomId);
-    router.push(`/battle/runtime?roomId=${roomId}`);
+    console.log('Starting battle for room:', roomId, 'with team:', selectedTeam);
+    router.push(`/battle/runtime?roomId=${roomId}&teamId=${selectedTeam.id}`);
   };
 
   const isHost = user?.uid === room?.hostId;
@@ -195,18 +221,39 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
             </div>
           </div>
 
-          {/* Players */}
-          <div className="grid md:grid-cols-2 gap-6">
+          {/* Players and Team Selection */}
+          <div className="grid lg:grid-cols-2 gap-6">
             {/* Host */}
             <div className="border border-gray-200 rounded-lg p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-medium text-gray-900">Host</h3>
                 {isHost && <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">You</span>}
               </div>
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-gray-600 mb-4">
                 <p className="font-medium">{room.hostName}</p>
                 <p className="text-gray-500">Ready to battle</p>
               </div>
+              
+              {/* Team Selector for Host */}
+              {isHost && (
+                <TeamSelector
+                  selectedTeamId={room.hostTeam?.id}
+                  onTeamSelect={handleTeamSelect}
+                  label="Your Team"
+                />
+              )}
+              
+              {/* Display Host Team */}
+              {room.hostTeam && !isHost && (
+                <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+                  <div className="text-sm">
+                    <div className="font-medium text-blue-900">{room.hostTeam.name}</div>
+                    <div className="text-blue-700">
+                      {room.hostTeam.slots.filter(slot => slot.id).length} Pokémon selected
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Guest */}
@@ -216,10 +263,33 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
                 {isGuest && <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">You</span>}
               </div>
               {room.guestName ? (
-                <div className="text-sm text-gray-600">
-                  <p className="font-medium">{room.guestName}</p>
-                  <p className="text-gray-500">Ready to battle</p>
-                </div>
+                <>
+                  <div className="text-sm text-gray-600 mb-4">
+                    <p className="font-medium">{room.guestName}</p>
+                    <p className="text-gray-500">Ready to battle</p>
+                  </div>
+                  
+                  {/* Team Selector for Guest */}
+                  {isGuest && (
+                    <TeamSelector
+                      selectedTeamId={room.guestTeam?.id}
+                      onTeamSelect={handleTeamSelect}
+                      label="Your Team"
+                    />
+                  )}
+                  
+                  {/* Display Guest Team */}
+                  {room.guestTeam && !isGuest && (
+                    <div className="mt-3 p-3 bg-green-50 rounded-lg">
+                      <div className="text-sm">
+                        <div className="font-medium text-green-900">{room.guestTeam.name}</div>
+                        <div className="text-green-700">
+                          {room.guestTeam.slots.filter(slot => slot.id).length} Pokémon selected
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="text-sm text-gray-500">
                   <p>Waiting for player...</p>
@@ -250,9 +320,10 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
             {canStart && (
               <button
                 onClick={startBattle}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                disabled={!selectedTeam}
+                className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-medium transition-colors"
               >
-                Start Battle
+                {selectedTeam ? 'Start Battle' : 'Select Team First'}
               </button>
             )}
             
@@ -267,6 +338,29 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
           </div>
         </div>
 
+        {/* Chat Section */}
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
+              <MessageCircle className="h-5 w-5" />
+              <span>Room Chat</span>
+            </h3>
+            <button
+              onClick={() => setShowChat(!showChat)}
+              className="text-gray-500 hover:text-gray-700 transition-colors"
+            >
+              {showChat ? 'Hide Chat' : 'Show Chat'}
+            </button>
+          </div>
+          
+          {showChat && (
+            <Chat 
+              roomId={roomId}
+              className="max-h-96"
+            />
+          )}
+        </div>
+
         {/* Instructions */}
         <div className="bg-white rounded-xl shadow-lg p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">How to Play</h3>
@@ -277,14 +371,18 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
             </div>
             <div className="flex items-start space-x-3">
               <span className="bg-blue-100 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-medium flex-shrink-0 mt-0.5">2</span>
-              <p>Make sure you have a team saved in the Team Builder</p>
+              <p>Select your team from the dropdown above (create teams in the Team Builder first)</p>
             </div>
             <div className="flex items-start space-x-3">
               <span className="bg-blue-100 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-medium flex-shrink-0 mt-0.5">3</span>
-              <p>Once both players are ready, the host can start the battle</p>
+              <p>Use the chat to communicate with your opponent</p>
             </div>
             <div className="flex items-start space-x-3">
               <span className="bg-blue-100 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-medium flex-shrink-0 mt-0.5">4</span>
+              <p>Once both players have selected teams, the host can start the battle</p>
+            </div>
+            <div className="flex items-start space-x-3">
+              <span className="bg-blue-100 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-medium flex-shrink-0 mt-0.5">5</span>
               <p>Battle it out and see who&apos;s the better trainer!</p>
             </div>
           </div>

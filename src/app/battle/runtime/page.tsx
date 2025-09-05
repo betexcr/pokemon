@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, RotateCcw } from "lucide-react";
+import { ArrowLeft, RotateCcw, MessageCircle } from "lucide-react";
 import Image from "next/image";
 import { getPokemon, getMove } from "@/lib/api";
 import { Move } from "@/types/pokemon";
@@ -16,6 +16,9 @@ import {
 } from "@/lib/team-battle-engine";
 import TypeBadge from "@/components/TypeBadge";
 import HealthBar from "@/components/HealthBar";
+import Chat from "@/components/Chat";
+import { ToastContainer, useToast } from "@/components/Toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 const STORAGE_KEY = "pokemon-team-builder";
 
@@ -28,6 +31,8 @@ type SavedTeam = {
 function BattleRuntimePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user } = useAuth();
+  const { toasts, addToast, removeToast, showChatNotification } = useToast();
   
   const [battleState, setBattleState] = useState<TeamBattleState | null>(null);
   const [loading, setLoading] = useState(true);
@@ -42,9 +47,33 @@ function BattleRuntimePage() {
   const [previousPlayerId, setPreviousPlayerId] = useState<number | null>(null);
   const [previousOpponentId, setPreviousOpponentId] = useState<number | null>(null);
 
+  // Multiplayer and chat states
+  const [showChat, setShowChat] = useState(false);
+  const [isMultiplayer, setIsMultiplayer] = useState(false);
+  const [roomId, setRoomId] = useState<string | null>(null);
+
   const playerTeamId = searchParams.get("player");
   const opponentKind = searchParams.get("opponentKind");
   const opponentId = searchParams.get("opponentId");
+  const multiplayerRoomId = searchParams.get("roomId");
+  const multiplayerTeamId = searchParams.get("teamId");
+
+  // Initialize multiplayer mode
+  useEffect(() => {
+    if (multiplayerRoomId) {
+      setIsMultiplayer(true);
+      setRoomId(multiplayerRoomId);
+      // TODO: Set up real-time battle synchronization
+      console.log('Multiplayer battle initialized for room:', multiplayerRoomId);
+    }
+  }, [multiplayerRoomId]);
+
+  // Handle chat notifications
+  const handleChatNotification = useCallback((message: string) => {
+    if (!showChat) {
+      showChatNotification(message, () => setShowChat(true));
+    }
+  }, [showChat, showChatNotification]);
 
   // Animation class helpers
   const getPlayerAnimationClasses = () => {
@@ -630,6 +659,16 @@ function BattleRuntimePage() {
               <span className="font-medium">Back to Battle Setup</span>
             </button>
             <div className="flex items-center gap-2">
+              {isMultiplayer && roomId && (
+                <button
+                  onClick={() => setShowChat(!showChat)}
+                  className="flex items-center gap-2 px-3 py-1 text-sm bg-blue-100 hover:bg-blue-200 rounded-lg transition-colors"
+                  title="Toggle Chat"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  Chat
+                </button>
+              )}
               <button
                 onClick={restartBattle}
                 className="flex items-center gap-2 px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
@@ -890,7 +929,23 @@ function BattleRuntimePage() {
             </div>
           </div>
         </div>
+
+        {/* Chat Component for Multiplayer */}
+        {isMultiplayer && roomId && showChat && (
+          <div className="fixed bottom-4 right-4 w-80 z-40">
+            <Chat 
+              roomId={roomId}
+              isCollapsible={true}
+              isCollapsed={false}
+              onToggleCollapse={() => setShowChat(false)}
+              className="shadow-2xl"
+            />
+          </div>
+        )}
       </main>
+
+      {/* Toast Notifications */}
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
     </div>
   );
 }
