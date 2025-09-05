@@ -59,7 +59,9 @@ export default function RegisterForm({ onToggleMode }: RegisterFormProps) {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto">
+    <div className="w-full max-w-md mx-auto" style={{
+      backgroundColor: 'white',
+    }}>
       <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-6 border border-gray-200">
         <h2 className="text-2xl font-bold text-center mb-6 text-text">Sign Up</h2>
         

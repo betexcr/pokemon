@@ -18,6 +18,7 @@ import { Pokemon, PokemonSpecies, EvolutionChain } from '@/types/pokemon'
 import Button from '@/components/ui/Button'
 import Tabs from '@/components/pokemon/Tabs'
 import OverviewSection from '@/components/pokemon/OverviewSection'
+
 import StatsSection from '@/components/pokemon/StatsSection'
 import MovesSection from '@/components/pokemon/MovesSection'
 import EvolutionSection from '@/components/pokemon/EvolutionSection'

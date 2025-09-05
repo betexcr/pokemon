@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import UserProfile from '@/components/auth/UserProfile';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
+
 interface TeamSlot {
   id: number | null;
   level: number;
