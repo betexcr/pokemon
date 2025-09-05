@@ -959,48 +959,55 @@ export default function ModernPokedexLayout({
                 )}
               </button>
 
-              {/* Mobile Team Builder Button */}
-              <button
-                onClick={() => router.push('/team')}
-                className="md:hidden p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
-                title="Go to Team Builder"
-              >
-                <Users className="h-5 w-5" />
-              </button>
+              {/* Mobile Action Buttons - Only visible on mobile */}
+              {isMobile && (
+                <>
+                  {/* Mobile Team Builder Button */}
+                  <button
+                    onClick={() => router.push('/team')}
+                    className="p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
+                    title="Go to Team Builder"
+                  >
+                    <Users className="h-5 w-5" />
+                  </button>
 
-              {/* Mobile Battle Button */}
-              <button
-                onClick={() => router.push('/battle')}
-                className="md:hidden p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
-                title="Go to AI Battle"
-              >
-                <Swords className="h-5 w-5" />
-              </button>
+                  {/* Mobile Battle Button */}
+                  <button
+                    onClick={() => router.push('/battle')}
+                    className="p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
+                    title="Go to AI Battle"
+                  >
+                    <Swords className="h-5 w-5" />
+                  </button>
 
-              {/* Mobile Comparison Button */}
-              <button
-                onClick={() => router.push('/compare')}
-                className="md:hidden relative p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
-                title="Go to comparison"
-              >
-                <Scale className="h-5 w-5" />
-              </button>
+                  {/* Mobile Comparison Button */}
+                  <button
+                    onClick={() => router.push('/compare')}
+                    className="relative p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
+                    title="Go to comparison"
+                  >
+                    <Scale className="h-5 w-5" />
+                  </button>
+                </>
+              )}
 
             </div>
 
             {/* Mobile Menu Button - Only visible on mobile */}
-            <div className="md:hidden flex items-center">
-              <button
-                type="button"
-                onClick={() => { setShowMobileMenu(prev => !prev) }}
-                className="p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
-                title="Toggle menu"
-                aria-expanded={showMobileMenu}
-                aria-controls={'mobile-drawer'}
-              >
-                <Menu className="h-5 w-5" />
-              </button>
-            </div>
+            {isMobile && (
+              <div className="flex items-center">
+                <button
+                  type="button"
+                  onClick={() => { setShowMobileMenu(prev => !prev) }}
+                  className="p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
+                  title="Toggle menu"
+                  aria-expanded={showMobileMenu}
+                  aria-controls={'mobile-drawer'}
+                >
+                  <Menu className="h-5 w-5" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </header>
@@ -1264,7 +1271,8 @@ export default function ModernPokedexLayout({
       {/* Desktop Menu Drawer disabled: header has inline controls */}
 
       {/* Mobile Search Bar - Only on small screens */}
-      <div className="md:hidden border-b border-border bg-surface">
+      {isMobile && (
+        <div className="border-b border-border bg-surface">
         <div className="w-full px-4 py-3">
           <div className="flex items-center gap-3">
             <div className="relative flex-1">
@@ -1295,7 +1303,8 @@ export default function ModernPokedexLayout({
             <UserProfile />
           </div>
         </div>
-      </div>
+        </div>
+      )}
 
       {/* Enhanced Type Filter Ribbon */}
       <div className="border-b border-border bg-gradient-to-r from-surface via-surface to-surface">
