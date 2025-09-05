@@ -6,6 +6,27 @@ import { useAuth } from '@/contexts/AuthContext';
 import UserProfile from '@/components/auth/UserProfile';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
+interface TeamSlot {
+  id: number | null;
+  level: number;
+  moves: Array<{
+    name: string;
+    type: string;
+    damage_class: "physical" | "special" | "status";
+    power: number | null;
+    accuracy: number | null;
+    pp: number | null;
+    level_learned_at: number | null;
+    short_effect?: string | null;
+  }>;
+}
+
+interface SavedTeam {
+  id: string;
+  name: string;
+  slots: TeamSlot[];
+}
+
 interface RoomPlayer {
   id: string;
   name: string;
@@ -13,6 +34,7 @@ interface RoomPlayer {
   photoURL?: string;
   teamId?: string;
   teamName?: string;
+  selectedTeam?: SavedTeam;
   isReady: boolean;
   joinedAt: Date;
 }
@@ -39,6 +61,21 @@ function RoomPage() {
   const [error, setError] = useState<string | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const [savedTeams, setSavedTeams] = useState<SavedTeam[]>([]);
+  const [showTeamSelector, setShowTeamSelector] = useState(false);
+
+  // Load saved teams
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('pokemon-team-builder');
+      if (raw) {
+        const teams = JSON.parse(raw);
+        setSavedTeams(teams);
+      }
+    } catch (error) {
+      console.error('Failed to load saved teams:', error);
+    }
+  }, []);
 
   // Mock room data - will be replaced with Firebase/Firestore
   useEffect(() => {
@@ -80,8 +117,37 @@ function RoomPage() {
     }
   };
 
+  const selectTeam = (team: SavedTeam) => {
+    if (!room || !user) return;
+    
+    setRoom(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        players: prev.players.map(player => 
+          player.id === user.uid 
+            ? { 
+                ...player, 
+                teamId: team.id,
+                teamName: team.name,
+                selectedTeam: team,
+                isReady: false // Reset ready status when team changes
+              }
+            : player
+        )
+      };
+    });
+    setShowTeamSelector(false);
+  };
+
   const toggleReady = () => {
     if (!room || !user) return;
+    
+    const currentPlayer = room.players.find(p => p.id === user.uid);
+    if (!currentPlayer?.selectedTeam) {
+      alert('Please select a team before marking yourself as ready!');
+      return;
+    }
     
     // TODO: Update ready status in Firestore
     setRoom(prev => {
@@ -127,7 +193,7 @@ function RoomPage() {
   const canStartBattle = room && 
     room.hostId === user?.uid && 
     room.players.length >= 2 && 
-    room.players.every(player => player.isReady) &&
+    room.players.every(player => player.isReady && player.selectedTeam) &&
     room.status === 'waiting';
 
   if (loading) {
@@ -278,6 +344,15 @@ function RoomPage() {
                 </div>
                 
                 <div className="flex items-center space-x-3">
+                  {player.id === user?.uid && (
+                    <button
+                      onClick={() => setShowTeamSelector(true)}
+                      className="px-3 py-1 rounded-lg font-medium transition-colors bg-blue-600 hover:bg-blue-700 text-white text-sm"
+                    >
+                      {player.selectedTeam ? 'Change Team' : 'Select Team'}
+                    </button>
+                  )}
+                  
                   <div className={`px-3 py-1 rounded-full text-sm font-medium ${
                     player.isReady 
                       ? 'bg-green-100 text-green-800' 
@@ -327,6 +402,8 @@ function RoomPage() {
                 <p className="text-gray-600">
                   {room.players.length < 2 
                     ? 'Waiting for more players to join...'
+                    : !room.players.every(player => player.selectedTeam)
+                    ? 'All players must select a team to start the battle'
                     : !room.players.every(player => player.isReady)
                     ? 'All players must be ready to start the battle'
                     : 'Ready to start the battle!'
@@ -341,6 +418,71 @@ function RoomPage() {
               >
                 Start Battle
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Team Selector Modal */}
+        {showTeamSelector && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl shadow-2xl p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-semibold text-gray-900">Select Your Team</h3>
+                <button
+                  onClick={() => setShowTeamSelector(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              {savedTeams.length === 0 ? (
+                <div className="text-center py-8">
+                  <div className="text-gray-400 text-4xl mb-4">⚔️</div>
+                  <h4 className="text-lg font-medium text-gray-900 mb-2">No Teams Found</h4>
+                  <p className="text-gray-600 mb-4">You need to create a team first before joining a battle.</p>
+                  <button
+                    onClick={() => {
+                      setShowTeamSelector(false);
+                      router.push('/team');
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                  >
+                    Create Team
+                  </button>
+                </div>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2">
+                  {savedTeams.map((team) => (
+                    <div
+                      key={team.id}
+                      onClick={() => selectTeam(team)}
+                      className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer hover:border-blue-300"
+                    >
+                      <h4 className="font-medium text-gray-900 mb-2">{team.name}</h4>
+                      <div className="space-y-1">
+                        {team.slots.map((slot, index) => (
+                          <div key={index} className="flex items-center justify-between text-sm">
+                            <span className="text-gray-600">
+                              Slot {index + 1}:
+                            </span>
+                            <span className="text-gray-900">
+                              {slot.id ? `Pokemon #${slot.id} (Lv.${slot.level})` : 'Empty'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-3 pt-3 border-t border-gray-100">
+                        <div className="text-xs text-gray-500">
+                          {team.slots.filter(slot => slot.id !== null).length}/6 Pokemon
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
