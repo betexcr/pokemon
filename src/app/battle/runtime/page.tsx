@@ -18,6 +18,7 @@ import TypeBadge from "@/components/TypeBadge";
 import HealthBar from "@/components/HealthBar";
 import Chat from "@/components/Chat";
 import { ToastContainer, useToast } from "@/components/Toast";
+import { battleService, type MultiplayerBattleState } from '@/lib/battleService';
 import { useAuth } from "@/contexts/AuthContext";
 
 const STORAGE_KEY = "pokemon-team-builder";
@@ -31,7 +32,7 @@ type SavedTeam = {
 function BattleRuntimePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  // const { user } = useAuth();
+  const { user } = useAuth();
   const { toasts, removeToast, showChatNotification } = useToast();
   
   const [battleState, setBattleState] = useState<TeamBattleState | null>(null);
@@ -51,6 +52,8 @@ function BattleRuntimePage() {
   const [showChat, setShowChat] = useState(false);
   const [isMultiplayer, setIsMultiplayer] = useState(false);
   const [roomId, setRoomId] = useState<string | null>(null);
+  const [multiplayerBattle, setMultiplayerBattle] = useState<MultiplayerBattleState | null>(null);
+  const [battleId, setBattleId] = useState<string | null>(null);
 
   const playerTeamId = searchParams.get("player");
   const opponentKind = searchParams.get("opponentKind");
@@ -63,10 +66,39 @@ function BattleRuntimePage() {
     if (multiplayerRoomId) {
       setIsMultiplayer(true);
       setRoomId(multiplayerRoomId);
-      // TODO: Set up real-time battle synchronization
-      console.log('Multiplayer battle initialized for room:', multiplayerRoomId);
+      
+      // Get battle ID from URL params
+      const urlBattleId = searchParams.get("battleId");
+      if (urlBattleId) {
+        setBattleId(urlBattleId);
+        console.log('Multiplayer battle initialized for room:', multiplayerRoomId, 'battle:', urlBattleId);
+      }
     }
-  }, [multiplayerRoomId]);
+  }, [multiplayerRoomId, searchParams]);
+
+  // Listen to multiplayer battle changes
+  useEffect(() => {
+    if (!battleId || !isMultiplayer) return;
+
+    const unsubscribe = battleService.onBattleChange(battleId, (battle) => {
+      if (battle) {
+        setMultiplayerBattle(battle);
+        
+        // If battle data exists, update the local battle state
+        if (battle.battleData && battle.status === 'active') {
+          setBattleState(battle.battleData);
+        }
+        
+        // If battle is completed, handle end
+        if (battle.status === 'completed') {
+          console.log('Battle completed! Winner:', battle.winner);
+          // TODO: Show battle results
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, [battleId, isMultiplayer]);
 
   // Handle chat notifications
   // const handleChatNotification = useCallback((message: string) => {
@@ -184,6 +216,31 @@ function BattleRuntimePage() {
       setLoading(true);
       setError(null);
 
+      // Handle multiplayer battles
+      if (isMultiplayer && multiplayerBattle) {
+        console.log('Initializing multiplayer battle...');
+        
+        // Get team data from multiplayer battle
+        const isHost = user?.uid === multiplayerBattle.hostId;
+        const playerTeam = isHost ? multiplayerBattle.hostTeam : multiplayerBattle.guestTeam;
+        const opponentTeam = isHost ? multiplayerBattle.guestTeam : multiplayerBattle.hostTeam;
+        
+        if (!playerTeam || !opponentTeam) {
+          throw new Error("Team data not available for multiplayer battle");
+        }
+        
+        // Initialize battle with multiplayer teams
+        const battleState = await initializeTeamBattle(playerTeam, opponentTeam);
+        setBattleState(battleState);
+        
+        // Start the battle in Firestore
+        await battleService.startBattle(battleId!, battleState);
+        
+        setLoading(false);
+        return;
+      }
+
+      // Single player battle logic
       if (!playerTeamId || !opponentKind || !opponentId) {
         throw new Error("Missing battle parameters");
       }
@@ -569,35 +626,74 @@ function BattleRuntimePage() {
     initializeBattleState();
     
     return () => clearTimeout(timeoutId);
-  }, [initializeBattleState, loading]);
+  }, [initializeBattleState, loading, isMultiplayer, multiplayerBattle, battleId, user]);
 
   const handlePlayerMove = async (moveIndex: number) => {
     if (!battleState || battleState.turn !== 'player' || battleState.isComplete) return;
 
     setSelectedMove(moveIndex);
     
-    // Execute player move
-    const newState = await executeTeamAction(battleState, { type: 'move', moveIndex });
-    setBattleState(newState);
+    if (isMultiplayer && battleId && multiplayerBattle) {
+      // Multiplayer mode - sync move with other player
+      try {
+        const currentPokemon = getCurrentPokemon(battleState.player);
+        const moveName = currentPokemon.moves[moveIndex]?.name || 'Unknown Move';
+        
+        // Add move to battle service
+        await battleService.addMove(
+          battleId,
+          user?.uid || '',
+          user?.displayName || 'Anonymous',
+          moveIndex,
+          moveName
+        );
+        
+        // Execute move locally
+        const newState = await executeTeamAction(battleState, { type: 'move', moveIndex });
+        setBattleState(newState);
+        
+        // Update battle data in Firestore
+        await battleService.updateBattle(battleId, {
+          battleData: newState
+        });
+        
+        if (newState.isComplete) {
+          // Battle is complete
+          await battleService.endBattle(battleId, newState.winner || 'draw', newState);
+          setSelectedMove(null);
+          return;
+        }
+        
+      } catch (error) {
+        console.error('Failed to sync move:', error);
+        alert('Failed to sync move with opponent. Please try again.');
+      } finally {
+        setSelectedMove(null);
+      }
+    } else {
+      // Single player mode - original AI logic
+      const newState = await executeTeamAction(battleState, { type: 'move', moveIndex });
+      setBattleState(newState);
 
-    if (newState.isComplete) {
-      setSelectedMove(null);
-      return;
-    }
+      if (newState.isComplete) {
+        setSelectedMove(null);
+        return;
+      }
 
-    // AI turn
-    setIsAITurn(true);
-    try {
-      // For now, use a simple AI move selection
-      const currentOpponent = getCurrentPokemon(newState.opponent);
-      const aiMoveIndex = Math.floor(Math.random() * currentOpponent.moves.length);
-      const finalState = await executeTeamAction(newState, { type: 'move', moveIndex: aiMoveIndex });
-      setBattleState(finalState);
-    } catch (err) {
-      console.error("AI move failed:", err);
-    } finally {
-      setIsAITurn(false);
-      setSelectedMove(null);
+      // AI turn
+      setIsAITurn(true);
+      try {
+        // For now, use a simple AI move selection
+        const currentOpponent = getCurrentPokemon(newState.opponent);
+        const aiMoveIndex = Math.floor(Math.random() * currentOpponent.moves.length);
+        const finalState = await executeTeamAction(newState, { type: 'move', moveIndex: aiMoveIndex });
+        setBattleState(finalState);
+      } catch (err) {
+        console.error("AI move failed:", err);
+      } finally {
+        setIsAITurn(false);
+        setSelectedMove(null);
+      }
     }
   };
 
@@ -692,7 +788,19 @@ function BattleRuntimePage() {
               </span>
             ) : (
               <span className={turn === 'player' ? 'text-blue-500' : 'text-red-500'}>
-                {turn === 'player' ? 'Your Turn' : 'Opponent\'s Turn'}
+                {isMultiplayer && multiplayerBattle ? (
+                  turn === 'player' ? (
+                    user?.uid === (multiplayerBattle.currentTurn === 'host' ? multiplayerBattle.hostId : multiplayerBattle.guestId) 
+                      ? 'Your Turn' 
+                      : `${multiplayerBattle.currentTurn === 'host' ? multiplayerBattle.hostName : multiplayerBattle.guestName}'s Turn`
+                  ) : (
+                    user?.uid === (multiplayerBattle.currentTurn === 'host' ? multiplayerBattle.hostId : multiplayerBattle.guestId) 
+                      ? 'Your Turn' 
+                      : `${multiplayerBattle.currentTurn === 'host' ? multiplayerBattle.hostName : multiplayerBattle.guestName}'s Turn`
+                  )
+                ) : (
+                  turn === 'player' ? 'Your Turn' : 'Opponent\'s Turn'
+                )}
               </span>
             )}
           </h1>
@@ -845,12 +953,12 @@ function BattleRuntimePage() {
                 <button
                   key={index}
                   onClick={() => handlePlayerMove(index)}
-                  disabled={isAITurn}
+                  disabled={isAITurn || (isMultiplayer && multiplayerBattle && user?.uid !== (multiplayerBattle.currentTurn === 'host' ? multiplayerBattle.hostId : multiplayerBattle.guestId))}
                   className={`p-3 rounded-lg border text-left transition-colors ${
                     selectedMove === index
                       ? 'border-poke-blue bg-blue-50'
                       : 'border-border hover:border-poke-blue hover:bg-blue-50'
-                  } ${isAITurn ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  } ${(isAITurn || (isMultiplayer && multiplayerBattle && user?.uid !== (multiplayerBattle.currentTurn === 'host' ? multiplayerBattle.hostId : multiplayerBattle.guestId))) ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   <div className="font-medium capitalize">{move.name}</div>
                   <div className="text-sm text-muted">
