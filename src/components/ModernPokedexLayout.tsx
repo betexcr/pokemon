@@ -962,7 +962,7 @@ export default function ModernPokedexLayout({
               {/* Mobile Team Builder Button */}
               <button
                 onClick={() => router.push('/team')}
-                className="lg:hidden p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
+                className="md:hidden p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
                 title="Go to Team Builder"
               >
                 <Users className="h-5 w-5" />
@@ -971,7 +971,7 @@ export default function ModernPokedexLayout({
               {/* Mobile Battle Button */}
               <button
                 onClick={() => router.push('/battle')}
-                className="lg:hidden p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
+                className="md:hidden p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
                 title="Go to AI Battle"
               >
                 <Swords className="h-5 w-5" />
@@ -980,7 +980,7 @@ export default function ModernPokedexLayout({
               {/* Mobile Comparison Button */}
               <button
                 onClick={() => router.push('/compare')}
-                className="lg:hidden relative p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
+                className="md:hidden relative p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
                 title="Go to comparison"
               >
                 <Scale className="h-5 w-5" />
@@ -1371,7 +1371,7 @@ export default function ModernPokedexLayout({
                 <h2 className="text-lg font-semibold">Advanced Filters</h2>
                 <button
                   onClick={() => setShowSidebar(false)}
-                  className="lg:hidden p-1 rounded hover:bg-white/50"
+                  className="md:hidden p-1 rounded hover:bg-white/50"
                 >
                   <X className="h-5 w-5" />
                 </button>
@@ -1655,7 +1655,7 @@ export default function ModernPokedexLayout({
 
       {/* Mobile Filter Overlay */}
       {showSidebar && (
-        <div className="lg:hidden fixed inset-0 bg-black/50 z-50" onClick={() => setShowSidebar(false)}>
+        <div className="md:hidden fixed inset-0 bg-black/50 z-50" onClick={() => setShowSidebar(false)}>
           <div className="absolute right-0 top-0 h-full w-80 bg-surface overflow-hidden" onClick={e => e.stopPropagation()}>
             <div className="h-full flex flex-col">
               {/* Mobile Header - Fixed */}
