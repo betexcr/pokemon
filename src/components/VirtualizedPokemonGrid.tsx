@@ -47,8 +47,8 @@ export default function VirtualizedPokemonGrid({
   }
 
   return (
-    <div className={`${className}`}>
-      <div className={getLayoutClasses()} data-pokemon-grid>
+    <div className={`w-full max-w-full ${className}`}>
+      <div className={`${getLayoutClasses()} w-full max-w-full`} data-pokemon-grid>
         {pokemonList.map((pokemon) => (
           <ModernPokemonCard
             key={pokemon.id}
