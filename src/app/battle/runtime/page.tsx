@@ -229,8 +229,11 @@ function BattleRuntimePage() {
           throw new Error("Team data not available for multiplayer battle");
         }
         
-        // Initialize battle with multiplayer teams
-        const battleState = await initializeTeamBattle(playerTeam, opponentTeam);
+        // Initialize battle with multiplayer teams (cast to proper team format)
+        const battleState = await initializeTeamBattle(
+          playerTeam as SavedTeam, 
+          opponentTeam as SavedTeam
+        );
         setBattleState(battleState);
         
         // Start the battle in Firestore
