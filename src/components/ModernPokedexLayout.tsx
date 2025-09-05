@@ -588,42 +588,59 @@ export default function ModernPokedexLayout({
       pokemonGrid.appendChild(sentinel);
     }
 
-    // Check if user is already at bottom when sentinel is added
+    // Enhanced bottom detection with scroll listener
     const checkIfAtBottom = () => {
       const pokemonGrid = document.querySelector('[data-pokemon-grid]');
-      if (!pokemonGrid) return;
+      if (!pokemonGrid) return false;
       
       const container = pokemonGrid.closest('.overflow-y-auto');
-      if (!container) return;
+      if (!container) return false;
       
       const scrollTop = container.scrollTop;
       const containerHeight = container.clientHeight;
       const scrollHeight = container.scrollHeight;
       
-      // If user is within 50px of bottom, trigger load
-      if (scrollHeight - scrollTop - containerHeight < 50 && !isLoadingMore && hasMorePokemon) {
-        console.log('User already at bottom, loading more Pokémon...');
+      // If user is within 100px of bottom, consider them at bottom
+      return scrollHeight - scrollTop - containerHeight < 100;
+    };
+
+    // Function to handle loading when at bottom
+    const handleBottomReached = () => {
+      if (checkIfAtBottom() && !isLoadingMore && hasMorePokemon) {
+        console.log('User at bottom, loading more Pokémon...');
         loadMorePokemon();
       }
     };
 
     // Check immediately when sentinel is added
-    setTimeout(checkIfAtBottom, 100);
+    setTimeout(handleBottomReached, 100);
 
-    // Intersection Observer to detect when sentinel comes into view
+    // Add scroll listener to inner container for continuous monitoring
     const scrollContainer = pokemonGrid?.closest('.overflow-y-auto');
+    let scrollTimeout: NodeJS.Timeout;
     
+    const handleScroll = () => {
+      // Debounce scroll events
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(handleBottomReached, 50);
+    };
+
+    if (scrollContainer) {
+      scrollContainer.addEventListener('scroll', handleScroll);
+    }
+
+    // Intersection Observer as backup
     const observer = new IntersectionObserver(
       (entries) => {
         const [entry] = entries;
         if (entry.isIntersecting && !isLoadingMore && hasMorePokemon) {
-          console.log('Bottom of list reached, loading more Pokémon...');
+          console.log('Sentinel visible, loading more Pokémon...');
           loadMorePokemon();
         }
       },
       {
-        root: scrollContainer, // Use inner container as root instead of viewport
-        rootMargin: '200px', // Increased from 100px to trigger earlier
+        root: scrollContainer,
+        rootMargin: '200px',
         threshold: 0.1
       }
     );
@@ -632,6 +649,10 @@ export default function ModernPokedexLayout({
 
     return () => {
       observer.disconnect();
+      if (scrollContainer) {
+        scrollContainer.removeEventListener('scroll', handleScroll);
+      }
+      clearTimeout(scrollTimeout);
       if (sentinel.parentNode) {
         sentinel.parentNode.removeChild(sentinel);
       }
