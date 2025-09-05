@@ -7,6 +7,7 @@ import { GYM_CHAMPIONS, Champion } from "@/lib/gym_champions";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import UserProfile from "@/components/auth/UserProfile";
 import TrainerRoster from "@/components/battle/TrainerRoster";
+import TeamSelector from "@/components/TeamSelector";
 
 // Saved teams storage key reused from team builder
 const STORAGE_KEY = "pokemon-team-builder";
@@ -16,10 +17,10 @@ type SavedTeam = { id: string; name: string; slots: Array<{ id: number | null; l
 function BattlePage() {
   const router = useRouter();
   const [savedTeams, setSavedTeams] = useState<SavedTeam[]>([]);
-  const [playerTeamId, setPlayerTeamId] = useState<string>("");
+  const [selectedPlayerTeam, setSelectedPlayerTeam] = useState<SavedTeam | null>(null);
+  const [selectedOpponentTeam, setSelectedOpponentTeam] = useState<SavedTeam | null>(null);
   const [opponentType, setOpponentType] = useState<"champion" | "team">("champion");
   const [opponentChampionId, setOpponentChampionId] = useState<string>(GYM_CHAMPIONS[0]?.id ?? "");
-  const [opponentTeamId, setOpponentTeamId] = useState<string>("");
   const [generationFilter, setGenerationFilter] = useState<string>("");
 
   useEffect(() => {
@@ -32,9 +33,8 @@ function BattlePage() {
   const playerTeamsOptions = useMemo(() => savedTeams.map(t => ({ id: t.id, name: t.name })), [savedTeams]);
 
   const startBattle = () => {
-    if (!playerTeamId) return alert("Select your team");
+    if (!selectedPlayerTeam) return alert("Select your team");
 
-    const player = savedTeams.find(t => t.id === playerTeamId);
     let opponent: { name: string; slots: Array<{ id: number; level: number }> } | undefined;
 
     if (opponentType === "champion") {
@@ -42,21 +42,20 @@ function BattlePage() {
       if (!champ) return alert("Select a champion");
       opponent = champ.team;
     } else {
-      const team = savedTeams.find(t => t.id === opponentTeamId);
-      if (!team) return alert("Select opponent team");
+      if (!selectedOpponentTeam) return alert("Select opponent team");
       opponent = {
-        name: team.name,
-        slots: team.slots.filter(s => s.id != null).map(s => ({ id: s.id as number, level: s.level }))
+        name: selectedOpponentTeam.name,
+        slots: selectedOpponentTeam.slots.filter(s => s.id != null).map(s => ({ id: s.id as number, level: s.level }))
       };
     }
 
-    if (!player || !opponent) return;
+    if (!selectedPlayerTeam || !opponent) return;
 
     // Navigate to a future battle runtime route with encoded settings
     const params = new URLSearchParams({
-      player: player.id,
+      player: selectedPlayerTeam.id,
       opponentKind: opponentType,
-      opponentId: opponentType === "champion" ? opponentChampionId : (opponentTeamId || ""),
+      opponentId: opponentType === "champion" ? opponentChampionId : (selectedOpponentTeam?.id || ""),
     });
     router.push(`/battle/runtime?${params.toString()}`);
   };
@@ -99,20 +98,12 @@ function BattlePage() {
         {/* Player team selection */}
         <section className="border border-border rounded-xl bg-surface p-4">
           <h2 className="text-lg font-semibold mb-3">Your Team</h2>
-          {playerTeamsOptions.length === 0 ? (
-            <div className="text-sm text-muted">No saved teams. Create one in Team Builder.</div>
-          ) : (
-            <select
-              className="w-full px-3 py-2 border border-border rounded-lg bg-white"
-              value={playerTeamId}
-              onChange={(e)=> setPlayerTeamId(e.target.value)}
-            >
-              <option value="">Select a team…</option>
-              {playerTeamsOptions.map(t => (
-                <option key={t.id} value={t.id}>{t.name}</option>
-              ))}
-            </select>
-          )}
+          <TeamSelector
+            selectedTeamId={selectedPlayerTeam?.id}
+            onTeamSelect={setSelectedPlayerTeam}
+            label="Select Your Team"
+            showStorageIndicator={true}
+          />
         </section>
 
         {/* Opponent selection */}
@@ -141,25 +132,25 @@ function BattlePage() {
               onGenerationFilterChange={setGenerationFilter}
             />
           ) : (
-            <select
-              className="w-full px-3 py-2 border border-border rounded-lg bg-white"
-              value={opponentTeamId}
-              onChange={(e)=> setOpponentTeamId(e.target.value)}
-            >
-              <option value="">Select an opponent team…</option>
-              {savedTeams.map(t => (
-                <option key={t.id} value={t.id}>{t.name}</option>
-              ))}
-            </select>
+            <TeamSelector
+              selectedTeamId={selectedOpponentTeam?.id}
+              onTeamSelect={setSelectedOpponentTeam}
+              label="Select Opponent Team"
+              showStorageIndicator={true}
+            />
           )}
         </section>
 
         <div className="flex justify-end">
           <button
             onClick={startBattle}
-            className="px-4 py-2 rounded-lg bg-poke-blue text-white hover:bg-poke-blue/90"
+            disabled={!selectedPlayerTeam || (opponentType === "champion" && !opponentChampionId) || (opponentType === "team" && !selectedOpponentTeam)}
+            className="px-4 py-2 rounded-lg bg-poke-blue text-white hover:bg-poke-blue/90 disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
-            Start Battle
+            {!selectedPlayerTeam ? "Select Your Team" : 
+             opponentType === "champion" && !opponentChampionId ? "Select Champion" :
+             opponentType === "team" && !selectedOpponentTeam ? "Select Opponent Team" :
+             "Start Battle"}
           </button>
         </div>
       </main>
@@ -167,10 +158,6 @@ function BattlePage() {
   );
 }
 
-export default function ProtectedBattlePage() {
-  return (
-    <ProtectedRoute>
-      <BattlePage />
-    </ProtectedRoute>
-  );
+export default function BattlePageWrapper() {
+  return <BattlePage />;
 }

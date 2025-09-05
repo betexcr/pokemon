@@ -3,45 +3,74 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { getUserTeams, type SavedTeam } from '@/lib/userTeams';
-import { ChevronDown, Users, Check } from 'lucide-react';
+import { ChevronDown, Users, Check, Cloud, CloudOff } from 'lucide-react';
+
+// Local storage team type (simpler version)
+interface LocalTeam {
+  id: string;
+  name: string;
+  slots: Array<{ id: number | null; level: number; moves: unknown[] }>;
+}
 
 interface TeamSelectorProps {
   selectedTeamId?: string;
-  onTeamSelect: (team: SavedTeam | null) => void;
+  onTeamSelect: (team: SavedTeam | LocalTeam | null) => void;
   disabled?: boolean;
   label?: string;
+  showStorageIndicator?: boolean;
 }
+
+const STORAGE_KEY = 'pokemon-team-builder';
 
 export default function TeamSelector({ 
   selectedTeamId, 
   onTeamSelect, 
   disabled = false,
-  label = "Select Team"
+  label = "Select Team",
+  showStorageIndicator = true
 }: TeamSelectorProps) {
   const { user } = useAuth();
-  const [teams, setTeams] = useState<SavedTeam[]>([]);
+  const [teams, setTeams] = useState<(SavedTeam | LocalTeam)[]>([]);
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedTeam, setSelectedTeam] = useState<SavedTeam | null>(null);
+  const [selectedTeam, setSelectedTeam] = useState<SavedTeam | LocalTeam | null>(null);
+  const [isUsingLocalStorage, setIsUsingLocalStorage] = useState(false);
 
   useEffect(() => {
     const loadTeams = async () => {
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-
       try {
-        const userTeams = await getUserTeams(user.uid);
-        setTeams(userTeams);
-        
-        // Set selected team if teamId is provided
-        if (selectedTeamId) {
-          const team = userTeams.find(t => t.id === selectedTeamId);
-          setSelectedTeam(team || null);
+        if (user) {
+          // Load from Firebase for authenticated users
+          const userTeams = await getUserTeams(user.uid);
+          setTeams(userTeams);
+          setIsUsingLocalStorage(false);
+          
+          // Set selected team if teamId is provided
+          if (selectedTeamId) {
+            const team = userTeams.find(t => t.id === selectedTeamId);
+            setSelectedTeam(team || null);
+          }
+        } else {
+          // Load from local storage for non-authenticated users
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) {
+            const localTeams: LocalTeam[] = JSON.parse(raw);
+            setTeams(localTeams);
+            setIsUsingLocalStorage(true);
+            
+            // Set selected team if teamId is provided
+            if (selectedTeamId) {
+              const team = localTeams.find(t => t.id === selectedTeamId);
+              setSelectedTeam(team || null);
+            }
+          } else {
+            setTeams([]);
+            setIsUsingLocalStorage(true);
+          }
         }
       } catch (error) {
         console.error('Failed to load teams:', error);
+        setTeams([]);
       } finally {
         setLoading(false);
       }
@@ -50,7 +79,7 @@ export default function TeamSelector({
     loadTeams();
   }, [user, selectedTeamId]);
 
-  const handleTeamSelect = (team: SavedTeam) => {
+  const handleTeamSelect = (team: SavedTeam | LocalTeam) => {
     setSelectedTeam(team);
     onTeamSelect(team);
     setIsOpen(false);
@@ -78,14 +107,14 @@ export default function TeamSelector({
     );
   }
 
-  if (!user) {
+  if (!user && teams.length === 0) {
     return (
       <div className="w-full">
         <label className="block text-sm font-medium text-gray-700 mb-2">
           {label}
         </label>
         <div className="border border-gray-300 rounded-lg p-3 bg-gray-50 text-gray-500 text-sm">
-          Sign in to select a team
+          No teams saved. <a href="/team" className="text-blue-600 hover:underline">Create a team</a> or <a href="/auth" className="text-blue-600 hover:underline">sign in</a> to access cloud teams.
         </div>
       </div>
     );
@@ -106,9 +135,26 @@ export default function TeamSelector({
 
   return (
     <div className="w-full">
-      <label className="block text-sm font-medium text-gray-700 mb-2">
-        {label}
-      </label>
+      <div className="flex items-center justify-between mb-2">
+        <label className="block text-sm font-medium text-gray-700">
+          {label}
+        </label>
+        {showStorageIndicator && (
+          <div className="flex items-center space-x-1 text-xs">
+            {isUsingLocalStorage ? (
+              <>
+                <CloudOff className="h-3 w-3 text-orange-500" />
+                <span className="text-orange-600">Local</span>
+              </>
+            ) : (
+              <>
+                <Cloud className="h-3 w-3 text-blue-500" />
+                <span className="text-blue-600">Cloud</span>
+              </>
+            )}
+          </div>
+        )}
+      </div>
       
       <div className="relative">
         <button
@@ -169,7 +215,7 @@ export default function TeamSelector({
             <div className="text-blue-700">
               {selectedTeam.slots.filter(slot => slot.id).length} Pokémon selected
             </div>
-            {selectedTeam.description && (
+            {'description' in selectedTeam && selectedTeam.description && (
               <div className="text-blue-600 text-xs mt-1">{selectedTeam.description}</div>
             )}
           </div>
