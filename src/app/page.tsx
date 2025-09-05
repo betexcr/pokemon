@@ -3,21 +3,16 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Pokemon, FilterState } from '@/types/pokemon'
-import { getPokemonByType, getPokemonWithPagination } from '@/lib/api'
-import { formatPokemonName, typeColors, cn } from '@/lib/utils'
+import { getPokemonWithPagination } from '@/lib/api'
+import { } from '@/lib/utils'
 import ThemeToggle from '@/components/ThemeToggle'
 import { useTheme } from '@/components/ThemeProvider'
 import RedPokedexLayout from '@/components/RedPokedexLayout'
 import GoldPokedexLayout from '@/components/GoldPokedexLayout'
 import RubyPokedexLayout from '@/components/RubyPokedexLayout'
 import ModernPokedexLayout from '@/components/ModernPokedexLayout'
-import PokemonComparison from '@/components/PokemonComparison'
 import ComparisonOverlay from '@/components/ComparisonOverlay'
-
-import VirtualizedPokemonGrid from '@/components/VirtualizedPokemonGrid'
-import ViewTransition from '@/components/ViewTransition'
-import { useSearch } from '@/hooks/useSearch'
-import { Search, Zap, X, Users } from 'lucide-react'
+import { Zap, Users } from 'lucide-react'
 import MobileHeader from '@/components/MobileHeader'
 
 export default function Home() {
@@ -38,19 +33,6 @@ export default function Home() {
 
   const [comparisonList, setComparisonList] = useState<number[]>([])
   const [selectedPokemon, setSelectedPokemon] = useState<Pokemon | null>(null)
-  const [typeLoading, setTypeLoading] = useState(false)
-
-  // Enhanced search hook with caching, debouncing, and throttling
-  const {
-    results: searchResults,
-    isLoading: searchLoading,
-    handleSearchChange,
-    clearSearch
-  } = useSearch({
-    debounceMs: 300,
-    cacheTtl: 5 * 60 * 1000, // 5 minutes
-    throttleMs: 100
-  })
 
   const [filters, setFilters] = useState<FilterState>({
     search: '',
@@ -147,108 +129,11 @@ export default function Home() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [loadMorePokemon])
 
-  // Handle search changes
-  useEffect(() => {
-    handleSearchChange(filters.search)
-  }, [filters.search]) // Remove handleSearchChange dependency to prevent infinite loop
-
-
   // Memoize filtered Pokémon to prevent unnecessary re-renders and improve performance
   const memoizedFilteredPokemon = useMemo(() => {
-    // Only apply search results if there's an actual search term
-    if (filters.search.trim() && searchResults.length > 0) {
-      return searchResults
-    } else if (filters.search.trim() && searchResults.length === 0) {
-      // Search term exists but no results found
-      return []
-    } else {
-      // No search term, show all Pokémon
-      return pokemonList
-    }
-  }, [searchResults, pokemonList, filters.search])
+    return pokemonList
+  }, [pokemonList])
 
-  // Handle type filter changes
-  const handleTypeFilter = useCallback(async (type: string) => {
-    if (filters.types.includes(type)) {
-      // Remove type filter
-      const newTypes = filters.types.filter(t => t !== type)
-      setFilters(prev => ({ ...prev, types: newTypes }))
-      
-      if (newTypes.length === 0) {
-        // No type filters, show all Pokémon
-        // Reset to initial data and pagination
-        loadInitialData()
-        setCurrentOffset(30)
-        setHasMore(true)
-        currentOffsetRef.current = 30
-        hasMoreRef.current = true
-      } else {
-        // Still have other type filters, fetch those types with AND logic
-        setTypeLoading(true)
-        try {
-          const typePokemon = await Promise.all(
-            newTypes.map(t => getPokemonByType(t))
-          )
-          // Find Pokémon that appear in ALL selected types (AND logic)
-          const pokemonCounts = new Map<number, number>()
-          typePokemon.forEach(pokemonList => {
-            pokemonList.forEach(pokemon => {
-              pokemonCounts.set(pokemon.id, (pokemonCounts.get(pokemon.id) || 0) + 1)
-            })
-          })
-          
-          // Only include Pokémon that appear in all selected types
-          const allTypePokemon = typePokemon.flat()
-          const uniquePokemon = allTypePokemon.filter((pokemon, index, self) => {
-            const isFirstOccurrence = index === self.findIndex(p => p.id === pokemon.id)
-            if (!isFirstOccurrence) return false
-            return pokemonCounts.get(pokemon.id) === newTypes.length
-          })
-          // uniquePokemon will be handled by memoizedFilteredPokemon
-        } catch (err) {
-          console.error('Type filter error:', err)
-        } finally {
-          setTypeLoading(false)
-        }
-      }
-    } else {
-      // Add type filter
-      const newTypes = [...filters.types, type]
-      setFilters(prev => ({ ...prev, types: newTypes }))
-      
-      setTypeLoading(true)
-      try {
-        const typePokemon = await Promise.all(
-          newTypes.map(t => getPokemonByType(t))
-        )
-        // Find Pokémon that appear in ALL selected types (AND logic)
-        const pokemonCounts = new Map<number, number>()
-        typePokemon.forEach(pokemonList => {
-          pokemonList.forEach(pokemon => {
-            pokemonCounts.set(pokemon.id, (pokemonCounts.get(pokemon.id) || 0) + 1)
-          })
-        })
-        
-        // Only include Pokémon that appear in all selected types
-        const allTypePokemon = typePokemon.flat()
-        const uniquePokemon = allTypePokemon.filter((pokemon, index, self) => {
-          const isFirstOccurrence = index === self.findIndex(p => p.id === pokemon.id)
-          if (!isFirstOccurrence) return false
-          return pokemonCounts.get(pokemon.id) === newTypes.length
-        })
-        // uniquePokemon will be handled by memoizedFilteredPokemon
-        // Reset pagination state when filtering by type
-        setCurrentOffset(0)
-        setHasMore(false)
-        currentOffsetRef.current = 0
-        hasMoreRef.current = false
-      } catch (err) {
-        console.error('Type filter error:', err)
-      } finally {
-        setTypeLoading(false)
-      }
-    }
-  }, [filters.types, pokemonList])
 
   // Sort Pokémon using memoized filtered Pokémon for better performance
   const sortedPokemon = [...memoizedFilteredPokemon].sort((a, b) => {
@@ -492,176 +377,6 @@ export default function Home() {
           </div>
         </header>
       </div>
-
-      {/* Search and Filters */}
-      <div className={`border-b border-border ${
-        theme === 'gold' ? 'bg-gold-gradient'
-        : theme === 'green' ? 'bg-green-gradient'
-        : theme === 'red' ? 'bg-red-gradient'
-        : theme === 'ruby' ? 'bg-ruby-gradient'
-        : 'bg-surface'
-      }`}>
-        <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-4 overflow-hidden">
-          <div className="flex flex-col sm:flex-row gap-4">
-            {/* Search */}
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted" />
-              <input
-                type="text"
-                placeholder="Search Pokémon by name or ID..."
-                value={filters.search}
-                onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-                className={`w-full pl-10 pr-10 py-2 border border-border rounded-lg focus:ring-2 focus:ring-poke-blue focus:border-transparent bg-surface text-text transition-all duration-200 ${
-                  theme === 'gold' ? 'font-retro'
-                  : theme === 'green' ? 'font-gameboy'
-                  : theme === 'red' ? 'font-retro'
-                  : theme === 'ruby' ? 'font-retro'
-                  : ''
-                }`}
-              />
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
-                {searchLoading && (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-poke-blue"></div>
-                )}
-                {filters.search && (
-                  <button
-                    onClick={() => {
-                      setFilters(prev => ({ ...prev, search: '' }))
-                      clearSearch()
-                    }}
-                    className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    <X className="h-4 w-4 text-muted" />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Type Filters */}
-            <div className="flex flex-wrap gap-1 sm:gap-2 overflow-hidden w-full">
-              {Object.keys(typeColors).slice(0, 8).map(type => (
-                <button
-                  key={type}
-                  onClick={() => handleTypeFilter(type)}
-                  disabled={typeLoading}
-                  className={cn(
-                    'px-1.5 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium border transition-colors whitespace-nowrap flex-shrink-0',
-                    filters.types.includes(type)
-                      ? `${typeColors[type].bg} ${typeColors[type].text} ${typeColors[type].border}`
-                      : 'bg-surface text-muted border-border hover:bg-white/50 dark:hover:bg-white/10',
-                    typeLoading && 'opacity-50 cursor-not-allowed'
-                  )}
-                >
-                  <span className="truncate">{formatPokemonName(type)}</span>
-                  {typeLoading && filters.types.includes(type) && (
-                    <div className="inline-block ml-1 sm:ml-2 animate-spin rounded-full h-3 w-3 border-b-2 border-current"></div>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <main className="w-full max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-8 overflow-hidden">
-        {/* Results Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-            <h2 className={`text-lg sm:text-xl font-semibold ${
-              theme === 'gold' ? 'font-retro text-gold-accent'
-              : theme === 'green' ? 'font-gameboy text-green-accent'
-              : theme === 'red' ? 'font-retro text-red-accent'
-              : theme === 'ruby' ? 'font-retro text-ruby-accent'
-              : 'text-text'
-            }`}>
-              {sortedPokemon.length} Pokémon found
-            </h2>
-            {filters.search && (
-              <span className="text-sm text-muted">
-                for &quot;{filters.search}&quot;
-              </span>
-            )}
-            {(searchLoading || typeLoading) && (
-              <div className="flex items-center space-x-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-poke-blue"></div>
-                <span className="text-sm text-muted">Loading...</span>
-              </div>
-            )}
-          </div>
-
-          {/* Sort Controls */}
-          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-            <PokemonComparison pokemonList={sortedPokemon} />
-            
-            <select
-              value={filters.sortBy}
-              onChange={(e) => setFilters(prev => ({ ...prev, sortBy: e.target.value as 'id' | 'name' | 'height' | 'weight' }))}
-              className={`px-2 sm:px-3 py-1 border border-border rounded-lg bg-surface text-text text-sm ${
-                theme === 'gold' ? 'font-retro'
-                : theme === 'green' ? 'font-gameboy'
-                : theme === 'red' ? 'font-retro'
-                : theme === 'ruby' ? 'font-retro'
-                : ''
-              }`}
-            >
-              <option value="id">ID</option>
-              <option value="name">Name</option>
-              <option value="height">Height</option>
-              <option value="weight">Weight</option>
-            </select>
-            <button
-              onClick={() => setFilters(prev => ({ 
-                ...prev, 
-                sortOrder: prev.sortOrder === 'asc' ? 'desc' : 'asc' 
-              }))}
-              className={`p-2 rounded-lg transition-colors ${
-                theme === 'gold' 
-                  ? 'hover:bg-gold-accent/20 text-gold-accent'
-                  : theme === 'green'
-                  ? 'hover:bg-gold-accent/20 text-gold-accent'
-                  : theme === 'red'
-                  ? 'hover:bg-red-accent/20 text-red-accent'
-                  : theme === 'ruby'
-                  ? 'hover:bg-ruby-accent/20 text-ruby-accent'
-                  : 'hover:bg-white/50 text-muted hover:text-text'
-              }`}
-            >
-              {filters.sortOrder === 'asc' ? '↑' : '↓'}
-            </button>
-          </div>
-        </div>
-
-        {/* Pokémon Grid */}
-        <div className="w-full overflow-hidden">
-          <ViewTransition transitionName="pokemon-grid">
-            <VirtualizedPokemonGrid
-              pokemonList={sortedPokemon}
-              onToggleComparison={toggleComparison}
-              onSelectPokemon={setSelectedPokemon}
-              selectedPokemon={selectedPokemon}
-              comparisonList={comparisonList}
-              density={density}
-              isLoading={loadingMore}
-            />
-          </ViewTransition>
-        </div>
-
-        {/* No Results */}
-        {sortedPokemon.length === 0 && !searchLoading && !typeLoading && (
-          <div className="text-center py-12">
-            <p className="text-muted text-lg">No Pokémon found matching your criteria.</p>
-            <button
-              onClick={() => {
-                setFilters({ search: '', types: [], generation: '', sortBy: 'id', sortOrder: 'asc' })
-              }}
-              className="mt-4 px-4 py-2 bg-poke-blue text-white rounded-lg hover:bg-poke-blue/90"
-            >
-              Clear Filters
-            </button>
-        </div>
-        )}
-      </main>
 
       {/* Comparison Overlay */}
       <ComparisonOverlay
