@@ -11,6 +11,7 @@ import {
   ArrowLeft,
   Scale
 } from 'lucide-react'
+
 import Link from 'next/link'
 import { getPokemon, getPokemonSpecies, getEvolutionChain, getMove, getAbility } from '@/lib/api'
 import { formatPokemonName, formatPokemonNumber, cn } from '@/lib/utils'
