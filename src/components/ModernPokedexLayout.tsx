@@ -305,8 +305,18 @@ export default function ModernPokedexLayout({
         } else if (advancedFilters.generation === '') {
           // "All Generations" selected - use infinite scrolling
           setIsAllGenerations(true)
-          if (allGenerationsPokemon.length === 0) {
-            // Load initial batch
+          
+          // If legendary/mythical filters are active, we need to load all Pokémon
+          // to ensure we don't miss any that match the criteria
+          if (advancedFilters.legendary || advancedFilters.mythical) {
+            // Load all Pokémon for legendary/mythical filtering
+            const allPokemon = await getPokemonWithPagination(1000, 0) // Load a large batch
+            setAllGenerationsPokemon(allPokemon)
+            setCurrentOffset(allPokemon.length)
+            setHasMorePokemon(false) // Disable infinite scroll since we have all
+            results = allPokemon
+          } else if (allGenerationsPokemon.length === 0) {
+            // Load initial batch for normal infinite scrolling
             const initialPokemon = await getPokemonWithPagination(30, 0)
             setAllGenerationsPokemon(initialPokemon)
             setCurrentOffset(30)
@@ -489,8 +499,8 @@ export default function ModernPokedexLayout({
 
   // Load more Pokémon for infinite scrolling with deduplication
   const loadMorePokemon = useCallback(async () => {
-    if (isLoadingMore || !hasMorePokemon || !isAllGenerations) {
-      console.log('Skipping load - isLoadingMore:', isLoadingMore, 'hasMorePokemon:', hasMorePokemon, 'isAllGenerations:', isAllGenerations);
+    if (isLoadingMore || !hasMorePokemon) {
+      console.log('Skipping load - isLoadingMore:', isLoadingMore, 'hasMorePokemon:', hasMorePokemon);
       return;
     }
     
@@ -567,11 +577,11 @@ export default function ModernPokedexLayout({
     } finally {
       setIsLoadingMore(false);
     }
-  }, [isLoadingMore, hasMorePokemon, currentOffset, isAllGenerations, totalPokemonCount]);
+  }, [isLoadingMore, hasMorePokemon, currentOffset, totalPokemonCount]);
 
   // Infinite scroll effect using Intersection Observer (best practice)
   useEffect(() => {
-    if (!isAllGenerations || isLoadingMore || !hasMorePokemon) {
+    if (isLoadingMore || !hasMorePokemon) {
       return;
     }
 
@@ -657,7 +667,7 @@ export default function ModernPokedexLayout({
         sentinel.parentNode.removeChild(sentinel);
       }
     };
-  }, [isAllGenerations, isLoadingMore, hasMorePokemon, loadMorePokemon, pokemonList])
+  }, [isLoadingMore, hasMorePokemon, loadMorePokemon, pokemonList])
 
   // Clear all filters
   const clearAllFilters = useCallback(() => {
