@@ -59,7 +59,8 @@ To enable automatic deployment, you need to generate a Firebase CLI token:
 ### Deploy Workflow (`.github/workflows/deploy-simple.yml`):
 - Runs only on pushes to `main` branch
 - Builds the application with environment variables
-- Deploys to Firebase Hosting automatically using Firebase CLI
+- Deploys to Firebase Hosting automatically using Firebase CLI with token authentication
+- Uses `--project` flag to specify the Firebase project
 - Can also be triggered manually via GitHub Actions tab
 
 ## 4. Deployment URLs
@@ -102,3 +103,17 @@ If deployment fails:
 2. Verify all secrets are set correctly
 3. Ensure Firebase service account has proper permissions
 4. Check Firebase project ID matches in all configurations
+
+### Common Issues:
+
+**"Failed to authenticate, have you run firebase login?"**
+- This means the `FIREBASE_TOKEN` secret is not set or is invalid
+- Generate a new token with `firebase login:ci` and update the secret
+
+**"No currently active project"**
+- The workflow now uses `--project pokemon-battles-86a0d` flag to specify the project
+- This should resolve the project selection issue
+
+**Build failures**
+- Check that all environment variables are set as GitHub secrets
+- Verify the Firebase project ID matches in all configurations
