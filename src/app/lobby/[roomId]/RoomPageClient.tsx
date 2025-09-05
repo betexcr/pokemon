@@ -9,14 +9,21 @@ import Chat from '@/components/Chat';
 import { Users, Copy, Check, MessageCircle } from 'lucide-react';
 import type { SavedTeam } from '@/lib/userTeams';
 
+// Local storage team type (simpler version)
+interface LocalTeam {
+  id: string;
+  name: string;
+  slots: Array<{ id: number | null; level: number; moves: unknown[] }>;
+}
+
 interface RoomData {
   id: string;
   hostId: string;
   hostName: string;
-  hostTeam?: SavedTeam;
+  hostTeam?: SavedTeam | LocalTeam;
   guestId?: string;
   guestName?: string;
-  guestTeam?: SavedTeam;
+  guestTeam?: SavedTeam | LocalTeam;
   status: 'waiting' | 'ready' | 'battling' | 'finished';
   createdAt: Date;
   maxPlayers: number;
@@ -35,7 +42,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [selectedTeam, setSelectedTeam] = useState<SavedTeam | null>(null);
+  const [selectedTeam, setSelectedTeam] = useState<SavedTeam | LocalTeam | null>(null);
   const [showChat, setShowChat] = useState(true);
 
   useEffect(() => {
@@ -89,7 +96,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
     }
   };
 
-  const handleTeamSelect = (team: SavedTeam | null) => {
+  const handleTeamSelect = (team: SavedTeam | LocalTeam | null) => {
     setSelectedTeam(team);
     
     // Update room data with selected team
