@@ -771,7 +771,8 @@ export default function ModernPokedexLayout({
             </div>
 
             {/* Enhanced Desktop Controls Section - Hidden on mobile */}
-            <div className="hidden md:flex items-center space-x-4">
+            {!isMobile && (
+              <div className="flex items-center space-x-4">
               {/* Card Density Controls */}
               <div className="flex items-center space-x-2">
                 <span className="text-xs font-medium text-muted uppercase tracking-wider">Size</span>
@@ -992,6 +993,7 @@ export default function ModernPokedexLayout({
               )}
 
             </div>
+            )}
 
             {/* Mobile Menu Button - Only visible on mobile */}
             {isMobile && (
