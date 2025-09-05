@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react'
+import { act } from 'react'
 import Home from '../page'
 
 // Mock Next.js router
@@ -11,16 +12,32 @@ jest.mock('next/navigation', () => ({
     forward: jest.fn(),
     refresh: jest.fn(),
   }),
+  useSearchParams: () => ({
+    get: jest.fn(),
+  }),
   usePathname: () => '/',
-  useSearchParams: () => new URLSearchParams(),
 }))
 
-// Mock ThemeProvider
+// Mock layout components
+jest.mock('@/components/ModernPokedexLayout', () => {
+  return function MockModernPokedexLayout({ children }: { children: React.ReactNode }) {
+    return <div data-testid="modern-layout">{children}</div>
+  }
+})
+
+jest.mock('@/components/RedPokedexLayout', () => {
+  return function MockRedPokedexLayout({ children }: { children: React.ReactNode }) {
+    return <div data-testid="red-layout">{children}</div>
+  }
+})
+
+jest.mock('@/components/RubyPokedexLayout', () => {
+  return function MockRubyPokedexLayout({ children }: { children: React.ReactNode }) {
+    return <div data-testid="ruby-layout">{children}</div>
+  }
+})
+
 jest.mock('@/components/ThemeProvider', () => ({
-  useTheme: () => ({
-    theme: 'light',
-    setTheme: jest.fn(),
-  }),
   __esModule: true,
   default: ({ children }: { children: React.ReactNode }) => children,
 }))
@@ -61,12 +78,9 @@ jest.mock('@/lib/api', () => {
           dream_world: { front_default: null, front_female: null },
           home: { front_default: null, front_female: null, front_shiny: null, front_shiny_female: null },
           'official-artwork': { front_default: null, front_shiny: null }
-        }
+        },
+        versions: {}
       },
-      is_default: true,
-      order: 1,
-      forms: [],
-      game_indices: [],
       held_items: [],
       location_area_encounters: '',
       species: { name: 'bulbasaur', url: 'https://pokeapi.co/api/v2/pokemon-species/1/' }
@@ -104,12 +118,9 @@ jest.mock('@/lib/api', () => {
           dream_world: { front_default: null, front_female: null },
           home: { front_default: null, front_female: null, front_shiny: null, front_shiny_female: null },
           'official-artwork': { front_default: null, front_shiny: null }
-        }
+        },
+        versions: {}
       },
-      is_default: true,
-      order: 2,
-      forms: [],
-      game_indices: [],
       held_items: [],
       location_area_encounters: '',
       species: { name: 'ivysaur', url: 'https://pokeapi.co/api/v2/pokemon-species/2/' }
@@ -147,12 +158,9 @@ jest.mock('@/lib/api', () => {
           dream_world: { front_default: null, front_female: null },
           home: { front_default: null, front_female: null, front_shiny: null, front_shiny_female: null },
           'official-artwork': { front_default: null, front_shiny: null }
-        }
+        },
+        versions: {}
       },
-      is_default: true,
-      order: 3,
-      forms: [],
-      game_indices: [],
       held_items: [],
       location_area_encounters: '',
       species: { name: 'venusaur', url: 'https://pokeapi.co/api/v2/pokemon-species/3/' }
@@ -162,6 +170,7 @@ jest.mock('@/lib/api', () => {
   return {
     getAllPokemon: jest.fn().mockResolvedValue(mockPokemonData),
     getPokemonWithPagination: jest.fn().mockResolvedValue(mockPokemonData),
+    getPokemonTotalCount: jest.fn().mockResolvedValue(3),
     getPokemonList: jest.fn().mockResolvedValue({
       count: 151,
       next: null,
@@ -188,158 +197,59 @@ jest.mock('@/lib/api', () => {
         { name: 'water', url: 'https://pokeapi.co/api/v2/type/3/' }
       ]
     }),
-    getPokemonImageUrl: jest.fn().mockImplementation((id: number) => 
-      `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`
-    ),
-    getPokemonMainPageImage: jest.fn().mockImplementation((id: number) => 
-      `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${id}.png`
-    ),
-    searchPokemonByName: jest.fn().mockResolvedValue([])
+    getPokemonByGeneration: jest.fn().mockResolvedValue(mockPokemonData),
+    fetchWithRetry: jest.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) })
   }
 })
-
-// Mock useSearch hook
-jest.mock('@/hooks/useSearch', () => ({
-  useSearch: () => ({
-    results: [],
-    isLoading: false,
-    handleSearchChange: jest.fn(),
-    clearSearch: jest.fn()
-  })
-}))
-
-// Mock VirtualizedPokemonGrid component
-jest.mock('@/components/VirtualizedPokemonGrid', () => {
-  return function MockVirtualizedPokemonGrid({ pokemonList }: { pokemonList: Array<{ id: number; name: string }> }) {
-    return (
-      <div data-testid="virtualized-grid">
-        {pokemonList.map((pokemon) => (
-          <div key={pokemon.id} data-testid={`pokemon-${pokemon.id}`}>
-            <h3>{pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)}</h3>
-            <button data-testid="heart">❤️</button>
-          </div>
-        ))}
-      </div>
-    )
-  }
-})
-
-// Mock other components
-jest.mock('@/components/ViewTransition', () => {
-  return function MockViewTransition({ children }: { children: React.ReactNode }) {
-    return <div>{children}</div>
-  }
-})
-
-jest.mock('@/components/PokemonComparison', () => {
-  return function MockPokemonComparison() {
-    return <div data-testid="pokemon-comparison">Comparison</div>
-  }
-})
-
-jest.mock('@/components/ComparisonOverlay', () => {
-  return function MockComparisonOverlay() {
-    return <div data-testid="comparison-overlay">Overlay</div>
-  }
-})
-
-jest.mock('@/components/ThemeToggle', () => {
-  return function MockThemeToggle() {
-    return <button data-testid="theme-toggle">Theme</button>
-  }
-})
-
-// Mock the problematic layout components that cause infinite loops
-jest.mock('@/components/ModernPokedexLayout', () => {
-  return function MockModernPokedexLayout({ children }: { children: React.ReactNode }) {
-    return <div data-testid="modern-layout">{children}</div>
-  }
-})
-
-jest.mock('@/components/RedPokedexLayout', () => {
-  return function MockRedPokedexLayout({ children }: { children: React.ReactNode }) {
-    return <div data-testid="red-layout">{children}</div>
-  }
-})
-
-jest.mock('@/components/GoldPokedexLayout', () => {
-  return function MockGoldPokedexLayout({ children }: { children: React.ReactNode }) {
-    return <div data-testid="gold-layout">{children}</div>
-  }
-})
-
-jest.mock('@/components/RubyPokedexLayout', () => {
-  return function MockRubyPokedexLayout({ children }: { children: React.ReactNode }) {
-    return <div data-testid="ruby-layout">{children}</div>
-  }
-})
-
-// Mock localStorage
-const localStorageMock = {
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
-  clear: jest.fn(),
-}
-global.localStorage = localStorageMock
 
 describe('Home Page', () => {
   beforeEach(() => {
+    // Reset all mocks before each test
     jest.clearAllMocks()
-    localStorageMock.getItem.mockReturnValue(null)
   })
 
-  it('should render loading state initially', () => {
+  it('should render loading state initially', async () => {
     render(<Home />)
     
-    // The loading state should be visible initially
+    // Should show loading state initially
     expect(screen.getByText('Loading Pokémon...')).toBeInTheDocument()
   })
 
   it('should load and display pokemon after initial load', async () => {
     render(<Home />)
     
-    // Wait for results header specifically to avoid multiple matches
     await waitFor(() => {
-      expect(screen.queryByText('Loading Pokémon...')).not.toBeInTheDocument()
+      expect(screen.getByTestId('modern-layout')).toBeInTheDocument()
     })
-    
-    // Check if the modern layout is rendered (which means the component loaded)
-    expect(screen.getByTestId('modern-layout')).toBeInTheDocument()
   })
 
   it('should display pokemon count in header', async () => {
     render(<Home />)
     
     await waitFor(() => {
-      expect(screen.getByTestId('modern-layout')).toBeInTheDocument()
+      expect(screen.getByText('3 Pokémon discovered')).toBeInTheDocument()
     })
   })
 
   it('should filter pokemon by search', async () => {
     render(<Home />)
     
-    // Wait for the component to load
     await waitFor(() => {
       expect(screen.getByTestId('modern-layout')).toBeInTheDocument()
     })
-    
-    // The search functionality is tested through the layout component
-    expect(screen.getByTestId('modern-layout')).toBeInTheDocument()
   })
 
   it('should toggle view mode between grid and list', async () => {
     render(<Home />)
     
-    await waitFor(() => expect(screen.queryByText('Loading Pokémon...')).not.toBeInTheDocument())
-    
-    // Check if the layout component is rendered
-    expect(screen.getByTestId('modern-layout')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByTestId('modern-layout')).toBeInTheDocument()
+    })
   })
 
-  // Virtualized grid no longer shows a Load More button
   it('renders a results header and grid without load more', async () => {
     render(<Home />)
+    
     await waitFor(() => {
       expect(screen.getByTestId('modern-layout')).toBeInTheDocument()
     })
@@ -360,7 +270,9 @@ describe('Home Page', () => {
     const api = jest.requireMock('@/lib/api') as typeof import('@/lib/api')
     ;(api.getPokemonWithPagination as jest.Mock).mockRejectedValueOnce(new Error('API Error'))
 
-    render(<Home />)
+    await act(async () => {
+      render(<Home />)
+    })
 
     await waitFor(() => {
       expect(screen.getByText('Failed to load Pokémon data')).toBeInTheDocument()
@@ -369,7 +281,10 @@ describe('Home Page', () => {
   })
 
   it('should show empty state when no pokemon match filters', async () => {
-    render(<Home />)
+    // The API mock already returns proper data by default
+    await act(async () => {
+      render(<Home />)
+    })
     
     await waitFor(() => {
       expect(screen.getByTestId('modern-layout')).toBeInTheDocument()
@@ -386,21 +301,12 @@ describe('Home Page', () => {
     try {
       render(<Home />)
       
-      // Wait for initial load to complete
       await waitFor(() => {
         expect(screen.getByTestId('modern-layout')).toBeInTheDocument()
       })
       
-      // Verify no runtime errors were logged
-      expect(consoleSpy).not.toHaveBeenCalledWith(
-        expect.stringContaining('TypeError') ||
-        expect.stringContaining('Cannot convert undefined or null to object') ||
-        expect.stringContaining('Cannot read properties of undefined')
-      )
-      
-      // Verify the layout component is rendered
-      expect(screen.getByTestId('modern-layout')).toBeInTheDocument()
-      
+      // Check that no runtime errors occurred
+      expect(consoleSpy).not.toHaveBeenCalled()
     } finally {
       consoleSpy.mockRestore()
     }
@@ -410,7 +316,7 @@ describe('Home Page', () => {
     render(<Home />)
     
     await waitFor(() => {
-      expect(screen.getByTestId('modern-layout')).toBeInTheDocument()
+      expect(screen.getByText('3 Pokémon discovered')).toBeInTheDocument()
     })
   })
 })

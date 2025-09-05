@@ -25,7 +25,7 @@ export type BattlePokemon = {
 };
 
 export type BattleLogEntry = {
-  type: 'turn_start' | 'move_used' | 'damage_dealt' | 'status_applied' | 'status_damage' | 'status_effect' | 'pokemon_fainted' | 'pokemon_sent_out' | 'battle_start' | 'battle_end' | 'ability_changed' | 'healing';
+  type: 'turn_start' | 'move_used' | 'move_missed' | 'critical_hit' | 'multi_hit' | 'recoil' | 'drain' | 'damage_dealt' | 'status_applied' | 'status_damage' | 'status_effect' | 'pokemon_fainted' | 'pokemon_sent_out' | 'battle_start' | 'battle_end' | 'ability_changed' | 'healing';
   message: string;
   turn?: number;
   pokemon?: string;

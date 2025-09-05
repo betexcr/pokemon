@@ -1,0 +1,120 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isValidTeamData() {
+      return request.resource.data.keys().hasAll(['name', 'pokemon', 'userId', 'createdAt', 'updatedAt']) &&
+             request.resource.data.name is string &&
+             request.resource.data.name.size() > 0 &&
+             request.resource.data.name.size() <= 50 &&
+             request.resource.data.pokemon is list &&
+             request.resource.data.pokemon.size() <= 6 &&
+             request.resource.data.userId == request.auth.uid &&
+             request.resource.data.createdAt is timestamp &&
+             request.resource.data.updatedAt is timestamp;
+    }
+    
+    function isValidBattleData() {
+      return request.resource.data.keys().hasAll(['player1', 'player2', 'status', 'createdAt', 'updatedAt']) &&
+             request.resource.data.player1 is map &&
+             request.resource.data.player2 is map &&
+             request.resource.data.status in ['waiting', 'active', 'completed', 'cancelled'] &&
+             request.resource.data.createdAt is timestamp &&
+             request.resource.data.updatedAt is timestamp;
+    }
+    
+    // User teams collection
+    match /userTeams/{teamId} {
+      // Users can only access their own teams
+      allow read, write: if isOwner(resource.data.userId);
+      allow create: if isAuthenticated() && 
+                       isValidTeamData() &&
+                       request.resource.data.userId == request.auth.uid;
+    }
+    
+    // Battle rooms collection
+    match /battles/{battleId} {
+      // Players can read battles they're participating in
+      allow read: if isAuthenticated() && 
+                     (request.auth.uid == resource.data.player1.userId || 
+                      request.auth.uid == resource.data.player2.userId);
+      
+      // Only authenticated users can create battles
+      allow create: if isAuthenticated() && 
+                       isValidBattleData() &&
+                       (request.auth.uid == request.resource.data.player1.userId ||
+                        request.auth.uid == request.resource.data.player2.userId);
+      
+      // Players can update battles they're participating in (for moves, status changes)
+      allow update: if isAuthenticated() && 
+                       (request.auth.uid == resource.data.player1.userId || 
+                        request.auth.uid == resource.data.player2.userId) &&
+                       // Prevent changing critical fields
+                       request.resource.data.player1.userId == resource.data.player1.userId &&
+                       request.resource.data.player2.userId == resource.data.player2.userId &&
+                       request.resource.data.createdAt == resource.data.createdAt;
+    }
+    
+    // Battle moves/history subcollection
+    match /battles/{battleId}/moves/{moveId} {
+      // Players can read moves from battles they're participating in
+      allow read: if isAuthenticated() && 
+                     (request.auth.uid == get(/databases/$(database)/documents/battles/$(battleId)).data.player1.userId || 
+                      request.auth.uid == get(/databases/$(database)/documents/battles/$(battleId)).data.player2.userId);
+      
+      // Players can add moves to battles they're participating in
+      allow create: if isAuthenticated() && 
+                       (request.auth.uid == get(/databases/$(database)/documents/battles/$(battleId)).data.player1.userId || 
+                        request.auth.uid == get(/databases/$(database)/documents/battles/$(battleId)).data.player2.userId) &&
+                       request.resource.data.playerId == request.auth.uid &&
+                       request.resource.data.timestamp is timestamp;
+    }
+    
+    // User profiles collection (for future use)
+    match /userProfiles/{userId} {
+      // Users can only access their own profile
+      allow read, write: if isOwner(userId);
+      allow create: if isAuthenticated() && 
+                       request.resource.data.userId == request.auth.uid &&
+                       request.resource.data.createdAt is timestamp;
+    }
+    
+    // Battle statistics collection (for future use)
+    match /battleStats/{userId} {
+      // Users can only access their own stats
+      allow read, write: if isOwner(userId);
+      allow create: if isAuthenticated() && 
+                       request.resource.data.userId == request.auth.uid;
+    }
+    
+    // Global leaderboard (read-only for all authenticated users)
+    match /leaderboard/{document=**} {
+      allow read: if isAuthenticated();
+      // Only allow updates from Cloud Functions (server-side)
+      allow write: if false;
+    }
+    
+    // Matchmaking queue (for future use)
+    match /matchmaking/{userId} {
+      // Users can only manage their own matchmaking status
+      allow read, write: if isOwner(userId);
+      allow create: if isAuthenticated() && 
+                       request.resource.data.userId == request.auth.uid &&
+                       request.resource.data.status in ['waiting', 'matched', 'cancelled'];
+    }
+    
+    // Deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

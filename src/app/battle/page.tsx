@@ -4,13 +4,16 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Swords } from "lucide-react";
 import { GYM_CHAMPIONS, Champion } from "@/lib/gym_champions";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import UserProfile from "@/components/auth/UserProfile";
+import TrainerRoster from "@/components/battle/TrainerRoster";
 
 // Saved teams storage key reused from team builder
 const STORAGE_KEY = "pokemon-team-builder";
 
 type SavedTeam = { id: string; name: string; slots: Array<{ id: number | null; level: number }>; };
 
-export default function BattlePage() {
+function BattlePage() {
   const router = useRouter();
   const [savedTeams, setSavedTeams] = useState<SavedTeam[]>([]);
   const [playerTeamId, setPlayerTeamId] = useState<string>("");
@@ -27,25 +30,6 @@ export default function BattlePage() {
   }, []);
 
   const playerTeamsOptions = useMemo(() => savedTeams.map(t => ({ id: t.id, name: t.name })), [savedTeams]);
-  
-  // Filter champions by generation
-  const filteredChampions = useMemo(() => {
-    if (!generationFilter) return GYM_CHAMPIONS;
-    return GYM_CHAMPIONS.filter(champion => champion.generation === generationFilter);
-  }, [generationFilter]);
-
-  // Reset selected champion when generation filter changes
-  useEffect(() => {
-    if (generationFilter && !filteredChampions.find(c => c.id === opponentChampionId)) {
-      setOpponentChampionId(filteredChampions[0]?.id ?? "");
-    }
-  }, [generationFilter, filteredChampions, opponentChampionId]);
-  
-  // Get unique generations for the filter dropdown
-  const availableGenerations = useMemo(() => {
-    const generations = [...new Set(GYM_CHAMPIONS.map(c => c.generation))];
-    return generations.sort();
-  }, []);
 
   const startBattle = () => {
     if (!playerTeamId) return alert("Select your team");
@@ -90,9 +74,22 @@ export default function BattlePage() {
               <ArrowLeft className="h-5 w-5" />
               <span className="font-medium">Back to PokéDex</span>
             </button>
-            <div className="flex items-center gap-2">
-              <Swords className="h-5 w-5 text-poke-blue" />
-              <h1 className="text-lg font-semibold">AI Battle</h1>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Swords className="h-5 w-5 text-poke-blue" />
+                <h1 className="text-lg font-semibold">AI Battle</h1>
+              </div>
+              
+              <button
+                onClick={() => router.push("/lobby")}
+                className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+              >
+                <Swords className="w-4 h-4" />
+                <span>Online Battles</span>
+              </button>
+              
+              {/* User Profile */}
+              <UserProfile />
             </div>
           </div>
         </div>
@@ -136,36 +133,13 @@ export default function BattlePage() {
           </div>
 
           {opponentType === "champion" ? (
-            <div className="space-y-3">
-              {/* Generation Filter - only for Gym Champions */}
-              <div>
-                <label className="block text-sm font-medium mb-2">Generation Filter</label>
-                <select
-                  className="w-full px-3 py-2 border border-border rounded-lg bg-white"
-                  value={generationFilter}
-                  onChange={(e) => setGenerationFilter(e.target.value)}
-                >
-                  <option value="">All Generations</option>
-                  {availableGenerations.map(generation => (
-                    <option key={generation} value={generation}>{generation}</option>
-                  ))}
-                </select>
-              </div>
-              
-              {/* Champion Selection */}
-              <div>
-                <label className="block text-sm font-medium mb-2">Select Champion</label>
-                <select
-                  className="w-full px-3 py-2 border border-border rounded-lg bg-white"
-                  value={opponentChampionId}
-                  onChange={(e)=> setOpponentChampionId(e.target.value)}
-                >
-                  {filteredChampions.map((c: Champion) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
+            <TrainerRoster
+              champions={GYM_CHAMPIONS}
+              selectedChampionId={opponentChampionId}
+              onChampionSelect={setOpponentChampionId}
+              generationFilter={generationFilter}
+              onGenerationFilterChange={setGenerationFilter}
+            />
           ) : (
             <select
               className="w-full px-3 py-2 border border-border rounded-lg bg-white"
@@ -190,5 +164,13 @@ export default function BattlePage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function ProtectedBattlePage() {
+  return (
+    <ProtectedRoute>
+      <BattlePage />
+    </ProtectedRoute>
   );
 }

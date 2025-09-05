@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import ThemeProvider from '@/components/ThemeProvider'
+import { AuthProvider } from '@/contexts/AuthContext'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -76,11 +77,13 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
       </head>
       <body suppressHydrationWarning className={`${inter.className} h-full bg-bg text-text pokeball-bg`}>
-        <ThemeProvider>
-          <div className="min-h-full">
-            {children}
-          </div>
-        </ThemeProvider>
+        <AuthProvider>
+          <ThemeProvider>
+            <div className="min-h-full">
+              {children}
+            </div>
+          </ThemeProvider>
+        </AuthProvider>
       </body>
     </html>
   )

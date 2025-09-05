@@ -1,4 +1,13 @@
 import { Pokemon, Move } from "@/types/pokemon";
+import { CompiledMove } from "./adapters/pokeapiMoveAdapter";
+import { DynamicPowerContext } from "@/types/move";
+import { 
+  calculateComprehensiveDamage, 
+  TypeName, 
+  calculateTypeEffectiveness 
+} from "./damage-calculator";
+import { getMove } from "./moveCache";
+import { executeTurn } from "./executor";
 
 export type BattlePokemon = {
   pokemon: Pokemon;
@@ -31,7 +40,7 @@ export type BattleTeam = {
 };
 
 export type BattleLogEntry = {
-  type: 'turn_start' | 'move_used' | 'damage_dealt' | 'status_applied' | 'status_damage' | 'status_effect' | 'pokemon_fainted' | 'pokemon_sent_out' | 'battle_start' | 'battle_end' | 'ability_changed' | 'healing';
+  type: 'turn_start' | 'move_used' | 'move_missed' | 'critical_hit' | 'multi_hit' | 'recoil' | 'drain' | 'damage_dealt' | 'status_applied' | 'status_damage' | 'status_effect' | 'pokemon_fainted' | 'pokemon_sent_out' | 'battle_start' | 'battle_end' | 'ability_changed' | 'healing';
   message: string;
   turn?: number;
   pokemon?: string;
@@ -136,6 +145,168 @@ export function canChangeAbility(move: Move): string | null {
   return abilityMoves[move.name] || null;
 }
 
+// Map PokeAPI stat names to our stat modifier keys
+function mapStatName(stat: "atk"|"def"|"spa"|"spd"|"spe"|"acc"|"eva"): keyof BattlePokemon['statModifiers'] {
+  const mapping: Record<"atk"|"def"|"spa"|"spd"|"spe"|"acc"|"eva", keyof BattlePokemon['statModifiers']> = {
+    'atk': 'attack',
+    'def': 'defense',
+    'spa': 'specialAttack',
+    'spd': 'specialDefense',
+    'spe': 'speed',
+    'acc': 'accuracy',
+    'eva': 'evasion'
+  };
+  return mapping[stat];
+}
+
+// Apply effects for status moves (stat changes, etc.)
+export async function applyStatusMoveEffects(
+  attacker: BattlePokemon, 
+  defender: BattlePokemon, 
+  move: Move | CompiledMove, 
+  battleState: { battleLog: BattleLogEntry[] }
+): Promise<void> {
+  // Handle both old Move type and new CompiledMove type
+  let compiledMove: CompiledMove;
+  if ('getPower' in move) {
+    // Already a CompiledMove
+    compiledMove = move;
+  } else {
+    // Old Move type - convert to CompiledMove
+    compiledMove = await getMove(move.name);
+  }
+  
+  const moveName = compiledMove.name;
+  
+  // Stat reduction moves
+  const statReductionMoves: Record<string, { stat: keyof BattlePokemon['statModifiers'], stages: number, target: 'self' | 'opponent' }> = {
+    'growl': { stat: 'attack', stages: -1, target: 'opponent' },
+    'leer': { stat: 'defense', stages: -1, target: 'opponent' },
+    'tail-whip': { stat: 'defense', stages: -1, target: 'opponent' },
+    'scary-face': { stat: 'speed', stages: -2, target: 'opponent' },
+    'string-shot': { stat: 'speed', stages: -1, target: 'opponent' },
+    'smokescreen': { stat: 'accuracy', stages: -1, target: 'opponent' },
+    'sand-attack': { stat: 'accuracy', stages: -1, target: 'opponent' },
+    'kinesis': { stat: 'accuracy', stages: -1, target: 'opponent' },
+    'flash': { stat: 'accuracy', stages: -1, target: 'opponent' },
+    'charm': { stat: 'attack', stages: -2, target: 'opponent' },
+    'feather-dance': { stat: 'attack', stages: -2, target: 'opponent' },
+    'metal-sound': { stat: 'specialDefense', stages: -2, target: 'opponent' },
+    'fake-tears': { stat: 'specialDefense', stages: -2, target: 'opponent' },
+    'sweet-scent': { stat: 'evasion', stages: -1, target: 'opponent' },
+    'cotton-spore': { stat: 'speed', stages: -2, target: 'opponent' }
+  };
+
+  // Stat boosting moves
+  const statBoostingMoves: Record<string, { stat: keyof BattlePokemon['statModifiers'], stages: number, target: 'self' | 'opponent' }> = {
+    'swords-dance': { stat: 'attack', stages: 2, target: 'self' },
+    'dragon-dance': { stat: 'attack', stages: 1, target: 'self' },
+    'bulk-up': { stat: 'attack', stages: 1, target: 'self' },
+    'calm-mind': { stat: 'specialAttack', stages: 1, target: 'self' },
+    'nasty-plot': { stat: 'specialAttack', stages: 2, target: 'self' },
+    'work-up': { stat: 'attack', stages: 1, target: 'self' },
+    'hone-claws': { stat: 'attack', stages: 1, target: 'self' },
+    'defense-curl': { stat: 'defense', stages: 1, target: 'self' },
+    'iron-defense': { stat: 'defense', stages: 2, target: 'self' },
+    'acid-armor': { stat: 'defense', stages: 2, target: 'self' },
+    'barrier': { stat: 'defense', stages: 2, target: 'self' },
+    'amnesia': { stat: 'specialDefense', stages: 2, target: 'self' },
+    'agility': { stat: 'speed', stages: 2, target: 'self' },
+    'rock-polish': { stat: 'speed', stages: 2, target: 'self' },
+    'autotomize': { stat: 'speed', stages: 2, target: 'self' },
+    'shift-gear': { stat: 'speed', stages: 2, target: 'self' },
+    'quiver-dance': { stat: 'specialAttack', stages: 1, target: 'self' },
+    'coil': { stat: 'attack', stages: 1, target: 'self' },
+    'shell-smash': { stat: 'attack', stages: 2, target: 'self' },
+    'belly-drum': { stat: 'attack', stages: 6, target: 'self' },
+    'growth': { stat: 'specialAttack', stages: 1, target: 'self' },
+    'howl': { stat: 'attack', stages: 1, target: 'self' },
+    'meditate': { stat: 'attack', stages: 1, target: 'self' },
+    'sharpen': { stat: 'attack', stages: 1, target: 'self' },
+    'harden': { stat: 'defense', stages: 1, target: 'self' },
+    'withdraw': { stat: 'defense', stages: 1, target: 'self' },
+    'minimize': { stat: 'evasion', stages: 2, target: 'self' },
+    'double-team': { stat: 'evasion', stages: 1, target: 'self' },
+    'focus-energy': { stat: 'accuracy', stages: 1, target: 'self' },
+    'laser-focus': { stat: 'accuracy', stages: 2, target: 'self' }
+  };
+
+  // Check for stat changes from PokeAPI data first
+  if (compiledMove.statChanges && compiledMove.statChanges.length > 0) {
+    for (const statChange of compiledMove.statChanges) {
+      // Check if the effect triggers
+      if (Math.random() < (statChange.chance / 100)) {
+        const target = statChange.stages > 0 ? attacker : defender; // Positive stages usually affect self, negative affect opponent
+        const statName = mapStatName(statChange.stat);
+        const oldValue = target.statModifiers[statName];
+        
+        // Apply stat change (clamp between -6 and +6)
+        target.statModifiers[statName] = Math.max(-6, Math.min(6, oldValue + statChange.stages));
+        
+        const newValue = target.statModifiers[statName];
+        const change = newValue - oldValue;
+        
+        if (change !== 0) {
+          const statDisplayName = {
+            attack: 'Attack',
+            defense: 'Defense', 
+            specialAttack: 'Special Attack',
+            specialDefense: 'Special Defense',
+            speed: 'Speed',
+            accuracy: 'Accuracy',
+            evasion: 'Evasion'
+          }[statName];
+          
+          const direction = change > 0 ? 'rose' : 'fell';
+          const targetName = target.pokemon.name;
+          
+          battleState.battleLog.push({
+            type: 'status_effect',
+            message: `${targetName}'s ${statDisplayName} ${direction}!`,
+            pokemon: String(targetName)
+          });
+        }
+      }
+    }
+  } else {
+    // Fallback to hardcoded stat changes for moves not in PokeAPI
+    const statChange = statReductionMoves[moveName] || statBoostingMoves[moveName];
+    
+    if (statChange) {
+      const target = statChange.target === 'self' ? attacker : defender;
+      const statName = statChange.stat;
+      const oldValue = target.statModifiers[statName];
+      
+      // Apply stat change (clamp between -6 and +6)
+      target.statModifiers[statName] = Math.max(-6, Math.min(6, oldValue + statChange.stages));
+      
+      const newValue = target.statModifiers[statName];
+      const change = newValue - oldValue;
+      
+      if (change !== 0) {
+        const statDisplayName = {
+          attack: 'Attack',
+          defense: 'Defense', 
+          specialAttack: 'Special Attack',
+          specialDefense: 'Special Defense',
+          speed: 'Speed',
+          accuracy: 'Accuracy',
+          evasion: 'Evasion'
+        }[statName];
+        
+        const direction = change > 0 ? 'rose' : 'fell';
+        const targetName = statChange.target === 'self' ? attacker.pokemon.name : defender.pokemon.name;
+        
+        battleState.battleLog.push({
+          type: 'status_effect',
+          message: `${targetName}'s ${statDisplayName} ${direction}!`,
+          pokemon: String(targetName)
+        });
+      }
+    }
+  }
+}
+
 // Check if Pokémon is immune to sleep
 export function isImmuneToSleep(pokemon: BattlePokemon): boolean {
   const currentAbility = getCurrentAbility(pokemon);
@@ -194,35 +365,12 @@ export function canCauseFlinch(move: Move): boolean {
   return flinchMoves.includes(move.name);
 }
 
-// Type effectiveness calculation
+// Type effectiveness calculation (now using comprehensive damage calculator)
 export function getTypeEffectiveness(attackType: string, defenseTypes: string[]): number {
-  const typeChart: Record<string, Record<string, number>> = {
-    normal: { rock: 0.5, ghost: 0, steel: 0.5 },
-    fire: { fire: 0.5, water: 0.5, grass: 2, ice: 2, bug: 2, rock: 0.5, dragon: 0.5, steel: 2 },
-    water: { fire: 2, water: 0.5, grass: 0.5, ground: 2, rock: 2, dragon: 0.5 },
-    electric: { water: 2, electric: 0.5, grass: 0.5, ground: 0, flying: 2, dragon: 0.5 },
-    grass: { fire: 0.5, water: 2, grass: 0.5, poison: 0.5, flying: 0.5, bug: 0.5, rock: 2, ground: 2, steel: 0.5, dragon: 0.5 },
-    ice: { fire: 0.5, water: 0.5, grass: 2, ice: 0.5, ground: 2, flying: 2, dragon: 2, steel: 0.5 },
-    fighting: { normal: 2, ice: 2, poison: 0.5, flying: 0.5, psychic: 0.5, bug: 0.5, rock: 2, ghost: 0, dark: 2, steel: 2 },
-    poison: { grass: 2, poison: 0.5, ground: 0.5, rock: 0.5, ghost: 0.5, steel: 0, bug: 2 },
-    ground: { fire: 2, electric: 2, grass: 0.5, poison: 2, flying: 0, bug: 0.5, rock: 2, steel: 2 },
-    flying: { electric: 0.5, grass: 2, ice: 0.5, fighting: 2, bug: 2, rock: 0.5, steel: 0.5 },
-    psychic: { fighting: 2, poison: 2, psychic: 0.5, dark: 0, steel: 0.5 },
-    bug: { fire: 0.5, grass: 2, fighting: 0.5, poison: 2, flying: 0.5, psychic: 2, ghost: 0.5, dark: 2, steel: 0.5 },
-    rock: { fire: 2, ice: 2, fighting: 0.5, ground: 0.5, flying: 2, bug: 2, steel: 0.5 },
-    ghost: { normal: 0, psychic: 2, ghost: 2, dark: 0.5 },
-    dragon: { dragon: 2, steel: 0.5 },
-    dark: { fighting: 0.5, psychic: 2, ghost: 2, dark: 0.5, steel: 0.5 },
-    steel: { fire: 0.5, water: 0.5, electric: 0.5, ice: 2, rock: 2, steel: 0.5 },
-    fairy: { fire: 0.5, fighting: 2, poison: 0.5, dragon: 2, dark: 2, steel: 0.5 }
-  };
-
-  let effectiveness = 1;
-  for (const defenseType of defenseTypes) {
-    const multiplier = typeChart[attackType]?.[defenseType] ?? 1;
-    effectiveness *= multiplier;
-  }
-  return effectiveness;
+  return calculateTypeEffectiveness(
+    attackType as TypeName, 
+    defenseTypes.map(type => type as TypeName)
+  );
 }
 
 // Check if a Pokemon can use a move
@@ -294,65 +442,137 @@ export function processEndOfTurnStatus(pokemon: BattlePokemon): number {
   return damage;
 }
 
-// Calculate damage using sophisticated formula with status effects
-export function calculateDamageDetailed(
+// Calculate damage using comprehensive modern formula with PokeAPI moves
+export async function calculateDamageDetailed(
   attacker: BattlePokemon,
   defender: BattlePokemon,
-  move: Move
-): { damage: number; effectiveness: number; critical: boolean; statusEffect?: string; flinch?: boolean } {
+  move: Move | CompiledMove
+): Promise<{ damage: number; effectiveness: number; critical: boolean; statusEffect?: string; flinch?: boolean }> {
   const level = attacker.level;
-  const power = move.power || 0;
+  
+  // Handle both old Move type and new CompiledMove type
+  let compiledMove: CompiledMove;
+  if ('getPower' in move) {
+    // Already a CompiledMove
+    compiledMove = move;
+  } else {
+    // Old Move type - convert to CompiledMove
+    compiledMove = await getMove(move.name);
+  }
+  
+  // Calculate dynamic power if needed
+  const powerContext: DynamicPowerContext = {
+    attacker: {
+      level: attacker.level,
+      weightKg: attacker.pokemon.weight / 10, // Convert from hectograms to kg
+      speed: attacker.pokemon.stats.find(s => s.stat.name === 'speed')?.base_stat,
+      curHP: attacker.currentHp,
+      maxHP: attacker.maxHp
+    },
+    defender: {
+      weightKg: defender.pokemon.weight / 10,
+      speed: defender.pokemon.stats.find(s => s.stat.name === 'speed')?.base_stat,
+      curHP: defender.currentHp,
+      maxHP: defender.maxHp,
+      types: defender.pokemon.types.map(t => 
+        (typeof t === 'string' ? t : t.type?.name || 'normal') as TypeName
+      )
+    }
+  };
+  
+  const power = compiledMove.getPower ? compiledMove.getPower(powerContext) : (compiledMove.power || 0);
   
   // Determine if move is physical or special
-  const moveType = typeof move.type === 'string' ? move.type : move.type?.name || 'normal';
-  const isPhysical = ['normal', 'fighting', 'poison', 'ground', 'flying', 'bug', 'rock', 'ghost', 'steel', 'fairy'].includes(moveType);
+  const moveType = compiledMove.type;
+  const isPhysical = compiledMove.category === 'Physical';
   
-  // Get stats from the stats array
+  // Get base stats
   const attackerAttackStat = attacker.pokemon.stats.find(stat => stat.stat.name === 'attack')?.base_stat || 50;
   const attackerSpecialAttackStat = attacker.pokemon.stats.find(stat => stat.stat.name === 'special-attack')?.base_stat || 50;
   const defenderDefenseStat = defender.pokemon.stats.find(stat => stat.stat.name === 'defense')?.base_stat || 50;
   const defenderSpecialDefenseStat = defender.pokemon.stats.find(stat => stat.stat.name === 'special-defense')?.base_stat || 50;
   
-  const attack = isPhysical 
-    ? applyStatModifier(calculateStat(attackerAttackStat, level), attacker.statModifiers.attack)
-    : applyStatModifier(calculateStat(attackerSpecialAttackStat, level), attacker.statModifiers.specialAttack);
+  // Calculate actual stats at level
+  const attackStat = isPhysical 
+    ? calculateStat(attackerAttackStat, level)
+    : calculateStat(attackerSpecialAttackStat, level);
     
-  const defense = isPhysical
-    ? applyStatModifier(calculateStat(defenderDefenseStat, level), defender.statModifiers.defense)
-    : applyStatModifier(calculateStat(defenderSpecialDefenseStat, level), defender.statModifiers.specialDefense);
+  const defenseStat = isPhysical
+    ? calculateStat(defenderDefenseStat, level)
+    : calculateStat(defenderSpecialDefenseStat, level);
 
-  // Type effectiveness
-  const defenderTypes = defender.pokemon.types.map(type => 
-    typeof type === 'string' ? type : type.type?.name || ''
-  );
-  const effectiveness = getTypeEffectiveness(moveType, defenderTypes);
-  
-  // STAB (Same Type Attack Bonus)
+  // Get types
   const attackerTypes = attacker.pokemon.types.map(type => 
-    typeof type === 'string' ? type : type.type?.name || ''
+    (typeof type === 'string' ? type : type.type?.name || 'normal') as TypeName
   );
-  const stab = attackerTypes.includes(moveType) ? 1.5 : 1;
-  
-  // Random factor (85-100%)
-  const randomFactor = 0.85 + Math.random() * 0.15;
-  
-  // Critical hit chance (6.25% base)
-  const criticalHit = Math.random() < 0.0625 ? 2 : 1;
-  
-  // Damage calculation
-  const damage = Math.floor(
-    ((((2 * level / 5 + 2) * power * attack / defense) / 50 + 2) * 
-     effectiveness * stab * randomFactor * criticalHit)
+  const defenderTypes = defender.pokemon.types.map(type => 
+    (typeof type === 'string' ? type : type.type?.name || 'normal') as TypeName
   );
+
+  // Check for abilities
+  const currentAbility = getCurrentAbility(attacker);
+  const hasAdaptability = currentAbility === 'adaptability';
+  const hasGuts = currentAbility === 'guts';
+  const hasHugePower = currentAbility === 'huge-power';
+  const hasPurePower = currentAbility === 'pure-power';
+  const hasTintedLens = currentAbility === 'tinted-lens';
+  const hasFilter = currentAbility === 'filter';
+  const hasSolidRock = currentAbility === 'solid-rock';
+  const hasMultiscale = currentAbility === 'multiscale';
+  const hasSniper = currentAbility === 'sniper';
+  const hasSuperLuck = currentAbility === 'super-luck';
+
+  // Check if defender has abilities
+  const defenderAbility = getCurrentAbility(defender);
+  const defenderHasFilter = defenderAbility === 'filter';
+  const defenderHasSolidRock = defenderAbility === 'solid-rock';
+  const defenderHasMultiscale = defenderAbility === 'multiscale';
+
+  // Check for high crit moves using the new crit rate stage
+  const isHighCritMove = compiledMove.critRateStage > 0;
+
+  // Use comprehensive damage calculation
+  const result = calculateComprehensiveDamage({
+    level,
+    movePower: power,
+    moveType,
+    attackerTypes,
+    defenderTypes,
+    attackStat,
+    defenseStat,
+    attackStatStages: attacker.statModifiers.attack,
+    defenseStatStages: defender.statModifiers.defense,
+    isPhysical,
+    weather: 'None', // TODO: Add weather system
+    isBurned: attacker.status === 'burned',
+    hasGuts,
+    hasAdaptability,
+    hasLifeOrb: false, // TODO: Add item system
+    hasExpertBelt: false, // TODO: Add item system
+    hasReflect: false, // TODO: Add screen system
+    hasLightScreen: false, // TODO: Add screen system
+    isMultiTarget: false, // TODO: Add multi-target detection
+    terrain: 'None', // TODO: Add terrain system
+    hasTintedLens,
+    hasFilter: defenderHasFilter,
+    hasSolidRock: defenderHasSolidRock,
+    hasMultiscale: defenderHasMultiscale,
+    isFullHp: defender.currentHp === defender.maxHp,
+    hasHugePower,
+    hasPurePower,
+    hasSniper,
+    isHighCritMove,
+    hasSuperLuck
+  });
   
-  // Check for status effects and flinch
-  const statusEffect = canCauseStatusEffect(move);
-  const flinch = canCauseFlinch(move) && Math.random() < 0.3; // 30% flinch chance
+  // Check for status effects and flinch using new move system
+  const statusEffect = compiledMove.ailment ? compiledMove.ailment.kind : undefined;
+  const flinch = compiledMove.ailment?.kind === 'flinch' && Math.random() < (compiledMove.ailment.chance / 100);
   
   return {
-    damage: Math.max(1, damage),
-    effectiveness,
-    critical: criticalHit > 1,
+    damage: result.damage,
+    effectiveness: result.effectiveness,
+    critical: result.critical,
     statusEffect: statusEffect || undefined,
     flinch: flinch || undefined
   };
@@ -544,7 +764,7 @@ export function initializeTeamBattle(
 }
 
 // Execute team battle action
-export function executeTeamAction(state: BattleState, action: BattleAction): BattleState {
+export async function executeTeamAction(state: BattleState, action: BattleAction): Promise<BattleState> {
   const newState = { ...state, battleLog: [...state.battleLog] };
   
   // Check if battle is already complete
@@ -717,18 +937,8 @@ export function executeTeamAction(state: BattleState, action: BattleAction): Bat
                 });
               }
             }
-          } else {
-            // Use sophisticated damage calculation for damaging moves
-            const damageResult = calculateDamageDetailed(attacker, defender, move);
-            const damage = damageResult.damage;
-            const oldHp = defender.currentHp;
-            defender.currentHp = Math.max(0, defender.currentHp - damage);
-            
-            // Calculate damage percentage
-            const damagePercent = calculateDamagePercentage(damage, defender.maxHp);
-            const remainingPercent = Math.round((defender.currentHp / defender.maxHp) * 100);
-            
-            // Log move usage
+          } else if (move.damage_class?.name === 'status') {
+            // Handle status moves (no damage, just effects)
             newState.battleLog.push({
               type: 'move_used',
               message: `${attacker.pokemon.name} used ${move.name}!`,
@@ -736,51 +946,142 @@ export function executeTeamAction(state: BattleState, action: BattleAction): Bat
               move: String(move.name)
             });
             
-            // Log damage with effectiveness
-            const effectivenessText = getEffectivenessText(damageResult.effectiveness);
-            let damageMessage = `${defender.pokemon.name} took ${damagePercent}% damage (${remainingPercent}% HP left).`;
-            
-            if (effectivenessText === 'super_effective') {
-              damageMessage = `It's super effective! ${damageMessage}`;
-            } else if (effectivenessText === 'not_very_effective') {
-              damageMessage = `It's not very effective... ${damageMessage}`;
-            } else if (effectivenessText === 'no_effect') {
-              damageMessage = `It had no effect!`;
-            }
-            
-            newState.battleLog.push({
-              type: 'damage_dealt',
-              message: damageMessage,
-              pokemon: String(defender.pokemon.name),
-              damage: damagePercent,
-              effectiveness: effectivenessText
+            // Apply stat changes for status moves
+            await applyStatusMoveEffects(attacker, defender, move, newState);
+          } else {
+            // Use the new PokeAPI executor for move execution
+            const turnResult = await executeTurn({
+              move: move.name,
+              attacker: attacker,
+              defender: defender,
+              attackerHasAdaptability: getCurrentAbility(attacker) === 'adaptability'
             });
             
-            // Apply status effects
-            if (damageResult.statusEffect && !defender.status) {
+            // The executor already handles HP changes, so we just need to log the results
+            
+            // Log move usage
+            newState.battleLog.push({
+              type: 'move_used',
+              message: `${attacker.pokemon.name} used ${turnResult.move}!`,
+              pokemon: String(attacker.pokemon.name),
+              move: String(turnResult.move)
+            });
+            
+            // Handle miss
+            if (turnResult.missed) {
+              newState.battleLog.push({
+                type: 'move_missed',
+                message: `${attacker.pokemon.name}'s ${move.name} missed!`,
+                pokemon: String(attacker.pokemon.name),
+                move: String(move.name)
+              });
+            } else {
+              // Log damage if any
+              if (turnResult.totalDamage > 0) {
+                const damagePercent = calculateDamagePercentage(turnResult.totalDamage, defender.maxHp);
+                const remainingPercent = Math.round((defender.currentHp / defender.maxHp) * 100);
+                
+                // Log damage with effectiveness
+                const effectivenessText = getEffectivenessText(turnResult.typeEffectiveness);
+                let damageMessage = `${defender.pokemon.name} took ${damagePercent}% damage (${remainingPercent}% HP left).`;
+                
+                if (effectivenessText === 'super_effective') {
+                  damageMessage = `It's super effective! ${damageMessage}`;
+                } else if (effectivenessText === 'not_very_effective') {
+                  damageMessage = `It's not very effective... ${damageMessage}`;
+                } else if (effectivenessText === 'no_effect') {
+                  damageMessage = `It had no effect!`;
+                }
+                
+                newState.battleLog.push({
+                  type: 'damage_dealt',
+                  message: damageMessage,
+                  pokemon: String(defender.pokemon.name),
+                  damage: damagePercent,
+                  effectiveness: effectivenessText
+                });
+              }
+              
+              // Log critical hits
+              if (turnResult.crits.some(crit => crit)) {
+                newState.battleLog.push({
+                  type: 'critical_hit',
+                  message: "A critical hit!",
+                  pokemon: String(attacker.pokemon.name)
+                });
+              }
+              
+              // Log multi-hit
+              if (turnResult.hits > 1) {
+                newState.battleLog.push({
+                  type: 'multi_hit',
+                  message: `Hit ${turnResult.hits} times!`,
+                  pokemon: String(attacker.pokemon.name)
+                });
+              }
+              
+              // Log drain
+              if (turnResult.drained && turnResult.drained > 0) {
+                newState.battleLog.push({
+                  type: 'healing',
+                  message: `${attacker.pokemon.name} restored ${turnResult.drained} HP!`,
+                  pokemon: String(attacker.pokemon.name)
+                });
+              }
+              
+              // Log recoil
+              if (turnResult.recoil && turnResult.recoil > 0) {
+                newState.battleLog.push({
+                  type: 'recoil',
+                  message: `${attacker.pokemon.name} is damaged by recoil!`,
+                  pokemon: String(attacker.pokemon.name)
+                });
+              }
+            }
+            
+            // Apply status effects (handled by executor, just log if applied)
+            if (turnResult.appliedAilment && !defender.status) {
               // Check if target is immune to sleep
-              if (damageResult.statusEffect === 'asleep' && isImmuneToSleep(defender)) {
+              if (turnResult.appliedAilment === 'SLP' && isImmuneToSleep(defender)) {
                 newState.battleLog.push({
                   type: 'status_effect',
                   message: `${defender.pokemon.name} is immune to sleep due to its ${getCurrentAbility(defender)} ability!`,
                   pokemon: String(defender.pokemon.name)
                 });
               } else {
-                defender.status = damageResult.statusEffect as 'poisoned' | 'paralyzed' | 'asleep' | 'burned' | 'frozen';
+                const statusMap: Record<string, string> = {
+                  'PAR': 'paralyzed',
+                  'BRN': 'burned', 
+                  'PSN': 'poisoned',
+                  'TOX': 'poisoned',
+                  'SLP': 'asleep',
+                  'FRZ': 'frozen'
+                };
+                const status = statusMap[turnResult.appliedAilment] || turnResult.appliedAilment.toLowerCase();
+                defender.status = status as 'poisoned' | 'paralyzed' | 'asleep' | 'burned' | 'frozen';
                 defender.statusTurns = 0;
                 newState.battleLog.push({
                   type: 'status_applied',
-                  message: `${defender.pokemon.name} was ${damageResult.statusEffect}!`,
+                  message: `${defender.pokemon.name} was ${status}!`,
                   pokemon: String(defender.pokemon.name),
-                  status: String(damageResult.statusEffect)
+                  status: status
                 });
               }
+            }
+            
+            // Log stat changes
+            if (turnResult.statChanges && turnResult.statChanges.length > 0) {
+              newState.battleLog.push({
+                type: 'status_effect',
+                message: `${defender.pokemon.name}'s stats changed!`,
+                pokemon: String(defender.pokemon.name)
+              });
             }
             
             // Apply ability changes (Worry Seed, etc.)
             const newAbility = canChangeAbility(move);
             if (newAbility) {
-              const oldAbility = getCurrentAbility(defender);
+              // const oldAbility = getCurrentAbility(defender);
               defender.currentAbility = newAbility;
               defender.abilityChanged = true;
               
@@ -810,10 +1111,7 @@ export function executeTeamAction(state: BattleState, action: BattleAction): Bat
               }
             }
             
-            // Apply flinch
-            if (damageResult.flinch) {
-              defender.flinched = true;
-            }
+            // Flinch is now handled by the executor
           }
         }
       }

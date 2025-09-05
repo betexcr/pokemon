@@ -7,7 +7,7 @@ import Image from "next/image";
 import { getPokemon, getMove } from "@/lib/api";
 import { Move } from "@/types/pokemon";
 import { GYM_CHAMPIONS } from "@/lib/gym_champions";
-import {
+import { 
   BattleState as TeamBattleState,
   initializeTeamBattle,
   executeTeamAction,
@@ -305,7 +305,7 @@ function BattleRuntimePage() {
           url: ''
         },
         effect_entries: [{
-          effect: 'Deals damage',
+        effect: 'Deals damage',
           language: {
             name: 'en',
             url: ''
@@ -548,7 +548,7 @@ function BattleRuntimePage() {
     setSelectedMove(moveIndex);
     
     // Execute player move
-    const newState = executeTeamAction(battleState, { type: 'move', moveIndex });
+    const newState = await executeTeamAction(battleState, { type: 'move', moveIndex });
     setBattleState(newState);
 
     if (newState.isComplete) {
@@ -562,7 +562,7 @@ function BattleRuntimePage() {
       // For now, use a simple AI move selection
       const currentOpponent = getCurrentPokemon(newState.opponent);
       const aiMoveIndex = Math.floor(Math.random() * currentOpponent.moves.length);
-      const finalState = executeTeamAction(newState, { type: 'move', moveIndex: aiMoveIndex });
+      const finalState = await executeTeamAction(newState, { type: 'move', moveIndex: aiMoveIndex });
       setBattleState(finalState);
     } catch (err) {
       console.error("AI move failed:", err);
@@ -697,7 +697,7 @@ function BattleRuntimePage() {
                     <div className="flex gap-1 mt-2 justify-end">
                       <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800 border border-red-200">
                         {opponent.status}
-                      </span>
+                    </span>
                     </div>
                   )}
                 </div>
@@ -735,7 +735,7 @@ function BattleRuntimePage() {
               {/* Everything on the LEFT */}
               <div className="flex-1 flex items-center gap-4">
                 <div className="relative w-24 h-24 flex items-center justify-center">
-                  <Image
+                <Image
                     src={player.pokemon.sprites.back_default || player.pokemon.sprites.back_shiny || player.pokemon.sprites.front_default || '/placeholder-pokemon.png'}
                     alt={player.pokemon.name}
                     width={96}
@@ -747,12 +747,12 @@ function BattleRuntimePage() {
                     onLoad={() => {
                       console.log('Successfully loaded player sprite:', player.pokemon.sprites.back_default || player.pokemon.sprites.front_default);
                     }}
-                  />
-                </div>
+                />
+              </div>
                 <div>
                   <h3 className="text-xl font-semibold capitalize">{player.pokemon.name}</h3>
                   <p className="text-sm text-muted">Lv. {player.level}</p>
-                  <div className="flex gap-1 mt-1">
+                <div className="flex gap-1 mt-1">
                     {player.pokemon.types.map((type, index) => {
                       const typeName = typeof type === 'string' ? type : type.type?.name || 'unknown';
                       return (
@@ -770,7 +770,7 @@ function BattleRuntimePage() {
                     <div className="flex gap-1 mt-2">
                       <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800 border border-red-200">
                         {player.status}
-                      </span>
+                    </span>
                     </div>
                   )}
                 </div>
@@ -795,9 +795,9 @@ function BattleRuntimePage() {
             </div>
 
           </div>
-          </div>
+        </div>
 
-          {/* Move Selection */}
+        {/* Move Selection */}
           {!isComplete && turn === 'player' && player.currentHp > 0 && (
           <div className="bg-surface border border-border rounded-xl p-6">
             <h3 className="text-lg font-semibold mb-4">Select a Move</h3>
@@ -822,11 +822,11 @@ function BattleRuntimePage() {
               ))}
             </div>
           </div>
-          )}
+        )}
 
           {/* Pokémon Fainted Message */}
           {!isComplete && turn === 'player' && player.currentHp <= 0 && (
-          <div className="bg-surface border border-border rounded-xl p-6">
+        <div className="bg-surface border border-border rounded-xl p-6">
             <h3 className="text-lg font-semibold mb-4 text-red-600">{player.pokemon.name} has fainted!</h3>
             <p className="text-muted">Waiting for next Pokémon to be sent out...</p>
           </div>
@@ -834,7 +834,7 @@ function BattleRuntimePage() {
 
           {/* Battle Log (sticky on large screens) */}
           <div ref={battleLogRef} className="bg-surface border border-border rounded-xl p-6 lg:sticky lg:top-24 h-[420px] overflow-y-auto">
-            <h3 className="text-lg font-semibold mb-4">Battle Log</h3>
+          <h3 className="text-lg font-semibold mb-4">Battle Log</h3>
             <div className="space-y-2">
             {battleLog.filter(log => log != null).reverse().map((log, index) => {
               // Handle both old string format and new BattleLogEntry format
@@ -882,8 +882,8 @@ function BattleRuntimePage() {
                   {message.split('\n').map((line, lineIndex) => (
                     <div key={lineIndex} className={lineIndex > 0 ? 'mt-1' : ''}>
                       {line}
-                    </div>
-                  ))}
+              </div>
+            ))}
                 </div>
               );
             })}

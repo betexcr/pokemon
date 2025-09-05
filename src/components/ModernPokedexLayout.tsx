@@ -9,6 +9,7 @@ import { getPokemonByGeneration, getPokemonByType, getPokemon, getPokemonWithPag
 import ThemeToggle from './ThemeToggle'
 import VirtualizedPokemonGrid from './VirtualizedPokemonGrid'
 import { Search, Filter, X, Scale, ArrowRight, Menu, LayoutGrid, Grid3X3, Rows, Users, Swords, List } from 'lucide-react'
+import UserProfile from './auth/UserProfile'
 import { createHeuristics } from '@/lib/heuristics/core'
 import { LocalStorageAdapter, MemoryStorage } from '@/lib/heuristics/storage'
 
@@ -932,6 +933,11 @@ export default function ModernPokedexLayout({
                 </div>
               </div>
 
+              {/* User Profile */}
+              <div className="hidden md:flex items-center">
+                <UserProfile />
+              </div>
+
               {/* Desktop Team Builder Button */}
               <button
                 onClick={() => router.push('/team')}
@@ -1244,6 +1250,12 @@ export default function ModernPokedexLayout({
               <div className="space-y-3">
                 <h4 className="text-sm font-semibold text-text uppercase tracking-wider">Theme</h4>
                 <ThemeToggle />
+              </div>
+
+              {/* Mobile User Profile */}
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold text-text uppercase tracking-wider">Account</h4>
+                <UserProfile />
               </div>
 
               {/* Mobile Close Button */}
