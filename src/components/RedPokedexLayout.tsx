@@ -50,32 +50,43 @@ export default function RedPokedexLayout({
 
   return (
     <div className="min-h-screen pokemon-red-bg font-gbc text-black">
-      {/* Theme Toggle */}
-      <div className="absolute top-4 right-4 z-50">
+      {/* Theme Toggle - Hidden on mobile */}
+      <div className="hidden md:block absolute top-4 right-4 z-50">
         <ThemeToggle />
       </div>
       
       {/* Authentic GBC PokéDex Header */}
       <div className="bg-red-100 border-b-4 border-red-600 p-4 relative">
         <h1 className="font-['Pocket_Monk'] text-2xl font-bold text-center text-red-800 tracking-wider">POKéDEX</h1>
-        <div className="absolute top-2 right-2 flex items-center gap-2">
+        
+        {/* Desktop Header Controls - Hidden on mobile */}
+        <div className="hidden md:flex absolute top-2 right-2 items-center gap-2">
           <UserProfile />
           <button onClick={() => router.push('/team')} className="px-3 py-1 bg-white text-red-800 border-2 border-red-600 rounded font-bold" title="Go to Team Builder">🎮 TEAM</button>
           <button onClick={() => setShowDesktopMenu(true)} className="px-3 py-1 bg-white text-red-800 border-2 border-red-600 rounded font-bold">MENU</button>
         </div>
+
+        {/* Mobile Menu Button - Only visible on mobile */}
+        <button
+          onClick={() => setShowDesktopMenu(true)}
+          className="md:hidden absolute top-2 right-2 p-2 bg-white text-red-800 border-2 border-red-600 rounded font-bold"
+          aria-label="Toggle menu"
+        >
+          ☰
+        </button>
       </div>
 
       {/* Main PokéDex Interface - Split Panel Design */}
-      <div className="flex h-[calc(100vh-120px)]">
+      <div className="flex flex-col md:flex-row h-[calc(100vh-120px)]">
         {/* Left Panel - Pokémon List */}
-        <div className="w-1/2 bg-red-50 border-r-4 border-red-600 p-4">
+        <div className="w-full md:w-1/2 bg-red-50 border-r-0 md:border-r-4 border-b-4 md:border-b-0 border-red-600 p-4">
           <div className="mb-4">
             <h2 className="text-lg font-bold border-b-2 border-red-600 pb-2 text-red-800">CONTENTS</h2>
           </div>
           
           <div className="space-y-1 max-h-[calc(100vh-200px)]">
-            {/* Sort controls */}
-            <div className="flex items-center gap-2 mb-2">
+            {/* Sort controls - Hidden on mobile */}
+            <div className="hidden md:flex items-center gap-2 mb-2">
               <span className="text-xs font-bold text-red-800">SORT</span>
               <select
                 value={sortBy}
@@ -131,7 +142,7 @@ export default function RedPokedexLayout({
         </div>
 
         {/* Right Panel - Stats and Menu */}
-        <div className="w-1/2 bg-red-50 p-4">
+        <div className="w-full md:w-1/2 bg-red-50 p-4">
           {selectedPokemon ? (
             <>
               {/* Stats Section */}

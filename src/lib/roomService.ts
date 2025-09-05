@@ -33,6 +33,7 @@ export interface RoomData {
 }
 
 export interface RoomUpdate {
+  hostTeam?: unknown;
   guestId?: string;
   guestName?: string;
   guestTeam?: unknown;
@@ -156,8 +157,17 @@ class RoomService {
   async updateRoom(roomId: string, updates: RoomUpdate): Promise<void> {
     if (!db) throw new Error('Firebase not initialized');
     
+    console.log('roomService.updateRoom called with:', { roomId, updates });
+    
     const roomRef = doc(db, this.roomsCollection, roomId);
-    await updateDoc(roomRef, updates);
+    
+    try {
+      await updateDoc(roomRef, updates);
+      console.log('roomService.updateRoom completed successfully');
+    } catch (error) {
+      console.error('roomService.updateRoom failed:', error);
+      throw error;
+    }
   }
 
   // Start battle
@@ -197,9 +207,13 @@ class RoomService {
       return () => {};
     }
     
+    console.log('roomService.onRoomChange setting up listener for room:', roomId);
+    
     const roomRef = doc(db, this.roomsCollection, roomId);
     
     return onSnapshot(roomRef, (doc) => {
+      console.log('roomService.onRoomChange snapshot received for room:', roomId, 'exists:', doc.exists());
+      
       if (doc.exists()) {
         const data = doc.data();
         const room: RoomData = {
@@ -207,10 +221,16 @@ class RoomService {
           ...data,
           createdAt: data.createdAt?.toDate() || new Date()
         } as RoomData;
+        console.log('roomService.onRoomChange calling callback with room:', room);
         callback(room);
       } else {
+        console.log('roomService.onRoomChange calling callback with null (room deleted)');
+        console.log('roomService.onRoomChange - checking if this is due to a failed update...');
         callback(null);
       }
+    }, (error) => {
+      console.error('roomService.onRoomChange error:', error);
+      console.error('roomService.onRoomChange error details:', error.code, error.message);
     });
   }
 

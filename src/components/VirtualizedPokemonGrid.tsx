@@ -13,6 +13,7 @@ interface VirtualizedPokemonGridProps {
   comparisonList: number[]
   density: 'cozy' | 'compact' | 'ultra' | 'list'
   className?: string
+  isLoading?: boolean
 }
 
 export default function VirtualizedPokemonGrid({
@@ -22,9 +23,9 @@ export default function VirtualizedPokemonGrid({
   selectedPokemon,
   comparisonList,
   density,
-  className = ''
+  className = '',
+  isLoading = false
 }: VirtualizedPokemonGridProps) {
-  const [isLoading, setIsLoading] = useState(false)
 
   let theme = 'light'
   try {
@@ -37,17 +38,17 @@ export default function VirtualizedPokemonGrid({
   // Calculate layout based on density
   const getLayoutClasses = () => {
     switch (density) {
-      case 'cozy': return 'grid grid-cols-3 gap-6'
-      case 'compact': return 'grid grid-cols-6 gap-6'
-      case 'ultra': return 'grid grid-cols-12 gap-6'
+      case 'cozy': return 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-6'
+      case 'compact': return 'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2 sm:gap-3 md:gap-4'
+      case 'ultra': return 'grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-12 gap-2 sm:gap-3 md:gap-4'
       case 'list': return 'flex flex-col gap-2'
-      default: return 'grid grid-cols-3 gap-6'
+      default: return 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-6'
     }
   }
 
   return (
     <div className={`${className}`}>
-      <div className={getLayoutClasses()}>
+      <div className={getLayoutClasses()} data-pokemon-grid>
         {pokemonList.map((pokemon) => (
           <ModernPokemonCard
             key={pokemon.id}

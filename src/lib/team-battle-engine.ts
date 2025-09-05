@@ -60,6 +60,7 @@ export type BattleState = {
   isComplete: boolean;
   winner?: 'player' | 'opponent';
   phase: 'battle' | 'switch';
+  needsPokemonSelection?: 'player' | 'opponent' | null;
 };
 
 export type BattleAction = {
@@ -767,6 +768,139 @@ export function handleAutomaticSwitching(state: BattleState): BattleState {
     }
     
     console.log('New turn order:', newState.turn);
+  }
+  
+  newState.battleLog = newLog;
+  return newState;
+}
+
+// Handle Pokemon switching for multiplayer battles (manual selection)
+export function handleMultiplayerSwitching(state: BattleState, isPlayerTurn: boolean): BattleState {
+  console.log('=== HANDLE MULTIPLAYER SWITCHING DEBUG ===');
+  const newState = { ...state };
+  const newLog = [...state.battleLog];
+  
+  // Check if current player's Pokemon is fainted
+  const currentPokemon = isPlayerTurn ? getCurrentPokemon(state.player) : getCurrentPokemon(state.opponent);
+  const team = isPlayerTurn ? state.player : state.opponent;
+  
+  console.log(`${isPlayerTurn ? 'Player' : 'Opponent'} current Pokemon:`, {
+    name: currentPokemon.pokemon.name,
+    hp: currentPokemon.currentHp,
+    isFainted: currentPokemon.currentHp <= 0
+  });
+  
+  if (currentPokemon.currentHp <= 0) {
+    console.log(`${isPlayerTurn ? 'Player' : 'Opponent'} Pokemon fainted - waiting for manual selection`);
+    
+    // Check if there are any available Pokemon
+    const availablePokemon = team.pokemon.filter((p, index) => 
+      p.currentHp > 0 && index !== team.currentIndex
+    );
+    
+    if (availablePokemon.length === 0) {
+      console.log(`No available ${isPlayerTurn ? 'player' : 'opponent'} Pokemon found - team defeated`);
+      // Mark battle as complete
+      newState.isComplete = true;
+      newState.winner = isPlayerTurn ? 'opponent' : 'player';
+      newLog.push({
+        type: 'battle_end',
+        message: isPlayerTurn ? 'All your Pokemon have fainted! You lose!' : 'All opponent Pokemon have fainted! You win!',
+        pokemon: isPlayerTurn ? 'defeat' : 'victory'
+      });
+      console.log(`=== BATTLE COMPLETE - ${isPlayerTurn ? 'OPPONENT' : 'PLAYER'} VICTORY ===`);
+    } else {
+      // Set a flag to indicate that manual Pokemon selection is needed
+      newState.needsPokemonSelection = isPlayerTurn ? 'player' : 'opponent';
+      newLog.push({
+        type: 'pokemon_fainted',
+        message: `${currentPokemon.pokemon.name} fainted! Choose your next Pokemon.`,
+        pokemon: currentPokemon.pokemon.name
+      });
+      console.log(`=== WAITING FOR ${isPlayerTurn ? 'PLAYER' : 'OPPONENT'} TO SELECT POKEMON ===`);
+    }
+  }
+  
+  newState.battleLog = newLog;
+  return newState;
+}
+
+// Manually switch to a selected Pokemon (for multiplayer battles)
+export function switchToSelectedPokemon(state: BattleState, pokemonIndex: number, isPlayer: boolean): BattleState {
+  console.log('=== SWITCH TO SELECTED POKEMON DEBUG ===');
+  const newState = { ...state };
+  const newLog = [...state.battleLog];
+  
+  const team = isPlayer ? newState.player : newState.opponent;
+  const teamName = isPlayer ? 'player' : 'opponent';
+  
+  console.log(`Switching ${teamName} to Pokemon at index:`, pokemonIndex);
+  
+  // Validate the selection
+  if (pokemonIndex < 0 || pokemonIndex >= team.pokemon.length) {
+    console.error('Invalid Pokemon index:', pokemonIndex);
+    return state;
+  }
+  
+  const selectedPokemon = team.pokemon[pokemonIndex];
+  
+  if (selectedPokemon.currentHp <= 0) {
+    console.error('Cannot switch to fainted Pokemon:', selectedPokemon.pokemon.name);
+    return state;
+  }
+  
+  if (pokemonIndex === team.currentIndex) {
+    console.error('Cannot switch to current Pokemon');
+    return state;
+  }
+  
+  // Perform the switch
+  switchToPokemon(team, pokemonIndex);
+  const newCurrent = getCurrentPokemon(team);
+  
+  console.log(`${teamName} switched to:`, newCurrent.pokemon.name);
+  
+  newLog.push({
+    type: 'pokemon_sent_out',
+    message: `Go! ${newCurrent.pokemon.name}!`,
+    pokemon: newCurrent.pokemon.name
+  });
+  
+  // Clear the needsPokemonSelection flag
+  newState.needsPokemonSelection = null;
+  
+  // Recalculate turn order based on Speed
+  const playerCurrent = getCurrentPokemon(newState.player);
+  const opponentCurrent = getCurrentPokemon(newState.opponent);
+  
+  const playerSpeed = applyStatModifier(
+    calculateStat(playerCurrent.pokemon.stats.find(s => s.stat.name === 'speed')?.base_stat || 0, playerCurrent.level),
+    playerCurrent.statModifiers.speed
+  );
+  
+  const opponentSpeed = applyStatModifier(
+    calculateStat(opponentCurrent.pokemon.stats.find(s => s.stat.name === 'speed')?.base_stat || 0, opponentCurrent.level),
+    opponentCurrent.statModifiers.speed
+  );
+  
+  console.log('Speed comparison:', {
+    playerName: playerCurrent.pokemon.name,
+    playerSpeed,
+    opponentName: opponentCurrent.pokemon.name,
+    opponentSpeed
+  });
+  
+  // Determine new turn order based on Speed
+  if (playerSpeed > opponentSpeed) {
+    newState.turn = 'player';
+    console.log('Player goes first (faster)');
+  } else if (opponentSpeed > playerSpeed) {
+    newState.turn = 'opponent';
+    console.log('Opponent goes first (faster)');
+  } else {
+    // Speed tie - randomize (50/50 chance)
+    newState.turn = Math.random() < 0.5 ? 'player' : 'opponent';
+    console.log('Speed tie - random turn:', newState.turn);
   }
   
   newState.battleLog = newLog;

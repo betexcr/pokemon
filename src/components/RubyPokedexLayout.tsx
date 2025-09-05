@@ -77,8 +77,8 @@ export default function RubyPokedexLayout({
 
   return (
     <div className="min-h-screen pokemon-ruby-bg font-gba text-white">
-      {/* Theme Toggle */}
-      <div className="absolute top-4 right-4 z-50">
+      {/* Theme Toggle - Hidden on mobile */}
+      <div className="hidden md:block absolute top-4 right-4 z-50">
         <ThemeToggle />
       </div>
       
@@ -99,8 +99,8 @@ export default function RubyPokedexLayout({
             </button>
           ))}
 
-          {/* Sort controls */}
-          <div className="ml-4 flex items-center gap-2">
+          {/* Sort controls - Hidden on mobile */}
+          <div className="hidden md:flex ml-4 items-center gap-2">
             <span className="text-xs font-bold tracking-wider">SORT</span>
             <select
               value={sortBy}

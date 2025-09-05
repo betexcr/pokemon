@@ -41,6 +41,15 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
   const [selectedTeam, setSelectedTeam] = useState<SavedTeam | LocalTeam | null>(null);
   const [showChat, setShowChat] = useState(true);
 
+  console.log('RoomPageClient rendered with roomId:', roomId);
+
+  useEffect(() => {
+    console.log('RoomPageClient mounted with roomId:', roomId);
+    return () => {
+      console.log('RoomPageClient unmounting with roomId:', roomId);
+    };
+  }, [roomId]);
+
   useEffect(() => {
     if (!user) {
       setLoading(false);
@@ -49,6 +58,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
 
     // Listen to room changes in real-time
     const unsubscribe = roomService.onRoomChange(roomId, (room) => {
+      console.log('Room change detected:', room);
       if (room) {
         setRoom(room);
         
@@ -56,6 +66,10 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
         if (user) {
           const isHost = user.uid === room.hostId;
           const isGuest = user.uid === room.guestId;
+          
+          console.log('User role - isHost:', isHost, 'isGuest:', isGuest);
+          console.log('Room hostTeam:', room.hostTeam);
+          console.log('Room guestTeam:', room.guestTeam);
           
           if (isHost && room.hostTeam) {
             setSelectedTeam(room.hostTeam as SavedTeam | LocalTeam);
@@ -67,6 +81,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
         setLoading(false);
       } else {
         // Room doesn't exist or was deleted
+        console.log('Room not found or deleted, redirecting to lobby');
         setLoading(false);
         router.push('/lobby');
       }
@@ -78,7 +93,8 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
   // Cleanup when user leaves the room
   useEffect(() => {
     const handleBeforeUnload = () => {
-      if (user && room) {
+      if (user) {
+        console.log('beforeunload event triggered, leaving room:', roomId);
         roomService.leaveRoom(roomId, user.uid);
       }
     };
@@ -87,11 +103,11 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
     
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
-      if (user && room) {
-        roomService.leaveRoom(roomId, user.uid);
-      }
+      // Don't automatically leave room on component unmount
+      // This prevents issues with React re-rendering
+      console.log('Component unmounting, but not leaving room automatically');
     };
-  }, [user, room, roomId]);
+  }, [user, roomId]);
 
   const copyRoomCode = async () => {
     try {
@@ -124,6 +140,10 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
   };
 
   const handleTeamSelect = async (team: SavedTeam | LocalTeam | null) => {
+    console.log('handleTeamSelect called with team:', team);
+    console.log('Current room:', room);
+    console.log('Current user:', user);
+    
     setSelectedTeam(team);
     
     // Update room data with selected team in Firestore
@@ -131,15 +151,53 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
       const isHost = user.uid === room.hostId;
       const isGuest = user.uid === room.guestId;
       
-      try {
-        if (isHost) {
-          await roomService.updateRoom(roomId, { hostTeam: team || undefined });
-        } else if (isGuest) {
-          await roomService.updateRoom(roomId, { guestTeam: team || undefined });
+      console.log('isHost:', isHost, 'isGuest:', isGuest);
+      
+      // Only update if we have a valid team or if we're clearing the selection
+      if (team || isHost || isGuest) {
+        try {
+          if (isHost) {
+            console.log('Updating host team for room:', roomId);
+            console.log('Team data being sent:', team);
+            
+            // Create a clean team object to avoid Firestore issues
+            const cleanTeam = team ? {
+              id: team.id,
+              name: team.name,
+              slots: team.slots.map(slot => ({
+                id: slot.id,
+                level: slot.level,
+                moves: slot.moves || []
+              }))
+            } : undefined;
+            
+            console.log('Clean team data:', cleanTeam);
+            await roomService.updateRoom(roomId, { hostTeam: cleanTeam });
+            console.log('Host team updated successfully');
+          } else if (isGuest) {
+            console.log('Updating guest team for room:', roomId);
+            console.log('Team data being sent:', team);
+            
+            // Create a clean team object to avoid Firestore issues
+            const cleanTeam = team ? {
+              id: team.id,
+              name: team.name,
+              slots: team.slots.map(slot => ({
+                id: slot.id,
+                level: slot.level,
+                moves: slot.moves || []
+              }))
+            } : undefined;
+            
+            console.log('Clean team data:', cleanTeam);
+            await roomService.updateRoom(roomId, { guestTeam: cleanTeam });
+            console.log('Guest team updated successfully');
+          }
+        } catch (error) {
+          console.error('Failed to update room with team:', error);
+          console.error('Error details:', error);
+          alert('Failed to save team selection. Please try again.');
         }
-      } catch (error) {
-        console.error('Failed to update room with team:', error);
-        alert('Failed to save team selection. Please try again.');
       }
     }
   };

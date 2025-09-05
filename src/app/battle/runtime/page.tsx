@@ -12,7 +12,9 @@ import {
   initializeTeamBattle,
   executeTeamAction,
   getCurrentPokemon,
-  handleAutomaticSwitching
+  handleAutomaticSwitching,
+  handleMultiplayerSwitching,
+  switchToSelectedPokemon
 } from "@/lib/team-battle-engine";
 import TypeBadge from "@/components/TypeBadge";
 import HealthBar from "@/components/HealthBar";
@@ -20,6 +22,7 @@ import Chat from "@/components/Chat";
 import { ToastContainer, useToast } from "@/components/Toast";
 import { battleService, type MultiplayerBattleState } from '@/lib/battleService';
 import { useAuth } from "@/contexts/AuthContext";
+import { type MoveData } from '@/lib/userTeams';
 
 const STORAGE_KEY = "pokemon-team-builder";
 
@@ -287,7 +290,10 @@ function BattleRuntimePage() {
       });
       
       setSwitchingInProgress(true);
-      const updatedState = handleAutomaticSwitching(battleState);
+      // Use multiplayer switching for multiplayer battles, automatic for single-player
+      const updatedState = isMultiplayer 
+        ? handleMultiplayerSwitching(battleState, battleState.turn === 'player')
+        : handleAutomaticSwitching(battleState);
       
       if (updatedState !== battleState) {
         console.log('=== SWITCHING OCCURRED ===');
@@ -423,7 +429,10 @@ function BattleRuntimePage() {
       console.log('=== IMMEDIATE SWITCHING TRIGGERED ===');
       setSwitchingInProgress(true);
       
-      const updatedState = handleAutomaticSwitching(battleState);
+      // Use multiplayer switching for multiplayer battles, automatic for single-player
+      const updatedState = isMultiplayer 
+        ? handleMultiplayerSwitching(battleState, battleState.turn === 'player')
+        : handleAutomaticSwitching(battleState);
       if (updatedState !== battleState) {
         console.log('Immediate switching successful');
         setBattleState(updatedState);
@@ -582,7 +591,7 @@ function BattleRuntimePage() {
             const { saveTeamToFirebase } = await import('@/lib/userTeams');
             await saveTeamToFirebase(user.uid, {
               name: defaultTeam.name,
-              slots: defaultTeam.slots as unknown as Array<{ id: number | null; level: number; moves: unknown[] }>, // Type assertion for compatibility
+              slots: defaultTeam.slots as Array<{ id: number | null; level: number; moves: MoveData[] }>, // Type assertion for compatibility
               isPublic: false,
               description: 'Default test team'
             });
@@ -1033,6 +1042,21 @@ function BattleRuntimePage() {
     }
   };
 
+  const handlePokemonSelection = (pokemonIndex: number) => {
+    if (!battleState || !battleState.needsPokemonSelection) return;
+    
+    console.log('=== POKEMON SELECTION HANDLER ===');
+    console.log('Selected Pokemon index:', pokemonIndex);
+    console.log('Needs selection for:', battleState.needsPokemonSelection);
+    
+    const isPlayerSelection = battleState.needsPokemonSelection === 'player';
+    const updatedState = switchToSelectedPokemon(battleState, pokemonIndex, isPlayerSelection);
+    
+    console.log('Updated battle state after Pokemon selection:', updatedState);
+    setBattleState(updatedState);
+    setSwitchingInProgress(false);
+  };
+
   const restartBattle = () => {
     setInitialized(false);
     setLoading(true);
@@ -1310,7 +1334,7 @@ function BattleRuntimePage() {
 
         {/* Move Selection */}
           {(() => {
-            const shouldShowMoves = !isComplete && turn === 'player' && player.currentHp > 0;
+            const shouldShowMoves = !isComplete && turn === 'player' && player.currentHp > 0 && !battleState?.needsPokemonSelection;
             console.log('Move selection visibility check:', {
               isComplete,
               turn,
@@ -1346,8 +1370,64 @@ function BattleRuntimePage() {
           </div>
         )}
 
+        {/* Pokemon Selection for Multiplayer Battles */}
+        {isMultiplayer && battleState?.needsPokemonSelection === 'player' && (
+          <div className="bg-surface border border-border rounded-xl p-6">
+            <h3 className="text-lg font-semibold mb-4 text-red-600">Choose your next Pokemon!</h3>
+            <p className="text-muted mb-4">Your current Pokemon has fainted. Select which Pokemon to send out next:</p>
+            <div className="grid grid-cols-2 gap-3">
+              {playerTeam.pokemon.map((pokemon, index) => {
+                const isCurrent = index === playerTeam.currentIndex;
+                const isFainted = pokemon.currentHp <= 0;
+                const isSelectable = !isCurrent && !isFainted;
+                
+                return (
+                  <button
+                    key={index}
+                    onClick={() => isSelectable && handlePokemonSelection(index)}
+                    disabled={!isSelectable}
+                    className={`p-4 rounded-lg border text-left transition-colors ${
+                      isSelectable
+                        ? 'border-border hover:border-poke-blue hover:bg-blue-50 cursor-pointer'
+                        : 'border-gray-300 bg-gray-100 cursor-not-allowed opacity-50'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <Image
+                        src={getPokemonSpriteUrl(pokemon.pokemon.id)}
+                        alt={pokemon.pokemon.name}
+                        width={48}
+                        height={48}
+                        className="w-12 h-12"
+                      />
+                      <div className="flex-1">
+                        <div className="font-medium capitalize">{pokemon.pokemon.name}</div>
+                        <div className="text-sm text-muted">
+                          Level {pokemon.level} • HP: {pokemon.currentHp}/{pokemon.maxHp}
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+                          <div 
+                            className="bg-red-500 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${(pokemon.currentHp / pokemon.maxHp) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    {isCurrent && (
+                      <div className="text-xs text-blue-600 mt-2 font-medium">Currently Active</div>
+                    )}
+                    {isFainted && (
+                      <div className="text-xs text-red-600 mt-2 font-medium">Fainted</div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
           {/* Pokémon Fainted Message */}
-          {!isComplete && turn === 'player' && player.currentHp <= 0 && (
+          {!isComplete && turn === 'player' && player.currentHp <= 0 && !battleState?.needsPokemonSelection && (
         <div className="bg-surface border border-border rounded-xl p-6">
             <h3 className="text-lg font-semibold mb-4 text-red-600">{player.pokemon.name} has fainted!</h3>
             <p className="text-muted">Waiting for next Pokémon to be sent out...</p>
