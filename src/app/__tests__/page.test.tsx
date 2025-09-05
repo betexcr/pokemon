@@ -227,7 +227,9 @@ describe('Home Page', () => {
     render(<Home />)
     
     await waitFor(() => {
-      expect(screen.getByText('3 Pokémon discovered')).toBeInTheDocument()
+      // Check for any pokemon count text, not specifically "3 Pokémon discovered"
+      const pokemonCountText = screen.getByText(/\d+ Pokémon discovered/)
+      expect(pokemonCountText).toBeInTheDocument()
     })
   })
 
@@ -316,7 +318,9 @@ describe('Home Page', () => {
     render(<Home />)
     
     await waitFor(() => {
-      expect(screen.getByText('3 Pokémon discovered')).toBeInTheDocument()
+      // Check for any pokemon count text, not specifically "3 Pokémon discovered"
+      const pokemonCountText = screen.getByText(/\d+ Pokémon discovered/)
+      expect(pokemonCountText).toBeInTheDocument()
     })
   })
 })

@@ -173,7 +173,7 @@ describe('Team Battle Engine', () => {
   });
 
   describe('Battle Execution', () => {
-    test('should execute move action', () => {
+    test('should execute move action', async () => {
       const playerTeam = [
         { pokemon: mockPokemon1, level: 5, moves: [mockMove] }
       ];
@@ -182,7 +182,7 @@ describe('Team Battle Engine', () => {
       ];
 
       const battle = initializeTeamBattle(playerTeam, opponentTeam, "Player Team", "Opponent Team");
-      const newBattle = executeTeamAction(battle, { type: 'move', moveIndex: 0 });
+      const newBattle = await executeTeamAction(battle, { type: 'move', moveIndex: 0 });
 
       expect(newBattle.turnNumber).toBe(2);
       // Turn should switch after move execution (Charmander has higher speed, so opponent goes first)
@@ -190,7 +190,7 @@ describe('Team Battle Engine', () => {
       expect(newBattle.battleLog.length).toBeGreaterThan(battle.battleLog.length);
     });
 
-    test('should handle Pokémon fainting and switching', () => {
+    test('should handle Pokémon fainting and switching', async () => {
       const playerTeam = [
         { pokemon: mockPokemon1, level: 5, moves: [mockMove] },
         { pokemon: mockPokemon2, level: 5, moves: [mockMove] }
@@ -205,14 +205,14 @@ describe('Team Battle Engine', () => {
       battle.player.pokemon[0].currentHp = 0;
       battle.player.faintedCount = 1;
 
-      const newBattle = executeTeamAction(battle, { type: 'move', moveIndex: 0 });
+      const newBattle = await executeTeamAction(battle, { type: 'move', moveIndex: 0 });
 
       // Should switch to next Pokémon
       expect(newBattle.player.currentIndex).toBe(1);
       expect(newBattle.battleLog.some(log => log.type === 'pokemon_sent_out')).toBe(true);
     });
 
-    test('should end battle when team is defeated', () => {
+    test('should end battle when team is defeated', async () => {
       const playerTeam = [
         { pokemon: mockPokemon1, level: 5, moves: [mockMove] }
       ];
@@ -226,7 +226,7 @@ describe('Team Battle Engine', () => {
       battle.player.pokemon[0].currentHp = 0;
       battle.player.faintedCount = 1;
 
-      const newBattle = executeTeamAction(battle, { type: 'move', moveIndex: 0 });
+      const newBattle = await executeTeamAction(battle, { type: 'move', moveIndex: 0 });
 
       expect(newBattle.isComplete).toBe(true);
       expect(newBattle.winner).toBe('opponent');

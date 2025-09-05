@@ -34,6 +34,7 @@ jobs:
       - name: Deploy to Firebase Hosting
         run: |
           npm install -g firebase-tools
+          firebase use pokemon-battles-86a0d
           firebase deploy --only hosting --token ${{ secrets.FIREBASE_TOKEN }}
         env:
           FIREBASE_PROJECT: pokemon-battles-86a0d
