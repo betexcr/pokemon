@@ -17,8 +17,8 @@
 
 html, body { 
   height: 100%; 
-  /* Prevent horizontal overflow */
-  overflow-x: hidden;
+  /* Completely disable main page scroll */
+  overflow: hidden;
   /* Hide scrollbar but keep scroll functionality */
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* Internet Explorer 10+ */
