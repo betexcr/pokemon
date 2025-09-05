@@ -1,22 +1,18 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { useRouter } from 'next/navigation'
 import { Pokemon, FilterState } from '@/types/pokemon'
 import { getPokemonWithPagination } from '@/lib/api'
 import { } from '@/lib/utils'
-import ThemeToggle from '@/components/ThemeToggle'
 import { useTheme } from '@/components/ThemeProvider'
 import RedPokedexLayout from '@/components/RedPokedexLayout'
 import GoldPokedexLayout from '@/components/GoldPokedexLayout'
 import RubyPokedexLayout from '@/components/RubyPokedexLayout'
 import ModernPokedexLayout from '@/components/ModernPokedexLayout'
 import ComparisonOverlay from '@/components/ComparisonOverlay'
-import { Zap, Users } from 'lucide-react'
 import MobileHeader from '@/components/MobileHeader'
 
 export default function Home() {
-  const router = useRouter()
   const [pokemonList, setPokemonList] = useState<Pokemon[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -303,80 +299,6 @@ export default function Home() {
         />
       </div>
 
-      {/* Desktop Header - Only visible on desktop */}
-      <div className="hidden md:block">
-        <header className={`sticky top-0 z-50 border-b border-border ${
-          theme === 'gold' ? 'bg-gold-gradient'
-          : theme === 'green' ? 'bg-green-gradient'
-          : theme === 'red' ? 'bg-red-gradient'
-          : theme === 'ruby' ? 'bg-ruby-gradient'
-          : 'bg-surface'
-        }`}>
-          <div className="w-full max-w-7xl mx-auto px-4 lg:px-8 py-4">
-            <div className="flex items-center justify-between">
-              {/* Logo and Title */}
-              <div className="flex items-center space-x-3">
-                <Zap className={`h-8 w-8 ${
-                  theme === 'gold' ? 'text-gold-accent' 
-                  : theme === 'green' ? 'text-green-accent'
-                  : theme === 'red' ? 'text-red-accent'
-                  : theme === 'ruby' ? 'text-ruby-accent'
-                  : 'text-poke-yellow'
-                }`} />
-                <h1 className={`text-2xl font-bold ${
-                  theme === 'gold' ? 'font-retro text-gold-accent'
-                  : theme === 'green' ? 'font-gameboy text-green-accent'
-                  : theme === 'red' ? 'font-retro text-red-accent'
-                  : theme === 'ruby' ? 'font-retro text-ruby-accent'
-                  : 'text-text'
-                }`}>
-                  PokéDex
-                </h1>
-              </div>
-
-              {/* Desktop Controls */}
-              <div className="flex items-center space-x-4">
-                <span className="text-sm text-muted">
-                  {pokemonList?.length || 0} Pokémon discovered
-                </span>
-                
-                {/* Density Controls */}
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-muted">Density:</span>
-                  <div className="flex bg-surface border border-border rounded-lg p-1">
-                    {(['cozy', 'compact', 'ultra'] as const).map((d) => (
-                      <button
-                        key={d}
-                        onClick={() => setDensity(d)}
-                        className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
-                          density === d
-                            ? 'bg-poke-blue text-white'
-                            : 'text-muted hover:text-text hover:bg-white/50'
-                        }`}
-                      >
-                        {d.charAt(0).toUpperCase() + d.slice(1)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Team Builder Link */}
-                <button
-                  onClick={() => router.push('/team')}
-                  className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-surface border border-border text-muted hover:text-text hover:bg-white/50 transition-all duration-200"
-                  title="Go to Team Builder"
-                >
-                  <Users className="h-4 w-4" />
-                  <span className="text-sm font-medium">Team</span>
-                </button>
-
-                {/* Theme Toggle */}
-                <ThemeToggle />
-              </div>
-            </div>
-          </div>
-        </header>
-      </div>
 
       {/* Comparison Overlay */}
       <ComparisonOverlay
