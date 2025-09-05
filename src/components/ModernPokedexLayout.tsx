@@ -714,8 +714,8 @@ export default function ModernPokedexLayout({
     <div className="h-screen w-full max-w-full bg-bg text-text flex flex-col overflow-hidden">
       {/* Sticky Header */}
       <header className="sticky top-0 z-50 bg-gradient-to-r from-surface via-surface to-surface border-b border-border shadow-lg">
-        <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-20 lg:h-24 py-3 list-none">
+        <div className="w-full max-w-full px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-20 lg:h-24 py-3 list-none min-w-0">
             {/* Brand & Title Section */}
             <div className="flex items-center space-x-3 lg:space-x-6">
               {/* POKEDEX Text - Upper Left */}
@@ -789,10 +789,10 @@ export default function ModernPokedexLayout({
 
             {/* Enhanced Desktop Controls Section - Hidden on mobile */}
             {!isMobile && (
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2 lg:space-x-4 min-w-0 flex-shrink-0">
               {/* Card Density Controls */}
-              <div className="flex items-center space-x-2">
-                <span className="text-xs font-medium text-muted uppercase tracking-wider">Size</span>
+              <div className="flex items-center space-x-1">
+                <span className="text-xs font-medium text-muted uppercase tracking-wider hidden xl:block">Size</span>
                 <div className="flex items-center bg-surface border border-border rounded-xl p-1 shadow-sm">
                   {[
                     { visual: '3cols', label: '3 Cols', target: '3cols', showOnMobile: false },
@@ -803,7 +803,7 @@ export default function ModernPokedexLayout({
                     <button
                       key={visual}
                       onClick={() => setCardDensity(target as '3cols' | '6cols' | '9cols' | 'list')}
-                      className={`px-3 py-2 text-xs font-medium rounded-lg transition-all duration-200 flex items-center space-x-2 ${
+                      className={`px-2 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 flex items-center space-x-1 ${
                         cardDensity === target 
                           ? 'bg-poke-blue text-white shadow-lg scale-105' 
                           : 'text-muted hover:text-text hover:bg-white/50'
@@ -851,13 +851,13 @@ export default function ModernPokedexLayout({
               </div>
 
               {/* Sort Controls */}
-              <div className="flex items-center space-x-2">
-                <span className="text-xs font-medium text-muted uppercase tracking-wider">Sort</span>
-                <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-1">
+                <span className="text-xs font-medium text-muted uppercase tracking-wider hidden xl:block">Sort</span>
+                <div className="flex items-center space-x-1">
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                    className="px-3 py-2 bg-surface border border-border rounded-xl text-text text-sm font-medium focus:ring-2 focus:ring-poke-blue focus:border-poke-blue focus:outline-none transition-all duration-200 shadow-sm hover:shadow-md"
+                    className="px-2 py-1.5 bg-surface border border-border rounded-xl text-text text-xs font-medium focus:ring-2 focus:ring-poke-blue focus:border-poke-blue focus:outline-none transition-all duration-200 shadow-sm hover:shadow-md"
                   >
                     <option value="id">Number</option>
                     <option value="name">Name</option>
@@ -872,7 +872,7 @@ export default function ModernPokedexLayout({
                   
                   <button
                     onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-                    className="flex items-center gap-2 px-2 py-1 rounded-xl bg-surface border border-border hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md group"
+                    className="flex items-center gap-1 px-1.5 py-1 rounded-xl bg-surface border border-border hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md group"
                     title={`Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`}
                   >
                     <div className={`transform transition-transform duration-200 ${sortOrder === 'asc' ? 'rotate-0' : 'rotate-180'}`}>
@@ -886,12 +886,12 @@ export default function ModernPokedexLayout({
               </div>
 
               {/* Theme/Layout Selector */}
-              <div className="flex items-center space-x-2">
-                <span className="text-xs font-medium text-muted uppercase tracking-wider">Theme</span>
+              <div className="flex items-center space-x-1">
+                <span className="text-xs font-medium text-muted uppercase tracking-wider hidden xl:block">Theme</span>
                 <select
                   onChange={(e) => applyThemeSelection(e.target.value as 'light'|'dark'|'red'|'gold'|'ruby')}
                   value={themeSelection}
-                  className="px-3 py-2 bg-surface border border-border rounded-xl text-text text-sm font-medium focus:ring-2 focus:ring-poke-blue focus:border-poke-blue focus:outline-none transition-all duration-200 shadow-sm hover:shadow-md"
+                  className="px-2 py-1.5 bg-surface border border-border rounded-xl text-text text-xs font-medium focus:ring-2 focus:ring-poke-blue focus:border-poke-blue focus:outline-none transition-all duration-200 shadow-sm hover:shadow-md"
                   title="Change theme"
                 >
                   <option value="light">Light</option>
@@ -903,7 +903,7 @@ export default function ModernPokedexLayout({
               </div>
 
               {/* Quick Type Filters - Desktop */}
-              <div className="hidden lg:flex items-center space-x-2">
+              <div className="hidden xl:flex items-center space-x-2">
                 <span className="text-xs font-medium text-muted uppercase tracking-wider">Types</span>
                 <div className="flex items-center space-x-1">
                   {Object.keys(typeColors).slice(0, 6).map(type => (
@@ -939,14 +939,14 @@ export default function ModernPokedexLayout({
               {/* Filter Toggle */}
               <button
                 onClick={() => setShowSidebar(!showSidebar)}
-                className={`p-3 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md ${
+                className={`p-2 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md ${
                   showSidebar 
                     ? 'bg-poke-blue text-white shadow-lg scale-105' 
                     : 'bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30'
                 }`}
                 title={showSidebar ? 'Hide filters' : 'Show filters'}
               >
-                <Filter className="h-5 w-5" />
+                <Filter className="h-4 w-4" />
               </button>
 
               {/* Theme Toggle */}
