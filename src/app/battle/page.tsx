@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Swords } from "lucide-react";
 import { GYM_CHAMPIONS } from "@/lib/gym_champions";
@@ -9,25 +9,25 @@ import TrainerRoster from "@/components/battle/TrainerRoster";
 import TeamSelector from "@/components/TeamSelector";
 
 // Saved teams storage key reused from team builder
-const STORAGE_KEY = "pokemon-team-builder";
+// const STORAGE_KEY = "pokemon-team-builder";
 
 type SavedTeam = { id: string; name: string; slots: Array<{ id: number | null; level: number }>; };
 
 function BattlePage() {
   const router = useRouter();
-  const [savedTeams, setSavedTeams] = useState<SavedTeam[]>([]);
+  // const [savedTeams, setSavedTeams] = useState<SavedTeam[]>([]);
   const [selectedPlayerTeam, setSelectedPlayerTeam] = useState<SavedTeam | null>(null);
   const [selectedOpponentTeam, setSelectedOpponentTeam] = useState<SavedTeam | null>(null);
   const [opponentType, setOpponentType] = useState<"champion" | "team">("champion");
   const [opponentChampionId, setOpponentChampionId] = useState<string>(GYM_CHAMPIONS[0]?.id ?? "");
   const [generationFilter, setGenerationFilter] = useState<string>("");
 
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setSavedTeams(JSON.parse(raw));
-    } catch {}
-  }, []);
+  // useEffect(() => {
+  //   try {
+  //     const raw = localStorage.getItem(STORAGE_KEY);
+  //     if (raw) setSavedTeams(JSON.parse(raw));
+  //   } catch {}
+  // }, []);
 
   // const playerTeamsOptions = useMemo(() => savedTeams.map(t => ({ id: t.id, name: t.name })), [savedTeams]);
 
