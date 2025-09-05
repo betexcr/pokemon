@@ -697,7 +697,7 @@ export default function ModernPokedexLayout({
     <div className="h-screen bg-bg text-text flex flex-col">
       {/* Sticky Header */}
       <header className="sticky top-0 z-50 bg-gradient-to-r from-surface via-surface to-surface border-b border-border shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20 lg:h-24 py-3 list-none">
             {/* Brand & Title Section */}
             <div className="flex items-center space-x-3 lg:space-x-6">
@@ -1265,7 +1265,7 @@ export default function ModernPokedexLayout({
 
       {/* Mobile Search Bar - Only on small screens */}
       <div className="md:hidden border-b border-border bg-surface">
-        <div className="max-w-7xl mx-auto px-4 py-3">
+        <div className="w-full px-4 py-3">
           <div className="flex items-center gap-3">
             <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-text" />
@@ -1299,7 +1299,7 @@ export default function ModernPokedexLayout({
 
       {/* Enhanced Type Filter Ribbon */}
       <div className="border-b border-border bg-gradient-to-r from-surface via-surface to-surface">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             {/* Type Filter Buttons */}
             <div className="flex items-center space-x-3 overflow-x-auto scrollbar-hide pb-2">
@@ -1359,7 +1359,7 @@ export default function ModernPokedexLayout({
       </div>
 
       {/* Main Content */}
-      <div className="flex max-w-7xl mx-auto flex-1 min-h-0 overflow-hidden">
+      <div className="flex w-full flex-1 min-h-0 overflow-hidden">
         {/* Sidebar - Advanced Filters */}
         <div className={`${
           showSidebar ? 'block' : 'hidden'
@@ -1595,7 +1595,7 @@ export default function ModernPokedexLayout({
 
         {/* Main Content Area */}
         <div className="flex-1 min-h-0 overflow-y-auto">
-          <div className="p-8 min-h-full">
+          <div className="p-8 min-h-full max-w-full overflow-x-hidden">
             {/* Pokémon Grid */}
             {isFiltering ? (
               <div className="text-center py-12">
