@@ -13,7 +13,7 @@ function LobbyPage() {
   const [rooms, setRooms] = useState<RoomData[]>([]);
   const [loading, setLoading] = useState(true);
   const [creatingRoom, setCreatingRoom] = useState(false);
-  const [roomCode, setRoomCode] = useState('');
+  // const [roomCode, setRoomCode] = useState('');
 
   // Load rooms from Firebase
   useEffect(() => {
@@ -41,7 +41,7 @@ function LobbyPage() {
         user.displayName || 'Anonymous Trainer'
       );
       
-      setRoomCode(roomId);
+      // setRoomCode(roomId);
       console.log('Created room with ID:', roomId);
       
       // Redirect to the room
