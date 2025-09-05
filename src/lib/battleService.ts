@@ -25,14 +25,14 @@ export interface MultiplayerBattleState {
   roomId: string;
   hostId: string;
   hostName: string;
-  hostTeam: any;
+  hostTeam: unknown;
   guestId: string;
   guestName: string;
-  guestTeam: any;
+  guestTeam: unknown;
   currentTurn: 'host' | 'guest';
   turnNumber: number;
   moves: BattleMove[];
-  battleData: any; // The actual battle state from the game engine
+  battleData: unknown; // The actual battle state from the game engine
   status: 'waiting' | 'active' | 'completed';
   winner?: string;
   createdAt: Date;
@@ -43,17 +43,17 @@ export interface BattleUpdate {
   currentTurn?: 'host' | 'guest';
   turnNumber?: number;
   moves?: BattleMove[];
-  battleData?: any;
+  battleData?: unknown;
   status?: 'waiting' | 'active' | 'completed';
   winner?: string;
-  updatedAt?: any;
+  updatedAt?: unknown;
 }
 
 class BattleService {
   private battlesCollection = 'battles';
 
   // Create a new battle
-  async createBattle(roomId: string, hostId: string, hostName: string, hostTeam: any, guestId: string, guestName: string, guestTeam: any): Promise<string> {
+  async createBattle(roomId: string, hostId: string, hostName: string, hostTeam: unknown, guestId: string, guestName: string, guestTeam: unknown): Promise<string> {
     if (!db) throw new Error('Firebase not initialized');
     
     const battleData = {
@@ -141,7 +141,7 @@ class BattleService {
   }
 
   // Start the battle (initialize battle data)
-  async startBattle(battleId: string, initialBattleData: any): Promise<void> {
+  async startBattle(battleId: string, initialBattleData: unknown): Promise<void> {
     if (!db) throw new Error('Firebase not initialized');
     
     const battleRef = doc(db, this.battlesCollection, battleId);
@@ -153,7 +153,7 @@ class BattleService {
   }
 
   // End the battle
-  async endBattle(battleId: string, winner: string, finalBattleData: any): Promise<void> {
+  async endBattle(battleId: string, winner: string, finalBattleData: unknown): Promise<void> {
     if (!db) throw new Error('Firebase not initialized');
     
     const battleRef = doc(db, this.battlesCollection, battleId);
