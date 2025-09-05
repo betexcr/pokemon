@@ -92,8 +92,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const provider = new GoogleAuthProvider();
       
-      // Optional: Add additional scopes if needed
-      // provider.addScope('https://www.googleapis.com/auth/contacts.readonly');
+      // Add scopes to get profile information including photo
+      provider.addScope('profile');
+      provider.addScope('email');
       
       // Optional: Set custom parameters
       provider.setCustomParameters({
@@ -109,7 +110,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const credential = GoogleAuthProvider.credentialFromResult(result);
       const accessToken = credential?.accessToken;
       
-      console.log('User signed in successfully with Google:', user.displayName);
+      console.log('User signed in successfully with Google:', {
+        displayName: user.displayName,
+        email: user.email,
+        photoURL: user.photoURL,
+        uid: user.uid
+      });
       
       // You can now access user.uid, user.email, user.displayName, etc.
       // The user is automatically signed in and the onAuthStateChanged will trigger

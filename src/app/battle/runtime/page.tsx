@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef, Suspense } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, RotateCcw, MessageCircle } from "lucide-react";
 import Image from "next/image";
-import { getPokemon, getMove } from "@/lib/api";
+import { getPokemon, getMove, getPokemonSpriteUrl } from "@/lib/api";
 import { Move } from "@/types/pokemon";
 import { GYM_CHAMPIONS } from "@/lib/gym_champions";
 import { 
@@ -32,15 +32,44 @@ type SavedTeam = {
 function BattleRuntimePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { toasts, removeToast } = useToast();
   
   const [battleState, setBattleState] = useState<TeamBattleState | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [initialized, setInitialized] = useState(false);
   const [selectedMove, setSelectedMove] = useState<number | null>(null);
   const [isAITurn, setIsAITurn] = useState(false);
+  const [switchingInProgress, setSwitchingInProgress] = useState(false);
+  const [showBattleResults, setShowBattleResults] = useState(false);
   const battleLogRef = useRef<HTMLDivElement>(null);
+
+  // Memoize battle state dependencies to prevent useEffect issues
+  const playerHpString = useMemo(() => 
+    battleState?.player?.pokemon?.map(p => p.currentHp).join(',') || '', 
+    [battleState?.player?.pokemon?.map(p => p.currentHp)]
+  );
+  
+  const opponentHpString = useMemo(() => 
+    battleState?.opponent?.pokemon?.map(p => p.currentHp).join(',') || '', 
+    [battleState?.opponent?.pokemon?.map(p => p.currentHp)]
+  );
+  
+  const playerIdString = useMemo(() => 
+    battleState?.player?.pokemon?.map(p => p.pokemon.id).join(',') || '', 
+    [battleState?.player?.pokemon]
+  );
+  
+  const opponentIdString = useMemo(() => 
+    battleState?.opponent?.pokemon?.map(p => p.pokemon.id).join(',') || '', 
+    [battleState?.opponent?.pokemon]
+  );
+  
+  const playerDebugString = useMemo(() => 
+    battleState?.player?.pokemon?.map(p => `${p.pokemon.name}-${p.currentHp}`).join(',') || '', 
+    [battleState?.player?.pokemon]
+  );
   
   // Animation states
   const [playerAnimation, setPlayerAnimation] = useState<'enter' | 'idle' | 'faint'>('idle');
@@ -176,23 +205,154 @@ function BattleRuntimePage() {
 
     setPreviousPlayerId(currentPlayer.pokemon.id);
     setPreviousOpponentId(currentOpponent.pokemon.id);
-  }, [battleState, previousPlayerId, previousOpponentId, playerAnimation, opponentAnimation]);
+  }, [
+    battleState?.player?.currentIndex,
+    battleState?.opponent?.currentIndex,
+    playerIdString,
+    opponentIdString,
+    previousPlayerId, 
+    previousOpponentId, 
+    playerAnimation, 
+    opponentAnimation
+  ]);
 
   // Handle automatic switching when Pokémon faint
   useEffect(() => {
-    if (!battleState || battleState.isComplete) return;
+    console.log('=== AUTOMATIC SWITCHING useEffect TRIGGERED ===');
+    console.log('Conditions:', {
+      hasBattleState: !!battleState,
+      isComplete: battleState?.isComplete,
+      switchingInProgress
+    });
+    
+    if (!battleState || battleState.isComplete || switchingInProgress) {
+      console.log('Early return from automatic switching useEffect');
+      return;
+    }
 
     const currentPlayer = getCurrentPokemon(battleState.player);
     const currentOpponent = getCurrentPokemon(battleState.opponent);
 
+    // Debug: Always log current Pokemon status
+    console.log('=== AUTOMATIC SWITCHING CHECK ===');
+    console.log('Current player Pokemon:', {
+      name: currentPlayer.pokemon.name,
+      hp: currentPlayer.currentHp,
+      isFainted: currentPlayer.currentHp <= 0
+    });
+    console.log('Current opponent Pokemon:', {
+      name: currentOpponent.pokemon.name,
+      hp: currentOpponent.currentHp,
+      isFainted: currentOpponent.currentHp <= 0
+    });
+
     // Check if any Pokémon has fainted and needs to be switched
     if (currentPlayer.currentHp <= 0 || currentOpponent.currentHp <= 0) {
+      console.log('=== POKEMON FAINTED - DETAILED DEBUG ===');
+      console.log('Player team state:', {
+        currentIndex: battleState.player.currentIndex,
+        faintedCount: battleState.player.faintedCount,
+        teamSize: battleState.player.pokemon.length,
+        pokemon: battleState.player.pokemon.map((p, i) => ({
+          index: i,
+          name: p.pokemon.name,
+          hp: p.currentHp,
+          maxHp: p.maxHp,
+          isCurrent: i === battleState.player.currentIndex,
+          isFainted: p.currentHp <= 0
+        }))
+      });
+      
+      console.log('Opponent team state:', {
+        currentIndex: battleState.opponent.currentIndex,
+        faintedCount: battleState.opponent.faintedCount,
+        teamSize: battleState.opponent.pokemon.length,
+        pokemon: battleState.opponent.pokemon.map((p, i) => ({
+          index: i,
+          name: p.pokemon.name,
+          hp: p.currentHp,
+          maxHp: p.maxHp,
+          isCurrent: i === battleState.opponent.currentIndex,
+          isFainted: p.currentHp <= 0
+        }))
+      });
+      
+      console.log('Current Pokemon status:', {
+        playerFainted: currentPlayer.currentHp <= 0,
+        opponentFainted: currentOpponent.currentHp <= 0,
+        playerName: currentPlayer.pokemon.name,
+        opponentName: currentOpponent.pokemon.name,
+        playerHp: currentPlayer.currentHp,
+        opponentHp: currentOpponent.currentHp
+      });
+      
+      setSwitchingInProgress(true);
       const updatedState = handleAutomaticSwitching(battleState);
+      
       if (updatedState !== battleState) {
+        console.log('=== SWITCHING OCCURRED ===');
+        console.log('New player state:', {
+          index: updatedState.player.currentIndex,
+          name: getCurrentPokemon(updatedState.player).pokemon.name,
+          hp: getCurrentPokemon(updatedState.player).currentHp
+        });
+        console.log('New opponent state:', {
+          index: updatedState.opponent.currentIndex,
+          name: getCurrentPokemon(updatedState.opponent).pokemon.name,
+          hp: getCurrentPokemon(updatedState.opponent).currentHp
+        });
+        console.log('New turn:', updatedState.turn);
+        
+        // Safeguard: Ensure turn is set correctly after switching
+        const newPlayer = getCurrentPokemon(updatedState.player);
+        const newOpponent = getCurrentPokemon(updatedState.opponent);
+        
+        if (newPlayer.currentHp > 0 && newOpponent.currentHp > 0) {
+          // Both Pokemon are alive, ensure turn is set correctly
+          if (updatedState.turn !== 'player' && updatedState.turn !== 'opponent') {
+            console.log('WARNING: Invalid turn state after switching, defaulting to player');
+            updatedState.turn = 'player';
+          }
+        }
+        
         setBattleState(updatedState);
+        
+        // Check if battle is now complete
+        if (updatedState.isComplete) {
+          console.log('Battle completed during switching!');
+          setSwitchingInProgress(false);
+          return;
+        }
+      } else {
+        console.log('=== NO SWITCHING OCCURRED ===');
+        console.log('Battle may be over or no available Pokemon');
+        console.log('Player team defeated:', battleState.player.faintedCount >= battleState.player.pokemon.length);
+        console.log('Opponent team defeated:', battleState.opponent.faintedCount >= battleState.opponent.pokemon.length);
+        
+        // Check if battle should be complete
+        if (battleState.player.faintedCount >= battleState.player.pokemon.length) {
+          console.log('Player team fully defeated - marking battle complete');
+          const defeatState = { ...battleState, isComplete: true, winner: 'opponent' as const };
+          setBattleState(defeatState);
+          return;
+        } else if (battleState.opponent.faintedCount >= battleState.opponent.pokemon.length) {
+          console.log('Opponent team fully defeated - marking battle complete');
+          const victoryState = { ...battleState, isComplete: true, winner: 'player' as const };
+          setBattleState(victoryState);
+          return;
+        }
       }
+      // Reset switching flag after a short delay
+      setTimeout(() => setSwitchingInProgress(false), 100);
     }
-  }, [battleState]);
+  }, [
+    battleState?.player?.currentIndex,
+    battleState?.opponent?.currentIndex,
+    playerHpString,
+    opponentHpString,
+    battleState?.isComplete,
+    switchingInProgress
+  ]);
 
   // Debug logging for Pokémon changes
   useEffect(() => {
@@ -208,7 +368,79 @@ function BattleRuntimePage() {
       faintedCount: playerTeam.faintedCount,
       teamSize: playerTeam.pokemon.length
     });
-  }, [battleState]);
+  }, [
+    battleState?.player?.currentIndex,
+    playerDebugString
+  ]);
+
+  // Show battle results dialog when battle is complete
+  useEffect(() => {
+    if (battleState?.isComplete && !showBattleResults) {
+      setShowBattleResults(true);
+    }
+  }, [battleState?.isComplete, showBattleResults]);
+
+  // Handle AI turns when it's the opponent's turn
+  useEffect(() => {
+    if (!battleState || battleState.isComplete || isAITurn || switchingInProgress) return;
+    
+    if (battleState.turn === 'opponent') {
+      const currentOpponent = getCurrentPokemon(battleState.opponent);
+      if (currentOpponent.currentHp > 0) {
+        console.log('=== AI TURN TRIGGERED ===');
+        console.log('Opponent Pokemon:', currentOpponent.pokemon.name, 'HP:', currentOpponent.currentHp);
+        
+        setIsAITurn(true);
+        
+        // Add a small delay to make the AI turn visible
+        setTimeout(async () => {
+          try {
+            const aiMoveIndex = Math.floor(Math.random() * currentOpponent.moves.length);
+            console.log('AI selecting move:', aiMoveIndex, currentOpponent.moves[aiMoveIndex]?.name);
+            const newState = await executeTeamAction(battleState, { type: 'move', moveIndex: aiMoveIndex });
+            setBattleState(newState);
+          } catch (err) {
+            console.error("AI move failed:", err);
+          } finally {
+            setIsAITurn(false);
+          }
+        }, 1000); // 1 second delay
+      }
+    }
+  }, [battleState?.turn, battleState?.opponent?.currentIndex, isAITurn, switchingInProgress]);
+
+  // Direct HP monitoring for immediate switching
+  useEffect(() => {
+    if (!battleState || battleState.isComplete || switchingInProgress) return;
+    
+    const currentPlayer = getCurrentPokemon(battleState.player);
+    const currentOpponent = getCurrentPokemon(battleState.opponent);
+    
+    console.log('=== DIRECT HP MONITORING ===');
+    console.log('Player HP:', currentPlayer.currentHp, 'Opponent HP:', currentOpponent.currentHp);
+    
+    if (currentPlayer.currentHp <= 0 || currentOpponent.currentHp <= 0) {
+      console.log('=== IMMEDIATE SWITCHING TRIGGERED ===');
+      setSwitchingInProgress(true);
+      
+      const updatedState = handleAutomaticSwitching(battleState);
+      if (updatedState !== battleState) {
+        console.log('Immediate switching successful');
+        setBattleState(updatedState);
+        
+        // Check if battle is now complete
+        if (updatedState.isComplete) {
+          console.log('Battle completed during switching!');
+          setSwitchingInProgress(false);
+          return;
+        }
+      } else {
+        console.log('Immediate switching failed');
+      }
+      
+      setTimeout(() => setSwitchingInProgress(false), 100);
+    }
+  }, [battleState?.player?.pokemon?.map(p => p.currentHp), battleState?.opponent?.pokemon?.map(p => p.currentHp), switchingInProgress]);
 
   const initializeBattleState = useCallback(async () => {
     try {
@@ -279,46 +511,110 @@ function BattleRuntimePage() {
         throw new Error("Missing battle parameters");
       }
 
-      // Load saved teams
-      const savedTeamsRaw = localStorage.getItem(STORAGE_KEY);
+      // Load saved teams from Firebase or localStorage based on authentication
       let savedTeams: SavedTeam[] = [];
       
-      if (!savedTeamsRaw) {
-        // Create a default test team if none exists
+      if (user) {
+        // User is authenticated, try Firebase first, then fallback to localStorage
+        try {
+          const { getUserTeams } = await import('@/lib/userTeams');
+          const firebaseTeams = await getUserTeams(user.uid);
+          savedTeams = firebaseTeams;
+          console.log('Loaded teams from Firebase:', savedTeams.length);
+        } catch (error) {
+          console.error('Failed to load teams from Firebase:', error);
+          // Fallback to localStorage
+          const savedTeamsRaw = localStorage.getItem(STORAGE_KEY);
+          if (savedTeamsRaw) {
+            try {
+              savedTeams = JSON.parse(savedTeamsRaw);
+              console.log('Fallback: Loaded teams from localStorage:', savedTeams.length);
+            } catch (parseError) {
+              console.error('Failed to parse localStorage teams:', parseError);
+              savedTeams = [];
+            }
+          }
+        }
+      } else {
+        // User not authenticated, load from localStorage
+        const savedTeamsRaw = localStorage.getItem(STORAGE_KEY);
+        if (savedTeamsRaw) {
+          try {
+            savedTeams = JSON.parse(savedTeamsRaw);
+            console.log('Loaded teams from localStorage:', savedTeams.length);
+          } catch (parseError) {
+            console.error('Failed to parse localStorage teams:', parseError);
+            savedTeams = [];
+          }
+        }
+      }
+      
+      // Create a default test team if none exists
+      if (savedTeams.length === 0) {
         console.log('No saved teams found, creating default test team...');
         const defaultTeam: SavedTeam = {
           id: "1756959740815",
           name: "Test Team",
-          slots: [
-            {
-              id: 25, // Pikachu
-              level: 15,
-              moves: [
-                { name: 'thunderbolt', type: 'electric', power: 90, accuracy: 100, pp: 15, effect: 'Deals damage', damage_class: 'special', priority: 0 },
-                { name: 'quick-attack', type: 'normal', power: 40, accuracy: 100, pp: 30, effect: 'Deals damage', damage_class: 'physical', priority: 1 },
-                { name: 'iron-tail', type: 'steel', power: 100, accuracy: 75, pp: 15, effect: 'Deals damage', damage_class: 'physical', priority: 0 },
-                { name: 'thunder', type: 'electric', power: 110, accuracy: 70, pp: 10, effect: 'Deals damage', damage_class: 'special', priority: 0 },
-              ]
-            },
-            { id: null, level: 15, moves: [] },
-            { id: null, level: 15, moves: [] },
-            { id: null, level: 15, moves: [] },
-            { id: null, level: 15, moves: [] },
-            { id: null, level: 15, moves: [] },
-          ]
+                      slots: [
+              {
+                id: 25, // Pikachu
+                level: 15,
+                moves: [
+                  { name: 'thunderbolt', type: 'electric', power: 90, accuracy: 100, pp: 15, level_learned_at: 15, damage_class: 'special' as const },
+                  { name: 'quick-attack', type: 'normal', power: 40, accuracy: 100, pp: 30, level_learned_at: 10, damage_class: 'physical' as const },
+                  { name: 'iron-tail', type: 'steel', power: 100, accuracy: 75, pp: 15, level_learned_at: 20, damage_class: 'physical' as const },
+                  { name: 'thunder', type: 'electric', power: 110, accuracy: 70, pp: 10, level_learned_at: 25, damage_class: 'special' as const },
+                ]
+              },
+              { id: null, level: 15, moves: [] },
+              { id: null, level: 15, moves: [] },
+              { id: null, level: 15, moves: [] },
+              { id: null, level: 15, moves: [] },
+              { id: null, level: 15, moves: [] },
+            ]
         };
         savedTeams = [defaultTeam];
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(savedTeams));
+        
+        // Save to appropriate storage
+        if (user) {
+          // Save to Firebase
+          try {
+            const { saveTeamToFirebase } = await import('@/lib/userTeams');
+            await saveTeamToFirebase(user.uid, {
+              name: defaultTeam.name,
+              slots: defaultTeam.slots as unknown as Array<{ id: number | null; level: number; moves: unknown[] }>, // Type assertion for compatibility
+              isPublic: false,
+              description: 'Default test team'
+            });
+          } catch (error) {
+            console.error('Failed to save default team to Firebase:', error);
+            // Fallback to localStorage
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(savedTeams));
+          }
+        } else {
+          // Save to localStorage
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(savedTeams));
+        }
         console.log('Default test team created');
-      } else {
-        savedTeams = JSON.parse(savedTeamsRaw);
       }
 
       // Get player team
+      console.log('Looking for player team with ID:', playerTeamId);
+      console.log('Available teams:', savedTeams.map(t => ({ id: t.id, name: t.name })));
+      
       const playerTeam = savedTeams.find(t => t.id === playerTeamId);
       if (!playerTeam) {
         console.error('Player team not found. Available teams:', savedTeams.map(t => ({ id: t.id, name: t.name })));
-        throw new Error(`Player team with ID "${playerTeamId}" not found. Available teams: ${savedTeams.map(t => t.name).join(', ')}`);
+        console.error('User authentication state:', { user: !!user, uid: user?.uid });
+        console.error('Storage check - localStorage teams:', localStorage.getItem(STORAGE_KEY));
+        
+        // Try to provide more helpful error message
+        const availableTeamNames = savedTeams.map(t => t.name).join(', ');
+        const errorMessage = availableTeamNames 
+          ? `Player team with ID "${playerTeamId}" not found. Available teams: ${availableTeamNames}`
+          : `Player team with ID "${playerTeamId}" not found. No teams available. Please create a team first.`;
+        
+        throw new Error(errorMessage);
       }
 
       // Get opponent team
@@ -333,7 +629,10 @@ function BattleRuntimePage() {
         opponentTeam = champion.team;
       } else {
         const team = savedTeams.find(t => t.id === opponentId);
-        if (!team) throw new Error("Opponent team not found");
+        if (!team) {
+          console.error('Opponent team not found. Available teams:', savedTeams.map(t => ({ id: t.id, name: t.name })));
+          throw new Error(`Opponent team with ID "${opponentId}" not found. Available teams: ${savedTeams.map(t => t.name).join(', ')}`);
+        }
         opponentTeam = {
           name: team.name,
           slots: team.slots.filter(s => s.id != null).map(s => ({ id: s.id as number, level: s.level }))
@@ -586,7 +885,16 @@ function BattleRuntimePage() {
       
       const battle = initializeTeamBattle(playerTeamData, opponentTeamData, playerTeam.name, opponentTeam.name);
       
-      console.log('Battle initialized:', battle);
+      console.log('Battle initialized:', {
+        playerTeamSize: playerTeamData.length,
+        opponentTeamSize: opponentTeamData.length,
+        opponentTeamPokemon: opponentTeamData.map(p => ({ name: p.pokemon.name, level: p.level })),
+        battleState: {
+          playerTeamSize: battle.player.pokemon.length,
+          opponentTeamSize: battle.opponent.pokemon.length,
+          opponentPokemon: battle.opponent.pokemon.map(p => ({ name: p.pokemon.name, hp: p.currentHp }))
+        }
+      });
 
       // Ensure battle log is properly formatted
       const sanitizedBattle = {
@@ -628,6 +936,7 @@ function BattleRuntimePage() {
 
       
       setBattleState(sanitizedBattle as TeamBattleState);
+      setInitialized(true);
     } catch (err) {
       console.error('Battle initialization error:', err);
       let errorMessage = "Failed to initialize battle";
@@ -643,24 +952,29 @@ function BattleRuntimePage() {
       }
       
       setError(errorMessage);
+      setInitialized(true);
     } finally {
       setLoading(false);
     }
   }, [playerTeamId, opponentKind, opponentId, isMultiplayer, multiplayerBattle, battleId, user]);
 
   useEffect(() => {
+    // Only initialize once and wait for auth to be ready
+    if (initialized || authLoading) return;
+    
     const timeoutId = setTimeout(() => {
-      if (loading) {
+      if (loading && !initialized) {
         console.error('Battle initialization timeout');
         setError('Battle initialization is taking too long. Please try again.');
         setLoading(false);
+        setInitialized(true);
       }
     }, 10000); // 10 second timeout
 
     initializeBattleState();
     
     return () => clearTimeout(timeoutId);
-  }, [initializeBattleState, loading, isMultiplayer, multiplayerBattle, battleId, user]);
+  }, [initializeBattleState, initialized, authLoading, isMultiplayer, multiplayerBattle, battleId, user]);
 
   const handlePlayerMove = async (moveIndex: number) => {
     if (!battleState || battleState.turn !== 'player' || battleState.isComplete) return;
@@ -714,28 +1028,22 @@ function BattleRuntimePage() {
         return;
       }
 
-      // AI turn
-      setIsAITurn(true);
-      try {
-        // For now, use a simple AI move selection
-        const currentOpponent = getCurrentPokemon(newState.opponent);
-        const aiMoveIndex = Math.floor(Math.random() * currentOpponent.moves.length);
-        const finalState = await executeTeamAction(newState, { type: 'move', moveIndex: aiMoveIndex });
-        setBattleState(finalState);
-      } catch (err) {
-        console.error("AI move failed:", err);
-      } finally {
-        setIsAITurn(false);
-        setSelectedMove(null);
-      }
+      // AI turn will be handled by the useEffect
+      setSelectedMove(null);
     }
   };
 
   const restartBattle = () => {
-    initializeBattleState();
+    setInitialized(false);
+    setLoading(true);
+    setError(null);
+    setBattleState(null);
+    setSwitchingInProgress(false);
+    setShowBattleResults(false);
+    // The useEffect will automatically trigger initialization
   };
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <div className="min-h-screen bg-bg text-text flex items-center justify-center">
         <div className="text-center">
@@ -746,7 +1054,7 @@ function BattleRuntimePage() {
             height={100} 
             className="mx-auto mb-4"
           />
-          <p>Initializing battle...</p>
+          <p>{authLoading ? 'Loading authentication...' : 'Initializing battle...'}</p>
         </div>
       </div>
     );
@@ -776,10 +1084,32 @@ function BattleRuntimePage() {
   const getTypeName = (t: string | { name?: string; type?: { name?: string } } | undefined) => 
     (typeof t === 'string' ? t : (t?.name || t?.type?.name || 'unknown'));
 
+  // Debug logging for move selection visibility
+  console.log('Battle state debug:', {
+    isComplete,
+    turn,
+    playerHp: player.currentHp,
+    playerName: player.pokemon.name,
+    opponentHp: opponent.currentHp,
+    opponentName: opponent.pokemon.name,
+    shouldShowMoves: !isComplete && turn === 'player' && player.currentHp > 0,
+    playerTeamCurrentIndex: playerTeam.currentIndex,
+    opponentTeamCurrentIndex: opponentTeam.currentIndex,
+    playerMovesCount: player.moves.length,
+    opponentTeamSize: opponentTeam.pokemon.length,
+    opponentTeamFaintedCount: opponentTeam.faintedCount,
+    opponentTeamPokemon: opponentTeam.pokemon.map((p, i) => ({
+      index: i,
+      name: p.pokemon.name,
+      hp: p.currentHp,
+      isCurrent: i === opponentTeam.currentIndex
+    }))
+  });
+
   return (
     <div className="min-h-screen bg-bg text-text">
       <header className="sticky top-0 z-50 border-b border-border bg-surface">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <button
               onClick={() => router.push("/battle")}
@@ -812,7 +1142,7 @@ function BattleRuntimePage() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 py-6">
+      <main className="w-full px-4 py-6">
         {/* Battle Status */}
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold mb-2">
@@ -979,7 +1309,18 @@ function BattleRuntimePage() {
         </div>
 
         {/* Move Selection */}
-          {!isComplete && turn === 'player' && player.currentHp > 0 && (
+          {(() => {
+            const shouldShowMoves = !isComplete && turn === 'player' && player.currentHp > 0;
+            console.log('Move selection visibility check:', {
+              isComplete,
+              turn,
+              playerHp: player.currentHp,
+              playerName: player.pokemon.name,
+              shouldShowMoves,
+              switchingInProgress
+            });
+            return shouldShowMoves;
+          })() && (
           <div className="bg-surface border border-border rounded-xl p-6">
             <h3 className="text-lg font-semibold mb-4">Select a Move</h3>
             <div className="grid grid-cols-2 gap-3">
@@ -1088,6 +1429,131 @@ function BattleRuntimePage() {
 
       {/* Toast Notifications */}
       <ToastContainer toasts={toasts} onRemove={removeToast} />
+
+      {/* Battle Results Dialog */}
+      {showBattleResults && battleState && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-surface border border-border rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+            <div className="text-center mb-6">
+              <h2 className={`text-3xl font-bold mb-2 ${
+                battleState.winner === 'player' ? 'text-green-500' : 'text-red-500'
+              }`}>
+                {battleState.winner === 'player' ? 'Victory!' : 'Defeat!'}
+              </h2>
+              <p className="text-muted">
+                {battleState.winner === 'player' 
+                  ? 'Congratulations! You won the battle!' 
+                  : 'Better luck next time!'}
+              </p>
+            </div>
+
+            {/* Remaining Pokemon Display */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              {/* Player Team */}
+              <div className="bg-white/50 rounded-lg p-4">
+                <h3 className="text-lg font-semibold mb-3 text-center">Your Team</h3>
+                <div className="space-y-2">
+                  {battleState.player.pokemon.map((pokemon, index) => (
+                    <div key={index} className="flex items-center gap-3 p-2 rounded bg-white/30">
+                      <div className="relative w-12 h-12 flex-shrink-0">
+                        <Image
+                          src={getPokemonSpriteUrl(pokemon.pokemon.id)}
+                          alt={pokemon.pokemon.name}
+                          width={48}
+                          height={48}
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium capitalize text-sm">
+                          {pokemon.pokemon.name}
+                        </div>
+                        <div className="text-xs text-muted">
+                          Lv. {pokemon.level}
+                        </div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <div className="flex-1 bg-gray-200 rounded-full h-2">
+                            <div 
+                              className={`h-2 rounded-full transition-all ${
+                                pokemon.currentHp > 0 ? 'bg-green-500' : 'bg-red-500'
+                              }`}
+                              style={{ 
+                                width: `${Math.max(0, (pokemon.currentHp / pokemon.maxHp) * 100)}%` 
+                              }}
+                            />
+                          </div>
+                          <span className="text-xs font-mono">
+                            {pokemon.currentHp}/{pokemon.maxHp}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Opponent Team */}
+              <div className="bg-white/50 rounded-lg p-4">
+                <h3 className="text-lg font-semibold mb-3 text-center">Opponent Team</h3>
+                <div className="space-y-2">
+                  {battleState.opponent.pokemon.map((pokemon, index) => (
+                    <div key={index} className="flex items-center gap-3 p-2 rounded bg-white/30">
+                      <div className="relative w-12 h-12 flex-shrink-0">
+                        <Image
+                          src={getPokemonSpriteUrl(pokemon.pokemon.id)}
+                          alt={pokemon.pokemon.name}
+                          width={48}
+                          height={48}
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium capitalize text-sm">
+                          {pokemon.pokemon.name}
+                        </div>
+                        <div className="text-xs text-muted">
+                          Lv. {pokemon.level}
+                        </div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <div className="flex-1 bg-gray-200 rounded-full h-2">
+                            <div 
+                              className={`h-2 rounded-full transition-all ${
+                                pokemon.currentHp > 0 ? 'bg-green-500' : 'bg-red-500'
+                              }`}
+                              style={{ 
+                                width: `${Math.max(0, (pokemon.currentHp / pokemon.maxHp) * 100)}%` 
+                              }}
+                            />
+                          </div>
+                          <span className="text-xs font-mono">
+                            {pokemon.currentHp}/{pokemon.maxHp}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={() => router.push("/battle")}
+                className="px-6 py-3 bg-poke-blue text-white rounded-lg hover:bg-poke-blue/90 transition-colors font-medium"
+              >
+                Back to Battle Setup
+              </button>
+              <button
+                onClick={restartBattle}
+                className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
+              >
+                Battle Again
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

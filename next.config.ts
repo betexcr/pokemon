@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: 'export',
+  // Removed 'output: export' to enable dynamic rendering for lobby rooms
   trailingSlash: true,
   images: {
     unoptimized: true,

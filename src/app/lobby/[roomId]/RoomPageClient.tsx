@@ -51,6 +51,19 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
     const unsubscribe = roomService.onRoomChange(roomId, (room) => {
       if (room) {
         setRoom(room);
+        
+        // Initialize selected team based on user's role
+        if (user) {
+          const isHost = user.uid === room.hostId;
+          const isGuest = user.uid === room.guestId;
+          
+          if (isHost && room.hostTeam) {
+            setSelectedTeam(room.hostTeam as SavedTeam | LocalTeam);
+          } else if (isGuest && room.guestTeam) {
+            setSelectedTeam(room.guestTeam as SavedTeam | LocalTeam);
+          }
+        }
+        
         setLoading(false);
       } else {
         // Room doesn't exist or was deleted
@@ -110,19 +123,24 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
     }
   };
 
-  const handleTeamSelect = (team: SavedTeam | LocalTeam | null) => {
+  const handleTeamSelect = async (team: SavedTeam | LocalTeam | null) => {
     setSelectedTeam(team);
     
-    // Update room data with selected team
+    // Update room data with selected team in Firestore
     if (room && user) {
       const isHost = user.uid === room.hostId;
       const isGuest = user.uid === room.guestId;
       
-      setRoom(prev => prev ? {
-        ...prev,
-        ...(isHost && { hostTeam: team || undefined }),
-        ...(isGuest && { guestTeam: team || undefined })
-      } : null);
+      try {
+        if (isHost) {
+          await roomService.updateRoom(roomId, { hostTeam: team || undefined });
+        } else if (isGuest) {
+          await roomService.updateRoom(roomId, { guestTeam: team || undefined });
+        }
+      } catch (error) {
+        console.error('Failed to update room with team:', error);
+        alert('Failed to save team selection. Please try again.');
+      }
     }
   };
 
@@ -268,10 +286,17 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
                 <p className="text-gray-500">Ready to battle</p>
               </div>
               
-              {/* Team Selector for Host - Temporarily disabled */}
-              <div className="p-3 bg-blue-50 rounded-lg">
-                <p className="text-sm text-blue-600">Team selector temporarily disabled</p>
-              </div>
+              {/* Team Selector for Host */}
+              {isHost && (
+                <div className="mb-3">
+                  <TeamSelector
+                    selectedTeamId={selectedTeam?.id}
+                    onTeamSelect={handleTeamSelect}
+                    label="Select Your Team"
+                    showStorageIndicator={true}
+                  />
+                </div>
+              )}
               
               {/* Display Host Team */}
               {Boolean(room.hostTeam && !isHost) && (
@@ -327,10 +352,17 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
                     <p className="text-gray-500">Ready to battle</p>
                   </div>
                   
-                  {/* Team Selector for Guest - Temporarily disabled */}
-                  <div className="p-3 bg-green-50 rounded-lg">
-                    <p className="text-sm text-green-600">Team selector temporarily disabled</p>
-                  </div>
+                  {/* Team Selector for Guest */}
+                  {isGuest && (
+                    <div className="mb-3">
+                      <TeamSelector
+                        selectedTeamId={selectedTeam?.id}
+                        onTeamSelect={handleTeamSelect}
+                        label="Select Your Team"
+                        showStorageIndicator={true}
+                      />
+                    </div>
+                  )}
                   
                   {/* Display Guest Team */}
                   {Boolean(room.guestTeam && !isGuest) && (

@@ -61,12 +61,27 @@ export default function UserProfile() {
 
   // Get user's profile picture or generate initials
   const getProfilePicture = () => {
+    console.log('UserProfile - User data:', {
+      displayName: user.displayName,
+      email: user.email,
+      photoURL: user.photoURL,
+      uid: user.uid
+    });
+    
     if (user.photoURL) {
+      console.log('Using photoURL:', user.photoURL);
       return (
         <img
           src={user.photoURL}
           alt={user.displayName || user.email || 'User'}
           className="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm"
+          onError={(e) => {
+            console.error('Failed to load profile image:', user.photoURL);
+            e.currentTarget.style.display = 'none';
+          }}
+          onLoad={() => {
+            console.log('Profile image loaded successfully');
+          }}
         />
       );
     }

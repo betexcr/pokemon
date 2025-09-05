@@ -35,28 +35,10 @@ export default function Chat({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Mock messages for now - will be replaced with Firebase/Firestore
+  // Initialize with empty messages - will be replaced with Firebase/Firestore
   useEffect(() => {
-    const mockMessages: ChatMessage[] = [
-      {
-        id: '1',
-        userId: 'system',
-        userName: 'System',
-        message: `Welcome to room ${roomId}!`,
-        timestamp: new Date(Date.now() - 1000 * 60 * 5),
-        type: 'system'
-      },
-      {
-        id: '2',
-        userId: 'user1',
-        userName: 'Trainer Red',
-        message: 'Hello! Ready to battle?',
-        timestamp: new Date(Date.now() - 1000 * 60 * 3),
-        type: 'user'
-      }
-    ];
-    
-    setMessages(mockMessages);
+    // Start with empty messages array - real messages will come from Firebase
+    setMessages([]);
   }, [roomId]);
 
   const scrollToBottom = () => {
