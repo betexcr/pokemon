@@ -11,6 +11,7 @@ import ThemeToggle from './ThemeToggle';
 import PokemonComparison from './PokemonComparison';
 import RadarChart from './RadarChart';
 import VirtualizedPokemonList from './VirtualizedPokemonList';
+import UserProfile from './auth/UserProfile';
 
 interface RubyPokedexLayoutProps {
   pokemonList: Pokemon[];
@@ -128,6 +129,7 @@ export default function RubyPokedexLayout({
         </div>
         
         <div className="flex items-center gap-2">
+          <UserProfile />
           <button 
             onClick={() => router.push('/team')}
             className="px-4 py-2 border-2 border-border text-white text-sm font-bold transition-colors bg-surface hover:bg-ruby-tab/20"

@@ -1000,11 +1000,11 @@ export default function ModernPokedexLayout({
                 <Scale className="h-5 w-5" />
               </button>
 
-              {/* Mobile Menu Toggle - hidden on desktop and mobile for now */}
+              {/* Mobile Menu Toggle */}
               <button
                 type="button"
                 onClick={() => { setShowMobileMenu(prev => !prev) }}
-                className="hidden p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
+                className="md:hidden p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
                 title="Toggle menu"
                 aria-expanded={showMobileMenu}
                 aria-controls={'mobile-drawer'}
@@ -1277,7 +1277,8 @@ export default function ModernPokedexLayout({
       {/* Mobile Search Bar - Only on small screens */}
       <div className="md:hidden border-b border-border bg-surface">
         <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="relative">
+          <div className="flex items-center gap-3">
+            <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-text" />
             <input
               type="text"
@@ -1301,6 +1302,8 @@ export default function ModernPokedexLayout({
                 <X className="h-4 w-4 text-text hover:text-poke-blue" />
               </button>
             )}
+            </div>
+            <UserProfile />
           </div>
         </div>
       </div>
