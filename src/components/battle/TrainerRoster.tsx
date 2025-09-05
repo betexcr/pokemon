@@ -130,25 +130,25 @@ export default function TrainerRoster({
                 {/* Trainer Card */}
                 <div className={`
                   bg-gradient-to-b from-surface to-surface/80 
-                  border-2 rounded-lg p-3 text-center
+                  border-2 rounded-lg p-4 text-center
                   ${isSelected 
                     ? 'border-poke-blue shadow-lg shadow-poke-blue/20' 
                     : 'border-border hover:border-poke-blue/50'
                   }
                   transition-all duration-200
                 `}>
-                  {/* Trainer Image */}
-                  <div className="relative w-16 h-16 mx-auto mb-2">
+                  {/* Trainer Image - Enhanced */}
+                  <div className="relative w-20 h-20 mx-auto mb-3">
                     <Image
                       src={imagePath}
                       alt={champion.name}
                       fill
-                      className="object-cover rounded-md"
+                      className="object-cover rounded-lg border-2 border-white/20 shadow-lg"
                       onError={(e) => {
                         // Fallback to placeholder if image fails to load
                         const target = e.target as HTMLImageElement;
                         target.src = '/placeholder-pokemon.png';
-                        target.className = 'object-contain rounded-md bg-gray-200';
+                        target.className = 'object-contain rounded-lg bg-gray-200 border-2 border-white/20 shadow-lg';
                       }}
                     />
                   </div>
@@ -195,16 +195,16 @@ export default function TrainerRoster({
               
               return (
                 <div className="flex items-center space-x-4">
-                  <div className="relative w-12 h-12">
+                  <div className="relative w-16 h-16">
                     <Image
                       src={getTrainerImagePath(selectedChampion)}
                       alt={selectedChampion.name}
                       fill
-                      className="object-cover rounded-md"
+                      className="object-cover rounded-lg border-2 border-white/20 shadow-lg"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.src = '/placeholder-pokemon.png';
-                        target.className = 'object-contain rounded-md bg-gray-200';
+                        target.className = 'object-contain rounded-lg bg-gray-200 border-2 border-white/20 shadow-lg';
                       }}
                     />
                   </div>
