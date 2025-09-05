@@ -38,13 +38,7 @@ export default function Home() {
     sortOrder: 'asc'
   })
 
-  let theme = 'light'
-  try {
-    const themeContext = useTheme()
-    theme = themeContext.theme
-  } catch {
-    // Theme provider not available, use default
-  }
+  const { theme } = useTheme()
 
   // Load initial data with caching
   const loadInitialData = useCallback(async () => {
@@ -180,20 +174,12 @@ export default function Home() {
 
   // Determine layout mode based on theme
   const isModernTheme = theme === 'light' || theme === 'dark';
+  
+  // Debug: Log the current theme and loading state
+  console.log('Current theme:', theme, 'isModernTheme:', isModernTheme, 'loading:', loading);
 
   // Render modern layout for light/dark themes
   if (isModernTheme) {
-    if (loading) {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-bg">
-          <div className="text-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/loading.gif" width={100} height={100} alt="Loading" className="mx-auto mb-4" />
-            <p className="text-muted">Loading Pokémon...</p>
-          </div>
-        </div>
-      )
-    }
     return (
       <ModernPokedexLayout
         pokemonList={sortedPokemon}
@@ -287,29 +273,20 @@ export default function Home() {
     );
   }
 
+  // Default case: Use ModernPokedexLayout for any theme that's not explicitly handled
   return (
-    <div className="min-h-screen bg-bg">
-      {/* Mobile Header - Only visible on mobile */}
-      <div className="md:hidden">
-        <MobileHeader 
-          theme={theme}
-          pokemonCount={pokemonList?.length || 0}
-          density={density}
-          onDensityChange={setDensity}
-        />
-      </div>
-
-
-      {/* Comparison Overlay */}
-      <ComparisonOverlay
-        comparisonList={comparisonList}
-        pokemonList={pokemonList}
-        onRemoveFromComparison={toggleComparison}
-        onClearComparison={() => {
-          setComparisonList([])
-          localStorage.removeItem('pokemon-comparison')
-        }}
-      />
-    </div>
+    <ModernPokedexLayout
+      pokemonList={sortedPokemon}
+      selectedPokemon={selectedPokemon}
+      onSelectPokemon={setSelectedPokemon}
+      onToggleComparison={toggleComparison}
+      onClearComparison={() => {
+        setComparisonList([])
+        localStorage.removeItem('pokemon-comparison')
+      }}
+      comparisonList={comparisonList}
+      filters={filters}
+      setFilters={setFilters}
+    />
   )
 }
