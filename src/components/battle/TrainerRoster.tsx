@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import Image from 'next/image';
 import { Champion } from '@/lib/gym_champions';
 
 interface TrainerRosterProps {
@@ -81,7 +80,9 @@ export default function TrainerRoster({
     };
     
     const imageName = trainerImageMap[trainerId] || trainerId;
-    return `/gen${generation.charAt(0)}/${imageName}.png`;
+    const imagePath = `/gen${generation.charAt(0)}/${imageName}.png`;
+    console.log(`Trainer: ${champion.name}, ID: ${champion.id}, TrainerId: ${trainerId}, ImagePath: ${imagePath}`);
+    return imagePath;
   };
 
 
@@ -138,17 +139,18 @@ export default function TrainerRoster({
                   transition-all duration-200
                 `}>
                   {/* Trainer Image - Enhanced */}
-                  <div className="relative w-20 h-20 mx-auto mb-3">
-                    <Image
+                  <div className="w-20 h-20 mx-auto mb-3 flex items-center justify-center">
+                    <img
                       src={imagePath}
                       alt={champion.name}
-                      fill
-                      className="object-cover rounded-lg border-2 border-white/20 shadow-lg"
+                      width={80}
+                      height={80}
+                      className="w-full h-full object-cover rounded-lg border-2 border-white/20 shadow-lg"
                       onError={(e) => {
                         // Fallback to placeholder if image fails to load
                         const target = e.target as HTMLImageElement;
                         target.src = '/placeholder-pokemon.png';
-                        target.className = 'object-contain rounded-lg bg-gray-200 border-2 border-white/20 shadow-lg';
+                        target.className = 'w-full h-full object-contain rounded-lg bg-gray-200 border-2 border-white/20 shadow-lg';
                       }}
                     />
                   </div>
@@ -195,16 +197,17 @@ export default function TrainerRoster({
               
               return (
                 <div className="flex items-center space-x-4">
-                  <div className="relative w-16 h-16">
-                    <Image
+                  <div className="w-16 h-16 flex items-center justify-center">
+                    <img
                       src={getTrainerImagePath(selectedChampion)}
                       alt={selectedChampion.name}
-                      fill
-                      className="object-cover rounded-lg border-2 border-white/20 shadow-lg"
+                      width={64}
+                      height={64}
+                      className="w-full h-full object-cover rounded-lg border-2 border-white/20 shadow-lg"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.src = '/placeholder-pokemon.png';
-                        target.className = 'object-contain rounded-lg bg-gray-200 border-2 border-white/20 shadow-lg';
+                        target.className = 'w-full h-full object-contain rounded-lg bg-gray-200 border-2 border-white/20 shadow-lg';
                       }}
                     />
                   </div>
