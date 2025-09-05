@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { getUserTeams, type SavedTeam } from '@/lib/userTeams';
 import { ChevronDown, Users, Check, Cloud, CloudOff } from 'lucide-react';
+import Image from 'next/image';
 
 // Local storage team type (simpler version)
 interface LocalTeam {
@@ -21,6 +22,12 @@ interface TeamSelectorProps {
 }
 
 const STORAGE_KEY = 'pokemon-team-builder';
+
+// Function to get Pokemon image URL
+const getPokemonImageUrl = (pokemonId: number | null): string => {
+  if (!pokemonId) return '/placeholder-pokemon.png';
+  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemonId}.png`;
+};
 
 export default function TeamSelector({ 
   selectedTeamId, 
@@ -190,7 +197,32 @@ export default function TeamSelector({
                   className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded flex items-center justify-between"
                 >
                   <div className="flex items-center space-x-3">
-                    <Users className="h-4 w-4 text-gray-400" />
+                    {/* Pokemon Roster Images */}
+                    <div className="flex -space-x-1">
+                      {team.slots.slice(0, 6).map((slot, index) => (
+                        <div
+                          key={index}
+                          className="relative w-6 h-6 rounded-full border border-white bg-gray-100 overflow-hidden"
+                        >
+                          {slot.id ? (
+                            <Image
+                              src={getPokemonImageUrl(slot.id)}
+                              alt={`Pokemon ${slot.id}`}
+                              fill
+                              className="object-cover"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src = '/placeholder-pokemon.png';
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                              <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                     <div>
                       <div className="font-medium text-gray-900">{team.name}</div>
                       <div className="text-xs text-gray-500">
@@ -211,7 +243,35 @@ export default function TeamSelector({
       {selectedTeam && (
         <div className="mt-2 p-3 bg-blue-50 rounded-lg">
           <div className="text-sm">
-            <div className="font-medium text-blue-900 mb-1">{selectedTeam.name}</div>
+            <div className="font-medium text-blue-900 mb-2">{selectedTeam.name}</div>
+            
+            {/* Pokemon Roster Images */}
+            <div className="flex -space-x-1 mb-2">
+              {selectedTeam.slots.slice(0, 6).map((slot, index) => (
+                <div
+                  key={index}
+                  className="relative w-8 h-8 rounded-full border-2 border-white bg-gray-100 overflow-hidden"
+                >
+                  {slot.id ? (
+                    <Image
+                      src={getPokemonImageUrl(slot.id)}
+                      alt={`Pokemon ${slot.id}`}
+                      fill
+                      className="object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = '/placeholder-pokemon.png';
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                      <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+            
             <div className="text-blue-700">
               {selectedTeam.slots.filter(slot => slot.id).length} Pokémon selected
             </div>

@@ -8,6 +8,7 @@ import TeamSelector from '@/components/TeamSelector';
 import Chat from '@/components/Chat';
 import { Users, Copy, Check, MessageCircle } from 'lucide-react';
 import type { SavedTeam } from '@/lib/userTeams';
+import Image from 'next/image';
 
 // Local storage team type (simpler version)
 interface LocalTeam {
@@ -15,6 +16,12 @@ interface LocalTeam {
   name: string;
   slots: Array<{ id: number | null; level: number; moves: unknown[] }>;
 }
+
+// Function to get Pokemon image URL
+const getPokemonImageUrl = (pokemonId: number | null): string => {
+  if (!pokemonId) return '/placeholder-pokemon.png';
+  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemonId}.png`;
+};
 
 interface RoomData {
   id: string;
@@ -254,7 +261,35 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
               {room.hostTeam && !isHost && (
                 <div className="mt-3 p-3 bg-blue-50 rounded-lg">
                   <div className="text-sm">
-                    <div className="font-medium text-blue-900">{room.hostTeam.name}</div>
+                    <div className="font-medium text-blue-900 mb-2">{room.hostTeam.name}</div>
+                    
+                    {/* Pokemon Roster Images */}
+                    <div className="flex -space-x-1 mb-2">
+                      {room.hostTeam.slots.slice(0, 6).map((slot, index) => (
+                        <div
+                          key={index}
+                          className="relative w-8 h-8 rounded-full border-2 border-white bg-gray-100 overflow-hidden"
+                        >
+                          {slot.id ? (
+                            <Image
+                              src={getPokemonImageUrl(slot.id)}
+                              alt={`Pokemon ${slot.id}`}
+                              fill
+                              className="object-cover"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src = '/placeholder-pokemon.png';
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                              <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    
                     <div className="text-blue-700">
                       {room.hostTeam.slots.filter(slot => slot.id).length} Pokémon selected
                     </div>
@@ -289,7 +324,35 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
                   {room.guestTeam && !isGuest && (
                     <div className="mt-3 p-3 bg-green-50 rounded-lg">
                       <div className="text-sm">
-                        <div className="font-medium text-green-900">{room.guestTeam.name}</div>
+                        <div className="font-medium text-green-900 mb-2">{room.guestTeam.name}</div>
+                        
+                        {/* Pokemon Roster Images */}
+                        <div className="flex -space-x-1 mb-2">
+                          {room.guestTeam.slots.slice(0, 6).map((slot, index) => (
+                            <div
+                              key={index}
+                              className="relative w-8 h-8 rounded-full border-2 border-white bg-gray-100 overflow-hidden"
+                            >
+                              {slot.id ? (
+                                <Image
+                                  src={getPokemonImageUrl(slot.id)}
+                                  alt={`Pokemon ${slot.id}`}
+                                  fill
+                                  className="object-cover"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.src = '/placeholder-pokemon.png';
+                                  }}
+                                />
+                              ) : (
+                                <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                                  <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                        
                         <div className="text-green-700">
                           {room.guestTeam.slots.filter(slot => slot.id).length} Pokémon selected
                         </div>
