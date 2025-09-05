@@ -33,7 +33,7 @@ function BattleRuntimePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
-  const { toasts, removeToast, showChatNotification } = useToast();
+  const { toasts, removeToast } = useToast();
   
   const [battleState, setBattleState] = useState<TeamBattleState | null>(null);
   const [loading, setLoading] = useState(true);
@@ -612,7 +612,7 @@ function BattleRuntimePage() {
     } finally {
       setLoading(false);
     }
-  }, [playerTeamId, opponentKind, opponentId]);
+  }, [playerTeamId, opponentKind, opponentId, isMultiplayer, multiplayerBattle, battleId, user]);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
