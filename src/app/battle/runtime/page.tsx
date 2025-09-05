@@ -86,7 +86,7 @@ function BattleRuntimePage() {
         
         // If battle data exists, update the local battle state
         if (battle.battleData && battle.status === 'active') {
-          setBattleState(battle.battleData);
+          setBattleState(battle.battleData as TeamBattleState);
         }
         
         // If battle is completed, handle end
@@ -234,7 +234,7 @@ function BattleRuntimePage() {
         setBattleState(battleState);
         
         // Start the battle in Firestore
-        await battleService.startBattle(battleId!, battleState);
+        await battleService.startBattle(battleId!, battleState as unknown);
         
         setLoading(false);
         return;
@@ -654,12 +654,12 @@ function BattleRuntimePage() {
         
         // Update battle data in Firestore
         await battleService.updateBattle(battleId, {
-          battleData: newState
+          battleData: newState as unknown
         });
         
         if (newState.isComplete) {
           // Battle is complete
-          await battleService.endBattle(battleId, newState.winner || 'draw', newState);
+          await battleService.endBattle(battleId, newState.winner || 'draw', newState as unknown);
           setSelectedMove(null);
           return;
         }
