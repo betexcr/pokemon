@@ -694,7 +694,7 @@ export default function ModernPokedexLayout({
   }, [])
 
   return (
-    <div className="min-h-screen bg-bg text-text flex flex-col">
+    <div className="h-screen bg-bg text-text flex flex-col overflow-hidden">
       {/* Sticky Header */}
       <header className="sticky top-0 z-50 bg-gradient-to-r from-surface via-surface to-surface border-b border-border shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1363,7 +1363,7 @@ export default function ModernPokedexLayout({
         {/* Sidebar - Advanced Filters */}
         <div className={`${
           showSidebar ? 'block' : 'hidden'
-        } lg:block lg:w-80 border-r border-border bg-surface min-h-screen overflow-hidden`}>
+        } lg:block lg:w-80 border-r border-border bg-surface h-screen overflow-hidden`}>
           <div className="h-full flex flex-col">
             {/* Header - Fixed */}
             <div className="flex-shrink-0 p-6 border-b border-border bg-surface">
@@ -1594,7 +1594,7 @@ export default function ModernPokedexLayout({
       </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 min-h-0">
+        <div className="flex-1 min-h-0 overflow-y-auto">
           <div className="p-8">
             {/* Pokémon Grid */}
             {isFiltering ? (
