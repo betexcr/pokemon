@@ -587,60 +587,154 @@ export function isTeamDefeated(team: BattleTeam): boolean {
 }
 
 export function getNextAvailablePokemon(team: BattleTeam): number | null {
+  console.log('=== GET NEXT AVAILABLE POKEMON DEBUG ===');
+  console.log('Team state:', {
+    currentIndex: team.currentIndex,
+    faintedCount: team.faintedCount,
+    teamSize: team.pokemon.length,
+    pokemon: team.pokemon.map((p, i) => ({
+      index: i,
+      name: p.pokemon.name,
+      hp: p.currentHp,
+      maxHp: p.maxHp,
+      isCurrent: i === team.currentIndex,
+      isFainted: p.currentHp <= 0
+    }))
+  });
+  
+  // Find the next available Pokemon (skip the current one if it's fainted)
   for (let i = 0; i < team.pokemon.length; i++) {
-    if (team.pokemon[i].currentHp > 0) {
+    const pokemon = team.pokemon[i];
+    console.log(`Checking Pokemon ${i} (${pokemon.pokemon.name}): HP=${pokemon.currentHp}, Available=${pokemon.currentHp > 0}`);
+    
+    // Skip the current Pokemon if it's fainted, look for the next one
+    if (i === team.currentIndex && pokemon.currentHp <= 0) {
+      console.log(`Skipping current Pokemon ${i} (${pokemon.pokemon.name}) - it's fainted`);
+      continue;
+    }
+    
+    if (pokemon.currentHp > 0) {
+      console.log(`Found available Pokemon at index ${i}: ${pokemon.pokemon.name}`);
       return i;
     }
   }
+  
+  console.log('No available Pokemon found');
   return null;
 }
 
 export function switchToPokemon(team: BattleTeam, index: number): void {
+  console.log('=== SWITCH TO POKEMON DEBUG ===');
+  console.log('Attempting to switch to index:', index);
+  console.log('Team size:', team.pokemon.length);
+  console.log('Target Pokemon:', team.pokemon[index] ? {
+    name: team.pokemon[index].pokemon.name,
+    hp: team.pokemon[index].currentHp,
+    maxHp: team.pokemon[index].maxHp
+  } : 'No Pokemon at this index');
+  
   if (index >= 0 && index < team.pokemon.length && team.pokemon[index].currentHp > 0) {
+    console.log('Switching successful - old index:', team.currentIndex, 'new index:', index);
     team.currentIndex = index;
+  } else {
+    console.log('Switching failed - conditions not met:', {
+      indexValid: index >= 0 && index < team.pokemon.length,
+      pokemonExists: !!team.pokemon[index],
+      pokemonAlive: team.pokemon[index]?.currentHp > 0
+    });
   }
 }
 
 // Function to handle automatic switching when a Pokémon faints
 export function handleAutomaticSwitching(state: BattleState): BattleState {
+  console.log('=== HANDLE AUTOMATIC SWITCHING DEBUG ===');
   const newState = { ...state };
   const newLog = [...state.battleLog];
   
   // Check if player's current Pokémon is fainted and switch if needed
   let pokemonSwitched = false;
   const playerCurrent = getCurrentPokemon(state.player);
+  console.log('Player current Pokemon:', {
+    name: playerCurrent.pokemon.name,
+    hp: playerCurrent.currentHp,
+    isFainted: playerCurrent.currentHp <= 0
+  });
+  
   if (playerCurrent.currentHp <= 0) {
+    console.log('Player Pokemon fainted, looking for next available...');
     const nextIndex = getNextAvailablePokemon(state.player);
-    if (nextIndex !== null) {
+    console.log('Next available player Pokemon index:', nextIndex);
+    
+    if (nextIndex !== null && nextIndex !== state.player.currentIndex) {
+      console.log('Switching player to Pokemon at index:', nextIndex);
       switchToPokemon(newState.player, nextIndex);
       const newCurrent = getCurrentPokemon(newState.player);
+      console.log('Player switched to:', newCurrent.pokemon.name);
       newLog.push({
         type: 'pokemon_sent_out',
         message: `Go! ${newCurrent.pokemon.name}!`,
         pokemon: newCurrent.pokemon.name
       });
       pokemonSwitched = true;
+    } else if (nextIndex === state.player.currentIndex) {
+      console.log('ERROR: Trying to switch to the same fainted Pokemon! Skipping switch.');
+    } else {
+      console.log('No available player Pokemon found - team defeated');
+      // Mark battle as complete with opponent victory
+      newState.isComplete = true;
+      newState.winner = 'opponent';
+      newLog.push({
+        type: 'battle_end',
+        message: 'All your Pokemon have fainted! You lose!',
+        pokemon: 'defeat'
+      });
+      console.log('=== BATTLE COMPLETE - OPPONENT VICTORY ===');
     }
   }
   
   // Check if opponent's current Pokémon is fainted and switch if needed
   const opponentCurrent = getCurrentPokemon(state.opponent);
+  console.log('Opponent current Pokemon:', {
+    name: opponentCurrent.pokemon.name,
+    hp: opponentCurrent.currentHp,
+    isFainted: opponentCurrent.currentHp <= 0
+  });
+  
   if (opponentCurrent.currentHp <= 0) {
+    console.log('Opponent Pokemon fainted, looking for next available...');
     const nextIndex = getNextAvailablePokemon(state.opponent);
-    if (nextIndex !== null) {
+    console.log('Next available opponent Pokemon index:', nextIndex);
+    
+    if (nextIndex !== null && nextIndex !== state.opponent.currentIndex) {
+      console.log('Switching opponent to Pokemon at index:', nextIndex);
       switchToPokemon(newState.opponent, nextIndex);
       const newCurrent = getCurrentPokemon(newState.opponent);
+      console.log('Opponent switched to:', newCurrent.pokemon.name);
       newLog.push({
         type: 'pokemon_sent_out',
         message: `${newCurrent.pokemon.name} was sent out!`,
         pokemon: newCurrent.pokemon.name
       });
       pokemonSwitched = true;
+    } else if (nextIndex === state.opponent.currentIndex) {
+      console.log('ERROR: Trying to switch to the same fainted Pokemon! Skipping switch.');
+    } else {
+      console.log('No available opponent Pokemon found - team defeated');
+      // Mark battle as complete with player victory
+      newState.isComplete = true;
+      newState.winner = 'player';
+      newLog.push({
+        type: 'battle_end',
+        message: 'All opponent Pokemon have fainted! You win!',
+        pokemon: 'victory'
+      });
+      console.log('=== BATTLE COMPLETE - PLAYER VICTORY ===');
     }
   }
   
   // If a Pokémon was switched, recalculate turn order based on new Pokémon's Speed
   if (pokemonSwitched) {
+    console.log('=== RECALCULATING TURN ORDER ===');
     const newPlayerCurrent = getCurrentPokemon(newState.player);
     const newOpponentCurrent = getCurrentPokemon(newState.opponent);
     
@@ -649,16 +743,30 @@ export function handleAutomaticSwitching(state: BattleState): BattleState {
     const playerSpeed = calculateStat(playerSpeedStat, newPlayerCurrent.level);
     const opponentSpeed = calculateStat(opponentSpeedStat, newOpponentCurrent.level);
     
+    console.log('Speed comparison:', {
+      playerName: newPlayerCurrent.pokemon.name,
+      playerSpeedStat,
+      playerSpeed,
+      opponentName: newOpponentCurrent.pokemon.name,
+      opponentSpeedStat,
+      opponentSpeed,
+      oldTurn: state.turn
+    });
+    
     // Determine new turn order based on Speed (with tie-breaking)
     if (playerSpeed > opponentSpeed) {
       newState.turn = 'player';
+      console.log('Player goes first (faster)');
     } else if (opponentSpeed > playerSpeed) {
       newState.turn = 'opponent';
+      console.log('Opponent goes first (faster)');
     } else {
       // Speed tie - randomize (50/50 chance)
       newState.turn = Math.random() < 0.5 ? 'player' : 'opponent';
+      console.log('Speed tie - random turn:', newState.turn);
     }
     
+    console.log('New turn order:', newState.turn);
   }
   
   newState.battleLog = newLog;

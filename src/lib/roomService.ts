@@ -5,6 +5,7 @@ import {
   getDoc, 
   updateDoc, 
   deleteDoc, 
+  deleteField,
   onSnapshot, 
   query, 
   where, 
@@ -47,15 +48,19 @@ class RoomService {
   async createRoom(hostId: string, hostName: string, hostTeam?: unknown): Promise<string> {
     if (!db) throw new Error('Firebase not initialized');
     
-    const roomData = {
+    const roomData: any = {
       hostId,
       hostName,
-      hostTeam,
       status: 'waiting' as const,
       createdAt: serverTimestamp(),
       maxPlayers: 2,
       currentPlayers: 1
     };
+
+    // Only include hostTeam if it's provided and not undefined
+    if (hostTeam !== undefined) {
+      roomData.hostTeam = hostTeam;
+    }
 
     const docRef = await addDoc(collection(db, this.roomsCollection), roomData);
     return docRef.id;
@@ -104,13 +109,19 @@ class RoomService {
     }
     
     // Update room with guest information
-    await updateDoc(roomRef, {
+    const updateData: any = {
       guestId,
       guestName,
-      guestTeam,
       currentPlayers: roomData.currentPlayers + 1,
       status: 'ready' // Both players are now in the room
-    });
+    };
+
+    // Only include guestTeam if it's provided and not undefined
+    if (guestTeam !== undefined) {
+      updateData.guestTeam = guestTeam;
+    }
+
+    await updateDoc(roomRef, updateData);
     
     return true;
   }
@@ -132,9 +143,9 @@ class RoomService {
     } else if (roomData.guestId === userId) {
       // Guest is leaving - remove guest and reset room
       await updateDoc(roomRef, {
-        guestId: null,
-        guestName: null,
-        guestTeam: null,
+        guestId: deleteField(),
+        guestName: deleteField(),
+        guestTeam: deleteField(),
         currentPlayers: 1,
         status: 'waiting'
       });

@@ -19,13 +19,15 @@ export async function generateStaticParams() {
 }
 
 interface RoomPageProps {
-  params: { roomId: string };
+  params: Promise<{ roomId: string }>;
 }
 
-export default function RoomPage({ params }: RoomPageProps) {
+export default async function RoomPage({ params }: RoomPageProps) {
+  const { roomId } = await params;
+  
   return (
     <ProtectedRoute>
-      <RoomPageClient roomId={params.roomId} />
+      <RoomPageClient roomId={roomId} />
     </ProtectedRoute>
   );
 }

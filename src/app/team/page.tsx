@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Pokemon } from '@/types/pokemon'
-import { getPokemonList, getPokemon, getMove } from '@/lib/api'
+import { getPokemonList, getPokemon, getMove, getPokemonSpriteUrl } from '@/lib/api'
 import { formatPokemonName } from '@/lib/utils'
 import Image from 'next/image'
 import TypeBadge from '@/components/TypeBadge'
@@ -642,7 +642,7 @@ export default function TeamBuilderPage() {
                       >
                         <div className="relative w-6 h-6 flex-shrink-0 bg-gray-100 rounded">
                           <Image
-                            src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`}
+                            src={getPokemonSpriteUrl(pokemon.id)}
                             alt={pokemon.name}
                             width={24}
                             height={24}
@@ -751,7 +751,7 @@ export default function TeamBuilderPage() {
                     <div className="flex items-center gap-3 mb-3">
                       <div className="relative w-16 h-16 flex-shrink-0">
                         <Image
-                          src={poke.sprites.other['official-artwork'].front_default || poke.sprites.front_default || ''}
+                          src={getPokemonSpriteUrl(poke.id)}
                           alt={poke.name}
                           width={64}
                           height={64}
@@ -970,7 +970,7 @@ export default function TeamBuilderPage() {
                         return poke ? (
                           <div key={idx} className="relative w-8 h-8" title={`${formatPokemonName(poke.name)} Lv.${slot.level}`}>
                             <Image
-                              src={poke.sprites.other['official-artwork'].front_default || poke.sprites.front_default || ''}
+                              src={getPokemonSpriteUrl(poke.id)}
                               alt={poke.name}
                               width={32}
                               height={32}

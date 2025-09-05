@@ -65,6 +65,9 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
         
         
+        {/* Viewport for mobile responsiveness */}
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        
         {/* Additional SEO */}
         <meta name="theme-color" content="#3B4CCA" />
         <meta name="msapplication-TileColor" content="#3B4CCA" />
