@@ -147,10 +147,14 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
     }
   };
 
-  const isHost = user?.uid === room?.hostId;
-  const isGuest = user?.uid === room?.guestId;
+  const isHost = Boolean(user?.uid && room?.hostId && user.uid === room.hostId);
+  const isGuest = Boolean(user?.uid && room?.guestId && user.uid === room.guestId);
   const canJoin = !isHost && !isGuest && room && room.currentPlayers < room.maxPlayers;
   const canStart = isHost && room && room.currentPlayers === room.maxPlayers && room.status === 'ready';
+  
+  // Helper variables for team selectors
+  const showHostTeamSelector = Boolean(isHost && room);
+  const showGuestTeamSelector = Boolean(isGuest && room);
 
   if (loading) {
     return (
@@ -266,9 +270,9 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
               </div>
               
               {/* Team Selector for Host */}
-              {isHost && (
+              {showHostTeamSelector && (
                 <TeamSelector
-                  selectedTeamId={room.hostTeam?.id}
+                  selectedTeamId={(room!.hostTeam as { id?: string })?.id}
                   onTeamSelect={handleTeamSelect}
                   label="Your Team"
                 />
@@ -329,9 +333,9 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
                   </div>
                   
                   {/* Team Selector for Guest */}
-                  {isGuest && (
+                  {showGuestTeamSelector && (
                     <TeamSelector
-                      selectedTeamId={room.guestTeam?.id}
+                      selectedTeamId={(room!.guestTeam as { id?: string })?.id}
                       onTeamSelect={handleTeamSelect}
                       label="Your Team"
                     />

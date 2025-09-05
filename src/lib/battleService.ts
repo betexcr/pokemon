@@ -7,7 +7,6 @@ import {
   deleteDoc, 
   onSnapshot, 
   serverTimestamp,
-  type DocumentData,
   type Unsubscribe
 } from 'firebase/firestore';
 import { db } from './firebase';

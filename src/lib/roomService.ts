@@ -11,7 +11,6 @@ import {
   orderBy, 
   limit,
   serverTimestamp,
-  type DocumentData,
   type Unsubscribe
 } from 'firebase/firestore';
 import { db } from './firebase';
@@ -151,7 +150,7 @@ class RoomService {
   }
 
   // Start battle
-  async startBattle(roomId: string, battleId: string): Promise<void> {
+  async startBattle(roomId: string, _battleId: string): Promise<void> {
     if (!db) throw new Error('Firebase not initialized');
     
     const roomRef = doc(db, this.roomsCollection, roomId);

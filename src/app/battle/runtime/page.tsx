@@ -229,10 +229,41 @@ function BattleRuntimePage() {
           throw new Error("Team data not available for multiplayer battle");
         }
         
-        // Initialize battle with multiplayer teams (cast to proper team format)
+        // Convert SavedTeam to the format expected by initializeTeamBattle
+        const convertTeamForBattle = async (team: SavedTeam) => {
+          const battleTeam = [];
+          for (const slot of team.slots) {
+            if (slot.id) {
+              try {
+                const pokemon = await getPokemon(slot.id);
+                const moves = await Promise.all(
+                  slot.moves.map(async (move: unknown) => {
+                    if (typeof move === 'string') {
+                      return await getMove(move);
+                    }
+                    return move;
+                  })
+                );
+                battleTeam.push({
+                  pokemon,
+                  level: slot.level,
+                  moves: moves.filter((move): move is Move => move !== null && move !== undefined && typeof move === 'object' && 'name' in move)
+                });
+              } catch (error) {
+                console.error(`Failed to load Pokemon ${slot.id}:`, error);
+              }
+            }
+          }
+          return battleTeam;
+        };
+
+        // Initialize battle with converted teams
+        const playerBattleTeam = await convertTeamForBattle(playerTeam as SavedTeam);
+        const opponentBattleTeam = await convertTeamForBattle(opponentTeam as SavedTeam);
+        
         const battleState = await initializeTeamBattle(
-          playerTeam as SavedTeam, 
-          opponentTeam as SavedTeam
+          playerBattleTeam,
+          opponentBattleTeam
         );
         setBattleState(battleState);
         
@@ -956,12 +987,12 @@ function BattleRuntimePage() {
                 <button
                   key={index}
                   onClick={() => handlePlayerMove(index)}
-                  disabled={isAITurn || (isMultiplayer && multiplayerBattle && user?.uid !== (multiplayerBattle.currentTurn === 'host' ? multiplayerBattle.hostId : multiplayerBattle.guestId))}
+                  disabled={isAITurn || (isMultiplayer && multiplayerBattle && user?.uid !== (multiplayerBattle.currentTurn === 'host' ? multiplayerBattle.hostId : multiplayerBattle.guestId)) || false}
                   className={`p-3 rounded-lg border text-left transition-colors ${
                     selectedMove === index
                       ? 'border-poke-blue bg-blue-50'
                       : 'border-border hover:border-poke-blue hover:bg-blue-50'
-                  } ${(isAITurn || (isMultiplayer && multiplayerBattle && user?.uid !== (multiplayerBattle.currentTurn === 'host' ? multiplayerBattle.hostId : multiplayerBattle.guestId))) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  } ${(isAITurn || (isMultiplayer && multiplayerBattle && user?.uid !== (multiplayerBattle.currentTurn === 'host' ? multiplayerBattle.hostId : multiplayerBattle.guestId)) || false) ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   <div className="font-medium capitalize">{move.name}</div>
                   <div className="text-sm text-muted">
