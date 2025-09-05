@@ -1359,7 +1359,7 @@ export default function ModernPokedexLayout({
       </div>
 
       {/* Main Content */}
-      <div className="flex max-w-7xl mx-auto flex-1">
+      <div className="flex max-w-7xl mx-auto flex-1 min-h-0">
         {/* Sidebar - Advanced Filters */}
         <div className={`${
           showSidebar ? 'block' : 'hidden'
@@ -1594,7 +1594,7 @@ export default function ModernPokedexLayout({
       </div>
 
         {/* Main Content Area */}
-        <div className="flex-1">
+        <div className="flex-1 min-h-0">
           <div className="p-8">
             {/* Pokémon Grid */}
             {isFiltering ? (
