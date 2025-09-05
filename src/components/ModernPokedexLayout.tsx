@@ -380,6 +380,7 @@ export default function ModernPokedexLayout({
   // Handle allGenerationsPokemon updates separately to avoid infinite loops
   useEffect(() => {
     if (allGenerationsPokemon.length > 0) {
+      console.log('Updating filteredPokemon with allGenerationsPokemon:', allGenerationsPokemon.length);
       setFilteredPokemon(allGenerationsPokemon)
     }
   }, [allGenerationsPokemon])
@@ -524,6 +525,8 @@ export default function ModernPokedexLayout({
           emptyBatchCountRef.current += 1
           setCurrentOffset(prev => prev + pageSize)
           console.log('Empty batch, advancing offset and retrying. Empty batches:', emptyBatchCountRef.current, 'Current offset:', currentOffset, 'Total:', total)
+          // Reset loading state before retry
+          setIsLoadingMore(false);
           // small async retry
           setTimeout(() => { loadMorePokemon() }, 10)
           return;
@@ -559,9 +562,10 @@ export default function ModernPokedexLayout({
             return true;
           });
           
-          const updated = [...prev, ...finalUniquePokemon];
-          console.log('Added', finalUniquePokemon.length, 'unique Pokémon. Total now:', updated.length);
-          return updated;
+                  const updated = [...prev, ...finalUniquePokemon];
+        console.log('Added', finalUniquePokemon.length, 'unique Pokémon. Total now:', updated.length);
+        console.log('Updated allGenerationsPokemon, will trigger filteredPokemon update');
+        return updated;
         });
         const newOffset = currentOffset + pageSize;
         setCurrentOffset(newOffset);
