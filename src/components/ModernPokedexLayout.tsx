@@ -714,8 +714,8 @@ export default function ModernPokedexLayout({
     <div className="h-screen w-full max-w-full bg-bg text-text flex flex-col overflow-hidden">
       {/* Sticky Header */}
       <header className="sticky top-0 z-50 bg-gradient-to-r from-surface via-surface to-surface border-b border-border shadow-lg">
-        <div className="w-full max-w-full px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-20 lg:h-24 py-3 list-none min-w-0">
+        <div className="w-full max-w-full px-2 sm:px-4 lg:px-6">
+          <div className="flex items-center justify-between h-16 lg:h-20 py-2 list-none min-w-0">
             {/* Brand & Title Section */}
             <div className="flex items-center space-x-3 lg:space-x-6">
               {/* POKEDEX Text - Upper Left */}
@@ -739,7 +739,7 @@ export default function ModernPokedexLayout({
             </div>
 
             {/* Enhanced Search Bar */}
-            <div className="hidden lg:flex flex-1 max-w-lg mx-8">
+            <div className="hidden lg:flex flex-1 max-w-md mx-4">
               <div className="relative group w-full">
                 <div className="absolute inset-0 bg-gradient-to-r from-poke-blue/20 to-poke-red/20 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-300 opacity-0 group-hover:opacity-100"></div>
                 <div className="relative bg-surface border border-border rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:border-poke-blue/30">
@@ -751,7 +751,7 @@ export default function ModernPokedexLayout({
                     onChange={(e) => {
                       handleSearchChange(e.target.value)
                     }}
-                    className="w-full pl-12 md:pl-14 pr-4 py-3 bg-transparent text-text placeholder:text-muted/60 focus:outline-none text-base font-medium"
+                    className="w-full pl-10 pr-4 py-2 bg-transparent text-text placeholder:text-muted/60 focus:outline-none text-sm font-medium"
                   />
                   {searchLoading && (
                     <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
@@ -770,9 +770,9 @@ export default function ModernPokedexLayout({
               </div>
               
               {/* Desktop Status Indicator */}
-              <div className="ml-4 flex items-center space-x-2">
-                <div className={`w-2 h-2 rounded-full ${isFiltering ? 'bg-poke-yellow animate-pulse' : 'bg-green-500'}`}></div>
-                <span className="text-sm text-muted font-medium">
+              <div className="ml-2 flex items-center space-x-1">
+                <div className={`w-1.5 h-1.5 rounded-full ${isFiltering ? 'bg-poke-yellow animate-pulse' : 'bg-green-500'}`}></div>
+                <span className="text-xs text-muted font-medium whitespace-nowrap">
                   {isFiltering ? 'Filtering...' : `${filteredPokemon.length} of ${pokemonList.length}`}
                 </span>
                 {(advancedFilters.types.length > 0 || searchTerm || (advancedFilters.generation && advancedFilters.generation !== '') || advancedFilters.legendary || advancedFilters.mythical) && (
@@ -789,9 +789,9 @@ export default function ModernPokedexLayout({
 
             {/* Enhanced Desktop Controls Section - Hidden on mobile */}
             {!isMobile && (
-              <div className="flex items-center space-x-2 lg:space-x-4 min-w-0 flex-shrink-0">
+              <div className="flex items-center space-x-1 lg:space-x-2 min-w-0 flex-shrink-0">
               {/* Card Density Controls */}
-              <div className="flex items-center space-x-1">
+              <div className="hidden lg:flex items-center space-x-1">
                 <span className="text-xs font-medium text-muted uppercase tracking-wider hidden xl:block">Size</span>
                 <div className="flex items-center bg-surface border border-border rounded-xl p-1 shadow-sm">
                   {[
@@ -851,7 +851,7 @@ export default function ModernPokedexLayout({
               </div>
 
               {/* Sort Controls */}
-              <div className="flex items-center space-x-1">
+              <div className="hidden lg:flex items-center space-x-1">
                 <span className="text-xs font-medium text-muted uppercase tracking-wider hidden xl:block">Sort</span>
                 <div className="flex items-center space-x-1">
                   <select
@@ -886,7 +886,7 @@ export default function ModernPokedexLayout({
               </div>
 
               {/* Theme/Layout Selector */}
-              <div className="flex items-center space-x-1">
+              <div className="hidden lg:flex items-center space-x-1">
                 <span className="text-xs font-medium text-muted uppercase tracking-wider hidden xl:block">Theme</span>
                 <select
                   onChange={(e) => applyThemeSelection(e.target.value as 'light'|'dark'|'red'|'gold'|'ruby')}
@@ -939,14 +939,14 @@ export default function ModernPokedexLayout({
               {/* Filter Toggle */}
               <button
                 onClick={() => setShowSidebar(!showSidebar)}
-                className={`p-2 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md ${
+                className={`p-1.5 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md ${
                   showSidebar 
                     ? 'bg-poke-blue text-white shadow-lg scale-105' 
                     : 'bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30'
                 }`}
                 title={showSidebar ? 'Hide filters' : 'Show filters'}
               >
-                <Filter className="h-4 w-4" />
+                <Filter className="h-3.5 w-3.5" />
               </button>
 
               {/* Theme Toggle */}
