@@ -51,7 +51,7 @@ export default function GoldPokedexLayout({
         <div className="absolute top-2 right-2 flex items-center gap-2">
           <UserProfile />
           <button onClick={() => router.push('/team')} className="px-3 py-1 bg-white text-yellow-800 border-2 border-yellow-600 rounded font-bold" title="Go to Team Builder">🎮 TEAM</button>
-          <button onClick={() => setShowDesktopMenu(true)} className="px-3 py-1 bg-white text-yellow-800 border-2 border-yellow-600 rounded font-bold">MENU</button>
+          <button onClick={() => setShowDesktopMenu(true)} className="md:hidden px-3 py-1 bg-white text-yellow-800 border-2 border-yellow-600 rounded font-bold">MENU</button>
         </div>
       </div>
 
