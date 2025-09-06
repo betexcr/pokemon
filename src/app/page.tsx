@@ -27,6 +27,7 @@ export default function Home() {
       setActualPathname(window.location.pathname)
       
       // Add/remove pokedex-main-page class based on current path
+      // Only the main PokéDex page should have scroll disabled
       if (window.location.pathname === '/') {
         document.body.classList.add('pokedex-main-page')
       } else {
