@@ -78,40 +78,38 @@ export default function LobbyPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center justify-center min-h-[400px]">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading battle lobbies...</p>
-            </div>
-          </div>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading battle lobbies...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
+    <div className="min-h-screen bg-bg text-text">
+      {/* PokéDex Header */}
+      <div className="bg-surface border-b border-border shadow-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => router.push('/')}
-                className="text-blue-600 hover:text-blue-800 transition-colors"
+                className="text-poke-blue hover:text-poke-blue/80 transition-colors flex items-center space-x-2"
               >
-                ← Back to Pokédex
+                <span>←</span>
+                <span>Back to PokéDex</span>
               </button>
-              <h1 className="text-2xl font-bold text-gray-900">Battle Lobby</h1>
+              <h1 className="text-2xl font-bold text-text">PokéDex - Battle Lobby</h1>
             </div>
             <UserProfile />
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-full">
+        <div className="container mx-auto px-4 py-8">
         {/* Create Room Section */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
           <div className="flex items-center justify-between">
@@ -190,6 +188,7 @@ export default function LobbyPage() {
               ))}
             </div>
           )}
+        </div>
         </div>
       </div>
     </div>
