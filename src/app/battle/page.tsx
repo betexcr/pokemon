@@ -60,8 +60,9 @@ function BattlePage() {
   };
 
   return (
-    <div className="min-h-screen bg-bg text-text">
-      <header className="sticky top-0 z-50 border-b border-border bg-surface">
+    <div className="h-screen bg-bg text-text flex flex-col overflow-hidden">
+      {/* Fixed Header */}
+      <header className="flex-shrink-0 border-b border-border bg-surface">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <button
@@ -93,7 +94,9 @@ function BattlePage() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 py-6 space-y-6">
+      {/* Scrollable Content Area */}
+      <main className="flex-1 min-h-0 overflow-y-auto">
+        <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
         {/* Player team selection */}
         <section className="border border-border rounded-xl bg-surface p-4">
           <h2 className="text-lg font-semibold mb-3">Your Team</h2>
@@ -151,6 +154,7 @@ function BattlePage() {
              opponentType === "team" && !selectedOpponentTeam ? "Select Opponent Team" :
              "Start Battle"}
           </button>
+        </div>
         </div>
       </main>
     </div>
