@@ -18,6 +18,15 @@ import LobbyPage from '@/components/LobbyPage'
 
 export default function Home() {
   const pathname = usePathname()
+  
+  // Fallback for static export - get pathname from window.location
+  const [actualPathname, setActualPathname] = useState(pathname)
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setActualPathname(window.location.pathname)
+    }
+  }, [])
   const [pokemonList, setPokemonList] = useState<Pokemon[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -115,7 +124,7 @@ export default function Home() {
   // Infinite scroll effect - only for main PokéDex page
   useEffect(() => {
     // Don't add scroll listener if we're on lobby pages
-    if (pathname === '/lobby' || pathname.startsWith('/lobby/')) {
+    if (actualPathname === '/lobby' || actualPathname.startsWith('/lobby/')) {
       return
     }
 
@@ -127,7 +136,7 @@ export default function Home() {
 
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
-  }, [loadMorePokemon, pathname])
+  }, [loadMorePokemon, actualPathname])
 
   // Memoize filtered Pokémon to prevent unnecessary re-renders and improve performance
   const memoizedFilteredPokemon = useMemo(() => {
@@ -183,9 +192,9 @@ export default function Home() {
   }
 
   // Handle client-side routing for lobby pages
-  console.log('Current pathname:', pathname);
+  console.log('Current pathname:', pathname, 'Actual pathname:', actualPathname);
   
-  if (pathname === '/lobby') {
+  if (actualPathname === '/lobby') {
     console.log('Rendering LobbyPage');
     return (
       <ProtectedRoute>
@@ -194,8 +203,8 @@ export default function Home() {
     )
   }
   
-  if (pathname.startsWith('/lobby/')) {
-    const roomId = pathname.split('/lobby/')[1]
+  if (actualPathname.startsWith('/lobby/')) {
+    const roomId = actualPathname.split('/lobby/')[1]
     console.log('Lobby room detected, roomId:', roomId);
     if (roomId) {
       console.log('Rendering RoomPageClient for room:', roomId);
