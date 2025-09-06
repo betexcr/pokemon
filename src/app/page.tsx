@@ -25,6 +25,20 @@ export default function Home() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setActualPathname(window.location.pathname)
+      
+      // Add/remove pokedex-main-page class based on current path
+      if (window.location.pathname === '/') {
+        document.body.classList.add('pokedex-main-page')
+      } else {
+        document.body.classList.remove('pokedex-main-page')
+      }
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      if (typeof window !== 'undefined') {
+        document.body.classList.remove('pokedex-main-page')
+      }
     }
   }, [])
   const [pokemonList, setPokemonList] = useState<Pokemon[]>([])

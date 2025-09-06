@@ -17,16 +17,20 @@
 
 html, body { 
   height: 100%; 
-  /* Completely disable main page scroll */
-  overflow: hidden;
-  /* Hide scrollbar but keep scroll functionality */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* Internet Explorer 10+ */
   width: 100%;
   /* Subtle vertical gradient background (light mode) */
   background: linear-gradient(to bottom, #f8fafc 0%, #e6f0ff 100%);
   background-repeat: no-repeat;
   background-size: 100% 100%;
+}
+
+/* Only disable scroll on the main PokéDex page */
+body.pokedex-main-page {
+  /* Completely disable main page scroll */
+  overflow: hidden;
+  /* Hide scrollbar but keep scroll functionality */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
   background-attachment: fixed;
   color: var(--color-text); 
   font-size: 16px;
