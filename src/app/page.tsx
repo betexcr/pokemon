@@ -112,8 +112,13 @@ export default function Home() {
     loadInitialData()
   }, [loadInitialData])
 
-  // Infinite scroll effect
+  // Infinite scroll effect - only for main PokéDex page
   useEffect(() => {
+    // Don't add scroll listener if we're on lobby pages
+    if (pathname === '/lobby' || pathname.startsWith('/lobby/')) {
+      return
+    }
+
     const handleScroll = () => {
       if (window.innerHeight + document.documentElement.scrollTop >= document.documentElement.offsetHeight - 1000) {
         loadMorePokemon()
@@ -122,7 +127,7 @@ export default function Home() {
 
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
-  }, [loadMorePokemon])
+  }, [loadMorePokemon, pathname])
 
   // Memoize filtered Pokémon to prevent unnecessary re-renders and improve performance
   const memoizedFilteredPokemon = useMemo(() => {
