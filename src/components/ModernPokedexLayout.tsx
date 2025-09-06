@@ -1011,18 +1011,18 @@ export default function ModernPokedexLayout({
                 )}
               </button>
 
-              {/* Hamburger Menu Button */}
-              <button
-                onClick={() => setShowMobileMenu(!showMobileMenu)}
-                className="p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
-                title="Toggle menu"
-              >
-                <Menu className="h-5 w-5" />
-              </button>
-
               {/* Mobile Action Buttons - Only visible on mobile */}
               {isMobile && (
                 <>
+                  {/* Mobile Hamburger Menu Button */}
+                  <button
+                    onClick={() => setShowMobileMenu(!showMobileMenu)}
+                    className="p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
+                    title="Toggle menu"
+                  >
+                    <Menu className="h-5 w-5" />
+                  </button>
+
                   {/* Mobile Team Builder Button */}
                   <button
                     onClick={() => router.push('/team')}
