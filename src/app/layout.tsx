@@ -79,10 +79,10 @@ export default function RootLayout({
         {/* PWA Manifest */}
         <link rel="manifest" href="/manifest.json" />
       </head>
-      <body suppressHydrationWarning className={`${inter.className} h-full bg-bg text-text pokeball-bg`}>
+      <body suppressHydrationWarning className={`${inter.className} min-h-screen bg-bg text-text pokeball-bg`}>
         <AuthProvider>
           <ThemeProvider>
-            <div className="min-h-full">
+            <div className="min-h-screen">
               {children}
             </div>
           </ThemeProvider>
