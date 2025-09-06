@@ -21,8 +21,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build
-        run: npm run build
+      - name: Build with static export
+        run: |
+          # Temporarily enable static export for deployment
+          sed -i 's|// Removed '\''output: export'\'' to enable dynamic rendering for lobby rooms|output: '\''export'\'',|' next.config.ts
+          npm run build
         env:
           NEXT_PUBLIC_FIREBASE_API_KEY: ${{ vars.NEXT_PUBLIC_FIREBASE_API_KEY }}
           NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ vars.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
