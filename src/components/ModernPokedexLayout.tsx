@@ -506,7 +506,7 @@ export default function ModernPokedexLayout({
     
     // Additional protection against rapid calls
     const now = Date.now();
-    if (now - lastLoadTimeRef.current < 500) { // 500ms minimum between loads
+    if (now - lastLoadTimeRef.current < 100) { // Reduced to 100ms minimum between loads
       console.log('Skipping load - too soon since last load');
       return;
     }
@@ -1663,17 +1663,7 @@ export default function ModernPokedexLayout({
             ) : sortedPokemon.length > 0 ? (
               <>
                 <VirtualizedPokemonGrid
-                  pokemonList={
-                    isAllGenerations
-                      ? (() => {
-                          const start = Math.min(renderWindowStart, Math.max(0, sortedPokemon.length - maxRenderCount));
-                          const end = Math.min(sortedPokemon.length, Math.max(renderWindowStart, 0) + maxRenderCount);
-                          const sliced = sortedPokemon.slice(start, end);
-                          console.log('Virtualization slice - sortedPokemon.length:', sortedPokemon.length, 'maxRenderCount:', maxRenderCount, 'renderWindowStart:', renderWindowStart, 'slice:', start, 'to', end, 'result length:', sliced.length);
-                          return sliced;
-                        })()
-                      : sortedPokemon
-                  }
+                  pokemonList={sortedPokemon}
                   onToggleComparison={onToggleComparison}
                   onSelectPokemon={undefined}
                   selectedPokemon={null}
