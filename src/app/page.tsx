@@ -183,7 +183,10 @@ export default function Home() {
   }
 
   // Handle client-side routing for lobby pages
+  console.log('Current pathname:', pathname);
+  
   if (pathname === '/lobby') {
+    console.log('Rendering LobbyPage');
     return (
       <ProtectedRoute>
         <LobbyPage />
@@ -193,7 +196,9 @@ export default function Home() {
   
   if (pathname.startsWith('/lobby/')) {
     const roomId = pathname.split('/lobby/')[1]
+    console.log('Lobby room detected, roomId:', roomId);
     if (roomId) {
+      console.log('Rendering RoomPageClient for room:', roomId);
       return (
         <ProtectedRoute>
           <RoomPageClient roomId={roomId} />
