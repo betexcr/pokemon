@@ -21,10 +21,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build with static export
+      - name: Build for Firebase Hosting
         run: |
-          # Temporarily enable static export for deployment
-          sed -i 's|// Removed '\''output: export'\'' to enable dynamic rendering for lobby rooms|output: '\''export'\'',|' next.config.ts
+          # Build without static export to maintain dynamic functionality
           npm run build
         env:
           NEXT_PUBLIC_FIREBASE_API_KEY: ${{ vars.NEXT_PUBLIC_FIREBASE_API_KEY }}
