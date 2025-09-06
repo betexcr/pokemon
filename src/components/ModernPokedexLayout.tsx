@@ -194,7 +194,6 @@ export default function ModernPokedexLayout({
   useEffect(() => {
     const handleResize = () => {
       const isMobileScreen = window.innerWidth < 768
-      console.log('Screen resize - width:', window.innerWidth, 'isMobile:', isMobileScreen);
       setIsMobile(isMobileScreen)
 
       // If switching to mobile and current density is not available on mobile, switch to 3cols
@@ -208,7 +207,6 @@ export default function ModernPokedexLayout({
     }
 
     // Set initial screen size
-    console.log('Setting initial screen size...');
     handleResize()
 
     window.addEventListener('resize', handleResize)
@@ -1018,30 +1016,13 @@ export default function ModernPokedexLayout({
 
             {/* Mobile Hamburger Menu Button - Only visible on mobile */}
             {isMobile && (
-              <>
-                {/* Debug: Show mobile section is rendering */}
-                <div className="text-xs text-green-500 bg-green-100 p-1 rounded">
-                  MOBILE SECTION RENDERING
-                </div>
-                <button
-                  onClick={() => {
-                    console.log('Hamburger clicked, current showMobileMenu:', showMobileMenu);
-                    setShowMobileMenu(!showMobileMenu);
-                  }}
-                  className="p-3 rounded-xl bg-red-500 border-2 border-red-700 text-white hover:bg-red-600 transition-all duration-200 shadow-sm hover:shadow-md"
-                  title="Toggle menu"
-                  style={{ zIndex: 9999, position: 'relative' }}
-                >
-                  <Menu className="h-5 w-5" />
-                </button>
-              </>
-            )}
-            
-            {/* Debug: Show mobile state */}
-            {process.env.NODE_ENV === 'development' && (
-              <div className="text-xs text-red-500">
-                isMobile: {isMobile.toString()}
-              </div>
+              <button
+                onClick={() => setShowMobileMenu(!showMobileMenu)}
+                className="p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
+                title="Toggle menu"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
             )}
 
             {/* Mobile Menu Button removed - now part of desktop controls */}
