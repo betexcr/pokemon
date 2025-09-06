@@ -1011,45 +1011,15 @@ export default function ModernPokedexLayout({
                 )}
               </button>
 
-              {/* Mobile Action Buttons - Only visible on mobile */}
+              {/* Mobile Hamburger Menu Button - Only visible on mobile */}
               {isMobile && (
-                <>
-                  {/* Mobile Hamburger Menu Button */}
-                  <button
-                    onClick={() => setShowMobileMenu(!showMobileMenu)}
-                    className="p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
-                    title="Toggle menu"
-                  >
-                    <Menu className="h-5 w-5" />
-                  </button>
-
-                  {/* Mobile Team Builder Button */}
-                  <button
-                    onClick={() => router.push('/team')}
-                    className="p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
-                    title="Go to Team Builder"
-                  >
-                    <Users className="h-5 w-5" />
-                  </button>
-
-                  {/* Mobile Battle Button */}
-                  <button
-                    onClick={() => router.push('/battle')}
-                    className="p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
-                    title="Go to AI Battle"
-                  >
-                    <Swords className="h-5 w-5" />
-                  </button>
-
-                  {/* Mobile Comparison Button */}
-                  <button
-                    onClick={() => router.push('/compare')}
-                    className="relative p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
-                    title="Go to comparison"
-                  >
-                    <Scale className="h-5 w-5" />
-                  </button>
-                </>
+                <button
+                  onClick={() => setShowMobileMenu(!showMobileMenu)}
+                  className="p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
+                  title="Toggle menu"
+                >
+                  <Menu className="h-5 w-5" />
+                </button>
               )}
 
             </div>
@@ -1064,9 +1034,14 @@ export default function ModernPokedexLayout({
 
       {/* Mobile Menu Overlay - Only on small screens */}
       {showMobileMenu && isMobile && (
-        <div id="mobile-drawer" className="md:hidden fixed inset-0 z-50 bg-black/95 animate-in fade-in duration-200">
+        <div id="mobile-drawer" className="md:hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+          {/* Backdrop - click to close */}
+          <div 
+            className="absolute inset-0"
+            onClick={() => setShowMobileMenu(false)}
+          />
           <div
-            className="mobile-menu fixed right-0 top-0 h-full w-full bg-bg bg-opacity-100 border-l border-border shadow-2xl animate-in slide-in-from-right duration-300"
+            className="mobile-menu fixed right-0 top-0 h-full w-80 max-w-[85vw] bg-bg border-l border-border shadow-2xl animate-in slide-in-from-right duration-300"
             style={{ backgroundColor: 'var(--color-bg)' }}
           >
             <div className="p-6 space-y-6">
