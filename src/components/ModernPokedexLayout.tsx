@@ -736,7 +736,7 @@ export default function ModernPokedexLayout({
   }, [])
 
   return (
-    <div className="h-screen w-full max-w-full bg-bg text-text flex flex-col overflow-hidden">
+    <div className="min-h-screen w-full max-w-full bg-bg text-text flex flex-col">
       {/* Sticky Header */}
       <header className="sticky top-0 z-50 bg-gradient-to-r from-surface via-surface to-surface border-b border-border shadow-lg">
         <div className="w-full max-w-full px-4 sm:px-6 lg:px-8">
