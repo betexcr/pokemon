@@ -101,7 +101,7 @@ export default function TeamSelector({
   if (loading) {
     return (
       <div className="w-full">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-black dark:text-text mb-2">
           {label}
         </label>
         <div className="border border-gray-300 rounded-lg p-3 bg-gray-50">
@@ -117,10 +117,10 @@ export default function TeamSelector({
   if (!user && teams.length === 0) {
     return (
       <div className="w-full">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-black dark:text-text mb-2">
           {label}
         </label>
-        <div className="border border-gray-300 rounded-lg p-3 bg-gray-50 text-gray-500 text-sm">
+        <div className="border border-gray-300 rounded-lg p-3 bg-gray-50 text-gray-800 dark:text-muted text-sm">
           No teams saved. <a href="/team" className="text-blue-600 hover:underline">Create a team</a> or <a href="/auth" className="text-blue-600 hover:underline">sign in</a> to access cloud teams.
         </div>
       </div>
@@ -130,10 +130,10 @@ export default function TeamSelector({
   if (teams.length === 0) {
     return (
       <div className="w-full">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-black dark:text-text mb-2">
           {label}
         </label>
-        <div className="border border-gray-300 rounded-lg p-3 bg-gray-50 text-gray-500 text-sm">
+        <div className="border border-gray-300 rounded-lg p-3 bg-gray-50 text-gray-800 dark:text-muted text-sm">
           No teams saved. <a href="/team" className="text-blue-600 hover:underline">Create a team</a>
         </div>
       </div>
@@ -143,7 +143,7 @@ export default function TeamSelector({
   return (
     <div className="w-full">
       <div className="flex items-center justify-between mb-2">
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-medium text-black dark:text-text">
           {label}
         </label>
         {showStorageIndicator && (
@@ -172,7 +172,7 @@ export default function TeamSelector({
         >
           <div className="flex items-center space-x-3">
             <Users className="h-4 w-4 text-gray-400" />
-            <span className={selectedTeam ? "text-gray-900" : "text-gray-500"}>
+            <span className={selectedTeam ? "text-black dark:text-text" : "text-gray-800 dark:text-muted"}>
               {selectedTeam ? selectedTeam.name : "Choose a team..."}
             </span>
           </div>
@@ -184,7 +184,7 @@ export default function TeamSelector({
             <div className="p-2">
               <button
                 onClick={handleClearSelection}
-                className="w-full text-left px-3 py-2 text-sm text-gray-500 hover:bg-gray-100 rounded flex items-center space-x-2"
+                className="w-full text-left px-3 py-2 text-sm text-gray-800 dark:text-muted hover:bg-gray-100 rounded flex items-center space-x-2"
               >
                 <span>No team selected</span>
               </button>
@@ -224,8 +224,8 @@ export default function TeamSelector({
                       ))}
                     </div>
                     <div>
-                      <div className="font-medium text-gray-900">{team.name}</div>
-                      <div className="text-xs text-gray-500">
+                      <div className="font-medium text-black dark:text-text">{team.name}</div>
+                      <div className="text-xs text-gray-800 dark:text-muted">
                         {team.slots.filter(slot => slot.id).length}/6 Pokémon
                       </div>
                     </div>

@@ -90,9 +90,9 @@ export default function TrainerRoster({
     <div className="space-y-4">
       {/* Generation Filter */}
       <div>
-        <label className="block text-sm font-medium mb-2 text-gray-800 dark:text-text">Generation Filter</label>
+        <label className="block text-sm font-bold mb-2 text-black dark:text-text">Generation Filter</label>
         <select
-          className="w-full px-3 py-2 border border-border rounded-lg bg-white text-gray-800 dark:text-text"
+          className="w-full px-3 py-2 border border-border rounded-lg bg-white text-black dark:text-text font-medium"
           value={generationFilter}
           onChange={(e) => onGenerationFilterChange(e.target.value)}
         >
@@ -105,7 +105,7 @@ export default function TrainerRoster({
 
       {/* Street Fighter Style Roster */}
       <div className="space-y-3">
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-text">Select Your Opponent</h3>
+        <h3 className="text-lg font-bold text-black dark:text-text">Select Your Opponent</h3>
         
         {/* Roster Grid - Always 6 items per row */}
         <div className="grid grid-cols-6 gap-3">
@@ -156,12 +156,12 @@ export default function TrainerRoster({
                   </div>
 
                   {/* Trainer Name */}
-                  <div className="text-xs font-semibold text-gray-800 dark:text-text truncate">
+                  <div className="text-xs font-bold text-black dark:text-text truncate">
                     {champion.name.split(' ')[0]}
                   </div>
                   
                   {/* Generation Badge */}
-                  <div className="text-xs text-gray-600 dark:text-muted mt-1">
+                  <div className="text-xs font-medium text-gray-800 dark:text-muted mt-1">
                     {champion.generation.split(' ')[0]}
                   </div>
                 </div>
@@ -212,9 +212,9 @@ export default function TrainerRoster({
                     />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-gray-800 dark:text-text">{selectedChampion.name}</h4>
-                    <p className="text-sm text-gray-600 dark:text-muted">{selectedChampion.team.name}</p>
-                    <p className="text-xs text-gray-600 dark:text-muted">{selectedChampion.generation}</p>
+                    <h4 className="font-bold text-black dark:text-text">{selectedChampion.name}</h4>
+                    <p className="text-sm font-medium text-gray-800 dark:text-muted">{selectedChampion.team.name}</p>
+                    <p className="text-xs font-medium text-gray-800 dark:text-muted">{selectedChampion.generation}</p>
                   </div>
                 </div>
               );
