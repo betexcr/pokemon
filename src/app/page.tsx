@@ -123,8 +123,8 @@ export default function Home() {
 
   // Infinite scroll effect - only for main PokéDex page
   useEffect(() => {
-    // Don't add scroll listener if we're on lobby pages
-    if (actualPathname === '/lobby' || actualPathname.startsWith('/lobby/')) {
+    // Only add infinite scroll listener for the main PokéDex page (root path)
+    if (actualPathname !== '/') {
       return
     }
 
