@@ -126,8 +126,8 @@ export default function ModernPokedexLayout({
   // Heuristics-driven render-only cap and moving window
   const storage = typeof window !== 'undefined' ? new LocalStorageAdapter() : new MemoryStorage()
   const heur = createHeuristics({ storage })
-  const [maxRenderCount, setMaxRenderCount] = useState<number>(300)
-  const [renderWindowStart, setRenderWindowStart] = useState<number>(0)
+  // const [maxRenderCount, setMaxRenderCount] = useState<number>(300)
+  // const [renderWindowStart, setRenderWindowStart] = useState<number>(0)
 
   const computeMaxRenderCount = useCallback(async () => {
     let cap = 300
@@ -154,9 +154,9 @@ export default function ModernPokedexLayout({
     if (dpr >= 3) cap = Math.floor(cap * 0.7)
     else if (dpr >= 2) cap = Math.floor(cap * 0.85)
 
-    cap = Math.max(120, Math.min(cap, 1500))
-    console.log('Setting maxRenderCount to:', cap);
-    setMaxRenderCount(cap)
+    // cap = Math.max(120, Math.min(cap, 1500))
+    // console.log('Setting maxRenderCount to:', cap);
+    // setMaxRenderCount(cap)
   }, [heur])
 
   useEffect(() => {
