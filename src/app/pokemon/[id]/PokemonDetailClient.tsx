@@ -1,10 +1,17 @@
 'use client'
 
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Pokemon } from '@/types/pokemon'
-import { formatPokemonName, typeColors, cn } from '@/lib/utils'
-import { ArrowLeft, Heart, Zap, Shield, Swords, Target, TrendingUp } from 'lucide-react'
+import { formatPokemonName } from '@/lib/utils'
+import { ArrowLeft, Zap } from 'lucide-react'
 import { useTheme } from '@/components/ThemeProvider'
+import Tabs from '@/components/pokemon/Tabs'
+import OverviewSection from '@/components/pokemon/OverviewSection'
+import StatsSection from '@/components/pokemon/StatsSection'
+import MovesSection from '@/components/pokemon/MovesSection'
+import EvolutionSection from '@/components/pokemon/EvolutionSection'
+import MatchupsSection from '@/components/pokemon/MatchupsSection'
 
 interface PokemonDetailClientProps {
   pokemon: Pokemon | null
@@ -13,6 +20,7 @@ interface PokemonDetailClientProps {
 
 export default function PokemonDetailClient({ pokemon, error }: PokemonDetailClientProps) {
   const router = useRouter()
+  const [activeTab, setActiveTab] = useState<'overview' | 'stats' | 'moves' | 'evolution' | 'matchups'>('overview')
 
   let theme = 'light'
   try {
@@ -38,29 +46,6 @@ export default function PokemonDetailClient({ pokemon, error }: PokemonDetailCli
     )
   }
 
-  const getStatColor = (stat: string) => {
-    switch (stat.toLowerCase()) {
-      case 'hp': return 'text-red-500'
-      case 'attack': return 'text-orange-500'
-      case 'defense': return 'text-blue-500'
-      case 'special-attack': return 'text-purple-500'
-      case 'special-defense': return 'text-green-500'
-      case 'speed': return 'text-yellow-500'
-      default: return 'text-gray-500'
-    }
-  }
-
-  const getStatIcon = (stat: string) => {
-    switch (stat.toLowerCase()) {
-      case 'hp': return <Heart className="h-4 w-4" />
-      case 'attack': return <Swords className="h-4 w-4" />
-      case 'defense': return <Shield className="h-4 w-4" />
-      case 'special-attack': return <Zap className="h-4 w-4" />
-      case 'special-defense': return <Shield className="h-4 w-4" />
-      case 'speed': return <TrendingUp className="h-4 w-4" />
-      default: return <Target className="h-4 w-4" />
-    }
-  }
 
   return (
     <div className="min-h-screen bg-bg">
@@ -102,148 +87,63 @@ export default function PokemonDetailClient({ pokemon, error }: PokemonDetailCli
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Left Column - Image and Basic Info */}
-          <div className="space-y-6">
-            {/* Pokemon Image */}
-            <div className="bg-surface rounded-2xl p-8 border border-border">
-              <div className="text-center">
-                <div className="relative inline-block">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={pokemon.sprites.other?.['official-artwork']?.front_default || pokemon.sprites.front_default || '/placeholder-pokemon.png'}
-                    alt={formatPokemonName(pokemon.name)}
-                    className="w-64 h-64 mx-auto object-contain"
-                  />
-                </div>
-                <h1 className={`text-3xl font-bold mt-4 ${
-                  theme === 'gold' ? 'font-retro text-gold-accent'
-                  : theme === 'green' ? 'font-gameboy text-green-accent'
-                  : theme === 'red' ? 'font-retro text-red-accent'
-                  : theme === 'ruby' ? 'font-retro text-ruby-accent'
-                  : 'text-text'
-                }`}>
-                  {formatPokemonName(pokemon.name)}
-                </h1>
-                <p className="text-muted text-lg">#{pokemon.id.toString().padStart(3, '0')}</p>
-              </div>
-            </div>
-
-            {/* Types */}
-            <div className="bg-surface rounded-2xl p-6 border border-border">
-              <h2 className="text-xl font-semibold mb-4 text-text">Types</h2>
-              <div className="flex flex-wrap gap-2">
-                {pokemon.types.map((type, index) => (
-                  <span
-                    key={index}
-                    className={cn(
-                      'px-4 py-2 rounded-full text-sm font-medium border',
-                      typeColors[type.type.name].bg,
-                      typeColors[type.type.name].text,
-                      typeColors[type.type.name].border
-                    )}
-                  >
-                    {formatPokemonName(type.type.name)}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* Physical Stats */}
-            <div className="bg-surface rounded-2xl p-6 border border-border">
-              <h2 className="text-xl font-semibold mb-4 text-text">Physical Stats</h2>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="text-center">
-                  <p className="text-muted text-sm">Height</p>
-                  <p className="text-lg font-semibold text-text">{pokemon.height / 10}m</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-muted text-sm">Weight</p>
-                  <p className="text-lg font-semibold text-text">{pokemon.weight / 10}kg</p>
-                </div>
-              </div>
-            </div>
+        {/* Pokemon Header */}
+        <div className="text-center mb-8">
+          <div className="relative inline-block">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={pokemon.sprites.other?.['official-artwork']?.front_default || pokemon.sprites.front_default || '/placeholder-pokemon.png'}
+              alt={formatPokemonName(pokemon.name)}
+              className="w-32 h-32 mx-auto object-contain"
+            />
           </div>
+          <h1 className={`text-4xl font-bold mt-4 ${
+            theme === 'gold' ? 'font-retro text-gold-accent'
+            : theme === 'green' ? 'font-gameboy text-green-accent'
+            : theme === 'red' ? 'font-retro text-red-accent'
+            : theme === 'ruby' ? 'font-retro text-ruby-accent'
+            : 'text-text'
+          }`}>
+            {formatPokemonName(pokemon.name)}
+          </h1>
+          <p className="text-muted text-xl">#{pokemon.id.toString().padStart(3, '0')}</p>
+        </div>
 
-          {/* Right Column - Stats and Abilities */}
-          <div className="space-y-6">
-            {/* Base Stats */}
-            <div className="bg-surface rounded-2xl p-6 border border-border">
-              <h2 className="text-xl font-semibold mb-6 text-text">Base Stats</h2>
-              <div className="space-y-4">
-                {pokemon.stats.map((stat, index) => (
-                  <div key={index} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <span className={getStatColor(stat.stat.name)}>
-                          {getStatIcon(stat.stat.name)}
-                        </span>
-                        <span className="text-sm font-medium text-text capitalize">
-                          {stat.stat.name.replace('-', ' ')}
-                        </span>
-                      </div>
-                      <span className="text-sm font-semibold text-text">{stat.base_stat}</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className={`h-2 rounded-full transition-all duration-500 ${
-                          stat.base_stat >= 100 ? 'bg-green-500' :
-                          stat.base_stat >= 80 ? 'bg-yellow-500' :
-                          stat.base_stat >= 60 ? 'bg-orange-500' : 'bg-red-500'
-                        }`}
-                        style={{ width: `${Math.min((stat.base_stat / 150) * 100, 100)}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+        {/* Tabs */}
+        <Tabs activeTab={activeTab} onTabChange={setActiveTab} />
 
-            {/* Abilities */}
-            <div className="bg-surface rounded-2xl p-6 border border-border">
-              <h2 className="text-xl font-semibold mb-4 text-text">Abilities</h2>
-              <div className="space-y-2">
-                {pokemon.abilities.map((ability, index) => (
-                  <div
-                    key={index}
-                    className={cn(
-                      'px-3 py-2 rounded-lg border',
-                      ability.is_hidden
-                        ? 'bg-purple-50 border-purple-200 text-purple-800 dark:bg-purple-900/20 dark:border-purple-800 dark:text-purple-300'
-                        : 'bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-300'
-                    )}
-                  >
-                    <span className="font-medium capitalize">
-                      {formatPokemonName(ability.ability.name)}
-                    </span>
-                    {ability.is_hidden && (
-                      <span className="ml-2 text-xs opacity-75">(Hidden)</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Moves */}
-            <div className="bg-surface rounded-2xl p-6 border border-border">
-              <h2 className="text-xl font-semibold mb-4 text-text">Moves</h2>
-              <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto">
-                {pokemon.moves.slice(0, 20).map((move, index) => (
-                  <div
-                    key={index}
-                    className="px-3 py-1 bg-gray-50 dark:bg-gray-800 rounded text-sm text-text capitalize"
-                  >
-                    {formatPokemonName(move.move.name)}
-                  </div>
-                ))}
-                {pokemon.moves.length > 20 && (
-                  <div className="col-span-2 text-center text-muted text-sm">
-                    +{pokemon.moves.length - 20} more moves
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+        {/* Tab Content */}
+        <div className="bg-surface rounded-2xl border border-border">
+          {activeTab === 'overview' && (
+            <OverviewSection
+              types={pokemon.types.map(t => t.type.name)}
+              abilities={pokemon.abilities.map(a => ({ name: a.ability.name, is_hidden: a.is_hidden }))}
+              flavorText="A mysterious Pokémon with unique abilities and characteristics."
+              heightM={pokemon.height / 10}
+              weightKg={pokemon.weight / 10}
+              baseExp={pokemon.base_experience}
+            />
+          )}
+          {activeTab === 'stats' && (
+            <StatsSection
+              stats={pokemon.stats.map(stat => ({ name: stat.stat.name, value: stat.base_stat }))}
+            />
+          )}
+          {activeTab === 'moves' && (
+            <MovesSection
+              moves={pokemon.moves}
+            />
+          )}
+          {activeTab === 'evolution' && (
+            <EvolutionSection
+              chain={[]}
+            />
+          )}
+          {activeTab === 'matchups' && (
+            <MatchupsSection
+              groups={[]}
+            />
+          )}
         </div>
       </main>
     </div>

@@ -46,21 +46,61 @@ export default function VirtualizedPokemonGrid({
     }
   }
 
+  // Find the transition point from regular Pokemon to special forms
+  const specialFormsStartIndex = pokemonList.findIndex(pokemon => pokemon.id >= 10001)
+  
+  // Split the Pokemon list into regular and special forms
+  const regularPokemon = specialFormsStartIndex >= 0 ? pokemonList.slice(0, specialFormsStartIndex) : pokemonList
+  const specialFormsPokemon = specialFormsStartIndex >= 0 ? pokemonList.slice(specialFormsStartIndex) : []
+
   return (
     <div className={`w-full max-w-full ${className}`}>
-      <div className={`${getLayoutClasses()} w-full max-w-full`} data-pokemon-grid>
-        {pokemonList.map((pokemon) => (
-          <ModernPokemonCard
-            key={pokemon.id}
-            pokemon={pokemon}
-            isInComparison={comparisonList.includes(pokemon.id)}
-            onToggleComparison={onToggleComparison}
-            onSelect={undefined}
-            isSelected={selectedPokemon?.id === pokemon.id}
-            density={density}
-          />
-        ))}
-      </div>
+      {/* Regular Pokemon */}
+      {regularPokemon.length > 0 && (
+        <div className={`${getLayoutClasses()} w-full max-w-full`} data-pokemon-grid>
+          {regularPokemon.map((pokemon) => (
+            <ModernPokemonCard
+              key={pokemon.id}
+              pokemon={pokemon}
+              isInComparison={comparisonList.includes(pokemon.id)}
+              onToggleComparison={onToggleComparison}
+              onSelect={undefined}
+              isSelected={selectedPokemon?.id === pokemon.id}
+              density={density}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Special Forms Header */}
+      {specialFormsPokemon.length > 0 && (
+        <div className="w-full py-4">
+          <div className="w-full bg-background border-y border-border">
+            <div className="flex items-center justify-center py-3">
+              <h3 className="text-sm font-medium text-muted-foreground">
+                ⭐ Special Forms & Variants
+              </h3>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Special Forms Pokemon */}
+      {specialFormsPokemon.length > 0 && (
+        <div className={`${getLayoutClasses()} w-full max-w-full`} data-pokemon-grid>
+          {specialFormsPokemon.map((pokemon) => (
+            <ModernPokemonCard
+              key={pokemon.id}
+              pokemon={pokemon}
+              isInComparison={comparisonList.includes(pokemon.id)}
+              onToggleComparison={onToggleComparison}
+              onSelect={undefined}
+              isSelected={selectedPokemon?.id === pokemon.id}
+              density={density}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Loading indicator */}
       {isLoading && (

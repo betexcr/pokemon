@@ -71,12 +71,12 @@ function BattlePage() {
               title="Back to PokéDex"
             >
               <ArrowLeft className="h-5 w-5" />
-              <span className="font-medium">Back to PokéDex</span>
+              <span className="font-medium text-text">Back to PokéDex</span>
             </button>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <Swords className="h-5 w-5 text-poke-blue" />
-                <h1 className="text-lg font-semibold">AI Battle</h1>
+                <h1 className="text-lg font-semibold text-text">AI Battle</h1>
               </div>
               
               <button
@@ -99,7 +99,15 @@ function BattlePage() {
         <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
         {/* Player team selection */}
         <section className="border border-border rounded-xl bg-surface p-4">
-          <h2 className="text-lg font-bold mb-3 text-black dark:text-text">Your Team</h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-bold text-text">Your Team</h2>
+            <button
+              onClick={() => router.push("/team")}
+              className="text-sm text-poke-blue hover:text-poke-blue/80 hover:underline transition-colors"
+            >
+              Go to Team Builder
+            </button>
+          </div>
           <TeamSelector
             selectedTeamId={selectedPlayerTeam?.id}
             onTeamSelect={setSelectedPlayerTeam}
@@ -110,13 +118,13 @@ function BattlePage() {
 
         {/* Opponent selection */}
         <section className="border border-border rounded-xl bg-surface p-4">
-          <h2 className="text-lg font-bold mb-3 text-black dark:text-text">Opponent</h2>
+          <h2 className="text-lg font-bold mb-3 text-text">Opponent</h2>
           <div className="flex items-center gap-3 mb-3">
-            <label className="flex items-center gap-2 text-sm font-medium text-black dark:text-text">
+            <label className="flex items-center gap-2 text-sm font-medium text-text">
               <input type="radio" checked={opponentType === "champion"} onChange={()=> setOpponentType("champion")} />
               Gym Champion
             </label>
-            <label className="flex items-center gap-2 text-sm font-medium text-black dark:text-text">
+            <label className="flex items-center gap-2 text-sm font-medium text-text">
               <input type="radio" checked={opponentType === "team"} onChange={()=> {
                 setOpponentType("team");
                 setGenerationFilter(""); // Reset generation filter when switching to saved team

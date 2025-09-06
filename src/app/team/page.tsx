@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Pokemon } from '@/types/pokemon'
-import { getPokemonList, getPokemon, getMove, getPokemonSpriteUrl } from '@/lib/api'
+import { getPokemonList, getPokemon, getMove, getPokemonSpriteUrl, getPokemonTotalCount } from '@/lib/api'
 import { formatPokemonName } from '@/lib/utils'
 import Image from 'next/image'
 import TypeBadge from '@/components/TypeBadge'
@@ -42,6 +42,12 @@ export default function TeamBuilderPage() {
   const [collapsedSlots, setCollapsedSlots] = useState<Set<number>>(new Set([0, 1, 2, 3, 4, 5]))
   const [saving, setSaving] = useState(false)
   const [syncing, setSyncing] = useState(false)
+  
+  // Virtualized scrolling state
+  const [pokemonOffset, setPokemonOffset] = useState(0)
+  const [hasMorePokemon, setHasMorePokemon] = useState(true)
+  const [loadingMorePokemon, setLoadingMorePokemon] = useState(false)
+  const [totalPokemonCount, setTotalPokemonCount] = useState(0)
 
   // First-click suggestions: original 151
   const firstGenSuggestions = useMemo(() => {
@@ -54,7 +60,7 @@ export default function TeamBuilderPage() {
   // Prefetch types for visible suggestions so badges are shown immediately
   // (hook positioned after dependencies are defined below)
 
-  // Filter Pokémon based on search term
+  // Filter Pokémon based on search term (for search mode)
   const filteredPokemon = useMemo(() => {
     if (!searchTerm.trim()) return []
     
@@ -70,8 +76,78 @@ export default function TeamBuilderPage() {
       return name.includes(term) || 
              id.includes(term) || 
              normalizedName.includes(normalizedTerm)
-    }).slice(0, 50) // Limit to 50 results for performance
+    })
   }, [allPokemon, searchTerm])
+
+  // Load more Pokemon for virtualized scrolling
+  const loadMorePokemon = useCallback(async () => {
+    if (loadingMorePokemon || !hasMorePokemon || searchTerm.trim()) return
+    
+    setLoadingMorePokemon(true)
+    try {
+      const newOffset = pokemonOffset + 30
+      const pokemonList = await getPokemonList(30, newOffset)
+      
+      if (pokemonList.results.length === 0) {
+        setHasMorePokemon(false)
+        return
+      }
+      
+      // Create basic Pokémon objects with minimal data
+      const newPokemon = pokemonList.results.map((pokemonRef) => {
+        const pokemonId = pokemonRef.url.split('/').slice(-2)[0]
+        const id = parseInt(pokemonId)
+        
+        return {
+          id,
+          name: pokemonRef.name,
+          base_experience: 0,
+          height: 0,
+          weight: 0,
+          is_default: true,
+          order: id,
+          abilities: [],
+          forms: [],
+          game_indices: [],
+          held_items: [],
+          location_area_encounters: '',
+          moves: [],
+          sprites: {
+            front_default: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemonId}.png`,
+            front_shiny: null,
+            front_female: null,
+            front_shiny_female: null,
+            back_default: null,
+            back_shiny: null,
+            back_female: null,
+            back_shiny_female: null,
+            other: {
+              dream_world: { front_default: null, front_female: null },
+              home: { front_default: null, front_female: null, front_shiny: null, front_shiny_female: null },
+              'official-artwork': {
+                front_default: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemonId}.png`,
+                front_shiny: null
+              }
+            }
+          },
+          stats: [],
+          types: [], // Will be populated when Pokémon is selected
+          species: { name: pokemonRef.name, url: '' }
+        } as Pokemon
+      })
+
+      setAllPokemon(prev => [...prev, ...newPokemon])
+      setPokemonOffset(newOffset)
+      
+      if (pokemonList.results.length < 30) {
+        setHasMorePokemon(false)
+      }
+    } catch (error) {
+      console.error('Error loading more Pokémon:', error)
+    } finally {
+      setLoadingMorePokemon(false)
+    }
+  }, [pokemonOffset, hasMorePokemon, loadingMorePokemon, searchTerm])
 
   // Function to fetch type data for a Pokémon
   const fetchPokemonTypes = useCallback(async (pokemonId: number) => {
@@ -98,7 +174,8 @@ export default function TeamBuilderPage() {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Element
-      if (!target.closest('.search-dropdown-container')) {
+      // Check if target has closest method and if it's within the dropdown container
+      if (!target || typeof target.closest !== 'function' || !target.closest('.search-dropdown-container')) {
         setShowDropdown(false)
       }
     }
@@ -119,6 +196,30 @@ export default function TeamBuilderPage() {
     }
   }, [showDropdown])
 
+  // Handle scroll for virtualized loading in dropdown
+  useEffect(() => {
+    const handleScroll = (event: Event) => {
+      const target = event.target as Element
+      // Check if target has closest method and if it's within the dropdown list
+      if (!target || typeof target.closest !== 'function' || !target.closest('.pokemon-dropdown-list')) return
+      
+      const element = target as HTMLElement
+      const { scrollTop, scrollHeight, clientHeight } = element
+      
+      // Load more when user scrolls to within 100px of the bottom
+      if (scrollHeight - scrollTop <= clientHeight + 100) {
+        loadMorePokemon()
+      }
+    }
+
+    if (showDropdown && !searchTerm.trim()) {
+      document.addEventListener('scroll', handleScroll, true)
+      return () => {
+        document.removeEventListener('scroll', handleScroll, true)
+      }
+    }
+  }, [showDropdown, searchTerm, loadMorePokemon])
+
   // Fetch type data for displayed Pokémon
   useEffect(() => {
     if (filteredPokemon.length > 0) {
@@ -130,13 +231,18 @@ export default function TeamBuilderPage() {
     }
   }, [filteredPokemon, fetchPokemonTypes])
 
-  // Load data
+  // Load initial data
   useEffect(() => {
     const load = async () => {
       try {
         setLoading(true)
-        // Get all Pokémon for Team Builder (all generations)
-        const pokemonList = await getPokemonList(1025, 0)
+        // Get total count and first 50 Pokémon
+        const [totalCount, pokemonList] = await Promise.all([
+          getPokemonTotalCount(),
+          getPokemonList(50, 0)
+        ])
+        
+        setTotalPokemonCount(totalCount)
         
         // Create basic Pokémon objects with minimal data for search
         const basicPokemon = pokemonList.results.map((pokemonRef) => {
@@ -182,6 +288,8 @@ export default function TeamBuilderPage() {
         })
 
         setAllPokemon(basicPokemon)
+        setPokemonOffset(50)
+        setHasMorePokemon(totalCount > 50)
       } catch (e) {
         console.error('Error loading Pokémon:', e)
         setError('Failed to load Pokémon list')
@@ -510,7 +618,18 @@ export default function TeamBuilderPage() {
           return { ...slot, moves: currentMoves.filter(m => m.name !== move.name) }
         } else if (currentMoves.length < 4) {
           // Add move (max 4)
-          return { ...slot, moves: [...currentMoves, move] }
+          const newMoves = [...currentMoves, move]
+          
+          // Auto-collapse when 4 moves are added
+          if (newMoves.length === 4) {
+            setCollapsedSlots(prev => {
+              const newSet = new Set(prev)
+              newSet.add(slotIndex)
+              return newSet
+            })
+          }
+          
+          return { ...slot, moves: newMoves }
         }
       }
       return slot
@@ -536,7 +655,7 @@ export default function TeamBuilderPage() {
   )
 
   return (
-    <div className="min-h-screen bg-bg text-text">
+    <div className="min-h-screen bg-bg text-text overflow-x-hidden">
       <header className="sticky top-0 z-50 border-b border-border bg-surface">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
@@ -548,7 +667,7 @@ export default function TeamBuilderPage() {
                   title="Back to PokéDex"
                 >
                   <ArrowLeft className="h-5 w-5" />
-                  <span className="font-medium">Back to PokéDex</span>
+                  <span className="font-medium text-text">Back to PokéDex</span>
                 </button>
               </div>
               <span className="text-sm text-muted">
@@ -610,10 +729,10 @@ export default function TeamBuilderPage() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+      <main className="max-w-7xl mx-auto px-4 py-6 space-y-6 overflow-x-hidden">
         {/* Add Pokémon Search */}
         <section className="border border-border rounded-xl bg-surface p-4 overflow-visible">
-          <h2 className="text-lg font-semibold mb-4">Add Pokémon</h2>
+          <h2 className="text-lg font-semibold mb-4 text-text">Add Pokémon</h2>
           <div className="relative search-dropdown-container max-w-full z-[10000]">
             <input
               type="text"
@@ -625,17 +744,25 @@ export default function TeamBuilderPage() {
             />
             
             {showDropdown && (
-              <div className="absolute top-full left-0 w-full max-w-full mt-1 bg-white border border-border rounded-lg shadow-2xl z-[10010] max-h-96 overflow-y-auto">
-                {(searchTerm.trim() ? filteredPokemon : firstGenSuggestions).length > 0 ? (
+              <div className="absolute top-full left-0 w-full max-w-full mt-1 bg-white border border-border rounded-lg shadow-2xl z-[10010] max-h-96 overflow-y-auto pokemon-dropdown-list">
+                {(searchTerm.trim() ? filteredPokemon : allPokemon).length > 0 ? (
                   <div className="divide-y divide-border">
-                    {(searchTerm.trim() ? filteredPokemon.slice(0, 50) : firstGenSuggestions).map((pokemon) => (
+                    {(searchTerm.trim() ? filteredPokemon.slice(0, 50) : allPokemon).map((pokemon) => (
                       <button
                         key={pokemon.id}
                         onClick={async () => {
                           const slot = teamSlots.findIndex(s => s.id === null)
                           if (slot !== -1) {
                             await setSlot(slot, { id: pokemon.id })
-                            // Keep dropdown open and search term for multiple selections
+                            // Close dropdown and clear search term
+                            setShowDropdown(false)
+                            setSearchTerm('')
+                            // Focus on the selected Pokemon slot by expanding it
+                            setCollapsedSlots(prev => {
+                              const newSet = new Set(prev)
+                              newSet.delete(slot)
+                              return newSet
+                            })
                           }
                         }}
                         className="w-full text-left hover:bg-gray-50 flex items-center gap-1 transition-colors h-10 py-1"
@@ -673,6 +800,21 @@ export default function TeamBuilderPage() {
                         </div>
                       </button>
                     ))}
+                    
+                    {/* Loading indicator for virtualized scrolling */}
+                    {!searchTerm.trim() && loadingMorePokemon && (
+                      <div className="p-4 text-center text-muted">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-poke-blue mx-auto mb-2"></div>
+                        <p className="text-sm">Loading more Pokémon...</p>
+                      </div>
+                    )}
+                    
+                    {/* End of list indicator */}
+                    {!searchTerm.trim() && !hasMorePokemon && allPokemon.length > 0 && (
+                      <div className="p-4 text-center text-muted text-sm">
+                        All {totalPokemonCount} Pokémon loaded
+                      </div>
+                    )}
                   </div>
                 ) : searchTerm.trim() ? (
                   <div className="p-4 text-center text-muted">
@@ -687,18 +829,18 @@ export default function TeamBuilderPage() {
         </section>
 
         {/* Team slots */}
-        <section className="border border-border rounded-xl bg-surface p-4">
+        <section className="border border-border rounded-xl bg-surface p-4 overflow-x-hidden">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Your Team</h2>
+            <h2 className="text-lg font-semibold text-text">Your Team</h2>
             <div className="text-sm text-muted">
               {teamSlots.filter(s => s.id != null).length} / 6 Pokémon
             </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
             {teamSlots.map((slot, idx) => {
               const poke = allPokemon.find(p => p.id === slot.id) || null
               return (
-                <div key={idx} className="border border-border rounded-lg bg-white/50">
+                <div key={idx} className="border border-border rounded-lg bg-white/50 w-full min-w-0">
                   {/* Collapsible Header */}
                   <div 
                     className="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50 transition-colors"
@@ -706,13 +848,13 @@ export default function TeamBuilderPage() {
                   >
                     <div className="flex items-center gap-2">
                       {collapsedSlots.has(idx) ? (
-                        <ChevronRight className="h-4 w-4 text-gray-500" />
+                        <ChevronRight className="h-4 w-4 text-muted" />
                       ) : (
-                        <ChevronDown className="h-4 w-4 text-gray-500" />
+                        <ChevronDown className="h-4 w-4 text-muted" />
                       )}
-                      <span className="text-sm font-medium">Slot {idx + 1}</span>
+                      <span className="text-sm font-medium text-text">Slot {idx + 1}</span>
                       {poke && (
-                        <span className="text-xs text-gray-600">
+                        <span className="text-xs text-muted">
                           #{poke.id} {formatPokemonName(poke.name)}
                         </span>
                       )}
@@ -745,7 +887,7 @@ export default function TeamBuilderPage() {
                   
                   {/* Collapsible Content */}
                   {!collapsedSlots.has(idx) && (
-                    <div className="px-3 pb-3">
+                    <div className="px-3 pb-3 w-full min-w-0">
                   
                   {poke ? (
                     <div className="flex items-center gap-3 mb-3">
@@ -759,7 +901,7 @@ export default function TeamBuilderPage() {
                         />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-gray-900">#{poke.id} {formatPokemonName(poke.name)}</div>
+                        <div className="text-sm font-medium text-text">#{poke.id} {formatPokemonName(poke.name)}</div>
                         <div className="flex flex-wrap gap-1 mt-1">
                           {poke.types?.length > 0 ? poke.types.map(t => (
                             <TypeBadge key={t.type.name} type={t.type.name} variant="span" />
@@ -768,7 +910,7 @@ export default function TeamBuilderPage() {
                       </div>
                     </div>
                   ) : (
-                    <div className="text-sm mb-3 h-16 flex items-center justify-center text-gray-500 border-2 border-dashed border-gray-300 rounded">
+                    <div className="text-sm mb-3 h-16 flex items-center justify-center text-muted border-2 border-dashed border-border rounded">
                       Empty Slot
                     </div>
                   )}
@@ -782,7 +924,7 @@ export default function TeamBuilderPage() {
                   {poke && (
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <label className="text-sm font-medium">Moves ({slot.moves.length}/4)</label>
+                        <label className="text-sm font-medium text-text">Moves ({slot.moves.length}/4)</label>
                         {slot.moves.length > 0 && (
                           <button 
                             onClick={() => setSlot(idx, { moves: [] })} 
@@ -796,17 +938,17 @@ export default function TeamBuilderPage() {
                       
                       {/* Selected Moves Table */}
                       {slot.moves.length > 0 && (
-                        <div className="overflow-x-auto rounded-lg border border-gray-200">
-                          <table className="w-full text-xs">
+                        <div className="overflow-x-auto rounded-lg border border-gray-200 w-full">
+                          <table className="w-full text-xs min-w-max">
                             <thead className="bg-gray-50 border-b border-gray-200">
-                              <tr className="[&>th]:px-2 [&>th]:py-1 text-left text-gray-600">
+                              <tr className="[&>th]:px-2 [&>th]:py-1 text-left text-muted">
                                 <th>Move</th><th>Type</th><th>Cat.</th><th>Power</th><th>Acc.</th><th>PP</th>
                               </tr>
                             </thead>
                             <tbody>
                               {slot.moves.map((move) => (
                                 <tr key={move.name} className="[&>td]:px-2 [&>td]:py-1 border-b border-gray-100">
-                                  <td className="font-medium capitalize">
+                                  <td className="font-medium capitalize text-text">
                                     <div className="flex items-center gap-2">
                                       <span>{move.name}</span>
                                       <button 
@@ -833,11 +975,11 @@ export default function TeamBuilderPage() {
                       {/* Available Moves Table */}
                       {availableMoves[idx] && availableMoves[idx].length > 0 && (
                         <div className="space-y-2">
-                          <div className="text-xs text-gray-600 font-medium">Available moves:</div>
-                          <div className="overflow-x-auto rounded-lg border border-gray-200">
-                            <table className="w-full text-xs">
+                          <div className="text-xs text-muted font-medium">Available moves:</div>
+                          <div className="overflow-x-auto rounded-lg border border-gray-200 w-full">
+                            <table className="w-full text-xs min-w-max">
                               <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
-                                <tr className="[&>th]:px-2 [&>th]:py-1 text-left text-gray-600">
+                                <tr className="[&>th]:px-2 [&>th]:py-1 text-left text-muted">
                                   <th>Move</th><th>Type</th><th>Cat.</th><th>Power</th><th>Acc.</th><th>PP</th><th>Lvl</th><th></th>
                                 </tr>
                               </thead>
@@ -853,7 +995,7 @@ export default function TeamBuilderPage() {
                                   .slice(0, 15)
                                   .map((move) => (
                                     <tr key={move.name} className="[&>td]:px-2 [&>td]:py-1 border-b border-gray-100 hover:bg-gray-50">
-                                      <td className="font-medium capitalize">
+                                      <td className="font-medium capitalize text-text">
                                         {move.short_effect ? (
                                           <Tooltip content={move.short_effect} maxWidth="w-80" variant="move" type={move.type}>
                                             <span className="cursor-help">
@@ -898,9 +1040,9 @@ export default function TeamBuilderPage() {
         </section>
 
         {/* Saved teams */}
-        <section className="border border-border rounded-xl bg-surface p-4">
+        <section className="border border-border rounded-xl bg-surface p-4 overflow-x-hidden">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Saved Teams</h2>
+            <h2 className="text-lg font-semibold text-text">Saved Teams</h2>
             {user ? (
               <div className="flex items-center gap-1 text-sm text-green-600">
                 <Cloud className="h-4 w-4" />
@@ -959,7 +1101,7 @@ export default function TeamBuilderPage() {
                     {team.slots.some(s => s.moves && s.moves.length > 0) && (
                       <span className="ml-2">• {team.slots.reduce((total, s) => total + (s.moves?.length || 0), 0)} moves</span>
                     )}
-                    <div className="text-xs text-gray-500 mt-1">
+                    <div className="text-xs text-muted mt-1">
                       {team.updatedAt.toLocaleDateString()}
                     </div>
                   </div>
