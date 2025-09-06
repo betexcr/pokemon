@@ -131,7 +131,16 @@ export default function PokemonDetailClient({ pokemon, error }: PokemonDetailCli
           )}
           {activeTab === 'moves' && (
             <MovesSection
-              moves={pokemon.moves}
+              moves={pokemon.moves.map(pokemonMove => ({
+                name: pokemonMove.move.name,
+                type: 'normal', // Default type, would need to fetch actual move data
+                damage_class: 'physical' as const,
+                power: null,
+                accuracy: null,
+                pp: null,
+                level_learned_at: pokemonMove.version_group_details[0]?.level_learned_at || null,
+                short_effect: null
+              }))}
             />
           )}
           {activeTab === 'evolution' && (
