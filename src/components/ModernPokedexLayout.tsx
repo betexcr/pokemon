@@ -1014,6 +1014,43 @@ export default function ModernPokedexLayout({
             </div>
             )}
 
+            {/* Mobile Quick Access Links - Only visible on mobile */}
+            {isMobile && (
+              <div className="flex items-center space-x-2">
+                {/* Team Builder Link */}
+                <button
+                  onClick={() => router.push('/team')}
+                  className="p-2 rounded-lg bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
+                  title="Team Builder"
+                >
+                  <Users className="h-4 w-4" />
+                </button>
+
+                {/* Battle Link */}
+                <button
+                  onClick={() => router.push('/battle')}
+                  className="p-2 rounded-lg bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
+                  title="Battle"
+                >
+                  <Swords className="h-4 w-4" />
+                </button>
+
+                {/* Comparison Link */}
+                <button
+                  onClick={() => router.push('/compare')}
+                  className="relative p-2 rounded-lg bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
+                  title="Compare Pokémon"
+                >
+                  <Scale className="h-4 w-4" />
+                  {comparisonList.length > 0 && (
+                    <span className="absolute -top-1 -right-1 px-1 py-0.5 bg-poke-red text-white text-xs rounded-full font-bold">
+                      {comparisonList.length}
+                    </span>
+                  )}
+                </button>
+              </div>
+            )}
+
             {/* Mobile Hamburger Menu Button - Only visible on mobile */}
             {isMobile && (
               <button
