@@ -44,18 +44,6 @@ export default function Home() {
 
   const { theme } = useTheme()
 
-  // Handle client-side routing for lobby rooms
-  if (pathname.startsWith('/lobby/')) {
-    const roomId = pathname.split('/lobby/')[1]
-    if (roomId) {
-      return (
-        <ProtectedRoute>
-          <RoomPageClient roomId={roomId} />
-        </ProtectedRoute>
-      )
-    }
-  }
-
   // Load initial data with caching
   const loadInitialData = useCallback(async () => {
     try {
@@ -186,6 +174,18 @@ export default function Home() {
         </div>
       </div>
     )
+  }
+
+  // Handle client-side routing for lobby rooms
+  if (pathname.startsWith('/lobby/')) {
+    const roomId = pathname.split('/lobby/')[1]
+    if (roomId) {
+      return (
+        <ProtectedRoute>
+          <RoomPageClient roomId={roomId} />
+        </ProtectedRoute>
+      )
+    }
   }
 
   // Determine layout mode based on theme
