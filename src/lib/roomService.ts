@@ -49,7 +49,7 @@ class RoomService {
   async createRoom(hostId: string, hostName: string, hostTeam?: unknown): Promise<string> {
     if (!db) throw new Error('Firebase not initialized');
     
-    const roomData: any = {
+    const roomData: Record<string, unknown> = {
       hostId,
       hostName,
       status: 'waiting' as const,
@@ -110,7 +110,7 @@ class RoomService {
     }
     
     // Update room with guest information
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       guestId,
       guestName,
       currentPlayers: roomData.currentPlayers + 1,
@@ -162,7 +162,7 @@ class RoomService {
     const roomRef = doc(db, this.roomsCollection, roomId);
     
     try {
-      await updateDoc(roomRef, updates as any);
+      await updateDoc(roomRef, updates as Record<string, unknown>);
       console.log('roomService.updateRoom completed successfully');
     } catch (error) {
       console.error('roomService.updateRoom failed:', error);

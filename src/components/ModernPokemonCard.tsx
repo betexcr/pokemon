@@ -15,7 +15,7 @@ interface ModernPokemonCardProps {
   onSelect?: (pokemon: Pokemon) => void
   isSelected?: boolean
   className?: string
-  density?: 'cozy' | 'compact' | 'ultra' | 'list'
+  density?: '3cols' | '6cols' | '9cols' | 'list'
 }
 
 export default function ModernPokemonCard({
@@ -25,7 +25,7 @@ export default function ModernPokemonCard({
   onSelect,
   isSelected = false,
   className = '',
-  density = 'compact'
+  density = '6cols'
 }: ModernPokemonCardProps) {
   const [imageLoaded, setImageLoaded] = useState(false)
   const router = useRouter()
@@ -77,9 +77,9 @@ export default function ModernPokemonCard({
 
     // Layout and styling based on density
     const densityClasses = {
-      cozy: 'rounded-xl hover:scale-[1.02]',
-      compact: 'rounded-lg hover:scale-[1.02]',
-      ultra: 'rounded-md hover:scale-[1.01]',
+      '3cols': 'rounded-xl hover:scale-[1.02]',
+      '6cols': 'rounded-lg hover:scale-[1.02]',
+      '9cols': 'rounded-md hover:scale-[1.01]',
       list: 'rounded-lg hover:scale-[1.01] flex items-center'
     }
 
@@ -202,7 +202,7 @@ export default function ModernPokemonCard({
 
           {/* Pokémon Image */}
           <div className={`relative bg-gradient-to-br from-white/20 to-white/5 rounded-lg flex items-center justify-center overflow-hidden mb-3 ${
-            density === 'cozy' ? 'h-44' : density === 'compact' ? 'h-36' : 'h-20'
+            density === '3cols' ? 'h-44' : density === '6cols' ? 'h-36' : 'h-20'
           }`}>
             {imageLoading && (
               <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse" />
@@ -230,7 +230,7 @@ export default function ModernPokemonCard({
           <div className="space-y-2">
             {/* Name */}
             <h3 className={`font-semibold text-text text-center group-hover:text-poke-blue transition-colors ${
-              density === 'ultra' ? 'text-xs' : 'text-base'
+              density === '9cols' ? 'text-xs' : 'text-base'
             }`}>
               {formatPokemonName(pokemon.name)}
             </h3>

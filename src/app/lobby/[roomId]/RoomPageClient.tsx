@@ -360,11 +360,11 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
               {Boolean(room.hostTeam && !isHost) && (
                 <div className="mt-3 p-3 bg-blue-50 rounded-lg">
                   <div className="text-sm">
-                    <div className="font-medium text-blue-900 mb-2">{(room.hostTeam as any)?.name || 'Host Team'}</div>
+                    <div className="font-medium text-blue-900 mb-2">{(room.hostTeam as { name?: string })?.name || 'Host Team'}</div>
                     
                     {/* Pokemon Roster Images */}
                     <div className="flex -space-x-1 mb-2">
-                      {(room.hostTeam as any)?.slots?.slice(0, 6).map((slot: any, index: number) => (
+                      {(room.hostTeam as { slots?: Array<{ id?: number }> })?.slots?.slice(0, 6).map((slot: { id?: number }, index: number) => (
                         <div
                           key={index}
                           className="relative w-8 h-8 rounded-full border-2 border-white bg-gray-100 overflow-hidden"
@@ -390,7 +390,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
                     </div>
                     
                     <div className="text-blue-700">
-                      {(room.hostTeam as any)?.slots?.filter((slot: any) => slot.id).length || 0} Pokémon selected
+                      {(room.hostTeam as { slots?: Array<{ id?: number }> })?.slots?.filter((slot: { id?: number }) => slot.id).length || 0} Pokémon selected
                     </div>
                   </div>
                 </div>
@@ -426,11 +426,11 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
                   {Boolean(room.guestTeam && !isGuest) && (
                     <div className="mt-3 p-3 bg-green-50 rounded-lg">
                       <div className="text-sm">
-                        <div className="font-medium text-green-900 mb-2">{(room.guestTeam as any)?.name || 'Guest Team'}</div>
+                        <div className="font-medium text-green-900 mb-2">{(room.guestTeam as { name?: string })?.name || 'Guest Team'}</div>
                         
                         {/* Pokemon Roster Images */}
                         <div className="flex -space-x-1 mb-2">
-                          {(room.guestTeam as any)?.slots?.slice(0, 6).map((slot: any, index: number) => (
+                          {(room.guestTeam as { slots?: Array<{ id?: number }> })?.slots?.slice(0, 6).map((slot: { id?: number }, index: number) => (
                             <div
                               key={index}
                               className="relative w-8 h-8 rounded-full border-2 border-white bg-gray-100 overflow-hidden"
@@ -456,7 +456,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
                         </div>
                         
                         <div className="text-green-700">
-                          {(room.guestTeam as any)?.slots?.filter((slot: any) => slot.id).length || 0} Pokémon selected
+                          {(room.guestTeam as { slots?: Array<{ id?: number }> })?.slots?.filter((slot: { id?: number }) => slot.id).length || 0} Pokémon selected
                         </div>
                       </div>
                     </div>

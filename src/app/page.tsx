@@ -9,14 +9,14 @@ import RedPokedexLayout from '@/components/RedPokedexLayout'
 import GoldPokedexLayout from '@/components/GoldPokedexLayout'
 import RubyPokedexLayout from '@/components/RubyPokedexLayout'
 import ModernPokedexLayout from '@/components/ModernPokedexLayout'
-import ComparisonOverlay from '@/components/ComparisonOverlay'
-import MobileHeader from '@/components/MobileHeader'
+// import ComparisonOverlay from '@/components/ComparisonOverlay'
+// import MobileHeader from '@/components/MobileHeader'
 
 export default function Home() {
   const [pokemonList, setPokemonList] = useState<Pokemon[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [density, setDensity] = useState<'cozy' | 'compact' | 'ultra' | 'list'>('compact')
+  // const [density, setDensity] = useState<'cozy' | 'compact' | 'ultra' | 'list'>('compact')
   const [loadingMore, setLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(true)
   const [currentOffset, setCurrentOffset] = useState(0)
