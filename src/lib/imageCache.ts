@@ -120,7 +120,13 @@ class ImageCache {
     try {
       const response = await fetch(url)
       if (!response.ok) {
-        throw new Error(`Failed to fetch image: ${response.status}`)
+        // Handle 404 and other errors gracefully
+        if (response.status === 404) {
+          console.warn(`Image not found (404): ${url}`)
+        } else {
+          console.warn(`Failed to fetch image: ${url} (${response.status})`)
+        }
+        return url // Return original URL on error
       }
 
       const blob = await response.blob()
@@ -158,7 +164,7 @@ class ImageCache {
       return URL.createObjectURL(blob)
 
     } catch (error) {
-      console.error(`Failed to cache image ${url}:`, error)
+      console.warn(`Failed to cache image ${url}:`, error)
       return url // Return original URL on error
     }
   }

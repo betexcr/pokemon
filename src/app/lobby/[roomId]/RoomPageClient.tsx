@@ -56,25 +56,49 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
       return;
     }
 
+    // Track user presence when entering the room
+    const trackPresence = async () => {
+      try {
+        await roomService.trackUserPresence(roomId, user.uid, true);
+      } catch (error) {
+        console.error('Failed to track user presence:', error);
+      }
+    };
+
+    trackPresence();
+
     // Listen to room changes in real-time
     const unsubscribe = roomService.onRoomChange(roomId, (room) => {
       console.log('Room change detected:', room);
       if (room) {
-        setRoom(room);
+        // Validate room data and provide defaults for missing fields
+        const validatedRoom = {
+          ...room,
+          hostId: room.hostId || '',
+          hostName: room.hostName || 'Unknown Host',
+          hostReady: room.hostReady || false,
+          guestReady: room.guestReady || false,
+          status: room.status || 'waiting',
+          maxPlayers: room.maxPlayers || 2,
+          currentPlayers: room.currentPlayers || (room.guestId ? 2 : 1),
+          activeUsers: room.activeUsers || (room.hostId ? [room.hostId] : [])
+        };
+        
+        setRoom(validatedRoom);
         
         // Initialize selected team based on user's role
         if (user) {
-          const isHost = user.uid === room.hostId;
-          const isGuest = user.uid === room.guestId;
+          const isHost = user.uid === validatedRoom.hostId;
+          const isGuest = user.uid === validatedRoom.guestId;
           
           console.log('User role - isHost:', isHost, 'isGuest:', isGuest);
-          console.log('Room hostTeam:', room.hostTeam);
-          console.log('Room guestTeam:', room.guestTeam);
+          console.log('Room hostTeam:', validatedRoom.hostTeam);
+          console.log('Room guestTeam:', validatedRoom.guestTeam);
           
-          if (isHost && room.hostTeam) {
-            setSelectedTeam(room.hostTeam as SavedTeam | LocalTeam);
-          } else if (isGuest && room.guestTeam) {
-            setSelectedTeam(room.guestTeam as SavedTeam | LocalTeam);
+          if (isHost && validatedRoom.hostTeam) {
+            setSelectedTeam(validatedRoom.hostTeam as SavedTeam | LocalTeam);
+          } else if (isGuest && validatedRoom.guestTeam) {
+            setSelectedTeam(validatedRoom.guestTeam as SavedTeam | LocalTeam);
           }
         }
         
@@ -87,15 +111,21 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      // Track user leaving when component unmounts
+      if (user) {
+        roomService.trackUserPresence(roomId, user.uid, false).catch(console.error);
+      }
+    };
   }, [roomId, user, router]);
 
   // Cleanup when user leaves the room
   useEffect(() => {
     const handleBeforeUnload = () => {
       if (user) {
-        console.log('beforeunload event triggered, leaving room:', roomId);
-        roomService.leaveRoom(roomId, user.uid);
+        console.log('beforeunload event triggered, tracking user leaving:', roomId);
+        roomService.trackUserPresence(roomId, user.uid, false).catch(console.error);
       }
     };
 
@@ -103,9 +133,6 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
     
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
-      // Don't automatically leave room on component unmount
-      // This prevents issues with React re-rendering
-      console.log('Component unmounting, but not leaving room automatically');
     };
   }, [user, roomId]);
 
@@ -202,6 +229,18 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
     }
   };
 
+  const toggleReadyStatus = async () => {
+    if (!user || !room) return;
+    
+    try {
+      const currentReadyStatus = isHost ? room.hostReady : room.guestReady;
+      await roomService.updateReadyStatus(roomId, user.uid, !currentReadyStatus);
+    } catch (error) {
+      console.error('Failed to update ready status:', error);
+      alert('Failed to update ready status. Please try again.');
+    }
+  };
+
   const startBattle = async () => {
     if (!selectedTeam || !room) {
       alert('Please select a team before starting the battle!');
@@ -219,14 +258,14 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
       router.push(`/battle/runtime?roomId=${roomId}&teamId=${selectedTeam.id}&battleId=${battleId}`);
     } catch (error) {
       console.error('Failed to start battle:', error);
-      alert('Failed to start battle. Please try again.');
+      alert(error instanceof Error ? error.message : 'Failed to start battle. Please try again.');
     }
   };
 
   const isHost = Boolean(user?.uid && room?.hostId && user.uid === room.hostId) as boolean;
   const isGuest = Boolean(user?.uid && room?.guestId && user.uid === room.guestId) as boolean;
   const canJoin = !isHost && !isGuest && room && room.currentPlayers < room.maxPlayers;
-  const canStart = isHost && room && room.currentPlayers === room.maxPlayers && room.status === 'ready';
+  const canStart = isHost && room && room.currentPlayers === room.maxPlayers && room.status === 'ready' && room.hostReady && room.guestReady;
   
   // TODO: Re-enable team selectors once TypeScript issues are resolved
   // For now, we'll show a simple message instead
@@ -341,7 +380,13 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
               </div>
               <div className="text-sm text-gray-600 mb-4">
                 <p className="font-medium">{room.hostName}</p>
-                <p className="text-gray-500">Ready to battle</p>
+                <div className="flex items-center space-x-2">
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    room.hostReady ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
+                  }`}>
+                    {room.hostReady ? 'Ready' : 'Not Ready'}
+                  </span>
+                </div>
               </div>
               
               {/* Team Selector for Host */}
@@ -353,6 +398,21 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
                     label="Select Your Team"
                     showStorageIndicator={true}
                   />
+                </div>
+              )}
+              
+              {/* Ready Checkbox for Host */}
+              {isHost && (
+                <div className="mb-3">
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={room.hostReady || false}
+                      onChange={toggleReadyStatus}
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                    />
+                        <span className="text-sm text-gray-700">I&apos;m ready to battle</span>
+                  </label>
                 </div>
               )}
               
@@ -407,7 +467,13 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
                 <>
                   <div className="text-sm text-gray-600 mb-4">
                     <p className="font-medium">{room.guestName}</p>
-                    <p className="text-gray-500">Ready to battle</p>
+                    <div className="flex items-center space-x-2">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        room.guestReady ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        {room.guestReady ? 'Ready' : 'Not Ready'}
+                      </span>
+                    </div>
                   </div>
                   
                   {/* Team Selector for Guest */}
@@ -419,6 +485,21 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
                         label="Select Your Team"
                         showStorageIndicator={true}
                       />
+                    </div>
+                  )}
+                  
+                  {/* Ready Checkbox for Guest */}
+                  {isGuest && (
+                    <div className="mb-3">
+                      <label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={room.guestReady || false}
+                          onChange={toggleReadyStatus}
+                          className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 focus:ring-2"
+                        />
+                        <span className="text-sm text-gray-700">I&apos;m ready to battle</span>
+                      </label>
                     </div>
                   )}
                   
@@ -489,13 +570,24 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
               </button>
             )}
             
-            {canStart && (
+            {isHost && room && room.currentPlayers === room.maxPlayers && room.status === 'ready' && (
               <button
                 onClick={startBattle}
-                disabled={!selectedTeam}
-                className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                disabled={!canStart}
+                className={`px-6 py-3 rounded-lg font-medium transition-colors ${
+                  canStart 
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                    : 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                }`}
               >
-                {selectedTeam ? 'Start Battle' : 'Select Team First'}
+                {!selectedTeam 
+                  ? 'Select Team First' 
+                  : !room.hostReady 
+                    ? 'Mark Yourself Ready' 
+                    : !room.guestReady 
+                      ? 'Waiting for Guest to be Ready' 
+                      : 'Start Battle'
+                }
               </button>
             )}
             
@@ -551,10 +643,14 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
             </div>
             <div className="flex items-start space-x-3">
               <span className="bg-blue-100 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-medium flex-shrink-0 mt-0.5">4</span>
-              <p>Once both players have selected teams, the host can start the battle</p>
+              <p>Check the &quot;I&apos;m ready to battle&quot; checkbox once you&apos;ve selected your team</p>
             </div>
             <div className="flex items-start space-x-3">
               <span className="bg-blue-100 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-medium flex-shrink-0 mt-0.5">5</span>
+              <p>Once both players are ready, the host can start the battle</p>
+            </div>
+            <div className="flex items-start space-x-3">
+              <span className="bg-blue-100 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-medium flex-shrink-0 mt-0.5">6</span>
               <p>Battle it out and see who&apos;s the better trainer!</p>
             </div>
           </div>

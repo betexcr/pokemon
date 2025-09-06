@@ -3,15 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Send, MessageCircle, X, Minimize2, Maximize2 } from 'lucide-react';
-
-interface ChatMessage {
-  id: string;
-  userId: string;
-  userName: string;
-  message: string;
-  timestamp: Date;
-  type: 'user' | 'system';
-}
+import { chatService, type ChatMessage } from '@/lib/chatService';
 
 interface ChatProps {
   roomId: string;
@@ -35,10 +27,15 @@ export default function Chat({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Initialize with empty messages - will be replaced with Firebase/Firestore
+  // Listen to messages from Firebase
   useEffect(() => {
-    // Start with empty messages array - real messages will come from Firebase
-    setMessages([]);
+    if (!roomId) return;
+    
+    const unsubscribe = chatService.onMessagesChange(roomId, (newMessages) => {
+      setMessages(newMessages);
+    });
+
+    return () => unsubscribe();
   }, [roomId]);
 
   const scrollToBottom = () => {
@@ -53,20 +50,18 @@ export default function Chat({
     e.preventDefault();
     if (!newMessage.trim() || !user) return;
 
-    const message: ChatMessage = {
-      id: Date.now().toString(),
-      userId: user.uid,
-      userName: user.displayName || 'Anonymous',
-      message: newMessage.trim(),
-      timestamp: new Date(),
-      type: 'user'
-    };
-
-    // TODO: Send to Firebase/Firestore
-    console.log('Sending message:', message);
-    
-    setMessages(prev => [...prev, message]);
-    setNewMessage('');
+    try {
+      await chatService.sendMessage(
+        roomId,
+        user.uid,
+        user.displayName || 'Anonymous',
+        newMessage.trim()
+      );
+      setNewMessage('');
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      alert('Failed to send message. Please try again.');
+    }
   };
 
   const formatTime = (date: Date) => {

@@ -22,21 +22,26 @@ export interface RoomData {
   hostId: string;
   hostName: string;
   hostTeam?: unknown; // Team data
+  hostReady?: boolean; // Host ready status
   guestId?: string;
   guestName?: string;
   guestTeam?: unknown; // Team data
+  guestReady?: boolean; // Guest ready status
   status: 'waiting' | 'ready' | 'battling' | 'finished';
   createdAt: Date;
   maxPlayers: number;
   currentPlayers: number;
+  activeUsers?: string[]; // Track active users in the room
   battleId?: string; // Reference to battle document
 }
 
 export interface RoomUpdate {
   hostTeam?: unknown;
+  hostReady?: boolean;
   guestId?: string;
   guestName?: string;
   guestTeam?: unknown;
+  guestReady?: boolean;
   status?: 'waiting' | 'ready' | 'battling' | 'finished';
   currentPlayers?: number;
   battleId?: string;
@@ -52,10 +57,12 @@ class RoomService {
     const roomData: Record<string, unknown> = {
       hostId,
       hostName,
+      hostReady: false,
       status: 'waiting' as const,
       createdAt: serverTimestamp(),
       maxPlayers: 2,
-      currentPlayers: 1
+      currentPlayers: 1,
+      activeUsers: [hostId] // Track active users
     };
 
     // Only include hostTeam if it's provided and not undefined
@@ -76,11 +83,27 @@ class RoomService {
     
     if (docSnap.exists()) {
       const data = docSnap.data();
-      return {
+      
+      // Handle older rooms that might not have all the new fields
+      const roomData: RoomData = {
         id: docSnap.id,
-        ...data,
-        createdAt: data.createdAt?.toDate() || new Date()
-      } as RoomData;
+        hostId: data.hostId || '',
+        hostName: data.hostName || 'Unknown Host',
+        hostTeam: data.hostTeam,
+        hostReady: data.hostReady || false,
+        guestId: data.guestId,
+        guestName: data.guestName,
+        guestTeam: data.guestTeam,
+        guestReady: data.guestReady || false,
+        status: data.status || 'waiting',
+        createdAt: data.createdAt?.toDate() || new Date(),
+        maxPlayers: data.maxPlayers || 2,
+        currentPlayers: data.currentPlayers || (data.guestId ? 2 : 1),
+        activeUsers: data.activeUsers || (data.hostId ? [data.hostId] : []),
+        battleId: data.battleId
+      };
+      
+      return roomData;
     }
     
     return null;
@@ -110,12 +133,24 @@ class RoomService {
     }
     
     // Update room with guest information
+    const activeUsers = roomData.activeUsers || [roomData.hostId];
+    if (!activeUsers.includes(guestId)) {
+      activeUsers.push(guestId);
+    }
+    
     const updateData: Record<string, unknown> = {
       guestId,
       guestName,
-      currentPlayers: roomData.currentPlayers + 1,
+      guestReady: false,
+      currentPlayers: activeUsers.length,
+      activeUsers,
       status: 'ready' // Both players are now in the room
     };
+    
+    // Ensure maxPlayers is set for older rooms
+    if (!roomData.maxPlayers) {
+      updateData.maxPlayers = 2;
+    }
 
     // Only include guestTeam if it's provided and not undefined
     if (guestTeam !== undefined) {
@@ -143,11 +178,15 @@ class RoomService {
       await deleteDoc(roomRef);
     } else if (roomData.guestId === userId) {
       // Guest is leaving - remove guest and reset room
+      const activeUsers = (roomData.activeUsers || []).filter((id: string) => id !== userId);
+      
       await updateDoc(roomRef, {
         guestId: deleteField(),
         guestName: deleteField(),
         guestTeam: deleteField(),
-        currentPlayers: 1,
+        guestReady: deleteField(),
+        currentPlayers: activeUsers.length,
+        activeUsers,
         status: 'waiting'
       });
     }
@@ -170,6 +209,31 @@ class RoomService {
     }
   }
 
+  // Update ready status for a player
+  async updateReadyStatus(roomId: string, userId: string, isReady: boolean): Promise<void> {
+    if (!db) throw new Error('Firebase not initialized');
+    
+    const roomRef = doc(db, this.roomsCollection, roomId);
+    const roomSnap = await getDoc(roomRef);
+    
+    if (!roomSnap.exists()) {
+      throw new Error('Room not found');
+    }
+    
+    const roomData = roomSnap.data();
+    const updates: RoomUpdate = {};
+    
+    if (roomData.hostId === userId) {
+      updates.hostReady = isReady;
+    } else if (roomData.guestId === userId) {
+      updates.guestReady = isReady;
+    } else {
+      throw new Error('User is not in this room');
+    }
+    
+    await this.updateRoom(roomId, updates);
+  }
+
   // Start battle
   async startBattle(roomId: string, _battleId: string): Promise<void> {
     if (!db) throw new Error('Firebase not initialized');
@@ -182,6 +246,16 @@ class RoomService {
     }
     
     const roomData = roomSnap.data();
+    
+    // Check if both players are ready
+    if (!roomData.hostReady || !roomData.guestReady) {
+      throw new Error('Both players must be ready before starting the battle');
+    }
+    
+    // Check if both players have teams
+    if (!roomData.hostTeam || !roomData.guestTeam) {
+      throw new Error('Both players must select teams before starting the battle');
+    }
     
     // Create battle in Firestore
     const actualBattleId = await battleService.createBattle(
@@ -216,11 +290,26 @@ class RoomService {
       
       if (doc.exists()) {
         const data = doc.data();
+        
+        // Handle older rooms that might not have all the new fields
         const room: RoomData = {
           id: doc.id,
-          ...data,
-          createdAt: data.createdAt?.toDate() || new Date()
-        } as RoomData;
+          hostId: data.hostId || '',
+          hostName: data.hostName || 'Unknown Host',
+          hostTeam: data.hostTeam,
+          hostReady: data.hostReady || false,
+          guestId: data.guestId,
+          guestName: data.guestName,
+          guestTeam: data.guestTeam,
+          guestReady: data.guestReady || false,
+          status: data.status || 'waiting',
+          createdAt: data.createdAt?.toDate() || new Date(),
+          maxPlayers: data.maxPlayers || 2,
+          currentPlayers: data.currentPlayers || (data.guestId ? 2 : 1),
+          activeUsers: data.activeUsers || (data.hostId ? [data.hostId] : []),
+          battleId: data.battleId
+        };
+        
         console.log('roomService.onRoomChange calling callback with room:', room);
         callback(room);
       } else {
@@ -231,6 +320,37 @@ class RoomService {
     }, (error) => {
       console.error('roomService.onRoomChange error:', error);
       console.error('roomService.onRoomChange error details:', error.code, error.message);
+    });
+  }
+
+  // Track user presence in a room
+  async trackUserPresence(roomId: string, userId: string, isActive: boolean): Promise<void> {
+    if (!db) throw new Error('Firebase not initialized');
+    
+    const roomRef = doc(db, this.roomsCollection, roomId);
+    const roomSnap = await getDoc(roomRef);
+    
+    if (!roomSnap.exists()) return;
+    
+    const roomData = roomSnap.data();
+    let activeUsers = roomData.activeUsers || [];
+    
+    if (isActive) {
+      // Add user to active users if not already present
+      if (!activeUsers.includes(userId)) {
+        activeUsers.push(userId);
+      }
+    } else {
+      // Remove user from active users
+      activeUsers = activeUsers.filter((id: string) => id !== userId);
+    }
+    
+    // Update current players count based on active users
+    const currentPlayers = activeUsers.length;
+    
+    await updateDoc(roomRef, {
+      activeUsers,
+      currentPlayers
     });
   }
 
@@ -252,11 +372,27 @@ class RoomService {
       const rooms: RoomData[] = [];
       snapshot.forEach((doc) => {
         const data = doc.data();
-        rooms.push({
+        
+        // Handle older rooms that might not have all the new fields
+        const room: RoomData = {
           id: doc.id,
-          ...data,
-          createdAt: data.createdAt?.toDate() || new Date()
-        } as RoomData);
+          hostId: data.hostId || '',
+          hostName: data.hostName || 'Unknown Host',
+          hostTeam: data.hostTeam,
+          hostReady: data.hostReady || false,
+          guestId: data.guestId,
+          guestName: data.guestName,
+          guestTeam: data.guestTeam,
+          guestReady: data.guestReady || false,
+          status: data.status || 'waiting',
+          createdAt: data.createdAt?.toDate() || new Date(),
+          maxPlayers: data.maxPlayers || 2,
+          currentPlayers: data.currentPlayers || (data.guestId ? 2 : 1),
+          activeUsers: data.activeUsers || (data.hostId ? [data.hostId] : []),
+          battleId: data.battleId
+        };
+        
+        rooms.push(room);
       });
       callback(rooms);
     });

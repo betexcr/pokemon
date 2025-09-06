@@ -8,7 +8,7 @@ import Image from 'next/image'
 import TypeBadge from '@/components/TypeBadge'
 import Tooltip from '@/components/Tooltip'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, ChevronDown, ChevronRight, Cloud, CloudOff, Save, Loader2 } from 'lucide-react'
+import { ArrowLeft, ChevronDown, ChevronRight, Cloud, CloudOff, Save, Loader2, Wifi } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { 
   saveTeamToFirebase, 
@@ -19,6 +19,7 @@ import {
   type TeamSlot,
   type MoveData
 } from '@/lib/userTeams'
+import AuthModal from '@/components/auth/AuthModal'
 
 // Types are now imported from userTeams.ts
 
@@ -42,6 +43,7 @@ export default function TeamBuilderPage() {
   const [collapsedSlots, setCollapsedSlots] = useState<Set<number>>(new Set([0, 1, 2, 3, 4, 5]))
   const [saving, setSaving] = useState(false)
   const [syncing, setSyncing] = useState(false)
+  const [showAuthModal, setShowAuthModal] = useState(false)
   
   // Virtualized scrolling state
   const [pokemonOffset, setPokemonOffset] = useState(0)
@@ -1058,11 +1060,20 @@ export default function TeamBuilderPage() {
           {savedTeams.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-sm text-muted mb-2">No teams saved yet.</p>
-              {!user && (
-                <p className="text-xs text-muted">
-                  Sign in to sync your teams across devices
-                </p>
-              )}
+              {!user ? (
+                <div className="space-y-3">
+                  <p className="text-xs text-muted">
+                    Sign in to sync your teams across devices
+                  </p>
+                  <button
+                    onClick={() => setShowAuthModal(true)}
+                    className="inline-flex items-center gap-2 px-4 py-2 text-sm text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors"
+                  >
+                    <Wifi className="h-4 w-4" />
+                    Go online to save your teams!
+                  </button>
+                </div>
+              ) : null}
             </div>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -1134,6 +1145,13 @@ export default function TeamBuilderPage() {
           )}
         </section>
       </main>
+      
+      {/* Auth Modal */}
+      <AuthModal 
+        isOpen={showAuthModal} 
+        onClose={() => setShowAuthModal(false)}
+        initialMode="login"
+      />
     </div>
   )
 }

@@ -63,9 +63,9 @@ h1, h2, h3, h4, h5, h6, p, span, div, label {
   background-color: var(--color-muted);
 }
 
-/* Only disable scroll on the main PokéDex page */
+/* Main PokéDex page styling - fixed background with contained scrolling */
 body.pokedex-main-page {
-  /* Completely disable main page scroll */
+  /* Fixed background, no body scrolling */
   overflow: hidden;
   /* Hide scrollbar but keep scroll functionality */
   scrollbar-width: none; /* Firefox */
@@ -77,6 +77,71 @@ body.pokedex-main-page {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+}
+
+/* Allow internal scroll containers to work properly on main page */
+body.pokedex-main-page .overflow-y-auto {
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Ensure main content area can scroll and fits within viewport */
+body.pokedex-main-page .flex-1.min-h-0.overflow-y-auto {
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+  height: calc(100vh - 6rem) !important; /* Balanced height for proper scrolling */
+  max-height: calc(100vh - 6rem) !important;
+  min-height: calc(100vh - 6rem) !important; /* Ensure minimum height for overflow */
+}
+
+/* Ensure sidebar fits within viewport */
+body.pokedex-main-page .h-screen {
+  height: calc(100vh - 5rem) !important; /* Balanced height for proper scrolling */
+  max-height: calc(100vh - 5rem) !important;
+}
+
+/* Ensure sidebar content can scroll properly */
+body.pokedex-main-page .h-screen .overflow-y-auto {
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Specific fix for sidebar with flex layout */
+body.pokedex-main-page .h-screen .flex.flex-col {
+  height: 100% !important;
+}
+
+/* Ensure the scrollable content area in sidebar has proper height */
+body.pokedex-main-page .h-screen .flex-1.overflow-y-auto {
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  max-height: calc(100vh - 15rem) !important; /* Leave space for header and comparison section */
+}
+
+/* Ensure comparison section is always visible */
+body.pokedex-main-page .h-screen .flex-shrink-0 {
+  flex-shrink: 0 !important;
+  min-height: auto !important;
+}
+
+/* Ensure comparison section content is scrollable */
+body.pokedex-main-page .h-screen .flex-shrink-0 .overflow-y-auto {
+  max-height: 200px !important;
+  overflow-y: auto !important;
+}
+
+@media (min-width: 1024px) {
+  body.pokedex-main-page .flex-1.min-h-0.overflow-y-auto {
+    height: calc(100vh - 7rem) !important; /* Balanced height for proper scrolling */
+    max-height: calc(100vh - 7rem) !important;
+    min-height: calc(100vh - 7rem) !important; /* Ensure minimum height for overflow */
+  }
+  
+  body.pokedex-main-page .h-screen {
+    height: calc(100vh - 6rem) !important; /* Balanced height for proper scrolling */
+    max-height: calc(100vh - 6rem) !important;
+  }
 }
 
 /* Hide scrollbar for WebKit browsers (Chrome, Safari, Edge) */

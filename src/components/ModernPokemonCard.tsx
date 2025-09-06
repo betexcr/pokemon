@@ -4,9 +4,9 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Pokemon } from '@/types/pokemon'
 import { formatPokemonName } from '@/lib/utils'
-import { usePokemonImage } from '@/hooks/useCachedImage'
 import { Scale } from 'lucide-react'
 import TypeBadge from './TypeBadge'
+import PokemonCardFrame from './PokemonCardFrame'
 
 interface ModernPokemonCardProps {
   pokemon: Pokemon
@@ -28,11 +28,13 @@ export default function ModernPokemonCard({
   density = '6cols'
 }: ModernPokemonCardProps) {
   const [imageLoaded, setImageLoaded] = useState(false)
+  const [imageError, setImageError] = useState(false)
   const router = useRouter()
   
-  // Use cached image hook
-  const { imageUrl, isLoading: imageLoading, hasError: imageError } = usePokemonImage(pokemon.id)
-  
+  // Use direct image URLs with fallbacks
+  const primaryImageUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${pokemon.id}.png`
+  const fallbackImageUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`
+  const placeholderImageUrl = '/placeholder-pokemon.png'
 
   const handleClick = (e: React.MouseEvent) => {
     if (onSelect) {
@@ -65,38 +67,15 @@ export default function ModernPokemonCard({
   const primaryType = pokemon.types[0]?.type.name || 'normal'
   const accentColor = `var(--type-${primaryType})`
 
-  // Calculate card styling based on density
-  const getCardClasses = () => {
-    const baseClasses = `
-      group relative bg-surface border border-border overflow-hidden
-      transition-all duration-200 hover:shadow-lg focus:outline-none
-      focus:ring-2 focus:ring-poke-blue focus:ring-offset-2 focus:ring-offset-bg
-      ${isSelected ? 'ring-2 ring-poke-blue ring-offset-2' : ''}
-      ${className}
-    `
-
-    // Layout and styling based on density
-    const densityClasses = {
-      '3cols': 'rounded-xl hover:scale-[1.02]',
-      '6cols': 'rounded-lg hover:scale-[1.02]',
-      '9cols': 'rounded-md hover:scale-[1.01]',
-      list: 'rounded-lg hover:scale-[1.01] flex items-center'
-    }
-
-    return `${baseClasses} ${densityClasses[density]}`
-  }
-
   return (
-    <div
+    <PokemonCardFrame
       onClick={handleClick}
-      className={getCardClasses()}
-      style={{
-        viewTransitionName: onSelect ? undefined : `pokemon-${pokemon.id}`
-      }}
-      aria-label={`View details for ${formatPokemonName(pokemon.name)}`}
-      role="button"
-      tabIndex={0}
+      className={className}
+      density={density}
+      isSelected={isSelected}
       onKeyDown={handleKeyDown}
+      aria-label={`View details for ${formatPokemonName(pokemon.name)}`}
+      data-pokemon-id={pokemon.id}
     >
       {/* Type accent bar */}
       <div
@@ -107,90 +86,107 @@ export default function ModernPokemonCard({
 
       {/* Card content */}
       {density === 'list' ? (
-        // List layout
-        <div className="flex items-center w-full p-3">
+        // List layout - clean horizontal list item
+        <div className="flex items-center w-full">
           {/* Pokémon Image */}
-          <div className="relative bg-gradient-to-br from-white/20 to-white/5 rounded-lg flex items-center justify-center overflow-hidden mr-4 w-16 h-16 flex-shrink-0">
-            {imageLoading && (
+          <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg flex items-center justify-center overflow-hidden mr-4 w-12 h-12 flex-shrink-0">
+            {!imageLoaded && !imageError && (
               <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse rounded-lg" />
             )}
             
             {/* Pokémon Image */}
             <img
-              src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`}
+              src={primaryImageUrl}
               alt={formatPokemonName(pokemon.name)}
-              className="w-full h-full object-contain"
+              className={`w-full h-full object-contain transition-opacity duration-300 ${
+                imageLoaded ? 'opacity-100' : 'opacity-0'
+              }`}
               onLoad={() => setImageLoaded(true)}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                if (target.src === primaryImageUrl) {
+                  // Try fallback URL
+                  target.src = fallbackImageUrl;
+                } else if (target.src === fallbackImageUrl) {
+                  // Try placeholder
+                  target.src = placeholderImageUrl;
+                  setImageError(true);
+                }
+              }}
               loading="lazy"
             />
             
-            {/* Debug: Show loading state */}
-            {imageLoading && (
+            {/* Loading spinner */}
+            {!imageLoaded && !imageError && (
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
               </div>
             )}
             
+            {/* Error state */}
+            {imageError && (
+              <div className="absolute inset-0 flex items-center justify-center text-muted">
+                <span className="text-xs">?</span>
+              </div>
+            )}
           </div>
 
           {/* Pokémon Info */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <span className="text-xs font-mono text-muted">
-                  #{String(pokemon.id).padStart(3, '0')}
-                </span>
-                <h3 className="font-semibold text-text group-hover:text-poke-blue transition-colors truncate text-sm">
-                  {formatPokemonName(pokemon.name)}
-                </h3>
+          <div className="flex-1 min-w-0 flex items-center justify-between">
+            <div className="flex items-center space-x-3 min-w-0">
+              <span className="text-xs font-mono text-gray-500 font-medium flex-shrink-0">
+                #{String(pokemon.id).padStart(3, '0')}
+              </span>
+              <h3 className="font-semibold text-gray-800 group-hover:text-poke-blue transition-colors truncate">
+                {formatPokemonName(pokemon.name)}
+              </h3>
+            </div>
+            
+            <div className="flex items-center space-x-3 flex-shrink-0">
+              {/* Type badges */}
+              <div className="flex gap-1">
+                {pokemon.types.map((type) => (
+                  <TypeBadge
+                    key={type.type.name}
+                    type={type.type.name}
+                    className="transition-transform duration-200 group-hover:scale-105 text-xs"
+                  />
+                ))}
               </div>
               
-              <div className="flex items-center space-x-2">
-                {/* Type badges */}
-                <div className="flex gap-1">
-                  {pokemon.types.map((type) => (
-                    <TypeBadge
-                      key={type.type.name}
-                      type={type.type.name}
-                      className="transition-transform duration-200 group-hover:scale-105 text-xs"
-                    />
-                  ))}
-                </div>
-                
-                {/* Comparison button */}
-                <button
-                  onClick={handleComparisonClick}
-                  className={`
-                    p-1 rounded-full transition-all duration-200
-                    ${isInComparison 
-                      ? 'bg-blue-500 text-white shadow-lg' 
-                      : 'bg-white/80 text-gray-400 hover:bg-blue-500 hover:text-white'
-                    }
-                    focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1
-                  `}
-                  aria-label={isInComparison ? 'Remove from comparison' : 'Add to comparison'}
-                >
-                  <Scale className={`h-3 w-3 ${isInComparison ? 'fill-current' : ''}`} />
-                </button>
-              </div>
+              {/* Comparison button */}
+              <button
+                onClick={handleComparisonClick}
+                className={`
+                  p-1.5 rounded-full transition-all duration-200 border
+                  ${isInComparison 
+                    ? 'bg-blue-500 text-white border-blue-500 shadow-md' 
+                    : 'bg-white text-gray-400 border-gray-200 hover:bg-blue-500 hover:text-white hover:border-blue-500'
+                  }
+                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1
+                `}
+                aria-label={isInComparison ? 'Remove from comparison' : 'Add to comparison'}
+              >
+                <Scale className={`h-3 w-3 ${isInComparison ? 'fill-current' : ''}`} />
+              </button>
             </div>
           </div>
         </div>
       ) : (
-        // Grid layout for cozy, compact, and ultra
-        <div className="p-4">
-          {/* Header: ID and Favorite */}
+        // Grid layout for 3cols, 6cols, and 9cols
+        <div className={`${density === '3cols' ? 'p-6' : density === '6cols' ? 'p-4' : 'p-3'} h-full flex flex-col`}>
+          {/* Header: ID and Comparison */}
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-mono text-muted">
+            <span className="text-xs font-mono text-gray-500 font-medium">
               #{String(pokemon.id).padStart(3, '0')}
             </span>
             <button
               onClick={handleComparisonClick}
               className={`
-                p-1.5 rounded-full transition-all duration-200
+                p-1.5 rounded-full transition-all duration-200 border
                 ${isInComparison 
-                  ? 'bg-blue-500 text-white shadow-lg' 
-                  : 'bg-white/80 text-gray-400 hover:bg-blue-500 hover:text-white'
+                  ? 'bg-blue-500 text-white border-blue-500 shadow-md' 
+                  : 'bg-white text-gray-400 border-gray-200 hover:bg-blue-500 hover:text-white hover:border-blue-500'
                 }
                 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1
               `}
@@ -201,53 +197,74 @@ export default function ModernPokemonCard({
           </div>
 
           {/* Pokémon Image */}
-          <div className={`relative bg-gradient-to-br from-white/20 to-white/5 rounded-lg flex items-center justify-center overflow-hidden mb-3 ${
-            density === '3cols' ? 'h-44' : density === '6cols' ? 'h-36' : 'h-20'
+          <div className={`relative bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg flex items-center justify-center overflow-hidden mb-3 ${
+            density === '3cols' ? 'h-48' : density === '6cols' ? 'h-40' : 'h-24'
           }`}>
-            {imageLoading && (
+            {!imageLoaded && !imageError && (
               <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse" />
             )}
             
-            {!imageError ? (
-              <img
-                src={imageUrl}
-                alt={formatPokemonName(pokemon.name)}
-                className={`
-                  w-full h-full object-contain transition-opacity duration-300
-                  ${imageLoaded ? 'opacity-100' : 'opacity-0'}
-                `}
-                onLoad={() => setImageLoaded(true)}
-                loading="lazy"
-              />
-            ) : (
-              <div className="flex items-center justify-center text-muted">
+            <img
+              src={primaryImageUrl}
+              alt={formatPokemonName(pokemon.name)}
+              className={`
+                w-full h-full object-contain transition-opacity duration-300
+                ${imageLoaded ? 'opacity-100' : 'opacity-0'}
+              `}
+              onLoad={() => setImageLoaded(true)}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                if (target.src === primaryImageUrl) {
+                  // Try fallback URL
+                  target.src = fallbackImageUrl;
+                } else if (target.src === fallbackImageUrl) {
+                  // Try placeholder
+                  target.src = placeholderImageUrl;
+                  setImageError(true);
+                }
+              }}
+              loading="lazy"
+            />
+            
+            {/* Loading spinner */}
+            {!imageLoaded && !imageError && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-6 h-6 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            )}
+            
+            {/* Error state */}
+            {imageError && (
+              <div className="absolute inset-0 flex items-center justify-center text-muted">
                 <span className="text-2xl">?</span>
               </div>
             )}
           </div>
 
           {/* Pokémon Info */}
-          <div className="space-y-2">
+          <div className="space-y-3 flex-1 flex flex-col justify-end">
             {/* Name */}
-            <h3 className={`font-semibold text-text text-center group-hover:text-poke-blue transition-colors ${
-              density === '9cols' ? 'text-xs' : 'text-base'
-            }`}>
-              {formatPokemonName(pokemon.name)}
+            <h3 className={`font-semibold text-center group-hover:text-poke-blue transition-colors ${
+              density === '9cols' ? 'text-xs' : density === '6cols' ? 'text-sm' : 'text-base'
+            }`} style={{color: '#1f2937', fontWeight: '600'}}>
+              {pokemon.name ? formatPokemonName(pokemon.name) : 'No Name'}
             </h3>
 
             {/* Type badges */}
-            <div className="flex flex-wrap gap-2 justify-center">
-              {pokemon.types.map((type) => (
+            <div className="flex flex-wrap gap-1 justify-center">
+              {pokemon.types && pokemon.types.length > 0 ? pokemon.types.map((type) => (
                 <TypeBadge
                   key={type.type.name}
                   type={type.type.name}
-                  className="transition-transform duration-200 group-hover:scale-105"
+                  className={`transition-transform duration-200 group-hover:scale-105 ${
+                    density === '9cols' ? 'text-xs px-2 py-1' : 'text-xs px-2 py-1'
+                  }`}
                 />
-              ))}
+              )) : <span className="text-xs text-gray-500">No Types</span>}
             </div>
           </div>
         </div>
       )}
-    </div>
+    </PokemonCardFrame>
   )
 }

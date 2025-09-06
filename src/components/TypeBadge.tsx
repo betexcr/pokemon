@@ -16,6 +16,7 @@ export default function TypeBadge({ type, className = '', variant = 'button' }: 
     borderColor: `var(--type-${type})`
   };
   
+  
   if (variant === 'span') {
     return (
       <span className={baseClasses} style={style}>
