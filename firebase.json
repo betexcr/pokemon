@@ -12,6 +12,14 @@
     ],
     "rewrites": [
       {
+        "source": "/lobby/**",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/battle/**",
+        "destination": "/index.html"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }

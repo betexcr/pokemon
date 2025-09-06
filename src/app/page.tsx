@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { usePathname } from 'next/navigation'
 import { Pokemon, FilterState } from '@/types/pokemon'
 import { getPokemonWithPagination } from '@/lib/api'
 import { } from '@/lib/utils'
@@ -9,10 +10,13 @@ import RedPokedexLayout from '@/components/RedPokedexLayout'
 import GoldPokedexLayout from '@/components/GoldPokedexLayout'
 import RubyPokedexLayout from '@/components/RubyPokedexLayout'
 import ModernPokedexLayout from '@/components/ModernPokedexLayout'
+import ProtectedRoute from '@/components/auth/ProtectedRoute'
+import RoomPageClient from '@/app/lobby/[roomId]/RoomPageClient'
 // import ComparisonOverlay from '@/components/ComparisonOverlay'
 // import MobileHeader from '@/components/MobileHeader'
 
 export default function Home() {
+  const pathname = usePathname()
   const [pokemonList, setPokemonList] = useState<Pokemon[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -39,6 +43,18 @@ export default function Home() {
   })
 
   const { theme } = useTheme()
+
+  // Handle client-side routing for lobby rooms
+  if (pathname.startsWith('/lobby/')) {
+    const roomId = pathname.split('/lobby/')[1]
+    if (roomId) {
+      return (
+        <ProtectedRoute>
+          <RoomPageClient roomId={roomId} />
+        </ProtectedRoute>
+      )
+    }
+  }
 
   // Load initial data with caching
   const loadInitialData = useCallback(async () => {
