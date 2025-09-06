@@ -1015,16 +1015,23 @@ export default function ModernPokedexLayout({
 
               {/* Mobile Hamburger Menu Button - Only visible on mobile */}
               {isMobile && (
-                <button
-                  onClick={() => {
-                    console.log('Hamburger clicked, current showMobileMenu:', showMobileMenu);
-                    setShowMobileMenu(!showMobileMenu);
-                  }}
-                  className="p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
-                  title="Toggle menu"
-                >
-                  <Menu className="h-5 w-5" />
-                </button>
+                <>
+                  {/* Debug: Show mobile section is rendering */}
+                  <div className="text-xs text-green-500 bg-green-100 p-1 rounded">
+                    MOBILE SECTION RENDERING
+                  </div>
+                  <button
+                    onClick={() => {
+                      console.log('Hamburger clicked, current showMobileMenu:', showMobileMenu);
+                      setShowMobileMenu(!showMobileMenu);
+                    }}
+                    className="p-3 rounded-xl bg-red-500 border-2 border-red-700 text-white hover:bg-red-600 transition-all duration-200 shadow-sm hover:shadow-md"
+                    title="Toggle menu"
+                    style={{ zIndex: 9999, position: 'relative' }}
+                  >
+                    <Menu className="h-5 w-5" />
+                  </button>
+                </>
               )}
               
               {/* Debug: Show mobile state */}
