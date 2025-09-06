@@ -107,8 +107,8 @@ export default function TrainerRoster({
       <div className="space-y-3">
         <h3 className="text-lg font-bold text-black dark:text-text">Select Your Opponent</h3>
         
-        {/* Roster Grid - Always 6 items per row */}
-        <div className="grid grid-cols-6 gap-3">
+        {/* Roster Grid - 9 columns on desktop, 6 on mobile */}
+        <div className="grid grid-cols-6 lg:grid-cols-9 gap-3">
           {filteredChampions.map((champion) => {
             const isSelected = selectedChampionId === champion.id;
             const isHovered = hoveredChampion === champion.id;
