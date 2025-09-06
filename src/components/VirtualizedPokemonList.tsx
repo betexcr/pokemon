@@ -1,169 +1,202 @@
 'use client'
 
-import { useVirtualizer } from '@tanstack/react-virtual'
-import { useRef, useState } from 'react'
-import { Pokemon } from '@/types/pokemon'
-import { formatPokemonName } from '@/lib/utils'
-import { useTheme } from './ThemeProvider'
+import { useEffect, useMemo, useRef, useCallback } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { Pokemon } from '@/types/pokemon';
+import PokemonCardFrame from './PokemonCardFrame';
+import ModernPokemonCard from './ModernPokemonCard';
+import { getPokemonMainPageImage } from '@/lib/api';
+import { formatPokemonName } from '@/lib/utils';
+
+type Pokemon = { 
+  id: number; 
+  name: string; 
+  image?: string;
+  types: Array<{ type: { name: string } }>;
+};
 
 interface VirtualizedPokemonListProps {
-  pokemonList: Pokemon[]
-  onSelectPokemon: (pokemon: Pokemon) => void
-  selectedPokemon: Pokemon | null
-  className?: string
-  itemHeight?: number
-  containerHeight?: number
+  data: Pokemon[];              // all fetched so far (increments of 100)
+  isLoading: boolean;
+  hasMore: boolean;
+  loadMore: () => void;         // () => void, fetch next 100
+  rowHeight?: number;           // approx card height (px)
+  density?: '3cols' | '6cols' | '9cols' | 'list';
+  onToggleComparison: (id: number) => void;
+  onSelectPokemon?: (pokemon: Pokemon) => void;
+  selectedPokemon: Pokemon | null;
+  comparisonList: number[];
+  className?: string;
 }
 
 export default function VirtualizedPokemonList({
-  pokemonList,
+  data,
+  isLoading,
+  hasMore,
+  loadMore,
+  rowHeight = 120,
+  density = '6cols',
+  onToggleComparison,
   onSelectPokemon,
   selectedPokemon,
-  className = '',
-  itemHeight = 60,
-  containerHeight = 400
+  comparisonList,
+  className = ''
 }: VirtualizedPokemonListProps) {
-  const parentRef = useRef<HTMLDivElement>(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const parentRef = useRef<HTMLDivElement>(null);
 
-  let theme = 'light'
-  try {
-    const themeContext = useTheme()
-    theme = themeContext.theme
-  } catch {
-    // Theme provider not available, use default
-  }
-
-  const isRetro = theme === 'gold' || theme === 'red' || theme === 'ruby'
-
-  const virtualizer = useVirtualizer({
-    count: pokemonList.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => itemHeight,
-    overscan: 5,
-  })
-
-  const virtualItems = virtualizer.getVirtualItems()
-
-  const getItemStyle = (pokemon: Pokemon) => {
-    const baseStyle = `flex items-center cursor-pointer p-2 transition-colors ${
-      selectedPokemon?.id === pokemon.id 
-        ? isRetro 
-          ? theme === 'red' ? 'bg-red-200 border-2 border-red-600' 
-          : theme === 'gold' ? 'bg-yellow-300 border-2 border-yellow-600'
-          : 'bg-pink-300 border-2 border-pink-600'
-        : 'hover:bg-gray-100'
-        : isRetro
-        ? theme === 'red' ? 'hover:bg-red-100' 
-        : theme === 'gold' ? 'hover:bg-yellow-100'
-        : 'hover:bg-pink-100'
-        : 'hover:bg-gray-50'
-    }`
-
-    return baseStyle
-  }
-
-  const getTextStyle = () => {
-    if (isRetro) {
-      return theme === 'red' ? 'text-red-800 font-gbc' 
-        : theme === 'gold' ? 'text-yellow-800 font-gbc'
-        : 'text-pink-800 font-gba'
+  // Calculate items per row based on density
+  const getItemsPerRow = () => {
+    switch (density) {
+      case '3cols': return 3;
+      case '6cols': return 6;
+      case '9cols': return 9;
+      case 'list': return 1;
+      default: return 6;
     }
-    return 'text-gray-800'
-  }
+  };
+
+  const itemsPerRow = getItemsPerRow();
+  const totalRows = Math.ceil(data.length / itemsPerRow);
+
+  // Virtualizer: only render what's visible + overscan buffer
+  const rowVirtualizer = useVirtualizer({
+    count: totalRows,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => rowHeight,
+    overscan: 16, // ~2–3 screens ahead; tune to taste
+  });
+
+  // Infinite load trigger: when the last virtual row is near the end
+  useEffect(() => {
+    const vItems = rowVirtualizer.getVirtualItems();
+    if (!vItems.length || isLoading || !hasMore) return;
+    
+    const last = vItems[vItems.length - 1];
+    if (last.index >= totalRows - 3) { // prefetch when 3 rows from end
+      console.log('🚀 Triggering loadMore via virtualization');
+      loadMore();
+    }
+  }, [rowVirtualizer, totalRows, isLoading, hasMore, loadMore]);
+
+  // Only rows that are visible get mounted
+  const totalHeight = rowVirtualizer.getTotalSize();
+  const virtualItems = rowVirtualizer.getVirtualItems();
+
+  // Render a single row of Pokemon cards
+  const renderRow = useCallback((rowIndex: number) => {
+    const startIndex = rowIndex * itemsPerRow;
+    const endIndex = Math.min(startIndex + itemsPerRow, data.length);
+    const rowPokemon = data.slice(startIndex, endIndex);
+
+    if (density === 'list') {
+      // List view: each row contains one Pokemon
+      const pokemon = rowPokemon[0];
+      if (!pokemon) return null;
+
+      return (
+        <div
+          key={pokemon.id}
+          className="w-full"
+          style={{ height: rowHeight }}
+        >
+          <PokemonCardFrame
+            isSelected={selectedPokemon?.id === pokemon.id}
+            density={density}
+            onClick={() => onSelectPokemon?.(pokemon)}
+            aria-label={`Pokemon ${formatPokemonName(pokemon.name)}`}
+            data-pokemon-id={pokemon.id}
+          >
+            <ModernPokemonCard
+              pokemon={pokemon}
+              isInComparison={comparisonList.includes(pokemon.id)}
+              onToggleComparison={onToggleComparison}
+              onSelect={onSelectPokemon}
+              isSelected={selectedPokemon?.id === pokemon.id}
+              density={density}
+            />
+          </PokemonCardFrame>
+        </div>
+      );
+    }
+
+    // Grid view: each row contains multiple Pokemon
+    return (
+      <div
+        key={rowIndex}
+        className={`grid w-full gap-3`}
+        style={{
+          height: rowHeight,
+          gridTemplateColumns: `repeat(${itemsPerRow}, 1fr)`,
+        }}
+      >
+        {rowPokemon.map((pokemon) => (
+          <PokemonCardFrame
+            key={pokemon.id}
+            isSelected={selectedPokemon?.id === pokemon.id}
+            density={density}
+            onClick={() => onSelectPokemon?.(pokemon)}
+            aria-label={`Pokemon ${formatPokemonName(pokemon.name)}`}
+            data-pokemon-id={pokemon.id}
+          >
+            <ModernPokemonCard
+              pokemon={pokemon}
+              isInComparison={comparisonList.includes(pokemon.id)}
+              onToggleComparison={onToggleComparison}
+              onSelect={onSelectPokemon}
+              isSelected={selectedPokemon?.id === pokemon.id}
+              density={density}
+            />
+          </PokemonCardFrame>
+        ))}
+        
+        {/* Fill empty slots in the last row */}
+        {Array.from({ length: itemsPerRow - rowPokemon.length }).map((_, index) => (
+          <div key={`empty-${rowIndex}-${index}`} style={{ height: rowHeight }} />
+        ))}
+      </div>
+    );
+  }, [data, itemsPerRow, density, rowHeight, selectedPokemon, comparisonList, onToggleComparison, onSelectPokemon]);
+
+  const items = useMemo(() => virtualItems.map(vRow => {
+    return (
+      <div
+        key={vRow.key}
+        className="absolute left-0 right-0 px-3"
+        style={{ 
+          transform: `translateY(${vRow.start}px)`, 
+          height: vRow.size 
+        }}
+      >
+        {renderRow(vRow.index)}
+      </div>
+    );
+  }), [virtualItems, renderRow]);
 
   return (
-    <div className={`${className}`}>
+    <div className={`w-full max-w-full ${className}`}>
       <div
         ref={parentRef}
-        className="overflow-auto"
-        style={{ height: containerHeight }}
+        style={{ 
+          height: "80vh", 
+          overflow: "auto", 
+          position: "relative" 
+        }}
+        aria-label="Pokédex"
       >
-        <div
-          style={{
-            height: `${virtualizer.getTotalSize()}px`,
-            width: '100%',
-            position: 'relative',
-          }}
-        >
-          {virtualItems.map((virtualItem) => {
-            const pokemon = pokemonList[virtualItem.index]
-            return (
-              <div
-                key={virtualItem.key}
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: `${virtualItem.size}px`,
-                  transform: `translateY(${virtualItem.start}px)`,
-                }}
-                className={getItemStyle(pokemon)}
-                onClick={() => onSelectPokemon(pokemon)}
-              >
-                <div className="flex items-center space-x-3 w-full">
-                  {/* Pokémon Sprite */}
-                  <img
-                    src={pokemon.sprites.front_default || ''}
-                    alt={pokemon.name}
-                    className={`w-8 h-8 object-contain ${
-                      isRetro ? 'image-render-pixel' : ''
-                    }`}
-                  />
-                  
-                  {/* Pokémon Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className={`text-sm font-medium ${getTextStyle()}`}>
-                      {String(pokemon.id).padStart(3, '0')} {formatPokemonName(pokemon.name)}
-                    </div>
-                    <div className="flex space-x-1 mt-1">
-                      {pokemon.types.map((type) => (
-                        <span
-                          key={type.type.name}
-                          className={`px-2 py-1 text-xs rounded-full ${
-                            isRetro 
-                              ? theme === 'red' ? 'bg-red-200 text-red-800' 
-                              : theme === 'gold' ? 'bg-yellow-200 text-yellow-800'
-                              : 'bg-pink-200 text-pink-800'
-                              : 'bg-blue-100 text-blue-800'
-                          }`}
-                        >
-                          {formatPokemonName(type.type.name)}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Selection Indicator */}
-                  {selectedPokemon?.id === pokemon.id && (
-                    <div className={`w-2 h-2 rounded-full ${
-                      isRetro 
-                        ? theme === 'red' ? 'bg-red-600' 
-                        : theme === 'gold' ? 'bg-yellow-600'
-                        : 'bg-pink-600'
-                        : 'bg-blue-600'
-                    }`} />
-                  )}
-                </div>
-              </div>
-            )
-          })}
+        <div style={{ 
+          height: totalHeight, 
+          position: "relative" 
+        }}>
+          {items}
         </div>
+
+        {isLoading && (
+          <div className="p-4 text-center text-sm text-neutral-500">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-poke-blue mx-auto mb-2"></div>
+            Loading more Pokémon...
+          </div>
+        )}
       </div>
-
-      {/* Loading indicator */}
-      {isLoading && (
-        <div className="flex justify-center py-4">
-          <div className={`animate-spin rounded-full h-6 w-6 border-b-2 ${
-            isRetro 
-              ? theme === 'red' ? 'border-red-600' 
-              : theme === 'gold' ? 'border-yellow-600'
-              : 'border-pink-600'
-              : 'border-blue-600'
-          }`} />
-        </div>
-      )}
     </div>
-  )
+  );
 }

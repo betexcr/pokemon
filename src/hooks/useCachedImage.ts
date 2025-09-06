@@ -38,7 +38,7 @@ export function useCachedImage(
           options.onLoad?.()
         }
       } catch (error) {
-        console.error('Failed to load cached image:', error)
+        console.warn('Failed to load cached image:', error)
         
         if (isMounted) {
           setHasError(true)
@@ -53,7 +53,7 @@ export function useCachedImage(
                 setHasError(false)
               }
             } catch (fallbackError) {
-              console.error('Fallback image also failed:', fallbackError)
+              console.warn('Fallback image also failed:', fallbackError)
               if (isMounted) {
                 setImageUrl(options.fallbackUrl)
               }
@@ -85,11 +85,12 @@ export function useCachedImage(
 export function usePokemonImage(pokemonId: number, variant: 'default' | 'shiny' = 'default') {
   const baseUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${pokemonId}.png`
   const fallbackUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemonId}.png`
+  const finalFallbackUrl = '/placeholder-pokemon.png' // Local placeholder
   
   return useCachedImage(baseUrl, {
-    fallbackUrl,
+    fallbackUrl: fallbackUrl,
     onError: () => {
-      console.warn(`Failed to load image for Pokémon ${pokemonId}`)
+      console.warn(`Failed to load image for Pokémon ${pokemonId}, using fallback`)
     }
   })
 }

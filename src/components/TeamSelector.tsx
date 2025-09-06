@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { getUserTeams, type SavedTeam } from '@/lib/userTeams';
-import { ChevronDown, Users, Check, Cloud, CloudOff } from 'lucide-react';
+import { ChevronDown, Users, Check, Cloud, CloudOff, Wifi } from 'lucide-react';
 import Image from 'next/image';
+import AuthModal from '@/components/auth/AuthModal';
 
 // Local storage team type (simpler version)
 interface LocalTeam {
@@ -42,6 +43,7 @@ export default function TeamSelector({
   const [isOpen, setIsOpen] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<SavedTeam | LocalTeam | null>(null);
   const [isUsingLocalStorage, setIsUsingLocalStorage] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   useEffect(() => {
     const loadTeams = async () => {
@@ -236,6 +238,22 @@ export default function TeamSelector({
                 </button>
               </div>
             ))}
+            
+            {/* Go Online Option - only show when not authenticated */}
+            {!user && (
+              <div className="border-t border-gray-200 pt-2 mt-2">
+                <button
+                  onClick={() => {
+                    setShowAuthModal(true);
+                    setIsOpen(false);
+                  }}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                >
+                  <Wifi className="h-4 w-4" />
+                  <span>Go online to save your teams!</span>
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -281,6 +299,13 @@ export default function TeamSelector({
           </div>
         </div>
       )}
+      
+      {/* Auth Modal */}
+      <AuthModal 
+        isOpen={showAuthModal} 
+        onClose={() => setShowAuthModal(false)}
+        initialMode="login"
+      />
     </div>
   );
 }

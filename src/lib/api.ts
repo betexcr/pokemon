@@ -155,7 +155,10 @@ export async function getPokemonList(limit = 20, offset = 0): Promise<NamedAPIRe
 export async function getPokemonTotalCount(): Promise<number> {
   const cacheKey = getCacheKey('pokemon-count');
   const cached = getCache(cacheKey);
-  if (cached) return cached as number;
+  if (cached) {
+    console.log('Using cached total count:', cached);
+    return cached as number;
+  }
 
   try {
     // Fetch the Pokémon list endpoint directly to get the total count
@@ -175,70 +178,59 @@ export async function getPokemonTotalCount(): Promise<number> {
 }
 
 // Get Pokémon with pagination for infinite scrolling
-export async function getPokemonWithPagination(limit = 50, offset = 0): Promise<Pokemon[]> {
+export async function getPokemonWithPagination(limit = 75, offset = 0): Promise<Pokemon[]> {
   const cacheKey = getCacheKey('pokemon-paginated', { limit, offset });
   const cached = getCache(cacheKey);
-  if (cached) return cached as Pokemon[];
+  if (cached) {
+    return cached as Pokemon[];
+  }
 
   try {
     const pokemonList = await getPokemonList(limit, offset);
     
-    // Convert to full Pokémon objects with basic data
-    const pokemonData = await Promise.all(
+    // Fetch full Pokémon data for each Pokémon with proper error handling
+    const pokemonData = await Promise.allSettled(
       pokemonList.results.map(async (pokemonRef) => {
         const pokemonId = pokemonRef.url.split('/').slice(-2)[0];
         const id = parseInt(pokemonId);
         
-        return {
-          id,
-          name: pokemonRef.name,
-          base_experience: 0,
-          height: 0,
-          weight: 0,
-          is_default: true,
-          order: id,
-          abilities: [],
-          forms: [],
-          game_indices: [],
-          held_items: [],
-          location_area_encounters: '',
-          moves: [],
-          sprites: {
-            front_default: getPokemonFallbackImage(id),
-            back_default: null,
-            front_shiny: null,
-            back_shiny: null,
-            front_female: null,
-            back_female: null,
-            front_shiny_female: null,
-            back_shiny_female: null,
-            other: {
-              dream_world: { front_default: null, front_female: null },
-              home: { front_default: null, front_female: null, front_shiny: null, front_shiny_female: null },
-              'official-artwork': { front_default: null, front_shiny: null },
-              showdown: { front_default: null, front_female: null, front_shiny: null, front_shiny_female: null }
-            },
-            versions: {}
-          },
-          stats: [
-            { base_stat: 50, effort: 0, stat: { name: 'hp', url: '' } },
-            { base_stat: 50, effort: 0, stat: { name: 'attack', url: '' } },
-            { base_stat: 50, effort: 0, stat: { name: 'defense', url: '' } },
-            { base_stat: 50, effort: 0, stat: { name: 'special-attack', url: '' } },
-            { base_stat: 50, effort: 0, stat: { name: 'special-defense', url: '' } },
-            { base_stat: 50, effort: 0, stat: { name: 'speed', url: '' } }
-          ],
-          types: [
-            { slot: 1, type: { name: 'normal', url: '' } }
-          ],
-          past_types: [],
-          species: { name: pokemonRef.name, url: '' }
-        } as Pokemon;
+        try {
+          // Fetch the full Pokémon data with retry logic
+          const fullPokemon = await getPokemon(id);
+          return fullPokemon;
+        } catch (error) {
+          console.error(`Failed to fetch full data for Pokémon ${id}:`, error);
+          // Return null for failed fetches instead of placeholder data
+          return null;
+        }
       })
     );
-
-    setCache(cacheKey, pokemonData, CACHE_TTL.POKEMON_LIST);
-    return pokemonData;
+    
+    // Filter out failed fetches and log the results
+    const successfulPokemon = pokemonData
+      .filter((result): result is PromiseFulfilledResult<Pokemon> => 
+        result.status === 'fulfilled' && result.value !== null
+      )
+      .map(result => result.value);
+    
+    const failedCount = pokemonData.length - successfulPokemon.length;
+    if (failedCount > 0) {
+      console.warn(`Failed to fetch ${failedCount} out of ${pokemonData.length} Pokémon`);
+    }
+    
+    
+    // Log sample data to verify quality
+    if (successfulPokemon.length > 0) {
+      const sample = successfulPokemon[0];
+      
+      // Check if this is placeholder data
+      if (sample.types?.[0]?.type.name === 'normal' && sample.height === 0 && sample.weight === 0) {
+        console.warn('⚠️ WARNING: Placeholder data detected! This should not happen with the new implementation.');
+      }
+    }
+    
+    setCache(cacheKey, successfulPokemon, CACHE_TTL.POKEMON_LIST);
+    return successfulPokemon;
   } catch (error) {
     console.error('Error fetching paginated Pokémon:', error);
     return [];

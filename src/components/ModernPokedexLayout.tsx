@@ -5,13 +5,15 @@ import { Pokemon, FilterState } from '@/types/pokemon'
 import { formatPokemonName, typeColors } from '@/lib/utils'
 import { useSearch } from '@/hooks/useSearch'
 import { useRouter } from 'next/navigation'
-import { getPokemonByGeneration, getPokemonByType, getPokemon, getPokemonWithPagination, getPokemonTotalCount } from '@/lib/api'
+import { getPokemonByGeneration, getPokemonByType, getPokemon, getPokemonWithPagination, getPokemonTotalCount, getPokemonList } from '@/lib/api'
 import ThemeToggle from './ThemeToggle'
 import VirtualizedPokemonGrid from './VirtualizedPokemonGrid'
-import { Search, Filter, X, Scale, ArrowRight, Menu, Users, Swords, List, Grid3X3, Grid2X2, Grid } from 'lucide-react'
+import AdvancedFilters from './AdvancedFilters'
+import { Search, Filter, X, Scale, ArrowRight, Menu, Users, Swords, List, Grid3X3, Grid2X2, LayoutGridIcon } from 'lucide-react'
 import UserProfile from './auth/UserProfile'
 import { createHeuristics } from '@/lib/heuristics/core'
 import { LocalStorageAdapter, MemoryStorage } from '@/lib/heuristics/storage'
+import Image from 'next/image'
 
 // Legendary and Mythical Pokémon lists
 const LEGENDARY_POKEMON = new Set([
@@ -92,7 +94,7 @@ export default function ModernPokedexLayout({
   // Advanced filters state
   const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilters>({
     types: [],
-    generation: '', // Default to "All Generations" since we load 50 Pokémon initially
+    generation: 'all', // Default to "All Generations" to enable infinite scroll
     habitat: '',
     heightRange: [0, 20],
     weightRange: [0, 1000],
@@ -103,7 +105,28 @@ export default function ModernPokedexLayout({
   const [showSidebar, setShowSidebar] = useState(true) // Advanced filters open by default
   const [sortBy, setSortBy] = useState<'id' | 'name' | 'stats' | 'hp' | 'attack' | 'defense' | 'special-attack' | 'special-defense' | 'speed'>('id')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
+  
+  // Debounced filter values for weight and height
+  const [debouncedHeightRange, setDebouncedHeightRange] = useState<[number, number]>([0, 20])
+  const [debouncedWeightRange, setDebouncedWeightRange] = useState<[number, number]>([0, 1000])
   const [filteredPokemon, setFilteredPokemon] = useState<Pokemon[]>([])
+  
+  // Debouncing for height and weight filters
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedHeightRange(advancedFilters.heightRange)
+    }, 300) // 300ms debounce
+    
+    return () => clearTimeout(timer)
+  }, [advancedFilters.heightRange])
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedWeightRange(advancedFilters.weightRange)
+    }, 300) // 300ms debounce
+    
+    return () => clearTimeout(timer)
+  }, [advancedFilters.weightRange])
   const [isFiltering, setIsFiltering] = useState(false)
   const [cardDensity, setCardDensity] = useState<'3cols' | '6cols' | '9cols' | 'list'>('6cols')
   const [comparisonPokemon, setComparisonPokemon] = useState<Pokemon[]>([])
@@ -120,7 +143,7 @@ export default function ModernPokedexLayout({
   const [isAllGenerations, setIsAllGenerations] = useState(false)
   const [totalPokemonCount, setTotalPokemonCount] = useState<number | null>(null)
   const emptyBatchCountRef = useRef<number>(0)
-  const [themeSelection, setThemeSelection] = useState<'light'|'dark'|'red'|'gold'|'ruby'>('light')
+  const [themeSelection, setThemeSelection] = useState<'light'|'dark'>('light')
   const lastLoadTimeRef = useRef<number>(0)
 
   // Heuristics-driven render-only cap and moving window
@@ -157,6 +180,9 @@ export default function ModernPokedexLayout({
     // cap = Math.max(120, Math.min(cap, 1500))
     // console.log('Setting maxRenderCount to:', cap);
     // setMaxRenderCount(cap)
+    
+    // Suppress unused variable warning - this function is called for side effects
+    void cap
   }, [heur])
 
   useEffect(() => {
@@ -211,7 +237,7 @@ export default function ModernPokedexLayout({
 
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
-  }, [showMobileMenu])
+  }, [showMobileMenu, cardDensity])
 
 
   // Prevent background scroll when mobile menu is open
@@ -259,6 +285,12 @@ export default function ModernPokedexLayout({
       
       try {
         let results: Pokemon[] = []
+        
+        // Check if we need efficient filtering for weight/height/sorting
+        const needsEfficientFiltering = advancedFilters.generation === 'all' && 
+          (debouncedHeightRange[0] > 0 || debouncedHeightRange[1] < 20 || 
+           debouncedWeightRange[0] > 0 || debouncedWeightRange[1] < 1000 ||
+           sortBy !== 'id' || sortOrder !== 'asc')
 
         // If we have search results, use those as base
         if (searchResults.length > 0) {
@@ -303,63 +335,174 @@ export default function ModernPokedexLayout({
               return pokemonCounts.get(pokemon.id) === advancedFilters.types.length
             })
           }
-        } else if (advancedFilters.generation === '') {
-          // "All Generations" selected - use infinite scrolling
-          setIsAllGenerations(true)
-          if (allGenerationsPokemon.length === 0) {
-            // Load initial batch
-            const initialPokemon = await getPokemonWithPagination(30, 0)
-            setAllGenerationsPokemon(initialPokemon)
-            setCurrentOffset(30)
-            // fetch total count once
-            try { 
-              const count = await getPokemonTotalCount(); 
-              console.log('Fetched total Pokémon count:', count);
-              setTotalPokemonCount(count || null);
-              console.log('Set totalPokemonCount state to:', count);
+        } else if (advancedFilters.generation === 'all') {
+          // Check if legendary/mythical filters are active
+          if (advancedFilters.legendary || advancedFilters.mythical) {
+            // "All Generations" with legendary/mythical filters - efficient filtering approach
+            setIsAllGenerations(false) // Override infinite scroll for this case
+            setHasMorePokemon(false) // Disable infinite scroll for filtered results
+            
+            try {
+              // Get total count first
+              const totalCount = await getPokemonTotalCount();
+              
+              // Step 1: Fetch basic Pokémon list (without full data/images) to identify legendary/mythical
+              const basicPokemonList = await getPokemonList(totalCount, 0);
+              
+              // Step 2: Filter for legendary/mythical Pokémon IDs
+              const legendaryMythicalIds: number[] = [];
+              basicPokemonList.results.forEach((pokemonRef: { name: string; url: string }) => {
+                const pokemonId = parseInt(pokemonRef.url.split('/').slice(-2)[0]);
+                const isLegendary = LEGENDARY_POKEMON.has(pokemonId);
+                const isMythical = MYTHICAL_POKEMON.has(pokemonId);
+                
+                if (advancedFilters.legendary && advancedFilters.mythical) {
+                  // When both filters are selected, show only Pokémon that are BOTH legendary AND mythical
+                  if (isLegendary && isMythical) legendaryMythicalIds.push(pokemonId);
+                } else if (advancedFilters.legendary && isLegendary) {
+                  legendaryMythicalIds.push(pokemonId);
+                } else if (advancedFilters.mythical && isMythical) {
+                  legendaryMythicalIds.push(pokemonId);
+                }
+              });
+              
+              
+              // Step 3: Fetch full data only for the filtered legendary/mythical Pokémon
+              const legendaryMythicalPokemon = await Promise.all(
+                legendaryMythicalIds.map(async (id) => {
+                  try {
+                    return await getPokemon(id);
+                  } catch (error) {
+                    console.warn(`Failed to fetch full data for Pokémon ${id}:`, error);
+                    return null;
+                  }
+                })
+              );
+              
+              // Filter out any failed fetches
+              results = legendaryMythicalPokemon.filter(pokemon => pokemon !== null) as Pokemon[];
+              
             } catch (error) {
-              console.error('Error fetching total count:', error);
+              console.error('Error in efficient legendary/mythical filtering:', error);
+              // Fallback to infinite scroll
+              setIsAllGenerations(true)
+              if (allGenerationsPokemon.length === 0) {
+                const initialPokemon = await getPokemonWithPagination(100, 0)
+                setAllGenerationsPokemon(initialPokemon)
+                setCurrentOffset(100)
+                results = initialPokemon
+              } else {
+                results = allGenerationsPokemon
+              }
             }
-            results = initialPokemon
+          } else if (needsEfficientFiltering) {
+            // "All Generations" with weight/height/sorting filters - efficient filtering approach
+            setIsAllGenerations(false) // Override infinite scroll for this case
+            setHasMorePokemon(false) // Disable infinite scroll for filtered results
+            
+            try {
+              // Get total count first
+              const totalCount = await getPokemonTotalCount();
+              
+              // Step 1: Fetch basic Pokémon list (without full data/images) to identify candidates
+              const basicPokemonList = await getPokemonList(totalCount, 0);
+              
+              // Step 2: For weight/height filtering, we need full data, so fetch all Pokémon
+              // For sorting, we also need full data
+              const allPokemon: Pokemon[] = [];
+              const batchSize = 50;
+              let offset = 0;
+              
+              while (offset < totalCount) {
+                const batch = await getPokemonWithPagination(batchSize, offset);
+                if (batch.length === 0) break;
+                allPokemon.push(...batch);
+                offset += batchSize;
+              }
+              
+              results = allPokemon;
+              
+            } catch (error) {
+              console.error('Error in efficient weight/height/sorting filtering:', error);
+              // Fallback to infinite scroll
+              setIsAllGenerations(true)
+              setHasMorePokemon(true)
+              if (allGenerationsPokemon.length === 0) {
+                const initialPokemon = await getPokemonWithPagination(100, 0)
+                setAllGenerationsPokemon(initialPokemon)
+                setCurrentOffset(100)
+                results = initialPokemon
+              } else {
+                results = allGenerationsPokemon
+              }
+            }
           } else {
-            results = allGenerationsPokemon
+            // "All Generations" without any special filters - use infinite scrolling
+            setIsAllGenerations(true)
+            setHasMorePokemon(true) // Ensure infinite scroll is enabled
+            
+            // Check if we need to reset the allGenerationsPokemon (e.g., coming from filtering)
+            if (allGenerationsPokemon.length === 0 || allGenerationsPokemon.length < 100) {
+              // Load initial batch
+              const initialPokemon = await getPokemonWithPagination(100, 0)
+              setAllGenerationsPokemon(initialPokemon)
+              setCurrentOffset(100)
+              // fetch total count once
+              try { 
+                const count = await getPokemonTotalCount(); 
+                setTotalPokemonCount(count || null);
+              } catch (error) {
+                console.error('Error fetching total count:', error);
+              }
+              results = initialPokemon
+            } else {
+              results = allGenerationsPokemon
+            }
           }
         } else {
-          // No filters - use base pokemon list
+          // No filters or default state - use base pokemon list
           results = pokemonList
           setIsAllGenerations(false)
         }
 
-        // Only apply height/weight/legendary/mythical filters if we have detailed data
-        // Skip these filters for "All Generations" mode with basic paginated data
+        // Apply height/weight filters only if we have detailed data
         const hasDetailedData = results.length > 0 && results[0].height > 0 && results[0].weight > 0;
-        if (!isAllGenerations || hasDetailedData) {
-          // Height and weight filters
+        if (hasDetailedData) {
+          // Height and weight filters using debounced values
           results = results.filter(pokemon => {
             const height = pokemon.height / 10
             const weight = pokemon.weight / 10
-            return height >= advancedFilters.heightRange[0] && 
-                   height <= advancedFilters.heightRange[1] &&
-                   weight >= advancedFilters.weightRange[0] && 
-                   weight <= advancedFilters.weightRange[1]
+            return height >= debouncedHeightRange[0] && 
+                   height <= debouncedHeightRange[1] &&
+                   weight >= debouncedWeightRange[0] && 
+                   weight <= debouncedWeightRange[1]
           })
+        }
 
-          // Legendary and Mythical filters
-          if (advancedFilters.legendary || advancedFilters.mythical) {
-            results = results.filter(pokemon => {
-              const isLegendary = LEGENDARY_POKEMON.has(pokemon.id)
-              const isMythical = MYTHICAL_POKEMON.has(pokemon.id)
-              
-              if (advancedFilters.legendary && advancedFilters.mythical) {
-                return isLegendary || isMythical
-              } else if (advancedFilters.legendary) {
-                return isLegendary
-              } else if (advancedFilters.mythical) {
-                return isMythical
-              }
-              return true
-            })
-          }
+        // Legendary and Mythical filters - apply only if not already filtered at data level
+        if ((advancedFilters.legendary || advancedFilters.mythical) && advancedFilters.generation !== 'all') {
+          console.log('Applying legendary/mythical filters:', { 
+            legendary: advancedFilters.legendary, 
+            mythical: advancedFilters.mythical,
+            totalPokemon: results.length 
+          });
+          
+          results = results.filter(pokemon => {
+            const isLegendary = LEGENDARY_POKEMON.has(pokemon.id)
+            const isMythical = MYTHICAL_POKEMON.has(pokemon.id)
+            
+            if (advancedFilters.legendary && advancedFilters.mythical) {
+              // When both filters are selected, show only Pokémon that are BOTH legendary AND mythical
+              return isLegendary && isMythical
+            } else if (advancedFilters.legendary) {
+              return isLegendary
+            } else if (advancedFilters.mythical) {
+              return isMythical
+            }
+            return true
+          })
+          
+          console.log(`After ${advancedFilters.legendary && advancedFilters.mythical ? 'legendary AND mythical' : advancedFilters.legendary ? 'legendary' : 'mythical'} filtering:`, results.length, 'Pokémon found');
         }
 
 
@@ -376,12 +519,11 @@ export default function ModernPokedexLayout({
     }
 
     applyFilters()
-  }, [searchResults, pokemonList, advancedFilters])
+  }, [searchResults, pokemonList, advancedFilters, allGenerationsPokemon, isAllGenerations, debouncedHeightRange, debouncedWeightRange, sortBy, sortOrder])
 
   // Handle allGenerationsPokemon updates separately to avoid infinite loops
   useEffect(() => {
     if (allGenerationsPokemon.length > 0) {
-      console.log('Updating filteredPokemon with allGenerationsPokemon:', allGenerationsPokemon.length);
       setFilteredPokemon(allGenerationsPokemon)
     }
   }, [allGenerationsPokemon])
@@ -495,195 +637,201 @@ export default function ModernPokedexLayout({
     })
   }, [filteredPokemon, sortBy, sortOrder, detailsCache])
 
-  // Load more Pokémon for infinite scrolling with deduplication
+  // Load more Pokémon for infinite scrolling with improved error handling
   const loadMorePokemon = useCallback(async () => {
     if (isLoadingMore || !hasMorePokemon || !isAllGenerations) {
-      console.log('Skipping load - isLoadingMore:', isLoadingMore, 'hasMorePokemon:', hasMorePokemon, 'isAllGenerations:', isAllGenerations);
       return;
     }
     
-    console.log('Loading more Pokémon - currentOffset:', currentOffset, 'totalPokemonCount:', totalPokemonCount);
-    
-    // Additional protection against rapid calls
+    // Protection against rapid calls
     const now = Date.now();
-    if (now - lastLoadTimeRef.current < 100) { // Reduced to 100ms minimum between loads
-      console.log('Skipping load - too soon since last load');
+    if (now - lastLoadTimeRef.current < 500) {
       return;
     }
     lastLoadTimeRef.current = now;
     
-    console.log('Loading more Pokémon, offset:', currentOffset);
+    
     setIsLoadingMore(true);
+    
     try {
-      const pageSize = 30
+      const pageSize = 75;
       const newPokemon = await getPokemonWithPagination(pageSize, currentOffset);
-      console.log('Loaded new Pokémon:', newPokemon.length, 'at offset:', currentOffset);
+      
       
       if (newPokemon.length === 0) {
-        // If we know total count and haven't reached it, skip ahead and retry a few times
-        const total = totalPokemonCount ?? 0
-        if (total && currentOffset < total && emptyBatchCountRef.current < 5) { // Increased retry limit
-          emptyBatchCountRef.current += 1
-          setCurrentOffset(prev => prev + pageSize)
-          console.log('Empty batch, advancing offset and retrying. Empty batches:', emptyBatchCountRef.current, 'Current offset:', currentOffset, 'Total:', total)
-          // Reset loading state before retry
+        // Handle empty batch with retry logic
+        const total = totalPokemonCount ?? 0;
+        if (total && currentOffset < total && emptyBatchCountRef.current < 3) {
+          emptyBatchCountRef.current += 1;
+          setCurrentOffset(prev => prev + pageSize);
           setIsLoadingMore(false);
-          // small async retry
-          setTimeout(() => { loadMorePokemon() }, 10)
+          // Retry with exponential backoff
+          setTimeout(() => loadMorePokemon(), Math.pow(2, emptyBatchCountRef.current) * 100);
           return;
         }
-        console.log('No more Pokémon to load. Current offset:', currentOffset, 'Total count:', total)
         setHasMorePokemon(false);
       } else {
-        emptyBatchCountRef.current = 0
+        emptyBatchCountRef.current = 0;
+        
+        // Store current scroll position before adding new content
+        const mainContentArea = document.querySelector('.flex-1.min-h-0.overflow-y-auto');
+        const scrollTop = mainContentArea?.scrollTop || 0;
+        const scrollHeight = mainContentArea?.scrollHeight || 0;
+        
+        // Deduplicate and add new Pokémon
         setAllGenerationsPokemon(prev => {
-          // Enhanced deduplication by Pokémon ID and name
           const existingIds = new Set(prev.map(p => p.id));
-          const existingNames = new Set(prev.map(p => p.name.toLowerCase()));
-          
-          const uniqueNewPokemon = newPokemon.filter(p => 
-            !existingIds.has(p.id) && !existingNames.has(p.name.toLowerCase())
-          );
+          const uniqueNewPokemon = newPokemon.filter(p => !existingIds.has(p.id));
           
           if (uniqueNewPokemon.length === 0) {
-            console.log('All new Pokémon were duplicates, skipping');
             return prev;
           }
           
-          // Additional check: ensure no duplicates within the new batch itself
-          const seenIds = new Set();
-          const seenNames = new Set();
-          const finalUniquePokemon = uniqueNewPokemon.filter(p => {
-            if (seenIds.has(p.id) || seenNames.has(p.name.toLowerCase())) {
-              console.log('Removing duplicate within batch:', p.name, p.id);
-              return false;
-            }
-            seenIds.add(p.id);
-            seenNames.add(p.name.toLowerCase());
-            return true;
-          });
-          
-                  const updated = [...prev, ...finalUniquePokemon];
-        console.log('Added', finalUniquePokemon.length, 'unique Pokémon. Total now:', updated.length);
-        console.log('Updated allGenerationsPokemon, will trigger filteredPokemon update');
-        return updated;
+          return [...prev, ...uniqueNewPokemon];
         });
+        
         const newOffset = currentOffset + pageSize;
         setCurrentOffset(newOffset);
-        // Stop when we reach total count if known
-        if (totalPokemonCount && newOffset >= totalPokemonCount) {
-          console.log('Reaching total count limit. Current offset:', newOffset, 'Total:', totalPokemonCount)
-          setHasMorePokemon(false)
+        
+        // Maintain scroll position after content is added
+        if (mainContentArea) {
+          // Use requestAnimationFrame to ensure DOM has updated
+          requestAnimationFrame(() => {
+            const newScrollHeight = mainContentArea.scrollHeight;
+            const heightDifference = newScrollHeight - scrollHeight;
+            mainContentArea.scrollTop = scrollTop + heightDifference;
+          });
+        }
+        
+        // Check if we've reached the limit
+        const reasonableLimit = 2000;
+        if ((totalPokemonCount && newOffset >= totalPokemonCount) || newOffset >= reasonableLimit) {
+          setHasMorePokemon(false);
+        } else {
         }
       }
     } catch (error) {
-      console.error('Error loading more Pokémon:', error);
+      console.error('❌ Error loading more Pokémon:', error);
+      
+      // Retry on error with exponential backoff
+      if (emptyBatchCountRef.current < 3) {
+        emptyBatchCountRef.current += 1;
+        setIsLoadingMore(false);
+        setTimeout(() => loadMorePokemon(), Math.pow(2, emptyBatchCountRef.current) * 1000);
+        return;
+      }
+      
+      // If all retries failed, stop trying
+      setHasMorePokemon(false);
     } finally {
       setIsLoadingMore(false);
     }
   }, [isLoadingMore, hasMorePokemon, currentOffset, isAllGenerations, totalPokemonCount]);
 
-  // Infinite scroll effect using Intersection Observer (best practice)
+  // Improved infinite scroll effect using Intersection Observer
   useEffect(() => {
     if (!isAllGenerations || isLoadingMore || !hasMorePokemon) {
       return;
     }
 
-    // Create a sentinel element at the bottom of the list
-    const sentinel = document.createElement('div');
-    sentinel.style.height = '20px'; // Make it more visible
-    sentinel.style.width = '100%';
-    sentinel.style.backgroundColor = 'transparent';
-    sentinel.setAttribute('data-infinite-scroll-sentinel', 'true');
-    
-    // Find the Pokemon grid container and append sentinel
-    const pokemonGrid = document.querySelector('[data-pokemon-grid]');
-    if (pokemonGrid) {
-      pokemonGrid.appendChild(sentinel);
+    // Define setupObserver function first
+    const setupObserver = (sentinelElement: Element) => {
+
+      // Create intersection observer with better configuration
+      const observer = new IntersectionObserver(
+        (entries) => {
+          const [entry] = entries;
+          
+          
+          if (entry.isIntersecting && !isLoadingMore && hasMorePokemon) {
+            loadMorePokemon();
+          }
+        },
+        {
+          root: null, // Use viewport as root for better reliability
+          rootMargin: '300px', // Even larger margin to trigger earlier
+          threshold: 0.01 // Lower threshold for more sensitive detection
+        }
+      );
+
+      observer.observe(sentinelElement);
+
+      return () => {
+        observer.disconnect();
+      };
+    };
+
+    // Find the sentinel element with retry mechanism
+    const findSentinel = () => {
+      return document.querySelector('[data-infinite-scroll-sentinel="true"]');
+    };
+
+    let sentinel = findSentinel();
+    if (!sentinel) {
+      // Retry finding sentinel after a short delay
+      const retryTimeout = setTimeout(() => {
+        sentinel = findSentinel();
+        if (sentinel) {
+          setupObserver(sentinel);
+        } else {
+        }
+      }, 100);
+      
+      return () => clearTimeout(retryTimeout);
     }
 
-    // Enhanced bottom detection with scroll listener
-    const checkIfAtBottom = () => {
-      const pokemonGrid = document.querySelector('[data-pokemon-grid]');
-      if (!pokemonGrid) return false;
-      
-      const container = pokemonGrid.closest('.overflow-y-auto');
-      if (!container) return false;
-      
-      const scrollTop = container.scrollTop;
-      const containerHeight = container.clientHeight;
-      const scrollHeight = container.scrollHeight;
-      
-      // If user is within 100px of bottom, consider them at bottom
-      return scrollHeight - scrollTop - containerHeight < 100;
-    };
-
-    // Function to handle loading when at bottom
-    const handleBottomReached = () => {
-      if (checkIfAtBottom() && !isLoadingMore && hasMorePokemon) {
-        console.log('User at bottom, loading more Pokémon...');
-        loadMorePokemon();
-      }
-    };
-
-    // Check immediately when sentinel is added
-    setTimeout(handleBottomReached, 100);
-
-    // Add scroll listener to inner container for continuous monitoring
-    const scrollContainer = pokemonGrid?.closest('.overflow-y-auto');
+    // Also set up scroll-based backup detection
+    const mainContentArea = document.querySelector('.flex-1.min-h-0.overflow-y-auto');
     let scrollTimeout: NodeJS.Timeout;
     
     const handleScroll = () => {
-      // Debounce scroll events
+      if (!mainContentArea || isLoadingMore || !hasMorePokemon) return;
+      
       clearTimeout(scrollTimeout);
-      scrollTimeout = setTimeout(handleBottomReached, 50);
-    };
-
-    if (scrollContainer) {
-      scrollContainer.addEventListener('scroll', handleScroll);
-    }
-
-    // Intersection Observer as backup
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const [entry] = entries;
-        if (entry.isIntersecting && !isLoadingMore && hasMorePokemon) {
-          console.log('Sentinel visible, loading more Pokémon...');
+      scrollTimeout = setTimeout(() => {
+        const { scrollTop, scrollHeight, clientHeight } = mainContentArea;
+        const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+        
+        // Trigger loading when within 500px of bottom
+        if (distanceFromBottom < 500) {
+          console.log('🚀 Triggering loadMorePokemon via scroll detection');
           loadMorePokemon();
         }
-      },
-      {
-        root: scrollContainer,
-        rootMargin: '200px',
-        threshold: 0.1
-      }
-    );
+      }, 100);
+    };
 
-    observer.observe(sentinel);
+    if (mainContentArea) {
+    mainContentArea.addEventListener('scroll', handleScroll);
+    }
+
+    const cleanup = setupObserver(sentinel);
 
     return () => {
-      observer.disconnect();
-      if (scrollContainer) {
-        scrollContainer.removeEventListener('scroll', handleScroll);
+      cleanup?.();
+      if (mainContentArea) {
+      mainContentArea.removeEventListener('scroll', handleScroll);
       }
       clearTimeout(scrollTimeout);
-      if (sentinel.parentNode) {
-        sentinel.parentNode.removeChild(sentinel);
-      }
     };
-  }, [isAllGenerations, isLoadingMore, hasMorePokemon, loadMorePokemon, pokemonList])
+  }, [isAllGenerations, isLoadingMore, hasMorePokemon, loadMorePokemon, currentOffset])
 
   // Clear all filters
   const clearAllFilters = useCallback(() => {
     setAdvancedFilters({
       types: [],
-      generation: '', // Reset to "All Generations" default
+      generation: 'all', // Reset to "All Generations" to maintain infinite scroll
       habitat: '',
       heightRange: [0, 20],
       weightRange: [0, 1000],
       legendary: false,
       mythical: false
     })
+    // Reset debounced values
+    setDebouncedHeightRange([0, 20])
+    setDebouncedWeightRange([0, 1000])
+    // Reset sorting
+    setSortBy('id')
+    setSortOrder('asc')
     setFilteredPokemon(pokemonList)
     clearSearch()
     // Reset infinite scrolling state
@@ -705,7 +853,7 @@ export default function ModernPokedexLayout({
   }, [])
 
   // Theme/layout selector (persists and reloads)
-  const applyThemeSelection = useCallback((value: 'light'|'dark'|'red'|'gold'|'ruby') => {
+  const applyThemeSelection = useCallback((value: 'light'|'dark') => {
     try {
       // Persist under multiple keys to interop with existing providers
       localStorage.setItem('theme', value)
@@ -723,12 +871,8 @@ export default function ModernPokedexLayout({
   useEffect(() => {
     try {
       const stored = localStorage.getItem('app_theme') || localStorage.getItem('theme') || 'light'
-      const allowed = new Set(['light','dark','red','gold','ruby'])
-      let normalized = allowed.has(stored || '') ? (stored as 'light'|'dark'|'red'|'gold'|'ruby') : 'light'
-      // If returning from retro themes into Modern layout, default to light unless explicit dark
-      if (normalized === 'red' || normalized === 'gold' || normalized === 'ruby') {
-        normalized = 'light'
-      }
+      const allowed = new Set(['light','dark'])
+      const normalized = allowed.has(stored || '') ? (stored as 'light'|'dark') : 'light'
       setThemeSelection(normalized)
     } catch {
       setThemeSelection('light')
@@ -798,7 +942,7 @@ export default function ModernPokedexLayout({
               <div className="ml-2 flex items-center space-x-1">
                 <div className={`w-1.5 h-1.5 rounded-full ${isFiltering ? 'bg-poke-yellow animate-pulse' : 'bg-green-500'}`}></div>
                 <span className="text-xs text-muted font-medium whitespace-nowrap">
-                  {isFiltering ? 'Filtering...' : `${filteredPokemon.length} of ${pokemonList.length}`}
+                  {isFiltering ? 'Filtering...' : ''}
                 </span>
                 {(advancedFilters.types.length > 0 || searchTerm || (advancedFilters.generation && advancedFilters.generation !== '') || advancedFilters.legendary || advancedFilters.mythical) && (
                   <button
@@ -836,7 +980,7 @@ export default function ModernPokedexLayout({
                     >
                       <span className="inline-flex items-center justify-center">
                         {visual === '3cols' && (
-                          <Grid className="w-4 h-4" />
+                          <LayoutGridIcon className="w-4 h-4" />
                         )}
                         {visual === '6cols' && (
                           <Grid2X2 className="w-4 h-4" />
@@ -893,16 +1037,13 @@ export default function ModernPokedexLayout({
               <div className="flex items-center space-x-2">
                 <span className="text-xs font-medium text-muted uppercase tracking-wider">Theme</span>
                 <select
-                  onChange={(e) => applyThemeSelection(e.target.value as 'light'|'dark'|'red'|'gold'|'ruby')}
+                  onChange={(e) => applyThemeSelection(e.target.value as 'light'|'dark')}
                   value={themeSelection}
                   className="px-3 py-2 bg-surface border border-border rounded-xl text-text text-sm font-medium focus:ring-2 focus:ring-poke-blue focus:border-poke-blue focus:outline-none transition-all duration-200 shadow-sm hover:shadow-md"
                   title="Change theme"
                 >
                   <option value="light">Light</option>
                   <option value="dark">Dark</option>
-                  <option value="red">Red</option>
-                  <option value="gold">Gold</option>
-                  <option value="ruby">Ruby</option>
                 </select>
               </div>
 
@@ -1395,7 +1536,7 @@ export default function ModernPokedexLayout({
                 <div className="flex items-center space-x-2">
                   <div className={`w-2 h-2 rounded-full ${isFiltering ? 'bg-poke-yellow animate-pulse' : 'bg-green-500'}`}></div>
                   <span className="text-sm font-medium text-muted">
-                    {isFiltering ? 'Filtering...' : `${filteredPokemon.length} of ${pokemonList.length}`}
+                    {isFiltering ? 'Filtering...' : ''}
                   </span>
                 </div>
                 
@@ -1414,239 +1555,19 @@ export default function ModernPokedexLayout({
       </div>
 
       {/* Main Content */}
-      <div className="flex w-full max-w-full flex-1 min-h-0 overflow-hidden px-2 sm:px-4 lg:px-6">
-        {/* Sidebar - Advanced Filters */}
-        <div className={`${
-          showSidebar ? 'block' : 'hidden'
-        } lg:block lg:w-80 border-r border-border bg-surface h-screen overflow-hidden`}>
-          <div className="h-full flex flex-col">
-            {/* Header - Fixed */}
-            <div className="flex-shrink-0 p-6 border-b border-border bg-surface">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold">Advanced Filters</h2>
-                <button
-                  onClick={() => setShowSidebar(false)}
-                  className="md:hidden p-1 rounded hover:bg-white/50"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-              
-              {/* Results Count */}
-              <div className="text-sm text-muted mt-2">
-                {filteredPokemon.length} Pokémon found
-              </div>
-            </div>
-            
-            {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 space-y-6">
-              {/* Generation Filter */}
-              <div className="min-w-0">
-                <label className="block text-sm font-medium mb-2">Generation</label>
-                <select
-                  value={advancedFilters.generation}
-                  onChange={(e) => {
-                    setAdvancedFilters(prev => ({
-                      ...prev, 
-                      generation: e.target.value 
-                    }))
-                  }}
-                  className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text"
-                >
-                  <option value="">All Generations</option>
-                  <option value="1">Generation 1</option>
-                  <option value="2">Generation 2</option>
-                  <option value="3">Generation 3</option>
-                  <option value="4">Generation 4</option>
-                  <option value="5">Generation 5</option>
-                  <option value="6">Generation 6</option>
-                  <option value="7">Generation 7</option>
-                  <option value="8">Generation 8</option>
-                  <option value="9">Generation 9</option>
-                </select>
-              </div>
-
-              {/* Height Range */}
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Height: {advancedFilters.heightRange[0]}m - {advancedFilters.heightRange[1]}m
-                </label>
-                <div className="space-y-2">
-                  <input
-                    type="range"
-                    min="0"
-                    max="20"
-                    step="0.1"
-                    value={advancedFilters.heightRange[0]}
-                    onChange={(e) => {
-                      setAdvancedFilters(prev => ({
-                        ...prev, 
-                        heightRange: [parseFloat(e.target.value), prev.heightRange[1]] as [number, number]
-                      }))
-                    }}
-                    className="w-full"
-                  />
-                  <input
-                    type="range"
-                    min="0"
-                    max="20"
-                    step="0.1"
-                    value={advancedFilters.heightRange[1]}
-                    onChange={(e) => {
-                      setAdvancedFilters(prev => ({
-                        ...prev, 
-                        heightRange: [prev.heightRange[0], parseFloat(e.target.value)] as [number, number]
-                      }))
-                    }}
-                    className="w-full"
-                  />
-                </div>
-              </div>
-
-              {/* Weight Range */}
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Weight: {advancedFilters.weightRange[0]}kg - {advancedFilters.weightRange[1]}kg
-                </label>
-                <div className="space-y-2">
-                  <input
-                    type="range"
-                    min="0"
-                    max="1000"
-                    step="1"
-                    value={advancedFilters.weightRange[0]}
-                                    onChange={(e) => {
-                    setAdvancedFilters(prev => ({
-                      ...prev, 
-                      weightRange: [parseInt(e.target.value), prev.weightRange[1]] as [number, number]
-                    }))
-                  }}
-                  className="w-full"
-                />
-                <input
-                  type="range"
-                  min="0"
-                  max="1000"
-                  step="1"
-                  value={advancedFilters.weightRange[1]}
-                                    onChange={(e) => {
-                    setAdvancedFilters(prev => ({
-                      ...prev, 
-                      weightRange: [prev.weightRange[0], parseInt(e.target.value)] as [number, number]
-                    }))
-                  }}
-                  className="w-full"
-                />
-              </div>
-
-              {/* Legendary and Mythical Filters */}
-              <div className="space-y-3">
-                <label className="block text-sm font-medium">Special Categories</label>
-                <div className="space-y-2">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      checked={advancedFilters.legendary}
-                      onChange={(e) => {
-                        setAdvancedFilters(prev => ({
-                          ...prev,
-                          legendary: e.target.checked
-                        }))
-                      }}
-                      className="w-4 h-4 text-poke-blue bg-surface border-border rounded focus:ring-poke-blue focus:ring-2"
-                    />
-                    <span className="text-sm text-text">Legendary Pokémon</span>
-                  </label>
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      checked={advancedFilters.mythical}
-                      onChange={(e) => {
-                        setAdvancedFilters(prev => ({
-                          ...prev,
-                          mythical: e.target.checked
-                        }))
-                      }}
-                      className="w-4 h-4 text-poke-blue bg-surface border-border rounded focus:ring-poke-blue focus:ring-2"
-                    />
-                    <span className="text-sm text-text">Mythical Pokémon</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            {/* Comparison Section */}
-            <div className="border-t border-border pt-6">
-              <h3 className="text-lg font-semibold mb-4 flex items-center">
-                <Scale className="h-5 w-5 mr-2 text-blue-500" />
-                Compare Pokémon
-              </h3>
-              
-              {comparisonList.length === 0 ? (
-                <div className="text-center py-6">
-                  <p className="text-sm text-muted mb-3">
-                    Select Pokémon to compare their stats
-                  </p>
-                  <div className="text-4xl mb-2">⚖️</div>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {/* Selected Pokémon List */}
-                  <div className="max-h-48 overflow-y-auto bg-gray-800 rounded-lg border border-gray-700">
-                    {comparisonPokemon.map((pokemon, index) => (
-                      <div
-                        key={pokemon.id}
-                        className={`flex items-center px-3 py-2 ${
-                          index < comparisonPokemon.length - 1 
-                            ? 'border-b border-gray-700' 
-                            : ''
-                        }`}
-                      >
-                        <picture className="mr-3">
-                          <img
-                            src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`}
-                            alt={formatPokemonName(pokemon.name)}
-                            className="w-8 h-8 object-contain"
-                            loading="lazy"
-                            decoding="async"
-                          />
-                        </picture>
-                        <span className="text-white text-sm">
-                          {formatPokemonName(pokemon.name)}#{pokemon.id}
-                        </span>
-                        <button
-                          onClick={() => onToggleComparison(pokemon.id)}
-                          className="ml-auto p-1 rounded hover:bg-red-600 transition-colors"
-                          aria-label={`Remove ${formatPokemonName(pokemon.name)} from comparison`}
-                        >
-                          <X className="h-3 w-3 text-red-400" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Actions */}
-                  <div className="space-y-2 pt-2 border-t border-border">
-                    <button
-                      onClick={onClearComparison}
-                      className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                    >
-                      Clear All
-                    </button>
-                    <button
-                      onClick={() => window.location.href = '/compare'}
-                      className="w-full px-3 py-2 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center"
-                    >
-                      <ArrowRight className="h-4 w-4 mr-2" />
-                      Go to Comparison
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+      <div className="flex w-full max-w-full flex-1 min-h-0 px-2 sm:px-4 lg:px-6">
+        {/* Advanced Filters Component */}
+        <AdvancedFilters
+          advancedFilters={advancedFilters}
+          setAdvancedFilters={setAdvancedFilters}
+          showSidebar={showSidebar}
+          setShowSidebar={setShowSidebar}
+          comparisonList={comparisonList}
+          comparisonPokemon={comparisonPokemon}
+          onToggleComparison={onToggleComparison}
+          onClearComparison={onClearComparison}
+          onGoToComparison={() => window.location.href = '/compare'}
+        />
 
         {/* Main Content Area */}
         <div className="flex-1 min-h-0 overflow-y-auto">
@@ -1666,15 +1587,30 @@ export default function ModernPokedexLayout({
                   selectedPokemon={null}
                   comparisonList={comparisonList}
                   density={cardDensity}
+                  enableVirtualization={isAllGenerations}
+                  showSpecialForms={isAllGenerations || (advancedFilters.generation !== 'all' && advancedFilters.generation !== '')}
                 />
                 {/* Infinite scroll loading indicator */}
                 {isAllGenerations && isLoadingMore && (
                   <div className="text-center py-8">
-                    <img src="/loading.gif" alt="Loading more Pokémon" width="50" height="50" className="mx-auto mb-2" />
+                    <Image src="/loading.gif" alt="Loading more Pokémon" width={50} height={50} className="mx-auto mb-2" />
                     <p className="text-muted text-sm">Loading more Pokémon...</p>
                   </div>
                 )}
-                {/* Manual load more removed: auto-infinite-scroll handles fetching */}
+                
+                {/* Manual load more button - only show on API error */}
+                {isAllGenerations && hasMorePokemon && !isLoadingMore && emptyBatchCountRef.current > 0 && (
+                  <div className="text-center py-8">
+                    <button
+                      onClick={loadMorePokemon}
+                      className="px-6 py-3 bg-poke-red text-white rounded-lg hover:bg-poke-red/90 transition-colors font-medium"
+                    >
+                      Retry Loading Pokémon
+                    </button>
+                    <p className="text-muted text-sm mt-2">There was an error loading more Pokémon. Click to retry.</p>
+                  </div>
+                )}
+                
                 {/* End of list indicator */}
                 {isAllGenerations && !hasMorePokemon && !isLoadingMore && (
                   <div className="text-center py-8">
@@ -1701,31 +1637,19 @@ export default function ModernPokedexLayout({
         </div>
       </div>
 
-      {/* Mobile Filter Overlay */}
-      {showSidebar && (
+      {/* Mobile Filter Overlay - Now handled by AdvancedFilters component */}
+      {false && (
         <div className="md:hidden fixed inset-0 bg-black/50 z-50" onClick={() => setShowSidebar(false)}>
-          <div className="absolute right-0 top-0 h-full w-80 bg-surface overflow-hidden" onClick={e => e.stopPropagation()}>
+          <div className="absolute right-0 top-0 h-full w-80 bg-surface" onClick={e => e.stopPropagation()}>
             <div className="h-full flex flex-col">
               {/* Mobile Header - Fixed */}
               <div className="flex-shrink-0 p-6 border-b border-border bg-surface">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold">Advanced Filters</h2>
-                  <button
-                    onClick={() => setShowSidebar(false)}
-                    className="p-1 rounded hover:bg-white/50"
-                  >
-                    <X className="h-5 w-5" />
-                  </button>
-                </div>
+             
                 
-                {/* Results Count */}
-                <div className="text-sm text-muted mt-2">
-                  {filteredPokemon.length} Pokémon found
-                </div>
               </div>
               
               {/* Mobile Scrollable Content */}
-              <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 space-y-6">
+              <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 space-y-6 min-h-0" style={{maxHeight: 'calc(100vh - 20rem)'}}>
                 {/* Generation Filter */}
                 <div>
                   <label className="block text-sm font-medium mb-2">Generation</label>
@@ -1739,7 +1663,7 @@ export default function ModernPokedexLayout({
                     }}
                     className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text"
                   >
-                    <option value="">All Generations</option>
+                    <option value="all">All Generations</option>
                     <option value="1">Generation 1</option>
                     <option value="2">Generation 2</option>
                     <option value="3">Generation 3</option>
@@ -1861,24 +1785,27 @@ export default function ModernPokedexLayout({
                   </div>
                 </div>
 
-                {/* Comparison Section */}
-                <div className="border-t border-border pt-6">
+              </div>
+              
+              {/* Mobile Comparison Section - Scrollable at bottom */}
+              <div className="flex-shrink-0 border-t border-border bg-surface overflow-y-auto" style={{maxHeight: 'calc(100vh - 24rem)', minHeight: '200px'}}>
+                <div className="p-4">
                   <h3 className="text-lg font-semibold mb-4 flex items-center">
                     <Scale className="h-5 w-5 mr-2 text-blue-500" />
-                    Compare Pokémon
+                    Comparison ({comparisonList.length})
                   </h3>
                   
                   {comparisonList.length === 0 ? (
-                    <div className="text-center py-6">
+                    <div className="text-center py-4">
                       <p className="text-sm text-muted mb-3">
                         Select Pokémon to compare their stats
                       </p>
                       <div className="text-4xl mb-2">⚖️</div>
                     </div>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       {/* Selected Pokémon List */}
-                      <div className="max-h-48 overflow-y-auto bg-gray-800 rounded-lg border border-gray-700">
+                      <div className="max-h-40 overflow-y-auto bg-gray-800 rounded-lg border border-gray-700">
                         {comparisonPokemon.map((pokemon, index) => (
                           <div
                             key={pokemon.id}
@@ -1911,8 +1838,8 @@ export default function ModernPokedexLayout({
                         ))}
                       </div>
 
-                      {/* Actions */}
-                      <div className="space-y-2 pt-2 border-t border-border">
+                      {/* Actions - Always visible at bottom */}
+                      <div className="space-y-2 pt-2 border-t border-border sticky bottom-0 bg-surface">
                         <button
                           onClick={onClearComparison}
                           className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"

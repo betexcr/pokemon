@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 import { Pokemon, FilterState } from '@/types/pokemon'
 import { getPokemonWithPagination } from '@/lib/api'
-import { } from '@/lib/utils'
+// import { } from '@/lib/utils' // Empty import removed
 import { useTheme } from '@/components/ThemeProvider'
 import RedPokedexLayout from '@/components/RedPokedexLayout'
 import GoldPokedexLayout from '@/components/GoldPokedexLayout'
@@ -134,7 +134,8 @@ export default function Home() {
   // Load initial data
   useEffect(() => {
     loadInitialData()
-  }, [loadInitialData])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // No dependencies to prevent infinite loading
 
   // Infinite scroll effect - only for main PokéDex page
   useEffect(() => {
@@ -151,7 +152,8 @@ export default function Home() {
 
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
-  }, [loadMorePokemon, actualPathname])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [actualPathname]) // Remove loadMorePokemon dependency to prevent infinite loading
 
   // Memoize filtered Pokémon to prevent unnecessary re-renders and improve performance
   const memoizedFilteredPokemon = useMemo(() => {
