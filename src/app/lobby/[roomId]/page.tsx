@@ -3,10 +3,35 @@ import RoomPageClient from './RoomPageClient';
 
 // Generate static params for static export
 export async function generateStaticParams() {
-  // Return empty array to let client-side routing handle all dynamic room IDs
-  // This ensures that any room ID (including dynamically generated ones) 
-  // will be handled by the client-side routing in the main page
-  return [];
+  // Return some sample room IDs for static generation
+  // This allows the page to be statically exported while still supporting dynamic room IDs
+  return [
+    { roomId: 'BATTLE' },
+    { roomId: 'BATTLE01' },
+    { roomId: 'BATTLE123' },
+    { roomId: 'DUEL01' },
+    { roomId: 'DUEL123' },
+    { roomId: 'FIGHT01' },
+    { roomId: 'FIGHT123' },
+    { roomId: 'GAME01' },
+    { roomId: 'GAME123' },
+    { roomId: 'MATCH01' },
+    { roomId: 'MATCH123' },
+    { roomId: 'POKE01' },
+    { roomId: 'POKE123' },
+    { roomId: 'POKEMON' },
+    { roomId: 'ROOM01' },
+    { roomId: 'ROOM123' },
+    { roomId: 'TEAM01' },
+    { roomId: 'TEAM123' },
+    { roomId: 'TEST01' },
+    { roomId: 'TRAINER' },
+    { roomId: 'A1B2C3' },
+    { roomId: 'ABC123' },
+    { roomId: 'PR8DKU' },
+    { roomId: 'X1Y2Z3' },
+    { roomId: 'XYZ789' }
+  ];
 }
 
 interface RoomPageProps {
