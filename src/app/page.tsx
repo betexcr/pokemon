@@ -12,6 +12,7 @@ import RubyPokedexLayout from '@/components/RubyPokedexLayout'
 import ModernPokedexLayout from '@/components/ModernPokedexLayout'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import RoomPageClient from '@/app/lobby/[roomId]/RoomPageClient'
+import LobbyPage from '@/components/LobbyPage'
 // import ComparisonOverlay from '@/components/ComparisonOverlay'
 // import MobileHeader from '@/components/MobileHeader'
 
@@ -176,7 +177,15 @@ export default function Home() {
     )
   }
 
-  // Handle client-side routing for lobby rooms
+  // Handle client-side routing for lobby pages
+  if (pathname === '/lobby') {
+    return (
+      <ProtectedRoute>
+        <LobbyPage />
+      </ProtectedRoute>
+    )
+  }
+  
   if (pathname.startsWith('/lobby/')) {
     const roomId = pathname.split('/lobby/')[1]
     if (roomId) {
