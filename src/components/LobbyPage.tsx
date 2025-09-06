@@ -28,6 +28,11 @@ export default function LobbyPage() {
     return () => unsubscribe();
   }, [user]);
 
+  // Ensure page starts at top when lobby loads
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   const createRoom = async () => {
     if (!user) return;
     
