@@ -99,7 +99,7 @@ function BattlePage() {
         <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
         {/* Player team selection */}
         <section className="border border-border rounded-xl bg-surface p-4">
-          <h2 className="text-lg font-semibold mb-3">Your Team</h2>
+          <h2 className="text-lg font-semibold mb-3 text-gray-800 dark:text-text">Your Team</h2>
           <TeamSelector
             selectedTeamId={selectedPlayerTeam?.id}
             onTeamSelect={setSelectedPlayerTeam}
@@ -110,13 +110,13 @@ function BattlePage() {
 
         {/* Opponent selection */}
         <section className="border border-border rounded-xl bg-surface p-4">
-          <h2 className="text-lg font-semibold mb-3">Opponent</h2>
+          <h2 className="text-lg font-semibold mb-3 text-gray-800 dark:text-text">Opponent</h2>
           <div className="flex items-center gap-3 mb-3">
-            <label className="flex items-center gap-2 text-sm">
+            <label className="flex items-center gap-2 text-sm text-gray-800 dark:text-text">
               <input type="radio" checked={opponentType === "champion"} onChange={()=> setOpponentType("champion")} />
               Gym Champion
             </label>
-            <label className="flex items-center gap-2 text-sm">
+            <label className="flex items-center gap-2 text-sm text-gray-800 dark:text-text">
               <input type="radio" checked={opponentType === "team"} onChange={()=> {
                 setOpponentType("team");
                 setGenerationFilter(""); // Reset generation filter when switching to saved team
