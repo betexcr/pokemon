@@ -24,6 +24,45 @@ html, body {
   background-size: 100% 100%;
 }
 
+/* Global text color enforcement - only for text elements, not buttons */
+body {
+  color: var(--color-text) !important;
+}
+
+/* Ensure text elements inherit the correct color, but preserve button styling */
+h1, h2, h3, h4, h5, h6, p, span, div, label {
+  color: inherit;
+}
+
+/* Override any Tailwind dark mode text colors that might be conflicting - exclude buttons */
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6, 
+.dark p, .dark span, .dark div, .dark label {
+  color: var(--color-text) !important;
+}
+
+/* Ensure scroll containers work properly */
+.overflow-y-auto {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+.overflow-y-auto::-webkit-scrollbar {
+  width: 8px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
+  border-radius: 4px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-muted);
+}
+
 /* Only disable scroll on the main PokéDex page */
 body.pokedex-main-page {
   /* Completely disable main page scroll */

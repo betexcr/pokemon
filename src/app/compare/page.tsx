@@ -97,7 +97,7 @@ export default function ComparePage() {
                 title="Back to PokéDex"
               >
                 <ArrowLeft className="h-5 w-5" />
-                <span className="font-medium">Back to PokéDex</span>
+                <span className="font-medium text-text">Back to PokéDex</span>
               </button>
               
               <div className="flex items-center space-x-3">
@@ -138,7 +138,7 @@ export default function ComparePage() {
               title="Back to PokéDex"
             >
               <ArrowLeft className="h-5 w-5" />
-              <span className="font-medium">Back to PokéDex</span>
+              <span className="font-medium text-text">Back to PokéDex</span>
             </button>
             
             <div className="flex items-center space-x-3">

@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation'
 import { getPokemonByGeneration, getPokemonByType, getPokemon, getPokemonWithPagination, getPokemonTotalCount } from '@/lib/api'
 import ThemeToggle from './ThemeToggle'
 import VirtualizedPokemonGrid from './VirtualizedPokemonGrid'
-import { Search, Filter, X, Scale, ArrowRight, Menu, Users, Swords, List } from 'lucide-react'
+import { Search, Filter, X, Scale, ArrowRight, Menu, Users, Swords, List, Grid3X3, Grid2X2, Grid } from 'lucide-react'
 import UserProfile from './auth/UserProfile'
 import { createHeuristics } from '@/lib/heuristics/core'
 import { LocalStorageAdapter, MemoryStorage } from '@/lib/heuristics/storage'
@@ -836,28 +836,13 @@ export default function ModernPokedexLayout({
                     >
                       <span className="inline-flex items-center justify-center">
                         {visual === '3cols' && (
-                          <div className="w-4 h-4 bg-current rounded-sm"></div>
+                          <Grid className="w-4 h-4" />
                         )}
                         {visual === '6cols' && (
-                          <div className="w-4 h-4 grid grid-cols-2 gap-0.5">
-                            <div className="bg-current rounded-sm"></div>
-                            <div className="bg-current rounded-sm"></div>
-                            <div className="bg-current rounded-sm"></div>
-                            <div className="bg-current rounded-sm"></div>
-                          </div>
+                          <Grid2X2 className="w-4 h-4" />
                         )}
                         {visual === '9cols' && (
-                          <div className="w-4 h-4 grid grid-cols-3 gap-0.5">
-                            <div className="bg-current rounded-sm"></div>
-                            <div className="bg-current rounded-sm"></div>
-                            <div className="bg-current rounded-sm"></div>
-                            <div className="bg-current rounded-sm"></div>
-                            <div className="bg-current rounded-sm"></div>
-                            <div className="bg-current rounded-sm"></div>
-                            <div className="bg-current rounded-sm"></div>
-                            <div className="bg-current rounded-sm"></div>
-                            <div className="bg-current rounded-sm"></div>
-                          </div>
+                          <Grid3X3 className="w-4 h-4" />
                         )}
                         {visual === 'list' && (
                           <List className="w-4 h-4" />
