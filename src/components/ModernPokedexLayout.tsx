@@ -154,7 +154,8 @@ export default function ModernPokedexLayout({
     if (dpr >= 3) cap = Math.floor(cap * 0.7)
     else if (dpr >= 2) cap = Math.floor(cap * 0.85)
 
-    cap = Math.max(120, Math.min(cap, 500))
+    cap = Math.max(120, Math.min(cap, 1500))
+    console.log('Setting maxRenderCount to:', cap);
     setMaxRenderCount(cap)
   }, [heur])
 
@@ -1664,10 +1665,13 @@ export default function ModernPokedexLayout({
                 <VirtualizedPokemonGrid
                   pokemonList={
                     isAllGenerations
-                      ? sortedPokemon.slice(
-                          Math.min(renderWindowStart, Math.max(0, sortedPokemon.length - maxRenderCount)),
-                          Math.min(sortedPokemon.length, Math.max(renderWindowStart, 0) + maxRenderCount)
-                        )
+                      ? (() => {
+                          const start = Math.min(renderWindowStart, Math.max(0, sortedPokemon.length - maxRenderCount));
+                          const end = Math.min(sortedPokemon.length, Math.max(renderWindowStart, 0) + maxRenderCount);
+                          const sliced = sortedPokemon.slice(start, end);
+                          console.log('Virtualization slice - sortedPokemon.length:', sortedPokemon.length, 'maxRenderCount:', maxRenderCount, 'renderWindowStart:', renderWindowStart, 'slice:', start, 'to', end, 'result length:', sliced.length);
+                          return sliced;
+                        })()
                       : sortedPokemon
                   }
                   onToggleComparison={onToggleComparison}
