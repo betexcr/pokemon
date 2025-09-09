@@ -176,8 +176,8 @@ export default function ModernPokemonCard({
         // Grid layout for 3cols, 6cols, and 9cols
         <div className={`${density === '3cols' ? 'p-6' : density === '6cols' ? 'p-4' : 'p-3'} h-full flex flex-col`}>
           {/* Header: ID and Comparison */}
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-mono text-gray-500 font-medium">
+          <div className="flex items-center justify-between mb-3 card-header">
+            <span className="text-xs font-mono text-gray-500 font-medium card-number">
               #{String(pokemon.id).padStart(3, '0')}
             </span>
             <button
@@ -189,6 +189,7 @@ export default function ModernPokemonCard({
                   : 'bg-white text-gray-400 border-gray-200 hover:bg-blue-500 hover:text-white hover:border-blue-500'
                 }
                 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1
+              card-control
               `}
               aria-label={isInComparison ? 'Remove from comparison' : 'Add to comparison'}
             >
@@ -197,9 +198,11 @@ export default function ModernPokemonCard({
           </div>
 
           {/* Pokémon Image */}
-          <div className={`relative bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg flex items-center justify-center overflow-hidden mb-3 ${
-            density === '3cols' ? 'h-48' : density === '6cols' ? 'h-40' : 'h-24'
-          }`}>
+          <div className={`relative bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg flex items-center justify-center overflow-hidden mb-3 card-art ${
+            density === '3cols' ? 'aspect-square max-h-48' : density === '6cols' ? 'aspect-square max-h-40' : 'aspect-square max-h-24'
+          }`} style={{
+            width: '100%'
+          }}>
             {!imageLoaded && !imageError && (
               <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse" />
             )}
@@ -242,16 +245,16 @@ export default function ModernPokemonCard({
           </div>
 
           {/* Pokémon Info */}
-          <div className="space-y-3 flex-1 flex flex-col justify-end">
+          <div className="space-y-3 flex-1 flex flex-col justify-end card-info">
             {/* Name */}
-            <h3 className={`font-semibold text-center group-hover:text-poke-blue transition-colors ${
+            <h3 className={`font-semibold text-center group-hover:text-poke-blue transition-colors card-name ${
               density === '9cols' ? 'text-xs' : density === '6cols' ? 'text-sm' : 'text-base'
             }`} style={{color: '#1f2937', fontWeight: '600'}}>
               {pokemon.name ? formatPokemonName(pokemon.name) : 'No Name'}
             </h3>
 
             {/* Type badges */}
-            <div className="flex flex-wrap gap-1 justify-center">
+            <div className="flex flex-wrap gap-1 justify-center card-badges">
               {pokemon.types && pokemon.types.length > 0 ? pokemon.types.map((type) => (
                 <TypeBadge
                   key={type.type.name}

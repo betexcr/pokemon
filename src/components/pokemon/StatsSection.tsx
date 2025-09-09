@@ -1,9 +1,9 @@
-import RadarChart from '../RadarChart';
+import MultiPokemonRadarChart from '../MultiPokemonRadarChart';
 import StatsSlider from './StatsSlider';
 
 type Stat = { name: string; value: number }; // HP, attack, defense, special-attack, special-defense, speed
 
-export default function StatsSection({ stats }: { stats: Stat[] }) {
+export default function StatsSection({ stats, name }: { stats: Stat[]; name?: string }) {
   // Use fixed max stat of 255 for proper scaling
   const maxStat = 255;
   
@@ -47,7 +47,26 @@ export default function StatsSection({ stats }: { stats: Stat[] }) {
   }];
 
   return (
-    <section id="stats" className="mx-auto w-full px-4 py-4 space-y-6 text-center">
+    <section id="stats" className="mx-auto w-full px-4 py-4 space-y-6">
+      {/* Radar on top */}
+      <div className="flex justify-center">
+        <MultiPokemonRadarChart
+          pokemons={[{
+            id: 0,
+            name: name || 'current',
+            stats: [
+              { stat: { name: 'hp' }, base_stat: stats.find(s => s.name === 'hp')?.value || 0 },
+              { stat: { name: 'attack' }, base_stat: stats.find(s => s.name === 'attack')?.value || 0 },
+              { stat: { name: 'defense' }, base_stat: stats.find(s => s.name === 'defense')?.value || 0 },
+              { stat: { name: 'special-attack' }, base_stat: stats.find(s => s.name === 'special-attack')?.value || 0 },
+              { stat: { name: 'special-defense' }, base_stat: stats.find(s => s.name === 'special-defense')?.value || 0 },
+              { stat: { name: 'speed' }, base_stat: stats.find(s => s.name === 'speed')?.value || 0 }
+            ]
+          }]}
+        />
+      </div>
+
+      {/* Stat bars below */}
       <div className="space-y-6">
         {stats.map(s => (
           <StatsSlider
@@ -59,11 +78,6 @@ export default function StatsSection({ stats }: { stats: Stat[] }) {
             colorClass={getStatColor(s.name)}
           />
         ))}
-      </div>
-
-      {/* Radar Chart */}
-      <div className="flex justify-center pt-8">
-        <RadarChart data={radarData} size={300} />
       </div>
     </section>
   );

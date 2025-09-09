@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.log('User signed in successfully via Google redirect:', result.user.displayName);
         }
       } catch (error) {
-        console.error('Error handling Google redirect result:', error);
+        console.warn('Error handling Google redirect result (non-critical):', error);
       }
     };
 
@@ -53,6 +53,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
+      setLoading(false);
+    }, (error) => {
+      console.warn('Firebase auth error (non-critical):', error);
+      setUser(null);
       setLoading(false);
     });
 

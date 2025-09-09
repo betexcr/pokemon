@@ -43,22 +43,22 @@ export default function VirtualizedPokemonGrid({
   // Calculate layout based on density - fixed column counts
   const getLayoutClasses = () => {
     switch (density) {
-      case '3cols': return 'grid grid-cols-3 gap-4' // Always 3 columns
-      case '6cols': return 'grid grid-cols-6 gap-3' // Always 6 columns  
-      case '9cols': return 'grid grid-cols-9 gap-2' // Always 9 columns
+      case '3cols': return 'grid grid-cols-3 gap-4 items-stretch content-stretch' // Always 3 columns
+      case '6cols': return 'grid grid-cols-6 gap-3 items-stretch content-stretch' // Always 6 columns  
+      case '9cols': return 'grid grid-cols-9 gap-2 items-stretch content-stretch' // Always 9 columns
       case 'list': return 'flex flex-col gap-1' // List view with tighter spacing
-      default: return 'grid grid-cols-6 gap-3' // Default to 6 columns
+      default: return 'grid grid-cols-6 gap-3 items-stretch content-stretch' // Default to 6 columns
     }
   }
 
-  // Calculate grid dimensions for virtualization
+  // Calculate grid dimensions for virtualization - Aspect ratio aware heights
   const getGridDimensions = useMemo(() => {
     switch (density) {
-      case '3cols': return { cols: 3, itemHeight: 320, gap: 16 } // Larger cards for 3 columns
-      case '6cols': return { cols: 6, itemHeight: 240, gap: 12 } // Medium cards for 6 columns
-      case '9cols': return { cols: 9, itemHeight: 180, gap: 8 }  // Smaller cards for 9 columns
+      case '3cols': return { cols: 3, itemHeight: 360, gap: 16 } // Max height with aspect ratio constraint
+      case '6cols': return { cols: 6, itemHeight: 280, gap: 12 } // Max height with aspect ratio constraint
+      case '9cols': return { cols: 9, itemHeight: 200, gap: 8 }  // Max height with aspect ratio constraint
       case 'list': return { cols: 1, itemHeight: 60, gap: 4 }
-      default: return { cols: 6, itemHeight: 240, gap: 12 }
+      default: return { cols: 6, itemHeight: 280, gap: 12 }
     }
   }, [density])
 
@@ -78,7 +78,10 @@ export default function VirtualizedPokemonGrid({
   const parentRef = React.useRef<HTMLDivElement>(null)
   const virtualizer = useVirtualizer({
     count: totalRows,
-    getScrollElement: () => parentRef.current,
+    getScrollElement: () => {
+      // Use the main scroll container instead of creating our own
+      return document.querySelector('.flex-1.min-h-0.overflow-y-auto') || parentRef.current
+    },
     estimateSize: () => getGridDimensions.itemHeight + getGridDimensions.gap,
     overscan: 5, // Render 5 extra rows for smooth scrolling
   })
@@ -240,7 +243,7 @@ export default function VirtualizedPokemonGrid({
         {uniqueRegularPokemon.length > 0 && (
           <div
             ref={parentRef}
-            className="w-full h-full overflow-auto"
+            className="w-full h-full"
             data-pokemon-grid
             style={{
               height: 'auto', // Let content determine height for proper overflow
@@ -276,7 +279,7 @@ export default function VirtualizedPokemonGrid({
                   top: virtualizer.getTotalSize(),
                   left: 0,
                   width: '100%',
-                  height: '50px', // Increased height for better detection
+                  height: '1px',
                   backgroundColor: 'transparent',
                   zIndex: 1,
                 }}
@@ -304,10 +307,10 @@ export default function VirtualizedPokemonGrid({
 
   // Render non-virtualized content (original implementation)
   return (
-    <div className={`w-full max-w-full ${className}`}>
+    <div className={`w-full max-w-full overflow-x-hidden ${className}`}>
       {/* Regular Pokemon */}
       {uniqueRegularPokemon.length > 0 && (
-        <div className={`${getLayoutClasses()} w-full max-w-full ${density === 'list' ? 'p-1' : 'p-2'}`} data-pokemon-grid>
+        <div className={`${getLayoutClasses()} w-full max-w-full ${density === 'list' ? 'pl-0 pr-0' : 'pl-0 pr-0'}`} data-pokemon-grid>
           {uniqueRegularPokemon.map((pokemon) => (
             <ModernPokemonCard
               key={pokemon.id}
@@ -337,7 +340,7 @@ export default function VirtualizedPokemonGrid({
 
       {/* Special Forms Pokemon */}
       {specialFormsPokemon.length > 0 && (
-        <div className={`${getLayoutClasses()} w-full max-w-full ${density === 'list' ? 'p-1' : 'p-2'}`} data-pokemon-grid>
+        <div className={`${getLayoutClasses()} w-full max-w-full ${density === 'list' ? 'pl-0 pr-0' : 'pl-0 pr-0'}`} data-pokemon-grid>
           {specialFormsPokemon.map((pokemon) => (
             <ModernPokemonCard
               key={pokemon.id}
@@ -356,7 +359,7 @@ export default function VirtualizedPokemonGrid({
       <div
         style={{
           width: '100%',
-          height: '50px', // Increased height for better detection
+          height: '1px',
           backgroundColor: 'transparent',
         }}
         data-infinite-scroll-sentinel="true"

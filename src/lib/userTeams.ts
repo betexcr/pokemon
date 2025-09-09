@@ -171,6 +171,7 @@ export async function getUserTeams(userId: string): Promise<SavedTeam[]> {
   }
 
   try {
+    console.log('getUserTeams: Fetching teams for userId:', userId);
     const teamsQuery = query(
       collection(db, 'userTeams'),
       where('userId', '==', userId),
@@ -178,7 +179,10 @@ export async function getUserTeams(userId: string): Promise<SavedTeam[]> {
     );
 
     const querySnapshot = await getDocs(teamsQuery);
-    return querySnapshot.docs.map(docToSavedTeam);
+    console.log('getUserTeams: Query snapshot size:', querySnapshot.docs.length);
+    const teams = querySnapshot.docs.map(docToSavedTeam);
+    console.log('getUserTeams: Mapped teams:', teams);
+    return teams;
   } catch (error) {
     console.error('Error fetching user teams from Firebase:', error);
     throw new Error('Failed to fetch teams');

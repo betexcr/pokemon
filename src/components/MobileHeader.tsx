@@ -4,6 +4,9 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Zap, Users, Menu, X } from 'lucide-react'
 import ThemeToggle from '@/components/ThemeToggle'
+import { useAuth } from '@/contexts/AuthContext'
+import Image from 'next/image'
+import HeaderIcons, { HamburgerMenu } from '@/components/HeaderIcons'
 
 interface MobileHeaderProps {
   theme: string
@@ -19,7 +22,9 @@ export default function MobileHeader({
   onDensityChange 
 }: MobileHeaderProps) {
   const router = useRouter()
+  const { user } = useAuth()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [imageError, setImageError] = useState(false)
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen)
@@ -29,9 +34,54 @@ export default function MobileHeader({
     setIsMenuOpen(false)
   }
 
-  const handleTeamClick = () => {
-    router.push('/team')
-    closeMenu()
+  const handleFiltersClick = () => {
+    // TODO: Implement filters functionality
+    console.log('Advanced filters clicked')
+  }
+
+  const renderProfilePicture = () => {
+    if (!user) {
+      // Show profile placeholder when logged off
+      return (
+        <button className="pk-btn-profile" title="Sign In">
+          <Image 
+            src="/profile-placeholder.png" 
+            alt="Profile Placeholder" 
+            width={32} 
+            height={32} 
+            className="w-full h-full rounded-full object-cover" 
+          />
+        </button>
+      );
+    }
+
+    const src = user?.photoURL && user.photoURL.trim().length > 0 ? user.photoURL : undefined;
+    const name = user?.displayName || 'User';
+    
+    if (src && !imageError) {
+      return (
+        <button className="pk-btn-profile" title={name}>
+          <Image 
+            src={src} 
+            alt={name} 
+            width={32} 
+            height={32} 
+            className="w-full h-full rounded-full object-cover" 
+            onError={() => setImageError(true)}
+            referrerPolicy="no-referrer"
+          />
+        </button>
+      );
+    }
+    
+    const initial = name.trim().charAt(0).toUpperCase();
+    return (
+      <button className="pk-btn-profile" title={name}>
+        <div className="w-full h-full rounded-full bg-gradient-to-br from-poke-blue to-poke-red flex items-center justify-center text-white font-semibold">
+          {initial}
+        </div>
+      </button>
+    );
   }
 
   return (
@@ -86,32 +136,21 @@ export default function MobileHeader({
                 </div>
               </div>
 
-              {/* Team Builder Link */}
-              <button
-                onClick={handleTeamClick}
-                className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-surface border border-border text-muted hover:text-text hover:bg-white/50 transition-all duration-200"
-                title="Go to Team Builder"
-              >
-                <Users className="h-4 w-4" />
-                <span className="text-sm font-medium">Team</span>
-              </button>
+              {/* PokéDex Toolbar */}
+              <HeaderIcons onFiltersClick={handleFiltersClick} />
 
               {/* Theme Toggle */}
               <ThemeToggle />
             </div>
 
-            {/* Mobile Menu Button - Only visible on mobile */}
-            <button
-              onClick={toggleMenu}
-              className="md:hidden p-2 rounded-lg hover:bg-white/50 transition-colors"
-              aria-label="Toggle menu"
-            >
-              {isMenuOpen ? (
-                <X className="h-6 w-6 text-text" />
-              ) : (
-                <Menu className="h-6 w-6 text-text" />
-              )}
-            </button>
+            {/* Mobile Menu Button and Profile Picture - Only visible on mobile */}
+            <div className="md:hidden flex items-center space-x-3">
+              {/* Profile Picture - Always render to prevent pop-up */}
+              {renderProfilePicture()}
+              
+              {/* Hamburger Menu Button */}
+              <HamburgerMenu onClick={toggleMenu} />
+            </div>
           </div>
         </div>
       </header>
@@ -126,8 +165,8 @@ export default function MobileHeader({
           />
           
           {/* Menu Panel */}
-          <div className="absolute right-0 top-0 h-full w-80 max-w-[85vw] bg-surface border-l border-border shadow-xl">
-            <div className="p-6">
+          <div className="absolute right-0 top-0 h-full w-80 max-w-[85vw] bg-surface border-l border-border shadow-xl flex flex-col">
+            <div className="p-6 overflow-y-auto flex-1 mobile-menu-scroll">
               {/* Menu Header */}
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold text-text">Menu</h2>
@@ -182,8 +221,53 @@ export default function MobileHeader({
                     onClick={handleTeamClick}
                     className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg bg-white/50 text-text hover:bg-white/70 transition-colors"
                   >
-                    <Users className="h-5 w-5" />
+                    <Image 
+                      src="/header-icons/team_builder.png" 
+                      alt="Team Builder" 
+                      width={20} 
+                      height={20} 
+                      className="h-5 w-5"
+                    />
                     <span className="font-medium">Team Builder</span>
+                  </button>
+                  <button
+                    onClick={handleBattleClick}
+                    className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg bg-white/50 text-text hover:bg-white/70 transition-colors"
+                  >
+                    <Image 
+                      src="/header-icons/battle.png" 
+                      alt="Battles" 
+                      width={20} 
+                      height={20} 
+                      className="h-5 w-5"
+                    />
+                    <span className="font-medium">Battles</span>
+                  </button>
+                  <button
+                    onClick={handleCompareClick}
+                    className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg bg-white/50 text-text hover:bg-white/70 transition-colors"
+                  >
+                    <Image 
+                      src="/header-icons/compare.png" 
+                      alt="Compare" 
+                      width={20} 
+                      height={20} 
+                      className="h-5 w-5"
+                    />
+                    <span className="font-medium">Compare</span>
+                  </button>
+                  <button
+                    onClick={handleFiltersClick}
+                    className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg bg-white/50 text-text hover:bg-white/70 transition-colors"
+                  >
+                    <Image 
+                      src="/header-icons/advanced_filters.png" 
+                      alt="Advanced Filters" 
+                      width={20} 
+                      height={20} 
+                      className="h-5 w-5"
+                    />
+                    <span className="font-medium">Advanced Filters</span>
                   </button>
                 </div>
               </div>

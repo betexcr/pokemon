@@ -11,9 +11,13 @@ import VirtualizedPokemonGrid from './VirtualizedPokemonGrid'
 import AdvancedFilters from './AdvancedFilters'
 import { Search, Filter, X, Scale, ArrowRight, Menu, Users, Swords, List, Grid3X3, Grid2X2, LayoutGridIcon } from 'lucide-react'
 import UserProfile from './auth/UserProfile'
+import AuthModal from './auth/AuthModal'
+import { useAuth } from '@/contexts/AuthContext'
 import { createHeuristics } from '@/lib/heuristics/core'
 import { LocalStorageAdapter, MemoryStorage } from '@/lib/heuristics/storage'
 import Image from 'next/image'
+import HeaderIcons, { HamburgerMenu } from '@/components/HeaderIcons'
+import AppHeader from '@/components/AppHeader'
 
 // Legendary and Mythical Pokémon lists
 const LEGENDARY_POKEMON = new Set([
@@ -89,7 +93,9 @@ export default function ModernPokedexLayout({
   // filters: _filters,
   // setFilters: _setFilters
 }: ModernPokedexLayoutProps) {
+  console.log('ModernPokedexLayout rendered with pokemonList length:', pokemonList.length);
   const router = useRouter()
+  const { user } = useAuth()
   
   // Advanced filters state
   const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilters>({
@@ -140,11 +146,12 @@ export default function ModernPokedexLayout({
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [hasMorePokemon, setHasMorePokemon] = useState(true)
   const [currentOffset, setCurrentOffset] = useState(0)
-  const [isAllGenerations, setIsAllGenerations] = useState(false)
+  const [isAllGenerations, setIsAllGenerations] = useState(true) // Start in "All Generations" mode by default
   const [totalPokemonCount, setTotalPokemonCount] = useState<number | null>(null)
   const emptyBatchCountRef = useRef<number>(0)
-  const [themeSelection, setThemeSelection] = useState<'light'|'dark'>('light')
   const lastLoadTimeRef = useRef<number>(0)
+  const [showAuthModal, setShowAuthModal] = useState(false)
+  const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login')
 
   // Heuristics-driven render-only cap and moving window
   const storage = typeof window !== 'undefined' ? new LocalStorageAdapter() : new MemoryStorage()
@@ -202,6 +209,36 @@ export default function ModernPokedexLayout({
       setFilteredPokemon(pokemonList)
     }
   }, [pokemonList, filteredPokemon.length])
+
+  // Load initial Pokemon data when component mounts
+  useEffect(() => {
+    const loadInitialPokemon = async () => {
+      console.log('loadInitialPokemon effect running:', { isAllGenerations, allGenerationsPokemonLength: allGenerationsPokemon.length });
+      if (isAllGenerations && allGenerationsPokemon.length === 0) {
+        console.log('Loading initial Pokemon data...');
+        try {
+          const initialPokemon = await getPokemonWithPagination(100, 0);
+          console.log('Loaded initial Pokemon:', initialPokemon.length, 'Pokemon');
+          setAllGenerationsPokemon(initialPokemon);
+          setCurrentOffset(100);
+          
+          // Fetch total count
+          try {
+            const count = await getPokemonTotalCount();
+            console.log('Fetched total Pokemon count:', count);
+            setTotalPokemonCount(count || null);
+          } catch (error) {
+            console.error('Error fetching total count:', error);
+            setTotalPokemonCount(1302);
+          }
+        } catch (error) {
+          console.error('Error loading initial Pokemon:', error);
+        }
+      }
+    };
+
+    loadInitialPokemon();
+  }, []); // Run only once on mount
 
   // Close mobile menu when clicking outside
   useEffect(() => {
@@ -441,22 +478,12 @@ export default function ModernPokedexLayout({
             setIsAllGenerations(true)
             setHasMorePokemon(true) // Ensure infinite scroll is enabled
             
-            // Check if we need to reset the allGenerationsPokemon (e.g., coming from filtering)
-            if (allGenerationsPokemon.length === 0 || allGenerationsPokemon.length < 100) {
-              // Load initial batch
-              const initialPokemon = await getPokemonWithPagination(100, 0)
-              setAllGenerationsPokemon(initialPokemon)
-              setCurrentOffset(100)
-              // fetch total count once
-              try { 
-                const count = await getPokemonTotalCount(); 
-                setTotalPokemonCount(count || null);
-              } catch (error) {
-                console.error('Error fetching total count:', error);
-              }
-              results = initialPokemon
-            } else {
+            // Use existing allGenerationsPokemon or wait for it to be loaded by the separate effect
+            if (allGenerationsPokemon.length > 0) {
               results = allGenerationsPokemon
+            } else {
+              // If no Pokemon loaded yet, return empty array and let the separate effect handle loading
+              results = []
             }
           }
         } else {
@@ -524,6 +551,7 @@ export default function ModernPokedexLayout({
   // Handle allGenerationsPokemon updates separately to avoid infinite loops
   useEffect(() => {
     if (allGenerationsPokemon.length > 0) {
+      console.log('Setting filteredPokemon from allGenerationsPokemon:', allGenerationsPokemon.length, 'Pokemon');
       setFilteredPokemon(allGenerationsPokemon)
     }
   }, [allGenerationsPokemon])
@@ -640,8 +668,11 @@ export default function ModernPokedexLayout({
   // Load more Pokémon for infinite scrolling with improved error handling
   const loadMorePokemon = useCallback(async () => {
     if (isLoadingMore || !hasMorePokemon || !isAllGenerations) {
+      console.log('Skipping loadMorePokemon:', { isLoadingMore, hasMorePokemon, isAllGenerations });
       return;
     }
+    
+    console.log('Loading more Pokemon. Current offset:', currentOffset, 'Total count:', totalPokemonCount);
     
     // Protection against rapid calls
     const now = Date.now();
@@ -673,11 +704,6 @@ export default function ModernPokedexLayout({
       } else {
         emptyBatchCountRef.current = 0;
         
-        // Store current scroll position before adding new content
-        const mainContentArea = document.querySelector('.flex-1.min-h-0.overflow-y-auto');
-        const scrollTop = mainContentArea?.scrollTop || 0;
-        const scrollHeight = mainContentArea?.scrollHeight || 0;
-        
         // Deduplicate and add new Pokémon
         setAllGenerationsPokemon(prev => {
           const existingIds = new Set(prev.map(p => p.id));
@@ -693,21 +719,14 @@ export default function ModernPokedexLayout({
         const newOffset = currentOffset + pageSize;
         setCurrentOffset(newOffset);
         
-        // Maintain scroll position after content is added
-        if (mainContentArea) {
-          // Use requestAnimationFrame to ensure DOM has updated
-          requestAnimationFrame(() => {
-            const newScrollHeight = mainContentArea.scrollHeight;
-            const heightDifference = newScrollHeight - scrollHeight;
-            mainContentArea.scrollTop = scrollTop + heightDifference;
-          });
-        }
-        
         // Check if we've reached the limit
-        const reasonableLimit = 2000;
-        if ((totalPokemonCount && newOffset >= totalPokemonCount) || newOffset >= reasonableLimit) {
+        // Use a more reasonable limit based on actual Pokemon count
+        const maxPokemonCount = totalPokemonCount || 1302; // Fallback to known total
+        if (newOffset >= maxPokemonCount) {
+          console.log(`Reached end of Pokemon list at offset ${newOffset}, total count: ${maxPokemonCount}`);
           setHasMorePokemon(false);
         } else {
+          console.log(`Continuing to load more Pokemon. Current offset: ${newOffset}, total count: ${maxPokemonCount}`);
         }
       }
     } catch (error) {
@@ -742,15 +761,23 @@ export default function ModernPokedexLayout({
         (entries) => {
           const [entry] = entries;
           
+          console.log('Intersection observer triggered:', { 
+            isIntersecting: entry.isIntersecting, 
+            isLoadingMore, 
+            hasMorePokemon,
+            currentOffset,
+            totalPokemonCount 
+          });
           
           if (entry.isIntersecting && !isLoadingMore && hasMorePokemon) {
+            console.log('Triggering loadMorePokemon from intersection observer');
             loadMorePokemon();
           }
         },
         {
           root: null, // Use viewport as root for better reliability
-          rootMargin: '300px', // Even larger margin to trigger earlier
-          threshold: 0.01 // Lower threshold for more sensitive detection
+          rootMargin: '100px', // Reduced margin to be less aggressive
+          threshold: 0.1 // Higher threshold for less sensitive detection
         }
       );
 
@@ -763,24 +790,31 @@ export default function ModernPokedexLayout({
 
     // Find the sentinel element with retry mechanism
     const findSentinel = () => {
-      return document.querySelector('[data-infinite-scroll-sentinel="true"]');
+      const sentinel = document.querySelector('[data-infinite-scroll-sentinel="true"]');
+      console.log('Looking for sentinel element:', sentinel);
+      return sentinel;
     };
 
     let sentinel = findSentinel();
     if (!sentinel) {
+      console.log('Sentinel not found, retrying...');
       // Retry finding sentinel after a short delay
       const retryTimeout = setTimeout(() => {
         sentinel = findSentinel();
         if (sentinel) {
+          console.log('Sentinel found on retry, setting up observer');
           setupObserver(sentinel);
         } else {
+          console.log('Sentinel still not found after retry');
         }
       }, 100);
       
       return () => clearTimeout(retryTimeout);
+    } else {
+      console.log('Sentinel found immediately, setting up observer');
     }
 
-    // Also set up scroll-based backup detection
+    // Set up scroll-based backup detection (less aggressive)
     const mainContentArea = document.querySelector('.flex-1.min-h-0.overflow-y-auto');
     let scrollTimeout: NodeJS.Timeout;
     
@@ -792,16 +826,23 @@ export default function ModernPokedexLayout({
         const { scrollTop, scrollHeight, clientHeight } = mainContentArea;
         const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
         
-        // Trigger loading when within 500px of bottom
-        if (distanceFromBottom < 500) {
-          console.log('🚀 Triggering loadMorePokemon via scroll detection');
+        // Trigger loading when within 200px of bottom (reduced from 500px)
+        if (distanceFromBottom < 200) {
+          console.log('Triggering loadMorePokemon from scroll detection:', { 
+            distanceFromBottom, 
+            scrollTop, 
+            scrollHeight, 
+            clientHeight,
+            isLoadingMore,
+            hasMorePokemon 
+          });
           loadMorePokemon();
         }
-      }, 100);
+      }, 150); // Increased debounce time
     };
 
     if (mainContentArea) {
-    mainContentArea.addEventListener('scroll', handleScroll);
+      mainContentArea.addEventListener('scroll', handleScroll, { passive: true });
     }
 
     const cleanup = setupObserver(sentinel);
@@ -852,49 +893,84 @@ export default function ModernPokedexLayout({
     })
   }, [])
 
-  // Theme/layout selector (persists and reloads)
-  const applyThemeSelection = useCallback((value: 'light'|'dark') => {
-    try {
-      // Persist under multiple keys to interop with existing providers
-      localStorage.setItem('theme', value)
-      localStorage.setItem('app_theme', value)
-      localStorage.setItem('layout', value)
-    } catch {}
-    setThemeSelection(value)
-    // Soft reload to let top-level layout react to theme
-    if (typeof window !== 'undefined') {
-      window.location.reload()
-    }
-  }, [])
 
-  // Initialize theme selector reliably when landing on Modern
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem('app_theme') || localStorage.getItem('theme') || 'light'
-      const allowed = new Set(['light','dark'])
-      const normalized = allowed.has(stored || '') ? (stored as 'light'|'dark') : 'light'
-      setThemeSelection(normalized)
-    } catch {
-      setThemeSelection('light')
+  // Auth modal handlers
+  const openAuthModal = (mode: 'login' | 'register' = 'login') => {
+    setAuthModalMode(mode)
+    setShowAuthModal(true)
+  }
+
+  const closeAuthModal = () => {
+    setShowAuthModal(false)
+  }
+
+  // Profile picture button (adapted from MobileHeader)
+  const renderProfilePicture = () => {
+    const currentUser = user
+    if (!currentUser) {
+      return (
+        <button className="pk-btn-profile" title="Sign In">
+          <Image 
+            src="/profile-placeholder.png" 
+            alt="Profile Placeholder" 
+            width={32} 
+            height={32} 
+            className="w-full h-full rounded-full object-cover" 
+          />
+        </button>
+      )
     }
-  }, [])
+
+    const src = currentUser.photoURL && currentUser.photoURL.trim().length > 0 ? currentUser.photoURL : undefined
+    const name = currentUser.displayName || 'User'
+
+    if (src) {
+      return (
+        <button className="pk-btn-profile" title={name}>
+          <Image 
+            src={src} 
+            alt={name} 
+            width={32} 
+            height={32} 
+            className="w-full h-full rounded-full object-cover" 
+          />
+        </button>
+      )
+    }
+
+    const initial = name.trim().charAt(0).toUpperCase()
+    return (
+      <button className="pk-btn-profile" title={name}>
+        <div className="w-full h-full rounded-full bg-gradient-to-br from-poke-blue to-poke-red flex items-center justify-center text-white font-semibold">
+          {initial}
+        </div>
+      </button>
+    )
+  }
 
   return (
-    <div className="min-h-screen w-full max-w-full bg-bg text-text flex flex-col mx-auto">
-      {/* Sticky Header */}
+    <div className="h-screen root-full w-full max-w-full bg-bg text-text flex flex-col mx-auto">
+      {/* Unified App Header (desktop style across breakpoints) */}
+      <AppHeader
+        title="PokéDex"
+        subtitle={`${pokemonList.length} Pokémon discovered`}
+        comparisonList={comparisonList}
+        showSidebar={showSidebar}
+        onToggleSidebar={() => setShowSidebar(!showSidebar)}
+        showToolbar={true}
+      />
+
+      {/* Old header temporarily disabled */}
+      {false && (
       <header className="sticky top-0 z-50 bg-gradient-to-r from-surface via-surface to-surface border-b border-border shadow-lg">
         <div className="w-full max-w-full px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20 lg:h-24 py-3 list-none min-w-0">
-            {/* Brand & Title Section */}
             <div className="flex items-center space-x-3 lg:space-x-6">
-              {/* POKEDEX Text - Upper Left */}
               <div className="absolute left-4 top-3 lg:top-4 z-10">
                 <h1 className="font-['Pocket_Monk'] text-2xl lg:text-3xl font-bold text-poke-blue tracking-wider drop-shadow-lg">
                   POKÉDEX
                 </h1>
               </div>
-              
-              {/* Logo/Brand - Centered */}
               <div className="flex items-center space-x-2 lg:space-x-3 mx-auto">
                 <div className="flex flex-col">
                   <h2 className="text-lg lg:text-xl font-bold bg-gradient-to-r from-poke-blue via-poke-red to-poke-blue bg-clip-text text-transparent animate-pulse">
@@ -959,93 +1035,8 @@ export default function ModernPokedexLayout({
             {/* Enhanced Desktop Controls Section - Hidden on mobile */}
             {!isMobile && (
               <div className="flex items-center space-x-6 min-w-0 flex-shrink-0">
-              {/* Card Density Controls */}
-              <div className="flex items-center space-x-2">
-                <span className="text-xs font-medium text-muted uppercase tracking-wider">Size</span>
-                <div className="flex items-center bg-surface border border-border rounded-xl p-1 shadow-sm">
-                  {[
-                    { visual: '3cols', label: '3 Cols', target: '3cols', showOnMobile: false },
-                    { visual: '6cols', label: '6 Cols', target: '6cols', showOnMobile: false },
-                    { visual: '9cols', label: '9 Cols', target: '9cols', showOnMobile: false },
-                    { visual: 'list', label: 'List', target: 'list', showOnMobile: true }
-                  ].filter(({ showOnMobile }) => !isMobile || showOnMobile).map(({ visual, label, target }) => (
-                    <button
-                      key={visual}
-                      onClick={() => setCardDensity(target as '3cols' | '6cols' | '9cols' | 'list')}
-                      className={`px-3 py-2 text-xs font-medium rounded-lg transition-all duration-200 flex items-center space-x-2 ${
-                        cardDensity === target 
-                          ? 'bg-poke-blue text-white shadow-lg scale-105' 
-                          : 'text-muted hover:text-text hover:bg-white/50'
-                      }`}
-                    >
-                      <span className="inline-flex items-center justify-center">
-                        {visual === '3cols' && (
-                          <LayoutGridIcon className="w-4 h-4" />
-                        )}
-                        {visual === '6cols' && (
-                          <Grid2X2 className="w-4 h-4" />
-                        )}
-                        {visual === '9cols' && (
-                          <Grid3X3 className="w-4 h-4" />
-                        )}
-                        {visual === 'list' && (
-                          <List className="w-4 h-4" />
-                        )}
-                      </span>
-                      <span className="hidden xl:inline">{label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Sort Controls */}
-              <div className="flex items-center space-x-2">
-                <span className="text-xs font-medium text-muted uppercase tracking-wider">Sort</span>
-                <div className="flex items-center space-x-2">
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                    className="px-3 py-2 bg-surface border border-border rounded-xl text-text text-sm font-medium focus:ring-2 focus:ring-poke-blue focus:border-poke-blue focus:outline-none transition-all duration-200 shadow-sm hover:shadow-md"
-                  >
-                    <option value="id">Number</option>
-                    <option value="name">Name</option>
-                    <option value="stats">Total Stats</option>
-                    <option value="hp">HP</option>
-                    <option value="attack">Attack</option>
-                    <option value="defense">Defense</option>
-                    <option value="special-attack">Sp. Attack</option>
-                    <option value="special-defense">Sp. Defense</option>
-                    <option value="speed">Speed</option>
-                  </select>
-                  
-                  <button
-                    onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-                    className="flex items-center gap-2 px-2 py-1 rounded-xl bg-surface border border-border hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md group"
-                    title={`Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`}
-                  >
-                    <div className={`transform transition-transform duration-200 ${sortOrder === 'asc' ? 'rotate-0' : 'rotate-180'}`}>
-                      <svg className="w-4 h-4 text-muted group-hover:text-poke-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-                      </svg>
-                    </div>
-                    <span className="text-xs font-medium text-muted group-hover:text-poke-blue">{sortOrder === 'asc' ? 'ASC' : 'DESC'}</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Theme/Layout Selector */}
-              <div className="flex items-center space-x-2">
-                <span className="text-xs font-medium text-muted uppercase tracking-wider">Theme</span>
-                <select
-                  onChange={(e) => applyThemeSelection(e.target.value as 'light'|'dark')}
-                  value={themeSelection}
-                  className="px-3 py-2 bg-surface border border-border rounded-xl text-text text-sm font-medium focus:ring-2 focus:ring-poke-blue focus:border-poke-blue focus:outline-none transition-all duration-200 shadow-sm hover:shadow-md"
-                  title="Change theme"
-                >
-                  <option value="light">Light</option>
-                  <option value="dark">Dark</option>
-                </select>
-              </div>
+              {/* Theme Toggle */}
+              <ThemeToggle />
 
               {/* Quick Type Filters - Desktop */}
               <div className="hidden xl:flex items-center space-x-2">
@@ -1081,117 +1072,47 @@ export default function ModernPokedexLayout({
                 </div>
               </div>
 
-              {/* Filter Toggle */}
-              <button
-                onClick={() => setShowSidebar(!showSidebar)}
-                className={`p-3 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md ${
-                  showSidebar 
-                    ? 'bg-poke-blue text-white shadow-lg scale-105' 
-                    : 'bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30'
-                }`}
-                title={showSidebar ? 'Hide filters' : 'Show filters'}
-              >
-                <Filter className="h-5 w-5" />
-              </button>
 
               {/* Theme Toggle */}
               <div className="hidden md:flex items-center">
-                <span className="text-xs font-medium text-muted uppercase tracking-wider mr-2">Theme</span>
-                <div className="p-1 rounded-xl bg-surface border border-border shadow-sm">
-                  <ThemeToggle />
-                </div>
+                <ThemeToggle />
               </div>
 
-              {/* User Profile */}
-              <div className="hidden md:flex items-center">
-                <UserProfile />
+              {/* Profile Picture Button (desktop) */}
+              <div className="hidden md:flex items-center space-x-2">
+                {renderProfilePicture()}
               </div>
 
-              {/* Action Buttons - Icon Only */}
-              <button
-                onClick={() => router.push('/team')}
-                className="p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
-                title="Go to Team Builder"
-              >
-                <Users className="h-5 w-5" />
-              </button>
-
-              <button
-                onClick={() => router.push('/battle')}
-                className="p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
-                title="Go to AI Battle"
-              >
-                <Swords className="h-5 w-5" />
-              </button>
-
-              <button
-                onClick={() => router.push('/compare')}
-                className="relative p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
-                title="Go to comparison"
-              >
-                <Scale className="h-5 w-5" />
-                {comparisonList.length > 0 && (
-                  <span className="absolute -top-1 -right-1 px-1.5 py-0.5 bg-poke-red text-white text-xs rounded-full font-bold">
-                    {comparisonList.length}
-                  </span>
-                )}
-              </button>
+              {/* Action Buttons - PokéDex Toolbar Style */}
+              <div className="pk-toolbar">
+                <HeaderIcons 
+                  comparisonList={comparisonList}
+                  showSidebar={showSidebar}
+                  onFiltersClick={() => setShowSidebar(!showSidebar)}
+                />
+              </div>
 
             </div>
             )}
 
-            {/* Mobile Quick Access Links - Only visible on mobile */}
+            {/* Mobile Toolbar - All buttons distributed across available space */}
             {isMobile && (
-              <div className="flex items-center space-x-2">
-                {/* Team Builder Link */}
-                <button
-                  onClick={() => router.push('/team')}
-                  className="p-2 rounded-lg bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
-                  title="Team Builder"
-                >
-                  <Users className="h-4 w-4" />
-                </button>
-
-                {/* Battle Link */}
-                <button
-                  onClick={() => router.push('/battle')}
-                  className="p-2 rounded-lg bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
-                  title="Battle"
-                >
-                  <Swords className="h-4 w-4" />
-                </button>
-
-                {/* Comparison Link */}
-                <button
-                  onClick={() => router.push('/compare')}
-                  className="relative p-2 rounded-lg bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
-                  title="Compare Pokémon"
-                >
-                  <Scale className="h-4 w-4" />
-                  {comparisonList.length > 0 && (
-                    <span className="absolute -top-1 -right-1 px-1 py-0.5 bg-poke-red text-white text-xs rounded-full font-bold">
-                      {comparisonList.length}
-                    </span>
-                  )}
-                </button>
+              <div className="pk-toolbar flex-1 justify-between">
+                <HeaderIcons 
+                  comparisonList={comparisonList}
+                  showSidebar={showSidebar}
+                  onFiltersClick={() => setShowSidebar(!showSidebar)}
+                />
+                <HamburgerMenu onClick={() => setShowMobileMenu(!showMobileMenu)} />
+                <UserProfile isMobile={true} />
               </div>
-            )}
-
-            {/* Mobile Hamburger Menu Button - Only visible on mobile */}
-            {isMobile && (
-              <button
-                onClick={() => setShowMobileMenu(!showMobileMenu)}
-                className="p-3 rounded-xl bg-surface border border-border text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
-                title="Toggle menu"
-              >
-                <Menu className="h-5 w-5" />
-              </button>
             )}
 
             {/* Mobile Menu Button removed - now part of desktop controls */}
           </div>
         </div>
       </header>
+      )}
 
       {/* Fallback marker removed; no desktop drawer */}
 
@@ -1309,24 +1230,7 @@ export default function ModernPokedexLayout({
                 </div>
               </div>
 
-              {/* Mobile Filter Toggle */}
-              <div className="space-y-3">
-                <h4 className="text-sm font-semibold text-text uppercase tracking-wider">Filters</h4>
-                <button
-                  onClick={() => {
-                    setShowSidebar(!showSidebar)
-                    setShowMobileMenu(false)
-                  }}
-                  className={`w-full p-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center space-x-2 ${
-                    showSidebar 
-                      ? 'bg-poke-blue text-white shadow-lg' 
-                      : 'bg-white border border-border text-text hover:bg-gray-50'
-                  }`}
-                >
-                  <Filter className="h-5 w-5" />
-                  <span>{showSidebar ? 'Hide Filters' : 'Show Filters'}</span>
-                </button>
-              </div>
+              {/* Mobile Filter Toggle removed to avoid overlap/bleed on desktop */}
 
               {/* Mobile Sort Controls - Segmented control */}
               <div className="space-y-3">
@@ -1364,22 +1268,21 @@ export default function ModernPokedexLayout({
 
               {/* Mobile Comparison Section */}
               <div className="space-y-3">
-                <h4 className="text-sm font-semibold text-text uppercase tracking-wider">Comparison</h4>
                 <div className="space-y-2">
                   <button
-                    onClick={() => {
-                      router.push('/compare')
-                      setShowMobileMenu(false)
-                    }}
-                    className="w-full p-3 rounded-xl bg-poke-blue text-white font-medium transition-all duration-200 hover:bg-poke-blue/80 flex items-center justify-center space-x-2"
+                    onClick={() => { if (comparisonList.length > 0) { router.push('/compare'); setShowMobileMenu(false) } }}
+                    disabled={comparisonList.length === 0}
+                    className={`w-full p-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center space-x-2 ${comparisonList.length === 0 ? 'bg-poke-blue/40 text-white/80 cursor-not-allowed' : 'bg-poke-blue text-white hover:bg-poke-blue/80'}`}
+                    aria-disabled={comparisonList.length === 0}
                   >
-                    <Scale className="h-5 w-5" />
+                    <Image 
+                      src="/header-icons/compare.png" 
+                      alt="Compare" 
+                      width={20} 
+                      height={20} 
+                      className="h-5 w-5"
+                    />
                     <span>Go to Comparison</span>
-                    {comparisonList.length > 0 && (
-                      <span className="ml-2 px-2 py-1 bg-white text-poke-blue text-xs rounded-full font-bold">
-                        {comparisonList.length}
-                      </span>
-                    )}
                   </button>
                   {comparisonList.length > 0 && (
                     <button
@@ -1406,7 +1309,13 @@ export default function ModernPokedexLayout({
                     }}
                     className="w-full p-3 rounded-xl bg-poke-red text-white font-medium transition-all duration-200 hover:bg-poke-red/80 flex items-center justify-center space-x-2"
                   >
-                    <Users className="h-5 w-5" />
+                    <Image 
+                      src="/header-icons/team_builder.png" 
+                      alt="Team Builder" 
+                      width={20} 
+                      height={20} 
+                      className="h-5 w-5"
+                    />
                     <span>Go to Team Builder</span>
                   </button>
                 </div>
@@ -1423,7 +1332,13 @@ export default function ModernPokedexLayout({
                     }}
                     className="w-full p-3 rounded-xl bg-poke-blue text-white font-medium transition-all duration-200 hover:bg-poke-blue/80 flex items-center justify-center space-x-2"
                   >
-                    <Swords className="h-5 w-5" />
+                    <Image 
+                      src="/header-icons/battle.png" 
+                      alt="Battle" 
+                      width={20} 
+                      height={20} 
+                      className="h-5 w-5"
+                    />
                     <span>Go to AI Battle</span>
                   </button>
                 </div>
@@ -1431,7 +1346,6 @@ export default function ModernPokedexLayout({
 
               {/* Mobile Theme Toggle */}
               <div className="space-y-3">
-                <h4 className="text-sm font-semibold text-text uppercase tracking-wider">Theme</h4>
                 <ThemeToggle />
               </div>
 
@@ -1440,6 +1354,58 @@ export default function ModernPokedexLayout({
                 <h4 className="text-sm font-semibold text-text uppercase tracking-wider">Account</h4>
                 <UserProfile />
               </div>
+
+              {/* Test Auth Buttons - Always visible for testing */}
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold text-text uppercase tracking-wider">Test Auth Dialog</h4>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => {
+                      openAuthModal('login')
+                      setShowMobileMenu(false)
+                    }}
+                    className="w-full p-3 rounded-xl bg-poke-blue text-white font-medium transition-all duration-200 hover:bg-poke-blue/80 flex items-center justify-center space-x-2"
+                  >
+                    <span>Test Sign In Dialog</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      openAuthModal('register')
+                      setShowMobileMenu(false)
+                    }}
+                    className="w-full p-3 rounded-xl bg-poke-red text-white font-medium transition-all duration-200 hover:bg-poke-red/80 flex items-center justify-center space-x-2"
+                  >
+                    <span>Test Sign Up Dialog</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Mobile Auth Buttons - Only show if not logged in */}
+              {!user && (
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold text-text uppercase tracking-wider">Authentication</h4>
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => {
+                        openAuthModal('login')
+                        setShowMobileMenu(false)
+                      }}
+                      className="w-full p-3 rounded-xl bg-poke-blue text-white font-medium transition-all duration-200 hover:bg-poke-blue/80 flex items-center justify-center space-x-2"
+                    >
+                      <span>Sign In</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        openAuthModal('register')
+                        setShowMobileMenu(false)
+                      }}
+                      className="w-full p-3 rounded-xl bg-poke-red text-white font-medium transition-all duration-200 hover:bg-poke-red/80 flex items-center justify-center space-x-2"
+                    >
+                      <span>Sign Up</span>
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Mobile Close Button */}
               <div className="pt-6 border-t border-border">
@@ -1487,7 +1453,6 @@ export default function ModernPokedexLayout({
               </button>
             )}
             </div>
-            <UserProfile />
           </div>
         </div>
         </div>
@@ -1495,7 +1460,7 @@ export default function ModernPokedexLayout({
 
       {/* Enhanced Type Filter Ribbon */}
       <div className="border-b border-border bg-gradient-to-r from-surface via-surface to-surface">
-        <div className="w-full max-w-full px-4 sm:px-6 lg:px-8 py-4">
+        <div className="w-full max-w-full pl-0 pr-4 sm:pl-0 sm:pr-6 lg:pl-0 lg:pr-8 py-4">
           <div className="flex items-center justify-between">
             {/* Type Filter Buttons */}
             <div className="flex items-center space-x-3 overflow-x-auto scrollbar-hide pb-2">
@@ -1554,8 +1519,90 @@ export default function ModernPokedexLayout({
         </div>
       </div>
 
+      {/* Desktop Size & Sort Controls - positioned below type filters */}
+      {!isMobile && (
+        <div className="border-b border-border bg-surface/60">
+          <div className="w-full max-w-full px-4 sm:px-6 lg:px-8 py-3">
+            <div className="flex items-center justify-between gap-6">
+              {/* Card Density Controls */}
+              <div className="flex items-center space-x-2">
+                <span className="text-xs font-medium text-muted uppercase tracking-wider">Size</span>
+                <div className="flex items-center bg-surface border border-border rounded-xl p-1 shadow-sm">
+                  {[
+                    { visual: '3cols', label: '3 Cols', target: '3cols' },
+                    { visual: '6cols', label: '6 Cols', target: '6cols' },
+                    { visual: '9cols', label: '9 Cols', target: '9cols' },
+                    { visual: 'list', label: 'List', target: 'list' }
+                  ].map(({ visual, label, target }) => (
+                    <button
+                      key={visual}
+                      onClick={() => setCardDensity(target as '3cols' | '6cols' | '9cols' | 'list')}
+                      className={`px-3 py-2 text-xs font-medium rounded-lg transition-all duration-200 flex items-center space-x-2 ${
+                        cardDensity === target 
+                          ? 'bg-poke-blue text-white shadow-lg scale-105' 
+                          : 'text-muted hover:text-text hover:bg-white/50'
+                      }`}
+                    >
+                      <span className="inline-flex items-center justify-center">
+                        {visual === '3cols' && (
+                          <LayoutGridIcon className="w-4 h-4" />
+                        )}
+                        {visual === '6cols' && (
+                          <Grid2X2 className="w-4 h-4" />
+                        )}
+                        {visual === '9cols' && (
+                          <Grid3X3 className="w-4 h-4" />
+                        )}
+                        {visual === 'list' && (
+                          <List className="w-4 h-4" />
+                        )}
+                      </span>
+                      <span className="hidden xl:inline">{label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Sort Controls */}
+              <div className="flex items-center space-x-2">
+                <span className="text-xs font-medium text-muted uppercase tracking-wider">Sort</span>
+                <div className="flex items-center space-x-2">
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                    className="px-3 py-2 bg-surface border border-border rounded-xl text-text text-sm font-medium focus:ring-2 focus:ring-poke-blue focus:border-poke-blue focus:outline-none transition-all duration-200 shadow-sm hover:shadow-md control-keep"
+                  >
+                    <option value="id">Number</option>
+                    <option value="name">Name</option>
+                    <option value="stats">Total Stats</option>
+                    <option value="hp">HP</option>
+                    <option value="attack">Attack</option>
+                    <option value="defense">Defense</option>
+                    <option value="special-attack">Sp. Attack</option>
+                    <option value="special-defense">Sp. Defense</option>
+                    <option value="speed">Speed</option>
+                  </select>
+                  <button
+                    onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                    className="flex items-center gap-2 px-2 py-1 rounded-xl bg-surface border border-border hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md group control-keep"
+                    title={`Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`}
+                  >
+                    <div className={`transform transition-transform duration-200 ${sortOrder === 'asc' ? 'rotate-0' : 'rotate-180'}`}>
+                      <svg className="w-4 h-4 text-muted group-hover:text-poke-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                      </svg>
+                    </div>
+                    <span className="text-xs font-medium text-muted group-hover:text-poke-blue">{sortOrder === 'asc' ? 'ASC' : 'DESC'}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main Content */}
-      <div className="flex w-full max-w-full flex-1 min-h-0 px-2 sm:px-4 lg:px-6">
+      <div className="flex w-full max-w-full flex-1 min-h-0 overflow-x-hidden pl-0 pr-0 sm:pl-0 sm:pr-0 lg:pl-0 lg:pr-0">
         {/* Advanced Filters Component */}
         <AdvancedFilters
           advancedFilters={advancedFilters}
@@ -1570,9 +1617,21 @@ export default function ModernPokedexLayout({
         />
 
         {/* Main Content Area */}
-        <div className="flex-1 min-h-0 overflow-y-auto">
-          <div className="p-4 sm:p-6 lg:p-8 min-h-full w-full max-w-full overflow-x-hidden pr-6">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scroll-stable scrollbar-hide">
+          <div className={`${showSidebar ? 'pl-0 pr-4 sm:pl-0 sm:pr-6 lg:pl-0 lg:pr-8' : 'pl-0 pr-4 sm:pl-0 sm:pr-6 lg:pl-0 lg:pr-8'} min-h-full w-full max-w-full`}>
             {/* Pokémon Grid */}
+            {(() => {
+              console.log('Render state:', { 
+                isFiltering, 
+                sortedPokemonLength: sortedPokemon.length, 
+                allGenerationsPokemonLength: allGenerationsPokemon.length,
+                isAllGenerations,
+                hasMorePokemon,
+                currentOffset,
+                totalPokemonCount
+              });
+              return null;
+            })()}
             {isFiltering ? (
               <div className="text-center py-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-poke-blue mx-auto mb-4"></div>
@@ -1587,12 +1646,12 @@ export default function ModernPokedexLayout({
                   selectedPokemon={null}
                   comparisonList={comparisonList}
                   density={cardDensity}
-                  enableVirtualization={isAllGenerations}
+                  enableVirtualization={false}
                   showSpecialForms={isAllGenerations || (advancedFilters.generation !== 'all' && advancedFilters.generation !== '')}
                 />
                 {/* Infinite scroll loading indicator */}
                 {isAllGenerations && isLoadingMore && (
-                  <div className="text-center py-8">
+                  <div className="text-center py-4">
                     <Image src="/loading.gif" alt="Loading more Pokémon" width={50} height={50} className="mx-auto mb-2" />
                     <p className="text-muted text-sm">Loading more Pokémon...</p>
                   </div>
@@ -1613,7 +1672,7 @@ export default function ModernPokedexLayout({
                 
                 {/* End of list indicator */}
                 {isAllGenerations && !hasMorePokemon && !isLoadingMore && (
-                  <div className="text-center py-8">
+                  <div className="text-center py-4">
                     <p className="text-muted text-sm">You&apos;ve reached the end! All Pokémon loaded.</p>
                   </div>
                 )}
@@ -1787,81 +1846,17 @@ export default function ModernPokedexLayout({
 
               </div>
               
-              {/* Mobile Comparison Section - Scrollable at bottom */}
-              <div className="flex-shrink-0 border-t border-border bg-surface overflow-y-auto" style={{maxHeight: 'calc(100vh - 24rem)', minHeight: '200px'}}>
-                <div className="p-4">
-                  <h3 className="text-lg font-semibold mb-4 flex items-center">
-                    <Scale className="h-5 w-5 mr-2 text-blue-500" />
-                    Comparison ({comparisonList.length})
-                  </h3>
-                  
-                  {comparisonList.length === 0 ? (
-                    <div className="text-center py-4">
-                      <p className="text-sm text-muted mb-3">
-                        Select Pokémon to compare their stats
-                      </p>
-                      <div className="text-4xl mb-2">⚖️</div>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {/* Selected Pokémon List */}
-                      <div className="max-h-40 overflow-y-auto bg-gray-800 rounded-lg border border-gray-700">
-                        {comparisonPokemon.map((pokemon, index) => (
-                          <div
-                            key={pokemon.id}
-                            className={`flex items-center px-3 py-2 ${
-                              index < comparisonPokemon.length - 1 
-                                ? 'border-b border-gray-700' 
-                                : ''
-                            }`}
-                          >
-                            <picture className="mr-3">
-                              <img
-                                src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`}
-                                alt={formatPokemonName(pokemon.name)}
-                                className="w-8 h-8 object-contain"
-                                loading="lazy"
-                                decoding="async"
-                              />
-                            </picture>
-                            <span className="text-white text-sm">
-                              {formatPokemonName(pokemon.name)}#{pokemon.id}
-                            </span>
-                            <button
-                              onClick={() => onToggleComparison(pokemon.id)}
-                              className="ml-auto p-1 rounded hover:bg-red-600 transition-colors"
-                              aria-label={`Remove ${formatPokemonName(pokemon.name)} from comparison`}
-                            >
-                              <X className="h-3 w-3 text-red-400" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Actions - Always visible at bottom */}
-                      <div className="space-y-2 pt-2 border-t border-border sticky bottom-0 bg-surface">
-                        <button
-                          onClick={onClearComparison}
-                          className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                        >
-                          Clear All
-                        </button>
-                        <button
-                          onClick={() => window.location.href = '/compare'}
-                          className="w-full px-3 py-2 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center"
-                        >
-                          <ArrowRight className="h-4 w-4 mr-2" />
-                          Go to Comparison
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* Auth Modal */}
+      <AuthModal 
+        isOpen={showAuthModal}
+        onClose={closeAuthModal}
+        initialMode={authModalMode}
+      />
 
     </div>
   )

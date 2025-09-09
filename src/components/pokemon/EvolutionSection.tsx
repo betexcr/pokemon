@@ -11,6 +11,7 @@ export default function EvolutionSection({ chain, selectedSprite = 'default' }: 
       <div className="flex flex-wrap justify-center gap-4">
         {chain.map((n, i) => {
           const primaryType = n.types[0] || 'normal';
+          const secondaryType = n.types[1] || null;
           const imageUrl = selectedSprite === 'shiny' 
             ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/shiny/${n.id}.png`
             : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${n.id}.png`;
@@ -21,13 +22,19 @@ export default function EvolutionSection({ chain, selectedSprite = 'default' }: 
                 <div 
                   className="relative rounded-xl bg-surface overflow-hidden border border-border hover:shadow-card transition-all duration-200"
                   style={{ 
-                    background: `linear-gradient(180deg, color-mix(in oklab, var(--type-${primaryType}) 14%, transparent) 0%, transparent 60%)`
+                    background: secondaryType
+                      ? `linear-gradient(180deg,
+                            color-mix(in oklab, var(--type-${primaryType}) 16%, transparent) 0%,
+                            color-mix(in oklab, var(--type-${secondaryType}) 16%, transparent) 60%)`
+                      : `linear-gradient(180deg, color-mix(in oklab, var(--type-${primaryType}) 14%, transparent) 0%, transparent 60%)`
                   }}
                 >
                   {/* Type accent bar */}
                   <div 
                     className="h-1.5 w-full" 
-                    style={{ backgroundColor: `var(--type-${primaryType})` }} 
+                    style={secondaryType
+                      ? { backgroundImage: `linear-gradient(90deg, var(--type-${primaryType}) 0%, var(--type-${secondaryType}) 100%)` }
+                      : { backgroundColor: `var(--type-${primaryType})` }} 
                   />
                   
                   <div className="flex justify-center items-center p-4">

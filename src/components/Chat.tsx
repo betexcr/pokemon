@@ -24,7 +24,7 @@ export default function Chat({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isMinimized, setIsMinimized] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Listen to messages from Firebase
@@ -39,10 +39,19 @@ export default function Chat({
   }, [roomId]);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const el = messagesContainerRef.current;
+    if (el) {
+      el.scrollTop = el.scrollHeight;
+    }
   };
 
+  // Avoid auto-scrolling on first mount to prevent initial page jump
+  const didMountRef = useRef(false);
   useEffect(() => {
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+      return;
+    }
     scrollToBottom();
   }, [messages]);
 
@@ -122,7 +131,7 @@ export default function Chat({
       </div>
 
       {/* Messages */}
-      <div className="flex-1 p-3 space-y-3 max-h-64 overflow-y-auto">
+      <div ref={messagesContainerRef} className="flex-1 p-3 space-y-3 max-h-64 overflow-y-auto">
         {messages.length === 0 ? (
           <div className="text-center text-gray-500 text-sm py-4">
             No messages yet. Start the conversation!
@@ -159,7 +168,8 @@ export default function Chat({
             </div>
           ))
         )}
-        <div ref={messagesEndRef} />
+        {/* spacer */}
+        <div className="h-0" />
       </div>
 
       {/* Input */}

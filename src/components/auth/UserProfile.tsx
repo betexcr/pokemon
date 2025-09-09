@@ -5,7 +5,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { LogOut, User, LogIn } from 'lucide-react';
 import AuthModal from './AuthModal';
 
-export default function UserProfile() {
+interface UserProfileProps {
+  isMobile?: boolean;
+}
+
+export default function UserProfile({ isMobile = false }: UserProfileProps) {
   const { user, logout } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -52,10 +56,14 @@ export default function UserProfile() {
         <button
           ref={buttonRef}
           onClick={() => setShowAuthModal(true)}
-          className="flex items-center space-x-2 px-2 py-1 rounded-full bg-surface border border-border hover:bg-white/50 hover:border-primary/30 transition-all duration-200 shadow-sm hover:shadow-md"
+          className="pk-btn-profile"
+          title="Sign In"
         >
-          <LogIn size={18} />
-          <span className="hidden sm:block text-sm font-medium">Sign In</span>
+          <img
+            src="/profile-placeholder.png"
+            alt="Profile Placeholder"
+            className="w-full h-full rounded-full object-cover"
+          />
         </button>
         <AuthModal 
           isOpen={showAuthModal}
@@ -82,11 +90,12 @@ export default function UserProfile() {
         <img
           src={user.photoURL}
           alt={user.displayName || user.email || 'User'}
-          className="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm"
+          className="w-full h-full rounded-full object-cover"
           onError={() => {
             console.warn('Failed to load profile image, falling back to initials');
             setImageLoadError(true);
           }}
+          referrerPolicy="no-referrer"
           onLoad={() => {
             console.log('Profile image loaded successfully');
           }}
@@ -96,7 +105,7 @@ export default function UserProfile() {
     
     // Fallback to initials (either no photoURL or image failed to load)
     return (
-      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-poke-blue to-poke-red flex items-center justify-center text-white text-sm font-bold border-2 border-white shadow-sm">
+      <div className="w-full h-full rounded-full bg-gradient-to-br from-poke-blue to-poke-red flex items-center justify-center text-white font-bold">
         {initials}
       </div>
     );
@@ -113,12 +122,10 @@ export default function UserProfile() {
       <button
         ref={buttonRef}
         onClick={handleButtonClick}
-        className="flex items-center space-x-2 px-2 py-1 rounded-full bg-surface border border-border hover:bg-white/50 hover:border-primary/30 transition-all duration-200 shadow-sm hover:shadow-md group"
+        className="pk-btn-profile"
+        title={user.displayName || user.email || 'User Profile'}
       >
         {getProfilePicture()}
-        <span className="hidden sm:block text-sm font-medium text-text group-hover:text-primary">
-          {user.displayName || user.email?.split('@')[0]}
-        </span>
       </button>
 
       {showDropdown && buttonRect && (

@@ -9,6 +9,8 @@ import { Pokemon } from '@/types/pokemon'
 import TypeBadge from '@/components/TypeBadge'
 import Button from '@/components/ui/Button'
 import MultiPokemonRadarChart from '@/components/MultiPokemonRadarChart'
+import PokeballReleaseAnimation from '@/components/PokeballReleaseAnimation'
+import AppHeader from '@/components/AppHeader'
 
 
 export default function ComparePage() {
@@ -17,6 +19,8 @@ export default function ComparePage() {
   const [pokemons, setPokemons] = useState<Pokemon[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showReleaseAnimation, setShowReleaseAnimation] = useState(false)
+  const [releasedPokemon, setReleasedPokemon] = useState<Pokemon[]>([])
 
   useEffect(() => {
     loadSelectedPokemon()
@@ -72,11 +76,26 @@ export default function ComparePage() {
     localStorage.removeItem('pokemon-comparison')
   }
 
+  const handleReleasePokemon = () => {
+    console.log('Release Pokémon clicked, pokemons:', pokemons.length)
+    if (pokemons.length > 0) {
+      console.log('Starting animation...')
+      setShowReleaseAnimation(true)
+    } else {
+      console.log('No Pokémon to release')
+    }
+  }
+
+  const handleAnimationComplete = () => {
+    setShowReleaseAnimation(false)
+    setReleasedPokemon([...pokemons])
+  }
+
 
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+      <div className="h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-poke-blue mx-auto mb-4"></div>
           <p className="text-muted">Loading comparison...</p>
@@ -87,28 +106,15 @@ export default function ComparePage() {
 
   if (error || pokemons.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-        <header className="bg-white/80 backdrop-blur border-b border-border/60 sticky top-0 z-50 shadow-sm">
-          <div className="mx-auto max-w-6xl px-4 md:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-16">
-              <button
-                onClick={() => window.location.href = '/'}
-                className="flex items-center space-x-2 text-muted hover:text-text transition-colors"
-                title="Back to PokéDex"
-              >
-                <ArrowLeft className="h-5 w-5" />
-                <span className="font-medium text-text">Back to PokéDex</span>
-              </button>
-              
-              <div className="flex items-center space-x-3">
-                <Scale className="h-6 w-6 text-poke-blue" />
-                <h1 className="text-xl font-bold text-text tracking-tight">Pokémon Comparison</h1>
-              </div>
-            </div>
-          </div>
-        </header>
+      <div className="h-screen w-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex flex-col overflow-y-auto scrollbar-hide">
+        <AppHeader
+          title="Pokémon Comparison"
+          backLink="/"
+          backLabel="Back to PokéDex"
+          showToolbar={false}
+        />
 
-        <main className="mx-auto max-w-6xl px-4 md:px-6 lg:px-8 py-12">
+        <main className="flex-1 mx-auto max-w-6xl px-4 md:px-6 lg:px-8 py-12">
           <div className="text-center">
             <Scale className="h-16 w-16 text-muted mx-auto mb-4" />
             <h3 className="text-lg font-medium text-text mb-2">No Pokémon Selected</h3>
@@ -127,45 +133,68 @@ export default function ComparePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      {/* Sticky Header */}
-      <header className="bg-white/80 backdrop-blur border-b border-border/60 sticky top-0 z-50 shadow-sm">
-        <div className="mx-auto max-w-6xl px-4 md:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <button
-              onClick={() => window.location.href = '/'}
-              className="flex items-center space-x-2 text-muted hover:text-text transition-colors"
-              title="Back to PokéDex"
-            >
-              <ArrowLeft className="h-5 w-5" />
-              <span className="font-medium text-text">Back to PokéDex</span>
-            </button>
-            
-            <div className="flex items-center space-x-3">
-              <Scale className="h-6 w-6 text-poke-blue" />
-              <h1 className="text-xl font-bold text-text tracking-tight">Pokémon Comparison</h1>
-              <span className="text-sm text-muted hidden sm:block">
-                {pokemons.length} Pokémon selected
-              </span>
-            </div>
-
-            <div className="flex items-center space-x-3">
+    <div className="h-screen root-full w-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex flex-col overflow-hidden">
+      {/* Pokéball Release Animation */}
+      {showReleaseAnimation && (
+        <PokeballReleaseAnimation 
+          pokemons={pokemons} 
+          onAnimationComplete={handleAnimationComplete}
+        />
+      )}
+      {/* Header */}
+      <AppHeader
+        title="Pokémon Comparison"
+        backLink="/"
+        backLabel="Back to PokéDex"
+        showToolbar={false}
+        rightContent={(
+          <div className="flex items-center space-x-3">
+            {pokemons.length > 0 && (
               <Button
-                variant="secondary"
-                onClick={clearAll}
+                variant="primary"
+                onClick={handleReleasePokemon}
                 className="inline-flex items-center space-x-2"
               >
-                <X className="h-4 w-4" />
-                <span>Clear All</span>
+                <span>Release Pokémon</span>
               </Button>
-            </div>
+            )}
+            {pokemons.length === 0 && (
+              <Button
+                variant="primary"
+                onClick={() => {
+                  const testPokemon = [
+                    { id: 1, name: 'bulbasaur' },
+                    { id: 4, name: 'charmander' },
+                    { id: 7, name: 'squirtle' },
+                    { id: 25, name: 'pikachu' },
+                    { id: 39, name: 'jigglypuff' },
+                    { id: 150, name: 'mewtwo' }
+                  ]
+                  localStorage.setItem('pokemon-comparison', JSON.stringify(testPokemon.map(p => p.id)))
+                  window.location.reload()
+                }}
+                className="inline-flex items-center space-x-2"
+              >
+                <span>Load Test Pokémon</span>
+              </Button>
+            )}
+            <Button
+              variant="secondary"
+              onClick={clearAll}
+              className="inline-flex items-center space-x-2"
+            >
+              <X className="h-4 w-4" />
+              <span>Clear All</span>
+            </Button>
           </div>
-        </div>
-      </header>
+        )}
+      />
 
-      <main className="mx-auto max-w-6xl px-4 md:px-6 lg:px-8 py-6">
-        {/* Pokémon Stats Table */}
-        <div className="bg-white rounded-2xl shadow-card border border-border/60 p-6 mb-8">
+      <main className="flex-1 min-h-0 overflow-y-auto scroll-stable mx-auto max-w-6xl px-4 md:px-6 lg:px-8 py-6">
+        <div className="flex gap-6">
+          {/* Left side - Pokémon Stats Table */}
+          <div className="flex-1">
+            <div className="bg-white rounded-2xl shadow-card border border-border/60 p-6 mb-8">
           <h3 className="text-lg font-semibold text-text mb-4">Pokémon Stats Comparison</h3>
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -207,9 +236,7 @@ export default function ComparePage() {
                             <div className="font-medium text-text capitalize">
                               {formatPokemonName(pokemon.name)}
                             </div>
-                            <div className="text-sm text-muted">
-                              #{pokemon.id}
-                            </div>
+                            {/* Removed Pokédex number display */}
                             <div className="flex gap-1 mt-1">
                               {pokemon.types.map((type) => (
                                 <TypeBadge key={type.type.name} type={type.type.name} />
@@ -253,17 +280,42 @@ export default function ComparePage() {
           </div>
         </div>
 
-        {/* Radar Chart */}
-        <div className="bg-white rounded-2xl shadow-card border border-border/60 p-6 mb-8">
-          <h2 className="text-2xl font-bold text-text mb-6 text-center tracking-tight">
-            Stats Comparison
-          </h2>
-          <div className="flex justify-center">
-            <MultiPokemonRadarChart pokemons={pokemons} />
+            {/* Radar Chart */}
+            <div className="bg-white rounded-2xl shadow-card border border-border/60 p-6 mb-8">
+              <h2 className="text-2xl font-bold text-text mb-6 text-center tracking-tight">
+                Stats Comparison
+              </h2>
+              <div className="flex justify-center">
+                <MultiPokemonRadarChart pokemons={pokemons} />
+              </div>
+            </div>
           </div>
+
+          {/* Right side - Released Pokémon */}
+          {releasedPokemon.length > 0 && (
+            <div className="w-80 flex-shrink-0">
+              <div className="bg-white rounded-2xl shadow-card border border-border/60 p-6 sticky top-6">
+                <h3 className="text-lg font-semibold text-text mb-4">Released Pokémon</h3>
+                <div className="grid grid-cols-3 gap-3">
+                  {releasedPokemon.map((pokemon) => (
+                    <div key={pokemon.id} className="text-center">
+                      <Link href={`/pokemon/${pokemon.id}`}>
+                        <img
+                          src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`}
+                          alt={formatPokemonName(pokemon.name)}
+                          className="w-16 h-16 object-contain mx-auto cursor-pointer hover:scale-110 transition-transform"
+                        />
+                      </Link>
+                      <p className="text-xs text-muted mt-1 capitalize">
+                        {formatPokemonName(pokemon.name)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
-
-
       </main>
     </div>
   )

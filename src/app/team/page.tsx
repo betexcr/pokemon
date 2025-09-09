@@ -20,6 +20,7 @@ import {
   type MoveData
 } from '@/lib/userTeams'
 import AuthModal from '@/components/auth/AuthModal'
+import AppHeader from '@/components/AppHeader'
 
 // Types are now imported from userTeams.ts
 
@@ -32,7 +33,7 @@ export default function TeamBuilderPage() {
   const [allPokemon, setAllPokemon] = useState<Pokemon[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [availableMoves, setAvailableMoves] = useState<Record<number, Array<{ name: string; type: string; damage_class: "physical" | "special" | "status"; power: number | null; accuracy: number | null; pp: number | null; level_learned_at: number | null; short_effect?: string | null }>>>({})
+  const [availableMoves, setAvailableMoves] = useState<Record<number, Array<{ name: string; type: string; damage_class: "physical" | "special" | "status"; power: number | null; accuracy: number | null; pp: number | null; level_learned_at: number | null; learn_method: string; short_effect?: string | null }>>>({})
   const [teamSlots, setTeamSlots] = useState<TeamSlot[]>(
     Array.from({ length: 6 }, () => ({ id: null, level: 50, moves: [] as MoveData[] }))
   )
@@ -44,6 +45,7 @@ export default function TeamBuilderPage() {
   const [saving, setSaving] = useState(false)
   const [syncing, setSyncing] = useState(false)
   const [showAuthModal, setShowAuthModal] = useState(false)
+  const [levelMovesOnly, setLevelMovesOnly] = useState(true)
   
   // Virtualized scrolling state
   const [pokemonOffset, setPokemonOffset] = useState(0)
@@ -456,7 +458,7 @@ export default function TeamBuilderPage() {
     }
   }
 
-  const loadTeam = (team: FirebaseSavedTeam) => {
+  const loadTeam = async (team: FirebaseSavedTeam) => {
     setTeamSlots(team.slots)
     setTeamName(team.name)
     
@@ -468,6 +470,31 @@ export default function TeamBuilderPage() {
       }
     })
     setCollapsedSlots(newCollapsedSlots)
+    
+    // Load available moves for each Pokemon in the team
+    const movePromises = team.slots.map(async (slot, idx) => {
+      if (slot.id && slot.level) {
+        try {
+          const moves = await getAvailableMoves(slot.id, slot.level)
+          return { idx, moves }
+        } catch (error) {
+          console.error(`Failed to load moves for Pokemon ${slot.id}:`, error)
+          return { idx, moves: [] }
+        }
+      }
+      return { idx, moves: [] }
+    })
+    
+    const moveResults = await Promise.all(movePromises)
+    const newAvailableMoves: Record<number, Array<{ name: string; type: string; damage_class: "physical" | "special" | "status"; power: number | null; accuracy: number | null; pp: number | null; level_learned_at: number | null; learn_method: string; short_effect?: string | null }>> = {}
+    
+    moveResults.forEach(({ idx, moves }) => {
+      if (moves.length > 0) {
+        newAvailableMoves[idx] = moves
+      }
+    })
+    
+    setAvailableMoves(newAvailableMoves)
   }
 
   const deleteTeam = async (id: string) => {
@@ -488,19 +515,30 @@ export default function TeamBuilderPage() {
   }
 
   // Get available moves for a Pokémon at a specific level
-  const getAvailableMoves = useCallback(async (pokemonId: number, level: number): Promise<Array<{ name: string; type: string; damage_class: "physical" | "special" | "status"; power: number | null; accuracy: number | null; pp: number | null; level_learned_at: number | null; short_effect?: string | null }>> => {
+  const getAvailableMoves = useCallback(async (pokemonId: number, level: number): Promise<Array<{ name: string; type: string; damage_class: "physical" | "special" | "status"; power: number | null; accuracy: number | null; pp: number | null; level_learned_at: number | null; learn_method: string; short_effect?: string | null }>> => {
     try {
       const pokemon = allPokemon.find(p => p.id === pokemonId)
       if (!pokemon || pokemon.moves.length === 0) {
         // Fetch full Pokémon data if we don't have moves
         const fullPokemon = await getPokemon(pokemonId)
-        const levelUpMoves = fullPokemon.moves
-          .filter(move => move.version_group_details.some(detail => detail.move_learn_method.name === 'level-up'))
+        const allMoves = fullPokemon.moves
+          .filter(move => move.version_group_details.some(detail => 
+            ['level-up', 'machine', 'egg', 'tutor'].includes(detail.move_learn_method.name)
+          ))
           .map(move => {
+            // Prioritize level-up moves, then machine, egg, tutor
             const levelUpDetail = move.version_group_details.find(detail => detail.move_learn_method.name === 'level-up');
+            const machineDetail = move.version_group_details.find(detail => detail.move_learn_method.name === 'machine');
+            const eggDetail = move.version_group_details.find(detail => detail.move_learn_method.name === 'egg');
+            const tutorDetail = move.version_group_details.find(detail => detail.move_learn_method.name === 'tutor');
+            
             return {
               moveName: move.move.name,
-              level_learned_at: levelUpDetail?.level_learned_at || null
+              level_learned_at: levelUpDetail?.level_learned_at || null,
+              learn_method: levelUpDetail ? 'level-up' : 
+                           machineDetail ? 'machine' : 
+                           eggDetail ? 'egg' : 
+                           tutorDetail ? 'tutor' : 'unknown'
             };
           })
           .filter((move, index, self) => 
@@ -508,7 +546,7 @@ export default function TeamBuilderPage() {
           );
 
         // Fetch full move details for each move
-        const movePromises = levelUpMoves.map(async ({ moveName, level_learned_at }) => {
+        const movePromises = allMoves.map(async ({ moveName, level_learned_at, learn_method }) => {
           try {
             const moveData = await getMove(moveName);
             const englishEffect = (moveData.effect_entries || []).find((e: { language: { name: string }; short_effect?: string; effect?: string }) => e.language?.name === 'en');
@@ -520,6 +558,7 @@ export default function TeamBuilderPage() {
               accuracy: moveData.accuracy,
               pp: moveData.pp,
               level_learned_at,
+              learn_method,
               short_effect: englishEffect?.short_effect || englishEffect?.effect || null
             };
           } catch (error) {
@@ -531,25 +570,43 @@ export default function TeamBuilderPage() {
               power: null,
               accuracy: null,
               pp: null,
-              level_learned_at
+              level_learned_at,
+              learn_method
             };
           }
         });
 
         const moveResults = await Promise.all(movePromises);
         return moveResults
-          .filter(move => !move.level_learned_at || move.level_learned_at <= level)
-          .slice(0, 20); // Limit to first 20 moves for performance
+          .filter(move => {
+            // For level-up moves, only include if level_learned_at <= level
+            if (move.learn_method === 'level-up') {
+              return move.level_learned_at && move.level_learned_at <= level
+            }
+            // For other move types (machine, egg, tutor), include them all
+            return true
+          })
       }
 
       // If we have basic move data, fetch full details
-      const levelUpMoves = pokemon.moves
-        .filter(move => move.version_group_details.some(detail => detail.move_learn_method.name === 'level-up'))
+      const allMoves = pokemon.moves
+        .filter(move => move.version_group_details.some(detail => 
+          ['level-up', 'machine', 'egg', 'tutor'].includes(detail.move_learn_method.name)
+        ))
         .map(move => {
+          // Prioritize level-up moves, then machine, egg, tutor
           const levelUpDetail = move.version_group_details.find(detail => detail.move_learn_method.name === 'level-up');
+          const machineDetail = move.version_group_details.find(detail => detail.move_learn_method.name === 'machine');
+          const eggDetail = move.version_group_details.find(detail => detail.move_learn_method.name === 'egg');
+          const tutorDetail = move.version_group_details.find(detail => detail.move_learn_method.name === 'tutor');
+          
           return {
             moveName: move.move.name,
-            level_learned_at: levelUpDetail?.level_learned_at || null
+            level_learned_at: levelUpDetail?.level_learned_at || null,
+            learn_method: levelUpDetail ? 'level-up' : 
+                         machineDetail ? 'machine' : 
+                         eggDetail ? 'egg' : 
+                         tutorDetail ? 'tutor' : 'unknown'
           };
         })
         .filter((move, index, self) => 
@@ -557,7 +614,7 @@ export default function TeamBuilderPage() {
         );
 
       // Fetch full move details for each move
-      const movePromises = levelUpMoves.map(async ({ moveName, level_learned_at }) => {
+      const movePromises = allMoves.map(async ({ moveName, level_learned_at, learn_method }) => {
         try {
           const moveData = await getMove(moveName);
           const englishEffect = (moveData.effect_entries || []).find((e: { language: { name: string }; short_effect?: string; effect?: string }) => e.language?.name === 'en');
@@ -569,6 +626,7 @@ export default function TeamBuilderPage() {
             accuracy: moveData.accuracy,
             pp: moveData.pp,
             level_learned_at,
+            learn_method,
             short_effect: englishEffect?.short_effect || englishEffect?.effect || null
           };
         } catch (error) {
@@ -580,20 +638,27 @@ export default function TeamBuilderPage() {
             power: null,
             accuracy: null,
             pp: null,
-            level_learned_at
+            level_learned_at,
+            learn_method
           };
         }
       });
 
       const moveResults = await Promise.all(movePromises);
       return moveResults
-        .filter(move => !move.level_learned_at || move.level_learned_at <= level)
-        .slice(0, 20);
+        .filter(move => {
+          // For level-up moves, only include if level_learned_at <= level
+          if (move.learn_method === 'level-up') {
+            return move.level_learned_at && move.level_learned_at <= level
+          }
+          // For other move types (machine, egg, tutor), include them all
+          return true
+        })
     } catch (error) {
       console.error('Error getting available moves:', error)
       return []
     }
-  }, [allPokemon])
+  }, [allPokemon, levelMovesOnly])
 
   // Helper function to capitalize strings
 
@@ -658,78 +723,13 @@ export default function TeamBuilderPage() {
 
   return (
     <div className="min-h-screen bg-bg text-text overflow-x-hidden">
-      <header className="sticky top-0 z-50 border-b border-border bg-surface">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => router.push('/')}
-                  className="flex items-center space-x-2 text-muted hover:text-text transition-colors"
-                  title="Back to PokéDex"
-                >
-                  <ArrowLeft className="h-5 w-5" />
-                  <span className="font-medium text-text">Back to PokéDex</span>
-                </button>
-              </div>
-              <span className="text-sm text-muted">
-                Team Builder
-              </span>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              {/* Authentication Status */}
-              <div className="flex items-center gap-2 text-sm">
-                {user ? (
-                  <div className="flex items-center gap-1 text-green-600">
-                    <Cloud className="h-4 w-4" />
-                    <span>Cloud Sync</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-1 text-orange-600">
-                    <CloudOff className="h-4 w-4" />
-                    <span>Local Only</span>
-                  </div>
-                )}
-                {syncing && (
-                  <div className="flex items-center gap-1 text-blue-600">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Syncing...</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Team Management */}
-              <div className="flex items-center gap-2">
-                <input
-                  value={teamName}
-                  onChange={(e) => setTeamName(e.target.value)}
-                  placeholder="Team name"
-                  className="px-3 py-2 border border-border rounded-lg bg-surface text-text"
-                />
-                <button 
-                  onClick={saveTeam} 
-                  disabled={saving}
-                  className="px-3 py-2 rounded-lg bg-poke-blue text-white hover:bg-poke-blue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  {saving ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4" />
-                      Save Team
-                    </>
-                  )}
-                </button>
-                <button onClick={clearTeam} className="px-3 py-2 rounded-lg border border-border text-text hover:bg-white/50 transition-colors">Clear</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
+      <AppHeader
+        title="Team Builder"
+        backLink="/"
+        backLabel="Back to PokéDex"
+        showToolbar={false}
+        showThemeToggle={false}
+      />
 
       <main className="max-w-7xl mx-auto px-4 py-6 space-y-6 overflow-x-hidden">
         {/* Add Pokémon Search */}
@@ -742,7 +742,7 @@ export default function TeamBuilderPage() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onFocus={() => setShowDropdown(true)}
-              className="w-full max-w-full px-4 py-3 border border-border rounded-lg bg-white text-text placeholder-muted focus:outline-none focus:ring-2 focus:ring-poke-blue focus:border-transparent"
+              className="w-full max-w-full px-4 py-6 border border-border rounded-lg bg-white text-text placeholder-muted focus:outline-none focus:ring-2 focus:ring-poke-blue focus:border-transparent"
             />
             
             {showDropdown && (
@@ -834,8 +834,34 @@ export default function TeamBuilderPage() {
         <section className="border border-border rounded-xl bg-surface p-4 overflow-x-hidden">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-text">Your Team</h2>
-            <div className="text-sm text-muted">
-              {teamSlots.filter(s => s.id != null).length} / 6 Pokémon
+            <div className="flex items-center gap-2">
+              <div className="text-sm text-muted">
+                {teamSlots.filter(s => s.id != null).length} / 6 Pokémon
+              </div>
+              <input
+                value={teamName}
+                onChange={(e) => setTeamName(e.target.value)}
+                placeholder="Team name"
+                className="px-3 py-2 border border-border rounded-lg bg-surface text-text"
+              />
+              <button 
+                onClick={saveTeam} 
+                disabled={saving}
+                className="px-3 py-2 rounded-lg bg-poke-blue text-white hover:bg-poke-blue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4" />
+                    Save Team
+                  </>
+                )}
+              </button>
+              <button onClick={clearTeam} className="px-3 py-2 rounded-lg border border-border text-text hover:bg-white/50 transition-colors">Clear</button>
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
@@ -975,31 +1001,80 @@ export default function TeamBuilderPage() {
                       )}
                       
                       {/* Available Moves Table */}
-                      {availableMoves[idx] && availableMoves[idx].length > 0 && (
+                      {availableMoves[idx] && availableMoves[idx].length > 0 && slot.moves.length < 4 && (
                         <div className="space-y-2">
-                          <div className="text-xs text-muted font-medium">Available moves:</div>
-                          <div className="overflow-x-auto rounded-lg border border-gray-200 w-full">
+                          <div className="flex items-center justify-between">
+                            <div className="text-xs text-muted font-medium">
+                              Available moves ({availableMoves[idx].filter(move => !slot.moves.some(slotMove => slotMove.name === move.name)).filter(move => {
+                                if (levelMovesOnly) {
+                                  return move.learn_method === 'level-up' && move.level_learned_at && move.level_learned_at <= slot.level
+                                }
+                                return true
+                              }).length}):
+                              {availableMoves[idx].filter(move => !slot.moves.some(slotMove => slotMove.name === move.name)).length > 20 && (
+                                <span className="ml-2 text-blue-600">• Scroll to see all moves</span>
+                              )}
+                            </div>
+                            <label className="flex items-center gap-2 text-xs text-muted cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={levelMovesOnly}
+                                onChange={(e) => setLevelMovesOnly(e.target.checked)}
+                                className="rounded border-gray-300"
+                              />
+                              Level moves only
+                            </label>
+                          </div>
+                          <div className="overflow-x-auto rounded-lg border border-gray-200 w-full max-h-80 overflow-y-auto">
                             <table className="w-full text-xs min-w-max">
                               <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
                                 <tr className="[&>th]:px-2 [&>th]:py-1 text-left text-muted">
-                                  <th>Move</th><th>Type</th><th>Cat.</th><th>Power</th><th>Acc.</th><th>PP</th><th>Lvl</th><th></th>
+                                  <th>Move</th><th>Type</th><th>Cat.</th><th>Power</th><th>Acc.</th><th>PP</th><th>Lvl</th><th>Method</th><th></th>
                                 </tr>
                               </thead>
                               <tbody>
                                 {availableMoves[idx]
                                   .filter(move => !slot.moves.some(slotMove => slotMove.name === move.name))
+                                  .filter(move => {
+                                    if (levelMovesOnly) {
+                                      // Only show level-up moves that are actually available at this level
+                                      return move.learn_method === 'level-up' && move.level_learned_at && move.level_learned_at <= slot.level
+                                    }
+                                    // Show all moves when filter is off
+                                    return true
+                                  })
                                   .sort((a, b) => {
-                                    // Sort by level learned (ascending), with null values at the end
+                                    // Sort by learning method priority: level-up, machine, egg, tutor
+                                    const methodPriority = { 'level-up': 1, 'machine': 2, 'egg': 3, 'tutor': 4, 'unknown': 5 }
+                                    const aMethodPriority = methodPriority[a.learn_method as keyof typeof methodPriority] || 5
+                                    const bMethodPriority = methodPriority[b.learn_method as keyof typeof methodPriority] || 5
+                                    
+                                    if (aMethodPriority !== bMethodPriority) {
+                                      return aMethodPriority - bMethodPriority
+                                    }
+                                    
+                                    // If same method, sort by level learned (ascending), with null values at the end
                                     const aLevel = a.level_learned_at ?? 999
                                     const bLevel = b.level_learned_at ?? 999
-                                    return aLevel - bLevel
+                                    if (aLevel !== bLevel) {
+                                      return aLevel - bLevel
+                                    }
+                                    
+                                    // If same level, sort by power (higher power first)
+                                    const aPower = a.power ?? 0
+                                    const bPower = b.power ?? 0
+                                    return bPower - aPower
                                   })
-                                  .slice(0, 15)
                                   .map((move) => (
-                                    <tr key={move.name} className="[&>td]:px-2 [&>td]:py-1 border-b border-gray-100 hover:bg-gray-50">
+                                    <tr 
+                                      key={move.name} 
+                                      className="[&>td]:px-2 [&>td]:py-1 border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+                                      onClick={() => toggleMove(idx, move)}
+                                      title={slot.moves.length >= 4 ? 'Maximum 4 moves reached' : 'Click to add move'}
+                                    >
                                       <td className="font-medium capitalize text-text">
                                         {move.short_effect ? (
-                                          <Tooltip content={move.short_effect} maxWidth="w-80" variant="move" type={move.type}>
+                                          <Tooltip content={move.short_effect} maxWidth="w-80" variant="move" type={move.type} position="top">
                                             <span className="cursor-help">
                                               {move.name}
                                             </span>
@@ -1014,11 +1089,25 @@ export default function TeamBuilderPage() {
                                       <td>{move.accuracy ?? '—'}</td>
                                       <td>{move.pp ?? '—'}</td>
                                       <td>{move.level_learned_at ?? '—'}</td>
+                                      <td className="capitalize text-xs">
+                                        <span className={`px-1 py-0.5 rounded text-xs ${
+                                          move.learn_method === 'level-up' ? 'bg-blue-100 text-blue-800' :
+                                          move.learn_method === 'machine' ? 'bg-purple-100 text-purple-800' :
+                                          move.learn_method === 'egg' ? 'bg-green-100 text-green-800' :
+                                          move.learn_method === 'tutor' ? 'bg-orange-100 text-orange-800' :
+                                          'bg-gray-100 text-gray-800'
+                                        }`}>
+                                          {move.learn_method}
+                                        </span>
+                                      </td>
                                       <td>
                                         <button
-                                          onClick={() => toggleMove(idx, move)}
+                                          onClick={(e) => {
+                                            e.stopPropagation()
+                                            toggleMove(idx, move)
+                                          }}
                                           disabled={slot.moves.length >= 4}
-                                          className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:cursor-not-allowed"
+                                          className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
                                           title={slot.moves.length >= 4 ? 'Maximum 4 moves reached' : 'Add move'}
                                         >
                                           +
@@ -1026,6 +1115,10 @@ export default function TeamBuilderPage() {
                                       </td>
                                     </tr>
                                   ))}
+                                {/* Spacer row for better bottom spacing */}
+                                <tr>
+                                  <td colSpan={9} className="h-4"></td>
+                                </tr>
                               </tbody>
                             </table>
                           </div>
@@ -1066,7 +1159,10 @@ export default function TeamBuilderPage() {
                     Sign in to sync your teams across devices
                   </p>
                   <button
-                    onClick={() => setShowAuthModal(true)}
+                    onClick={() => {
+                      console.log('Auth button clicked, setting showAuthModal to true');
+                      setShowAuthModal(true);
+                    }}
                     className="inline-flex items-center gap-2 px-4 py-2 text-sm text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors"
                   >
                     <Wifi className="h-4 w-4" />

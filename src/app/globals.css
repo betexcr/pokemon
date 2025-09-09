@@ -18,15 +18,40 @@
 html, body { 
   height: 100%; 
   width: 100%;
-  /* Subtle vertical gradient background (light mode) */
-  background: linear-gradient(to bottom, #f8fafc 0%, #e6f0ff 100%);
-  background-repeat: no-repeat;
-  background-size: 100% 100%;
+  overflow: auto;
+  /* Reserve space for vertical scrollbar to prevent layout shift */
+  scrollbar-gutter: stable;
+  /* White background for light mode */
+  background: #ffffff;
+  /* Ensure no default browser spacing adds bottom gaps */
+  margin: 0;
+  padding: 0;
 }
 
 /* Global text color enforcement - only for text elements, not buttons */
 body {
   color: var(--color-text) !important;
+}
+
+/* Primary color utility classes */
+.bg-primary {
+  background-color: var(--color-primary);
+}
+
+.text-primary {
+  color: var(--color-primary);
+}
+
+.border-primary {
+  border-color: var(--color-primary);
+}
+
+.hover\:bg-primary\/90:hover {
+  background-color: color-mix(in srgb, var(--color-primary) 90%, transparent);
+}
+
+.focus\:ring-primary:focus {
+  --tw-ring-color: var(--color-primary);
 }
 
 /* Ensure text elements inherit the correct color, but preserve button styling */
@@ -46,6 +71,17 @@ h1, h2, h3, h4, h5, h6, p, span, div, label {
   scrollbar-color: var(--color-border) transparent;
 }
 
+/* Prevent layout shift when internal scrollbars appear */
+.scroll-stable {
+  /* Keep vertical gutter stable without adding left gutter space */
+  scrollbar-gutter: stable;
+}
+
+/* Prevent sidebar width jumps when inner scrollbars appear */
+.sidebar-stable {
+  scrollbar-gutter: stable both-edges;
+}
+
 .overflow-y-auto::-webkit-scrollbar {
   width: 8px;
 }
@@ -63,13 +99,16 @@ h1, h2, h3, h4, h5, h6, p, span, div, label {
   background-color: var(--color-muted);
 }
 
-/* Main PokéDex page styling - fixed background with contained scrolling */
+/* Mobile menu scrolling improvements */
+.mobile-menu-scroll {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+}
+
+/* Main PokéDex page styling - fixed background with natural scrolling */
 body.pokedex-main-page {
-  /* Fixed background, no body scrolling */
-  overflow: hidden;
-  /* Hide scrollbar but keep scroll functionality */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* Internet Explorer 10+ */
+  /* Fixed background, allow natural scrolling */
   background-attachment: fixed;
   color: var(--color-text); 
   font-size: 16px;
@@ -77,6 +116,18 @@ body.pokedex-main-page {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  /* Lock body scroll; use internal containers for scrolling */
+  overflow: hidden !important;
+  overflow-y: hidden !important;
+  overflow-x: hidden !important;
+  scrollbar-gutter: auto !important;
+}
+
+/* Ensure Next.js root does not scroll on main Pokédex page */
+body.pokedex-main-page #__next {
+  height: 100vh !important;
+  max-height: 100vh !important;
+  overflow: hidden !important;
 }
 
 /* Allow internal scroll containers to work properly on main page */
@@ -89,15 +140,57 @@ body.pokedex-main-page .overflow-y-auto {
 body.pokedex-main-page .flex-1.min-h-0.overflow-y-auto {
   overflow-y: auto !important;
   -webkit-overflow-scrolling: touch;
-  height: calc(100vh - 6rem) !important; /* Balanced height for proper scrolling */
-  max-height: calc(100vh - 6rem) !important;
-  min-height: calc(100vh - 6rem) !important; /* Ensure minimum height for overflow */
+  /* Let flexbox determine height based on siblings (header + ribbon) */
+  height: auto !important;
+  max-height: none !important;
+  min-height: 0 !important;
+  padding-bottom: 0 !important;
+  overscroll-behavior: contain;
+}
+
+/* Remove any residual bottom spacing inside main scroll area */
+body.pokedex-main-page .flex-1.min-h-0.overflow-y-auto > div {
+  padding-bottom: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* Ensure Pokémon grid items stretch to fill row height */
+body.pokedex-main-page [data-pokemon-grid] {
+  align-items: stretch !important;
+}
+body.pokedex-main-page [data-pokemon-grid] > * {
+  height: 100% !important;
+}
+
+/* Hide internal scrollbar track on WebKit in main list container */
+body.pokedex-main-page .flex-1.min-h-0.overflow-y-auto::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+}
+
+/* Ensure all overflow-y-auto elements have proper scrolling */
+.overflow-y-auto {
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Ensure sidebar fits within viewport */
 body.pokedex-main-page .h-screen {
   height: calc(100vh - 5rem) !important; /* Balanced height for proper scrolling */
   max-height: calc(100vh - 5rem) !important;
+}
+
+/* Ensure root container can truly fill the viewport when needed */
+/* Stronger override so the main app wrapper fills the viewport */
+.root-full {
+  height: 100vh !important;
+  min-height: 100vh !important;
+  max-height: 100vh !important;
+}
+body.pokedex-main-page .root-full {
+  height: 100vh !important;
+  min-height: 100vh !important;
+  max-height: 100vh !important;
 }
 
 /* Ensure sidebar content can scroll properly */
@@ -133,9 +226,10 @@ body.pokedex-main-page .h-screen .flex-shrink-0 .overflow-y-auto {
 
 @media (min-width: 1024px) {
   body.pokedex-main-page .flex-1.min-h-0.overflow-y-auto {
-    height: calc(100vh - 7rem) !important; /* Balanced height for proper scrolling */
-    max-height: calc(100vh - 7rem) !important;
-    min-height: calc(100vh - 7rem) !important; /* Ensure minimum height for overflow */
+    /* Maintain natural flex sizing on desktop as well */
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
   }
   
   body.pokedex-main-page .h-screen {
@@ -150,12 +244,31 @@ body::-webkit-scrollbar {
   display: none;
 }
 
-/* Dark mode gradient */
+/* When on the Pokédex main page, hide the root scrollbar entirely */
+html.pokedex-root {
+  overflow: hidden !important;
+  overflow-y: hidden !important;
+  overflow-x: hidden !important;
+  scrollbar-gutter: auto !important;
+}
+html.pokedex-root::-webkit-scrollbar {
+  display: none !important;
+}
+
+/* Aggressively hide all descendant scrollbars on the main Pokédex page while keeping scroll functionality */
+body.pokedex-main-page * {
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE/Edge legacy */
+}
+body.pokedex-main-page *::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important; /* WebKit */
+}
+
+/* Dark mode background */
 html.dark body {
-  background: linear-gradient(to bottom, #0f172a 0%, #1e293b 100%);
-  background-repeat: no-repeat;
-  background-size: 100% 100%;
-  background-attachment: fixed;
+  background: #0f172a;
 }
 
 /* Prevent horizontal overflow on all elements */
@@ -166,24 +279,28 @@ html.dark body {
 
 /* Optional: Pokéball pattern overlay (enable by adding class="pokeball-bg" to body) */
 body.pokeball-bg {
+  /* Pattern + subtle light gradient + base */
   background:
     url('/Pokeball.svg') repeat,
-    linear-gradient(to bottom, #f8fafc 0%, #e6f0ff 100%);
-  background-repeat: repeat, no-repeat;
-  background-size: 120px 120px, 100% 100%;
-  background-attachment: scroll, fixed;
-  background-blend-mode: overlay, normal;
+    radial-gradient(1200px 800px at 15% 10%, #f3f6ff 0%, rgba(243,246,255,0) 60%),
+    linear-gradient(180deg, #ffffff 0%, #f6f8fc 100%);
+  background-repeat: repeat, no-repeat, no-repeat;
+  background-size: 120px 120px, 120% 120%, 100% 100%;
+  background-attachment: scroll, fixed, fixed;
+  background-blend-mode: overlay, normal, normal;
 }
 
 /* Dark mode variant of the pattern */
 html.dark body.pokeball-bg {
+  /* Pattern + subtle dark gradient + base */
   background:
     url('/Pokeball.svg') repeat,
-    linear-gradient(to bottom, #0f172a 0%, #1e293b 100%);
-  background-repeat: repeat, no-repeat;
-  background-size: 120px 120px, 100% 100%;
-  background-attachment: scroll, fixed;
-  background-blend-mode: overlay, normal;
+    radial-gradient(1100px 700px at 20% 15%, rgba(59,76,202,0.18) 0%, rgba(59,76,202,0) 55%),
+    linear-gradient(180deg, #0f172a 0%, #0b1222 100%);
+  background-repeat: repeat, no-repeat, no-repeat;
+  background-size: 120px 120px, 120% 120%, 100% 100%;
+  background-attachment: scroll, fixed, fixed;
+  background-blend-mode: overlay, normal, normal;
 }
 
 /* Focus states for accessibility */
@@ -270,30 +387,108 @@ section { padding-top: 1rem; padding-bottom: 1rem; }
   display: none;  /* Safari and Chrome */
 }
 
-/* Card artwork height presets */
-.art-ultra-grid { height: 120px; }
-@media (min-width: 640px) { .art-ultra-grid { height: 128px; } }
-@media (min-width: 768px) { .art-ultra-grid { height: 136px; } }
+/* Card artwork height presets - Aspect ratio constraints to prevent height > width */
+.art-ultra-grid { 
+  aspect-ratio: 1 / 1; 
+  max-height: 136px; 
+  width: 100%; 
+  height: auto;
+}
+.art-ultra-list { 
+  aspect-ratio: 1 / 1; 
+  max-height: 176px; 
+  width: 100%; 
+  height: auto;
+}
+.art-compact-grid { 
+  aspect-ratio: 1 / 1; 
+  max-height: 196px; 
+  width: 100%; 
+  height: auto;
+}
+.art-compact-list { 
+  aspect-ratio: 1 / 1; 
+  max-height: 208px; 
+  width: 100%; 
+  height: auto;
+}
+.art-cozy-grid { 
+  aspect-ratio: 1 / 1; 
+  max-height: 212px; 
+  width: 100%; 
+  height: auto;
+}
+.art-cozy-list { 
+  aspect-ratio: 1 / 1; 
+  max-height: 228px; 
+  width: 100%; 
+  height: auto;
+}
 
-.art-ultra-list { height: 160px; }
-@media (min-width: 640px) { .art-ultra-list { height: 168px; } }
-@media (min-width: 768px) { .art-ultra-list { height: 176px; } }
+/* Ensure Pokemon cards never exceed square aspect ratio */
+[data-pokemon-grid] .aspect-\[4\/5\] {
+  aspect-ratio: 4 / 5 !important;
+  max-height: 100%;
+  width: 100%;
+  height: auto;
+}
 
-.art-compact-grid { height: 168px; }
-@media (min-width: 640px) { .art-compact-grid { height: 184px; } }
-@media (min-width: 768px) { .art-compact-grid { height: 196px; } }
+/* Additional constraint for very narrow viewports */
+@media (max-width: 480px) {
+  [data-pokemon-grid] .aspect-\[4\/5\] {
+    aspect-ratio: 1 / 1 !important; /* Force square on very small screens */
+  }
+}
 
-.art-compact-list { height: 188px; }
-@media (min-width: 640px) { .art-compact-list { height: 200px; } }
-@media (min-width: 768px) { .art-compact-list { height: 208px; } }
+/* Container query: tiny card mode when card width < 105px */
+.cq-card { 
+  container-type: inline-size; 
+}
 
-.art-cozy-grid { height: 184px; }
-@media (min-width: 640px) { .art-cozy-grid { height: 200px; } }
-@media (min-width: 768px) { .art-cozy-grid { height: 212px; } }
+/* Hide only the name when card width < 175px */
+@container (max-width: 175px) {
+  .cq-card .card-name { display: none; }
+}
 
-.art-cozy-list { height: 204px; }
-@media (min-width: 640px) { .art-cozy-list { height: 216px; } }
-@media (min-width: 768px) { .art-cozy-list { height: 228px; } }
+@container (max-width: 105px) {
+  /* Keep header so number can show; hide controls inside */
+  .cq-card .card-header { 
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+    right: auto; 
+    bottom: auto; 
+    display: block; 
+    margin: 0; 
+    padding: 0; 
+    background: transparent; 
+  }
+  .cq-card .card-header button { display: none; }
+  .cq-card .card-info { display: none; }
+  .cq-card .card-control { display: none; }
+  .cq-card .card-name { display: none; }
+  .cq-card .card-badges { display: none; }
+  .cq-card .card-art { 
+    aspect-ratio: 1 / 1 !important; 
+    max-height: none; 
+    margin-bottom: 0; 
+  }
+  .cq-card .card-art img { 
+    object-fit: contain; 
+  }
+  /* Overlay the number at top-left inside art area */
+  .cq-card .card-number { 
+    position: absolute; 
+    top: 6px; 
+    left: 6px; 
+    z-index: 2; 
+    background: rgba(255,255,255,0.8); 
+    padding: 2px 4px; 
+    border-radius: 6px; 
+    font-size: 10px; 
+    line-height: 1; 
+  }
+}
 
 /* Battle sprite animations */
 @keyframes slide-in-left {
@@ -344,3 +539,407 @@ section { padding-top: 1rem; padding-bottom: 1rem; }
 .animate-faint-down {
   animation: faint-down 1.2s ease-in forwards;
 }
+
+/* Poké Ball to Sprite transformation animations */
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes scale-in {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes pokeball-to-sprite {
+  0% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.8) rotate(180deg);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1) rotate(360deg);
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.6s ease-out;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.animate-pokeball-to-sprite {
+  animation: pokeball-to-sprite 1s ease-in-out;
+}
+
+/* Pokéball Release Animation - Enhanced version for Pokémon sprites */
+.party { 
+  display: flex; 
+  gap: 14px; 
+  align-items: center; 
+}
+
+.ball {
+  --size: 10px;              /* 50% of original 20px size */
+  position: relative;
+  list-style: none;
+}
+
+/* base image motion (shake -> tilt "open") - only when animating */
+.ball.animate img {
+  width: 100%; 
+  height: 100%; 
+  display: block;
+  transform-origin: 50% 58%;
+  animation: shake .45s ease-in var(--delay) 1,
+           tiltOpen .9s cubic-bezier(.2,.7,.2,1) calc(var(--delay) + .45s) forwards,
+           dim .6s linear calc(var(--delay) + 1.05s) forwards;
+  filter: saturate(1.1);
+}
+
+/* Static ball styling */
+.ball img {
+  width: 100%; 
+  height: 100%; 
+  display: block;
+  filter: saturate(1.1);
+}
+
+/* light band sweeping upward (hinge line) - only when animating */
+.ball.animate::before {
+  content: "";
+  position: absolute; 
+  inset: -35% -35%;
+  background:
+    radial-gradient(circle at 50% 56%, rgba(255,255,255,.95), rgba(255,255,255,0) 42%),
+    linear-gradient(to bottom, rgba(255,255,255,0) 48%, rgba(255,255,255,.28) 50%, rgba(255,255,255,0) 52%);
+  mix-blend-mode: screen;
+  opacity: 0;
+  transform: translateY(0) scaleY(.3);
+  animation: band .9s ease-out calc(var(--delay) + .55s) forwards;
+  pointer-events: none;
+}
+
+/* brief release flash - only when animating */
+.ball.animate::after {
+  content: "";
+  position: absolute; 
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,.95), rgba(255,255,255,0) 55%);
+  mix-blend-mode: screen;
+  transform: scale(.2);
+  opacity: 0;
+  animation: burst .55s ease-out calc(var(--delay) + .65s) forwards;
+  pointer-events: none;
+}
+
+/* stagger the six balls */
+.ball:nth-child(1) { --delay: 0s;    }
+.ball:nth-child(2) { --delay: .12s;  }
+.ball:nth-child(3) { --delay: .24s;  }
+.ball:nth-child(4) { --delay: .36s;  }
+.ball:nth-child(5) { --delay: .48s;  }
+.ball:nth-child(6) { --delay: .60s;  }
+
+/* keyframes */
+@keyframes shake {
+  0%, 100% { transform: translate(0,0) rotate(0); }
+  20% { transform: translate(-1px,1px) rotate(-2deg); }
+  40% { transform: translate(1px,-1px) rotate(2deg); }
+  60% { transform: translate(-1px,0) rotate(-1.5deg); }
+  80% { transform: translate(1px,0) rotate(1.5deg); }
+}
+
+@keyframes tiltOpen {
+  0% { transform: perspective(300px) rotateX(0) translateY(0) scale(1); }
+  50% { transform: perspective(300px) rotateX(22deg) translateY(-2px) scale(.99); }
+  100% { transform: perspective(300px) rotateX(35deg) translateY(-4px) scale(.985); }
+}
+
+@keyframes band {
+  0%   { opacity: 0; transform: translateY(0) scaleY(.3); }
+  30%  { opacity: .9; transform: translateY(-6px) scaleY(1); }
+  100% { opacity: 0; transform: translateY(-12px) scaleY(.6); }
+}
+
+@keyframes burst {
+  0%   { opacity: 0; transform: scale(.2); }
+  20%  { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(2.3); }
+}
+
+/* slightly "empty" look after opening */
+@keyframes dim {
+  to { filter: saturate(.7) brightness(.92); opacity: .9; }
+}
+
+/* Reset animation state for re-triggering */
+.ball.reset img {
+  animation: none;
+  filter: saturate(1.1);
+  transform: none;
+}
+
+.ball.reset::before,
+.ball.reset::after {
+  animation: none;
+  opacity: 0;
+  transform: none;
+}
+
+/* PokéDex Toolbar Styles */
+.pk-toolbar {
+  display: flex;
+  gap: 1rem;                  /* spacing between icons */
+  justify-content: center;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  flex-direction: row;
+  flex-wrap: nowrap;
+}
+
+/* Container button */
+.pk-btn {
+  width: 72px;                /* adjust size as needed */
+  height: 72px;
+  background: radial-gradient(circle at 30% 30%, #ffffff 0%, #e6e6e6 100%);
+  border: 1.5px solid #222;
+  border-radius: 50%;         /* circular container */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Profile button - same characteristics as pk-btn but without container */
+.pk-btn-profile {
+  width: 72px;                /* same size as other buttons */
+  height: 72px;
+  background: radial-gradient(circle at 30% 30%, #ffffff 0%, #e6e6e6 100%);
+  border: 1.5px solid #222;
+  border-radius: 50%;         /* circular button */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  padding: 0;                 /* no padding since content fills the button */
+  overflow: hidden;           /* ensure content doesn't overflow */
+}
+
+/* Hover/active feel like game UI */
+.pk-btn:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+}
+
+.pk-btn:active {
+  transform: scale(0.95);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.pk-btn-profile:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+}
+
+.pk-btn-profile:active {
+  transform: scale(0.95);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+/* Icon inside container */
+.pk-btn img {
+  width: 75%;                /* increased from 65% for better containment */
+  height: auto;
+  pointer-events: none;       /* prevent image from catching clicks */
+  border-radius: 50%;         /* ensure icons are properly rounded */
+  object-fit: contain;        /* maintain aspect ratio */
+  transform: scale(1.1);      /* add slight zoom for better visibility */
+  transition: transform 0.2s ease; /* smooth transition for hover effects */
+}
+
+/* Specific styling for hamburger menu icon to ensure consistency */
+.pk-btn img[src*="hamburger-menu"] {
+  border-radius: 50%;         /* force circular shape */
+  background: transparent;    /* ensure no background interference */
+  width: 75% !important;      /* increased from 65% for consistency */
+  height: 75% !important;     /* maintain consistent height */
+  object-fit: contain;        /* maintain aspect ratio */
+  transform: scale(1.1);      /* add slight zoom for better visibility */
+  transition: transform 0.2s ease; /* smooth transition for hover effects */
+}
+
+/* Profile picture styling within pk-btn */
+.pk-btn img.rounded-full {
+  width: 70% !important;      /* match other icons */
+  height: 70% !important;     /* maintain circular shape */
+  object-fit: cover;          /* ensure proper image fitting */
+  border-radius: 50%;         /* ensure circular shape */
+  aspect-ratio: 1;            /* ensure perfect circle */
+}
+
+.pk-btn > div.rounded-full {
+  width: 70% !important;      /* slightly larger for better fit */
+  height: 70% !important;     /* maintain circular shape */
+  font-size: 0.875rem;        /* slightly larger text for better visibility */
+  border-radius: 50%;         /* ensure circular shape */
+  display: flex;              /* ensure proper centering */
+  align-items: center;        /* center vertically */
+  justify-content: center;    /* center horizontally */
+  min-width: 0;               /* prevent width issues */
+  min-height: 0;              /* prevent height issues */
+  aspect-ratio: 1;            /* ensure perfect circle */
+}
+
+/* Dark mode variant for toolbar buttons */
+html.dark .pk-btn {
+  background: radial-gradient(circle at 30% 30%, #374151 0%, #1f2937 100%);
+  border: 1.5px solid #6b7280;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+html.dark .pk-btn:hover {
+  box-shadow: 0 6px 16px rgba(0,0,0,0.5);
+}
+
+html.dark .pk-btn:active {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+html.dark .pk-btn-profile {
+  background: radial-gradient(circle at 30% 30%, #374151 0%, #1f2937 100%);
+  border: 1.5px solid #6b7280;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+html.dark .pk-btn-profile:hover {
+  box-shadow: 0 6px 16px rgba(0,0,0,0.5);
+}
+
+html.dark .pk-btn-profile:active {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+/* Responsive adjustments for mobile */
+@media (max-width: 768px) {
+  .pk-toolbar {
+    gap: 0.5rem;
+    padding: 0.25rem;
+    flex-wrap: nowrap;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+  
+  .pk-btn {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+  }
+  
+  .pk-btn-profile {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .pk-toolbar {
+    gap: 0.375rem;
+    padding: 0.125rem;
+    justify-content: space-between;
+    flex-direction: row;
+    flex-wrap: nowrap;
+  }
+  
+  .pk-btn {
+    width: 44px;
+    height: 44px;
+  }
+  
+  .pk-btn-profile {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* Ensure mobile header buttons are properly sized and visible */
+@media (max-width: 768px) {
+  .pk-btn {
+    min-width: 44px;
+    min-height: 44px;
+    max-width: 48px;
+    max-height: 48px;
+  }
+  
+  .pk-btn-profile {
+    min-width: 44px;
+    min-height: 44px;
+    max-width: 48px;
+    max-height: 48px;
+  }
+  
+  /* Mobile-specific profile button improvements */
+  .pk-btn > div.rounded-full {
+    font-size: 0.75rem;        /* slightly smaller text on mobile */
+  }
+  
+  .pk-btn img.rounded-full {
+    width: 80% !important;     /* slightly larger on mobile for better visibility */
+    height: 80% !important;
+    transform: scale(1.1);      /* add slight zoom for better visibility */
+    transition: transform 0.2s ease; /* smooth transition for hover effects */
+  }
+}
+
+/* Ensure consistent control height across inputs and selects */
+@layer base {
+  :root {
+    --control-height: 40px; /* Matches ~px-3 py-2 button height */
+  }
+  input[type="text"],
+  input[type="search"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  select {
+    height: var(--control-height);
+    padding-top: 0.5rem;  /* match button vertical padding */
+    padding-bottom: 0.5rem;
+  }
+}
+
+/* Opt-out: preserve original control size for specific controls */
+.control-keep {
+  height: auto !important;
+  min-height: 0 !important;
+}
+
+
