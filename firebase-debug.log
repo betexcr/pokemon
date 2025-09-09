@@ -1,0 +1,50 @@
+[debug] [2025-09-09T02:30:58.787Z] ----------------------------------------------------------------------
+[debug] [2025-09-09T02:30:58.793Z] Command:       /Users/albertomunoz/.nvm/versions/node/v20.19.2/bin/node /Users/albertomunoz/.nvm/versions/node/v20.19.2/bin/firebase deploy --only firestore:rules --force
+[debug] [2025-09-09T02:30:58.793Z] CLI Version:   14.15.2
+[debug] [2025-09-09T02:30:58.793Z] Platform:      darwin
+[debug] [2025-09-09T02:30:58.793Z] Node Version:  v20.19.2
+[debug] [2025-09-09T02:30:58.793Z] Time:          Mon Sep 08 2025 20:30:58 GMT-0600 (Central Standard Time)
+[debug] [2025-09-09T02:30:58.793Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-09-09T02:30:58.899Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-09-09T02:30:58.899Z] > authorizing via signed-in user (albmunmu@gmail.com)
+[debug] [2025-09-09T02:30:58.899Z] [iam] checking project pokemon-battles-86a0d for permissions ["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]
+[debug] [2025-09-09T02:30:58.900Z] Checked if tokens are valid: false, expires at: 1757383446731
+[debug] [2025-09-09T02:30:58.900Z] Checked if tokens are valid: false, expires at: 1757383446731
+[debug] [2025-09-09T02:30:58.900Z] > refreshing access token with scopes: []
+[debug] [2025-09-09T02:30:58.901Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-09-09T02:30:58.901Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-09-09T02:30:59.464Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-09-09T02:30:59.464Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-09-09T02:30:59.475Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/pokemon-battles-86a0d:testIamPermissions [none]
+[debug] [2025-09-09T02:30:59.475Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/pokemon-battles-86a0d:testIamPermissions x-goog-quota-user=projects/pokemon-battles-86a0d
+[debug] [2025-09-09T02:30:59.476Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/pokemon-battles-86a0d:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]}
+[debug] [2025-09-09T02:31:00.011Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/pokemon-battles-86a0d:testIamPermissions 200
+[debug] [2025-09-09T02:31:00.011Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/pokemon-battles-86a0d:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]}
+[info] 
+[info] === Deploying to 'pokemon-battles-86a0d'...
+[info] 
+[info] i  deploying firestore 
+[info] i  firestore: reading indexes from firestore.indexes.json... 
+[info] i  cloud.firestore: checking firestore.rules for compilation errors... 
+[debug] [2025-09-09T02:31:00.015Z] Checked if tokens are valid: true, expires at: 1757388658464
+[debug] [2025-09-09T02:31:00.015Z] Checked if tokens are valid: true, expires at: 1757388658464
+[debug] [2025-09-09T02:31:00.017Z] >>> [apiv2][query] POST https://firebaserules.googleapis.com/v1/projects/pokemon-battles-86a0d:test [none]
+[debug] [2025-09-09T02:31:00.017Z] >>> [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/pokemon-battles-86a0d:test [omitted]
+[debug] [2025-09-09T02:31:00.760Z] <<< [apiv2][status] POST https://firebaserules.googleapis.com/v1/projects/pokemon-battles-86a0d:test 200
+[debug] [2025-09-09T02:31:00.761Z] <<< [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/pokemon-battles-86a0d:test {"issues":[{"sourcePosition":{"fileName":"firestore.rules","line":15,"column":14,"currentOffset":315,"endOffset":331},"description":"Unused function: isValidBattleData.","severity":"WARNING"},{"sourcePosition":{"fileName":"firestore.rules","line":16,"column":14,"currentOffset":350,"endOffset":356},"description":"Invalid variable name: request.","severity":"WARNING"},{"sourcePosition":{"fileName":"firestore.rules","line":17,"column":14,"currentOffset":496,"endOffset":502},"description":"Invalid variable name: request.","severity":"WARNING"},{"sourcePosition":{"fileName":"firestore.rules","line":18,"column":14,"currentOffset":551,"endOffset":557},"description":"Invalid variable name: request.","severity":"WARNING"},{"sourcePosition":{"fileName":"firestore.rules","line":19,"column":14,"currentOffset":606,"endOffset":612},"description":"Invalid variable name: request.","severity":"WARNING"},{"sourcePosition":{"fileName":"firestore.rules","line":20,"column":14,"currentOffset":663,"endOffset":669},"description":"Invalid variable name: request.","severity":"WARNING"},{"sourcePosition":{"fileName":"firestore.rules","line":21,"column":14,"currentOffset":719,"endOffset":725},"description":"Invalid variable name: request.","severity":"WARNING"},{"sourcePosition":{"fileName":"firestore.rules","line":22,"column":14,"currentOffset":777,"endOffset":783},"description":"Invalid variable name: request.","severity":"WARNING"},{"sourcePosition":{"fileName":"firestore.rules","line":23,"column":14,"currentOffset":873,"endOffset":879},"description":"Invalid variable name: request.","severity":"WARNING"},{"sourcePosition":{"fileName":"firestore.rules","line":24,"column":14,"currentOffset":934,"endOffset":940},"description":"Invalid variable name: request.","severity":"WARNING"}]}
+[warn] ⚠  [W] 15:14 - Unused function: isValidBattleData. 
+[warn] ⚠  [W] 16:14 - Invalid variable name: request. 
+[warn] ⚠  [W] 17:14 - Invalid variable name: request. 
+[warn] ⚠  [W] 18:14 - Invalid variable name: request. 
+[warn] ⚠  [W] 19:14 - Invalid variable name: request. 
+[warn] ⚠  [W] 20:14 - Invalid variable name: request. 
+[warn] ⚠  [W] 21:14 - Invalid variable name: request. 
+[warn] ⚠  [W] 22:14 - Invalid variable name: request. 
+[warn] ⚠  [W] 23:14 - Invalid variable name: request. 
+[warn] ⚠  [W] 24:14 - Invalid variable name: request. 
+[info] ✔  cloud.firestore: rules file firestore.rules compiled successfully 
+[debug] [2025-09-09T02:31:00.762Z] Checked if tokens are valid: true, expires at: 1757388658464
+[debug] [2025-09-09T02:31:00.762Z] Checked if tokens are valid: true, expires at: 1757388658464
+[debug] [2025-09-09T02:31:00.763Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/pokemon-battles-86a0d/databases/(default) [none]
+[debug] [2025-09-09T02:31:01.634Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/pokemon-battles-86a0d/databases/(default) 200
