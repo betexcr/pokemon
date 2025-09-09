@@ -88,27 +88,8 @@ service cloud.firestore {
     
     // Battles collection
     match /battles/{battleId} {
-      // Allow reads to participants (host or guest) OR users active in the linked room
-      // Also allow unauthenticated access for guests
-      allow read: if isAuthenticated() && (
-        request.auth.uid == resource.data.hostId ||
-        request.auth.uid == resource.data.guestId ||
-        (
-          resource.data.roomId is string &&
-          get(/databases/$(database)/documents/battle_rooms/$(resource.data.roomId)).data.activeUsers != null &&
-          request.auth.uid in get(/databases/$(database)/documents/battle_rooms/$(resource.data.roomId)).data.activeUsers
-        ) || (
-          // Also allow users who are the room's host or guest (even if activeUsers not updated yet)
-          resource.data.roomId is string && (
-            request.auth.uid == get(/databases/$(database)/documents/battle_rooms/$(resource.data.roomId)).data.hostId ||
-            request.auth.uid == get(/databases/$(database)/documents/battle_rooms/$(resource.data.roomId)).data.guestId
-          )
-        )
-      ) || (
-        // Allow unauthenticated access for guests (they can read battle data if they know the battleId)
-        resource.data.roomId is string &&
-        get(/databases/$(database)/documents/battle_rooms/$(resource.data.roomId)).data != null
-      );
+      // Allow anyone to read battles (for guest access)
+      allow read: if true;
 
       // Host can create a battle; guestId may be null initially
       allow create: if isAuthenticated() &&

@@ -34,22 +34,6 @@ export default function PokemonDetailClient({ pokemon, error }: PokemonDetailCli
     // Theme provider not available, use default
   }
 
-  if (error || !pokemon) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-bg">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">{error || 'Pokémon not found'}</p>
-          <button 
-            onClick={() => router.push('/')}
-            className="px-4 py-2 bg-poke-blue text-white rounded-lg hover:bg-poke-blue/90"
-          >
-            Back to Pokédex
-          </button>
-        </div>
-      </div>
-    )
-  }
-
   // Load evolution chain once on mount
   useEffect(() => {
     let isMounted = true
@@ -111,6 +95,22 @@ export default function PokemonDetailClient({ pokemon, error }: PokemonDetailCli
       { title: 'Immune (0×)', types: immunities, tone: 'immune' }
     ])
   }, [pokemon])
+
+  if (error || !pokemon) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-bg">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error || 'Pokémon not found'}</p>
+          <button 
+            onClick={() => router.push('/')}
+            className="px-4 py-2 bg-poke-blue text-white rounded-lg hover:bg-poke-blue/90"
+          >
+            Back to Pokédex
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-bg">

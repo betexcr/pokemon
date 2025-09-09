@@ -12,9 +12,9 @@ export async function generateStaticParams() {
 }
 
 interface PokemonDetailPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default async function PokemonDetailPage({ params }: PokemonDetailPageProps) {
@@ -22,7 +22,8 @@ export default async function PokemonDetailPage({ params }: PokemonDetailPagePro
   let error: string | null = null
 
   try {
-    pokemon = await getPokemon(Number(params.id))
+    const { id } = await params
+    pokemon = await getPokemon(Number(id))
     } catch (err) {
     error = 'Failed to load Pokémon data'
       console.error(err)
