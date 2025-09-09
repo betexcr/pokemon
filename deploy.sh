@@ -44,6 +44,10 @@ fi
 
 echo "✅ Build completed successfully"
 
+# Deploy Firestore rules first
+echo "🔒 Deploying Firestore rules..."
+firebase deploy --only firestore:rules
+
 # Deploy to Firebase Hosting using Next.js integration
 echo "🌐 Deploying to Firebase Hosting..."
 firebase deploy --only hosting

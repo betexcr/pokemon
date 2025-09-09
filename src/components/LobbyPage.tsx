@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import UserProfile from '@/components/auth/UserProfile';
 import { roomService, type RoomData } from '@/lib/roomService';
+import { cleanupAllRooms } from '@/lib/cleanupRooms';
 
 export default function LobbyPage() {
   const { user } = useAuth();
@@ -12,6 +13,7 @@ export default function LobbyPage() {
   const [rooms, setRooms] = useState<RoomData[]>([]);
   const [loading, setLoading] = useState(true);
   const [creatingRoom, setCreatingRoom] = useState(false);
+  const [cleaningUp, setCleaningUp] = useState(false);
 
   // Load rooms from Firebase
   useEffect(() => {
@@ -41,7 +43,8 @@ export default function LobbyPage() {
       // Create room in Firestore
       const roomId = await roomService.createRoom(
         user.uid,
-        user.displayName || 'Anonymous Trainer'
+        user.displayName || 'Anonymous Trainer',
+        user.photoURL || null
       );
       
       console.log('Created room with ID:', roomId);
@@ -59,6 +62,21 @@ export default function LobbyPage() {
   const joinRoom = (roomId: string) => {
     if (!user) return;
     router.push(`/lobby/${roomId}`);
+  };
+
+  const handleCleanup = async () => {
+    if (!user) return;
+    
+    setCleaningUp(true);
+    try {
+      await cleanupAllRooms();
+      alert('All rooms have been cleaned up successfully!');
+    } catch (error) {
+      console.error('Failed to cleanup rooms:', error);
+      alert('Failed to cleanup rooms. Please try again.');
+    } finally {
+      setCleaningUp(false);
+    }
   };
 
   const formatTimeAgo = (date: Date) => {
@@ -122,23 +140,42 @@ export default function LobbyPage() {
               <h2 className="text-xl font-semibold text-gray-900 mb-2">Create Battle Room</h2>
               <p className="text-gray-600">Start a new battle and invite friends to join</p>
             </div>
-            <button
-              onClick={createRoom}
-              disabled={creatingRoom}
-              className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center space-x-2"
-            >
-              {creatingRoom ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  <span>Creating...</span>
-                </>
-              ) : (
-                <>
-                  <span>+</span>
-                  <span>Create Room</span>
-                </>
-              )}
-            </button>
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={handleCleanup}
+                disabled={cleaningUp}
+                className="bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2 text-sm"
+              >
+                {cleaningUp ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <span>Cleaning...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>🧹</span>
+                    <span>Clean Rooms</span>
+                  </>
+                )}
+              </button>
+              <button
+                onClick={createRoom}
+                disabled={creatingRoom}
+                className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center space-x-2"
+              >
+                {creatingRoom ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <span>Creating...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>+</span>
+                    <span>Create Room</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
 

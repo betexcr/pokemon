@@ -1,11 +1,17 @@
 'use client'
 
 import { useState } from 'react'
-import { Pokemon } from '@/types/pokemon'
 import { formatPokemonName } from '@/lib/utils'
 
+// Minimal shape needed for the radar chart; compatible with full Pokemon
+type RadarPokemon = {
+  id: number
+  name: string
+  stats: Array<{ stat: { name: string }; base_stat: number }>
+}
+
 interface MultiPokemonRadarChartProps {
-  pokemons: Pokemon[]
+  pokemons: RadarPokemon[]
 }
 
 interface Point {
@@ -14,7 +20,7 @@ interface Point {
 }
 
 export default function MultiPokemonRadarChart({ pokemons }: MultiPokemonRadarChartProps) {
-  const [hoveredPokemon, setHoveredPokemon] = useState<Pokemon | null>(null)
+  const [hoveredPokemon, setHoveredPokemon] = useState<RadarPokemon | null>(null)
   const [hoveredStatIndex, setHoveredStatIndex] = useState<number | null>(null)
   const [cursorPos, setCursorPos] = useState<{x:number;y:number}>({x:0,y:0})
 

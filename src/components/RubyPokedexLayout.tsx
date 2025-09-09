@@ -105,7 +105,7 @@ export default function RubyPokedexLayout({
             <select
               value={sortBy}
               onChange={(e)=>setSortBy(e.target.value as typeof sortBy)}
-              className="px-2 py-1 bg-surface border-2 border-border text-white text-sm font-bold"
+              className="px-2 py-1 bg-surface border-2 border-border text-white text-sm font-bold control-keep"
             >
               <option value="id">Number</option>
               <option value="name">Name</option>
@@ -120,7 +120,7 @@ export default function RubyPokedexLayout({
             <button
               onClick={()=>setSortOrder(prev=>prev==='asc'?'desc':'asc')}
               title={`Sort ${sortOrder==='asc'?'Descending':'Ascending'}`}
-              className="px-2 py-1 border-2 border-border text-white text-sm font-bold bg-surface hover:bg-ruby-tab/20 flex items-center gap-2"
+              className="px-2 py-1 border-2 border-border text-white text-sm font-bold bg-surface hover:bg-ruby-tab/20 flex items-center gap-2 control-keep"
             >
               <span>{sortOrder==='asc'?'ASC':'DESC'}</span>
               <span className="inline-block transform" style={{ transform: sortOrder==='asc'?'rotate(0deg)':'rotate(180deg)' }}>▲</span>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { usePathname } from 'next/navigation'
 import { Pokemon, FilterState } from '@/types/pokemon'
 import { getPokemonWithPagination } from '@/lib/api'
@@ -30,8 +30,11 @@ export default function Home() {
       // Only the main PokéDex page should have scroll disabled
       if (window.location.pathname === '/') {
         document.body.classList.add('pokedex-main-page')
+        // Also disable root scrollbars to ensure only component scrollbar is visible
+        document.documentElement.classList.add('pokedex-root')
       } else {
         document.body.classList.remove('pokedex-main-page')
+        document.documentElement.classList.remove('pokedex-root')
       }
     }
     
@@ -39,6 +42,7 @@ export default function Home() {
     return () => {
       if (typeof window !== 'undefined') {
         document.body.classList.remove('pokedex-main-page')
+        document.documentElement.classList.remove('pokedex-root')
       }
     }
   }, [])
@@ -46,14 +50,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   // const [density, setDensity] = useState<'cozy' | 'compact' | 'ultra' | 'list'>('compact')
-  const [loadingMore, setLoadingMore] = useState(false)
-  const [hasMore, setHasMore] = useState(true)
-  const [currentOffset, setCurrentOffset] = useState(0)
-  
-  // Use refs to avoid dependency issues
-  const loadingMoreRef = useRef(false)
-  const hasMoreRef = useRef(true)
-  const currentOffsetRef = useRef(0)
+  // Removed window-based infinite scroll state; Modern layout owns scrolling
 
 
   const [comparisonList, setComparisonList] = useState<number[]>([])
@@ -76,11 +73,7 @@ export default function Home() {
       setError(null)
       const initialPokemon = await getPokemonWithPagination(30, 0)
       setPokemonList(initialPokemon)
-      setCurrentOffset(30)
-      setHasMore(initialPokemon.length === 30)
-      // Update refs
-      currentOffsetRef.current = 30
-      hasMoreRef.current = initialPokemon.length === 30
+      // Pagination state removed; internal scrolling handles further loads
     } catch (err) {
       setError('Failed to load Pokémon data')
       console.error(err)
@@ -97,39 +90,9 @@ export default function Home() {
     }
   }, [])
 
-  // Update refs when state changes
-  useEffect(() => {
-    loadingMoreRef.current = loadingMore
-  }, [loadingMore])
-  
-  useEffect(() => {
-    hasMoreRef.current = hasMore
-  }, [hasMore])
-  
-  useEffect(() => {
-    currentOffsetRef.current = currentOffset
-  }, [currentOffset])
+  // Removed refs/effects for window-based infinite scroll
 
-  // Load more Pokemon function
-  const loadMorePokemon = useCallback(async () => {
-    if (loadingMoreRef.current || !hasMoreRef.current) return
-
-    try {
-      setLoadingMore(true)
-      const morePokemon = await getPokemonWithPagination(30, currentOffsetRef.current)
-      if (morePokemon.length === 0) {
-        setHasMore(false)
-      } else {
-        setPokemonList(prev => [...prev, ...morePokemon])
-        setCurrentOffset(prev => prev + 30)
-        setHasMore(morePokemon.length === 30)
-      }
-    } catch (err) {
-      console.error('Failed to load more Pokémon:', err)
-    } finally {
-      setLoadingMore(false)
-    }
-  }, []) // No dependencies to prevent recreation
+  // Removed window-based load more handler
 
   // Load initial data
   useEffect(() => {
@@ -137,23 +100,7 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // No dependencies to prevent infinite loading
 
-  // Infinite scroll effect - only for main PokéDex page
-  useEffect(() => {
-    // Only add infinite scroll listener for the main PokéDex page (root path)
-    if (actualPathname !== '/') {
-      return
-    }
-
-    const handleScroll = () => {
-      if (window.innerHeight + document.documentElement.scrollTop >= document.documentElement.offsetHeight - 1000) {
-        loadMorePokemon()
-      }
-    }
-
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [actualPathname]) // Remove loadMorePokemon dependency to prevent infinite loading
+  // No window-based infinite scroll; Modern layout uses internal scroll container
 
   // Memoize filtered Pokémon to prevent unnecessary re-renders and improve performance
   const memoizedFilteredPokemon = useMemo(() => {

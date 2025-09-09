@@ -20,6 +20,7 @@ import TypeBadge from "@/components/TypeBadge";
 import HealthBar from "@/components/HealthBar";
 import Chat from "@/components/Chat";
 import { ToastContainer, useToast } from "@/components/Toast";
+import { chatService } from "@/lib/chatService";
 import { battleService, type MultiplayerBattleState } from '@/lib/battleService';
 import { useAuth } from "@/contexts/AuthContext";
 import { type MoveData } from '@/lib/userTeams';
@@ -39,6 +40,20 @@ function BattleRuntimePage() {
   const { toasts, removeToast } = useToast();
   
   const [battleState, setBattleState] = useState<TeamBattleState | null>(null);
+  const lastBattleStateJSONRef = useRef<string>('');
+
+  const setBattleStateIfChanged = useCallback((next: TeamBattleState) => {
+    try {
+      const serialized = JSON.stringify(next);
+      if (serialized !== lastBattleStateJSONRef.current) {
+        lastBattleStateJSONRef.current = serialized;
+        setBattleState(next);
+      }
+    } catch {
+      // Fallback: if serialization fails, still set once
+      setBattleState(next);
+    }
+  }, []);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
@@ -49,30 +64,31 @@ function BattleRuntimePage() {
   const battleLogRef = useRef<HTMLDivElement>(null);
 
   // Memoize battle state dependencies to prevent useEffect issues
-  const playerHpString = useMemo(() => 
-    battleState?.player?.pokemon?.map(p => p.currentHp).join(',') || '', 
-    [battleState?.player?.pokemon?.map(p => p.currentHp)]
-  );
+  // Stable string snapshots to avoid effect dependency loops
+  const playerHpString = useMemo(() => {
+    if (!battleState) return '';
+    return battleState.player.pokemon.map(p => p.currentHp).join(',');
+  }, [battleState]);
   
-  const opponentHpString = useMemo(() => 
-    battleState?.opponent?.pokemon?.map(p => p.currentHp).join(',') || '', 
-    [battleState?.opponent?.pokemon?.map(p => p.currentHp)]
-  );
+  const opponentHpString = useMemo(() => {
+    if (!battleState) return '';
+    return battleState.opponent.pokemon.map(p => p.currentHp).join(',');
+  }, [battleState]);
   
-  const playerIdString = useMemo(() => 
-    battleState?.player?.pokemon?.map(p => p.pokemon.id).join(',') || '', 
-    [battleState?.player?.pokemon]
-  );
+  const playerIdString = useMemo(() => {
+    if (!battleState) return '';
+    return battleState.player.pokemon.map(p => p.pokemon.id).join(',');
+  }, [battleState]);
   
-  const opponentIdString = useMemo(() => 
-    battleState?.opponent?.pokemon?.map(p => p.pokemon.id).join(',') || '', 
-    [battleState?.opponent?.pokemon]
-  );
+  const opponentIdString = useMemo(() => {
+    if (!battleState) return '';
+    return battleState.opponent.pokemon.map(p => p.pokemon.id).join(',');
+  }, [battleState]);
   
-  const playerDebugString = useMemo(() => 
-    battleState?.player?.pokemon?.map(p => `${p.pokemon.name}-${p.currentHp}`).join(',') || '', 
-    [battleState?.player?.pokemon]
-  );
+  const playerDebugString = useMemo(() => {
+    if (!battleState) return '';
+    return battleState.player.pokemon.map(p => `${p.pokemon.name}-${p.currentHp}`).join(',');
+  }, [battleState]);
   
   // Animation states
   const [playerAnimation, setPlayerAnimation] = useState<'enter' | 'idle' | 'faint'>('idle');
@@ -86,6 +102,9 @@ function BattleRuntimePage() {
   const [roomId, setRoomId] = useState<string | null>(null);
   const [multiplayerBattle, setMultiplayerBattle] = useState<MultiplayerBattleState | null>(null);
   const [battleId, setBattleId] = useState<string | null>(null);
+  const [hostName, setHostName] = useState<string>('Host');
+  const [guestName, setGuestName] = useState<string>('Guest');
+  const lastBattleUpdatedAtRef = useRef<number>(0);
 
   const playerTeamId = searchParams.get("player");
   const opponentKind = searchParams.get("opponentKind");
@@ -93,44 +112,124 @@ function BattleRuntimePage() {
   const multiplayerRoomId = searchParams.get("roomId");
   // const multiplayerTeamId = searchParams.get("teamId");
 
-  // Initialize multiplayer mode
+  // Initialize multiplayer mode (avoid unstable object deps)
+  const urlBattleId = searchParams.get("battleId");
+  const urlRoomId = searchParams.get("roomId");
   useEffect(() => {
-    if (multiplayerRoomId) {
+    if (multiplayerRoomId || urlBattleId) {
       setIsMultiplayer(true);
-      setRoomId(multiplayerRoomId);
-      
-      // Get battle ID from URL params
-      const urlBattleId = searchParams.get("battleId");
+      if (multiplayerRoomId) setRoomId(multiplayerRoomId);
       if (urlBattleId) {
         setBattleId(urlBattleId);
-        console.log('Multiplayer battle initialized for room:', multiplayerRoomId, 'battle:', urlBattleId);
+        console.log('Multiplayer battle initialized', { multiplayerRoomId, urlBattleId });
       }
     }
-  }, [multiplayerRoomId, searchParams]);
+  }, [multiplayerRoomId, urlBattleId]);
 
-  // Listen to multiplayer battle changes
+  // Listen to multiplayer battle changes (gate on auth and brief backoff if needed)
   useEffect(() => {
-    if (!battleId || !isMultiplayer) return;
+    if (!battleId || !isMultiplayer || authLoading || !user) return;
 
-    const unsubscribe = battleService.onBattleChange(battleId, (battle) => {
-      if (battle) {
-        setMultiplayerBattle(battle);
-        
-        // If battle data exists, update the local battle state
-        if (battle.battleData && battle.status === 'active') {
-          setBattleState(battle.battleData as TeamBattleState);
-        }
-        
-        // If battle is completed, handle end
-        if (battle.status === 'completed') {
-          console.log('Battle completed! Winner:', battle.winner);
-          // TODO: Show battle results
+    let unsubscribe: (() => void) | null = null;
+    let attempts = 0;
+    const maxAttempts = 5;
+    const baseDelayMs = 200;
+
+    const trySubscribe = () => {
+      attempts += 1;
+      try {
+        unsubscribe = battleService.onBattleChange(battleId, (battle) => {
+          if (!battle) return;
+
+          // Skip processing if this snapshot doesn't represent a newer update
+          const updatedAt = battle.updatedAt instanceof Date ? battle.updatedAt.getTime() : Date.now();
+          if (updatedAt === lastBattleUpdatedAtRef.current) return;
+          lastBattleUpdatedAtRef.current = updatedAt;
+
+          // Only update local state if something meaningful changed
+          setMultiplayerBattle(prev => {
+            try {
+              const a = prev ? JSON.stringify({
+                id: prev.id,
+                status: prev.status,
+                currentTurn: prev.currentTurn,
+                turnNumber: prev.turnNumber
+              }) : '';
+              const b = JSON.stringify({
+                id: battle.id,
+                status: battle.status,
+                currentTurn: battle.currentTurn,
+                turnNumber: battle.turnNumber
+              });
+              if (a === b) {
+                return prev;
+              }
+            } catch {}
+            return battle;
+          });
+
+          // If battle data exists, update the local battle state and align turn to local perspective
+          if (battle.battleData && battle.status === 'active') {
+            const aligned = { ...(battle.battleData as TeamBattleState) };
+            try {
+              if (battle.hostName) setHostName(battle.hostName);
+              if (battle.guestName) setGuestName(battle.guestName);
+              const userIsHost = user?.uid && battle.hostId && user.uid === battle.hostId;
+              const userIsGuest = user?.uid && battle.guestId && user.uid === battle.guestId;
+              if (userIsHost || userIsGuest) {
+                const localTurn = battle.currentTurn === 'host'
+                  ? (userIsHost ? 'player' : 'opponent')
+                  : (userIsGuest ? 'player' : 'opponent');
+                (aligned as any).turn = localTurn;
+              }
+            } catch {}
+            setBattleStateIfChanged(aligned);
+          }
+          
+          // Advance local turn marker to match server if it changed
+          setMultiplayerBattle(prev => {
+            if (!prev) return battle;
+            if (prev.currentTurn !== battle.currentTurn || prev.turnNumber !== battle.turnNumber) {
+              return { ...battle } as MultiplayerBattleState;
+            }
+            return prev;
+          });
+
+          // If battle is completed, handle end
+          if (battle.status === 'completed') {
+            console.log('Battle completed! Winner:', battle.winner);
+          }
+        });
+      } catch (e) {
+        if (attempts < maxAttempts) {
+          const delay = baseDelayMs * attempts;
+          setTimeout(trySubscribe, delay);
         }
       }
-    });
+    };
 
-    return () => unsubscribe();
-  }, [battleId, isMultiplayer]);
+    trySubscribe();
+
+    return () => {
+      lastBattleUpdatedAtRef.current = 0;
+      if (unsubscribe) unsubscribe();
+    };
+  }, [battleId, isMultiplayer, authLoading, user]);
+
+  // Force-align local turn with server turn whenever it changes (even if battleData is unchanged)
+  useEffect(() => {
+    if (!isMultiplayer || !multiplayerBattle || !battleState) return;
+    try {
+      const userIsHost = Boolean(user?.uid && multiplayerBattle.hostId && user?.uid === multiplayerBattle.hostId);
+      const localTurn = multiplayerBattle.currentTurn === 'host'
+        ? (userIsHost ? 'player' : 'opponent')
+        : (userIsHost ? 'opponent' : 'player');
+      if ((battleState as any).turn !== localTurn) {
+        const aligned = { ...(battleState as any), turn: localTurn };
+        setBattleStateIfChanged(aligned as TeamBattleState);
+      }
+    } catch {}
+  }, [isMultiplayer, multiplayerBattle?.currentTurn, multiplayerBattle?.turnNumber, battleState, user]);
 
   // Handle chat notifications
   // const handleChatNotification = useCallback((message: string) => {
@@ -321,7 +420,7 @@ function BattleRuntimePage() {
           }
         }
         
-        setBattleState(updatedState);
+        setBattleStateIfChanged(updatedState);
         
         // Check if battle is now complete
         if (updatedState.isComplete) {
@@ -339,12 +438,12 @@ function BattleRuntimePage() {
         if (battleState.player.faintedCount >= battleState.player.pokemon.length) {
           console.log('Player team fully defeated - marking battle complete');
           const defeatState = { ...battleState, isComplete: true, winner: 'opponent' as const };
-          setBattleState(defeatState);
+          setBattleStateIfChanged(defeatState);
           return;
         } else if (battleState.opponent.faintedCount >= battleState.opponent.pokemon.length) {
           console.log('Opponent team fully defeated - marking battle complete');
           const victoryState = { ...battleState, isComplete: true, winner: 'player' as const };
-          setBattleState(victoryState);
+          setBattleStateIfChanged(victoryState);
           return;
         }
       }
@@ -386,8 +485,9 @@ function BattleRuntimePage() {
     }
   }, [battleState?.isComplete, showBattleResults]);
 
-  // Handle AI turns when it's the opponent's turn
+  // Handle AI turns when it's the opponent's turn (single-player only)
   useEffect(() => {
+    if (isMultiplayer) return; // Never run AI in multiplayer
     if (!battleState || battleState.isComplete || isAITurn || switchingInProgress) return;
     
     if (battleState.turn === 'opponent') {
@@ -413,7 +513,7 @@ function BattleRuntimePage() {
         }, 1000); // 1 second delay
       }
     }
-  }, [battleState?.turn, battleState?.opponent?.currentIndex, isAITurn, switchingInProgress]);
+  }, [isMultiplayer, battleState?.turn, battleState?.opponent?.currentIndex, isAITurn, switchingInProgress]);
 
   // Direct HP monitoring for immediate switching
   useEffect(() => {
@@ -435,7 +535,7 @@ function BattleRuntimePage() {
         : handleAutomaticSwitching(battleState);
       if (updatedState !== battleState) {
         console.log('Immediate switching successful');
-        setBattleState(updatedState);
+        setBattleStateIfChanged(updatedState);
         
         // Check if battle is now complete
         if (updatedState.isComplete) {
@@ -449,7 +549,7 @@ function BattleRuntimePage() {
       
       setTimeout(() => setSwitchingInProgress(false), 100);
     }
-  }, [battleState?.player?.pokemon?.map(p => p.currentHp), battleState?.opponent?.pokemon?.map(p => p.currentHp), switchingInProgress]);
+  }, [playerHpString, opponentHpString, switchingInProgress]);
 
   const initializeBattleState = useCallback(async () => {
     try {
@@ -457,14 +557,50 @@ function BattleRuntimePage() {
       setLoading(true);
       setError(null);
 
+      // Resolve multiplayer mode from URL directly to avoid race conditions
+      const urlRoomId = searchParams.get("roomId");
+      const urlBattleId = searchParams.get("battleId");
+      const effectiveIsMultiplayer = isMultiplayer || Boolean(urlRoomId || urlBattleId);
+      const effectiveBattleId = battleId || urlBattleId || null;
+
       // Handle multiplayer battles
-      if (isMultiplayer && multiplayerBattle) {
+      if (effectiveIsMultiplayer) {
+        // Ensure we have a battleId before proceeding
+        if (!effectiveBattleId) {
+          // Wait for URL/listener to provide battleId
+          return;
+        }
+        // Ensure we have battle metadata; fetch once if listener hasn't populated yet
+        let battleMeta = multiplayerBattle;
+        if (!battleMeta) {
+          if (!effectiveBattleId) {
+            throw new Error('Missing battle ID for multiplayer battle');
+          }
+          try {
+            const fetched = await battleService.getBattle(effectiveBattleId);
+            if (fetched) {
+              battleMeta = fetched;
+              setMultiplayerBattle(fetched);
+            } else {
+              throw new Error('Battle not found');
+            }
+          } catch (e) {
+            // If we cannot fetch yet (e.g., permissions), wait for snapshot listener
+            console.warn('Waiting for battle snapshot, could not fetch immediately:', e);
+            return; // exit init now; listener will re-run init next effect tick
+          }
+        }
+
+        // If after fetch we still don't have meta, wait
+        if (!battleMeta) {
+          return;
+        }
         console.log('Initializing multiplayer battle...');
         
         // Get team data from multiplayer battle
-        const isHost = user?.uid === multiplayerBattle.hostId;
-        const playerTeam = isHost ? multiplayerBattle.hostTeam : multiplayerBattle.guestTeam;
-        const opponentTeam = isHost ? multiplayerBattle.guestTeam : multiplayerBattle.hostTeam;
+        const isHost = user?.uid === battleMeta.hostId;
+        const playerTeam = isHost ? battleMeta.hostTeam : battleMeta.guestTeam;
+        const opponentTeam = isHost ? battleMeta.guestTeam : battleMeta.hostTeam;
         
         if (!playerTeam || !opponentTeam) {
           throw new Error("Team data not available for multiplayer battle");
@@ -506,10 +642,12 @@ function BattleRuntimePage() {
           playerBattleTeam,
           opponentBattleTeam
         );
-        setBattleState(battleState);
+        setBattleStateIfChanged(battleState);
         
         // Start the battle in Firestore
-        await battleService.startBattle(battleId!, battleState as unknown);
+        if (effectiveBattleId) {
+          await battleService.startBattle(effectiveBattleId, battleState as unknown);
+        }
         
         setLoading(false);
         return;
@@ -944,7 +1082,7 @@ function BattleRuntimePage() {
       };
 
       
-      setBattleState(sanitizedBattle as TeamBattleState);
+      setBattleStateIfChanged(sanitizedBattle as TeamBattleState);
       setInitialized(true);
     } catch (err) {
       console.error('Battle initialization error:', err);
@@ -965,11 +1103,16 @@ function BattleRuntimePage() {
     } finally {
       setLoading(false);
     }
-  }, [playerTeamId, opponentKind, opponentId, isMultiplayer, multiplayerBattle, battleId, user]);
+  }, [playerTeamId, opponentKind, opponentId, isMultiplayer, user]);
 
   useEffect(() => {
     // Only initialize once and wait for auth to be ready
     if (initialized || authLoading) return;
+    
+    // For multiplayer battles, skip this effect - handled by separate effect
+    if (isMultiplayer) {
+      return;
+    }
     
     const timeoutId = setTimeout(() => {
       if (loading && !initialized) {
@@ -983,7 +1126,131 @@ function BattleRuntimePage() {
     initializeBattleState();
     
     return () => clearTimeout(timeoutId);
-  }, [initializeBattleState, initialized, authLoading, isMultiplayer, multiplayerBattle, battleId, user]);
+  }, [initialized, authLoading, isMultiplayer, user]); // Kept stable deps
+
+  // Separate effect to handle multiplayer battle initialization when data becomes available
+  useEffect(() => {
+    if (!isMultiplayer || initialized || !multiplayerBattle || !battleId || !user) return;
+    
+    console.log('Multiplayer battle data available, initializing...');
+    // Call initializeBattleState directly without including it in dependencies
+    const initBattle = async () => {
+      try {
+        console.log('Starting battle initialization...');
+        setLoading(true);
+        setError(null);
+
+        // Resolve multiplayer mode from URL directly to avoid race conditions
+        const urlRoomId = searchParams.get("roomId");
+        const urlBattleId = searchParams.get("battleId");
+        const effectiveIsMultiplayer = isMultiplayer || Boolean(urlRoomId || urlBattleId);
+        const effectiveBattleId = battleId || urlBattleId || null;
+
+        // Handle multiplayer battles
+        if (effectiveIsMultiplayer) {
+          // Ensure we have a battleId before proceeding
+          if (!effectiveBattleId) {
+            // Wait for URL/listener to provide battleId
+            return;
+          }
+          // Ensure we have battle metadata; fetch once if listener hasn't populated yet
+          let battleMeta = multiplayerBattle;
+          
+          if (!battleMeta) {
+            try {
+              battleMeta = await battleService.getBattle(effectiveBattleId);
+            } catch (err) {
+              console.error('Failed to fetch battle metadata:', err);
+              throw new Error('Failed to load battle data');
+            }
+          }
+
+          // If after fetch we still don't have meta, wait
+          if (!battleMeta) {
+            return;
+          }
+          console.log('Initializing multiplayer battle...');
+          
+          // Get team data from multiplayer battle
+          const isHost = user?.uid === battleMeta.hostId;
+          const playerTeam = isHost ? battleMeta.hostTeam : battleMeta.guestTeam;
+          const opponentTeam = isHost ? battleMeta.guestTeam : battleMeta.hostTeam;
+          
+          if (!playerTeam || !opponentTeam) {
+            throw new Error("Team data not available for multiplayer battle");
+          }
+          
+          // Convert SavedTeam to the format expected by initializeTeamBattle
+          const convertTeamForBattle = async (team: SavedTeam) => {
+            const battleTeam = [];
+            for (const slot of team.slots) {
+              if (slot.id) {
+                try {
+                  const pokemon = await getPokemon(slot.id);
+                  const moves = await Promise.all(
+                    slot.moves.map(async (move: unknown) => {
+                      if (typeof move === 'string') {
+                        return await getMove(move);
+                      }
+                      return move;
+                    })
+                  );
+                  battleTeam.push({
+                    pokemon,
+                    level: slot.level,
+                    moves: moves.filter((move): move is Move => move !== null && move !== undefined && typeof move === 'object' && 'name' in move)
+                  });
+                } catch (error) {
+                  console.error(`Failed to load Pokemon ${slot.id}:`, error);
+                }
+              }
+            }
+            return battleTeam;
+          };
+
+          // Initialize battle with converted teams
+          const playerBattleTeam = await convertTeamForBattle(playerTeam as SavedTeam);
+          const opponentBattleTeam = await convertTeamForBattle(opponentTeam as SavedTeam);
+          
+          const battleState = await initializeTeamBattle(
+            playerBattleTeam,
+            opponentBattleTeam
+          );
+          setBattleStateIfChanged(battleState);
+          
+          // Start the battle in Firestore (host only)
+          if (effectiveBattleId && user?.uid === battleMeta.hostId) {
+            await battleService.startBattle(effectiveBattleId, battleState as unknown);
+            // Set initial server turn based on host
+            await battleService.updateBattle(effectiveBattleId, {
+              currentTurn: 'host',
+              turnNumber: 1,
+              battleData: battleState as unknown
+            });
+          }
+          
+          setInitialized(true);
+        }
+      } catch (err) {
+        console.error('Battle initialization failed:', err);
+        let errorMessage = 'Failed to initialize battle. Please try again.';
+        if (err instanceof Error) {
+          if (err.message.includes('API')) {
+            errorMessage = `API error: ${err.message}`;
+          } else {
+            errorMessage = err.message;
+          }
+        }
+        
+        setError(errorMessage);
+        setInitialized(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    initBattle();
+  }, [isMultiplayer, initialized, multiplayerBattle, battleId, user, urlRoomId, urlBattleId]);
 
   const handlePlayerMove = async (moveIndex: number) => {
     if (!battleState || battleState.turn !== 'player' || battleState.isComplete) return;
@@ -1007,12 +1274,21 @@ function BattleRuntimePage() {
         
         // Execute move locally
         const newState = await executeTeamAction(battleState, { type: 'move', moveIndex });
-        setBattleState(newState);
+        setBattleStateIfChanged(newState);
         
-        // Update battle data in Firestore
+        // Update battle data and force next turn/turnNumber to ensure remote sync
+        const userIsHost = Boolean(user?.uid && multiplayerBattle.hostId && user?.uid === multiplayerBattle.hostId);
+        const nextTurn = userIsHost ? 'guest' : 'host';
+        const nextTurnNumber = (multiplayerBattle.turnNumber || 0) + 1;
         await battleService.updateBattle(battleId, {
-          battleData: newState as unknown
+          battleData: newState as unknown,
+          currentTurn: nextTurn,
+          turnNumber: nextTurnNumber
         });
+        // Broadcast a system-like chat message for visibility
+        try {
+          await chatService.sendSystemMessage(roomId as string, `${userIsHost ? hostName : guestName} used ${moveName}`);
+        } catch {}
         
         if (newState.isComplete) {
           // Battle is complete
@@ -1030,7 +1306,7 @@ function BattleRuntimePage() {
     } else {
       // Single player mode - original AI logic
       const newState = await executeTeamAction(battleState, { type: 'move', moveIndex });
-      setBattleState(newState);
+      setBattleStateIfChanged(newState);
 
       if (newState.isComplete) {
         setSelectedMove(null);
@@ -1053,7 +1329,7 @@ function BattleRuntimePage() {
     const updatedState = switchToSelectedPokemon(battleState, pokemonIndex, isPlayerSelection);
     
     console.log('Updated battle state after Pokemon selection:', updatedState);
-    setBattleState(updatedState);
+    setBattleStateIfChanged(updatedState);
     setSwitchingInProgress(false);
   };
 
@@ -1493,8 +1769,8 @@ function BattleRuntimePage() {
           </div>
         </div>
 
-        {/* Chat Component for Multiplayer */}
-        {isMultiplayer && roomId && showChat && (
+        {/* Chat Component for Multiplayer - always visible overlay during battle */}
+        {isMultiplayer && roomId && (
           <div className="fixed bottom-4 right-4 w-80 z-40">
             <Chat 
               roomId={roomId}

@@ -10,13 +10,15 @@ import {
   type Unsubscribe
 } from 'firebase/firestore';
 import { db } from './firebase';
+import { auth } from './firebase';
 
 export interface BattleMove {
   playerId: string;
   playerName: string;
   moveIndex: number;
   moveName: string;
-  timestamp: Date;
+  // Firestore server timestamp at write time
+  timestamp: unknown;
 }
 
 export interface MultiplayerBattleState {
@@ -50,6 +52,14 @@ export interface BattleUpdate {
 
 class BattleService {
   private battlesCollection = 'battles';
+
+  private isEqual(a: unknown, b: unknown): boolean {
+    try {
+      return JSON.stringify(a) === JSON.stringify(b);
+    } catch {
+      return false;
+    }
+  }
 
   // Create a new battle
   async createBattle(roomId: string, hostId: string, hostName: string, hostTeam: unknown, guestId: string, guestName: string, guestTeam: unknown): Promise<string> {
@@ -101,6 +111,21 @@ class BattleService {
     if (!db) throw new Error('Firebase not initialized');
     
     const battleRef = doc(db, this.battlesCollection, battleId);
+    const snap = await getDoc(battleRef);
+    if (snap.exists()) {
+      const current = snap.data();
+      // Build a comparable subset without updatedAt
+      const keys = Object.keys(updates).filter(k => k !== 'updatedAt');
+      const nextSubset: Record<string, unknown> = {};
+      const currSubset: Record<string, unknown> = {};
+      keys.forEach(k => {
+        nextSubset[k] = (updates as Record<string, unknown>)[k];
+        currSubset[k] = current[k];
+      });
+      if (this.isEqual(currSubset, nextSubset)) {
+        return; // No-op update; skip write to avoid loop
+      }
+    }
     await updateDoc(battleRef, {
       ...updates,
       updatedAt: serverTimestamp()
@@ -119,12 +144,17 @@ class BattleService {
     }
     
     const battleData = battleSnap.data();
+    // Prevent duplicate move append if last move matches same player/turn
+    const last = (battleData.moves || []).slice(-1)[0];
+    if (last && last.playerId === playerId && last.moveIndex === moveIndex && playerName === last.playerName) {
+      return;
+    }
     const newMove: BattleMove = {
       playerId,
       playerName,
       moveIndex,
       moveName,
-      timestamp: new Date()
+      timestamp: serverTimestamp()
     };
     
     const updatedMoves = [...(battleData.moves || []), newMove];
@@ -144,6 +174,13 @@ class BattleService {
     if (!db) throw new Error('Firebase not initialized');
     
     const battleRef = doc(db, this.battlesCollection, battleId);
+    const snap = await getDoc(battleRef);
+    if (snap.exists()) {
+      const data = snap.data();
+      if (data.status === 'active' && this.isEqual(data.battleData, initialBattleData)) {
+        return; // Already active with same data
+      }
+    }
     await updateDoc(battleRef, {
       battleData: initialBattleData,
       status: 'active',
@@ -156,6 +193,13 @@ class BattleService {
     if (!db) throw new Error('Firebase not initialized');
     
     const battleRef = doc(db, this.battlesCollection, battleId);
+    const snap = await getDoc(battleRef);
+    if (snap.exists()) {
+      const data = snap.data();
+      if (data.status === 'completed' && data.winner === winner && this.isEqual(data.battleData, finalBattleData)) {
+        return; // No change
+      }
+    }
     await updateDoc(battleRef, {
       battleData: finalBattleData,
       status: 'completed',
@@ -167,6 +211,13 @@ class BattleService {
   // Listen to battle changes
   onBattleChange(battleId: string, callback: (battle: MultiplayerBattleState | null) => void): Unsubscribe {
     if (!db) {
+      callback(null);
+      return () => {};
+    }
+    
+    // Guard: avoid subscribing before auth is available to prevent permission errors
+    if (!auth?.currentUser) {
+      console.warn('onBattleChange called before user is authenticated; skipping subscription to avoid permission error');
       callback(null);
       return () => {};
     }
@@ -186,6 +237,10 @@ class BattleService {
       } else {
         callback(null);
       }
+    }, (error) => {
+      console.error('Battle snapshot listener error:', error);
+      console.error('Error details:', error.code, error.message);
+      // Don't call callback with null on error, let the user handle it
     });
   }
 

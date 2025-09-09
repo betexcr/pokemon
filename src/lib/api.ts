@@ -368,9 +368,9 @@ export async function getGeneration(nameOrId: string | number): Promise<Generati
   return data;
 }
 
-// Get all Pokémon of a specific type - OPTIMIZED VERSION
+// Get all Pokémon of a specific type - FIXED VERSION with full data
 export async function getPokemonByType(type: string): Promise<Pokemon[]> {
-  const cacheKey = getCacheKey(`type/${type}/pokemon`);
+  const cacheKey = getCacheKey(`type/${type}/pokemon-full`);
   const cached = getCache(cacheKey);
   if (cached) return cached as Pokemon[];
 
@@ -378,53 +378,37 @@ export async function getPokemonByType(type: string): Promise<Pokemon[]> {
     // First get the type data
     const typeData = await getType(type);
     
-    // Instead of making individual API calls, create basic Pokémon objects
-    // This reduces API calls from potentially hundreds to just 1
-    const pokemonList = typeData.pokemon.map((pokemonRef) => {
-      const pokemonId = pokemonRef.pokemon.url.split('/').slice(-2)[0];
-      return {
-        id: parseInt(pokemonId),
-        name: pokemonRef.pokemon.name,
-        base_experience: 0,
-        height: 0,
-        weight: 0,
-        is_default: true,
-        order: parseInt(pokemonId),
-        abilities: [],
-        forms: [],
-        game_indices: [],
-        held_items: [],
-        location_area_encounters: '',
-        moves: [],
-        sprites: {
-          // Use the smallest, most efficient sprites for main page
-          front_default: getPokemonFallbackImage(parseInt(pokemonId)),
-          front_shiny: null,
-          front_female: null,
-          front_shiny_female: null,
-          back_default: null,
-          back_shiny: null,
-          back_female: null,
-          back_shiny_female: null,
-          other: {
-            dream_world: { front_default: null, front_female: null },
-            home: { front_default: null, front_female: null, front_shiny: null, front_shiny_female: null },
-            // Use home sprites instead of official artwork for main page (much smaller)
-            'official-artwork': {
-              front_default: getPokemonMainPageImage(parseInt(pokemonId)),
-              front_shiny: null
-            }
-          }
-        },
-        stats: [],
-        types: [{ slot: 1, type: { name: type, url: '' } }],
-        species: { name: '', url: '' },
-        evolution_chain: { name: '', url: '' }
-      } as Pokemon;
-    });
+    // Fetch full Pokémon data for each Pokémon to get all types
+    const pokemonData = await Promise.allSettled(
+      typeData.pokemon.map(async (pokemonRef) => {
+        const pokemonId = pokemonRef.pokemon.url.split('/').slice(-2)[0];
+        const id = parseInt(pokemonId);
+        
+        try {
+          // Fetch the full Pokémon data to get all types
+          const fullPokemon = await getPokemon(id);
+          return fullPokemon;
+        } catch (error) {
+          console.error(`Failed to fetch full data for Pokémon ${id}:`, error);
+          return null;
+        }
+      })
+    );
     
-    setCache(cacheKey, pokemonList, CACHE_TTL.POKEMON_LIST);
-    return pokemonList;
+    // Filter out failed fetches
+    const successfulPokemon = pokemonData
+      .filter((result): result is PromiseFulfilledResult<Pokemon> => 
+        result.status === 'fulfilled' && result.value !== null
+      )
+      .map(result => result.value);
+    
+    const failedCount = pokemonData.length - successfulPokemon.length;
+    if (failedCount > 0) {
+      console.warn(`Failed to fetch ${failedCount} out of ${pokemonData.length} Pokémon for type ${type}`);
+    }
+    
+    setCache(cacheKey, successfulPokemon, CACHE_TTL.POKEMON_LIST);
+    return successfulPokemon;
   } catch (error) {
     console.error(`Error fetching Pokémon for type ${type}:`, error);
     return [];

@@ -11,17 +11,6 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
     
-    function isValidTeamData() {
-      return request.resource.data.keys().hasAll(['name', 'slots', 'userId', 'createdAt', 'updatedAt']) &&
-             request.resource.data.name is string &&
-             request.resource.data.name.size() > 0 &&
-             request.resource.data.name.size() <= 50 &&
-             request.resource.data.slots is list &&
-             request.resource.data.slots.size() <= 6 &&
-             request.resource.data.userId == request.auth.uid &&
-             request.resource.data.createdAt is timestamp &&
-             request.resource.data.updatedAt is timestamp;
-    }
     
     function isValidBattleData() {
       return request.resource.data.keys().hasAll(['roomId', 'hostId', 'hostName', 'guestId', 'guestName', 'status', 'createdAt', 'updatedAt']) &&
@@ -63,8 +52,8 @@ service cloud.firestore {
     
     // Battle rooms collection
     match /battle_rooms/{roomId} {
-      // Users can read all waiting rooms (for lobby listing)
-      allow read: if isAuthenticated();
+      // Allow anyone to read rooms (for lobby listing and guest access)
+      allow read: if true;
       
       // Users can create rooms with their own hostId
       allow create: if isAuthenticated() && 
@@ -75,37 +64,83 @@ service cloud.firestore {
                        request.resource.data.currentPlayers == 1 &&
                        request.resource.data.createdAt is timestamp;
       
-      // Users can update rooms they're participating in (temporarily more permissive)
+      // Users can update rooms they're participating in or joining
       allow update: if isAuthenticated() && 
                        (request.auth.uid == resource.data.hostId || 
-                        request.auth.uid == resource.data.guestId);
+                        request.auth.uid == resource.data.guestId ||
+                        // Allow joining (setting guestId to current user)
+                        (request.resource.data.guestId == request.auth.uid && 
+                         resource.data.guestId == null) ||
+                        // Allow updates for room participants (host/guest)
+                        (request.auth.uid in resource.data.activeUsers) ||
+                        // Allow adding self to activeUsers if not present yet
+                        (
+                          request.resource.data.activeUsers != null &&
+                          request.auth.uid in request.resource.data.activeUsers &&
+                          (resource.data.activeUsers == null || !(request.auth.uid in resource.data.activeUsers))
+                        )
+                       );
       
       // Users can delete rooms they created
       allow delete: if isAuthenticated() && 
                        request.auth.uid == resource.data.hostId;
     }
     
-    // Battle rooms collection
+    // Battles collection
     match /battles/{battleId} {
-      // Players can read battles they're participating in
-      allow read: if isAuthenticated() && 
-                     (request.auth.uid == resource.data.hostId || 
-                      request.auth.uid == resource.data.guestId);
-      
-      // Only authenticated users can create battles
-      allow create: if isAuthenticated() && 
-                       isValidBattleData() &&
-                       (request.auth.uid == request.resource.data.hostId ||
-                        request.auth.uid == request.resource.data.guestId);
-      
-      // Players can update battles they're participating in (for moves, status changes)
-      allow update: if isAuthenticated() && 
-                       (request.auth.uid == resource.data.hostId || 
-                        request.auth.uid == resource.data.guestId) &&
-                       // Prevent changing critical fields
-                       request.resource.data.hostId == resource.data.hostId &&
-                       request.resource.data.guestId == resource.data.guestId &&
-                       request.resource.data.createdAt == resource.data.createdAt;
+      // Allow reads to participants (host or guest) OR users active in the linked room
+      // Also allow unauthenticated access for guests
+      allow read: if isAuthenticated() && (
+        request.auth.uid == resource.data.hostId ||
+        request.auth.uid == resource.data.guestId ||
+        (
+          resource.data.roomId is string &&
+          get(/databases/$(database)/documents/battle_rooms/$(resource.data.roomId)).data.activeUsers != null &&
+          request.auth.uid in get(/databases/$(database)/documents/battle_rooms/$(resource.data.roomId)).data.activeUsers
+        ) || (
+          // Also allow users who are the room's host or guest (even if activeUsers not updated yet)
+          resource.data.roomId is string && (
+            request.auth.uid == get(/databases/$(database)/documents/battle_rooms/$(resource.data.roomId)).data.hostId ||
+            request.auth.uid == get(/databases/$(database)/documents/battle_rooms/$(resource.data.roomId)).data.guestId
+          )
+        )
+      ) || (
+        // Allow unauthenticated access for guests (they can read battle data if they know the battleId)
+        resource.data.roomId is string &&
+        get(/databases/$(database)/documents/battle_rooms/$(resource.data.roomId)).data != null
+      );
+
+      // Host can create a battle; guestId may be null initially
+      allow create: if isAuthenticated() &&
+        request.resource.data.hostId == request.auth.uid &&
+        request.resource.data.roomId is string &&
+        request.resource.data.hostName is string &&
+        (request.resource.data.guestId == null || request.resource.data.guestId is string) &&
+        (request.resource.data.guestName == null || request.resource.data.guestName is string) &&
+        request.resource.data.status in ['waiting','active','completed'] &&
+        request.resource.data.createdAt is timestamp &&
+        request.resource.data.updatedAt is timestamp;
+
+      // Participants, room participants, or a guest setting their own guestId on an unclaimed battle can update
+      allow update: if isAuthenticated() && (
+        request.auth.uid == resource.data.hostId ||
+        request.auth.uid == resource.data.guestId ||
+        (
+          // Allow guest to claim spot by setting guestId when currently null
+          resource.data.guestId == null &&
+          request.resource.data.guestId == request.auth.uid
+        ) || (
+          resource.data.roomId is string &&
+          (
+            // Allow active room users
+            (get(/databases/$(database)/documents/battle_rooms/$(resource.data.roomId)).data.activeUsers != null &&
+             request.auth.uid in get(/databases/$(database)/documents/battle_rooms/$(resource.data.roomId)).data.activeUsers) ||
+            // Or explicitly allow room host/guest
+            request.auth.uid == get(/databases/$(database)/documents/battle_rooms/$(resource.data.roomId)).data.hostId ||
+            request.auth.uid == get(/databases/$(database)/documents/battle_rooms/$(resource.data.roomId)).data.guestId
+          )
+        )
+      );
     }
     
     // Battle moves/history subcollection
@@ -154,6 +189,32 @@ service cloud.firestore {
       allow create: if isAuthenticated() && 
                        request.resource.data.userId == request.auth.uid &&
                        request.resource.data.status in ['waiting', 'matched', 'cancelled'];
+    }
+    
+    // Chat messages collection
+    match /chat_messages/{messageId} {
+      // Allow anyone to read messages (for guest access to room chat)
+      allow read: if true;
+      
+      // Users can create messages with their own userId
+      allow create: if isAuthenticated() && 
+                       request.resource.data.userId == request.auth.uid &&
+                       request.resource.data.userName is string &&
+                       request.resource.data.message is string &&
+                       request.resource.data.message.size() > 0 &&
+                       request.resource.data.message.size() <= 200 &&
+                       request.resource.data.roomId is string &&
+                       request.resource.data.type in ['user', 'system'] &&
+                       request.resource.data.timestamp is timestamp;
+      
+      // Users can update their own messages (for editing)
+      allow update: if isAuthenticated() && 
+                       resource.data.userId == request.auth.uid &&
+                       request.resource.data.userId == request.auth.uid;
+      
+      // Users can delete their own messages
+      allow delete: if isAuthenticated() && 
+                       resource.data.userId == request.auth.uid;
     }
     
     // Deny all other access

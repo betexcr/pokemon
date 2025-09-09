@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react'
+import { ReactNode, useEffect, useRef, useState } from 'react'
 
 interface TooltipProps {
   children: ReactNode
@@ -8,6 +8,7 @@ interface TooltipProps {
   maxWidth?: string
   type?: string // For type-based styling
   variant?: 'default' | 'ability' | 'move' | 'stat'
+  containViewport?: boolean
 }
 
 export default function Tooltip({ 
@@ -17,10 +18,11 @@ export default function Tooltip({
   position = 'bottom',
   maxWidth = 'w-96',
   type = 'normal',
-  variant = 'default'
+  variant = 'default',
+  containViewport = true
 }: TooltipProps) {
   const positionClasses = {
-    top: 'bottom-full mb-2 left-1/2 transform -translate-x-1/2',
+    top: 'bottom-full mb-2 left-0',
     bottom: 'top-full mt-2 left-1/2 transform -translate-x-1/2',
     left: 'right-full mr-2 top-1/2 transform -translate-y-1/2',
     right: 'left-full ml-2 top-1/2 transform -translate-y-1/2'
@@ -28,6 +30,13 @@ export default function Tooltip({
 
   // Local open state to support tap/click on mobile in addition to hover
   const [isOpen, setIsOpen] = useState(false)
+
+  // Runtime-resolved position and fixed coordinates for viewport containment
+  const [resolvedPosition, setResolvedPosition] = useState<typeof position>(position)
+  const [fixedCoords, setFixedCoords] = useState<{ top: number; left: number } | null>(null)
+
+  const anchorRef = useRef<HTMLDivElement | null>(null)
+  const tipRef = useRef<HTMLDivElement | null>(null)
 
   // Opacity behavior for hover and open state
   const hoverOpacityClass = variant === 'stat' ? 'group-hover:opacity-80' : 'group-hover:opacity-100'
@@ -79,9 +88,91 @@ export default function Tooltip({
     return text
   }
 
+  // Compute fixed coordinates to keep tooltip inside viewport
+  useEffect(() => {
+    if (!containViewport) {
+      setFixedCoords(null)
+      setResolvedPosition(position)
+      return
+    }
+
+    if (!isOpen) return
+
+    const compute = () => {
+      const anchor = anchorRef.current
+      const tip = tipRef.current
+      if (!anchor || !tip) return
+
+      const anchorRect = anchor.getBoundingClientRect()
+
+      // Ensure tooltip is visible to measure size; temporarily set visibility
+      tip.style.visibility = 'hidden'
+      tip.style.position = 'fixed'
+      tip.style.top = '0px'
+      tip.style.left = '0px'
+      const tipRect = tip.getBoundingClientRect()
+      const vw = window.innerWidth
+      const vh = window.innerHeight
+      const margin = 12
+
+      let nextPos: typeof position = position
+      let top = 0
+      let left = 0
+
+      const computeFor = (pos: typeof position) => {
+        let t = 0, l = 0
+        if (pos === 'bottom') {
+          t = anchorRect.bottom + margin
+          l = anchorRect.left + anchorRect.width / 2 - tipRect.width / 2
+        } else if (pos === 'top') {
+          t = anchorRect.top - tipRect.height - margin
+          l = anchorRect.left + anchorRect.width / 2 - tipRect.width / 2
+        } else if (pos === 'left') {
+          t = anchorRect.top + anchorRect.height / 2 - tipRect.height / 2
+          l = anchorRect.left - tipRect.width - margin
+        } else { // right
+          t = anchorRect.top + anchorRect.height / 2 - tipRect.height / 2
+          l = anchorRect.right + margin
+        }
+        // Clamp horizontally and vertically
+        l = Math.max(margin, Math.min(l, vw - tipRect.width - margin))
+        t = Math.max(margin, Math.min(t, vh - tipRect.height - margin))
+        return { t, l }
+      }
+
+      // Try desired position and its opposite
+      const tryOrder: typeof position[] = [position, position === 'top' ? 'bottom' : position === 'bottom' ? 'top' : position === 'left' ? 'right' : 'left']
+
+      for (const pos of tryOrder) {
+        const { t, l } = computeFor(pos)
+        nextPos = pos
+        top = t
+        left = l
+        break
+      }
+
+      tip.style.visibility = ''
+
+      setResolvedPosition(nextPos)
+      setFixedCoords({ top, left })
+    }
+
+    compute()
+    const onResize = () => compute()
+    window.addEventListener('resize', onResize)
+    window.addEventListener('scroll', onResize, true)
+    return () => {
+      window.removeEventListener('resize', onResize)
+      window.removeEventListener('scroll', onResize, true)
+    }
+  }, [isOpen, position, content, containViewport])
+
+  const marginPx = 12
+
   return (
     <div 
       className={`relative group ${className}`}
+      ref={anchorRef}
       onMouseEnter={() => setIsOpen(true)}
       onMouseLeave={() => setIsOpen(false)}
       onClick={() => setIsOpen(prev => !prev)}
@@ -89,8 +180,15 @@ export default function Tooltip({
     >
       {children}
       <div 
-        className={`pointer-events-none absolute z-50 ${positionClasses[position]} ${maxWidth} max-w-[95vw] rounded-2xl p-5 text-sm leading-relaxed shadow-2xl ring-1 ring-gray-200/20 ${openOpacityClass} ${hoverOpacityClass} transition-all duration-300 ease-out ${getTypeBackground()} ${getTypeAccent()} ${getTextColor()}`}
-        style={getTypeOverlay()}
+        ref={tipRef}
+        className={`pointer-events-auto overflow-auto ${containViewport ? 'fixed' : 'absolute'} z-[9999] ${!containViewport ? positionClasses[position] : ''} ${maxWidth} rounded-2xl p-5 text-sm leading-relaxed shadow-2xl ring-1 ring-gray-200/20 ${openOpacityClass} ${hoverOpacityClass} transition-all duration-300 ease-out ${getTypeBackground()} ${getTypeAccent()} ${getTextColor()}`}
+        style={containViewport && fixedCoords ? { 
+          ...getTypeOverlay(), 
+          top: fixedCoords.top, 
+          left: fixedCoords.left, 
+          maxHeight: `calc(100vh - ${marginPx * 2}px)`, 
+          maxWidth: `calc(100vw - ${marginPx * 2}px)`
+        } : getTypeOverlay()}
       >
         <div className="space-y-3">
           {variant !== 'default' && (
@@ -112,9 +210,9 @@ export default function Tooltip({
         </div>
         
         {/* Modern Arrow */}
-        <div className={`absolute ${position === 'top' ? 'top-full left-1/2 transform -translate-x-1/2' : 
-                           position === 'bottom' ? 'bottom-full left-1/2 transform -translate-x-1/2' :
-                           position === 'left' ? 'left-full top-1/2 transform -translate-y-1/2' :
+        <div className={`absolute ${resolvedPosition === 'top' ? 'top-full left-4' : 
+                           resolvedPosition === 'bottom' ? 'bottom-full left-1/2 transform -translate-x-1/2' :
+                           resolvedPosition === 'left' ? 'left-full top-1/2 transform -translate-y-1/2' :
                            'right-full top-1/2 transform -translate-y-1/2'} 
                     w-3 h-3 rotate-45 ${
                       variant === 'default' ? 'bg-gray-900' : 'bg-white'

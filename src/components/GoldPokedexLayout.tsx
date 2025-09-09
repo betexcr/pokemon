@@ -104,7 +104,7 @@ export default function GoldPokedexLayout({
               <select
                 value={sortBy}
                 onChange={(e)=>setSortBy(e.target.value as typeof sortBy)}
-                className="px-2 py-1 bg-yellow-100 border-2 border-yellow-600 text-yellow-800 text-xs font-bold"
+                className="px-2 py-1 bg-yellow-100 border-2 border-yellow-600 text-yellow-800 text-xs font-bold control-keep"
               >
                 <option value="id">Number</option>
                 <option value="name">Name</option>
@@ -118,7 +118,7 @@ export default function GoldPokedexLayout({
               </select>
               <button
                 onClick={()=>setSortOrder(prev=>prev==='asc'?'desc':'asc')}
-                className="px-2 py-1 border-2 border-yellow-600 bg-yellow-100 text-yellow-800 text-xs font-bold flex items-center gap-2"
+                className="px-2 py-1 border-2 border-yellow-600 bg-yellow-100 text-yellow-800 text-xs font-bold flex items-center gap-2 control-keep"
                 title={`Sort ${sortOrder==='asc'?'Descending':'Ascending'}`}
               >
                 <span>{sortOrder==='asc'?'ASC':'DESC'}</span>

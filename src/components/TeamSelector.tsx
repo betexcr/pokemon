@@ -48,9 +48,12 @@ export default function TeamSelector({
   useEffect(() => {
     const loadTeams = async () => {
       try {
+        console.log('TeamSelector: Loading teams for user:', user?.uid, user?.displayName);
         if (user) {
           // Load from Firebase for authenticated users
+          console.log('TeamSelector: Loading cloud teams...');
           const userTeams = await getUserTeams(user.uid);
+          console.log('TeamSelector: Loaded cloud teams:', userTeams);
           setTeams(userTeams);
           setIsUsingLocalStorage(false);
           
@@ -58,6 +61,10 @@ export default function TeamSelector({
           if (selectedTeamId) {
             const team = userTeams.find(t => t.id === selectedTeamId);
             setSelectedTeam(team || null);
+          } else if (userTeams.length > 0) {
+            // Auto-select first team for convenience
+            setSelectedTeam(userTeams[0]);
+            onTeamSelect(userTeams[0]);
           }
         } else {
           // Load from local storage for non-authenticated users
@@ -71,6 +78,10 @@ export default function TeamSelector({
             if (selectedTeamId) {
               const team = localTeams.find(t => t.id === selectedTeamId);
               setSelectedTeam(team || null);
+            } else if (localTeams.length > 0) {
+              // Auto-select first team for convenience (guest)
+              setSelectedTeam(localTeams[0]);
+              onTeamSelect(localTeams[0]);
             }
           } else {
             setTeams([]);
@@ -244,6 +255,7 @@ export default function TeamSelector({
               <div className="border-t border-gray-200 pt-2 mt-2">
                 <button
                   onClick={() => {
+                    console.log('TeamSelector auth button clicked, setting showAuthModal to true');
                     setShowAuthModal(true);
                     setIsOpen(false);
                   }}
@@ -258,47 +270,6 @@ export default function TeamSelector({
         )}
       </div>
 
-      {selectedTeam && (
-        <div className="mt-2 p-3 bg-blue-50 rounded-lg">
-          <div className="text-sm">
-            <div className="font-medium text-blue-900 mb-2">{selectedTeam.name}</div>
-            
-            {/* Pokemon Roster Images */}
-            <div className="flex -space-x-1 mb-2">
-              {selectedTeam.slots.slice(0, 6).map((slot, index) => (
-                <div
-                  key={index}
-                  className="relative w-8 h-8 rounded-full border-2 border-white bg-gray-100 overflow-hidden"
-                >
-                  {slot.id ? (
-                    <Image
-                      src={getPokemonImageUrl(slot.id)}
-                      alt={`Pokemon ${slot.id}`}
-                      fill
-                      className="object-cover"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = '/placeholder-pokemon.png';
-                      }}
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                      <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-            
-            <div className="text-blue-700">
-              {selectedTeam.slots.filter(slot => slot.id).length} Pokémon selected
-            </div>
-            {'description' in selectedTeam && selectedTeam.description && (
-              <div className="text-blue-600 text-xs mt-1">{selectedTeam.description}</div>
-            )}
-          </div>
-        </div>
-      )}
       
       {/* Auth Modal */}
       <AuthModal 
