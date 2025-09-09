@@ -724,7 +724,7 @@ section { padding-top: 1rem; padding-bottom: 1rem; }
   width: 72px;                /* adjust size as needed */
   height: 72px;
   background: radial-gradient(circle at 30% 30%, #ffffff 0%, #e6e6e6 100%);
-  border: 1.5px solid #222;
+  border: 1px solid #222;
   border-radius: 50%;         /* circular container */
   display: flex;
   justify-content: center;
