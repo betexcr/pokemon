@@ -1158,7 +1158,10 @@ function BattleRuntimePage() {
           
           if (!battleMeta) {
             try {
-              battleMeta = await battleService.getBattle(effectiveBattleId);
+              const fetchedBattle = await battleService.getBattle(effectiveBattleId);
+              if (fetchedBattle) {
+                battleMeta = fetchedBattle;
+              }
             } catch (err) {
               console.error('Failed to fetch battle metadata:', err);
               throw new Error('Failed to load battle data');

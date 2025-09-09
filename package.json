@@ -10,6 +10,12 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "test:integration": "playwright test",
+    "test:integration:ui": "playwright test --ui",
+    "test:integration:headed": "playwright test --headed",
+    "test:integration:debug": "playwright test --debug",
+    "test:setup-users": "node scripts/setup-test-users.js setup",
+    "test:cleanup-users": "node scripts/setup-test-users.js cleanup",
     "deploy": "./deploy.sh",
     "deploy:firebase": "firebase deploy --only hosting"
   },
@@ -37,6 +43,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@playwright/test": "^1.55.0",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.8.0",
     "@testing-library/react": "^16.3.0",
