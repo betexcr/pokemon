@@ -424,13 +424,38 @@ class RoomService {
     
     const roomData = roomSnap.data();
     
+    const wasBattling = roomData.status === 'battling';
+
+    // If room was in battle, mark as unresolved and remove it from lobby listings
+    if (wasBattling) {
+      try {
+        if (roomData.battleId) {
+          await battleService.deleteBattle(roomData.battleId);
+        }
+      } catch (e) {
+        console.warn('Failed to delete battle during leave:', e);
+      }
+
+      const activeUsers = (roomData.activeUsers || []).filter((id: string) => id !== userId);
+      await updateDoc(roomRef, {
+        guestId: userId === roomData.guestId ? deleteField() : roomData.guestId,
+        guestName: userId === roomData.guestId ? deleteField() : roomData.guestName,
+        guestTeam: userId === roomData.guestId ? deleteField() : roomData.guestTeam,
+        guestReady: userId === roomData.guestId ? deleteField() : roomData.guestReady,
+        battleId: deleteField(),
+        status: 'unresolved',
+        currentPlayers: activeUsers.length,
+        activeUsers
+      } as Record<string, unknown>);
+      return;
+    }
+
     if (roomData.hostId === userId) {
-      // Host is leaving - delete the room
+      // Host is leaving (not battling) - delete the room
       await deleteDoc(roomRef);
     } else if (roomData.guestId === userId) {
-      // Guest is leaving - remove guest and reset room
+      // Guest is leaving (not battling) - remove guest and reset room
       const activeUsers = (roomData.activeUsers || []).filter((id: string) => id !== userId);
-      
       await updateDoc(roomRef, {
         guestId: deleteField(),
         guestName: deleteField(),
@@ -788,10 +813,10 @@ class RoomService {
       return () => {};
     }
     
-    // Show 'waiting', 'ready', and 'battling' rooms in lobby listings so guests can rejoin
+    // Show only 'waiting' and 'ready' rooms in lobby listings
     const roomsQuery = query(
       collection(db, this.roomsCollection),
-      where('status', 'in', ['waiting', 'ready', 'battling']),
+      where('status', 'in', ['waiting', 'ready']),
       orderBy('createdAt', 'desc'),
       limit(20)
     );
