@@ -261,45 +261,55 @@ function BattleRuntimePage() {
                 let synchronizedState: TeamBattleState;
                 
                 if (battleState) {
-                  // Merge with existing local state to preserve team positioning
+                  // Merge with existing local state to preserve team positioning.
+                  // IMPORTANT: Server state is always host-perspective. If the local user is the guest,
+                  // overlay opponent server data onto local player and vice-versa to avoid side flips.
+                  const isHostUser = Boolean(user?.uid && battle.hostId && user.uid === battle.hostId);
+                  const serverPlayerTeam = isHostUser ? serverData.player : serverData.opponent;
+                  const serverOpponentTeam = isHostUser ? serverData.opponent : serverData.player;
+
                   synchronizedState = {
                     ...serverData,
-                    // Preserve local team positioning but update battle progression data
+                    // Preserve local team composition; overlay dynamic fields from the correct server side
                     player: {
-                      ...serverData.player,
+                      ...battleState.player,
                       pokemon: battleState.player.pokemon.map((localPokemon, index) => {
-                        const serverPokemon = serverData.player?.pokemon?.[index];
+                        const serverPokemon = serverPlayerTeam?.pokemon?.[index];
                         if (serverPokemon) {
                           return {
-                            ...localPokemon, // Preserve local Pokemon data (name, moves, etc.)
+                            ...localPokemon,
                             currentHp: serverPokemon.currentHp,
                             status: serverPokemon.status,
                             statModifiers: serverPokemon.statModifiers || localPokemon.statModifiers,
                           };
                         }
                         return localPokemon;
-                      })
+                      }),
+                      currentIndex: serverPlayerTeam?.currentIndex ?? battleState.player.currentIndex,
+                      faintedCount: serverPlayerTeam?.faintedCount ?? battleState.player.faintedCount,
                     },
                     opponent: {
-                      ...serverData.opponent,
+                      ...battleState.opponent,
                       pokemon: battleState.opponent.pokemon.map((localPokemon, index) => {
-                        const serverPokemon = serverData.opponent?.pokemon?.[index];
+                        const serverPokemon = serverOpponentTeam?.pokemon?.[index];
                         if (serverPokemon) {
                           return {
-                            ...localPokemon, // Preserve local Pokemon data (name, moves, etc.)
+                            ...localPokemon,
                             currentHp: serverPokemon.currentHp,
                             status: serverPokemon.status,
                             statModifiers: serverPokemon.statModifiers || localPokemon.statModifiers,
                           };
                         }
                         return localPokemon;
-                      })
+                      }),
+                      currentIndex: serverOpponentTeam?.currentIndex ?? battleState.opponent.currentIndex,
+                      faintedCount: serverOpponentTeam?.faintedCount ?? battleState.opponent.faintedCount,
                     },
                     // Preserve phase system data from server
                     phase: serverData.phase || 'selection',
                     selectedMoves: serverData.selectedMoves || {},
                     executionQueue: serverData.executionQueue || []
-                  };
+                  } as TeamBattleState;
                 } else {
                   // No local state: align server (host-perspective) data to local user's perspective
                   console.log('📡 No local battle state; aligning server data to local perspective');
@@ -806,9 +816,15 @@ function BattleRuntimePage() {
         const playerBattleTeam = await convertTeamForBattle(playerTeam as SavedTeam);
         const opponentBattleTeam = await convertTeamForBattle(opponentTeam as SavedTeam);
         
+        const localIsHost = userRole === 'host';
+        const localPlayerName = localIsHost ? (battleMeta.hostName || userName || 'You') : (battleMeta.guestName || userName || 'You');
+        const localOpponentName = localIsHost ? (battleMeta.guestName || 'Opponent') : (battleMeta.hostName || 'Opponent');
+
         const battleState = await initializeTeamBattle(
           playerBattleTeam,
-          opponentBattleTeam
+          opponentBattleTeam,
+          localPlayerName,
+          localOpponentName
         );
         
         // Apply role-based positioning: 
@@ -1466,9 +1482,15 @@ function BattleRuntimePage() {
           const playerBattleTeam = await convertTeamForBattle(playerTeam as SavedTeam);
           const opponentBattleTeam = await convertTeamForBattle(opponentTeam as SavedTeam);
           
+          const localIsHost = userRole === 'host';
+          const localPlayerName = localIsHost ? (battleMeta.hostName || userName || 'You') : (battleMeta.guestName || userName || 'You');
+          const localOpponentName = localIsHost ? (battleMeta.guestName || 'Opponent') : (battleMeta.hostName || 'Opponent');
+
           const battleState = await initializeTeamBattle(
             playerBattleTeam,
-            opponentBattleTeam
+            opponentBattleTeam,
+            localPlayerName,
+            localOpponentName
           );
           
           // Apply role-based positioning: 
@@ -1582,10 +1604,12 @@ function BattleRuntimePage() {
         
         setBattleStateIfChanged(newState);
         
-        // Update battle data in Firebase
-        await battleService.updateBattle(battleId, {
-          battleData: newState as unknown
-        });
+        // Only host updates battleData during selection to avoid conflicting perspectives
+        if (user?.uid === multiplayerBattle.hostId) {
+          await battleService.updateBattle(battleId, {
+            battleData: newState as unknown
+          });
+        }
         
         console.log('📡 Battle updated in Firebase with move selection');
         console.log('🔄 Other players should now see phase:', newState.phase);
@@ -1711,6 +1735,16 @@ function BattleRuntimePage() {
   
   const turn = getCorrectTurn();
   
+  // Trainer names for display (multiplayer uses actual names by side)
+  const currentUserId = userId || user?.uid;
+  const isHostUser = Boolean(isMultiplayer && multiplayerBattle && currentUserId && currentUserId === multiplayerBattle.hostId);
+  const playerTrainerName = isMultiplayer 
+    ? (isHostUser ? (multiplayerBattle?.hostName || 'You') : (multiplayerBattle?.guestName || 'You'))
+    : 'You';
+  const opponentTrainerName = isMultiplayer 
+    ? (isHostUser ? (multiplayerBattle?.guestName || 'Opponent') : (multiplayerBattle?.hostName || 'Opponent'))
+    : 'Opponent';
+  
   // Teams are already correctly assigned during battle initialization
   const player = getCurrentPokemon(playerTeam);
   const opponent = getCurrentPokemon(opponentTeam);
@@ -1779,20 +1813,14 @@ function BattleRuntimePage() {
                 {winner === 'player' ? 'Victory!' : 'Defeat!'}
               </span>
             ) : (
-              <span className={turn === 'player' ? 'text-blue-500' : 'text-red-500'}>
-                {isMultiplayer && multiplayerBattle ? (
-                  turn === 'player' ? (
-                    user?.uid === (multiplayerBattle.currentTurn === 'host' ? multiplayerBattle.hostId : multiplayerBattle.guestId) 
-                      ? 'Your Turn' 
-                      : `${multiplayerBattle.currentTurn === 'host' ? multiplayerBattle.hostName : multiplayerBattle.guestName}'s Turn`
-                  ) : (
-                    user?.uid === (multiplayerBattle.currentTurn === 'host' ? multiplayerBattle.hostId : multiplayerBattle.guestId) 
-                      ? 'Your Turn' 
-                      : `${multiplayerBattle.currentTurn === 'host' ? multiplayerBattle.hostName : multiplayerBattle.guestName}'s Turn`
-                  )
-                ) : (
-                  turn === 'player' ? 'Your Turn' : 'Opponent\'s Turn'
-                )}
+              <span className={
+                battleState.phase === 'selection' ? 'text-blue-500' :
+                battleState.phase === 'execution' ? 'text-orange-500' :
+                'text-purple-500'
+              }>
+                {battleState.phase === 'selection' ? 'Selection Phase' :
+                 battleState.phase === 'execution' ? 'Executing Moves' :
+                 'Switch Pokémon'}
               </span>
             )}
           </h1>
@@ -1826,6 +1854,7 @@ function BattleRuntimePage() {
               {/* Everything else on the RIGHT */}
               <div className="flex-1 flex items-center justify-end gap-4">
                 <div className="text-right">
+                  <div className="text-xs text-muted mb-0.5">{opponentTrainerName}</div>
                   <h3 className="text-xl font-semibold capitalize">{opponent.pokemon.name}</h3>
                   <p className="text-sm text-muted">Lv. {opponent.level}</p>
                   <div className="flex gap-1 mt-1 justify-end">
@@ -1899,6 +1928,7 @@ function BattleRuntimePage() {
                 />
               </div>
                 <div>
+                  <div className="text-xs text-muted mb-0.5">{playerTrainerName}</div>
                   <h3 className="text-xl font-semibold capitalize">{player.pokemon.name}</h3>
                   <p className="text-sm text-muted">Lv. {player.level}</p>
                 <div className="flex gap-1 mt-1">
@@ -2177,7 +2207,7 @@ function BattleRuntimePage() {
         <BattleOverDialog
           isOpen={showBattleResults}
           onClose={() => setShowBattleResults(false)}
-          winner={battleState.winner}
+          winner={battleState.winner ?? 'draw'}
           playerTeam={battleState.player.pokemon}
           opponentTeam={battleState.opponent.pokemon}
           isMultiplayer={isMultiplayer}
