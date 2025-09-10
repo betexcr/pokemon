@@ -26,6 +26,23 @@ if (isFirebaseConfigured) {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
     db = getFirestore(app);
+
+    // Expose Firebase instances to the browser window for E2E visibility
+    if (typeof window !== 'undefined') {
+      // Modern explicit globals
+      // @ts-expect-error - augmenting window for test visibility
+      window.firebaseApp = app;
+      // @ts-expect-error - augmenting window for test visibility
+      window.firebaseAuth = auth;
+      // @ts-expect-error - augmenting window for test visibility
+      window.firebaseDb = db;
+
+      // Legacy shim used by some tests: emulate window.firebase.apps
+      // @ts-expect-error - augmenting window for test visibility
+      window.firebase = window.firebase || {};
+      // @ts-expect-error - augmenting window for test visibility
+      window.firebase.apps = [app];
+    }
   } catch (error) {
     console.warn('Firebase initialization failed:', error);
   }

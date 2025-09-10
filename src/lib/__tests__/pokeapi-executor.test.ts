@@ -8,20 +8,30 @@ const mockPokemon: Pokemon = {
   name: 'pikachu',
   height: 4,
   weight: 60,
-  types: [{ type: { name: 'electric' } }],
+  types: [{ type: { name: 'electric', url: 'https://pokeapi.co/api/v2/type/13/' }, slot: 1 }],
   stats: [
-    { stat: { name: 'hp' }, base_stat: 35 },
-    { stat: { name: 'attack' }, base_stat: 55 },
-    { stat: { name: 'defense' }, base_stat: 40 },
-    { stat: { name: 'special-attack' }, base_stat: 50 },
-    { stat: { name: 'special-defense' }, base_stat: 50 },
-    { stat: { name: 'speed' }, base_stat: 90 }
+    { stat: { name: 'hp', url: 'https://pokeapi.co/api/v2/stat/1/' }, base_stat: 35, effort: 0 },
+    { stat: { name: 'attack', url: 'https://pokeapi.co/api/v2/stat/2/' }, base_stat: 55, effort: 0 },
+    { stat: { name: 'defense', url: 'https://pokeapi.co/api/v2/stat/3/' }, base_stat: 40, effort: 0 },
+    { stat: { name: 'special-attack', url: 'https://pokeapi.co/api/v2/stat/4/' }, base_stat: 50, effort: 0 },
+    { stat: { name: 'special-defense', url: 'https://pokeapi.co/api/v2/stat/5/' }, base_stat: 50, effort: 0 },
+    { stat: { name: 'speed', url: 'https://pokeapi.co/api/v2/stat/6/' }, base_stat: 90, effort: 2 }
   ],
   moves: [],
   sprites: {
     front_default: '',
+    front_shiny: null,
+    front_female: null,
+    front_shiny_female: null,
     back_default: '',
-    other: {}
+    back_shiny: null,
+    back_female: null,
+    back_shiny_female: null,
+    other: {
+      dream_world: { front_default: null, front_female: null },
+      home: { front_default: null, front_female: null, front_shiny: null, front_shiny_female: null },
+      'official-artwork': { front_default: null, front_shiny: null }
+    }
   }
 };
 
@@ -30,20 +40,30 @@ const mockPokemon2: Pokemon = {
   name: 'squirtle',
   height: 5,
   weight: 90,
-  types: [{ type: { name: 'water' } }],
+  types: [{ type: { name: 'water', url: 'https://pokeapi.co/api/v2/type/11/' }, slot: 1 }],
   stats: [
-    { stat: { name: 'hp' }, base_stat: 44 },
-    { stat: { name: 'attack' }, base_stat: 48 },
-    { stat: { name: 'defense' }, base_stat: 65 },
-    { stat: { name: 'special-attack' }, base_stat: 50 },
-    { stat: { name: 'special-defense' }, base_stat: 64 },
-    { stat: { name: 'speed' }, base_stat: 43 }
+    { stat: { name: 'hp', url: 'https://pokeapi.co/api/v2/stat/1/' }, base_stat: 44, effort: 0 },
+    { stat: { name: 'attack', url: 'https://pokeapi.co/api/v2/stat/2/' }, base_stat: 48, effort: 0 },
+    { stat: { name: 'defense', url: 'https://pokeapi.co/api/v2/stat/3/' }, base_stat: 65, effort: 1 },
+    { stat: { name: 'special-attack', url: 'https://pokeapi.co/api/v2/stat/4/' }, base_stat: 50, effort: 0 },
+    { stat: { name: 'special-defense', url: 'https://pokeapi.co/api/v2/stat/5/' }, base_stat: 64, effort: 0 },
+    { stat: { name: 'speed', url: 'https://pokeapi.co/api/v2/stat/6/' }, base_stat: 43, effort: 0 }
   ],
   moves: [],
   sprites: {
     front_default: '',
+    front_shiny: null,
+    front_female: null,
+    front_shiny_female: null,
     back_default: '',
-    other: {}
+    back_shiny: null,
+    back_female: null,
+    back_shiny_female: null,
+    other: {
+      dream_world: { front_default: null, front_female: null },
+      home: { front_default: null, front_female: null, front_shiny: null, front_shiny_female: null },
+      'official-artwork': { front_default: null, front_shiny: null }
+    }
   }
 };
 

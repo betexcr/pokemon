@@ -300,3 +300,4 @@ async function joinRoom(page: Page, roomId: string) {
   await page.goto(`/lobby/${roomId}`);
   await expect(page.locator('[data-testid="room-info"]')).toBeVisible();
 }
+

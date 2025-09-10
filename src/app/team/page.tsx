@@ -25,6 +25,7 @@ import AppHeader from '@/components/AppHeader'
 // Types are now imported from userTeams.ts
 
 const STORAGE_KEY = 'pokemon-team-builder'
+const CURRENT_TEAM_KEY = 'pokemon-current-team'
 
 export default function TeamBuilderPage() {
   const router = useRouter()
@@ -37,6 +38,7 @@ export default function TeamBuilderPage() {
   const [teamSlots, setTeamSlots] = useState<TeamSlot[]>(
     Array.from({ length: 6 }, () => ({ id: null, level: 50, moves: [] as MoveData[] }))
   )
+  const [lastSelectedPokemon, setLastSelectedPokemon] = useState<number | null>(null)
   const [savedTeams, setSavedTeams] = useState<FirebaseSavedTeam[]>([])
   const [teamName, setTeamName] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
@@ -235,11 +237,50 @@ export default function TeamBuilderPage() {
     }
   }, [filteredPokemon, fetchPokemonTypes])
 
+  // Load current team state from localStorage
+  const loadCurrentTeam = useCallback(() => {
+    try {
+      const saved = localStorage.getItem(CURRENT_TEAM_KEY)
+      if (saved) {
+        const parsed = JSON.parse(saved) as TeamSlot[]
+        if (Array.isArray(parsed) && parsed.length === 6) {
+          return parsed
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load current team:', error)
+    }
+    return Array.from({ length: 6 }, () => ({ id: null, level: 50, moves: [] as MoveData[] }))
+  }, [])
+
+  // Persist current team state to localStorage
+  const persistCurrentTeam = useCallback((slots: TeamSlot[]) => {
+    try {
+      localStorage.setItem(CURRENT_TEAM_KEY, JSON.stringify(slots))
+    } catch (error) {
+      console.error('Failed to persist current team:', error)
+    }
+  }, [])
+
   // Load initial data
   useEffect(() => {
     const load = async () => {
       try {
         setLoading(true)
+        
+        // Load current team state first
+        const currentTeam = loadCurrentTeam()
+        setTeamSlots(currentTeam)
+        
+        // Set collapsed state based on which slots have Pokémon
+        const newCollapsedSlots = new Set<number>()
+        currentTeam.forEach((slot, idx) => {
+          if (slot.id === null) {
+            newCollapsedSlots.add(idx)
+          }
+        })
+        setCollapsedSlots(newCollapsedSlots)
+        
         // Get total count and first 50 Pokémon
         const [totalCount, pokemonList] = await Promise.all([
           getPokemonTotalCount(),
@@ -302,7 +343,7 @@ export default function TeamBuilderPage() {
       }
     }
     load()
-  }, [])
+  }, [loadCurrentTeam])
 
   // Load saved teams from Firebase or localStorage
   useEffect(() => {
@@ -359,10 +400,11 @@ export default function TeamBuilderPage() {
     }
   }, [user])
 
-
-
   const setSlot = async (idx: number, patch: Partial<TeamSlot>) => {
     if (patch.id && typeof patch.id === 'number') {
+      // Track the last selected Pokémon for dropdown memory
+      setLastSelectedPokemon(patch.id)
+      
       // Fetch full Pokémon details if we don't have them
       const existingPokemon = allPokemon.find(p => p.id === patch.id)
       if (existingPokemon && existingPokemon.types.length === 0) {
@@ -384,7 +426,11 @@ export default function TeamBuilderPage() {
       }
     }
     
-    setTeamSlots(prev => prev.map((s, i) => i === idx ? { ...s, ...patch } : s))
+    const newTeamSlots = teamSlots.map((s, i) => i === idx ? { ...s, ...patch } : s)
+    setTeamSlots(newTeamSlots)
+    
+    // Persist the updated team state
+    persistCurrentTeam(newTeamSlots)
     
     // Auto-expand/collapse based on Pokémon assignment
     if (patch.id !== undefined) {
@@ -403,8 +449,11 @@ export default function TeamBuilderPage() {
   }
 
   const clearTeam = () => {
-    setTeamSlots(Array.from({ length: 6 }, () => ({ id: null, level: 50, moves: [] as MoveData[] })))
+    const emptySlots = Array.from({ length: 6 }, () => ({ id: null, level: 50, moves: [] as MoveData[] }))
+    setTeamSlots(emptySlots)
     setCollapsedSlots(new Set([0, 1, 2, 3, 4, 5])) // Collapse all slots when clearing team
+    persistCurrentTeam(emptySlots) // Clear persisted state
+    setLastSelectedPokemon(null) // Clear last selected Pokémon
   }
 
   const saveTeam = async () => {
@@ -462,6 +511,9 @@ export default function TeamBuilderPage() {
     setTeamSlots(team.slots)
     setTeamName(team.name)
     
+    // Persist the loaded team as current team
+    persistCurrentTeam(team.slots)
+    
     // Set collapsed state based on which slots have Pokémon
     const newCollapsedSlots = new Set<number>()
     team.slots.forEach((slot, idx) => {
@@ -498,14 +550,22 @@ export default function TeamBuilderPage() {
   }
 
   const deleteTeam = async (id: string) => {
-    if (!user) {
+    if (!user || !user.uid) {
       // User not authenticated, delete from localStorage
       persistTeams(savedTeams.filter(t => t.id !== id))
       return
     }
 
-    // User is authenticated, delete from Firebase
+    // Check if this is a local team (not synced to Firebase)
+    if (id.startsWith('local_')) {
+      // Local team, just remove from state
+      setSavedTeams(savedTeams.filter(t => t.id !== id))
+      return
+    }
+
+    // User is authenticated and team is in Firebase, delete from Firebase
     try {
+      console.log('Deleting team from Firebase:', { teamId: id, userId: user.uid, userEmail: user.email })
       await deleteTeamFromFirebase(id, user.uid)
       setSavedTeams(savedTeams.filter(t => t.id !== id))
     } catch (error) {
@@ -742,17 +802,77 @@ export default function TeamBuilderPage() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onFocus={() => setShowDropdown(true)}
-              className="w-full max-w-full px-4 py-6 border border-border rounded-lg bg-white text-text placeholder-muted focus:outline-none focus:ring-2 focus:ring-poke-blue focus:border-transparent"
+              className="w-full max-w-full px-4 py-6 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-poke-blue focus:border-transparent"
+              style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
             />
             
             {showDropdown && (
               <div className="absolute top-full left-0 w-full max-w-full mt-1 bg-white border border-border rounded-lg shadow-2xl z-[10010] max-h-96 overflow-y-auto pokemon-dropdown-list">
                 {(searchTerm.trim() ? filteredPokemon : allPokemon).length > 0 ? (
                   <div className="divide-y divide-border">
+                    {/* Show last selected Pokémon at the top if available and not in search mode */}
+                    {!searchTerm.trim() && lastSelectedPokemon && (
+                      (() => {
+                        const lastPokemon = allPokemon.find(p => p.id === lastSelectedPokemon)
+                        return lastPokemon ? (
+                          <div key={`last-${lastPokemon.id}`} className="bg-blue-50 border-b-2 border-blue-200">
+                            <button
+                              onClick={async () => {
+                                const slot = teamSlots.findIndex(s => s.id === null)
+                                if (slot !== -1) {
+                                  await setSlot(slot, { id: lastPokemon.id })
+                                  setShowDropdown(false)
+                                  setSearchTerm('')
+                                  setCollapsedSlots(prev => {
+                                    const newSet = new Set(prev)
+                                    newSet.delete(slot)
+                                    return newSet
+                                  })
+                                }
+                              }}
+                              className="w-full text-left hover:bg-blue-100 flex items-center gap-1 transition-colors h-10 py-1 px-2"
+                            >
+                              <div className="relative w-6 h-6 flex-shrink-0 bg-blue-100 rounded">
+                                <Image
+                                  src={getPokemonSpriteUrl(lastPokemon.id)}
+                                  alt={lastPokemon.name}
+                                  width={24}
+                                  height={24}
+                                  className="w-full h-full object-contain"
+                                  unoptimized
+                                />
+                              </div>
+                              <div className="flex-1 min-w-0 leading-none">
+                                <div className="font-medium capitalize text-text text-xs leading-none">
+                                  {formatPokemonName(lastPokemon.name)} (Last Selected)
+                                </div>
+                                <div className="text-[10px] text-muted leading-none">
+                                  #{String(lastPokemon.id).padStart(4, '0')}
+                                </div>
+                              </div>
+                              <div className="flex gap-1 items-center">
+                                {lastPokemon.types.length > 0 ? (
+                                  lastPokemon.types.map((typeObj) => {
+                                    const typeName = typeof typeObj === 'string' ? typeObj : typeObj.type?.name
+                                    return typeName ? (
+                                      <TypeBadge key={`${lastPokemon.id}-${typeName}`} type={typeName} variant="span" />
+                                    ) : null
+                                  })
+                                ) : (
+                                  <span className="text-xs text-muted">…</span>
+                                )}
+                              </div>
+                            </button>
+                          </div>
+                        ) : null
+                      })()
+                    )}
+                    
                     {(searchTerm.trim() ? filteredPokemon.slice(0, 50) : allPokemon).map((pokemon) => (
                       <button
                         key={pokemon.id}
                         onClick={async () => {
+                          // Find the first empty slot
                           const slot = teamSlots.findIndex(s => s.id === null)
                           if (slot !== -1) {
                             await setSlot(slot, { id: pokemon.id })
@@ -765,6 +885,9 @@ export default function TeamBuilderPage() {
                               newSet.delete(slot)
                               return newSet
                             })
+                          } else {
+                            // All slots are full, show a message or replace the last selected slot
+                            console.log('All team slots are full')
                           }
                         }}
                         className="w-full text-left hover:bg-gray-50 flex items-center gap-1 transition-colors h-10 py-1"
@@ -945,7 +1068,7 @@ export default function TeamBuilderPage() {
                   
                   <div className="flex items-center gap-2 mb-3">
                     <label className="text-xs">Level</label>
-                    <input type="number" min={1} max={100} value={slot.level} onChange={(e) => setSlot(idx, { level: Math.max(1, Math.min(100, Number(e.target.value) || 50)) })} className="w-20 px-2 py-1 border border-border rounded" />
+                    <input type="number" min={1} max={100} value={slot.level} onChange={(e) => setSlot(idx, { level: Math.max(1, Math.min(100, Number(e.target.value) || 50)) })} className="w-20 px-2 py-1 border border-border rounded" style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }} />
                   </div>
                   
                   {/* Moveset Selector */}

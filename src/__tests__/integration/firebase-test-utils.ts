@@ -436,3 +436,4 @@ export class FirebaseTestUtils {
 
 // Export singleton instance
 export const firebaseTestUtils = new FirebaseTestUtils();
+

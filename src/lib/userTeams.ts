@@ -160,7 +160,19 @@ export async function deleteTeamFromFirebase(
     await deleteDoc(teamRef);
   } catch (error) {
     console.error('Error deleting team from Firebase:', error);
-    throw new Error('Failed to delete team');
+    
+    // Provide more specific error messages
+    if (error instanceof Error) {
+      if (error.message.includes('permission')) {
+        throw new Error('Permission denied. Please make sure you are logged in and own this team.');
+      } else if (error.message.includes('not found')) {
+        throw new Error('Team not found. It may have already been deleted.');
+      } else if (error.message.includes('network') || error.message.includes('timeout')) {
+        throw new Error('Network error. Please check your connection and try again.');
+      }
+    }
+    
+    throw new Error('Failed to delete team. Please try again.');
   }
 }
 

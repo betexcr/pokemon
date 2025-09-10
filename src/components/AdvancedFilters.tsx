@@ -58,9 +58,11 @@ export default function AdvancedFilters({
             </div>
           </div>
           
-          {/* Sidebar Body - filters static; comparison fills remaining space */}
-          <div className="flex-1 min-h-0 flex flex-col overflow-hidden p-6 pb-4">
-            <div className="flex-none space-y-6 min-w-0">
+          {/* Sidebar Body - scrollable filters; comparison fills remaining space */}
+          <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+            {/* Scrollable Filters Section */}
+            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scroll-stable scrollbar-hide p-6 pb-4">
+              <div className="space-y-6 min-w-0">
               {/* Generation Filter */}
               <div className="min-w-0">
                 <label className="block text-sm font-medium mb-2">Generation</label>
@@ -72,7 +74,8 @@ export default function AdvancedFilters({
                       generation: e.target.value 
                     }))
                   }}
-                  className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text"
+                  className="w-full px-3 py-2 border border-border rounded-lg"
+                  style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
                 >
                   <option value="all">All Generations</option>
                   <option value="1">Generation 1</option>
@@ -106,6 +109,7 @@ export default function AdvancedFilters({
                       }))
                     }}
                     className="w-full"
+                    style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
                   />
                   <input
                     type="range"
@@ -120,6 +124,7 @@ export default function AdvancedFilters({
                       }))
                     }}
                     className="w-full"
+                    style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
                   />
                 </div>
               </div>
@@ -143,6 +148,7 @@ export default function AdvancedFilters({
                       }))
                     }}
                     className="w-full"
+                    style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
                   />
                   <input
                     type="range"
@@ -157,6 +163,7 @@ export default function AdvancedFilters({
                       }))
                     }}
                     className="w-full"
+                    style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
                   />
                 </div>
               </div>
@@ -175,7 +182,8 @@ export default function AdvancedFilters({
                           legendary: e.target.checked
                         }))
                       }}
-                      className="w-4 h-4 text-poke-blue bg-surface border-border rounded focus:ring-poke-blue focus:ring-2"
+                      className="w-4 h-4 text-poke-blue border-border rounded focus:ring-poke-blue focus:ring-2"
+                      style={{ backgroundColor: 'var(--color-input-bg)' }}
                     />
                     <span className="text-sm text-text">Legendary Pokémon</span>
                   </label>
@@ -189,11 +197,13 @@ export default function AdvancedFilters({
                           mythical: e.target.checked
                         }))
                       }}
-                      className="w-4 h-4 text-poke-blue bg-surface border-border rounded focus:ring-poke-blue focus:ring-2"
+                      className="w-4 h-4 text-poke-blue border-border rounded focus:ring-poke-blue focus:ring-2"
+                      style={{ backgroundColor: 'var(--color-input-bg)' }}
                     />
                     <span className="text-sm text-text">Mythical Pokémon</span>
                   </label>
                 </div>
+              </div>
               </div>
             </div>
 

@@ -13,10 +13,12 @@ import {
   orderBy, 
   limit,
   serverTimestamp,
-  type Unsubscribe
+  type Unsubscribe,
+  FirestoreError
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { battleService } from './battleService';
+import { firebaseErrorLogger, PermissionErrorDetails } from './firebaseErrorLogger';
 
 export interface RoomData {
   id: string;
@@ -102,32 +104,72 @@ class RoomService {
   async createRoom(hostId: string, hostName: string, hostPhotoURL?: string | null, hostTeam?: unknown): Promise<string> {
     if (!db) throw new Error('Firebase not initialized');
     
-    // Close any existing rooms for this user first
-    await this.closeExistingRoomsForUser(hostId);
-    
-    const roomData: Record<string, unknown> = {
-      hostId,
-      hostName,
-      hostPhotoURL: hostPhotoURL || null,
-      hostReady: false,
-      hostAnimatingBalls: [],
-      hostReleasedBalls: [],
-      guestAnimatingBalls: [],
-      guestReleasedBalls: [],
-      status: 'waiting' as const,
-      createdAt: serverTimestamp(),
-      maxPlayers: 2,
-      currentPlayers: 1,
-      activeUsers: [hostId] // Track active users
-    };
+    try {
+      // Close any existing rooms for this user first
+      await this.closeExistingRoomsForUser(hostId);
+      
+      const roomData: Record<string, unknown> = {
+        hostId,
+        hostName,
+        hostPhotoURL: hostPhotoURL || null,
+        hostReady: false,
+        hostAnimatingBalls: [],
+        hostReleasedBalls: [],
+        guestAnimatingBalls: [],
+        guestReleasedBalls: [],
+        status: 'waiting' as const,
+        createdAt: serverTimestamp(),
+        maxPlayers: 2,
+        currentPlayers: 1,
+        activeUsers: [hostId] // Track active users
+      };
 
-    // Only include hostTeam if it's provided and not undefined
-    if (hostTeam !== undefined) {
-      roomData.hostTeam = hostTeam;
+      // Only include hostTeam if it's provided and not undefined
+      if (hostTeam !== undefined) {
+        roomData.hostTeam = hostTeam;
+      }
+
+      const docRef = await addDoc(collection(db, this.roomsCollection), roomData);
+      
+      console.log('✅ Room created successfully:', docRef.id);
+      return docRef.id;
+    } catch (error) {
+      console.error('❌ Failed to create room:', error);
+      
+      // Log detailed error information
+      firebaseErrorLogger.logError(
+        error as Error,
+        'create_room',
+        {
+          hostId,
+          hostName,
+          hostPhotoURL,
+          hasHostTeam: !!hostTeam,
+          collection: this.roomsCollection,
+          operation: 'addDoc'
+        }
+      );
+
+      // If it's a permission error, provide specific guidance
+      if (error instanceof FirestoreError && error.code === 'permission-denied') {
+        const permissionDetails: PermissionErrorDetails = {
+          operation: 'write',
+          collection: this.roomsCollection,
+          userId: hostId,
+          expectedPermissions: ['authenticated', 'hostId matches auth.uid'],
+          actualPermissions: [],
+          securityRuleViolations: ['battle_rooms create rule']
+        };
+        
+        firebaseErrorLogger.logPermissionError(error, permissionDetails, {
+          hostId,
+          hostName,
+          operation: 'create_room'
+        });
+      }
+
+      throw error;
     }
-
-    const docRef = await addDoc(collection(db, this.roomsCollection), roomData);
-    return docRef.id;
   }
 
   // Get room by ID
@@ -178,6 +220,8 @@ class RoomService {
     if (!db) throw new Error('Firebase not initialized');
     
     console.log('RoomService.joinRoom called with:', { roomId, guestId, guestName, guestTeam });
+    
+    try {
     
     const roomRef = doc(db, this.roomsCollection, roomId);
     const roomSnap = await getDoc(roomRef);
@@ -287,10 +331,86 @@ class RoomService {
       console.log('Room updated successfully');
     } catch (updateError) {
       console.error('Failed to update room:', updateError);
+      
+      // Log detailed error information
+      firebaseErrorLogger.logError(
+        updateError as Error,
+        'join_room_update',
+        {
+          roomId,
+          guestId,
+          guestName,
+          guestPhotoURL,
+          hasGuestTeam: !!guestTeam,
+          collection: this.roomsCollection,
+          operation: 'updateDoc',
+          updateData
+        }
+      );
+
+      // If it's a permission error, provide specific guidance
+      if (updateError instanceof FirestoreError && updateError.code === 'permission-denied') {
+        const permissionDetails: PermissionErrorDetails = {
+          operation: 'write',
+          collection: this.roomsCollection,
+          documentId: roomId,
+          userId: guestId,
+          expectedPermissions: ['authenticated', 'room participant'],
+          actualPermissions: [],
+          securityRuleViolations: ['battle_rooms update rule']
+        };
+        
+        firebaseErrorLogger.logPermissionError(updateError, permissionDetails, {
+          roomId,
+          guestId,
+          guestName,
+          operation: 'join_room_update'
+        });
+      }
+      
       throw new Error(`Failed to update room: ${updateError instanceof Error ? updateError.message : 'Unknown error'}`);
     }
     
     return true;
+    } catch (error) {
+      console.error('❌ Failed to join room:', error);
+      
+      // Log detailed error information
+      firebaseErrorLogger.logError(
+        error as Error,
+        'join_room',
+        {
+          roomId,
+          guestId,
+          guestName,
+          guestPhotoURL,
+          hasGuestTeam: !!guestTeam,
+          collection: this.roomsCollection
+        }
+      );
+
+      // If it's a permission error, provide specific guidance
+      if (error instanceof FirestoreError && error.code === 'permission-denied') {
+        const permissionDetails: PermissionErrorDetails = {
+          operation: 'write',
+          collection: this.roomsCollection,
+          documentId: roomId,
+          userId: guestId,
+          expectedPermissions: ['authenticated', 'room participant'],
+          actualPermissions: [],
+          securityRuleViolations: ['battle_rooms update rule']
+        };
+        
+        firebaseErrorLogger.logPermissionError(error, permissionDetails, {
+          roomId,
+          guestId,
+          guestName,
+          operation: 'join_room'
+        });
+      }
+
+      throw error;
+    }
   }
 
   // Leave a room
@@ -329,6 +449,16 @@ class RoomService {
     
     console.log('roomService.updateRoom called with:', { roomId, updates });
     
+    // Special debugging for team updates
+    if (updates.guestTeam) {
+      console.log('=== GUEST TEAM UPDATE IN ROOM SERVICE ===');
+      console.log('Guest team being saved:', updates.guestTeam);
+    }
+    if (updates.hostTeam) {
+      console.log('=== HOST TEAM UPDATE IN ROOM SERVICE ===');
+      console.log('Host team being saved:', updates.hostTeam);
+    }
+    
     const roomRef = doc(db, this.roomsCollection, roomId);
     
     try {
@@ -346,7 +476,7 @@ class RoomService {
     
     // Check authentication state
     const { auth } = await import('@/lib/firebase');
-    if (!auth.currentUser) {
+    if (!auth || !auth.currentUser) {
       throw new Error('User not authenticated');
     }
     
@@ -411,10 +541,10 @@ class RoomService {
     
     // Check authentication state
     const { auth } = await import('@/lib/firebase');
-    if (!auth.currentUser) {
+    if (!auth || !auth.currentUser) {
       throw new Error('User not authenticated');
     }
-    console.log('User authenticated:', auth.currentUser.uid);
+    console.log('User authenticated:', auth.currentUser?.uid);
     
     // Ensure animation fields are initialized
     await this.initializeAnimationFields(roomId);
@@ -490,6 +620,11 @@ class RoomService {
     }
     
     // Create battle in Firestore
+    console.log('=== BATTLE CREATION DEBUG ===');
+    console.log('Host team being passed to battle:', roomData.hostTeam);
+    console.log('Guest team being passed to battle:', roomData.guestTeam);
+    console.log('Teams are identical:', JSON.stringify(roomData.hostTeam) === JSON.stringify(roomData.guestTeam));
+    
     const actualBattleId = await battleService.createBattle(
       roomId,
       roomData.hostId,
@@ -562,6 +697,36 @@ class RoomService {
     }, (error) => {
       console.error('roomService.onRoomChange error:', error);
       console.error('roomService.onRoomChange error details:', error.code, error.message);
+      
+      // Log detailed error information for room listener
+      firebaseErrorLogger.logError(
+        error,
+        'listen_room',
+        {
+          roomId,
+          collection: this.roomsCollection,
+          operation: 'onSnapshot',
+          errorCode: error.code,
+          errorMessage: error.message
+        }
+      );
+
+      // If it's a permission error, provide specific guidance
+      if (error.code === 'permission-denied') {
+        const permissionDetails: PermissionErrorDetails = {
+          operation: 'listen',
+          collection: this.roomsCollection,
+          documentId: roomId,
+          expectedPermissions: ['authenticated', 'room access'],
+          actualPermissions: [],
+          securityRuleViolations: ['battle_rooms read rule']
+        };
+        
+        firebaseErrorLogger.logPermissionError(error, permissionDetails, {
+          roomId,
+          operation: 'listen_room'
+        });
+      }
     });
   }
 

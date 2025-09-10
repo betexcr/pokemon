@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { formatPokemonName } from '@/lib/utils'
+import { Pokemon } from '@/types/pokemon'
 
 // Minimal shape needed for the radar chart; compatible with full Pokemon
 type RadarPokemon = {
@@ -60,11 +61,11 @@ export default function MultiPokemonRadarChart({ pokemons }: MultiPokemonRadarCh
   }
 
   // Calculate points for each stat
-  const getStatPoints = (pokemon: Pokemon) => {
+  const getStatPoints = (pokemon: RadarPokemon) => {
     const points: Point[] = []
     
     stats.forEach((statName, index) => {
-      const stat = pokemon.stats.find(s => s.stat.name === statName)
+      const stat = pokemon.stats.find((s: any) => s.stat.name === statName)
       const value = stat?.base_stat || 0
       const angle = (index * 2 * Math.PI) / stats.length - Math.PI / 2
       const distance = (value / maxStat) * radius

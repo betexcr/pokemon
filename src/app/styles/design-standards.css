@@ -1,0 +1,296 @@
+/* Design Standards - Consistent spacing, typography, and component styling */
+
+/* ===== CARD COMPONENTS ===== */
+.card {
+  padding: 2rem 2rem 2.5rem;
+  margin: 2rem auto;
+  border-radius: 1rem;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+}
+
+.card-compact {
+  padding: 1.5rem;
+  margin: 1rem auto;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+.card-minimal {
+  padding: 1rem;
+  margin: 0.5rem auto;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+/* ===== FORM ELEMENTS ===== */
+input, 
+button, 
+select, 
+textarea {
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+  border-radius: 999px; /* capsule shape */
+  border: 1px solid var(--color-border);
+  transition: all 0.2s ease;
+}
+
+/* Special cases for non-capsule inputs */
+input[type="checkbox"],
+input[type="radio"] {
+  border-radius: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+input[type="range"] {
+  border-radius: 0.5rem;
+  padding: 0.5rem 0;
+}
+
+select {
+  border-radius: 0.5rem; /* slightly less rounded for dropdowns */
+}
+
+textarea {
+  border-radius: 0.75rem; /* slightly less rounded for text areas */
+  min-height: 4rem;
+  resize: vertical;
+}
+
+/* ===== TYPOGRAPHY ===== */
+h1, h2 {
+  margin-bottom: 1rem;
+  text-align: center;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+h3, h4, h5, h6 {
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+h1 {
+  font-size: 2.5rem;
+}
+
+h2 {
+  font-size: 2rem;
+}
+
+h3 {
+  font-size: 1.5rem;
+}
+
+h4 {
+  font-size: 1.25rem;
+}
+
+h5 {
+  font-size: 1.125rem;
+}
+
+h6 {
+  font-size: 1rem;
+}
+
+/* ===== LABELS ===== */
+label {
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+  display: block;
+  color: var(--color-text);
+}
+
+/* ===== HELPER TEXT ===== */
+.helper-text {
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: var(--color-muted);
+}
+
+.helper-text-compact {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  line-height: 1.3;
+  color: var(--color-muted);
+}
+
+/* ===== SPACING UTILITIES ===== */
+.margin-standard {
+  margin: 2rem auto;
+}
+
+.margin-compact {
+  margin: 1rem auto;
+}
+
+.margin-minimal {
+  margin: 0.5rem auto;
+}
+
+.padding-standard {
+  padding: 2rem 2rem 2.5rem;
+}
+
+.padding-compact {
+  padding: 1.5rem;
+}
+
+.padding-minimal {
+  padding: 1rem;
+}
+
+/* ===== BUTTON VARIANTS ===== */
+.btn-primary {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  font-weight: 600;
+}
+
+.btn-primary:hover {
+  background: var(--color-primary);
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: var(--color-google-bg);
+  color: var(--color-google-text);
+  border: 1px solid var(--color-google-border);
+  font-weight: 600;
+}
+
+.btn-secondary:hover {
+  background: var(--color-google-bg);
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.btn-capsule {
+  border-radius: 999px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.btn-capsule:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* ===== FORM LAYOUTS ===== */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group-compact {
+  margin-bottom: 1rem;
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+  align-items: end;
+}
+
+.form-row > * {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+/* ===== RESPONSIVE ADJUSTMENTS ===== */
+@media (max-width: 768px) {
+  .card {
+    padding: 1.5rem;
+    margin: 1rem auto;
+    border-radius: 0.75rem;
+  }
+  
+  h1 {
+    font-size: 2rem;
+  }
+  
+  h2 {
+    font-size: 1.75rem;
+  }
+  
+  .form-row {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .form-row > * {
+    margin-bottom: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .card {
+    padding: 1rem;
+    margin: 0.5rem auto;
+    border-radius: 0.5rem;
+  }
+  
+  input, 
+  button, 
+  select, 
+  textarea {
+    padding: 0.625rem 0.875rem;
+    margin-bottom: 0.625rem;
+  }
+  
+  h1 {
+    font-size: 1.75rem;
+  }
+  
+  h2 {
+    font-size: 1.5rem;
+  }
+}
+
+/* ===== FOCUS STATES ===== */
+input:focus,
+button:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(59, 76, 202, 0.1);
+}
+
+/* ===== DISABLED STATES ===== */
+input:disabled,
+button:disabled,
+select:disabled,
+textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: var(--color-muted);
+}
+
+/* ===== ERROR STATES ===== */
+.input-error {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.error-text {
+  color: #ef4444;
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+
+/* ===== SUCCESS STATES ===== */
+.input-success {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.success-text {
+  color: #10b981;
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}

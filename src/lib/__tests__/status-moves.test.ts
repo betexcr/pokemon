@@ -10,19 +10,19 @@ import { Pokemon, Move } from '@/types/pokemon';
 const mockPokemon: Pokemon = {
   id: 1,
   name: 'charizard',
-  types: [{ type: { name: 'fire' } }, { type: { name: 'flying' } }],
+  types: [{ type: { name: 'fire', url: 'https://pokeapi.co/api/v2/type/10/' }, slot: 1 }, { type: { name: 'flying', url: 'https://pokeapi.co/api/v2/type/3/' }, slot: 2 }],
   stats: [
-    { stat: { name: 'hp' }, base_stat: 78 },
-    { stat: { name: 'attack' }, base_stat: 84 },
-    { stat: { name: 'defense' }, base_stat: 78 },
-    { stat: { name: 'special-attack' }, base_stat: 109 },
-    { stat: { name: 'special-defense' }, base_stat: 85 },
-    { stat: { name: 'speed' }, base_stat: 100 }
+    { stat: { name: 'hp', url: 'https://pokeapi.co/api/v2/stat/1/' }, base_stat: 78, effort: 0 },
+    { stat: { name: 'attack', url: 'https://pokeapi.co/api/v2/stat/2/' }, base_stat: 84, effort: 0 },
+    { stat: { name: 'defense', url: 'https://pokeapi.co/api/v2/stat/3/' }, base_stat: 78, effort: 0 },
+    { stat: { name: 'special-attack', url: 'https://pokeapi.co/api/v2/stat/4/' }, base_stat: 109, effort: 3 },
+    { stat: { name: 'special-defense', url: 'https://pokeapi.co/api/v2/stat/5/' }, base_stat: 85, effort: 0 },
+    { stat: { name: 'speed', url: 'https://pokeapi.co/api/v2/stat/6/' }, base_stat: 100, effort: 0 }
   ],
   height: 17,
   weight: 905,
   abilities: [
-    { ability: { name: 'blaze' }, is_hidden: false }
+    { ability: { name: 'blaze', url: 'https://pokeapi.co/api/v2/ability/66/' }, is_hidden: false, slot: 1 }
   ],
   moves: [],
   base_experience: 267,
@@ -39,8 +39,7 @@ const mockPokemon: Pokemon = {
       dream_world: { front_default: null, front_female: null },
       home: { front_default: null, front_female: null, front_shiny: null, front_shiny_female: null },
       'official-artwork': { front_default: null, front_shiny: null }
-    },
-    versions: {}
+    }
   },
   held_items: [],
   location_area_encounters: '',
@@ -50,19 +49,19 @@ const mockPokemon: Pokemon = {
 const mockGeodude: Pokemon = {
   id: 74,
   name: 'geodude',
-  types: [{ type: { name: 'rock' } }, { type: { name: 'ground' } }],
+  types: [{ type: { name: 'rock', url: 'https://pokeapi.co/api/v2/type/6/' }, slot: 1 }, { type: { name: 'ground', url: 'https://pokeapi.co/api/v2/type/5/' }, slot: 2 }],
   stats: [
-    { stat: { name: 'hp' }, base_stat: 40 },
-    { stat: { name: 'attack' }, base_stat: 80 },
-    { stat: { name: 'defense' }, base_stat: 100 },
-    { stat: { name: 'special-attack' }, base_stat: 30 },
-    { stat: { name: 'special-defense' }, base_stat: 30 },
-    { stat: { name: 'speed' }, base_stat: 20 }
+    { stat: { name: 'hp', url: 'https://pokeapi.co/api/v2/stat/1/' }, base_stat: 40, effort: 0 },
+    { stat: { name: 'attack', url: 'https://pokeapi.co/api/v2/stat/2/' }, base_stat: 80, effort: 0 },
+    { stat: { name: 'defense', url: 'https://pokeapi.co/api/v2/stat/3/' }, base_stat: 100, effort: 1 },
+    { stat: { name: 'special-attack', url: 'https://pokeapi.co/api/v2/stat/4/' }, base_stat: 30, effort: 0 },
+    { stat: { name: 'special-defense', url: 'https://pokeapi.co/api/v2/stat/5/' }, base_stat: 30, effort: 0 },
+    { stat: { name: 'speed', url: 'https://pokeapi.co/api/v2/stat/6/' }, base_stat: 20, effort: 0 }
   ],
   height: 4,
   weight: 200,
   abilities: [
-    { ability: { name: 'rock-head' }, is_hidden: false }
+    { ability: { name: 'rock-head', url: 'https://pokeapi.co/api/v2/ability/69/' }, is_hidden: false, slot: 1 }
   ],
   moves: [],
   base_experience: 86,
@@ -79,8 +78,7 @@ const mockGeodude: Pokemon = {
       dream_world: { front_default: null, front_female: null },
       home: { front_default: null, front_female: null, front_shiny: null, front_shiny_female: null },
       'official-artwork': { front_default: null, front_shiny: null }
-    },
-    versions: {}
+    }
   },
   held_items: [],
   location_area_encounters: '',

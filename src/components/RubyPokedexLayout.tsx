@@ -338,7 +338,7 @@ export default function RubyPokedexLayout({
             </div>
             <div>
               <label className="block text-sm font-bold text-black mb-1">Search</label>
-              <input type="text" className="w-full border-2 border-border p-2 text-black" placeholder="Search..." value={searchTerm} onChange={(e)=>setSearchTerm(e.target.value)} />
+              <input type="text" className="w-full border-2 border-border p-2" placeholder="Search..." value={searchTerm} onChange={(e)=>setSearchTerm(e.target.value)} style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }} />
             </div>
             <div>
               <button onClick={()=>window.location.href='/compare'} className="w-full px-3 py-2 bg-black text-white font-bold">GO TO COMPARISON</button>

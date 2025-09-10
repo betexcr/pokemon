@@ -9,6 +9,19 @@
   --color-muted: #6B7280;
   --color-primary: #3B4CCA;
   
+  /* Input Colors */
+  --color-input-bg: #E0E0E0;
+  --color-input-text: #212121;
+  --color-input-placeholder: #757575;
+  
+  /* Button Colors */
+  --color-google-bg: #F5F5F5;
+  --color-google-border: #E0E0E0;
+  --color-google-text: #212121;
+  --color-signup-bg: #F5F5F5;
+  --color-signup-text: #1565C0;
+  --color-signup-hover: #0D47A1;
+  
   /* Pokémon Type Colors */
   --type-normal: #A8A878;
   --type-fire: #F08030;
@@ -37,6 +50,19 @@
   --color-text: #ECEFF4;
   --color-muted: #A1A7B3;
   --color-primary: #3B4CCA;
+  
+  /* Input Colors - same for dark mode */
+  --color-input-bg: #E0E0E0;
+  --color-input-text: #212121;
+  --color-input-placeholder: #757575;
+  
+  /* Button Colors - same for dark mode */
+  --color-google-bg: #F5F5F5;
+  --color-google-border: #E0E0E0;
+  --color-google-text: #212121;
+  --color-signup-bg: #F5F5F5;
+  --color-signup-text: #1565C0;
+  --color-signup-hover: #0D47A1;
 }
 
 /* Pokémon Gold Theme - Authentic Game Boy Color Style */

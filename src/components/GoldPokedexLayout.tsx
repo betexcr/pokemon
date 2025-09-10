@@ -237,7 +237,7 @@ export default function GoldPokedexLayout({
             </div>
             <div>
               <label className="block text-sm font-bold text-yellow-800 mb-1">Search</label>
-              <input type="text" className="w-full border-2 border-yellow-600 p-2 text-black" placeholder="Search..." />
+              <input type="text" className="w-full border-2 border-yellow-600 p-2" placeholder="Search..." style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }} />
             </div>
             <div>
               <button onClick={()=>window.location.href='/compare'} className="w-full px-3 py-2 bg-yellow-600 text-white font-bold">GO TO COMPARISON</button>
