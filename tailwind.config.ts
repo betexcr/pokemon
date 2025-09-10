@@ -15,11 +15,48 @@ export default {
         border: "var(--color-border)",
         text: "var(--color-text)",
         muted: "var(--color-muted)",
+        input: {
+          bg: "var(--color-input-bg)",
+          text: "var(--color-input-text)",
+          placeholder: "var(--color-input-placeholder)",
+        },
+        google: {
+          bg: "var(--color-google-bg)",
+          border: "var(--color-google-border)",
+          text: "var(--color-google-text)",
+        },
+        signup: {
+          bg: "var(--color-signup-bg)",
+          text: "var(--color-signup-text)",
+          hover: "var(--color-signup-hover)",
+        },
         poke: {
           red: "var(--color-poke-red)",
           yellow: "var(--color-poke-yellow)",
           blue: "var(--color-poke-blue)",
         },
+      },
+      spacing: {
+        'standard': '2rem',
+        'compact': '1rem',
+        'minimal': '0.5rem',
+      },
+      borderRadius: {
+        'capsule': '999px',
+      },
+      boxShadow: {
+        'card': '0 8px 24px rgba(0,0,0,0.15)',
+        'card-compact': '0 4px 16px rgba(0,0,0,0.1)',
+        'card-minimal': '0 2px 8px rgba(0,0,0,0.08)',
+      },
+      fontSize: {
+        'helper': '0.85rem',
+        'helper-compact': '0.8rem',
+      },
+      lineHeight: {
+        'helper': '1.4',
+        'helper-compact': '1.3',
+      },
         gold: {
           accent: "var(--color-accent)",
           "accent-dark": "var(--color-accent-dark)",
@@ -92,6 +129,5 @@ export default {
         'ruby-card': 'linear-gradient(180deg, var(--color-surface) 0%, var(--color-bg) 100%)',
       },
     },
-  },
   plugins: [],
 } satisfies Config;

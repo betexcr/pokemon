@@ -66,7 +66,8 @@ export default function RegisterForm({ onToggleMode }: RegisterFormProps) {
             id="displayName"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
-            className="w-full h-[52px] rounded-[18px] border border-black/10 bg-white px-4 text-[18px] font-medium text-[#20262f] placeholder-gray-400 outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-500"
+            className="w-full h-[52px] rounded-[18px] border border-black/10 px-4 text-[18px] font-medium outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-500"
+            style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
             placeholder="Ash K."
             required
           />
@@ -80,7 +81,8 @@ export default function RegisterForm({ onToggleMode }: RegisterFormProps) {
             id="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full h-[52px] rounded-[18px] border border-black/10 bg-white px-4 text-[18px] font-medium text-[#20262f] placeholder-gray-400 outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-500"
+            className="w-full h-[52px] rounded-[18px] border border-black/10 px-4 text-[18px] font-medium outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-500"
+            style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
             placeholder="Email"
             required
           />
@@ -95,7 +97,8 @@ export default function RegisterForm({ onToggleMode }: RegisterFormProps) {
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full h-[52px] rounded-[18px] border border-black/10 bg-white px-4 text-[18px] font-medium text-[#20262f] placeholder-gray-400 outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-500"
+              className="w-full h-[52px] rounded-[18px] border border-black/10 px-4 text-[18px] font-medium outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-500"
+              style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
               placeholder="Password"
               required
             />
@@ -121,7 +124,8 @@ export default function RegisterForm({ onToggleMode }: RegisterFormProps) {
               id="confirmPassword"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full h-[52px] rounded-[18px] border border-black/10 bg-white px-4 text-[18px] font-medium text-[#20262f] placeholder-gray-400 outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-500"
+              className="w-full h-[52px] rounded-[18px] border border-black/10 px-4 text-[18px] font-medium outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-500"
+              style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
               placeholder="Confirm password"
               required
             />
@@ -150,11 +154,11 @@ export default function RegisterForm({ onToggleMode }: RegisterFormProps) {
       {/* Footer */}
       <button
         onClick={onToggleMode}
-        className="w-full h-[56px] rounded-[18px] border border-black/10 bg-white flex items-center justify-center gap-3 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 mt-4"
+        className="w-full h-[56px] rounded-[18px] border border-google-border bg-signup-bg flex items-center justify-center gap-3 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 mt-4"
       >
-        <span className="text-[#0f172a] font-extrabold text-[24px]">
+        <span className="font-extrabold text-[24px]">
           Already have an account?{" "}
-          <span className="text-blue-600">
+          <span className="text-signup-text hover:text-signup-hover">
             Sign in
           </span>
         </span>

@@ -1150,7 +1150,8 @@ export default function ModernPokedexLayout({
                     placeholder="Search by name, number, or type"
                     value={searchTerm}
                     onChange={(e) => { handleSearchChange(e.target.value) }}
-                    className="w-full pl-10 pr-4 py-3 border border-border rounded-xl bg-white text-text placeholder:text-muted focus:ring-2 focus:ring-poke-blue focus:border-poke-blue focus:outline-none transition-all duration-200 text-sm"
+                    className="w-full pl-10 pr-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-poke-blue focus:border-poke-blue focus:outline-none transition-all duration-200 text-sm"
+                    style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
                     inputMode="search"
                     aria-label="Search Pokémon"
                   />
@@ -1244,7 +1245,8 @@ export default function ModernPokedexLayout({
                     <button
                       key={opt.id}
                       onClick={() => setSortBy(opt.id as 'id' | 'name' | 'stats')}
-                      className={`px-3 py-2 rounded-lg text-sm font-medium border transition ${sortBy===opt.id? 'bg-poke-blue text-white border-poke-blue' : 'bg-white text-text border-border'}`}
+                      className={`px-2 py-2 rounded-full text-sm font-medium border transition ${sortBy===opt.id? 'bg-poke-blue text-white border-poke-blue' : 'bg-white text-text border-border'}`}
+                      style={{ borderRadius: '9999px', padding: '8px 8px' }}
                       aria-pressed={sortBy===opt.id}
                     >
                       {opt.label}
@@ -1255,11 +1257,12 @@ export default function ModernPokedexLayout({
                   <span className="text-sm text-muted">Direction</span>
                   <button
                     onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-                    className="px-3 py-2 rounded-lg text-sm font-medium border border-border bg-white flex items-center space-x-2"
+                    className="px-2 py-2 rounded-full text-sm font-medium border border-border bg-white flex items-center space-x-1"
+                    style={{ borderRadius: '9999px', padding: '8px 8px' }}
                     aria-label={`Sort ${sortOrder==='asc'?'descending':'ascending'}`}
                   >
                     <span>{sortOrder === 'asc' ? 'Ascending' : 'Descending'}</span>
-                    <svg className={`w-4 h-4 transform ${sortOrder === 'asc' ? 'rotate-0' : 'rotate-180'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className={`w-3 h-3 transform ${sortOrder === 'asc' ? 'rotate-0' : 'rotate-180'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
                     </svg>
                   </button>
@@ -1437,7 +1440,8 @@ export default function ModernPokedexLayout({
               onChange={(e) => {
                 handleSearchChange(e.target.value)
               }}
-              className="w-full pl-10 pr-4 py-3 border border-border rounded-xl bg-white text-text placeholder:text-muted focus:ring-2 focus:ring-poke-blue focus:border-poke-blue focus:outline-none transition-all duration-200"
+              className="w-full pl-10 pr-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-poke-blue focus:border-poke-blue focus:outline-none transition-all duration-200"
+              style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
             />
             {searchLoading && (
               <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -1468,7 +1472,7 @@ export default function ModernPokedexLayout({
                 <button
                   key={type}
                   onClick={() => toggleTypeFilter(type)}
-                  className={`px-4 py-2 rounded-xl text-sm font-semibold border-2 transition-all duration-300 whitespace-nowrap shadow-sm hover:shadow-md transform hover:scale-105 ${
+                  className={`px-1.5 py-1.5 rounded-xl text-sm font-semibold border-2 transition-all duration-300 whitespace-nowrap shadow-sm hover:shadow-md transform hover:scale-105 ${
                     advancedFilters.types.includes(type) 
                       ? 'border-white shadow-lg scale-105' 
                       : 'border-transparent opacity-60 hover:opacity-80'
@@ -1476,6 +1480,7 @@ export default function ModernPokedexLayout({
                   style={{
                     backgroundColor: `var(--type-${type})`,
                     color: typeColors[type].text === 'text-white' ? 'white' : 'black',
+                    padding: '6px 6px'
                   }}
                   onMouseEnter={(e) => {
                     if (!advancedFilters.types.includes(type)) {
@@ -1537,24 +1542,25 @@ export default function ModernPokedexLayout({
                     <button
                       key={visual}
                       onClick={() => setCardDensity(target as '3cols' | '6cols' | '9cols' | 'list')}
-                      className={`px-3 py-2 text-xs font-medium rounded-lg transition-all duration-200 flex items-center space-x-2 ${
+                      className={`px-2 py-2 text-xs font-medium rounded-full transition-all duration-200 flex items-center space-x-1 ${
                         cardDensity === target 
                           ? 'bg-poke-blue text-white shadow-lg scale-105' 
                           : 'text-muted hover:text-text hover:bg-white/50'
                       }`}
+                      style={{ borderRadius: '9999px', padding: '8px 8px' }}
                     >
                       <span className="inline-flex items-center justify-center">
                         {visual === '3cols' && (
-                          <LayoutGridIcon className="w-4 h-4" />
+                          <LayoutGridIcon className="w-3 h-3" />
                         )}
                         {visual === '6cols' && (
-                          <Grid2X2 className="w-4 h-4" />
+                          <Grid2X2 className="w-3 h-3" />
                         )}
                         {visual === '9cols' && (
-                          <Grid3X3 className="w-4 h-4" />
+                          <Grid3X3 className="w-3 h-3" />
                         )}
                         {visual === 'list' && (
-                          <List className="w-4 h-4" />
+                          <List className="w-3 h-3" />
                         )}
                       </span>
                       <span className="hidden xl:inline">{label}</span>
@@ -1570,7 +1576,8 @@ export default function ModernPokedexLayout({
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                    className="px-3 py-2 bg-surface border border-border rounded-xl text-text text-sm font-medium focus:ring-2 focus:ring-poke-blue focus:border-poke-blue focus:outline-none transition-all duration-200 shadow-sm hover:shadow-md control-keep"
+                    className="px-3 py-2 border border-border rounded-xl text-sm font-medium focus:ring-2 focus:ring-poke-blue focus:border-poke-blue focus:outline-none transition-all duration-200 shadow-sm hover:shadow-md control-keep"
+                    style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
                   >
                     <option value="id">Number</option>
                     <option value="name">Name</option>
@@ -1584,11 +1591,12 @@ export default function ModernPokedexLayout({
                   </select>
                   <button
                     onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-                    className="flex items-center gap-2 px-2 py-1 rounded-xl bg-surface border border-border hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md group control-keep"
+                    className="flex items-center gap-1 px-2 py-2 rounded-full bg-surface border border-border hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md group control-keep"
+                    style={{ borderRadius: '9999px', padding: '8px 8px' }}
                     title={`Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`}
                   >
                     <div className={`transform transition-transform duration-200 ${sortOrder === 'asc' ? 'rotate-0' : 'rotate-180'}`}>
-                      <svg className="w-4 h-4 text-muted group-hover:text-poke-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-3 h-3 text-muted group-hover:text-poke-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
                       </svg>
                     </div>

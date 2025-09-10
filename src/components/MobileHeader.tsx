@@ -30,6 +30,21 @@ export default function MobileHeader({
     setIsMenuOpen(!isMenuOpen)
   }
 
+  const handleTeamClick = () => {
+    router.push('/team')
+    setIsMenuOpen(false)
+  }
+
+  const handleBattleClick = () => {
+    router.push('/battle')
+    setIsMenuOpen(false)
+  }
+
+  const handleCompareClick = () => {
+    router.push('/compare')
+    setIsMenuOpen(false)
+  }
+
   const closeMenu = () => {
     setIsMenuOpen(false)
   }

@@ -50,8 +50,8 @@ export default function HeaderIcons({
         <Image 
           src="/header-icons/advanced_filters.png" 
           alt="Advanced Filters" 
-          width={32} 
-          height={32} 
+          width={64} 
+          height={64} 
         />
       </button>
       
@@ -63,8 +63,8 @@ export default function HeaderIcons({
         <Image 
           src="/header-icons/team_builder.png" 
           alt="Team Builder" 
-          width={32} 
-          height={32} 
+          width={64} 
+          height={64} 
         />
       </button>
       
@@ -76,8 +76,8 @@ export default function HeaderIcons({
         <Image 
           src="/header-icons/battle.png" 
           alt="Battles" 
-          width={32} 
-          height={32} 
+          width={64} 
+          height={64} 
         />
       </button>
       
@@ -91,8 +91,8 @@ export default function HeaderIcons({
         <Image 
           src="/header-icons/compare.png" 
           alt="Compare" 
-          width={32} 
-          height={32} 
+          width={64} 
+          height={64} 
         />
       </button>
     </>

@@ -322,3 +322,4 @@ jobs:
 **Happy Testing! 🎮⚡**
 
 These integration tests ensure your Pokemon battle app works perfectly with real users and live Firebase services. They catch issues that unit tests miss and give you confidence in your multiplayer functionality.
+

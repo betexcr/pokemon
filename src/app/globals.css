@@ -3,6 +3,7 @@
 @tailwind utilities;
 
 @import "./styles/tokens.css";
+@import "./styles/design-standards.css";
 
 /* Pocket Monk Font */
 @font-face {
@@ -390,37 +391,37 @@ section { padding-top: 1rem; padding-bottom: 1rem; }
 /* Card artwork height presets - Aspect ratio constraints to prevent height > width */
 .art-ultra-grid { 
   aspect-ratio: 1 / 1; 
-  max-height: 136px; 
+  max-height: 160px; 
   width: 100%; 
   height: auto;
 }
 .art-ultra-list { 
   aspect-ratio: 1 / 1; 
-  max-height: 176px; 
+  max-height: 200px; 
   width: 100%; 
   height: auto;
 }
 .art-compact-grid { 
   aspect-ratio: 1 / 1; 
-  max-height: 196px; 
+  max-height: 220px; 
   width: 100%; 
   height: auto;
 }
 .art-compact-list { 
   aspect-ratio: 1 / 1; 
-  max-height: 208px; 
+  max-height: 232px; 
   width: 100%; 
   height: auto;
 }
 .art-cozy-grid { 
   aspect-ratio: 1 / 1; 
-  max-height: 212px; 
+  max-height: 240px; 
   width: 100%; 
   height: auto;
 }
 .art-cozy-list { 
   aspect-ratio: 1 / 1; 
-  max-height: 228px; 
+  max-height: 256px; 
   width: 100%; 
   height: auto;
 }
@@ -588,8 +589,98 @@ section { padding-top: 1rem; padding-bottom: 1rem; }
   animation: scale-in 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
+.animate-catch-in {
+  animation: catch-in 0.7s ease-in forwards;
+}
+
+.animate-capture-out {
+  animation: capture-out 0.7s ease-in forwards;
+}
+
+/* Arc throw of a ball into the slot */
+.animate-ball-arc-in-left { animation: ball-arc-in-left .6s cubic-bezier(.2,.7,.2,1) forwards; }
+.animate-ball-arc-in-right { animation: ball-arc-in-right .6s cubic-bezier(.2,.7,.2,1) forwards; }
+
+@keyframes ball-arc-in-left {
+  0%   { transform: translate(-18px,-16px) scale(.9) rotate(-25deg); opacity: 0; }
+  35%  { transform: translate(-10px,-12px) scale(1.05) rotate(-12deg); opacity: .9; }
+  75%  { transform: translate(-3px,-4px) scale(1) rotate(0deg); opacity: 1; }
+  100% { transform: translate(0,0) scale(1); opacity: 1; }
+}
+@keyframes ball-arc-in-right {
+  0%   { transform: translate(18px,-16px) scale(.9) rotate(25deg); opacity: 0; }
+  35%  { transform: translate(10px,-12px) scale(1.05) rotate(12deg); opacity: .9; }
+  75%  { transform: translate(3px,-4px) scale(1) rotate(0deg); opacity: 1; }
+  100% { transform: translate(0,0) scale(1); opacity: 1; }
+}
+
+/* Impact flash when ball closes */
+.animate-impact-flash::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.9), rgba(255,255,255,0) 60%);
+  animation: impact-flash .35s ease-out forwards;
+}
+
+@keyframes impact-flash {
+  0%   { opacity: 0; transform: scale(.4); }
+  50%  { opacity: .9; transform: scale(1.1); }
+  100% { opacity: 0; transform: scale(1.4); }
+}
+
+@keyframes catch-in {
+  0% { transform: translateY(-8px) scale(0.6) rotate(-12deg); opacity: 0; }
+  50% { transform: translateY(-2px) scale(1) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+@keyframes capture-out {
+  0% { transform: scale(1); opacity: 1; }
+  60% { transform: scale(0.6) rotate(-8deg); opacity: 0.7; }
+  100% { transform: scale(0); opacity: 0; }
+}
+
 .animate-pokeball-to-sprite {
   animation: pokeball-to-sprite 1s ease-in-out;
+}
+
+/* Release glow behind sprite */
+.animate-release-glow {
+  position: relative;
+}
+.animate-release-glow::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,245,157,.7), rgba(255,245,157,0) 70%);
+  animation: release-glow 0.6s ease-out;
+}
+
+@keyframes release-glow {
+  0% { opacity: 0; transform: scale(.6); }
+  50% { opacity: .9; transform: scale(1.1); }
+  100% { opacity: 0; transform: scale(1.4); }
+}
+
+/* Ball shake during catch */
+.animate-catch-shake img {
+  animation: catch-shake .5s ease-in-out;
+}
+@keyframes catch-shake {
+  0% { transform: translateX(0) rotate(0); }
+  25% { transform: translateX(-1px) rotate(-6deg); }
+  50% { transform: translateX(1px) rotate(6deg); }
+  75% { transform: translateX(-1px) rotate(-4deg); }
+  100% { transform: translateX(0) rotate(0); }
+}
+
+/* Improve visibility of tiny sprites */
+.sprite-released {
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 2px rgba(0,0,0,0.6));
 }
 
 /* Pokéball Release Animation - Enhanced version for Pokémon sprites */
@@ -794,6 +885,34 @@ section { padding-top: 1rem; padding-bottom: 1rem; }
   transition: transform 0.2s ease; /* smooth transition for hover effects */
 }
 
+/* Desktop viewport: double visible size of header icon images */
+@media (min-width: 1024px) {
+  .pk-btn img {
+    width: 100%;
+    height: auto;
+    transform: scale(1.6); /* ~2x vs previous 75% * 1.1 */
+  }
+  .pk-btn img[src*="hamburger-menu"] {
+    width: 100% !important;
+    height: 100% !important;
+    transform: scale(1.6);
+  }
+}
+
+/* Tablet viewport: match desktop icon size */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .pk-btn img {
+    width: 100%;
+    height: auto;
+    transform: scale(1.6);
+  }
+  .pk-btn img[src*="hamburger-menu"] {
+    width: 100% !important;
+    height: 100% !important;
+    transform: scale(1.6);
+  }
+}
+
 /* Profile picture styling within pk-btn */
 .pk-btn img.rounded-full {
   width: 70% !important;      /* match other icons */
@@ -917,6 +1036,18 @@ html.dark .pk-btn-profile:active {
     transform: scale(1.1);      /* add slight zoom for better visibility */
     transition: transform 0.2s ease; /* smooth transition for hover effects */
   }
+
+  /* Double the visible size of header icon images on mobile */
+  .pk-btn img {
+    width: 100%;
+    height: auto;
+    transform: scale(1.6);
+  }
+  .pk-btn img[src*="hamburger-menu"] {
+    width: 100% !important;
+    height: 100% !important;
+    transform: scale(1.6);
+  }
 }
 
 /* Ensure consistent control height across inputs and selects */
@@ -940,6 +1071,12 @@ html.dark .pk-btn-profile:active {
 .control-keep {
   height: auto !important;
   min-height: 0 !important;
+}
+
+/* Force circular buttons for size and sort controls */
+.control-keep.rounded-full {
+  border-radius: 9999px !important;
+  padding: 8px 8px !important;
 }
 
 

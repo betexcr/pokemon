@@ -8,10 +8,13 @@ import TeamSelector from '@/components/TeamSelector';
 import Chat from '@/components/Chat';
 import ChatOverlay from '@/components/ChatOverlay';
 import RoomPokeballReleaseAnimation from '@/components/RoomPokeballReleaseAnimation';
-import { Users, Copy, Check, Clock, MessageCircle } from 'lucide-react';
+import BattleStartDialog from '@/components/BattleStartDialog';
+import FirebaseErrorDebugger from '@/components/FirebaseErrorDebugger';
+import { Users, Copy, MessageCircle, Bug, Check } from 'lucide-react';
 import type { SavedTeam } from '@/lib/userTeams';
 import Image from 'next/image';
 import { roomService, type RoomData } from '@/lib/roomService';
+import { useBattleErrorLogger } from '@/hooks/useFirebaseErrorLogger';
 
 // Local storage team type (simpler version)
 interface LocalTeam {
@@ -35,6 +38,7 @@ interface RoomPageClientProps {
 export default function RoomPageClient({ roomId }: RoomPageClientProps) {
   const { user } = useAuth();
   const router = useRouter();
+  const { logBattleError, logRoomError, getErrorSummary } = useBattleErrorLogger();
   
   const [room, setRoom] = useState<RoomData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -55,6 +59,8 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
     host: Set<number>;
     guest: Set<number>;
   }>({ host: new Set(), guest: new Set() });
+  const [showBattleStartDialog, setShowBattleStartDialog] = useState(false);
+  const [showErrorDebugger, setShowErrorDebugger] = useState(false);
 
   console.log('RoomPageClient rendered with roomId:', roomId);
 
@@ -252,15 +258,15 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
     checkAndCompleteAnimations();
   }, [room?.hostAnimatingBalls, room?.guestAnimatingBalls]);
 
-  // Auto-navigate to battle when room status changes to 'battling'
+  // When room status becomes 'battling', show the start dialog for BOTH players.
+  // Navigation happens only after the dialog completes.
   useEffect(() => {
     if (!room || !user) return;
-    
     if (room.status === 'battling' && room.battleId) {
-      console.log('Room status changed to battling, auto-navigating to battle:', room.battleId);
-      router.push(`/battle/runtime?roomId=${roomId}&battleId=${room.battleId}`);
+      console.log('Room status changed to battling, showing start dialog:', room.battleId);
+      setShowBattleStartDialog(true);
     }
-  }, [room?.status, room?.battleId, user, roomId, router]);
+  }, [room?.status, room?.battleId, user]);
 
   const copyRoomCode = async () => {
     try {
@@ -308,6 +314,9 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
             } : undefined;
             
             console.log('Clean team data:', cleanTeam);
+            console.log('=== HOST TEAM UPDATE DEBUG ===');
+            console.log('Host UID:', user?.uid);
+            console.log('Team being set:', cleanTeam);
             await roomService.updateRoom(roomId, { hostTeam: cleanTeam });
             console.log('Host team updated successfully');
           } else if (isGuest) {
@@ -326,6 +335,9 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
             } : undefined;
             
             console.log('Clean team data:', cleanTeam);
+            console.log('=== GUEST TEAM UPDATE DEBUG ===');
+            console.log('Guest UID:', user?.uid);
+            console.log('Team being set:', cleanTeam);
             await roomService.updateRoom(roomId, { guestTeam: cleanTeam });
             console.log('Guest team updated successfully');
           } else {
@@ -391,20 +403,77 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
       return;
     }
     
+    // Ensure both teams are present before starting battle
+    if (!room.hostTeam || !room.guestTeam) {
+      alert('Both players must select their teams before starting the battle!');
+      return;
+    }
+    
     try {
       // Generate a unique battle ID
       const battleId = `battle_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
       
-      // Update room status to battling and set battle ID
-      await roomService.startBattle(roomId, battleId);
+      // Create battle with both teams
+      const { battleService } = await import('@/lib/battleService');
+      const createdBattleId = await battleService.createBattle(
+        roomId,
+        room.hostId,
+        room.hostName,
+        room.hostTeam,
+        room.guestId || '',
+        room.guestName || 'Guest',
+        room.guestTeam
+      );
       
-      console.log('Starting battle for room:', roomId, 'with team:', selectedTeam);
-      // Navigate both clients into runtime immediately; multiplayer uses roomId+battleId
-      router.push(`/battle/runtime?roomId=${roomId}&battleId=${battleId}`);
+      // Update room status to battling and set battle ID
+      await roomService.startBattle(roomId, createdBattleId);
+      
+      console.log('Starting battle for room:', roomId, 'with both teams present');
+      
+      // Show the battle start dialog
+      setShowBattleStartDialog(true);
     } catch (error) {
       console.error('Failed to start battle:', error);
+      
+      // Log detailed error information
+      logBattleError(error as Error, 'start_battle', {
+        roomId,
+        battleId: `battle_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
+        userId: user?.uid,
+        userEmail: user?.email,
+        hasSelectedTeam: !!selectedTeam,
+        roomStatus: room?.status,
+        operation: 'roomService.startBattle'
+      });
+      
       alert(error instanceof Error ? error.message : 'Failed to start battle. Please try again.');
     }
+  };
+
+  const handleBattleStart = () => {
+    // Navigate to battle after dialog completes with role information
+    const isHost = Boolean(user?.uid && room?.hostId && user.uid === room.hostId);
+    const role = isHost ? 'host' : 'guest';
+    
+    // Get the Pokemon list from the selected team
+    const pokemonList = selectedTeam?.slots?.filter(slot => slot.id !== null).map(slot => ({
+      id: slot.id,
+      level: slot.level,
+      moves: slot.moves || []
+    })) || [];
+    
+    // Create URL parameters with Pokemon list and user info
+    const params = new URLSearchParams({
+      roomId: roomId,
+      battleId: room?.battleId || '',
+      role: role,
+      isHost: isHost.toString(),
+      userId: user?.uid || '',
+      userName: user?.displayName || 'Anonymous',
+      pokemonList: JSON.stringify(pokemonList)
+    });
+    
+    router.push(`/battle/runtime?${params.toString()}`);
   };
 
   const isHost = Boolean(user?.uid && room?.hostId && user.uid === room.hostId) as boolean;
@@ -643,6 +712,20 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
             remoteAnimatingBalls={playerType === 'host' ? remoteAnimatingBalls.host : remoteAnimatingBalls.guest}
             remoteReleasedBalls={playerType === 'host' ? remoteReleasedBalls.host : remoteReleasedBalls.guest}
             isLocalPlayer={isLocalPlayer}
+            onCatchComplete={async (ballIndex: number) => {
+              // When catch completes, clear remote released/animating for this index
+              try {
+                const currentAnimating = playerType === 'host' ? remoteAnimatingBalls.host : remoteAnimatingBalls.guest
+                const currentReleased = playerType === 'host' ? remoteReleasedBalls.host : remoteReleasedBalls.guest
+                const newAnimating = new Set(currentAnimating)
+                const newReleased = new Set(currentReleased)
+                newAnimating.delete(ballIndex)
+                newReleased.delete(ballIndex)
+                await roomService.updateBallAnimation(roomId, playerType, newAnimating, newReleased)
+              } catch (e) {
+                console.error('Failed to sync catch completion:', e)
+              }
+            }}
           />
         </div>
       );
@@ -687,17 +770,23 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
   };
 
   const ReadyIcon = ({ ready, canToggle }: { ready: boolean; canToggle: boolean }) => {
-    const common = 'inline-flex items-center justify-center w-6 h-6 rounded cursor-pointer';
     if (ready) {
       return (
         <button
           type="button"
           onClick={() => canToggle && toggleReadyStatus()}
           disabled={!canToggle}
-          className={`${common} ${canToggle ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-green-100 text-green-700 opacity-70 cursor-default'}`}
+          className=""
+          style={{ background: 'none', border: 'none', padding: 0, margin: 0 }}
           title={canToggle ? 'Click to set Not Ready' : 'Ready'}
         >
-          <Check className="w-4 h-4" />
+          <Image
+            src="/header-icons/battle_ready_icon.png"
+            alt="Ready"
+            width={40}
+            height={40}
+            className=""
+          />
         </button>
       );
     }
@@ -706,11 +795,18 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
         type="button"
         onClick={() => canToggle && toggleReadyStatus()}
         disabled={!canToggle}
-        className={`${common} ${canToggle ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' : 'bg-gray-100 text-gray-500 opacity-70 cursor-default'}`}
+        className=""
+        style={{ background: 'none', border: 'none', padding: 0, margin: 0 }}
         title={canToggle ? 'Click to set Ready' : 'Not Ready'}
         aria-label={canToggle ? 'Set Ready' : 'Not Ready'}
       >
-        <Clock className="w-4 h-4" />
+        <Image
+          src="/header-icons/battle_waiting_icon.png"
+          alt="Waiting"
+          width={40}
+          height={40}
+          className=""
+        />
       </button>
     );
   };
@@ -724,13 +820,23 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => router.push('/lobby')}
-                className="text-blue-600 hover:text-blue-800 transition-colors"
+                className="text-blue-600 hover:text-blue-800 transition-colors text-sm md:text-base"
               >
-                ← Back to Lobby
+                ← <span className="hidden sm:inline">Back to Lobby</span><span className="sm:hidden">Back</span>
               </button>
               <h1 className="text-2xl font-bold text-gray-900">Battle Room</h1>
             </div>
-            {/* Removed <UserProfile /> from the top-right */}
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setShowErrorDebugger(true)}
+                className="flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1 md:py-1.5 text-xs md:text-sm bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors"
+                title="View Firebase Error Logs"
+              >
+                <Bug className="w-3 h-3 md:w-4 md:h-4" />
+                <span className="hidden sm:inline">Debug Errors</span>
+                <span className="sm:hidden">Debug</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -759,17 +865,17 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
               </div>
             </div>
             
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2 md:space-x-3">
               <button
                 onClick={() => setShowChatOverlay(true)}
-                className="p-2 hover:bg-gray-200 rounded transition-colors"
+                className="p-1 md:p-2 hover:bg-gray-200 rounded transition-colors"
                 title="Open chat"
               >
-                <MessageCircle className="h-5 w-5 text-gray-600" />
+                <MessageCircle className="h-4 w-4 md:h-5 md:w-5 text-gray-600" />
               </button>
               <button
                 onClick={copyRoomCode}
-                className="p-1 hover:bg-gray-200 rounded transition-colors"
+                className="p-0.5 md:p-1 hover:bg-gray-200 rounded transition-colors"
                 title="Copy room URL"
               >
                 {copied ? (
@@ -783,7 +889,6 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
 
           {/* Players and Team Selection */}
           <div className="grid lg:grid-cols-2 gap-6 w-full max-w-full overflow-hidden">
-            {/* Host - Temporarily disabled to fix build */}
             <div className="border border-gray-200 rounded-lg p-4 w-full max-w-full overflow-hidden">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-medium text-gray-900">Host</h3>
@@ -794,10 +899,41 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
                 <p className="font-medium">{room.hostName}</p>
                 <ReadyIcon ready={room.hostReady || false} canToggle={isHost} />
               </div>
-              
-              {/* Team functionality temporarily disabled */}
-              <div className="text-sm text-gray-500 italic">
-                Team selection temporarily disabled for build
+
+              {/* Host Poké Balls: always visible to both players (read-only for guest) */}
+              <div className="mt-2 flex items-center gap-3">
+                <div className="relative">
+                  {renderPokeballRow(
+                    (isHost
+                      ? (selectedTeam as SavedTeam | LocalTeam)?.slots
+                      : ((room.hostTeam as unknown as { slots?: Array<{ id?: number | null }> })?.slots)
+                    ) as Array<{ id?: number | null }>,
+                    'host'
+                  )}
+                  {releasedTeams.host && (
+                    <div className="absolute inset-0 flex items-center gap-1 animate-fade-in">
+                      {releasedTeams.host.sprites.map((sprite, idx) => (
+                        <div 
+                          key={idx} 
+                          className="w-2.5 h-2.5 animate-scale-in"
+                          style={{ animationDelay: `${idx * 0.1}s` }}
+                        >
+                          <Image src={sprite} alt="Released Pokemon" width={10} height={10} />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {isHost && (
+                  <div className="flex-1">
+                    <TeamSelector
+                      selectedTeamId={selectedTeam?.id}
+                      onTeamSelect={handleTeamSelect}
+                      label="Select Your Team"
+                      showStorageIndicator={true}
+                    />
+                  </div>
+                )}
               </div>
               {/* {isHost && (
                 <div className="mt-2 flex items-center gap-3">
@@ -829,46 +965,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
               
               {/* Ready toggle handled by icon next to name for Host */}
               
-              {/* Display Host Team - only for guests */}
-              {room.hostTeam && !isHost && (
-                <div className="mt-3 p-3 bg-blue-50 rounded-lg">
-                  <div className="text-sm">
-                    <div className="font-medium text-blue-900 mb-2">{(room.hostTeam as { name?: string })?.name || 'Host Team'}</div>
-                    
-                    {/* Pokemon Roster Images */}
-                    <div className="flex -space-x-1 mb-2">
-                      {(room.hostTeam as { slots?: Array<{ id?: number }> })?.slots?.slice(0, 6).map((slot: { id?: number }, index: number) => (
-                        <div
-                          key={index}
-                          className="relative w-8 h-8 rounded-full border-2 border-white bg-gray-100 overflow-hidden"
-                        >
-                          {slot.id ? (
-                            <Image
-                              src={getPokemonImageUrl(slot.id)}
-                              alt={`Pokemon ${slot.id}`}
-                              fill
-                              className="object-cover"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.src = '/placeholder-pokemon.png';
-                              }}
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                              <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                    
-                        <div className="text-blue-700 flex items-center">
-                          {/* @ts-ignore */}
-                          {renderPokeballRow((room.hostTeam as { slots?: Array<{ id?: number | null }> })?.slots, 'host')}
-                        </div>
-                  </div>
-                </div>
-              )}
+              {/* Host team display temporarily disabled */}
             </div>
 
             {/* Guest */}
@@ -888,8 +985,8 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
                     <ReadyIcon ready={room.guestReady || false} canToggle={isGuest} />
                   </div>
                   
-                  {/* Team Selector for Guest - Temporarily commented out to fix build */}
-                  {/* {(isGuest || canJoin) && (
+                  {/* Team Selector for Guest */}
+                  {(isGuest || canJoin) && (
                     <div className="mb-3">
                       <TeamSelector
                         selectedTeamId={selectedTeam?.id}
@@ -898,7 +995,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
                         showStorageIndicator={true}
                       />
                     </div>
-                  )} */}
+                  )}
 
                   {/* Show Guest's own Poké Balls summary */}
                   {isGuest && (
@@ -991,29 +1088,112 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
               <button
                 onClick={startBattle}
                 disabled={!canStart}
-                className={`px-6 py-3 rounded-lg font-medium transition-colors ${
+                className={`group relative flex items-center justify-center gap-3 px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 transform ${
                   canStart 
-                    ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                    : 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                    ? 'bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 border-2 border-yellow-600 hover:border-yellow-700' 
+                    : 'bg-gray-400 text-gray-200 cursor-not-allowed border-2 border-gray-500'
                 }`}
-              >
-                {!selectedTeam 
-                  ? 'Select Team First' 
-                  : !room.hostReady 
-                    ? 'Mark Yourself Ready' 
-                    : !room.guestReady 
-                      ? 'Waiting for Guest to be Ready' 
-                      : 'Start Battle'
+                title={
+                  !selectedTeam 
+                    ? 'Select Team First' 
+                    : !room.hostReady 
+                      ? 'Mark Yourself Ready' 
+                      : !room.guestReady 
+                        ? 'Waiting for Guest to be Ready' 
+                        : 'Start Battle'
                 }
+              >
+                {/* VS Battle Icon */}
+                <div className="relative">
+                  <Image
+                    src="/header-icons/battle.png"
+                    alt="VS Battle"
+                    width={32}
+                    height={32}
+                    className={`transition-all duration-300 ${
+                      canStart 
+                        ? 'group-hover:scale-110 group-hover:rotate-3' 
+                        : 'opacity-50'
+                    }`}
+                  />
+                  {/* Glow effect on hover */}
+                  {canStart && (
+                    <div className="absolute inset-0 bg-yellow-300 rounded-full opacity-0 group-hover:opacity-30 blur-sm transition-opacity duration-300"></div>
+                  )}
+                </div>
+                
+                {/* Button Text */}
+                <span className={`transition-all duration-300 ${
+                  canStart 
+                    ? 'group-hover:text-yellow-900' 
+                    : ''
+                }`}>
+                  {!selectedTeam 
+                    ? 'Select Team First' 
+                    : !room.hostReady 
+                      ? 'Mark Yourself Ready' 
+                      : !room.guestReady 
+                        ? 'Waiting for Guest to be Ready' 
+                        : 'Start Battle'
+                  }
+                </span>
+
+                {/* Animated border effect */}
+                {canStart && (
+                  <div className="absolute inset-0 rounded-xl border-2 border-transparent bg-gradient-to-r from-yellow-300 to-yellow-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+                )}
               </button>
             )}
             
             {room.status === 'battling' && (
               <button
-                onClick={() => router.push(`/battle/runtime?roomId=${roomId}`)}
-                className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                onClick={() => {
+                  const isHost = Boolean(user?.uid && room?.hostId && user.uid === room.hostId);
+                  const role = isHost ? 'host' : 'guest';
+                  
+                  // Get the Pokemon list from the selected team
+                  const pokemonList = selectedTeam?.slots?.filter(slot => slot.id !== null).map(slot => ({
+                    id: slot.id,
+                    level: slot.level,
+                    moves: slot.moves || []
+                  })) || [];
+                  
+                  // Create URL parameters with Pokemon list and user info
+                  const params = new URLSearchParams({
+                    roomId: roomId,
+                    battleId: room?.battleId || '',
+                    role: role,
+                    isHost: isHost.toString(),
+                    userId: user?.uid || '',
+                    userName: user?.displayName || 'Anonymous',
+                    pokemonList: JSON.stringify(pokemonList)
+                  });
+                  
+                  router.push(`/battle/runtime?${params.toString()}`);
+                }}
+                className="group relative flex items-center justify-center gap-3 px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 transform bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 border-2 border-red-700 hover:border-red-800"
+                title="Enter the ongoing battle"
               >
-                Enter Battle
+                {/* VS Battle Icon */}
+                <div className="relative">
+                  <Image
+                    src="/header-icons/battle.png"
+                    alt="VS Battle"
+                    width={32}
+                    height={32}
+                    className="transition-all duration-300 group-hover:scale-110 group-hover:rotate-3"
+                  />
+                  {/* Glow effect on hover */}
+                  <div className="absolute inset-0 bg-red-300 rounded-full opacity-0 group-hover:opacity-30 blur-sm transition-opacity duration-300"></div>
+                </div>
+                
+                {/* Button Text */}
+                <span className="transition-all duration-300 group-hover:text-red-100">
+                  Enter Battle
+                </span>
+
+                {/* Animated border effect */}
+                <div className="absolute inset-0 rounded-xl border-2 border-transparent bg-gradient-to-r from-red-300 to-red-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
               </button>
             )}
           </div>
@@ -1066,6 +1246,19 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
         roomId={roomId}
         isOpen={showChatOverlay}
         onClose={() => setShowChatOverlay(false)}
+      />
+
+      {/* Battle Start Dialog */}
+      <BattleStartDialog
+        isOpen={showBattleStartDialog}
+        onClose={() => setShowBattleStartDialog(false)}
+        onBattleStart={handleBattleStart}
+      />
+
+      {/* Firebase Error Debugger */}
+      <FirebaseErrorDebugger
+        isOpen={showErrorDebugger}
+        onClose={() => setShowErrorDebugger(false)}
       />
     </div>
   );

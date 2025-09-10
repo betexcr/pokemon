@@ -9,11 +9,12 @@ interface TypeBadgeProps {
 export default function TypeBadge({ type, className = '', variant = 'button' }: TypeBadgeProps) {
   const colorClasses = typeColors[type] || typeColors.normal;
   
-  const baseClasses = `px-3 py-1 rounded-full text-sm font-medium border transition-all duration-200 whitespace-nowrap ${className}`;
+  const baseClasses = `px-1.5 py-1.5 rounded-full text-sm font-medium border transition-all duration-200 whitespace-nowrap ${className}`;
   const style = {
     backgroundColor: `var(--type-${type})`,
     color: colorClasses.text === 'text-white' ? 'white' : 'black',
-    borderColor: `var(--type-${type})`
+    borderColor: `var(--type-${type})`,
+    padding: '6px 6px'
   };
   
   

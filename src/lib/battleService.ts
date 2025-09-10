@@ -17,8 +17,7 @@ export interface BattleMove {
   playerName: string;
   moveIndex: number;
   moveName: string;
-  // Firestore server timestamp at write time
-  timestamp: unknown;
+  turnNumber?: number;
 }
 
 export interface MultiplayerBattleState {
@@ -136,6 +135,13 @@ class BattleService {
   async addMove(battleId: string, playerId: string, playerName: string, moveIndex: number, moveName: string): Promise<void> {
     if (!db) throw new Error('Firebase not initialized');
     
+    console.log('📤 === BATTLE SERVICE ADD MOVE ===');
+    console.log('🆔 Battle ID:', battleId);
+    console.log('👤 Player ID:', playerId);
+    console.log('👤 Player Name:', playerName);
+    console.log('🎯 Move Index:', moveIndex);
+    console.log('⚡ Move Name:', moveName);
+    
     const battleRef = doc(db, this.battlesCollection, battleId);
     const battleSnap = await getDoc(battleRef);
     
@@ -144,29 +150,47 @@ class BattleService {
     }
     
     const battleData = battleSnap.data();
-    // Prevent duplicate move append if last move matches same player/turn
-    const last = (battleData.moves || []).slice(-1)[0];
-    if (last && last.playerId === playerId && last.moveIndex === moveIndex && playerName === last.playerName) {
+    console.log('📊 Current battle data:', {
+      turnNumber: battleData.turnNumber,
+      currentTurn: battleData.currentTurn,
+      movesCount: (battleData.moves || []).length
+    });
+    
+    // Check if this player has already made a move for the current turn
+    const currentTurnNumber = battleData.turnNumber || 1;
+    const existingMoveForTurn = (battleData.moves || []).find((move: any) => 
+      move.playerId === playerId && move.turnNumber === currentTurnNumber
+    );
+    
+    if (existingMoveForTurn) {
+      console.log('⚠️ Player has already made a move for this turn, skipping duplicate');
       return;
     }
-    const newMove: BattleMove = {
+    
+    const newMove = {
       playerId,
       playerName,
       moveIndex,
       moveName,
-      timestamp: serverTimestamp()
+      turnNumber: currentTurnNumber
     };
     
-    const updatedMoves = [...(battleData.moves || []), newMove];
-    const nextTurn = battleData.currentTurn === 'host' ? 'guest' : 'host';
-    const nextTurnNumber = battleData.turnNumber + 1;
+    console.log('📝 Adding new move:', newMove);
     
+    // Add the move to the moves array (without serverTimestamp in the array)
+    const updatedMoves = [...(battleData.moves || []), newMove];
+    
+    console.log('📊 Updated moves array length:', updatedMoves.length);
+    
+    // Update the battle document
     await updateDoc(battleRef, {
       moves: updatedMoves,
-      currentTurn: nextTurn,
-      turnNumber: nextTurnNumber,
+      lastMoveAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     });
+    
+    console.log('✅ Move added to Firebase successfully');
+    console.log('📡 Other players should now receive this move via Firebase listener');
   }
 
   // Start the battle (initialize battle data)

@@ -253,3 +253,4 @@ The solution I've provided gives you:
 This approach gives you **much higher confidence** that your Pokemon battle app works correctly with real users and live services, catching issues that unit tests miss.
 
 **Start with the example test** to see it in action, then expand to cover your full battle system!
+

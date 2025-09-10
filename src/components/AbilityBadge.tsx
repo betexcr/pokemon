@@ -115,11 +115,12 @@ export default function AbilityBadge({ ability, className = '' }: AbilityBadgePr
         <Tooltip content={ability.description} maxWidth="w-72" variant="ability" type={abilityType}>
           <button
             type="button"
-            className="px-3 py-1 rounded-full text-sm font-medium border transition-all duration-200 whitespace-nowrap cursor-help"
+            className="px-1.5 py-1.5 rounded-full text-sm font-medium border transition-all duration-200 whitespace-nowrap cursor-help"
             style={{
               backgroundColor: `var(--type-${abilityType})`,
               color: colorClasses.text === 'text-white' ? 'white' : 'black',
-              borderColor: `var(--type-${abilityType})`
+              borderColor: `var(--type-${abilityType})`,
+              padding: '6px 6px'
             }}
           >
             {formatAbilityName(ability.name)}
@@ -128,11 +129,12 @@ export default function AbilityBadge({ ability, className = '' }: AbilityBadgePr
       ) : (
         <button
           type="button"
-          className="px-3 py-1 rounded-full text-sm font-medium border transition-all duration-200 whitespace-nowrap"
+          className="px-1.5 py-1.5 rounded-full text-sm font-medium border transition-all duration-200 whitespace-nowrap"
           style={{
             backgroundColor: `var(--type-${abilityType})`,
             color: colorClasses.text === 'text-white' ? 'white' : 'black',
-            borderColor: `var(--type-${abilityType})`
+            borderColor: `var(--type-${abilityType})`,
+            padding: '6px 6px'
           }}
         >
           {formatAbilityName(ability.name)}

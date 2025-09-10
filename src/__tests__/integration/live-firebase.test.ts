@@ -304,3 +304,4 @@ test.describe('Live Firebase Integration Tests', () => {
     console.log('✅ Firebase data persistence test passed!');
   });
 });
+

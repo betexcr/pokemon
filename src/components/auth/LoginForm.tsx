@@ -50,7 +50,7 @@ export default function LoginForm({ onToggleMode }: LoginFormProps) {
   return (
     <div className="w-full">
       {/* Title */}
-      <h1 className="text-center text-[32px] leading-none font-extrabold text-[#121721] mb-3">
+      <h1 className="text-center text-[32px] leading-none font-extrabold text-[#121721]">
         Sign In
       </h1>
       
@@ -63,29 +63,31 @@ export default function LoginForm({ onToggleMode }: LoginFormProps) {
       {/* Form */}
       <form onSubmit={handleSubmit} className="mx-auto w-full max-w-3xl">
         {/* Email */}
-        <label className="block mb-3">
-          <span className="block text-[18px] font-semibold text-[#2b2f38] mb-2">Email</span>
+        <div className="form-group">
+          <label htmlFor="email">Email</label>
           <input
             type="email"
             id="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full h-[52px] rounded-[18px] border border-black/10 bg-white px-4 text-[18px] font-medium text-[#20262f] placeholder-gray-400 outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-500"
+            className="w-full"
+            style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
             placeholder="Email"
             required
           />
-        </label>
+        </div>
         
         {/* Password */}
-        <label className="block mb-4">
-          <span className="block text-[18px] font-semibold text-[#2b2f38] mb-2">Password</span>
+        <div className="form-group">
+          <label htmlFor="password">Password</label>
           <div className="relative">
             <input
               type={passwordVisible ? "text" : "password"}
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full h-[52px] rounded-[18px] border border-black/10 bg-white px-4 text-[18px] font-medium text-[#20262f] placeholder-gray-400 outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-500"
+              className="w-full"
+              style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
               placeholder="Password"
               required
             />
@@ -98,13 +100,13 @@ export default function LoginForm({ onToggleMode }: LoginFormProps) {
               {passwordVisible ? "Hide" : "Show"}
             </button>
           </div>
-        </label>
+        </div>
         
         {/* Submit */}
         <button
           type="submit"
           disabled={loading || googleLoading}
-          className="w-full h-[56px] rounded-[18px] bg-[#ffcf3a] text-[#0f172a] font-extrabold text-[24px] shadow-[0_6px_18px_rgba(255,207,58,.35)] transition active:translate-y-px hover:brightness-105 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="btn-primary btn-capsule w-full"
         >
           {loading ? 'Signing In...' : 'Sign In'}
         </button>
@@ -116,7 +118,7 @@ export default function LoginForm({ onToggleMode }: LoginFormProps) {
         type="button"
         onClick={handleGoogleSignIn}
         disabled={loading || googleLoading}
-        className="w-full h-[56px] rounded-[18px] border border-black/10 bg-white flex items-center justify-center gap-3 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed relative px-4"
+        className="btn-secondary btn-capsule w-full flex items-center justify-center gap-3"
       >
         {googleLoading ? (
           <div className="flex items-center">
@@ -140,7 +142,7 @@ export default function LoginForm({ onToggleMode }: LoginFormProps) {
                 <path fill="#34A853" d="M24 48c6.37 0 11.9-2.1 15.94-5.66l-7.28-5.65c-2.02 1.36-4.62 2.16-8.66 2.16-6.14 0-11.38-4.2-13.09-9.7l-8.37 6.49C6.4 42.62 14.62 48 24 48z"/>
               </svg>
             </div>
-            <span className="text-[#0f172a] font-extrabold text-[24px]">
+            <span className="font-extrabold text-[24px]">
               Sign in with Google
             </span>
           </>
@@ -150,11 +152,11 @@ export default function LoginForm({ onToggleMode }: LoginFormProps) {
       {/* Footer */}
       <button
         onClick={onToggleMode}
-        className="w-full h-[56px] rounded-[18px] border border-black/10 bg-white flex items-center justify-center gap-3 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 mt-4"
+        className="btn-secondary btn-capsule w-full flex items-center justify-center gap-3 mt-4"
       >
-        <span className="text-[#0f172a] font-extrabold text-[24px]">
+        <span className="font-extrabold text-[24px]">
           Don&apos;t have an account?{" "}
-          <span className="text-blue-600">
+          <span className="text-signup-text hover:text-signup-hover">
             Sign up
           </span>
         </span>
