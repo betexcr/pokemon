@@ -1,8 +1,9 @@
 import type { NextConfig } from "next";
 
+const isProd = process.env.NODE_ENV === 'production';
+
 const nextConfig: NextConfig = {
-  // Removed 'output: export' to enable dynamic rendering for lobby rooms
-  trailingSlash: true,
+  ...(isProd ? { output: 'export', trailingSlash: true } : {}),
   images: {
     unoptimized: true,
     remotePatterns: [

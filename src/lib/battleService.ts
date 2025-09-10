@@ -52,6 +52,30 @@ export interface BattleUpdate {
 class BattleService {
   private battlesCollection = 'battles';
 
+  // Recursively replace undefined with null so Firestore accepts the payload
+  private sanitizeForFirestore<T>(value: T): T {
+    if (value === undefined) {
+      return null as unknown as T;
+    }
+    if (value === null) return value;
+    if (Array.isArray(value)) {
+      return value.map((item) => this.sanitizeForFirestore(item)) as unknown as T;
+    }
+    if (typeof value === 'object') {
+      const obj = value as Record<string, unknown>;
+      const out: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(obj)) {
+        if (v === undefined) {
+          out[k] = null; // Firestore disallows undefined in nested fields
+        } else {
+          out[k] = this.sanitizeForFirestore(v);
+        }
+      }
+      return out as unknown as T;
+    }
+    return value;
+  }
+
   private isEqual(a: unknown, b: unknown): boolean {
     try {
       return JSON.stringify(a) === JSON.stringify(b);
@@ -125,8 +149,12 @@ class BattleService {
         return; // No-op update; skip write to avoid loop
       }
     }
+    const payload: BattleUpdate = { ...updates };
+    if (payload.battleData !== undefined) {
+      payload.battleData = this.sanitizeForFirestore(payload.battleData);
+    }
     await updateDoc(battleRef, {
-      ...updates,
+      ...payload,
       updatedAt: serverTimestamp()
     });
   }
@@ -134,6 +162,7 @@ class BattleService {
   // Add a move to the battle
   async addMove(battleId: string, playerId: string, playerName: string, moveIndex: number, moveName: string): Promise<void> {
     if (!db) throw new Error('Firebase not initialized');
+    if (!auth?.currentUser) throw new Error('User not authenticated');
     
     console.log('📤 === BATTLE SERVICE ADD MOVE ===');
     console.log('🆔 Battle ID:', battleId);
@@ -158,7 +187,7 @@ class BattleService {
     
     // Check if this player has already made a move for the current turn
     const currentTurnNumber = battleData.turnNumber || 1;
-    const existingMoveForTurn = (battleData.moves || []).find((move: any) => 
+    const existingMoveForTurn = (battleData.moves || []).find((move: { playerId?: string; turnNumber?: number }) => 
       move.playerId === playerId && move.turnNumber === currentTurnNumber
     );
     
@@ -182,7 +211,7 @@ class BattleService {
     
     console.log('📊 Updated moves array length:', updatedMoves.length);
     
-    // Update the battle document
+    // Update the battle document (single write to reduce contention)
     await updateDoc(battleRef, {
       moves: updatedMoves,
       lastMoveAt: serverTimestamp(),
@@ -206,7 +235,7 @@ class BattleService {
       }
     }
     await updateDoc(battleRef, {
-      battleData: initialBattleData,
+      battleData: this.sanitizeForFirestore(initialBattleData),
       status: 'active',
       updatedAt: serverTimestamp()
     });

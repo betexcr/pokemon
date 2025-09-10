@@ -20,6 +20,7 @@ import {
 import TypeBadge from "@/components/TypeBadge";
 import HealthBar from "@/components/HealthBar";
 import Chat from "@/components/Chat";
+import BattleOverDialog from "@/components/BattleOverDialog";
 import { ToastContainer, useToast } from "@/components/Toast";
 import { chatService } from "@/lib/chatService";
 import { battleService, type MultiplayerBattleState } from '@/lib/battleService';
@@ -163,7 +164,7 @@ function BattleRuntimePage() {
     const trySubscribe = () => {
       attempts += 1;
       try {
-        unsubscribe = battleService.onBattleChange(battleId, (battle) => {
+        unsubscribe = battleService.onBattleChange(battleId, async (battle) => {
           if (!battle) return;
 
           // Skip processing if this snapshot doesn't represent a newer update
@@ -300,18 +301,35 @@ function BattleRuntimePage() {
                     executionQueue: serverData.executionQueue || []
                   };
                 } else {
-                  // No local state, use server data directly
-                  console.log('📡 No local battle state, using server data directly');
-                  console.log('🔄 Server phase:', serverData.phase);
-                  console.log('📊 Server selected moves:', serverData.selectedMoves);
-                  console.log('⚡ Server execution queue length:', serverData.executionQueue?.length || 0);
-                  synchronizedState = {
-                    ...serverData,
-                    // Ensure phase system data is present
-                    phase: serverData.phase || 'selection',
-                    selectedMoves: serverData.selectedMoves || {},
-                    executionQueue: serverData.executionQueue || []
+                  // No local state: align server (host-perspective) data to local user's perspective
+                  console.log('📡 No local battle state; aligning server data to local perspective');
+                  const isHostUser = Boolean(user?.uid && battle.hostId && user.uid === battle.hostId);
+
+                  const normalizeState = (state: TeamBattleState, hostView: boolean): TeamBattleState => {
+                    if (hostView) {
+                      return {
+                        ...state,
+                        phase: state.phase || 'selection',
+                        selectedMoves: state.selectedMoves || {},
+                        executionQueue: state.executionQueue || []
+                      } as TeamBattleState;
+                    }
+                    // Guest viewing host-authored state: swap sides so local user is always `player`
+                    return {
+                      ...state,
+                      player: { ...state.opponent },
+                      opponent: { ...state.player },
+                      // Remap any selection bookkeeping
+                      selectedMoves: {
+                        player: state.selectedMoves?.opponent,
+                        opponent: state.selectedMoves?.player
+                      },
+                      phase: state.phase || 'selection',
+                      executionQueue: state.executionQueue || []
+                    } as TeamBattleState;
                   };
+
+                  synchronizedState = normalizeState(serverData, isHostUser);
                 }
 
                 console.log('✅ Synchronized state applied successfully');
@@ -342,6 +360,47 @@ function BattleRuntimePage() {
               lastAppliedTurnNumberRef.current = battle.turnNumber || 0;
               console.log('✅ Server update applied successfully with team positioning preserved');
             }
+          }
+
+          // Authoritative resolution: host resolves when both moves submitted for current turn
+          try {
+            const isHostUser = Boolean(user?.uid && battle.hostId && user.uid === battle.hostId);
+            const currentTurnNumber = battle.turnNumber || 1;
+            const movesThisTurn = (battle.moves || []).filter(m => m.turnNumber === currentTurnNumber);
+
+            // Only the host runs resolution to avoid double execution
+            if (isHostUser && battle.status === 'active' && movesThisTurn.length >= 2) {
+              console.log('🧮 Host resolving turn', currentTurnNumber, 'with moves:', movesThisTurn);
+              // Ensure we have local battle state to operate on
+              const baseState: TeamBattleState | null = (battle.battleData as TeamBattleState) || battleState;
+              if (baseState && baseState.phase === 'selection') {
+                // Map Firebase moves to player/opponent actions based on actual IDs
+                const hostMove = movesThisTurn.find(m => m.playerId === battle.hostId);
+                const guestMove = movesThisTurn.find(m => m.playerId === battle.guestId);
+                if (hostMove && guestMove) {
+                  let working = { ...baseState, battleLog: [...baseState.battleLog] } as TeamBattleState;
+                  // Host is always the player perspective in server battleData we maintain
+                  working = await executeTeamAction(working, { type: 'move', moveIndex: hostMove.moveIndex }, true);
+                  working = await executeTeamAction(working, { type: 'move', moveIndex: guestMove.moveIndex }, false);
+
+                  // If execution already advanced (both selected), the above calls may have executed to end-of-turn
+                  // Persist results and advance server turn bookkeeping
+                  const nextTurn = (battle.turnNumber || 1) + 1;
+                  const nextCurrentTurn: 'host' | 'guest' = battle.currentTurn === 'host' ? 'guest' : 'host';
+
+                  await battleService.updateBattle(battle.id, {
+                    battleData: working as unknown,
+                    turnNumber: nextTurn,
+                    currentTurn: nextCurrentTurn,
+                    moves: []
+                  });
+
+                  console.log('✅ Host wrote resolved battle state for turn', currentTurnNumber, '-> next turn', nextTurn);
+                }
+              }
+            }
+          } catch (resolveErr) {
+            console.error('Error during host turn resolution:', resolveErr);
           }
           
           // Advance local turn marker to match server if it changed
@@ -958,14 +1017,41 @@ function BattleRuntimePage() {
       const validOpponentMoves = getValidMoves(opponentMoveData);
 
       // Create fallback moves if we don't have enough
-      const createFallbackMove = (name: string, type: string = 'normal', power: number = 40) => ({
-        id: Math.floor(Math.random() * 10000), // Random ID for fallback moves
-        name,
-        accuracy: 100,
-        effect_chance: null,
-        pp: 35,
-        priority: 0,
-        power,
+      const createFallbackMove = (name: string, type: string = 'normal', power: number = 40) => {
+        // Define priority moves
+        const priorityMoves: Record<string, number> = {
+          'quick-attack': 1,
+          'extreme-speed': 2,
+          'mach-punch': 1,
+          'bullet-punch': 1,
+          'ice-shard': 1,
+          'sucker-punch': 1,
+          'vacuum-wave': 1,
+          'detect': 4,
+          'protect': 4,
+          'endure': 4,
+          'feint': 2,
+          'fake-out': 3,
+          'first-impression': 2,
+          'ally-switch': 2,
+          'teleport': -6,
+          'roar': -6,
+          'whirlwind': -6,
+          'circle-throw': -6,
+          'dragon-tail': -6,
+          'trick-room': -7,
+          'magic-room': -7,
+          'wonder-room': -7
+        };
+
+        return {
+          id: Math.floor(Math.random() * 10000), // Random ID for fallback moves
+          name,
+          accuracy: 100,
+          effect_chance: null,
+          pp: 35,
+          priority: priorityMoves[name] || 0,
+          power,
         contest_combos: {
           normal: {
             use_before: [],
@@ -1055,7 +1141,8 @@ function BattleRuntimePage() {
           name: type,
           url: ''
         }
-      });
+      };
+      };
 
       const finalPlayerMoves = validPlayerMoves.length > 0 ? validPlayerMoves : [
         createFallbackMove('tackle'),
@@ -1579,7 +1666,7 @@ function BattleRuntimePage() {
         <div className="text-center">
           <p className="text-red-500 mb-4">{error}</p>
           <button
-            onClick={() => router.push("/battle")}
+            onClick={() => router.push(isMultiplayer && roomId ? `/lobby/${roomId}` : "/battle")}
             className="px-4 py-2 bg-poke-blue text-white rounded-lg hover:bg-poke-blue/90"
           >
             Back to Battle Setup
@@ -1658,11 +1745,11 @@ function BattleRuntimePage() {
         <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <button
-              onClick={() => router.push("/battle")}
+              onClick={() => router.push(isMultiplayer ? '/lobby' : "/battle")}
               className="flex items-center space-x-2 text-muted hover:text-text transition-colors"
             >
               <ArrowLeft className="h-5 w-5" />
-              <span className="font-medium">Back to Battle Setup</span>
+              <span className="font-medium">{isMultiplayer ? 'Back to Lobby' : 'Back to Battle Setup'}</span>
             </button>
             <div className="flex items-center gap-2">
               {isMultiplayer && roomId && (
@@ -2085,129 +2172,18 @@ function BattleRuntimePage() {
       {/* Toast Notifications */}
       <ToastContainer toasts={toasts} onRemove={removeToast} />
 
-      {/* Battle Results Dialog */}
+      {/* Battle Over Dialog */}
       {showBattleResults && battleState && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-surface border border-border rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
-            <div className="text-center mb-6">
-              <h2 className={`text-3xl font-bold mb-2 ${
-                battleState.winner === 'player' ? 'text-green-500' : 'text-red-500'
-              }`}>
-                {battleState.winner === 'player' ? 'Victory!' : 'Defeat!'}
-              </h2>
-              <p className="text-muted">
-                {battleState.winner === 'player' 
-                  ? 'Congratulations! You won the battle!' 
-                  : 'Better luck next time!'}
-              </p>
-            </div>
-
-            {/* Remaining Pokemon Display */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              {/* Player Team */}
-              <div className="bg-white/50 rounded-lg p-4">
-                <h3 className="text-lg font-semibold mb-3 text-center">Your Team</h3>
-                <div className="space-y-2">
-                  {battleState.player.pokemon.map((pokemon, index) => (
-                    <div key={index} className="flex items-center gap-3 p-2 rounded bg-white/30">
-                      <div className="relative w-12 h-12 flex-shrink-0">
-                        <Image
-                          src={getPokemonSpriteUrl(pokemon.pokemon.id)}
-                          alt={pokemon.pokemon.name}
-                          width={48}
-                          height={48}
-                          className="w-full h-full object-contain"
-                        />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium capitalize text-sm">
-                          {pokemon.pokemon.name}
-                        </div>
-                        <div className="text-xs text-muted">
-                          Lv. {pokemon.level}
-                        </div>
-                        <div className="flex items-center gap-2 mt-1">
-                          <div className="flex-1 bg-gray-200 rounded-full h-2">
-                            <div 
-                              className={`h-2 rounded-full transition-all ${
-                                pokemon.currentHp > 0 ? 'bg-green-500' : 'bg-red-500'
-                              }`}
-                              style={{ 
-                                width: `${Math.max(0, (pokemon.currentHp / pokemon.maxHp) * 100)}%` 
-                              }}
-                            />
-                          </div>
-                          <span className="text-xs font-mono">
-                            {pokemon.currentHp}/{pokemon.maxHp}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Opponent Team */}
-              <div className="bg-white/50 rounded-lg p-4">
-                <h3 className="text-lg font-semibold mb-3 text-center">Opponent Team</h3>
-                <div className="space-y-2">
-                  {battleState.opponent.pokemon.map((pokemon, index) => (
-                    <div key={index} className="flex items-center gap-3 p-2 rounded bg-white/30">
-                      <div className="relative w-12 h-12 flex-shrink-0">
-                        <Image
-                          src={getPokemonSpriteUrl(pokemon.pokemon.id)}
-                          alt={pokemon.pokemon.name}
-                          width={48}
-                          height={48}
-                          className="w-full h-full object-contain"
-                        />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium capitalize text-sm">
-                          {pokemon.pokemon.name}
-                        </div>
-                        <div className="text-xs text-muted">
-                          Lv. {pokemon.level}
-                        </div>
-                        <div className="flex items-center gap-2 mt-1">
-                          <div className="flex-1 bg-gray-200 rounded-full h-2">
-                            <div 
-                              className={`h-2 rounded-full transition-all ${
-                                pokemon.currentHp > 0 ? 'bg-green-500' : 'bg-red-500'
-                              }`}
-                              style={{ 
-                                width: `${Math.max(0, (pokemon.currentHp / pokemon.maxHp) * 100)}%` 
-                              }}
-                            />
-                          </div>
-                          <span className="text-xs font-mono">
-                            {pokemon.currentHp}/{pokemon.maxHp}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-3 justify-center">
-              <button
-                onClick={() => router.push("/battle")}
-                className="px-6 py-3 bg-poke-blue text-white rounded-lg hover:bg-poke-blue/90 transition-colors font-medium"
-              >
-                Back to Battle Setup
-              </button>
-              <button
-                onClick={restartBattle}
-                className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
-              >
-                Battle Again
-              </button>
-            </div>
-          </div>
-        </div>
+        <BattleOverDialog
+          isOpen={showBattleResults}
+          onClose={() => setShowBattleResults(false)}
+          winner={battleState.winner}
+          playerTeam={battleState.player.pokemon}
+          opponentTeam={battleState.opponent.pokemon}
+          isMultiplayer={isMultiplayer}
+          hostName={multiplayerBattle?.hostName}
+          guestName={multiplayerBattle?.guestName}
+        />
       )}
     </div>
   );

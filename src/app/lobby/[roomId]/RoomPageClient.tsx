@@ -61,6 +61,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
   }>({ host: new Set(), guest: new Set() });
   const [showBattleStartDialog, setShowBattleStartDialog] = useState(false);
   const [showErrorDebugger, setShowErrorDebugger] = useState(false);
+  const [opponentForfeit, setOpponentForfeit] = useState<null | { name: string }>(null);
 
   console.log('RoomPageClient rendered with roomId:', roomId);
 
@@ -98,6 +99,17 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
           activeUsers: room.activeUsers || (room.hostId ? [room.hostId] : [])
         };
         
+        // Detect opponent leaving: if we were guest and host disappears, or we were host and guest disappears
+        if (user) {
+          const wasGuest = user.uid === (validatedRoom.guestId || '');
+          const wasHost = user.uid === (validatedRoom.hostId || '');
+          // If battle was active or ready, and the counterpart id is now missing, show forfeit dialog
+          const opponentLeft = (wasHost && !validatedRoom.guestId) || (wasGuest && !validatedRoom.hostId);
+          if (opponentLeft) {
+            setOpponentForfeit({ name: wasHost ? (validatedRoom.guestName || 'Opponent') : (validatedRoom.hostName || 'Opponent') });
+          }
+        }
+
         setRoom(validatedRoom);
         
         // Fix currentPlayers count if it's incorrect
@@ -842,6 +854,21 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
       </div>
 
       <div className="container mx-auto px-4 py-8 pb-16 space-y-8 max-w-7xl w-full">
+        {opponentForfeit && (
+          <div className="bg-white border border-red-300 rounded-xl p-4 mb-4">
+            <div className="text-red-700 font-semibold mb-2">{opponentForfeit.name} forfeited the battle</div>
+            <div className="text-sm text-gray-700 mb-3">Your opponent left the room. You can go back to the lobby creation screen to start a new battle.</div>
+            <button
+              onClick={() => {
+                setOpponentForfeit(null);
+                router.push('/lobby');
+              }}
+              className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              Back to Battle Lobby
+            </button>
+          </div>
+        )}
         {/* Room Info */}
         <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-full overflow-hidden">
           <div className="flex items-center justify-between mb-6">
