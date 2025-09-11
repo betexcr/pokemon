@@ -134,7 +134,7 @@ export default function AppHeader({
             )}
             <div className="flex items-center space-x-2 lg:space-x-3 mx-auto">
               <div className="flex flex-col">
-                <h2 className="text-lg lg:text-xl font-bold bg-gradient-to-r from-poke-blue via-poke-red to-poke-blue bg-clip-text text-transparent">
+                <h2 className="text-lg lg:text-xl font-bold text-poke-blue dark:bg-gradient-to-r dark:from-poke-blue dark:via-poke-red dark:to-poke-blue dark:bg-clip-text dark:text-transparent">
                   {title}
                 </h2>
                 {subtitle ? (
