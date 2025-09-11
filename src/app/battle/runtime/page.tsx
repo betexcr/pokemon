@@ -12,6 +12,7 @@ import {
   initializeTeamBattle,
   executeTeamAction,
   getCurrentPokemon,
+  createExecutionQueue,
   handleAutomaticSwitching,
   handleMultiplayerSwitching,
   switchToSelectedPokemon,
@@ -77,7 +78,9 @@ function BattleRuntimePage() {
   const [showBattleResults, setShowBattleResults] = useState(false);
   const [battleReady, setBattleReady] = useState(false);
   const [bothPlayersReady, setBothPlayersReady] = useState(false);
+  const [showWaitingDialog, setShowWaitingDialog] = useState(false);
   const battleLogRef = useRef<HTMLDivElement>(null);
+  const lastResolvedTurnRef = useRef<number>(0);
 
   // Memoize battle state dependencies to prevent useEffect issues
   // Stable string snapshots to avoid effect dependency loops
@@ -217,8 +220,7 @@ function BattleRuntimePage() {
             
             const shouldApplyServerUpdate = !initialBattleStateSetRef.current || 
               (battle.turnNumber && battle.turnNumber > lastAppliedTurnNumberRef.current) ||
-              (battle.battleData && battle.status === 'active' && battle.turnNumber !== lastAppliedTurnNumberRef.current) ||
-              hasBattleDataChanges;
+              (battle.battleData && battle.status === 'active' && battle.turnNumber !== lastAppliedTurnNumberRef.current);
             
             console.log('🔄 === SERVER UPDATE EVALUATION ===');
             console.log('👤 Current user:', user?.displayName || user?.uid || 'Anonymous');
@@ -229,6 +231,7 @@ function BattleRuntimePage() {
             console.log('🎮 Battle data exists:', !!battle.battleData);
             console.log('🔄 Battle data turn number:', (battle.battleData as TeamBattleState)?.turnNumber);
             console.log('🔍 Has battle data changes:', hasBattleDataChanges);
+            console.log('🚫 Just resolved this turn:', false); // Will be updated after isHostUser is declared
             console.log('✅ Should apply server update:', shouldApplyServerUpdate);
             console.log('📊 Has battle state:', !!battleState);
             
@@ -238,6 +241,15 @@ function BattleRuntimePage() {
             console.log('⚡ Server execution queue length:', serverData.executionQueue?.length || 0);
             
             if (shouldApplyServerUpdate) {
+              // Check if we should prevent server updates due to host resolution
+              const isHostUser = Boolean(user?.uid && battle.hostId && user.uid === battle.hostId);
+              const shouldPreventUpdate = isHostUser && lastResolvedTurnRef.current === (battle.turnNumber || 1);
+              
+              if (shouldPreventUpdate) {
+                console.log('🚫 Host just resolved this turn, preventing server update override');
+                return; // Skip applying server update
+              }
+              
               // Apply server updates to ensure proper synchronization
               
               try {
@@ -267,6 +279,17 @@ function BattleRuntimePage() {
                   const isHostUser = Boolean(user?.uid && battle.hostId && user.uid === battle.hostId);
                   const serverPlayerTeam = isHostUser ? serverData.player : serverData.opponent;
                   const serverOpponentTeam = isHostUser ? serverData.opponent : serverData.player;
+
+                  // Remap selection bookkeeping to local perspective
+                  const remappedSelectedMoves = isHostUser
+                    ? (serverData.selectedMoves || {})
+                    : {
+                        player: serverData.selectedMoves?.opponent,
+                        opponent: serverData.selectedMoves?.player
+                      };
+                  const remappedExecutionQueue = (serverData.executionQueue || []).map(item => (
+                    isHostUser ? item : { ...item, isPlayer: !item.isPlayer }
+                  ));
 
                   synchronizedState = {
                     ...serverData,
@@ -307,8 +330,8 @@ function BattleRuntimePage() {
                     },
                     // Preserve phase system data from server
                     phase: serverData.phase || 'selection',
-                    selectedMoves: serverData.selectedMoves || {},
-                    executionQueue: serverData.executionQueue || []
+                    selectedMoves: remappedSelectedMoves,
+                    executionQueue: remappedExecutionQueue
                   } as TeamBattleState;
                 } else {
                   // No local state: align server (host-perspective) data to local user's perspective
@@ -368,6 +391,8 @@ function BattleRuntimePage() {
               
               // Track the latest server-applied turn number to gate move UI
               lastAppliedTurnNumberRef.current = battle.turnNumber || 0;
+              // Remember last resolved turn to avoid re-running resolution locally
+              lastResolvedTurnRef.current = Math.max(lastResolvedTurnRef.current, battle.turnNumber || 0);
               console.log('✅ Server update applied successfully with team positioning preserved');
             }
           }
@@ -377,35 +402,70 @@ function BattleRuntimePage() {
             const isHostUser = Boolean(user?.uid && battle.hostId && user.uid === battle.hostId);
             const currentTurnNumber = battle.turnNumber || 1;
             const movesThisTurn = (battle.moves || []).filter(m => m.turnNumber === currentTurnNumber);
+            
+            // Don't apply server updates if we're the host and just resolved this turn
+            const justResolvedThisTurn = isHostUser && lastResolvedTurnRef.current === currentTurnNumber;
+            if (justResolvedThisTurn) {
+              console.log('🚫 Host just resolved this turn, preventing server update override');
+            }
 
             // Only the host runs resolution to avoid double execution
-            if (isHostUser && battle.status === 'active' && movesThisTurn.length >= 2) {
+            console.log('🔍 Resolution check:', {
+              isHostUser,
+              battleStatus: battle.status,
+              movesThisTurn: movesThisTurn.length,
+              currentTurnNumber,
+              lastResolvedTurn: lastResolvedTurnRef.current,
+              shouldResolve: isHostUser && battle.status === 'active' && movesThisTurn.length >= 2
+            });
+            
+            if (
+              isHostUser &&
+              battle.status === 'active' &&
+              movesThisTurn.length >= 2
+            ) {
               console.log('🧮 Host resolving turn', currentTurnNumber, 'with moves:', movesThisTurn);
               // Ensure we have local battle state to operate on
               const baseState: TeamBattleState | null = (battle.battleData as TeamBattleState) || battleState;
-              if (baseState && baseState.phase === 'selection') {
+              if (baseState) {
                 // Map Firebase moves to player/opponent actions based on actual IDs
                 const hostMove = movesThisTurn.find(m => m.playerId === battle.hostId);
                 const guestMove = movesThisTurn.find(m => m.playerId === battle.guestId);
                 if (hostMove && guestMove) {
                   let working = { ...baseState, battleLog: [...baseState.battleLog] } as TeamBattleState;
-                  // Host is always the player perspective in server battleData we maintain
-                  working = await executeTeamAction(working, { type: 'move', moveIndex: hostMove.moveIndex }, true);
-                  working = await executeTeamAction(working, { type: 'move', moveIndex: guestMove.moveIndex }, false);
+                  // Force both moves into selectedMoves and transition to execution
+                  const nextSelected = {
+                    player: { type: 'move', moveIndex: hostMove.moveIndex },
+                    opponent: { type: 'move', moveIndex: guestMove.moveIndex }
+                  } as const;
+                  working = { ...working, selectedMoves: nextSelected };
+                  
+                  // Always transition to execution phase when both moves are available
+                  working.phase = 'execution';
+                  working.executionQueue = createExecutionQueue(working);
+                  
+                  working.battleLog.push({
+                    type: 'turn_start',
+                    message: `Both trainers have selected their moves!`,
+                    turn: working.turnNumber
+                  });
+                  // Resolve entire execution queue
+                  while (working.phase === 'execution' && working.executionQueue.length > 0) {
+                    working = await executeTeamAction(working, { type: 'execute' });
+                  }
 
-                  // If execution already advanced (both selected), the above calls may have executed to end-of-turn
-                  // Persist results and advance server turn bookkeeping
+                  // Persist results and advance to next turn (no currentTurn switching needed)
                   const nextTurn = (battle.turnNumber || 1) + 1;
-                  const nextCurrentTurn: 'host' | 'guest' = battle.currentTurn === 'host' ? 'guest' : 'host';
 
                   await battleService.updateBattle(battle.id, {
                     battleData: working as unknown,
                     turnNumber: nextTurn,
-                    currentTurn: nextCurrentTurn,
                     moves: []
                   });
 
                   console.log('✅ Host wrote resolved battle state for turn', currentTurnNumber, '-> next turn', nextTurn);
+                  // Mark this turn as resolved to prevent double resolution from rapid snapshots
+                  lastResolvedTurnRef.current = currentTurnNumber;
                 }
               }
             }
@@ -413,10 +473,10 @@ function BattleRuntimePage() {
             console.error('Error during host turn resolution:', resolveErr);
           }
           
-          // Advance local turn marker to match server if it changed
+          // Update local battle state to match server
           setMultiplayerBattle(prev => {
             if (!prev) return battle;
-            if (prev.currentTurn !== battle.currentTurn || prev.turnNumber !== battle.turnNumber) {
+            if (prev.turnNumber !== battle.turnNumber) {
               return { ...battle } as MultiplayerBattleState;
             }
             return prev;
@@ -469,6 +529,7 @@ function BattleRuntimePage() {
     console.log('Battle ready flag:', battleReady);
     
     setBothPlayersReady(bothReady);
+    setShowWaitingDialog(!bothReady);
   }, [isMultiplayer, multiplayerBattle, battleReady]);
 
   // Track unread messages for badge
@@ -625,6 +686,8 @@ function BattleRuntimePage() {
   // Handle execution phase when both players have selected moves
   useEffect(() => {
     if (!battleState || battleState.isComplete || switchingInProgress) return;
+    // Multiplayer is server-resolved only; avoid local execution to prevent duplicates
+    if (isMultiplayer) return;
     
     // If we're in execution phase and there are actions to execute
     if (battleState.phase === 'execution' && battleState.executionQueue.length > 0) {
@@ -650,7 +713,7 @@ function BattleRuntimePage() {
         }
       }, 1500); // 1.5 second delay for execution
     }
-  }, [battleState?.phase, battleState?.executionQueue.length, switchingInProgress]);
+  }, [isMultiplayer, battleState?.phase, battleState?.executionQueue.length, switchingInProgress]);
 
   // Removed direct HP monitoring to prevent infinite loops
 
@@ -761,6 +824,11 @@ function BattleRuntimePage() {
         if (JSON.stringify(battleMeta.hostTeam) === JSON.stringify(battleMeta.guestTeam)) {
           console.error('🚨 BUG DETECTED: Host and guest teams are identical!');
           console.error('This means both players will see the same Pokémon');
+          console.error('Host team:', battleMeta.hostTeam);
+          console.error('Guest team:', battleMeta.guestTeam);
+          
+          // Show user-friendly error
+          throw new Error('Both players have selected the same team. Please ensure each player selects a different team before starting the battle.');
         }
         
         // Additional validation: Check if assigned teams are different
@@ -769,6 +837,9 @@ function BattleRuntimePage() {
           console.error('Player team:', playerTeam);
           console.error('Opponent team:', opponentTeam);
           console.error('This will cause both players to have the same Pokémon!');
+          
+          // Show user-friendly error
+          throw new Error('Team assignment error: Both players have the same team. Please refresh and ensure each player selects a different team.');
         }
         
         if (!playerTeam || !opponentTeam) {
@@ -1402,12 +1473,18 @@ function BattleRuntimePage() {
           }
           
           console.log('Initializing multiplayer battle...');
+          console.log('=== TEAM ASSIGNMENT DEBUG ===');
+          console.log('User role:', userRole);
+          console.log('Pokemon list param exists:', !!pokemonListParam);
+          console.log('Host team exists:', !!battleMeta.hostTeam);
+          console.log('Guest team exists:', !!battleMeta.guestTeam);
           
           // Get team data from URL parameters instead of Firebase
           const isHost = userRole === 'host';
           let playerTeam, opponentTeam;
           
           if (pokemonListParam) {
+            console.log('Using URL Pokemon list for team assignment');
             // Use Pokemon list from URL parameters
             const userPokemonList = JSON.parse(pokemonListParam);
             const userTeam = {
@@ -1432,9 +1509,26 @@ function BattleRuntimePage() {
               opponentTeam = battleMeta.hostTeam;
             }
           } else {
+            console.log('Using Firebase data for team assignment (fallback)');
             // Fallback to Firebase data if URL params not available
             playerTeam = isHost ? battleMeta.hostTeam : battleMeta.guestTeam;
             opponentTeam = isHost ? battleMeta.guestTeam : battleMeta.hostTeam;
+          }
+          
+          // Check if both teams are the same (this would be the bug)
+          console.log('=== TEAM COMPARISON DEBUG ===');
+          console.log('Host team data:', battleMeta.hostTeam);
+          console.log('Guest team data:', battleMeta.guestTeam);
+          console.log('Teams are identical:', JSON.stringify(battleMeta.hostTeam) === JSON.stringify(battleMeta.guestTeam));
+          
+          if (JSON.stringify(battleMeta.hostTeam) === JSON.stringify(battleMeta.guestTeam)) {
+            console.error('🚨 BUG DETECTED: Host and guest teams are identical!');
+            console.error('This means both players will see the same Pokémon');
+            console.error('Host team:', battleMeta.hostTeam);
+            console.error('Guest team:', battleMeta.guestTeam);
+            
+            // Show user-friendly error
+            throw new Error('Both players have selected the same team. Please ensure each player selects a different team before starting the battle.');
           }
           
           // Additional validation: Check if assigned teams are different
@@ -1443,6 +1537,9 @@ function BattleRuntimePage() {
             console.error('Player team:', playerTeam);
             console.error('Opponent team:', opponentTeam);
             console.error('This will cause both players to have the same Pokémon!');
+            
+            // Show user-friendly error
+            throw new Error('Team assignment error: Both players have the same team. Please refresh and ensure each player selects a different team.');
           }
           
           if (!playerTeam || !opponentTeam) {
@@ -1593,7 +1690,7 @@ function BattleRuntimePage() {
         console.log('✅ Move added to battle service successfully');
         console.log('📡 Move should now be visible to other players via Firebase');
         
-        // Select move locally (this will update the battle state)
+        // Select move locally (update local state only; host will resolve execution)
         const newState = await executeTeamAction(battleState, { type: 'move', moveIndex }, true);
         console.log('🎯 === LOCAL MOVE SELECTION RESULT ===');
         console.log('👤 Player:', user?.displayName || user?.uid || 'Anonymous');
@@ -1704,36 +1801,8 @@ function BattleRuntimePage() {
 
   const { player: playerTeam, opponent: opponentTeam, battleLog, isComplete, winner } = battleState;
   
-  // Determine the correct turn based on actual user IDs
-  const getCorrectTurn = () => {
-    if (!isMultiplayer || !multiplayerBattle) {
-      return battleState.turn;
-    }
-    
-    // For multiplayer, determine turn based on actual user IDs
-    const serverTurn = multiplayerBattle.currentTurn;
-    const currentUserId = userId || user?.uid;
-    
-    if (!currentUserId) {
-      console.warn('No current user ID available for turn determination');
-      return battleState.turn;
-    }
-    
-    // Check if it's the current user's turn based on their actual ID
-    const isCurrentUserTurn = (serverTurn === 'host' && currentUserId === multiplayerBattle.hostId) ||
-                             (serverTurn === 'guest' && currentUserId === multiplayerBattle.guestId);
-    
-    console.log('=== TURN DETERMINATION DEBUG ===');
-    console.log('Current user ID:', currentUserId);
-    console.log('Server turn:', serverTurn);
-    console.log('Host ID:', multiplayerBattle.hostId);
-    console.log('Guest ID:', multiplayerBattle.guestId);
-    console.log('Is current user turn:', isCurrentUserTurn);
-    
-    return isCurrentUserTurn ? 'player' : 'opponent';
-  };
-  
-  const turn = getCorrectTurn();
+  // Phase-based system: no individual turns, just selection -> execution -> selection
+  const turn = battleState.turn; // Keep for single-player compatibility
   
   // Trainer names for display (multiplayer uses actual names by side)
   const currentUserId = userId || user?.uid;
@@ -2198,6 +2267,16 @@ function BattleRuntimePage() {
           </div>
         )}
       </main>
+
+      {/* Waiting Dialog for Multiplayer */}
+      {isMultiplayer && showWaitingDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1100]">
+          <div className="bg-surface border border-border rounded-xl w-full max-w-sm mx-4 shadow-2xl p-5 text-center">
+            <div className="text-lg font-semibold mb-2">Waiting for the other player to join...</div>
+            <div className="text-sm text-muted">This will close automatically once they load the battle.</div>
+          </div>
+        </div>
+      )}
 
       {/* Toast Notifications */}
       <ToastContainer toasts={toasts} onRemove={removeToast} />

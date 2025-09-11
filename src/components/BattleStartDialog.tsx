@@ -45,10 +45,12 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart }: Ba
       return;
     }
 
-    // Start the battle sequence
-    setIsStarting(true);
-    // Enforce minimum visible time of 3 seconds
-    setMinCloseAt(Date.now() + 3000);
+    // Only start the battle sequence if not already starting
+    if (!isStarting) {
+      setIsStarting(true);
+      // Enforce minimum visible time of 3 seconds
+      setMinCloseAt(Date.now() + 3000);
+    }
     
     // Countdown timer
     const countdownInterval = setInterval(() => {
@@ -96,7 +98,7 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart }: Ba
       clearInterval(progressInterval);
       clearInterval(messageInterval);
     };
-  }, [isOpen, onBattleStart, onClose, minCloseAt]);
+  }, [isOpen, onBattleStart, onClose]);
 
   // Handle escape key
   useEffect(() => {
@@ -118,7 +120,7 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart }: Ba
       document.removeEventListener('keydown', handleEscape);
       document.body.style.overflow = 'unset';
     };
-  }, [isOpen, onClose, minCloseAt]);
+  }, [isOpen, onClose]);
 
   if (!isOpen || !mounted) return null;
 

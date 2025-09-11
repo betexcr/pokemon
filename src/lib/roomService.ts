@@ -451,8 +451,13 @@ class RoomService {
     }
 
     if (roomData.hostId === userId) {
-      // Host is leaving (not battling) - delete the room
-      await deleteDoc(roomRef);
+      // Host is leaving (not battling) - mark room as finished instead of deleting
+      const activeUsers = (roomData.activeUsers || []).filter((id: string) => id !== userId);
+      await updateDoc(roomRef, {
+        status: 'finished',
+        currentPlayers: activeUsers.length,
+        activeUsers
+      });
     } else if (roomData.guestId === userId) {
       // Guest is leaving (not battling) - remove guest and reset room
       const activeUsers = (roomData.activeUsers || []).filter((id: string) => id !== userId);
@@ -644,11 +649,17 @@ class RoomService {
       throw new Error('Both players must select teams before starting the battle');
     }
     
+    // Check if teams are identical (prevent same team battles)
+    const teamsAreIdentical = JSON.stringify(roomData.hostTeam) === JSON.stringify(roomData.guestTeam);
+    if (teamsAreIdentical) {
+      throw new Error('Both players cannot use the same team. Please select different teams.');
+    }
+    
     // Create battle in Firestore
     console.log('=== BATTLE CREATION DEBUG ===');
     console.log('Host team being passed to battle:', roomData.hostTeam);
     console.log('Guest team being passed to battle:', roomData.guestTeam);
-    console.log('Teams are identical:', JSON.stringify(roomData.hostTeam) === JSON.stringify(roomData.guestTeam));
+    console.log('Teams are identical:', teamsAreIdentical);
     
     const actualBattleId = await battleService.createBattle(
       roomId,
@@ -813,7 +824,7 @@ class RoomService {
       return () => {};
     }
     
-    // Show only 'waiting' and 'ready' rooms in lobby listings
+    // Show only 'waiting' and 'ready' rooms in lobby listings (exclude 'finished' and 'battling' rooms)
     const roomsQuery = query(
       collection(db, this.roomsCollection),
       where('status', 'in', ['waiting', 'ready']),

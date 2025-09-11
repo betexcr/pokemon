@@ -61,11 +61,8 @@ export default function TeamSelector({
           if (selectedTeamId) {
             const team = userTeams.find(t => t.id === selectedTeamId);
             setSelectedTeam(team || null);
-          } else if (userTeams.length > 0) {
-            // Auto-select first team for convenience
-            setSelectedTeam(userTeams[0]);
-            onTeamSelect(userTeams[0]);
           }
+          // Removed auto-selection to prevent both players from selecting the same team
         } else {
           // Load from local storage for non-authenticated users
           const raw = localStorage.getItem(STORAGE_KEY);
@@ -78,11 +75,8 @@ export default function TeamSelector({
             if (selectedTeamId) {
               const team = localTeams.find(t => t.id === selectedTeamId);
               setSelectedTeam(team || null);
-            } else if (localTeams.length > 0) {
-              // Auto-select first team for convenience (guest)
-              setSelectedTeam(localTeams[0]);
-              onTeamSelect(localTeams[0]);
             }
+            // Removed auto-selection to prevent both players from selecting the same team
           } else {
             setTeams([]);
             setIsUsingLocalStorage(true);
