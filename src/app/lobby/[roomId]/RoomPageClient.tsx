@@ -10,6 +10,7 @@ import ChatOverlay from '@/components/ChatOverlay';
 import RoomPokeballReleaseAnimation from '@/components/RoomPokeballReleaseAnimation';
 import BattleStartDialog from '@/components/BattleStartDialog';
 import FirebaseErrorDebugger from '@/components/FirebaseErrorDebugger';
+import ForfeitDialog from '@/components/ForfeitDialog';
 import { Users, Copy, MessageCircle, Bug, Check } from 'lucide-react';
 import type { SavedTeam } from '@/lib/userTeams';
 import Image from 'next/image';
@@ -108,6 +109,11 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
           if (opponentLeft) {
             setOpponentForfeit({ name: wasHost ? (validatedRoom.guestName || 'Opponent') : (validatedRoom.hostName || 'Opponent') });
           }
+        }
+
+        // If room is finished and user is not the host, show room finished message
+        if (validatedRoom.status === 'finished' && user && user.uid !== validatedRoom.hostId) {
+          setOpponentForfeit({ name: validatedRoom.hostName || 'Host' });
         }
 
         setRoom(validatedRoom);
@@ -329,6 +335,8 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
             console.log('=== HOST TEAM UPDATE DEBUG ===');
             console.log('Host UID:', user?.uid);
             console.log('Team being set:', cleanTeam);
+            console.log('Team name:', cleanTeam?.name);
+            console.log('Team slots:', cleanTeam?.slots?.map(s => ({ id: s.id, level: s.level })));
             await roomService.updateRoom(roomId, { hostTeam: cleanTeam });
             console.log('Host team updated successfully');
           } else if (isGuest) {
@@ -350,6 +358,8 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
             console.log('=== GUEST TEAM UPDATE DEBUG ===');
             console.log('Guest UID:', user?.uid);
             console.log('Team being set:', cleanTeam);
+            console.log('Team name:', cleanTeam?.name);
+            console.log('Team slots:', cleanTeam?.slots?.map(s => ({ id: s.id, level: s.level })));
             await roomService.updateRoom(roomId, { guestTeam: cleanTeam });
             console.log('Guest team updated successfully');
           } else {
@@ -418,6 +428,13 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
     // Ensure both teams are present before starting battle
     if (!room.hostTeam || !room.guestTeam) {
       alert('Both players must select their teams before starting the battle!');
+      return;
+    }
+    
+    // Check if both teams are identical (prevent same team battles)
+    if (JSON.stringify(room.hostTeam) === JSON.stringify(room.guestTeam)) {
+      alert('Both players have selected the same team! Please ensure each player selects a different team before starting the battle.');
+      console.error('🚨 PREVENTION: Both players selected identical teams:', room.hostTeam);
       return;
     }
     
@@ -854,21 +871,6 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
       </div>
 
       <div className="container mx-auto px-4 py-8 pb-16 space-y-8 max-w-7xl w-full">
-        {opponentForfeit && (
-          <div className="bg-white border border-red-300 rounded-xl p-4 mb-4">
-            <div className="text-red-700 font-semibold mb-2">{opponentForfeit.name} forfeited the battle</div>
-            <div className="text-sm text-gray-700 mb-3">Your opponent left the room. You can go back to the lobby creation screen to start a new battle.</div>
-            <button
-              onClick={() => {
-                setOpponentForfeit(null);
-                router.push('/lobby');
-              }}
-              className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              Back to Battle Lobby
-            </button>
-          </div>
-        )}
         {/* Room Info */}
         <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-full overflow-hidden">
           <div className="flex items-center justify-between mb-6">
@@ -1286,6 +1288,14 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
       <FirebaseErrorDebugger
         isOpen={showErrorDebugger}
         onClose={() => setShowErrorDebugger(false)}
+      />
+
+      {/* Forfeit Dialog */}
+      <ForfeitDialog
+        isOpen={!!opponentForfeit}
+        opponentName={opponentForfeit?.name || 'Opponent'}
+        isRoomFinished={room?.status === 'finished'}
+        onClose={() => setOpponentForfeit(null)}
       />
     </div>
   );
