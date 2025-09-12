@@ -141,8 +141,8 @@ export default function PokemonDetailClient({ pokemon, error }: PokemonDetailCli
                 : theme === 'green' ? 'font-gameboy text-green-accent'
                 : theme === 'red' ? 'font-retro text-red-accent'
                 : theme === 'ruby' ? 'font-retro text-ruby-accent'
-                : 'text-text'
-              }`}>
+                : 'text-poke-blue'
+              }`} style={{ fontFamily: 'Pokemon Solid, sans-serif', color: 'var(--color-poke-blue) !important' }}>
                 PokéDex
               </h1>
             </div>

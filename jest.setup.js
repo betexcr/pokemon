@@ -110,6 +110,13 @@ jest.mock('@/contexts/AuthContext', () => ({
   AuthProvider: ({ children }) => children
 }))
 
+// Mock ThemeProvider hook globally so components using it won't crash in tests
+jest.mock('@/components/ThemeProvider', () => {
+  const MockThemeProvider = ({ children }) => children
+  MockThemeProvider.useTheme = () => ({ theme: 'light', setTheme: jest.fn() })
+  return MockThemeProvider
+})
+
 // Mock PokeAPI calls
 jest.mock('@/lib/pokeapi', () => ({
   fetchMove: jest.fn((idOrName) => {

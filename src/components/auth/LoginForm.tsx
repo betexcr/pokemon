@@ -50,7 +50,7 @@ export default function LoginForm({ onToggleMode }: LoginFormProps) {
   return (
     <div className="w-full">
       {/* Title */}
-      <h1 className="text-center text-[32px] leading-none font-extrabold text-[#121721]">
+      <h1 className="text-center text-[32px] leading-none font-extrabold text-[#121721] mb-6">
         Sign In
       </h1>
       
@@ -63,30 +63,30 @@ export default function LoginForm({ onToggleMode }: LoginFormProps) {
       {/* Form */}
       <form onSubmit={handleSubmit} className="mx-auto w-full max-w-3xl">
         {/* Email */}
-        <div className="form-group">
-          <label htmlFor="email">Email</label>
+        <label className="block mb-3">
+          <span className="block text-[18px] font-semibold text-[#2b2f38] mb-2">Email</span>
           <input
             type="email"
             id="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full"
+            className="w-full h-[52px] rounded-[18px] border border-black/10 px-4 text-[18px] font-medium outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-500"
             style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
             placeholder="Email"
             required
           />
-        </div>
+        </label>
         
         {/* Password */}
-        <div className="form-group">
-          <label htmlFor="password">Password</label>
+        <label className="block mb-3">
+          <span className="block text-[18px] font-semibold text-[#2b2f38] mb-2">Password</span>
           <div className="relative">
             <input
               type={passwordVisible ? "text" : "password"}
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full"
+              className="w-full h-[52px] rounded-[18px] border border-black/10 px-4 text-[18px] font-medium outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-500"
               style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
               placeholder="Password"
               required
@@ -100,13 +100,13 @@ export default function LoginForm({ onToggleMode }: LoginFormProps) {
               {passwordVisible ? "Hide" : "Show"}
             </button>
           </div>
-        </div>
+        </label>
         
         {/* Submit */}
         <button
           type="submit"
           disabled={loading || googleLoading}
-          className="btn-primary btn-capsule w-full"
+          className="w-full h-[56px] rounded-[18px] bg-[#ffcf3a] text-[#0f172a] font-extrabold text-[24px] shadow-[0_6px_18px_rgba(255,207,58,.35)] transition active:translate-y-px hover:brightness-105 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? 'Signing In...' : 'Sign In'}
         </button>
@@ -118,7 +118,7 @@ export default function LoginForm({ onToggleMode }: LoginFormProps) {
         type="button"
         onClick={handleGoogleSignIn}
         disabled={loading || googleLoading}
-        className="btn-secondary btn-capsule w-full flex items-center justify-center gap-3"
+        className="w-full h-[56px] rounded-[18px] border border-google-border bg-signup-bg flex items-center justify-center gap-3 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
       >
         {googleLoading ? (
           <div className="flex items-center">
@@ -152,7 +152,7 @@ export default function LoginForm({ onToggleMode }: LoginFormProps) {
       {/* Footer */}
       <button
         onClick={onToggleMode}
-        className="btn-secondary btn-capsule w-full flex items-center justify-center gap-3 mt-4"
+        className="w-full h-[56px] rounded-[18px] border border-google-border bg-signup-bg flex items-center justify-center gap-3 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 mt-4"
       >
         <span className="font-extrabold text-[24px]">
           Don&apos;t have an account?{" "}

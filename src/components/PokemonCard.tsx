@@ -6,6 +6,7 @@ import clsx from "clsx";
 import TypeBadge from "./TypeBadge";
 import { getPokemonMainPageImage } from "@/lib/api";
 import { useRouter } from "next/navigation";
+import { Scale } from "lucide-react";
 
 /**
  * Polished Pokédex card
@@ -22,6 +23,8 @@ export default function PokemonCard({
   isSelected,
   mode = "grid", // "grid" | "list" (list uses wider image row)
   cardSize = 'compact',
+  isInComparison = false,
+  onToggleComparison,
 }: {
   pokemon: {
     id: number;
@@ -34,6 +37,8 @@ export default function PokemonCard({
   isSelected?: boolean;
   mode?: "grid" | "list";
   cardSize?: 'cozy' | 'compact' | 'ultra' | 'list';
+  isInComparison?: boolean;
+  onToggleComparison?: (id: number) => void;
 }) {
   const title = `${formatPokemonName(pokemon.name)} #${String(pokemon.id).padStart(4, "0")}`;
   const img = getPokemonMainPageImage(pokemon.id);
@@ -65,6 +70,14 @@ export default function PokemonCard({
     }
   };
 
+  const handleComparisonClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onToggleComparison) {
+      onToggleComparison(pokemon.id);
+    }
+  };
+
   return (
     <Link
       href={`/pokemon/${pokemon.id}`}
@@ -74,7 +87,7 @@ export default function PokemonCard({
         "group relative rounded-2xl border border-border bg-surface shadow-card transition no-underline text-text",
         "hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-poke-blue focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
         mode === "grid"
-          ? "overflow-hidden"
+          ? "overflow-hidden flex flex-col"
           : "grid grid-cols-[minmax(140px,200px)_1fr] gap-4 overflow-hidden",
         isSelected && "ring-2 ring-poke-blue ring-offset-2"
       )}
@@ -89,6 +102,31 @@ export default function PokemonCard({
         style={{ backgroundColor: accent }}
         aria-hidden="true"
       />
+
+      {/* First row - absolutely positioned */}
+      <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between">
+        {/* Pokemon number */}
+        <span className="text-xs text-muted font-mono bg-white/90 dark:bg-black/40 backdrop-blur px-2 py-1 rounded">
+          #{String(pokemon.id).padStart(4, "0")}
+        </span>
+        
+        {/* Comparison button */}
+        {onToggleComparison && (
+          <button
+            onClick={handleComparisonClick}
+            className={clsx(
+              "px-2 py-1 rounded-full text-xs font-medium transition-all duration-200 border flex items-center gap-1.5",
+              isInComparison 
+                ? 'bg-poke-blue text-white border-poke-blue shadow-md' 
+                : 'bg-white/90 dark:bg-black/40 text-gray-500 border-gray-200 hover:bg-poke-blue hover:text-white hover:border-poke-blue backdrop-blur'
+            )}
+            aria-label={isInComparison ? 'Remove from comparison' : 'Add to comparison'}
+          >
+            <Scale className={`h-3 w-3 ${isInComparison ? 'fill-current' : ''}`} />
+            <span className="text-xs">{isInComparison ? 'Remove' : 'Compare'}</span>
+          </button>
+        )}
+      </div>
 
       {/* Favorite heart */}
       <button
@@ -106,13 +144,11 @@ export default function PokemonCard({
         {isFavorite ? "❤️" : "♡"}
       </button>
 
-      {/* Artwork */}
+      {/* Artwork - now stretches to fill available space */}
       <div
         className={clsx(
-          "bg-white/60 dark:bg-white/5 flex items-center justify-center",
-          mode === "grid" 
-            ? (cardSize === 'cozy' ? 'art-cozy-grid' : cardSize === 'compact' ? 'art-compact-grid' : 'art-ultra-grid')
-            : (cardSize === 'cozy' ? 'art-cozy-list' : cardSize === 'compact' ? 'art-compact-list' : 'art-ultra-list')
+          "bg-white/60 dark:bg-white/5 flex items-center justify-center rounded-t-2xl flex-1 min-h-0",
+          mode === "grid" ? "w-full" : "w-full"
         )}
       >
         <img
@@ -122,7 +158,7 @@ export default function PokemonCard({
           width={512}
           height={512}
           className={clsx(
-            "mx-auto h-auto w-auto max-h-full max-w-full object-contain transition-transform duration-300",
+            "mx-auto h-full w-full max-h-full max-w-full object-contain transition-transform duration-300",
             "group-hover:scale-[1.04]",
             cardSize === 'cozy' ? "p-4" : cardSize === 'compact' ? "p-3.5" : "p-3"
           )}
@@ -134,7 +170,7 @@ export default function PokemonCard({
 
       {/* Info */}
       <div className={clsx(
-        "p-4",
+        "p-3 flex-shrink-0",
         mode === "list" && "pr-5"
       )}>
         <div className="flex items-baseline justify-between gap-2">
@@ -144,12 +180,9 @@ export default function PokemonCard({
           )}>
             {formatPokemonName(pokemon.name)}
           </h3>
-          <span className="text-xs text-muted font-mono">
-            #{String(pokemon.id).padStart(4, "0")}
-          </span>
         </div>
 
-        <div className="mt-2 flex flex-wrap gap-1.5">
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
           {types.map((type) => (
             <TypeBadge key={type} type={type} />
           ))}

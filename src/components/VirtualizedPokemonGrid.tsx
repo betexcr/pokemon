@@ -1,8 +1,9 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useMemo } from 'react'
 import { Pokemon } from '@/types/pokemon'
 import ModernPokemonCard from './ModernPokemonCard'
+import PokemonCard from './PokemonCard'
 import { useTheme } from './ThemeProvider'
 import { useVirtualizer } from '@tanstack/react-virtual'
 
@@ -149,17 +150,36 @@ export default function VirtualizedPokemonGrid({
             gap: getGridDimensions.gap,
           }}
         >
-          {rowPokemon.map((pokemon) => (
-            <ModernPokemonCard
-              key={pokemon.id}
-              pokemon={pokemon}
-              isInComparison={comparisonList.includes(pokemon.id)}
-              onToggleComparison={onToggleComparison}
-              onSelect={undefined}
-              isSelected={selectedPokemon?.id === pokemon.id}
-              density={density}
-            />
-          ))}
+          {rowPokemon.map((pokemon) => {
+            // Use PokemonCard for the smallest density (9cols) to show comparison button
+            if (density === '9cols') {
+              return (
+                <PokemonCard
+                  key={pokemon.id}
+                  pokemon={pokemon}
+                  isFavorite={false} // You might want to implement favorites
+                  onToggleFavorite={() => {}} // You might want to implement favorites
+                  isInComparison={comparisonList.includes(pokemon.id)}
+                  onToggleComparison={onToggleComparison}
+                  cardSize="compact"
+                  mode="grid"
+                />
+              )
+            }
+            
+            // Use ModernPokemonCard for other densities
+            return (
+              <ModernPokemonCard
+                key={pokemon.id}
+                pokemon={pokemon}
+                isInComparison={comparisonList.includes(pokemon.id)}
+                onToggleComparison={onToggleComparison}
+                onSelect={undefined}
+                isSelected={selectedPokemon?.id === pokemon.id}
+                density={density}
+              />
+            )
+          })}
         </div>
       )
     }
@@ -207,17 +227,34 @@ export default function VirtualizedPokemonGrid({
           gap: getGridDimensions.gap,
         }}
       >
-        {rowPokemon.map((pokemon) => (
-          <ModernPokemonCard
-            key={pokemon.id}
-            pokemon={pokemon}
-            isInComparison={comparisonList.includes(pokemon.id)}
-            onToggleComparison={onToggleComparison}
-            onSelect={undefined}
-            isSelected={selectedPokemon?.id === pokemon.id}
-            density={density}
-          />
-        ))}
+        {rowPokemon.map((pokemon) => {
+          if (density === '9cols') {
+            return (
+              <PokemonCard
+                key={pokemon.id}
+                pokemon={pokemon}
+                isFavorite={false}
+                onToggleFavorite={() => {}}
+                isInComparison={comparisonList.includes(pokemon.id)}
+                onToggleComparison={onToggleComparison}
+                cardSize="ultra"
+                mode="grid"
+              />
+            )
+          }
+          
+          return (
+            <ModernPokemonCard
+              key={pokemon.id}
+              pokemon={pokemon}
+              isInComparison={comparisonList.includes(pokemon.id)}
+              onToggleComparison={onToggleComparison}
+              onSelect={undefined}
+              isSelected={selectedPokemon?.id === pokemon.id}
+              density={density}
+            />
+          )
+        })}
       </div>
     )
   }
