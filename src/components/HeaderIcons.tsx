@@ -43,46 +43,127 @@ export default function HeaderIcons({
   return (
     <>
       <button 
-        className={`pk-btn ${showSidebar ? 'ring-2 ring-poke-blue ring-offset-2' : ''}`}
+        className={`w-16 h-16 rounded-full border-2 transition-all duration-200 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 ${showSidebar ? 'bg-poke-blue/10 border-poke-blue' : ''}`}
+        style={{
+          borderColor: 'var(--color-border)',
+          backgroundColor: 'var(--color-surface)',
+          borderRadius: '50%',
+          width: '64px',
+          height: '64px',
+          minWidth: '64px',
+          minHeight: '64px',
+          maxWidth: '64px',
+          maxHeight: '64px',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = 'var(--color-muted)';
+          e.currentTarget.style.backgroundColor = 'var(--color-bg)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = 'var(--color-border)';
+          e.currentTarget.style.backgroundColor = 'var(--color-surface)';
+        }}
         onClick={handleFiltersClick}
         title="Advanced Filters"
       >
         <Image 
           src="/header-icons/advanced_filters.png" 
           alt="Advanced Filters" 
-          width={64} 
-          height={64} 
+          width={48}
+          height={48}
+          className="w-12 h-12 object-contain"
         />
       </button>
       
       <button 
-        className="pk-btn" 
+        className="w-16 h-16 rounded-full border-2 transition-all duration-200 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500" 
+        style={{
+          borderColor: 'var(--color-border)',
+          backgroundColor: 'var(--color-surface)',
+          borderRadius: '50%',
+          width: '64px',
+          height: '64px',
+          minWidth: '64px',
+          minHeight: '64px',
+          maxWidth: '64px',
+          maxHeight: '64px',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = 'var(--color-muted)';
+          e.currentTarget.style.backgroundColor = 'var(--color-bg)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = 'var(--color-border)';
+          e.currentTarget.style.backgroundColor = 'var(--color-surface)';
+        }}
         onClick={handleTeamClick}
         title="Team Builder"
       >
         <Image 
           src="/header-icons/team_builder.png" 
           alt="Team Builder" 
-          width={64} 
-          height={64} 
+          width={48}
+          height={48}
+          className="w-12 h-12 object-contain"
         />
       </button>
       
       <button 
-        className="pk-btn" 
+        className="w-16 h-16 rounded-full border-2 transition-all duration-200 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500" 
+        style={{
+          borderColor: 'var(--color-border)',
+          backgroundColor: 'var(--color-surface)',
+          borderRadius: '50%',
+          width: '64px',
+          height: '64px',
+          minWidth: '64px',
+          minHeight: '64px',
+          maxWidth: '64px',
+          maxHeight: '64px',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = 'var(--color-muted)';
+          e.currentTarget.style.backgroundColor = 'var(--color-bg)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = 'var(--color-border)';
+          e.currentTarget.style.backgroundColor = 'var(--color-surface)';
+        }}
         onClick={handleBattleClick}
         title="Battles"
       >
         <Image 
           src="/header-icons/battle.png" 
           alt="Battles" 
-          width={64} 
-          height={64} 
+          width={48}
+          height={48}
+          className="w-12 h-12 object-contain"
         />
       </button>
       
       <button 
-        className={`pk-btn ${comparisonList.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+        className={`w-16 h-16 rounded-full border-2 transition-all duration-200 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 ${comparisonList.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+        style={{
+          borderColor: 'var(--color-border)',
+          backgroundColor: 'var(--color-surface)',
+          borderRadius: '50%',
+          width: '64px',
+          height: '64px',
+          minWidth: '64px',
+          minHeight: '64px',
+          maxWidth: '64px',
+          maxHeight: '64px',
+        }}
+        onMouseEnter={(e) => {
+          if (comparisonList.length > 0) {
+            e.currentTarget.style.borderColor = 'var(--color-muted)';
+            e.currentTarget.style.backgroundColor = 'var(--color-bg)';
+          }
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = 'var(--color-border)';
+          e.currentTarget.style.backgroundColor = 'var(--color-surface)';
+        }}
         onClick={handleCompareClick}
         disabled={comparisonList.length === 0}
         title={comparisonList.length === 0 ? 'Select Pokémon to enable comparison' : 'Compare'}
@@ -91,8 +172,9 @@ export default function HeaderIcons({
         <Image 
           src="/header-icons/compare.png" 
           alt="Compare" 
-          width={64} 
-          height={64} 
+          width={48}
+          height={48}
+          className="w-12 h-12 object-contain"
         />
       </button>
     </>
@@ -108,15 +190,35 @@ interface HamburgerMenuProps {
 export function HamburgerMenu({ onClick, className = '' }: HamburgerMenuProps) {
   return (
     <button 
-      className={`pk-btn ${className}`}
+      className={`w-16 h-16 rounded-full border-2 transition-all duration-200 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 ${className}`}
+      style={{
+        borderColor: 'var(--color-border)',
+        backgroundColor: 'var(--color-surface)',
+        borderRadius: '50%',
+        width: '64px',
+        height: '64px',
+        minWidth: '64px',
+        minHeight: '64px',
+        maxWidth: '64px',
+        maxHeight: '64px',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = 'var(--color-muted)';
+        e.currentTarget.style.backgroundColor = 'var(--color-bg)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = 'var(--color-border)';
+        e.currentTarget.style.backgroundColor = 'var(--color-surface)';
+      }}
       onClick={onClick}
       title="Toggle menu"
     >
       <Image 
         src="/header-icons/hamburger-menu.png" 
         alt="Menu" 
-        width={32} 
-        height={32} 
+        width={48}
+        height={48}
+        className="w-12 h-12 object-contain"
       />
     </button>
   )

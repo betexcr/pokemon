@@ -126,38 +126,11 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart }: Ba
 
   const modalContent = (
     <div 
-      style={{ 
-        position: 'fixed', 
-        top: 0, 
-        left: 0, 
-        right: 0, 
-        bottom: 0, 
-        zIndex: 999999,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: '100vw',
-        height: '100vh',
-        margin: 0,
-        padding: '1rem',
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)'
-      }}
+      className="fixed inset-0 z-[999999] flex items-center justify-center w-screen h-screen m-0 p-4 bg-black/80 backdrop-blur-lg"
     >
       {/* Modal Content */}
       <div 
-        className="relative bg-white rounded-2xl shadow-2xl overflow-hidden"
-        style={{
-          position: 'relative',
-          width: '100%',
-          maxWidth: '32rem',
-          backgroundColor: 'white',
-          borderRadius: '1rem',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-          zIndex: 1000000,
-          margin: 'auto'
-        }}
+        className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden z-[1000000] mx-auto"
       >
         {/* Hero GIF */}
         <div className="w-full overflow-hidden rounded-t-2xl bg-gradient-to-b from-blue-100 to-blue-200">

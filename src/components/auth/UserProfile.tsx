@@ -56,7 +56,7 @@ export default function UserProfile({ isMobile = false }: UserProfileProps) {
         <button
           ref={buttonRef}
           onClick={() => setShowAuthModal(true)}
-          className="pk-btn-profile"
+          className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-300 hover:border-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
           title="Sign In"
         >
           <img
@@ -91,6 +91,7 @@ export default function UserProfile({ isMobile = false }: UserProfileProps) {
           src={user.photoURL}
           alt={user.displayName || user.email || 'User'}
           className="w-full h-full rounded-full object-cover"
+          style={{ borderRadius: '50%' }}
           onError={() => {
             console.warn('Failed to load profile image, falling back to initials');
             setImageLoadError(true);
@@ -122,7 +123,7 @@ export default function UserProfile({ isMobile = false }: UserProfileProps) {
       <button
         ref={buttonRef}
         onClick={handleButtonClick}
-        className="pk-btn-profile"
+        className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-300 hover:border-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
         title={user.displayName || user.email || 'User Profile'}
       >
         {getProfilePicture()}

@@ -64,13 +64,35 @@ export default function AppHeader({
   const renderProfilePicture = () => {
     if (!user) {
       return (
-        <button ref={avatarRef} className="pk-btn-profile" title="Sign In" onClick={openMenuAtAvatar}>
+        <button 
+          ref={avatarRef} 
+          className="w-16 h-16 rounded-full overflow-hidden border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500" 
+          style={{
+            borderColor: 'var(--color-border)',
+            borderRadius: '50%',
+            width: '64px',
+            height: '64px',
+            minWidth: '64px',
+            minHeight: '64px',
+            maxWidth: '64px',
+            maxHeight: '64px',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = 'var(--color-muted)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = 'var(--color-border)';
+          }}
+          title="Sign In" 
+          onClick={openMenuAtAvatar}
+        >
           <Image 
             src="/profile-placeholder.png" 
             alt="Profile Placeholder" 
-            width={32} 
-            height={32} 
+            width={64} 
+            height={64} 
             className="w-full h-full rounded-full object-cover" 
+            style={{ borderRadius: '50%' }}
           />
         </button>
       )
@@ -81,13 +103,35 @@ export default function AppHeader({
 
     if (src && !imageError) {
       return (
-        <button ref={avatarRef} className="pk-btn-profile" title={name} onClick={openMenuAtAvatar}>
+        <button 
+          ref={avatarRef} 
+          className="w-16 h-16 rounded-full overflow-hidden border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500" 
+          style={{
+            borderColor: 'var(--color-border)',
+            borderRadius: '50%',
+            width: '64px',
+            height: '64px',
+            minWidth: '64px',
+            minHeight: '64px',
+            maxWidth: '64px',
+            maxHeight: '64px',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = 'var(--color-muted)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = 'var(--color-border)';
+          }}
+          title={name} 
+          onClick={openMenuAtAvatar}
+        >
           <Image 
             src={src} 
             alt={name} 
-            width={32} 
-            height={32} 
+            width={64} 
+            height={64} 
             className="w-full h-full rounded-full object-cover" 
+            style={{ borderRadius: '50%' }}
             onError={() => setImageError(true)}
             referrerPolicy="no-referrer"
           />
@@ -97,7 +141,28 @@ export default function AppHeader({
 
     const initial = name.trim().charAt(0).toUpperCase()
     return (
-      <button ref={avatarRef} className="pk-btn-profile" title={name} onClick={openMenuAtAvatar}>
+      <button 
+        ref={avatarRef} 
+        className="w-8 h-8 rounded-full overflow-hidden border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500" 
+        style={{
+          borderColor: 'var(--color-border)',
+          borderRadius: '50%',
+          width: '32px',
+          height: '32px',
+          minWidth: '32px',
+          minHeight: '32px',
+          maxWidth: '32px',
+          maxHeight: '32px',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = 'var(--color-muted)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = 'var(--color-border)';
+        }}
+        title={name} 
+        onClick={openMenuAtAvatar}
+      >
         <div className="w-full h-full rounded-full bg-gradient-to-br from-poke-blue to-poke-red flex items-center justify-center text-white font-semibold">
           {initial}
         </div>
@@ -134,7 +199,7 @@ export default function AppHeader({
             )}
             <div className="flex items-center space-x-2 lg:space-x-3 mx-auto">
               <div className="flex flex-col">
-                <h2 className="text-lg lg:text-xl font-bold text-poke-blue dark:bg-gradient-to-r dark:from-poke-blue dark:via-poke-red dark:to-poke-blue dark:bg-clip-text dark:text-transparent">
+                <h2 className="text-lg lg:text-xl font-bold text-poke-blue dark:bg-gradient-to-r dark:from-poke-blue dark:via-poke-red dark:to-poke-blue dark:bg-clip-text dark:text-transparent" style={{ fontFamily: 'Pokemon Solid, sans-serif', color: 'var(--color-poke-blue) !important' }}>
                   {title}
                 </h2>
                 {subtitle ? (
@@ -151,7 +216,7 @@ export default function AppHeader({
               <ThemeToggle />
             )}
             {showToolbar && (
-              <div className="pk-toolbar">
+              <div className="flex items-center space-x-2">
                 <HeaderIcons 
                   comparisonList={comparisonList}
                   showSidebar={showSidebar}

@@ -9,7 +9,7 @@ import { getPokemonByGeneration, getPokemonByType, getPokemon, getPokemonWithPag
 import ThemeToggle from './ThemeToggle'
 import VirtualizedPokemonGrid from './VirtualizedPokemonGrid'
 import AdvancedFilters from './AdvancedFilters'
-import { Search, Filter, X, Scale, ArrowRight, Menu, Users, Swords, List, Grid3X3, Grid2X2, LayoutGridIcon } from 'lucide-react'
+import { Search, X, List, Grid3X3, Grid2X2, LayoutGridIcon } from 'lucide-react'
 import UserProfile from './auth/UserProfile'
 import AuthModal from './auth/AuthModal'
 import { useAuth } from '@/contexts/AuthContext'
@@ -1139,52 +1139,7 @@ export default function ModernPokedexLayout({
                 </button>
               </div>
               
-              {/* Mobile Search Section */}
-              <div className="space-y-3">
-                <label htmlFor="mobile-search" className="text-sm font-medium text-muted">Search</label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
-                  <input
-                    id="mobile-search"
-                    type="text"
-                    placeholder="Search by name, number, or type"
-                    value={searchTerm}
-                    onChange={(e) => { handleSearchChange(e.target.value) }}
-                    className="w-full pl-10 pr-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-poke-blue focus:border-poke-blue focus:outline-none transition-all duration-200 text-sm"
-                    style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
-                    inputMode="search"
-                    aria-label="Search Pokémon"
-                  />
-                </div>
-              </div>
 
-              {/* Mobile Card Density Controls */}
-              <div className="space-y-3">
-                <h4 className="text-sm font-semibold text-text uppercase tracking-wider">Card Size</h4>
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { id: '3cols', label: '3 Cols', icon: '🟢' },
-                    { id: '6cols', label: '6 Cols', icon: '🔵' },
-                    { id: 'list', label: 'List', icon: '📋' }
-                  ].map(({ id, label, icon }) => (
-                    <button
-                      key={id}
-                      onClick={() => {
-                        setCardDensity(id as '3cols' | '6cols' | '9cols' | 'list')
-                        setShowMobileMenu(false)
-                      }}
-                      className={`p-3 rounded-xl text-sm font-medium transition-all duration-200 flex flex-col items-center space-y-2 ${
-                        cardDensity === id 
-                          ? 'bg-poke-blue text-white shadow-lg' 
-                          : 'bg-surface border border-border text-text hover:bg-gray-50'
-                      }`}
-                    >
-                      <span className="text-lg">{icon}</span>
-                      <span>{label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
 
               {/* Mobile Type Filters */}
               <div className="space-y-3">
@@ -1233,41 +1188,6 @@ export default function ModernPokedexLayout({
 
               {/* Mobile Filter Toggle removed to avoid overlap/bleed on desktop */}
 
-              {/* Mobile Sort Controls - Segmented control */}
-              <div className="space-y-3">
-                <h4 className="text-sm font-semibold text-text uppercase tracking-wider">Sort</h4>
-                <div role="group" aria-label="Sort by" className="grid grid-cols-3 gap-2">
-                  {[
-                    { id: 'id', label: 'Number' },
-                    { id: 'name', label: 'Name' },
-                    { id: 'stats', label: 'Total' },
-                  ].map(opt => (
-                    <button
-                      key={opt.id}
-                      onClick={() => setSortBy(opt.id as 'id' | 'name' | 'stats')}
-                      className={`px-2 py-2 rounded-full text-sm font-medium border transition ${sortBy===opt.id? 'bg-poke-blue text-white border-poke-blue' : 'bg-white text-text border-border'}`}
-                      style={{ borderRadius: '9999px', padding: '8px 8px' }}
-                      aria-pressed={sortBy===opt.id}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted">Direction</span>
-                  <button
-                    onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-                    className="px-2 py-2 rounded-full text-sm font-medium border border-border bg-white flex items-center space-x-1"
-                    style={{ borderRadius: '9999px', padding: '8px 8px' }}
-                    aria-label={`Sort ${sortOrder==='asc'?'descending':'ascending'}`}
-                  >
-                    <span>{sortOrder === 'asc' ? 'Ascending' : 'Descending'}</span>
-                    <svg className={`w-3 h-3 transform ${sortOrder === 'asc' ? 'rotate-0' : 'rotate-180'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
 
               {/* Mobile Comparison Section */}
               <div className="space-y-3">
@@ -1426,9 +1346,8 @@ export default function ModernPokedexLayout({
 
       {/* Desktop Menu Drawer disabled: header has inline controls */}
 
-      {/* Mobile Search Bar - Only on small screens */}
-      {isMobile && (
-        <div className="border-b border-border bg-surface">
+      {/* Search Bar - Visible on all viewports */}
+      <div className="border-b border-border bg-surface">
         <div className="w-full px-4 py-3">
           <div className="flex items-center gap-3">
             <div className="relative flex-1">
@@ -1459,8 +1378,7 @@ export default function ModernPokedexLayout({
             </div>
           </div>
         </div>
-        </div>
-      )}
+      </div>
 
       {/* Enhanced Type Filter Ribbon */}
       <div className="border-b border-border bg-gradient-to-r from-surface via-surface to-surface">
@@ -1524,90 +1442,88 @@ export default function ModernPokedexLayout({
         </div>
       </div>
 
-      {/* Desktop Size & Sort Controls - positioned below type filters */}
-      {!isMobile && (
-        <div className="border-b border-border bg-surface/60">
-          <div className="w-full max-w-full px-4 sm:px-6 lg:px-8 py-3">
-            <div className="flex items-center justify-between gap-6">
-              {/* Card Density Controls */}
-              <div className="flex items-center space-x-2">
-                <span className="text-xs font-medium text-muted uppercase tracking-wider">Size</span>
-                <div className="flex items-center bg-surface border border-border rounded-xl p-1 shadow-sm">
-                  {[
-                    { visual: '3cols', label: '3 Cols', target: '3cols' },
-                    { visual: '6cols', label: '6 Cols', target: '6cols' },
-                    { visual: '9cols', label: '9 Cols', target: '9cols' },
-                    { visual: 'list', label: 'List', target: 'list' }
-                  ].map(({ visual, label, target }) => (
-                    <button
-                      key={visual}
-                      onClick={() => setCardDensity(target as '3cols' | '6cols' | '9cols' | 'list')}
-                      className={`px-2 py-2 text-xs font-medium rounded-full transition-all duration-200 flex items-center space-x-1 ${
-                        cardDensity === target 
-                          ? 'bg-poke-blue text-white shadow-lg scale-105' 
-                          : 'text-muted hover:text-text hover:bg-white/50'
-                      }`}
-                      style={{ borderRadius: '9999px', padding: '8px 8px' }}
-                    >
-                      <span className="inline-flex items-center justify-center">
-                        {visual === '3cols' && (
-                          <LayoutGridIcon className="w-3 h-3" />
-                        )}
-                        {visual === '6cols' && (
-                          <Grid2X2 className="w-3 h-3" />
-                        )}
-                        {visual === '9cols' && (
-                          <Grid3X3 className="w-3 h-3" />
-                        )}
-                        {visual === 'list' && (
-                          <List className="w-3 h-3" />
-                        )}
-                      </span>
-                      <span className="hidden xl:inline">{label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Sort Controls */}
-              <div className="flex items-center space-x-2">
-                <span className="text-xs font-medium text-muted uppercase tracking-wider">Sort</span>
-                <div className="flex items-center space-x-2">
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                    className="px-3 py-2 border border-border rounded-xl text-sm font-medium focus:ring-2 focus:ring-poke-blue focus:border-poke-blue focus:outline-none transition-all duration-200 shadow-sm hover:shadow-md control-keep"
-                    style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
-                  >
-                    <option value="id">Number</option>
-                    <option value="name">Name</option>
-                    <option value="stats">Total Stats</option>
-                    <option value="hp">HP</option>
-                    <option value="attack">Attack</option>
-                    <option value="defense">Defense</option>
-                    <option value="special-attack">Sp. Attack</option>
-                    <option value="special-defense">Sp. Defense</option>
-                    <option value="speed">Speed</option>
-                  </select>
+      {/* Size & Sort Controls - Visible on all viewports */}
+      <div className="border-b border-border bg-surface/60">
+        <div className="w-full max-w-full px-4 sm:px-6 lg:px-8 py-3">
+          <div className="flex flex-row items-center justify-between gap-4">
+            {/* Card Density Controls */}
+            <div className="flex items-center space-x-2">
+              <span className="text-xs font-medium text-muted uppercase tracking-wider">Size</span>
+              <div className="flex items-center bg-surface rounded-xl p-1 shadow-sm">
+                {[
+                  { visual: '3cols', label: '3 Cols', target: '3cols' },
+                  { visual: '6cols', label: '6 Cols', target: '6cols' },
+                  { visual: '9cols', label: '9 Cols', target: '9cols' },
+                  { visual: 'list', label: 'List', target: 'list' }
+                ].map(({ visual, label, target }) => (
                   <button
-                    onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-                    className="flex items-center gap-1 px-2 py-2 rounded-full bg-surface border border-border hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md group control-keep"
+                    key={visual}
+                    onClick={() => setCardDensity(target as '3cols' | '6cols' | '9cols' | 'list')}
+                    className={`px-2 py-2 text-xs font-medium rounded-full transition-all duration-200 flex items-center space-x-1 ${
+                      cardDensity === target 
+                        ? 'bg-poke-blue text-white shadow-lg scale-105' 
+                        : 'text-muted hover:text-text hover:bg-white/50'
+                    }`}
                     style={{ borderRadius: '9999px', padding: '8px 8px' }}
-                    title={`Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`}
                   >
-                    <div className={`transform transition-transform duration-200 ${sortOrder === 'asc' ? 'rotate-0' : 'rotate-180'}`}>
-                      <svg className="w-3 h-3 text-muted group-hover:text-poke-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-                      </svg>
-                    </div>
-                    <span className="text-xs font-medium text-muted group-hover:text-poke-blue">{sortOrder === 'asc' ? 'ASC' : 'DESC'}</span>
+                    <span className="inline-flex items-center justify-center">
+                      {visual === '3cols' && (
+                        <LayoutGridIcon className="w-3 h-3" />
+                      )}
+                      {visual === '6cols' && (
+                        <Grid2X2 className="w-3 h-3" />
+                      )}
+                      {visual === '9cols' && (
+                        <Grid3X3 className="w-3 h-3" />
+                      )}
+                      {visual === 'list' && (
+                        <List className="w-3 h-3" />
+                      )}
+                    </span>
+                    <span className="hidden sm:inline">{label}</span>
                   </button>
-                </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Sort Controls */}
+            <div className="flex items-center space-x-2">
+              <span className="text-xs font-medium text-muted uppercase tracking-wider">Sort</span>
+              <div className="flex items-center space-x-2">
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                  className="px-3 py-2 border border-border rounded-xl text-sm font-medium focus:ring-2 focus:ring-poke-blue focus:border-poke-blue focus:outline-none transition-all duration-200 shadow-sm hover:shadow-md control-keep"
+                  style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
+                >
+                  <option value="id">Number</option>
+                  <option value="name">Name</option>
+                  <option value="stats">Total Stats</option>
+                  <option value="hp">HP</option>
+                  <option value="attack">Attack</option>
+                  <option value="defense">Defense</option>
+                  <option value="special-attack">Sp. Attack</option>
+                  <option value="special-defense">Sp. Defense</option>
+                  <option value="speed">Speed</option>
+                </select>
+                <button
+                  onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                  className="flex items-center gap-1 px-2 py-2 rounded-full bg-surface border border-border hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md group control-keep"
+                  style={{ borderRadius: '9999px', padding: '8px 8px' }}
+                  title={`Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`}
+                >
+                  <div className={`transform transition-transform duration-200 ${sortOrder === 'asc' ? 'rotate-0' : 'rotate-180'}`}>
+                    <svg className="w-3 h-3 text-muted group-hover:text-poke-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                    </svg>
+                  </div>
+                  <span className="text-xs font-medium text-muted group-hover:text-poke-blue">{sortOrder === 'asc' ? 'ASC' : 'DESC'}</span>
+                </button>
               </div>
             </div>
           </div>
         </div>
-      )}
+      </div>
 
       {/* Main Content */}
       <div className="flex w-full max-w-full flex-1 min-h-0 overflow-x-hidden pl-0 pr-0 sm:pl-0 sm:pr-0 lg:pl-0 lg:pr-0">

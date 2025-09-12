@@ -58,13 +58,33 @@ export default function MobileHeader({
     if (!user) {
       // Show profile placeholder when logged off
       return (
-        <button className="pk-btn-profile" title="Sign In">
+        <button 
+          className="w-16 h-16 rounded-full overflow-hidden border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500" 
+          style={{
+            borderColor: 'var(--color-border)',
+            borderRadius: '50%',
+            width: '64px',
+            height: '64px',
+            minWidth: '64px',
+            minHeight: '64px',
+            maxWidth: '64px',
+            maxHeight: '64px',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = 'var(--color-muted)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = 'var(--color-border)';
+          }}
+          title="Sign In"
+        >
           <Image 
             src="/profile-placeholder.png" 
             alt="Profile Placeholder" 
-            width={32} 
-            height={32} 
+            width={64} 
+            height={64} 
             className="w-full h-full rounded-full object-cover" 
+            style={{ borderRadius: '50%' }}
           />
         </button>
       );
@@ -75,13 +95,33 @@ export default function MobileHeader({
     
     if (src && !imageError) {
       return (
-        <button className="pk-btn-profile" title={name}>
+        <button 
+          className="w-16 h-16 rounded-full overflow-hidden border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500" 
+          style={{
+            borderColor: 'var(--color-border)',
+            borderRadius: '50%',
+            width: '64px',
+            height: '64px',
+            minWidth: '64px',
+            minHeight: '64px',
+            maxWidth: '64px',
+            maxHeight: '64px',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = 'var(--color-muted)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = 'var(--color-border)';
+          }}
+          title={name}
+        >
           <Image 
             src={src} 
             alt={name} 
-            width={32} 
-            height={32} 
+            width={64} 
+            height={64} 
             className="w-full h-full rounded-full object-cover" 
+            style={{ borderRadius: '50%' }}
             onError={() => setImageError(true)}
             referrerPolicy="no-referrer"
           />
@@ -91,7 +131,26 @@ export default function MobileHeader({
     
     const initial = name.trim().charAt(0).toUpperCase();
     return (
-      <button className="pk-btn-profile" title={name}>
+      <button 
+        className="w-8 h-8 rounded-full overflow-hidden border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500" 
+        style={{
+          borderColor: 'var(--color-border)',
+          borderRadius: '50%',
+          width: '32px',
+          height: '32px',
+          minWidth: '32px',
+          minHeight: '32px',
+          maxWidth: '32px',
+          maxHeight: '32px',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = 'var(--color-muted)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = 'var(--color-border)';
+        }}
+        title={name}
+      >
         <div className="w-full h-full rounded-full bg-gradient-to-br from-poke-blue to-poke-red flex items-center justify-center text-white font-semibold">
           {initial}
         </div>
@@ -134,7 +193,7 @@ export default function MobileHeader({
               {/* Density Controls */}
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-muted">Density:</span>
-                <div className="flex bg-surface border border-border rounded-lg p-1">
+                <div className="flex bg-surface rounded-lg p-1">
                   {(['cozy', 'compact', 'ultra'] as const).map((d) => (
                     <button
                       key={d}
