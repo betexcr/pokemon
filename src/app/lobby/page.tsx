@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import UserProfile from '@/components/auth/UserProfile';
+import UserDropdown from '@/components/UserDropdown';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { roomService, type RoomData } from '@/lib/roomService';
 
@@ -110,7 +110,7 @@ function LobbyPage() {
               </button>
               <h1 className="text-2xl font-bold text-gray-900">Battle Lobby</h1>
             </div>
-            <UserProfile />
+            <UserDropdown />
           </div>
         </div>
       </div>

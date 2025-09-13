@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Swords } from "lucide-react";
 import { GYM_CHAMPIONS } from "@/lib/gym_champions";
-import UserProfile from "@/components/auth/UserProfile";
+import UserDropdown from "@/components/UserDropdown";
 import TrainerRoster from "@/components/battle/TrainerRoster";
 import TeamSelector from "@/components/TeamSelector";
 
@@ -88,7 +88,7 @@ function BattlePage() {
               </button>
               
               {/* User Profile */}
-              <UserProfile />
+              <UserDropdown />
             </div>
           </div>
         </div>

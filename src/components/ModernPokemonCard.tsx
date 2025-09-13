@@ -1,21 +1,21 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { Pokemon } from '@/types/pokemon'
-import { formatPokemonName } from '@/lib/utils'
-import { Scale } from 'lucide-react'
-import TypeBadge from './TypeBadge'
-import PokemonCardFrame from './PokemonCardFrame'
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Pokemon } from "@/types/pokemon";
+import { formatPokemonName } from "@/lib/utils";
+import { Scale } from "lucide-react";
+import TypeBadge from "./TypeBadge";
+import PokemonCardFrame from "./PokemonCardFrame";
 
 interface ModernPokemonCardProps {
-  pokemon: Pokemon
-  isInComparison: boolean
-  onToggleComparison: (id: number) => void
-  onSelect?: (pokemon: Pokemon) => void
-  isSelected?: boolean
-  className?: string
-  density?: '3cols' | '6cols' | '9cols' | 'list'
+  pokemon: Pokemon;
+  isInComparison: boolean;
+  onToggleComparison: (id: number) => void;
+  onSelect?: (pokemon: Pokemon) => void;
+  isSelected?: boolean;
+  className?: string;
+  density?: "3cols" | "6cols" | "9cols" | "list";
 }
 
 export default function ModernPokemonCard({
@@ -24,48 +24,48 @@ export default function ModernPokemonCard({
   onToggleComparison,
   onSelect,
   isSelected = false,
-  className = '',
-  density = '6cols'
+  className = "",
+  density = "6cols",
 }: ModernPokemonCardProps) {
-  const [imageLoaded, setImageLoaded] = useState(false)
-  const [imageError, setImageError] = useState(false)
-  const router = useRouter()
-  
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const router = useRouter();
+
   // Use direct image URLs with fallbacks
-  const primaryImageUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${pokemon.id}.png`
-  const fallbackImageUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`
-  const placeholderImageUrl = '/placeholder-pokemon.png'
+  const primaryImageUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${pokemon.id}.png`;
+  const fallbackImageUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`;
+  const placeholderImageUrl = "/placeholder-pokemon.png";
 
   const handleClick = (e: React.MouseEvent) => {
     if (onSelect) {
-      e.preventDefault()
-      onSelect(pokemon)
+      e.preventDefault();
+      onSelect(pokemon);
     }
     // If no onSelect, navigate to detail page
     if (!onSelect) {
-      router.push(`/pokemon/${pokemon.id}`)
+      router.push(`/pokemon/${pokemon.id}`);
     }
-  }
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault()
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
       if (onSelect) {
-        onSelect(pokemon)
+        onSelect(pokemon);
       } else {
-        router.push(`/pokemon/${pokemon.id}`)
+        router.push(`/pokemon/${pokemon.id}`);
       }
     }
-  }
+  };
 
   const handleComparisonClick = (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    onToggleComparison(pokemon.id)
-  }
+    e.preventDefault();
+    e.stopPropagation();
+    onToggleComparison(pokemon.id);
+  };
 
-  const primaryType = pokemon.types[0]?.type.name || 'normal'
-  const accentColor = `var(--type-${primaryType})`
+  const primaryType = pokemon.types[0]?.type.name || "normal";
+  const accentColor = `var(--type-${primaryType})`;
 
   return (
     <PokemonCardFrame
@@ -85,7 +85,7 @@ export default function ModernPokemonCard({
       />
 
       {/* Card content */}
-      {density === 'list' ? (
+      {density === "list" ? (
         // List layout - clean horizontal list item
         <div className="flex items-center w-full">
           {/* Pokémon Image */}
@@ -93,13 +93,13 @@ export default function ModernPokemonCard({
             {!imageLoaded && !imageError && (
               <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse rounded-lg" />
             )}
-            
+
             {/* Pokémon Image */}
             <img
               src={primaryImageUrl}
               alt={formatPokemonName(pokemon.name)}
               className={`w-full h-full object-contain transition-opacity duration-300 ${
-                imageLoaded ? 'opacity-100' : 'opacity-0'
+                imageLoaded ? "opacity-100" : "opacity-0"
               }`}
               onLoad={() => setImageLoaded(true)}
               onError={(e) => {
@@ -115,14 +115,14 @@ export default function ModernPokemonCard({
               }}
               loading="lazy"
             />
-            
+
             {/* Loading spinner */}
             {!imageLoaded && !imageError && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
               </div>
             )}
-            
+
             {/* Error state */}
             {imageError && (
               <div className="absolute inset-0 flex items-center justify-center text-muted">
@@ -135,13 +135,13 @@ export default function ModernPokemonCard({
           <div className="flex-1 min-w-0 flex items-center justify-between">
             <div className="flex items-center space-x-3 min-w-0">
               <span className="text-xs font-mono text-gray-500 font-medium flex-shrink-0">
-                #{String(pokemon.id).padStart(3, '0')}
+                #{String(pokemon.id).padStart(3, "0")}
               </span>
               <h3 className="font-semibold text-gray-800 group-hover:text-poke-blue transition-colors truncate">
                 {formatPokemonName(pokemon.name)}
               </h3>
             </div>
-            
+
             <div className="flex items-center space-x-3 flex-shrink-0">
               {/* Type badges */}
               <div className="flex gap-1">
@@ -153,66 +153,93 @@ export default function ModernPokemonCard({
                   />
                 ))}
               </div>
-              
+
               {/* Comparison button */}
               <button
                 onClick={handleComparisonClick}
                 className={`
                   p-1.5 rounded-full transition-all duration-200 border
-                  ${isInComparison 
-                    ? 'bg-blue-500 text-white border-blue-500 shadow-md' 
-                    : 'bg-white text-gray-400 border-gray-200 hover:bg-blue-500 hover:text-white hover:border-blue-500'
+                  ${
+                    isInComparison
+                      ? "bg-blue-500 text-white border-blue-500 shadow-md"
+                      : "bg-white text-gray-400 border-gray-200 hover:bg-blue-500 hover:text-white hover:border-blue-500"
                   }
                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1
                 `}
-                aria-label={isInComparison ? 'Remove from comparison' : 'Add to comparison'}
+                aria-label={
+                  isInComparison
+                    ? "Remove from comparison"
+                    : "Add to comparison"
+                }
               >
-                <Scale className={`h-3 w-3 ${isInComparison ? 'fill-current' : ''}`} />
+                <Scale
+                  className={`h-3 w-3 ${isInComparison ? "fill-current" : ""}`}
+                />
               </button>
             </div>
           </div>
         </div>
       ) : (
         // Grid layout for 3cols, 6cols, and 9cols
-        <div className={`${density === '3cols' ? 'p-6' : density === '6cols' ? 'p-4' : 'p-3'} h-full flex flex-col`}>
+        <div
+          className={`${
+            density === "3cols" ? "p-6" : density === "6cols" ? "p-4" : "p-3"
+          } h-full flex flex-col`}
+        >
           {/* Header: ID and Comparison */}
-          <div className="flex items-center justify-between mb-3 card-header">
-            <span className="text-xs font-mono text-gray-500 font-medium card-number">
-              #{String(pokemon.id).padStart(3, '0')}
+          <div
+            className="absolute inset-x-0 top-0 h-9 z-10
+                  flex items-center justify-between px-2
+                  bg-white/70 backdrop-blur-sm"
+          >
+            <span className="text-slate-800 font-semibold">
+              #{String(pokemon.id).padStart(3, "0")}
             </span>
             <button
               onClick={handleComparisonClick}
               className={`
                 p-1.5 rounded-full transition-all duration-200 border
-                ${isInComparison 
-                  ? 'bg-blue-500 text-white border-blue-500 shadow-md' 
-                  : 'bg-white text-gray-400 border-gray-200 hover:bg-blue-500 hover:text-white hover:border-blue-500'
+                ${
+                  isInComparison
+                    ? "bg-blue-500 text-white border-blue-500 shadow-md"
+                    : "bg-white text-gray-400 border-gray-200 hover:bg-blue-500 hover:text-white hover:border-blue-500"
                 }
                 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1
               card-control
               `}
-              aria-label={isInComparison ? 'Remove from comparison' : 'Add to comparison'}
+              aria-label={
+                isInComparison ? "Remove from comparison" : "Add to comparison"
+              }
             >
-              <Scale className={`h-4 w-4 ${isInComparison ? 'fill-current' : ''}`} />
+              <Scale
+                className={`h-4 w-4 ${isInComparison ? "fill-current" : ""}`}
+              />
             </button>
           </div>
 
           {/* Pokémon Image */}
-          <div className={`relative bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg flex items-center justify-center overflow-hidden mb-3 card-art ${
-            density === '3cols' ? 'aspect-square max-h-48' : density === '6cols' ? 'aspect-square max-h-40' : 'aspect-square max-h-24'
-          }`} style={{
-            width: '100%'
-          }}>
+          <div
+            className={`relative bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg flex items-center justify-center overflow-hidden mb-3 card-art ${
+              density === "3cols"
+                ? "aspect-square max-h-48"
+                : density === "6cols"
+                ? "aspect-square max-h-40"
+                : "aspect-square max-h-24"
+            }`}
+            style={{
+              width: "100%",
+            }}
+          >
             {!imageLoaded && !imageError && (
               <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse" />
             )}
-            
+
             <img
               src={primaryImageUrl}
               alt={formatPokemonName(pokemon.name)}
               className={`
                 w-full h-full object-contain transition-opacity duration-300
-                ${imageLoaded ? 'opacity-100' : 'opacity-0'}
+                ${imageLoaded ? "opacity-100" : "opacity-0"}
               `}
               onLoad={() => setImageLoaded(true)}
               onError={(e) => {
@@ -228,14 +255,14 @@ export default function ModernPokemonCard({
               }}
               loading="lazy"
             />
-            
+
             {/* Loading spinner */}
             {!imageLoaded && !imageError && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="w-6 h-6 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
               </div>
             )}
-            
+
             {/* Error state */}
             {imageError && (
               <div className="absolute inset-0 flex items-center justify-center text-muted">
@@ -247,27 +274,45 @@ export default function ModernPokemonCard({
           {/* Pokémon Info */}
           <div className="space-y-3 flex-1 flex flex-col justify-end card-info">
             {/* Name */}
-            <h3 className={`font-semibold text-center group-hover:text-poke-blue transition-colors card-name ${
-              density === '9cols' ? 'text-xs' : density === '6cols' ? 'text-sm' : 'text-base'
-            }`} style={{color: '#1f2937', fontWeight: '600', marginBlockStart: '0', marginBlockEnd: '0px'}}>
-              {pokemon.name ? formatPokemonName(pokemon.name) : 'No Name'}
+            <h3
+              className={`font-semibold text-center group-hover:text-poke-blue transition-colors card-name ${
+                density === "9cols"
+                  ? "text-xs"
+                  : density === "6cols"
+                  ? "text-sm"
+                  : "text-base"
+              }`}
+              style={{
+                color: "#1f2937",
+                fontWeight: "600",
+                marginBlockStart: "0",
+                marginBlockEnd: "0px",
+              }}
+            >
+              {pokemon.name ? formatPokemonName(pokemon.name) : "No Name"}
             </h3>
 
             {/* Type badges */}
             <div className="flex flex-wrap gap-1 justify-center card-badges">
-              {pokemon.types && pokemon.types.length > 0 ? pokemon.types.map((type) => (
-                <TypeBadge
-                  key={type.type.name}
-                  type={type.type.name}
-                  className={`transition-transform duration-200 group-hover:scale-105 ${
-                    density === '9cols' ? 'text-xs px-2 py-1' : 'text-xs px-2 py-1'
-                  }`}
-                />
-              )) : <span className="text-xs text-gray-500">No Types</span>}
+              {pokemon.types && pokemon.types.length > 0 ? (
+                pokemon.types.map((type) => (
+                  <TypeBadge
+                    key={type.type.name}
+                    type={type.type.name}
+                    className={`transition-transform duration-200 group-hover:scale-105 ${
+                      density === "9cols"
+                        ? "text-xs px-2 py-1"
+                        : "text-xs px-2 py-1"
+                    }`}
+                  />
+                ))
+              ) : (
+                <span className="text-xs text-gray-500">No Types</span>
+              )}
             </div>
           </div>
         </div>
       )}
     </PokemonCardFrame>
-  )
+  );
 }
