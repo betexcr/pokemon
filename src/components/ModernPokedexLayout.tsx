@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation'
 import { getPokemonByGeneration, getPokemonByType, getPokemon, getPokemonWithPagination, getPokemonTotalCount, getPokemonList } from '@/lib/api'
 import ThemeToggle from './ThemeToggle'
 import VirtualizedPokemonGrid from './VirtualizedPokemonGrid'
+import PokedexListView from './PokedexListView'
 import AdvancedFilters from './AdvancedFilters'
 import { Search, X, List, Grid3X3, Grid2X2, LayoutGridIcon } from 'lucide-react'
 import UserDropdown from './UserDropdown'
@@ -745,11 +746,11 @@ export default function ModernPokedexLayout({
     } finally {
       setIsLoadingMore(false);
     }
-  }, [isLoadingMore, hasMorePokemon, currentOffset, isAllGenerations, totalPokemonCount]);
+  }, [isLoadingMore, hasMorePokemon, currentOffset, totalPokemonCount]);
 
   // Improved infinite scroll effect using Intersection Observer
   useEffect(() => {
-    if (!isAllGenerations || isLoadingMore || !hasMorePokemon) {
+    if (isLoadingMore || !hasMorePokemon) {
       return;
     }
 
@@ -854,7 +855,7 @@ export default function ModernPokedexLayout({
       }
       clearTimeout(scrollTimeout);
     };
-  }, [isAllGenerations, isLoadingMore, hasMorePokemon, loadMorePokemon, currentOffset])
+  }, [isLoadingMore, hasMorePokemon, loadMorePokemon, currentOffset, isAllGenerations])
 
   // Clear all filters
   const clearAllFilters = useCallback(() => {
@@ -1487,7 +1488,7 @@ export default function ModernPokedexLayout({
       </div>
 
       {/* Main Content */}
-      <div className="flex w-full max-w-full flex-1 min-h-0 overflow-x-hidden pl-0 pr-0 sm:pl-0 sm:pr-0 lg:pl-0 lg:pr-0">
+      <div className="flex w-full max-w-full flex-1 min-h-0 overflow-x-hidden pl-0 pr-0 sm:pl-0 sm:pr-0 lg:pl-0 lg:pr-0 gap-0">
         {/* Advanced Filters Component */}
         <AdvancedFilters
           advancedFilters={advancedFilters}
@@ -1503,7 +1504,7 @@ export default function ModernPokedexLayout({
 
         {/* Main Content Area */}
         <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scroll-stable scrollbar-hide">
-          <div className={`${showSidebar ? 'pl-0 pr-4 sm:pl-0 sm:pr-6 lg:pl-0 lg:pr-8' : 'pl-0 pr-4 sm:pl-0 sm:pr-6 lg:pl-0 lg:pr-8'} min-h-full w-full max-w-full`}>
+          <div className={`${showSidebar ? 'pl-0 pr-0' : 'pl-0 pr-4 sm:pl-0 sm:pr-6 lg:pl-0 lg:pr-8'} min-h-full w-full max-w-full`}>
             {/* Pokémon Grid */}
             {(() => {
               console.log('Render state:', { 
@@ -1524,18 +1525,31 @@ export default function ModernPokedexLayout({
               </div>
             ) : sortedPokemon.length > 0 ? (
               <>
-                <VirtualizedPokemonGrid
-                  pokemonList={sortedPokemon}
-                  onToggleComparison={onToggleComparison}
-                  onSelectPokemon={undefined}
-                  selectedPokemon={null}
-                  comparisonList={comparisonList}
-                  density={cardDensity}
-                  enableVirtualization={false}
-                  showSpecialForms={isAllGenerations || (advancedFilters.generation !== 'all' && advancedFilters.generation !== '')}
-                />
-                {/* Infinite scroll loading indicator */}
-                {isAllGenerations && isLoadingMore && (
+                {cardDensity === 'list' ? (
+                  <PokedexListView
+                    pokemonList={sortedPokemon}
+                    onToggleComparison={onToggleComparison}
+                    onSelectPokemon={undefined}
+                    comparisonList={comparisonList}
+                    isLoadingMore={isLoadingMore}
+                    hasMorePokemon={hasMorePokemon}
+                    onLoadMore={loadMorePokemon}
+                  />
+                ) : (
+                  <VirtualizedPokemonGrid
+                    pokemonList={sortedPokemon}
+                    onToggleComparison={onToggleComparison}
+                    onSelectPokemon={undefined}
+                    selectedPokemon={null}
+                    comparisonList={comparisonList}
+                    density={cardDensity}
+                    enableVirtualization={false}
+                    showSpecialForms={isAllGenerations || (advancedFilters.generation !== 'all' && advancedFilters.generation !== '')}
+                  />
+                )}
+                
+                {/* Infinite scroll loading indicator - only for grid view */}
+                {cardDensity !== 'list' && isAllGenerations && isLoadingMore && (
                   <div className="text-center py-4">
                     <Image src="/loading.gif" alt="Loading more Pokémon" width={50} height={50} className="mx-auto mb-2" />
                     <p className="text-muted text-sm">Loading more Pokémon...</p>
@@ -1555,8 +1569,8 @@ export default function ModernPokedexLayout({
                   </div>
                 )}
                 
-                {/* End of list indicator */}
-                {isAllGenerations && !hasMorePokemon && !isLoadingMore && (
+                {/* End of list indicator - only for grid view */}
+                {cardDensity !== 'list' && isAllGenerations && !hasMorePokemon && !isLoadingMore && (
                   <div className="text-center py-4">
                     <p className="text-muted text-sm">You&apos;ve reached the end! All Pokémon loaded.</p>
                   </div>
