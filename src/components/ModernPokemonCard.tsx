@@ -249,7 +249,7 @@ export default function ModernPokemonCard({
             {/* Name */}
             <h3 className={`font-semibold text-center group-hover:text-poke-blue transition-colors card-name ${
               density === '9cols' ? 'text-xs' : density === '6cols' ? 'text-sm' : 'text-base'
-            }`} style={{color: '#1f2937', fontWeight: '600'}}>
+            }`} style={{color: '#1f2937', fontWeight: '600', marginBlockStart: '0', marginBlockEnd: '0px'}}>
               {pokemon.name ? formatPokemonName(pokemon.name) : 'No Name'}
             </h3>
 
