@@ -53,8 +53,78 @@ export default function UserDropdown({ isMobile = false }: UserDropdownProps) {
       .slice(0, 2);
   };
 
+  // Show offline placeholder when no user
   if (!user) {
-    return null;
+    return (
+      <div className="relative inline-block text-left user-dropdown-container" ref={ref}>
+        <button
+          onClick={() => setOpen((v) => !v)}
+          aria-haspopup="menu"
+          aria-expanded={open}
+          className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-300 hover:border-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 user-dropdown-button"
+          style={{
+            width: '64px !important',
+            height: '64px !important',
+            borderRadius: '50% !important',
+            aspectRatio: '1 / 1 !important',
+            minWidth: '64px !important',
+            minHeight: '64px !important',
+            maxWidth: '64px !important',
+            maxHeight: '64px !important',
+            '--user-dropdown-size': '64px'
+          } as React.CSSProperties}
+          title="Sign In"
+        >
+          <img
+            src="/profile-placeholder.png"
+            alt="Profile Placeholder"
+            className="w-full h-full rounded-full object-cover user-dropdown-image"
+            style={{ 
+              borderRadius: '50% !important',
+              width: '100% !important',
+              height: '100% !important',
+              aspectRatio: '1 / 1 !important',
+              objectFit: 'cover !important',
+              minWidth: '0 !important',
+              minHeight: '0 !important'
+            }}
+            referrerPolicy="no-referrer"
+          />
+        </button>
+
+        {/* Dropdown for offline state */}
+        <div
+          role="menu"
+          aria-hidden={!open}
+          className={[
+            "absolute right-0 mt-2 rounded-lg border border-gray-200 shadow-lg z-50",
+            "origin-top-right transition duration-150 ease-out",
+            open
+              ? "opacity-100 translate-y-0 scale-100 pointer-events-auto"
+              : "opacity-0 -translate-y-1 scale-95 pointer-events-none",
+          ].join(" ")}
+          style={{
+            width: '320px',
+            maxWidth: 'calc(100vw - 2rem)',
+            right: '0',
+            left: 'auto',
+            backgroundColor: '#ffffff',
+            opacity: open ? 1 : 0,
+            transform: open ? 'translateY(0) scale(1)' : 'translateY(-4px) scale(0.95)',
+            pointerEvents: open ? 'auto' : 'none'
+          }}
+          data-testid="user-dropdown-menu"
+        >
+          <div className="px-4 py-3 text-sm text-gray-700">
+            Not signed in
+          </div>
+          <div className="border-t border-gray-100" />
+          <div className="px-4 py-3 text-sm text-gray-500">
+            Sign in to access your profile and teams
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
