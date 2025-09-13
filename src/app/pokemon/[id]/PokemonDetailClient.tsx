@@ -11,7 +11,7 @@ import OverviewSection from '@/components/pokemon/OverviewSection'
 import StatsSection from '@/components/pokemon/StatsSection'
 import MovesSection from '@/components/pokemon/MovesSection'
 import EvolutionSection from '@/components/pokemon/EvolutionSection'
-import { getPokemon, getPokemonSpecies, getEvolutionChain } from '@/lib/api'
+import { getPokemon, getPokemonSpecies, getEvolutionChain, getAbility, getMove } from '@/lib/api'
 import MatchupsSection from '@/components/pokemon/MatchupsSection'
 import { calculateTypeEffectiveness } from '@/lib/api'
 
@@ -25,6 +25,8 @@ export default function PokemonDetailClient({ pokemon, error }: PokemonDetailCli
   const [activeTab, setActiveTab] = useState<'overview' | 'stats' | 'moves' | 'evolution' | 'matchups'>('overview')
   const [evolutionChain, setEvolutionChain] = useState<Array<{ id: number; name: string; types: string[]; condition?: string }>>([])
   const [matchups, setMatchups] = useState<Array<{ title: string; types: string[]; tone: 'danger'|'ok'|'immune' }>>([])
+  const [abilitiesWithDescriptions, setAbilitiesWithDescriptions] = useState<Array<{ name: string; is_hidden?: boolean; description?: string | null }>>([])
+  const [movesWithEffects, setMovesWithEffects] = useState<Array<{ name: string; type: string; damage_class: 'physical' | 'special' | 'status'; power: number | null; accuracy: number | null; pp: number | null; level_learned_at: number | null; short_effect: string | null }>>([])
 
   let theme = 'light'
   try {
@@ -94,6 +96,104 @@ export default function PokemonDetailClient({ pokemon, error }: PokemonDetailCli
       { title: 'Resists (0.5×)', types: resistances, tone: 'ok' },
       { title: 'Immune (0×)', types: immunities, tone: 'immune' }
     ])
+  }, [pokemon])
+
+  // Fetch ability descriptions
+  useEffect(() => {
+    let isMounted = true
+    const loadAbilities = async () => {
+      try {
+        if (!pokemon) return
+        const abilities = await Promise.allSettled(
+          pokemon.abilities.map(async (abilityRef) => {
+            try {
+              const ability = await getAbility(abilityRef.ability.name)
+              const englishEffect = ability.effect_entries.find(entry => entry.language.name === 'en')
+              return {
+                name: ability.name,
+                is_hidden: abilityRef.is_hidden,
+                description: englishEffect?.short_effect || englishEffect?.effect || null
+              }
+            } catch (error) {
+              console.warn(`Failed to fetch ability ${abilityRef.ability.name}:`, error)
+              return {
+                name: abilityRef.ability.name,
+                is_hidden: abilityRef.is_hidden,
+                description: null
+              }
+            }
+          })
+        )
+        
+        if (isMounted) {
+          const successfulAbilities = abilities
+            .filter((result): result is PromiseFulfilledResult<{ name: string; is_hidden: boolean; description: string | null }> => 
+              result.status === 'fulfilled'
+            )
+            .map(result => result.value)
+          setAbilitiesWithDescriptions(successfulAbilities)
+        }
+      } catch (e) {
+        console.warn('Failed to load abilities', e)
+      }
+    }
+    loadAbilities()
+    return () => { isMounted = false }
+  }, [pokemon])
+
+  // Fetch move effects
+  useEffect(() => {
+    let isMounted = true
+    const loadMoves = async () => {
+      try {
+        if (!pokemon) return
+        // Limit to first 20 moves to avoid too many API calls
+        const movesToLoad = pokemon.moves.slice(0, 20)
+        const moves = await Promise.allSettled(
+          movesToLoad.map(async (moveRef) => {
+            try {
+              const move = await getMove(moveRef.move.name)
+              const englishEffect = move.effect_entries.find(entry => entry.language.name === 'en')
+              return {
+                name: move.name,
+                type: move.type.name,
+                damage_class: move.damage_class.name as 'physical' | 'special' | 'status',
+                power: move.power,
+                accuracy: move.accuracy,
+                pp: move.pp,
+                level_learned_at: moveRef.version_group_details[0]?.level_learned_at || null,
+                short_effect: englishEffect?.short_effect || englishEffect?.effect || null
+              }
+            } catch (error) {
+              console.warn(`Failed to fetch move ${moveRef.move.name}:`, error)
+              return {
+                name: moveRef.move.name,
+                type: 'normal',
+                damage_class: 'physical' as const,
+                power: null,
+                accuracy: null,
+                pp: null,
+                level_learned_at: moveRef.version_group_details[0]?.level_learned_at || null,
+                short_effect: null
+              }
+            }
+          })
+        )
+        
+        if (isMounted) {
+          const successfulMoves = moves
+            .filter((result): result is PromiseFulfilledResult<{ name: string; type: string; damage_class: 'physical' | 'special' | 'status'; power: number | null; accuracy: number | null; pp: number | null; level_learned_at: number | null; short_effect: string | null }> => 
+              result.status === 'fulfilled'
+            )
+            .map(result => result.value)
+          setMovesWithEffects(successfulMoves)
+        }
+      } catch (e) {
+        console.warn('Failed to load moves', e)
+      }
+    }
+    loadMoves()
+    return () => { isMounted = false }
   }, [pokemon])
 
   if (error || !pokemon) {
@@ -182,7 +282,7 @@ export default function PokemonDetailClient({ pokemon, error }: PokemonDetailCli
           {activeTab === 'overview' && (
             <OverviewSection
               types={pokemon.types.map(t => t.type.name)}
-              abilities={pokemon.abilities.map(a => ({ name: a.ability.name, is_hidden: a.is_hidden }))}
+              abilities={abilitiesWithDescriptions.length > 0 ? abilitiesWithDescriptions : pokemon.abilities.map(a => ({ name: a.ability.name, is_hidden: a.is_hidden }))}
               flavorText="A mysterious Pokémon with unique abilities and characteristics."
               heightM={pokemon.height / 10}
               weightKg={pokemon.weight / 10}
@@ -197,7 +297,7 @@ export default function PokemonDetailClient({ pokemon, error }: PokemonDetailCli
           )}
           {activeTab === 'moves' && (
             <MovesSection
-              moves={pokemon.moves.map(pokemonMove => ({
+              moves={movesWithEffects.length > 0 ? movesWithEffects : pokemon.moves.map(pokemonMove => ({
                 name: pokemonMove.move.name,
                 type: 'normal', // Default type, would need to fetch actual move data
                 damage_class: 'physical' as const,

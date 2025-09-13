@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import UserProfile from '@/components/auth/UserProfile';
+import UserDropdown from '@/components/UserDropdown';
 import { roomService, type RoomData } from '@/lib/roomService';
 import { cleanupAllRooms } from '@/lib/cleanupRooms';
 
@@ -126,7 +126,7 @@ export default function LobbyPage() {
               </button>
               <h1 className="text-2xl font-bold text-text">PokéDex - Battle Lobby</h1>
             </div>
-            <UserProfile />
+            <UserDropdown />
           </div>
         </div>
       </div>

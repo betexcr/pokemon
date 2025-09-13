@@ -10,7 +10,7 @@ import ThemeToggle from './ThemeToggle'
 import VirtualizedPokemonGrid from './VirtualizedPokemonGrid'
 import AdvancedFilters from './AdvancedFilters'
 import { Search, X, List, Grid3X3, Grid2X2, LayoutGridIcon } from 'lucide-react'
-import UserProfile from './auth/UserProfile'
+import UserDropdown from './UserDropdown'
 import AuthModal from './auth/AuthModal'
 import { useAuth } from '@/contexts/AuthContext'
 import { createHeuristics } from '@/lib/heuristics/core'
@@ -904,49 +904,6 @@ export default function ModernPokedexLayout({
     setShowAuthModal(false)
   }
 
-  // Profile picture button (adapted from MobileHeader)
-  const renderProfilePicture = () => {
-    const currentUser = user
-    if (!currentUser) {
-      return (
-        <button className="pk-btn-profile" title="Sign In">
-          <Image 
-            src="/profile-placeholder.png" 
-            alt="Profile Placeholder" 
-            width={32} 
-            height={32} 
-            className="w-full h-full rounded-full object-cover" 
-          />
-        </button>
-      )
-    }
-
-    const src = currentUser.photoURL && currentUser.photoURL.trim().length > 0 ? currentUser.photoURL : undefined
-    const name = currentUser.displayName || 'User'
-
-    if (src) {
-      return (
-        <button className="pk-btn-profile" title={name}>
-          <Image 
-            src={src} 
-            alt={name} 
-            width={32} 
-            height={32} 
-            className="w-full h-full rounded-full object-cover" 
-          />
-        </button>
-      )
-    }
-
-    const initial = name.trim().charAt(0).toUpperCase()
-    return (
-      <button className="pk-btn-profile" title={name}>
-        <div className="w-full h-full rounded-full bg-gradient-to-br from-poke-blue to-poke-red flex items-center justify-center text-white font-semibold">
-          {initial}
-        </div>
-      </button>
-    )
-  }
 
   return (
     <div className="h-screen root-full w-full max-w-full bg-bg text-text flex flex-col mx-auto">
@@ -1080,7 +1037,7 @@ export default function ModernPokedexLayout({
 
               {/* Profile Picture Button (desktop) */}
               <div className="hidden md:flex items-center space-x-2">
-                {renderProfilePicture()}
+                <UserDropdown />
               </div>
 
               {/* Action Buttons - PokéDex Toolbar Style */}
@@ -1104,7 +1061,7 @@ export default function ModernPokedexLayout({
                   onFiltersClick={() => setShowSidebar(!showSidebar)}
                 />
                 <HamburgerMenu onClick={() => setShowMobileMenu(!showMobileMenu)} />
-                <UserProfile isMobile={true} />
+                <UserDropdown isMobile={true} />
               </div>
             )}
 
@@ -1275,7 +1232,7 @@ export default function ModernPokedexLayout({
               {/* Mobile User Profile */}
               <div className="space-y-3">
                 <h4 className="text-sm font-semibold text-text uppercase tracking-wider">Account</h4>
-                <UserProfile />
+                <UserDropdown />
               </div>
 
               {/* Test Auth Buttons - Always visible for testing */}
@@ -1351,7 +1308,7 @@ export default function ModernPokedexLayout({
         <div className="w-full px-4 py-3">
           <div className="flex items-center gap-3">
             <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-text" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-text pointer-events-none z-10" />
             <input
               type="text"
               placeholder="Search Pokémon..."
@@ -1359,8 +1316,12 @@ export default function ModernPokedexLayout({
               onChange={(e) => {
                 handleSearchChange(e.target.value)
               }}
-              className="w-full pl-10 pr-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-poke-blue focus:border-poke-blue focus:outline-none transition-all duration-200"
-              style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
+              className="w-full pl-11 pr-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-poke-blue focus:border-poke-blue focus:outline-none transition-all duration-200"
+              style={{ 
+                backgroundColor: 'var(--color-input-bg)', 
+                color: 'var(--color-input-text)',
+                paddingLeft: '2.75rem !important'
+              }}
             />
             {searchLoading && (
               <div className="absolute right-3 top-1/2 transform -translate-y-1/2">

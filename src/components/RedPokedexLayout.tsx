@@ -10,7 +10,7 @@ import ThemeToggle from './ThemeToggle';
 import PokemonComparison from './PokemonComparison';
 import RadarChart from './RadarChart';
 import VirtualizedPokemonList from './VirtualizedPokemonList';
-import UserProfile from './auth/UserProfile';
+import UserDropdown from './UserDropdown';
 
 interface RedPokedexLayoutProps {
   pokemonList: Pokemon[];
@@ -61,7 +61,7 @@ export default function RedPokedexLayout({
         
         {/* Desktop Header Controls - Hidden on mobile */}
         <div className="hidden md:flex absolute top-2 right-2 items-center gap-2">
-          <UserProfile />
+          <UserDropdown />
           <button onClick={() => router.push('/team')} className="px-3 py-1 bg-white text-red-800 border-2 border-red-600 rounded font-bold" title="Go to Team Builder">🎮 TEAM</button>
           <button onClick={() => setShowDesktopMenu(true)} className="md:hidden px-3 py-1 bg-white text-red-800 border-2 border-red-600 rounded font-bold">MENU</button>
         </div>
