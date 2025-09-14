@@ -244,6 +244,13 @@ export class FirebaseBattleSyncManager {
     try {
       console.log('📤 Syncing battle state to Firebase');
       
+      // Check if battle still exists before attempting to sync
+      const battleExists = await battleService.getBattle(this.config.battleId);
+      if (!battleExists) {
+        console.log('⏭️ Skipping sync - battle document no longer exists');
+        return;
+      }
+      
       // Update the battle with the new state
       const updateData: any = {
         battleData: state,
@@ -260,6 +267,12 @@ export class FirebaseBattleSyncManager {
       this.updateSyncStatus({ lastSync: Date.now() });
     } catch (error) {
       console.error('❌ Failed to sync state to Firebase:', error);
+      
+      // If it's a permission error, the battle might have been deleted
+      if (error instanceof Error && error.message.includes('permission-denied')) {
+        console.log('⚠️ Battle may have been deleted, stopping sync attempts');
+        this.disconnect();
+      }
     }
   }
 

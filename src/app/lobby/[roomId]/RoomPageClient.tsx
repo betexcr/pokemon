@@ -144,7 +144,9 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
         hostReady: room?.hostReady,
         guestReady: room?.guestReady,
         currentPlayers: room?.currentPlayers,
-        maxPlayers: room?.maxPlayers
+        maxPlayers: room?.maxPlayers,
+        battleId: room?.battleId,
+        securedAt: room?.securedAt
       });
       if (room) {
         // Validate room data and provide defaults for missing fields
@@ -535,20 +537,23 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
     }
     
     try {
-      // Create battle with both teams
-      const { battleService } = await import('@/lib/battleService');
-      const createdBattleId = await battleService.createBattle(
-        roomId,
-        room.hostId,
-        room.hostName,
-        room.hostTeam,
-        room.guestId || '',
-        room.guestName || 'Guest',
-        room.guestTeam
-      );
+      // First check if battle is ready to start
+      console.log('🔍 Checking battle readiness before starting...');
+      const readinessCheck = await roomService.checkBattleReadiness(roomId);
       
-      // Update room status to battling and set battle ID
-      await roomService.startBattle(roomId, createdBattleId);
+      if (!readinessCheck.isReady) {
+        console.error('❌ Battle not ready:', readinessCheck.errors);
+        alert(`Battle cannot start: ${readinessCheck.errors.join(', ')}`);
+        return;
+      }
+      
+      console.log('✅ Battle readiness confirmed, starting battle...');
+      
+      // Use existing battle ID if available (from secureBattleData), otherwise pass empty string
+      const existingBattleId = room.battleId || '';
+      
+      // Update room status to battling and use existing battle ID
+      await roomService.startBattle(roomId, existingBattleId);
       
       console.log('Starting battle for room:', roomId, 'with both teams present');
       
@@ -921,6 +926,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
           className=""
           style={{ background: 'none', border: 'none', padding: 0, margin: 0 }}
           title={canToggle ? 'Click to set Not Ready' : 'Ready'}
+          data-testid="ready-button"
         >
           <Image
             src="/header-icons/battle_ready_icon.png"
@@ -941,6 +947,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
         style={{ background: 'none', border: 'none', padding: 0, margin: 0 }}
         title={canToggle ? 'Click to set Ready' : 'Not Ready'}
         aria-label={canToggle ? 'Set Ready' : 'Not Ready'}
+        data-testid="ready-button"
       >
         <Image
           src="/header-icons/battle_waiting_icon.png"
@@ -954,7 +961,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100" style={{ minHeight: '100vh', backgroundSize: 'cover', backgroundRepeat: 'no-repeat', backgroundAttachment: 'scroll' }}>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100" style={{ minHeight: '100vh', backgroundSize: 'cover', backgroundRepeat: 'no-repeat', backgroundAttachment: 'scroll' }} data-testid="lobby-page">
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="container mx-auto px-4 py-4">
@@ -1230,6 +1237,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
               <button
                 onClick={startBattle}
                 disabled={!canStart}
+                data-testid="start-battle-button"
                 className={`group relative flex items-center justify-center gap-3 px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 transform ${
                   canStart 
                     ? 'bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 border-2 border-yellow-600 hover:border-yellow-700' 
@@ -1395,6 +1403,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
         isOpen={showBattleStartDialog}
         onClose={() => setShowBattleStartDialog(false)}
         onBattleStart={handleBattleStart}
+        roomId={roomId}
       />
 
       {/* Firebase Error Debugger */}
