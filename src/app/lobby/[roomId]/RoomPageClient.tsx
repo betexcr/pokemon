@@ -145,8 +145,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
         guestReady: room?.guestReady,
         currentPlayers: room?.currentPlayers,
         maxPlayers: room?.maxPlayers,
-        battleId: room?.battleId,
-        securedAt: room?.securedAt
+        battleId: room?.battleId
       });
       if (room) {
         // Validate room data and provide defaults for missing fields

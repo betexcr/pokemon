@@ -124,9 +124,15 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
         {/* Auth Form */}
         <div className={`px-6 ${mode === 'login' ? 'pb-6' : 'pb-8'}`}>
           {mode === 'login' ? (
-            <LoginForm onToggleMode={() => setMode('register')} />
+            <LoginForm 
+              onToggleMode={() => setMode('register')} 
+              onSuccess={onClose}
+            />
           ) : (
-            <RegisterForm onToggleMode={() => setMode('login')} />
+            <RegisterForm 
+              onToggleMode={() => setMode('login')} 
+              onSuccess={onClose}
+            />
           )}
         </div>
       </div>

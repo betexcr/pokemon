@@ -90,7 +90,7 @@ test.describe('Emulator Auth Flow', () => {
           profileClicked = true;
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -124,7 +124,7 @@ test.describe('Emulator Auth Flow', () => {
             profileClicked = true;
             break;
           }
-        } catch (error) {
+        } catch (_error) {
           // Continue to next selector
         }
       }
@@ -171,7 +171,7 @@ test.describe('Emulator Auth Flow', () => {
           signInClicked = true;
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -208,7 +208,7 @@ test.describe('Emulator Auth Flow', () => {
           emailFilled = true;
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -242,7 +242,7 @@ test.describe('Emulator Auth Flow', () => {
           passwordFilled = true;
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -279,7 +279,7 @@ test.describe('Emulator Auth Flow', () => {
           formSubmitted = true;
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -320,7 +320,7 @@ test.describe('Emulator Auth Flow', () => {
           authenticated = true;
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }

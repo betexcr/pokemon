@@ -80,8 +80,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error('Authentication service is currently unavailable. Please try again later.');
     }
     try {
+      console.log('Creating user with email:', email);
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      await updateProfile(userCredential.user, { displayName });
+      console.log('User created successfully:', userCredential.user.uid);
+      
+      if (displayName) {
+        console.log('Updating profile with display name:', displayName);
+        await updateProfile(userCredential.user, { displayName });
+        console.log('Profile updated successfully');
+      }
+      
+      console.log('Signup completed successfully');
     } catch (error) {
       console.error('Error signing up:', error);
       throw error;

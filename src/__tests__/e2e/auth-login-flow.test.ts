@@ -64,7 +64,7 @@ test.describe('Authentication Login Flow', () => {
           profileClicked = true;
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -98,7 +98,7 @@ test.describe('Authentication Login Flow', () => {
             profileClicked = true;
             break;
           }
-        } catch (error) {
+        } catch (_error) {
           // Continue to next selector
         }
       }
@@ -135,7 +135,7 @@ test.describe('Authentication Login Flow', () => {
           authPopupFound = true;
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -176,7 +176,7 @@ test.describe('Authentication Login Flow', () => {
           signInClicked = true;
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -213,7 +213,7 @@ test.describe('Authentication Login Flow', () => {
           emailFilled = true;
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -247,7 +247,7 @@ test.describe('Authentication Login Flow', () => {
           passwordFilled = true;
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -284,7 +284,7 @@ test.describe('Authentication Login Flow', () => {
           formSubmitted = true;
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -325,7 +325,7 @@ test.describe('Authentication Login Flow', () => {
           authenticated = true;
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }

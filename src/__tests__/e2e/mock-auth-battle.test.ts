@@ -62,8 +62,8 @@ test.describe('Mock Auth Pokemon Battle', () => {
     // Step 1: Setup mock authentication for both users
     console.log('\n🔐 Step 1: Setting up mock authentication');
     
-    const hostAuthSuccess = await setupMockAuth(hostPage, 'testbattle1@pokemon-battles.test', 'Host');
-    const guestAuthSuccess = await setupMockAuth(guestPage, 'testbattle2@pokemon-battles.test', 'Guest');
+    await setupMockAuth(hostPage, 'testbattle1@pokemon-battles.test', 'Host');
+    await setupMockAuth(guestPage, 'testbattle2@pokemon-battles.test', 'Guest');
     
     console.log('✅ Both users have mock authentication set up');
     
@@ -106,7 +106,7 @@ test.describe('Mock Auth Pokemon Battle', () => {
           await hostPage.waitForTimeout(2000);
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -183,7 +183,7 @@ test.describe('Mock Auth Pokemon Battle', () => {
           await hostPage.waitForTimeout(1000);
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -212,7 +212,7 @@ test.describe('Mock Auth Pokemon Battle', () => {
           await guestPage.waitForTimeout(1000);
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -239,7 +239,7 @@ test.describe('Mock Auth Pokemon Battle', () => {
           await hostPage.waitForTimeout(1000);
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -255,7 +255,7 @@ test.describe('Mock Auth Pokemon Battle', () => {
           await guestPage.waitForTimeout(1000);
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -283,7 +283,7 @@ test.describe('Mock Auth Pokemon Battle', () => {
           await hostPage.waitForTimeout(3000);
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -330,11 +330,11 @@ test.describe('Mock Auth Pokemon Battle', () => {
             await elements[0].click();
             console.log('🎯 Clicked battle control');
             await hostPage.waitForTimeout(1000);
-          } catch (error) {
+          } catch (_error) {
             console.log('⚠️ Could not click battle control');
           }
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -360,7 +360,7 @@ test.describe('Mock Auth Pokemon Battle', () => {
           console.log(`✅ Found ${elements.length} Pokemon images: ${selector}`);
           pokemonFound += elements.length;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }

@@ -67,7 +67,7 @@ export class DynamicRetry {
         const delay = this.calculateDelay(attempt);
         
         console.log(`⏳ Attempt ${attempt} failed, retrying in ${delay}ms...`, {
-          error: error?.message || error,
+          error: (error as any)?.message || error,
           nextAttempt: attempt + 1,
           maxAttempts: this.config.maxAttempts
         });
