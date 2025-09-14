@@ -619,8 +619,14 @@ class RoomService {
     const newHostReady = roomData.hostId === userId ? isReady : roomData.hostReady;
     const newGuestReady = roomData.guestId === userId ? isReady : roomData.guestReady;
     
-    if (roomData.guestId && newHostReady && newGuestReady && roomData.status === 'waiting') {
+    // Update status to 'ready' if both players are ready and we have both players
+    if (roomData.guestId && newHostReady && newGuestReady && (roomData.status === 'waiting' || roomData.status === 'ready')) {
       updates.status = 'ready';
+      console.log('Room status updated to ready:', { roomId, userId, newHostReady, newGuestReady, currentStatus: roomData.status });
+    } else if (roomData.guestId && (!newHostReady || !newGuestReady) && roomData.status === 'ready') {
+      // If one player is not ready, set status back to 'waiting'
+      updates.status = 'waiting';
+      console.log('Room status updated to waiting:', { roomId, userId, newHostReady, newGuestReady, currentStatus: roomData.status });
     }
     
     await this.updateRoom(roomId, updates);
@@ -650,8 +656,24 @@ class RoomService {
     }
     
     // Check if teams are identical (prevent same team battles)
-    const teamsAreIdentical = JSON.stringify(roomData.hostTeam) === JSON.stringify(roomData.guestTeam);
+    // More robust comparison that handles different property orders
+    const normalizeTeam = (team: any) => {
+      if (!team || !Array.isArray(team)) return team;
+      return team.map(pokemon => ({
+        id: pokemon.id,
+        level: pokemon.level,
+        moves: pokemon.moves ? pokemon.moves.sort((a: any, b: any) => a.name.localeCompare(b.name)) : []
+      })).sort((a, b) => a.id - b.id);
+    };
+    
+    const normalizedHostTeam = normalizeTeam(roomData.hostTeam);
+    const normalizedGuestTeam = normalizeTeam(roomData.guestTeam);
+    const teamsAreIdentical = JSON.stringify(normalizedHostTeam) === JSON.stringify(normalizedGuestTeam);
+    
     if (teamsAreIdentical) {
+      console.error('🚨 PREVENTION: Both players selected identical teams');
+      console.error('Host team:', normalizedHostTeam);
+      console.error('Guest team:', normalizedGuestTeam);
       throw new Error('Both players cannot use the same team. Please select different teams.');
     }
     
@@ -677,6 +699,8 @@ class RoomService {
       // Mark start time so clients can show a short countdown
       startedAt: serverTimestamp()
     });
+    
+    console.log('✅ Room updated with battle ID:', actualBattleId, 'for room:', roomId);
   }
 
   // Listen to room changes

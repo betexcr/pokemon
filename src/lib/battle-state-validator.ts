@@ -215,10 +215,10 @@ export class BattleStateValidator {
       const team = isPlayer ? state.player : state.opponent;
       const currentPokemon = team.pokemon[team.currentIndex];
       
-      if (action.moveIndex === undefined) {
-        errors.push('Move action missing moveIndex');
-      } else if (action.moveIndex < 0 || action.moveIndex >= currentPokemon.moves.length) {
-        errors.push(`Invalid move index: ${action.moveIndex}`);
+      if (action.moveId === undefined) {
+        errors.push('Move action missing moveId');
+      } else if (!currentPokemon.moves.some(move => move.id === action.moveId)) {
+        errors.push(`Invalid move ID: ${action.moveId}`);
       }
     }
 

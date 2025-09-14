@@ -93,7 +93,7 @@ export class FirebaseBattleSyncManager {
 
   private handleBattleUpdate(battle: MultiplayerBattleState): void {
     console.log('📥 Received battle update from Firebase:', {
-      turn: battle.turn,
+      turnNumber: battle.turnNumber,
       status: battle.status,
       phase: battle.phase,
       actionsCount: battle.actions?.length || 0
@@ -115,7 +115,7 @@ export class FirebaseBattleSyncManager {
 
   private handleBattleStateUpdate(state: BattleState): void {
     console.log('🔄 Processing battle state update:', {
-      turnNumber: state.turnNumber,
+      turn: state.turn,
       phase: state.phase,
       isComplete: state.isComplete
     });
@@ -135,7 +135,7 @@ export class FirebaseBattleSyncManager {
     
     // Find actions for current turn
     const currentTurnActions = actions.filter(action => 
-      action.turnNumber === this.currentState?.turnNumber
+      action.turn === this.currentState?.turn
     );
 
     if (currentTurnActions.length >= 2) {
@@ -147,7 +147,7 @@ export class FirebaseBattleSyncManager {
   private hasStateConflict(localState: BattleState, serverState: BattleState): boolean {
     // Compare critical state properties
     return (
-      localState.turnNumber !== serverState.turnNumber ||
+      localState.turn !== serverState.turn ||
       localState.phase !== serverState.phase ||
       localState.isComplete !== serverState.isComplete ||
       this.hasTeamConflict(localState.player, serverState.player) ||
@@ -166,7 +166,6 @@ export class FirebaseBattleSyncManager {
       
       if (localPokemon.currentHp !== serverPokemon.currentHp) return true;
       if (localPokemon.status !== serverPokemon.status) return true;
-      if (localPokemon.currentIndex !== serverPokemon.currentIndex) return true;
     }
 
     return false;
@@ -246,11 +245,17 @@ export class FirebaseBattleSyncManager {
       console.log('📤 Syncing battle state to Firebase');
       
       // Update the battle with the new state
-      await battleService.updateBattle(this.config.battleId, {
+      const updateData: any = {
         battleData: state,
-        turnNumber: state.turnNumber,
         status: state.isComplete ? 'completed' : 'active'
-      });
+      };
+      
+      // Only include turnNumber if it's defined
+      if (state.turnNumber !== undefined) {
+        updateData.turnNumber = state.turnNumber;
+      }
+      
+      await battleService.updateBattle(this.config.battleId, updateData);
 
       this.updateSyncStatus({ lastSync: Date.now() });
     } catch (error) {
@@ -263,7 +268,7 @@ export class FirebaseBattleSyncManager {
       throw new Error('No battle state available');
     }
 
-    console.log('🎯 Selecting move:', moveName, 'for turn', this.currentState.turnNumber);
+    console.log('🎯 Selecting move:', moveName, 'for turn', this.currentState.turn);
 
     const action: BattleAction = {
       type: 'move',

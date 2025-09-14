@@ -82,7 +82,7 @@ export default function PokedexListView({
               {/* Right: actions */}
               <div className="flex items-center gap-3 flex-shrink-0">
                 <button
-                  onClick={handleComparisonClick}
+                  onClick={(e) => handleComparisonClick(e, pokemon.id)}
                   className={`
                     p-1.5 rounded-full transition-all duration-200 border
                     ${

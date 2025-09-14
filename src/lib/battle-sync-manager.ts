@@ -44,8 +44,8 @@ export class BattleSyncManager {
     this.firebaseSync.setBattleState(state);
   }
 
-  async selectMove(moveIndex: number, moveName: string): Promise<void> {
-    return this.firebaseSync.selectMove(moveIndex, moveName);
+  async selectMove(moveId: string, moveName: string): Promise<void> {
+    return this.firebaseSync.selectMove(moveId, moveName);
   }
 
   async switchPokemon(pokemonIndex: number): Promise<void> {
