@@ -94,7 +94,7 @@ export type BattleState = {
   battleLog: BattleLogEntry[];
   isComplete: boolean;
   winner?: 'player' | 'opponent';
-  phase: 'choice' | 'resolution' | 'end_of_turn' | 'replacement';
+  phase: 'choice' | 'resolution' | 'end_of_turn' | 'replacement' | 'selection' | 'execution';
   // Action queue system
   actionQueue: Array<{
     type: 'move' | 'switch' | 'pursuit';
@@ -106,9 +106,25 @@ export type BattleState = {
     speed: number;
   }>;
   // Field state (no weather/hazards for now)
-  field: {
-    // Reserved for future terrain/weather if needed
+  field: Record<string, never>;
+  // Multiplayer battle properties
+  selectedMoves?: {
+    player?: { type: 'move'; moveIndex: number } | null;
+    opponent?: { type: 'move'; moveIndex: number } | null;
   };
+  executionQueue?: Array<{
+    type: 'move' | 'switch';
+    user: 'player' | 'opponent';
+    moveId?: string;
+    target?: 'player' | 'opponent';
+    switchIndex?: number;
+    priority: number;
+    speed: number;
+  }>;
+  // Additional properties for team battles
+  turnNumber?: number;
+  needsPokemonSelection?: 'player' | 'opponent';
+  currentTurn?: 'host' | 'guest';
 };
 
 export type BattleAction = {

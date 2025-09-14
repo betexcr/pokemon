@@ -102,29 +102,22 @@ service cloud.firestore {
         request.resource.data.createdAt is timestamp &&
         request.resource.data.updatedAt is timestamp;
 
-      // Participants, room participants, or a guest setting their own guestId on an unclaimed battle can update
+      // Allow battle participants to update battles
       allow update: if isAuthenticated() && (
+        // Direct participants (host or guest)
         request.auth.uid == resource.data.hostId ||
         request.auth.uid == resource.data.guestId ||
-        (
-          // Allow guest to claim spot by setting guestId when currently null
-          resource.data.guestId == null &&
-          request.resource.data.guestId == request.auth.uid
-        ) || (
-          resource.data.roomId is string &&
-          (
-            // Allow active room users
-            (get(/databases/$(database)/documents/battle_rooms/$(resource.data.roomId)).data.activeUsers != null &&
-             request.auth.uid in get(/databases/$(database)/documents/battle_rooms/$(resource.data.roomId)).data.activeUsers) ||
-            // Or explicitly allow room host/guest
-            request.auth.uid == get(/databases/$(database)/documents/battle_rooms/$(resource.data.roomId)).data.hostId ||
-            request.auth.uid == get(/databases/$(database)/documents/battle_rooms/$(resource.data.roomId)).data.guestId
-          )
-        ) ||
-        // Allow updating battle data (actions, battleData, phase, turn, currentTurn, winner) for participants
-        (request.auth.uid == resource.data.hostId || request.auth.uid == resource.data.guestId) &&
-        (request.resource.data.keys().hasAny(['actions', 'battleData', 'phase', 'turn', 'currentTurn', 'winner', 'lastActionAt', 'updatedAt']))
+        // Allow guest to claim spot by setting guestId when currently null
+        (resource.data.guestId == null &&
+         request.resource.data.guestId == request.auth.uid) ||
+        // Allow updating specific battle fields for participants
+        ((request.auth.uid == resource.data.hostId || request.auth.uid == resource.data.guestId) &&
+         request.resource.data.keys().hasAny(['actions', 'battleData', 'phase', 'turn', 'currentTurn', 'winner', 'status', 'lastActionAt', 'updatedAt', 'turnNumber']))
       );
+
+      // Allow battle host to delete battles
+      allow delete: if isAuthenticated() && 
+        request.auth.uid == resource.data.hostId;
     }
     
     // Battle moves/history subcollection

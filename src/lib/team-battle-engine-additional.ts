@@ -1,6 +1,6 @@
 // Additional functions for the Gen-8/9 battle engine
 
-import { BattleState, BattlePokemon, getCurrentPokemon, switchToPokemon, getEffectiveSpeed, isTeamDefeated } from './team-battle-engine';
+import { BattleState, BattlePokemon, getCurrentPokemon, switchToPokemon, getEffectiveSpeed, isTeamDefeated, canUseMove } from './team-battle-engine';
 
 // Resolve a switch action
 export async function resolveSwitch(state: BattleState, action: BattleState['actionQueue'][0]): Promise<void> {

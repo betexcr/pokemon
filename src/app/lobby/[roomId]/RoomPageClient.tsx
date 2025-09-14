@@ -75,11 +75,11 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
 
   // Handle browser back/close for host cleanup
   useEffect(() => {
-    if (!user?.uid || !room?.isHost) return;
+    if (!user?.uid || !room?.hostId || user.uid !== room.hostId) return;
 
     const handleBeforeUnload = () => {
       // Use navigator.sendBeacon for reliable cleanup on page unload
-      if (navigator.sendBeacon) {
+      if (typeof navigator.sendBeacon === 'function') {
         const data = new FormData();
         data.append('roomId', roomId);
         data.append('userId', user.uid);
@@ -92,7 +92,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
     };
 
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden' && room?.isHost) {
+      if (document.visibilityState === 'hidden' && room?.hostId && user?.uid === room.hostId) {
         // When page becomes hidden (tab switch, browser close, etc.)
         // Fire and forget the room cleanup
         roomService.leaveRoom(roomId, user.uid).catch(error => {
@@ -110,12 +110,12 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [roomId, user?.uid, room?.isHost]);
+  }, [roomId, user?.uid, room?.hostId]);
 
   // Cleanup on component unmount (covers browser back button)
   useEffect(() => {
     return () => {
-      if (user?.uid && room?.isHost) {
+      if (user?.uid && room?.hostId && user.uid === room.hostId) {
         // Component is unmounting (navigation away)
         roomService.leaveRoom(roomId, user.uid).catch(error => {
           console.error('Failed to finish room on component unmount:', error);
@@ -123,7 +123,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
         console.log('🏁 Room finished due to host component unmounting');
       }
     };
-  }, [roomId, user?.uid, room?.isHost]);
+  }, [roomId, user?.uid, room?.hostId]);
 
   // Listen to room changes in real-time (even when unauthenticated)
   useEffect(() => {
@@ -138,6 +138,14 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
       });
       console.log('Current user:', { uid: user?.uid, displayName: user?.displayName });
       console.log('Is user the guest?', user?.uid === room?.guestId);
+      console.log('Is user the host?', user?.uid === room?.hostId);
+      console.log('Room status and ready states:', {
+        status: room?.status,
+        hostReady: room?.hostReady,
+        guestReady: room?.guestReady,
+        currentPlayers: room?.currentPlayers,
+        maxPlayers: room?.maxPlayers
+      });
       if (room) {
         // Validate room data and provide defaults for missing fields
         const validatedRoom = {
@@ -504,16 +512,29 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
     }
     
     // Check if both teams are identical (prevent same team battles)
-    if (JSON.stringify(room.hostTeam) === JSON.stringify(room.guestTeam)) {
+    // More robust comparison that handles different property orders
+    const normalizeTeam = (team: any) => {
+      if (!team || !Array.isArray(team)) return team;
+      return team.map(pokemon => ({
+        id: pokemon.id,
+        level: pokemon.level,
+        moves: pokemon.moves ? pokemon.moves.sort((a: any, b: any) => a.name.localeCompare(b.name)) : []
+      })).sort((a, b) => a.id - b.id);
+    };
+    
+    const normalizedHostTeam = normalizeTeam(room.hostTeam);
+    const normalizedGuestTeam = normalizeTeam(room.guestTeam);
+    const teamsAreIdentical = JSON.stringify(normalizedHostTeam) === JSON.stringify(normalizedGuestTeam);
+    
+    if (teamsAreIdentical) {
       alert('Both players have selected the same team! Please ensure each player selects a different team before starting the battle.');
-      console.error('🚨 PREVENTION: Both players selected identical teams:', room.hostTeam);
+      console.error('🚨 PREVENTION: Both players selected identical teams');
+      console.error('Host team:', normalizedHostTeam);
+      console.error('Guest team:', normalizedGuestTeam);
       return;
     }
     
     try {
-      // Generate a unique battle ID
-      const battleId = `battle_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
-      
       // Create battle with both teams
       const { battleService } = await import('@/lib/battleService');
       const createdBattleId = await battleService.createBattle(
@@ -598,6 +619,26 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
     roomGuestId: room?.guestId,
     roomGuestName: room?.guestName,
     userId: user?.uid
+  });
+  
+  // Log the actual room object to see all properties
+  console.log('Full room object:', room);
+
+  // Additional debugging for Start Battle button visibility
+  console.log('Start Battle button visibility check:', {
+    isHost,
+    roomExists: !!room,
+    currentPlayers: room?.currentPlayers,
+    maxPlayers: room?.maxPlayers,
+    playersMatch: room ? room.currentPlayers === room.maxPlayers : false,
+    statusReady: room?.status === 'ready',
+    statusWaiting: room?.status === 'waiting',
+    statusValid: room ? (room.status === 'ready' || room.status === 'waiting') : false,
+    hostReady: room?.hostReady,
+    guestReady: room?.guestReady,
+    bothReady: room ? (room.hostReady && room.guestReady) : false,
+    buttonVisible: isHost && room && room.currentPlayers === room.maxPlayers && (room.status === 'ready' || room.status === 'waiting'),
+    buttonEnabled: canStart
   });
   
   // Debug logging for role detection

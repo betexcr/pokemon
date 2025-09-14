@@ -182,10 +182,8 @@ export default function PokemonDetailClient({ pokemon, error }: PokemonDetailCli
         
         if (isMounted) {
           const successfulMoves = moves
-            .filter((result): result is PromiseFulfilledResult<{ name: string; type: string; damage_class: 'physical' | 'special' | 'status'; power: number | null; accuracy: number | null; pp: number | null; level_learned_at: number | null; short_effect: string | null }> => 
-              result.status === 'fulfilled'
-            )
-            .map(result => result.value)
+            .filter(result => result.status === 'fulfilled')
+            .map(result => (result as PromiseFulfilledResult<any>).value)
           setMovesWithEffects(successfulMoves)
         }
       } catch (e) {

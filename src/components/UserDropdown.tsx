@@ -142,7 +142,7 @@ export default function UserDropdown({ isMobile = false }: UserDropdownProps) {
               width: '100% !important',
               height: '100% !important',
               aspectRatio: '1 / 1 !important',
-              objectFit: 'cover !important',
+              objectFit: 'cover' as const,
               minWidth: '0 !important',
               minHeight: '0 !important'
             }}
@@ -235,7 +235,7 @@ export default function UserDropdown({ isMobile = false }: UserDropdownProps) {
               width: '100% !important',
               height: '100% !important',
               aspectRatio: '1 / 1 !important',
-              objectFit: 'cover !important',
+              objectFit: 'cover' as const,
               minWidth: '0 !important',
               minHeight: '0 !important'
             }}
