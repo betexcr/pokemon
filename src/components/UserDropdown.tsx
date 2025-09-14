@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { LogOut } from "lucide-react";
+import { LogOut, LogIn } from "lucide-react";
 import { useAuth } from '@/contexts/AuthContext';
+import AuthModal from './auth/AuthModal';
+import Image from 'next/image';
 
 interface UserDropdownProps {
   isMobile?: boolean;
@@ -10,8 +12,23 @@ interface UserDropdownProps {
 
 export default function UserDropdown({ isMobile = false }: UserDropdownProps) {
   const [open, setOpen] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const { user, logout } = useAuth();
+
+  // Ensure component is mounted before hydrating
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Close AuthModal when user successfully logs in
+  useEffect(() => {
+    if (user && showAuthModal) {
+      setShowAuthModal(false);
+    }
+  }, [user, showAuthModal]);
+
 
 
   // Close on outside click
@@ -52,6 +69,47 @@ export default function UserDropdown({ isMobile = false }: UserDropdownProps) {
       .toUpperCase()
       .slice(0, 2);
   };
+
+  // Don't render interactive elements until mounted to prevent hydration issues
+  if (!mounted) {
+    return (
+      <div className="relative inline-block text-left user-dropdown-container">
+        <button 
+          className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-300 hover:border-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 user-dropdown-button" 
+          style={{
+            width: '64px !important',
+            height: '64px !important',
+            borderRadius: '50% !important',
+            aspectRatio: '1 / 1 !important',
+            minWidth: '64px !important',
+            minHeight: '64px !important',
+            maxWidth: '64px !important',
+            maxHeight: '64px !important',
+            '--user-dropdown-size': '64px'
+          } as React.CSSProperties}
+          title="Loading..."
+        >
+          <Image 
+            src="/profile-placeholder.png" 
+            alt="Profile Placeholder" 
+            width={64}
+            height={64}
+            className="w-full h-full rounded-full object-cover user-dropdown-image"
+            style={{
+              borderRadius: '50% !important',
+              width: '100% !important',
+              height: '100% !important',
+              aspectRatio: '1 / 1 !important',
+              objectFit: 'cover' as const,
+              minWidth: '0 !important',
+              minHeight: '0 !important'
+            }}
+            referrerPolicy="no-referrer"
+          />
+        </button>
+      </div>
+    );
+  }
 
   // Show offline placeholder when no user
   if (!user) {
@@ -119,10 +177,29 @@ export default function UserDropdown({ isMobile = false }: UserDropdownProps) {
             Not signed in
           </div>
           <div className="border-t border-gray-100" />
-          <div className="px-4 py-3 text-sm text-gray-500">
+          <div className="px-4 py-3 text-sm text-gray-500 mb-3">
             Sign in to access your profile and teams
           </div>
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setShowAuthModal(true);
+              setOpen(false);
+            }}
+            className="flex w-full items-center px-4 py-3 text-sm text-blue-600 transition hover:bg-blue-50 focus:bg-blue-50 rounded-b-lg"
+            type="button"
+          >
+            <LogIn className="mr-2 h-4 w-4" />
+            Sign In / Sign Up
+          </button>
         </div>
+
+        {/* Auth Modal for non-authenticated users */}
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+        />
       </div>
     );
   }
@@ -213,6 +290,12 @@ export default function UserDropdown({ isMobile = false }: UserDropdownProps) {
           Log out
         </button>
       </div>
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+      />
     </div>
   );
 }

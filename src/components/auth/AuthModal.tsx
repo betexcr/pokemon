@@ -17,8 +17,6 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
   const [mode, setMode] = useState<'login' | 'register'>(initialMode);
   const [mounted, setMounted] = useState(false);
 
-  // Debug logging
-  console.log('AuthModal render:', { isOpen, mounted });
 
   useEffect(() => {
     setMounted(true);

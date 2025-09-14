@@ -73,6 +73,58 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
     };
   }, [roomId]);
 
+  // Handle browser back/close for host cleanup
+  useEffect(() => {
+    if (!user?.uid || !room?.isHost) return;
+
+    const handleBeforeUnload = () => {
+      // Use navigator.sendBeacon for reliable cleanup on page unload
+      if (navigator.sendBeacon) {
+        const data = new FormData();
+        data.append('roomId', roomId);
+        data.append('userId', user.uid);
+        data.append('action', 'leaveRoom');
+        
+        // In a real app, you'd send this to an API endpoint
+        // For now, we'll use the synchronous approach
+        console.log('🏁 Host leaving - room should be finished');
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden' && room?.isHost) {
+        // When page becomes hidden (tab switch, browser close, etc.)
+        // Fire and forget the room cleanup
+        roomService.leaveRoom(roomId, user.uid).catch(error => {
+          console.error('Failed to finish room on visibility change:', error);
+        });
+        console.log('🏁 Room finished due to host page becoming hidden');
+      }
+    };
+
+    // Add event listeners
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [roomId, user?.uid, room?.isHost]);
+
+  // Cleanup on component unmount (covers browser back button)
+  useEffect(() => {
+    return () => {
+      if (user?.uid && room?.isHost) {
+        // Component is unmounting (navigation away)
+        roomService.leaveRoom(roomId, user.uid).catch(error => {
+          console.error('Failed to finish room on component unmount:', error);
+        });
+        console.log('🏁 Room finished due to host component unmounting');
+      }
+    };
+  }, [roomId, user?.uid, room?.isHost]);
+
   // Listen to room changes in real-time (even when unauthenticated)
   useEffect(() => {
     const unsubscribe = roomService.onRoomChange(roomId, (room) => {
@@ -295,6 +347,26 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
     } catch (error) {
       console.error('Failed to copy room URL:', error);
     }
+  };
+
+  const handleBackClick = async () => {
+    if (!user) {
+      // If not authenticated, just navigate back
+      router.push('/lobby');
+      return;
+    }
+
+    try {
+      // Leave the room properly (this will mark it as finished if user is host)
+      await roomService.leaveRoom(roomId, user.uid);
+      console.log('Successfully left room:', roomId);
+    } catch (error) {
+      console.error('Error leaving room:', error);
+      // Continue with navigation even if cleanup fails
+    }
+
+    // Navigate back to lobby
+    router.push('/lobby');
   };
 
   // Manual join action removed
@@ -848,7 +920,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <button
-                onClick={() => router.push('/lobby')}
+                onClick={handleBackClick}
                 className="text-blue-600 hover:text-blue-800 transition-colors text-sm md:text-base"
               >
                 ← <span className="hidden sm:inline">Back to Lobby</span><span className="sm:hidden">Back</span>
