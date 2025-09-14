@@ -39,7 +39,7 @@ interface RoomPageProps {
 }
 
 export default async function RoomPage({ params }: RoomPageProps) {
-  const { roomId } = params;
+  const { roomId } = await params;
   
   return (
     <ProtectedRoute>

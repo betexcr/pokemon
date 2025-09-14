@@ -2,11 +2,12 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Zap, Users, Menu, X } from 'lucide-react'
+import { Zap, Users, Menu, X, LogIn } from 'lucide-react'
 import ThemeToggle from '@/components/ThemeToggle'
 import { useAuth } from '@/contexts/AuthContext'
 import Image from 'next/image'
 import HeaderIcons, { HamburgerMenu } from '@/components/HeaderIcons'
+import AuthModal from './auth/AuthModal'
 
 interface MobileHeaderProps {
   theme: string
@@ -25,6 +26,7 @@ export default function MobileHeader({
   const { user } = useAuth()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [imageError, setImageError] = useState(false)
+  const [showAuthModal, setShowAuthModal] = useState(false)
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen)
@@ -56,10 +58,14 @@ export default function MobileHeader({
 
   const renderProfilePicture = () => {
     if (!user) {
-      // Show profile placeholder when logged off
+      // Show profile placeholder when logged off with sign in functionality
       return (
         <button 
-          className="w-16 h-16 rounded-full overflow-hidden border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500" 
+          onClick={() => {
+            console.log('Mobile profile picture clicked, opening AuthModal');
+            setShowAuthModal(true);
+          }}
+          className="w-16 h-16 rounded-full overflow-hidden border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-400" 
           style={{
             borderColor: 'var(--color-border)',
             borderRadius: '50%',
@@ -76,7 +82,7 @@ export default function MobileHeader({
           onMouseLeave={(e) => {
             e.currentTarget.style.borderColor = 'var(--color-border)';
           }}
-          title="Sign In"
+          title="Sign In / Sign Up"
         >
           <Image 
             src="/profile-placeholder.png" 
@@ -367,6 +373,12 @@ export default function MobileHeader({
           </div>
         </div>
       )}
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+      />
     </>
   )
 }

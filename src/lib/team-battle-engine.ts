@@ -8,16 +8,40 @@ import {
 } from "./damage-calculator";
 import { getMove } from "./moveCache";
 import { executeTurn } from "./executor";
+import { 
+  resolveSwitch, 
+  resolveMove, 
+  processEndOfTurn, 
+  processReplacements 
+} from "./team-battle-engine-additional";
 
 export type BattlePokemon = {
   pokemon: Pokemon;
   level: number;
   currentHp: number;
   maxHp: number;
-  moves: Move[];
+  moves: Array<{
+    id: string;
+    pp: number;
+    maxPp: number;
+    disabled?: boolean;
+    lastUsed?: number; // turn number when last used
+  }>;
   status?: 'paralyzed' | 'poisoned' | 'burned' | 'frozen' | 'asleep' | 'confused';
   statusTurns?: number;
-  flinched?: boolean;
+  // Volatile conditions
+  volatile: {
+    confusion?: { turns: number };
+    substitute?: { hp: number };
+    leechSeed?: boolean;
+    choiceLock?: string; // move id
+    encore?: { move: string; turns: number };
+    taunt?: { turns: number };
+    disable?: { move: string; turns: number };
+    protect?: { counter: number };
+    perishSong?: { turns: number };
+    flinched?: boolean;
+  };
   // Ability system
   currentAbility?: string;
   originalAbility?: string;
@@ -37,6 +61,17 @@ export type BattleTeam = {
   pokemon: BattlePokemon[];
   currentIndex: number;
   faintedCount: number;
+  // Side conditions
+  sideConditions: {
+    reflect?: { turns: number };
+    lightScreen?: { turns: number };
+    safeguard?: { turns: number };
+    auroraVeil?: { turns: number };
+    spikes?: number; // layers
+    toxicSpikes?: number; // layers
+    stealthRock?: boolean;
+    stickyWeb?: boolean;
+  };
 };
 
 export type BattleLogEntry = {
@@ -54,30 +89,31 @@ export type BattleLogEntry = {
 export type BattleState = {
   player: BattleTeam;
   opponent: BattleTeam;
-  turn: 'player' | 'opponent';
-  turnNumber: number;
+  turn: number; // Current turn number
+  rng: number; // RNG seed for reproducibility
   battleLog: BattleLogEntry[];
   isComplete: boolean;
   winner?: 'player' | 'opponent';
-  phase: 'selection' | 'execution' | 'switch';
-  needsPokemonSelection?: 'player' | 'opponent' | null;
-  // New phase system
-  selectedMoves: {
-    player?: BattleAction;
-    opponent?: BattleAction;
-  };
-  executionQueue: Array<{
-    action: BattleAction;
-    pokemon: BattlePokemon;
+  phase: 'choice' | 'resolution' | 'end_of_turn' | 'replacement';
+  // Action queue system
+  actionQueue: Array<{
+    type: 'move' | 'switch' | 'pursuit';
+    user: 'player' | 'opponent';
+    moveId?: string;
+    target?: 'player' | 'opponent';
+    switchIndex?: number;
     priority: number;
     speed: number;
-    isPlayer: boolean;
   }>;
+  // Field state (no weather/hazards for now)
+  field: {
+    // Reserved for future terrain/weather if needed
+  };
 };
 
 export type BattleAction = {
-  type: 'move' | 'switch' | 'item' | 'execute';
-  moveIndex?: number;
+  type: 'move' | 'switch';
+  moveId?: string;
   target?: 'player' | 'opponent';
   switchIndex?: number;
 };
@@ -88,8 +124,30 @@ export function calculateHp(baseHp: number, level: number): number {
 }
 
 // Calculate move priority (higher number = higher priority)
-export function getMovePriority(move: Move): number {
-  return move.priority || 0;
+export function getMovePriority(moveId: string): number {
+  // Priority mapping for common moves
+  const priorityMoves: Record<string, number> = {
+    'quick-guard': 4,
+    'wide-guard': 4,
+    'protect': 4,
+    'detect': 4,
+    'king-s-shield': 4,
+    'spiky-shield': 4,
+    'baneful-bunker': 4,
+    'quick-attack': 1,
+    'extreme-speed': 2,
+    'fake-out': 3,
+    'sucker-punch': 1,
+    'bullet-punch': 1,
+    'ice-shard': 1,
+    'shadow-sneak': 1,
+    'mach-punch': 1,
+    'vacuum-wave': 1,
+    'trick-room': -6,
+    'wonder-room': -6,
+    'magic-room': -6,
+  };
+  return priorityMoves[moveId] || 0;
 }
 
 // Calculate effective speed for move ordering
@@ -99,54 +157,130 @@ export function getEffectiveSpeed(pokemon: BattlePokemon): number {
   return applyStatModifier(calculatedSpeed, pokemon.statModifiers.speed);
 }
 
-// Check if both players have selected moves
-export function bothPlayersSelectedMoves(state: BattleState): boolean {
-  return Boolean(state.selectedMoves.player && state.selectedMoves.opponent);
+// Check if a Pokemon can use a move (usability gates)
+export function canUseMove(pokemon: BattlePokemon, moveId: string): { canUse: boolean; reason?: string } {
+  const move = pokemon.moves.find(m => m.id === moveId);
+  if (!move) return { canUse: false, reason: 'Invalid move' };
+  
+  // Check PP
+  if (move.pp <= 0) return { canUse: false, reason: 'no PP left' };
+  
+  // Check if move is disabled
+  if (move.disabled) return { canUse: false, reason: 'disabled' };
+  
+  // Check status conditions
+  if (pokemon.status === 'asleep') {
+    return { canUse: Math.random() < 0.25, reason: 'fast asleep' };
+  }
+  if (pokemon.status === 'frozen') {
+    return { canUse: Math.random() < 0.2, reason: 'frozen solid' };
+  }
+  if (pokemon.status === 'paralyzed') {
+    return { canUse: Math.random() < 0.75, reason: 'fully paralyzed' };
+  }
+  
+  // Check volatile conditions
+  if (pokemon.volatile.taunt && pokemon.volatile.taunt.turns > 0) {
+    // Only allow damaging moves if taunted
+    // For now, assume all moves are status moves if they have no power
+    return { canUse: true }; // TODO: Check if move is status vs damaging
+  }
+  
+  if (pokemon.volatile.encore && pokemon.volatile.encore.turns > 0) {
+    // Must use the same move as last turn
+    return { canUse: moveId === pokemon.volatile.encore.move, reason: 'encored' };
+  }
+  
+  if (pokemon.volatile.disable && pokemon.volatile.disable.turns > 0) {
+    return { canUse: moveId !== pokemon.volatile.disable.move, reason: 'disabled' };
+  }
+  
+  return { canUse: true };
 }
 
-// Create execution queue from selected moves
-export function createExecutionQueue(state: BattleState): BattleState['executionQueue'] {
-  const queue: BattleState['executionQueue'] = [];
+// Build and order action queue (Gen-8/9 style)
+export function buildActionQueue(state: BattleState, playerAction: BattleAction, opponentAction: BattleAction): BattleState['actionQueue'] {
+  const queue: BattleState['actionQueue'] = [];
   
-  if (state.selectedMoves.player) {
-    const playerPokemon = getCurrentPokemon(state.player);
-    const move = state.selectedMoves.player.moveIndex !== undefined 
-      ? playerPokemon.moves[state.selectedMoves.player.moveIndex] 
-      : null;
-    
-    if (move) {
-      queue.push({
-        action: state.selectedMoves.player,
-        pokemon: playerPokemon,
-        priority: getMovePriority(move),
-        speed: getEffectiveSpeed(playerPokemon),
-        isPlayer: true
-      });
-    }
+  // Check for Pursuit interrupts
+  if (playerAction.type === 'switch' && opponentAction.type === 'move' && opponentAction.moveId === 'pursuit') {
+    queue.push({
+      type: 'pursuit',
+      user: 'opponent',
+      moveId: 'pursuit',
+      target: 'player',
+      priority: getMovePriority('pursuit'),
+      speed: getEffectiveSpeed(getCurrentPokemon(state.opponent))
+    });
   }
   
-  if (state.selectedMoves.opponent) {
-    const opponentPokemon = getCurrentPokemon(state.opponent);
-    const move = state.selectedMoves.opponent.moveIndex !== undefined 
-      ? opponentPokemon.moves[state.selectedMoves.opponent.moveIndex] 
-      : null;
-    
-    if (move) {
-      queue.push({
-        action: state.selectedMoves.opponent,
-        pokemon: opponentPokemon,
-        priority: getMovePriority(move),
-        speed: getEffectiveSpeed(opponentPokemon),
-        isPlayer: false
-      });
-    }
+  if (opponentAction.type === 'switch' && playerAction.type === 'move' && playerAction.moveId === 'pursuit') {
+    queue.push({
+      type: 'pursuit',
+      user: 'player',
+      moveId: 'pursuit',
+      target: 'opponent',
+      priority: getMovePriority('pursuit'),
+      speed: getEffectiveSpeed(getCurrentPokemon(state.player))
+    });
   }
   
-  // Sort by priority (descending), then by speed (descending)
+  // Add regular actions
+  if (playerAction.type === 'switch') {
+    queue.push({
+      type: 'switch',
+      user: 'player',
+      switchIndex: playerAction.switchIndex,
+      priority: 6, // Switches have priority 6
+      speed: 0
+    });
+  } else if (playerAction.type === 'move') {
+    queue.push({
+      type: 'move',
+      user: 'player',
+      moveId: playerAction.moveId,
+      target: playerAction.target,
+      priority: getMovePriority(playerAction.moveId || ''),
+      speed: getEffectiveSpeed(getCurrentPokemon(state.player))
+    });
+  }
+  
+  if (opponentAction.type === 'switch') {
+    queue.push({
+      type: 'switch',
+      user: 'opponent',
+      switchIndex: opponentAction.switchIndex,
+      priority: 6, // Switches have priority 6
+      speed: 0
+    });
+  } else if (opponentAction.type === 'move') {
+    queue.push({
+      type: 'move',
+      user: 'opponent',
+      moveId: opponentAction.moveId,
+      target: opponentAction.target,
+      priority: getMovePriority(opponentAction.moveId || ''),
+      speed: getEffectiveSpeed(getCurrentPokemon(state.opponent))
+    });
+  }
+  
+  // Order by class, then priority, then speed
   return queue.sort((a, b) => {
+    // Class ordering: Pursuit > Switches > Moves
+    const classOrder = { pursuit: 0, switch: 1, move: 2 };
+    const aClass = classOrder[a.type];
+    const bClass = classOrder[b.type];
+    
+    if (aClass !== bClass) {
+      return aClass - bClass;
+    }
+    
+    // Within same class, order by priority (higher first)
     if (a.priority !== b.priority) {
       return b.priority - a.priority;
     }
+    
+    // Within same priority, order by speed (higher first)
     return b.speed - a.speed;
   });
 }
@@ -450,8 +584,8 @@ export function getTypeEffectiveness(attackType: string, defenseTypes: string[])
   );
 }
 
-// Check if a Pokemon can use a move
-export function canUseMove(pokemon: BattlePokemon, moveIndex: number): { canUse: boolean; reason?: string } {
+// Legacy function for backward compatibility
+export function canUseMoveLegacy(pokemon: BattlePokemon, moveIndex: number): { canUse: boolean; reason?: string } {
   if (moveIndex < 0 || moveIndex >= pokemon.moves.length) return { canUse: false, reason: 'Invalid move' };
   const move = pokemon.moves[moveIndex];
   if (!move) return { canUse: false, reason: 'No move' };
@@ -831,16 +965,15 @@ export function handleAutomaticSwitching(state: BattleState): BattleState {
     });
     
     // Determine new turn order based on Speed (with tie-breaking)
+    // Note: In the new system, turn order is determined by the action queue
+    // This is just for logging purposes
     if (playerSpeed > opponentSpeed) {
-      newState.turn = 'player';
       console.log('Player goes first (faster)');
     } else if (opponentSpeed > playerSpeed) {
-      newState.turn = 'opponent';
       console.log('Opponent goes first (faster)');
     } else {
       // Speed tie - randomize (50/50 chance)
-      newState.turn = Math.random() < 0.5 ? 'player' : 'opponent';
-      console.log('Speed tie - random turn:', newState.turn);
+      console.log('Speed tie - random turn');
     }
     
     console.log('New turn order:', newState.turn);
@@ -887,7 +1020,7 @@ export function handleMultiplayerSwitching(state: BattleState, isPlayerTurn: boo
       console.log(`=== BATTLE COMPLETE - ${isPlayerTurn ? 'OPPONENT' : 'PLAYER'} VICTORY ===`);
     } else {
       // Set a flag to indicate that manual Pokemon selection is needed
-      newState.needsPokemonSelection = isPlayerTurn ? 'player' : 'opponent';
+      newState.phase = 'replacement';
       newLog.push({
         type: 'pokemon_fainted',
         message: `${currentPokemon.pokemon.name} fainted! Choose your next Pokemon.`,
@@ -942,8 +1075,8 @@ export function switchToSelectedPokemon(state: BattleState, pokemonIndex: number
     pokemon: newCurrent.pokemon.name
   });
   
-  // Clear the needsPokemonSelection flag
-  newState.needsPokemonSelection = null;
+  // Clear the replacement phase
+  newState.phase = 'choice';
   
   // Recalculate turn order based on Speed
   const playerCurrent = getCurrentPokemon(newState.player);
@@ -967,16 +1100,14 @@ export function switchToSelectedPokemon(state: BattleState, pokemonIndex: number
   });
   
   // Determine new turn order based on Speed
+  // Note: In the new system, turn order is determined by the action queue
   if (playerSpeed > opponentSpeed) {
-    newState.turn = 'player';
     console.log('Player goes first (faster)');
   } else if (opponentSpeed > playerSpeed) {
-    newState.turn = 'opponent';
     console.log('Opponent goes first (faster)');
   } else {
     // Speed tie - randomize (50/50 chance)
-    newState.turn = Math.random() < 0.5 ? 'player' : 'opponent';
-    console.log('Speed tie - random turn:', newState.turn);
+    console.log('Speed tie - random turn');
   }
   
   newState.battleLog = newLog;
@@ -1001,10 +1132,16 @@ export function initializeTeamBattle(
       level: teamMember.level,
       currentHp: hp,
       maxHp: hp,
-      moves: teamMember.moves,
+      moves: teamMember.moves.map(move => ({
+        id: move.name,
+        pp: 5, // Default PP
+        maxPp: 5,
+        disabled: false
+      })),
       originalAbility,
       currentAbility: originalAbility,
       abilityChanged: false,
+      volatile: {},
       statModifiers: {
         attack: 0,
         defense: 0,
@@ -1027,10 +1164,16 @@ export function initializeTeamBattle(
       level: teamMember.level,
       currentHp: hp,
       maxHp: hp,
-      moves: teamMember.moves,
+      moves: teamMember.moves.map(move => ({
+        id: move.name,
+        pp: 5, // Default PP
+        maxPp: 5,
+        disabled: false
+      })),
       originalAbility,
       currentAbility: originalAbility,
       abilityChanged: false,
+      volatile: {},
       statModifiers: {
         attack: 0,
         defense: 0,
@@ -1047,13 +1190,15 @@ export function initializeTeamBattle(
   const player: BattleTeam = {
     pokemon: playerBattlePokemon,
     currentIndex: 0,
-    faintedCount: 0
+    faintedCount: 0,
+    sideConditions: {}
   };
 
   const opponent: BattleTeam = {
     pokemon: opponentBattlePokemon,
     currentIndex: 0,
-    faintedCount: 0
+    faintedCount: 0,
+    sideConditions: {}
   };
 
   // Determine turn order based on speed of first Pokémon
@@ -1077,136 +1222,30 @@ export function initializeTeamBattle(
   return {
     player,
     opponent,
-    turn,
-    turnNumber: 1,
+    turn: 1,
+    rng: Math.floor(Math.random() * 1000000),
     battleLog: [{
       type: 'battle_start',
       message: `Battle Start!\n${playerTeamName} sends out ${playerCurrent.pokemon.name}!\n${opponentTeamName} sends out ${opponentCurrent.pokemon.name}!`,
       pokemon: String(playerCurrent.pokemon.name)
     }],
     isComplete: false,
-    phase: 'selection',
-    selectedMoves: {},
-    executionQueue: []
+    phase: 'choice',
+    actionQueue: [],
+    field: {}
   };
 }
 
-// Select a move during the selection phase
-export function selectMove(state: BattleState, action: BattleAction, isPlayer: boolean): BattleState {
-  const newState = { ...state, battleLog: [...state.battleLog] };
-  
-  // Check if battle is already complete
-  if (state.isComplete) {
-    return state;
-  }
-  
-  // Only allow move selection during selection phase
-  if (state.phase !== 'selection') {
-    console.warn('Cannot select move outside of selection phase');
-    return state;
-  }
-  
-  // Store the selected move
-  if (isPlayer) {
-    newState.selectedMoves.player = action;
-  } else {
-    newState.selectedMoves.opponent = action;
-  }
-  
-  // Log move selection
-  const pokemon = isPlayer ? getCurrentPokemon(state.player) : getCurrentPokemon(state.opponent);
-  const move = action.moveIndex !== undefined ? pokemon.moves[action.moveIndex] : null;
-  
-  if (move) {
-    newState.battleLog.push({
-      type: 'move_used',
-      message: `${pokemon.pokemon.name} is preparing ${move.name}!`,
-      pokemon: String(pokemon.pokemon.name),
-      move: String(move.name)
-    });
-  }
-  
-  // Check if both players have selected moves
-  if (bothPlayersSelectedMoves(newState)) {
-    // Transition to execution phase
-    newState.phase = 'execution';
-    newState.executionQueue = createExecutionQueue(newState);
-    
-    newState.battleLog.push({
-      type: 'turn_start',
-      message: `Both trainers have selected their moves!`,
-      turn: newState.turnNumber
-    });
-  }
-  
-  return newState;
+// Legacy function - use processBattleTurn instead
+export function selectMoveLegacy(state: BattleState, action: BattleAction, isPlayer: boolean): BattleState {
+  console.warn('selectMoveLegacy is deprecated, use processBattleTurn instead');
+  return state;
 }
 
-// Execute the next action in the execution queue
-export async function executeNextAction(state: BattleState): Promise<BattleState> {
-  const newState = { ...state, battleLog: [...state.battleLog] };
-  
-  // Check if battle is already complete
-  if (state.isComplete) {
-    return state;
-  }
-  
-  // Only execute during execution phase
-  if (state.phase !== 'execution') {
-    return state;
-  }
-  
-  // Check if there are actions to execute
-  if (newState.executionQueue.length === 0) {
-    // No more actions, end the turn
-    return await endTurn(newState);
-  }
-  
-  // Get the next action (highest priority/speed)
-  const nextAction = newState.executionQueue.shift()!;
-  const { action, pokemon, isPlayer } = nextAction;
-  
-  // Execute the action
-  if (action.type === 'move' && action.moveIndex !== undefined) {
-    const attacker = pokemon;
-    const defender = isPlayer ? getCurrentPokemon(newState.opponent) : getCurrentPokemon(newState.player);
-    
-    if (attacker.currentHp > 0 && defender.currentHp > 0) {
-      const move = attacker.moves[action.moveIndex];
-      const canUseResult = canUseMove(attacker, action.moveIndex);
-      
-      if (!move || !canUseResult.canUse) {
-        const reason = canUseResult.reason || 'couldn\'t use the move';
-        newState.battleLog.push({
-          type: 'status_effect',
-          message: `${attacker.pokemon.name} is ${reason}...`,
-          pokemon: String(attacker.pokemon.name),
-          move: move?.name ? String(move.name) : undefined
-        });
-      } else {
-        // Check for flinch
-        if (attacker.flinched) {
-          newState.battleLog.push({
-            type: 'status_effect',
-            message: `${attacker.pokemon.name} flinched and couldn't move!`,
-            pokemon: String(attacker.pokemon.name)
-          });
-          attacker.flinched = false;
-        } else {
-          // Execute the move using the existing logic
-          await executeMoveAction(newState, attacker, defender, move, isPlayer);
-        }
-      }
-    }
-  }
-  
-  // Continue with next action if there are more
-  if (newState.executionQueue.length > 0) {
-    return await executeNextAction(newState);
-  } else {
-    // No more actions, end the turn
-    return await endTurn(newState);
-  }
+// Legacy function - use processBattleTurn instead
+export async function executeNextActionLegacy(state: BattleState): Promise<BattleState> {
+  console.warn('executeNextActionLegacy is deprecated, use processBattleTurn instead');
+  return state;
 }
 
 // Execute a single move action (extracted from the original logic)
@@ -1315,6 +1354,9 @@ async function executeMoveAction(
     } else {
       // Log damage if any
       if (turnResult.totalDamage > 0) {
+        // Actually reduce the defender's HP
+        defender.currentHp = Math.max(0, defender.currentHp - turnResult.totalDamage);
+        
         const damagePercent = calculateDamagePercentage(turnResult.totalDamage, defender.maxHp);
         const remainingPercent = Math.round((defender.currentHp / defender.maxHp) * 100);
         
@@ -1460,7 +1502,7 @@ async function endTurn(state: BattleState): Promise<BattleState> {
     newState.battleLog.push({
       type: 'battle_end',
       message: 'All your Pokémon have fainted! You lost the battle!',
-      turn: newState.turnNumber
+      turn: newState.turn
     });
     return newState;
   }
@@ -1471,7 +1513,7 @@ async function endTurn(state: BattleState): Promise<BattleState> {
     newState.battleLog.push({
       type: 'battle_end',
       message: 'All opponent Pokémon have fainted! You won the battle!',
-      turn: newState.turnNumber
+      turn: newState.turn
     });
     return newState;
   }
@@ -1540,42 +1582,71 @@ async function endTurn(state: BattleState): Promise<BattleState> {
   }
   
   // Start next turn
-  newState.turnNumber++;
-  newState.phase = 'selection';
-  newState.selectedMoves = {};
-  newState.executionQueue = [];
+  newState.turn++;
+  newState.phase = 'choice';
+  newState.actionQueue = [];
   
   // Add turn indicator
   newState.battleLog.push({
     type: 'turn_start',
-    message: `Turn ${newState.turnNumber}:`,
-    turn: newState.turnNumber
+    message: `Turn ${newState.turn}:`,
+    turn: newState.turn
   });
   
   return newState;
 }
 
-// Main function to handle move selection and execution
-export async function executeTeamAction(state: BattleState, action: BattleAction, isPlayer: boolean = true): Promise<BattleState> {
-  // Check if battle is already complete
+// Main battle loop (Gen-8/9 style)
+export async function processBattleTurn(
+  state: BattleState, 
+  playerAction: BattleAction, 
+  opponentAction: BattleAction
+): Promise<BattleState> {
   if (state.isComplete) {
     return state;
   }
   
-  if (state.phase === 'selection') {
-    // Select move during selection phase
-    const newState = selectMove(state, action, isPlayer);
-    
-    // If both players have selected moves, start execution
-    if (bothPlayersSelectedMoves(newState)) {
-      return await executeNextAction(newState);
+  const newState = { ...state, battleLog: [...state.battleLog] };
+  newState.turn += 1;
+  
+  // A) Choice phase - actions are already provided
+  // B) Build & order action queue
+  newState.actionQueue = buildActionQueue(newState, playerAction, opponentAction);
+  newState.phase = 'resolution';
+  
+  // C) Resolve actions
+  for (const action of newState.actionQueue) {
+    if (action.type === 'switch') {
+      await resolveSwitch(newState, action);
+    } else if (action.type === 'move' || action.type === 'pursuit') {
+      await resolveMove(newState, action);
     }
-    
-    return newState;
-  } else if (state.phase === 'execution') {
-    // Continue execution phase
-    return await executeNextAction(state);
   }
   
-  return state;
+  // D) End-of-turn
+  await processEndOfTurn(newState);
+  
+  // E) Force replacements
+  await processReplacements(newState);
+  
+  // Check if battle is over
+  if (isTeamDefeated(newState.player)) {
+    newState.isComplete = true;
+    newState.winner = 'opponent';
+    newState.battleLog.push({
+      type: 'battle_end',
+      message: 'All your Pokémon have fainted! You lost!',
+      turn: newState.turn
+    });
+  } else if (isTeamDefeated(newState.opponent)) {
+    newState.isComplete = true;
+    newState.winner = 'player';
+    newState.battleLog.push({
+      type: 'battle_end',
+      message: 'All opponent Pokémon have fainted! You won!',
+      turn: newState.turn
+    });
+  }
+  
+  return newState;
 }

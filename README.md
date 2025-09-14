@@ -123,12 +123,27 @@ A high-performance, modern Pokémon web application built with Next.js, TypeScri
    npm install
    ```
 
-3. **Run the development server**
-```bash
-npm run dev
+3. **Configure environment (optional)**
+   Create a `.env.local` file in the root directory for development:
+   ```bash
+   # Firebase Configuration (required for battles)
+   NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
+   NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+   NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+   NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+   NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+   NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+   
+   # Development mode
+   NODE_ENV=development
    ```
 
-4. **Open your browser**
+4. **Run the development server**
+   ```bash
+   npm run dev
+   ```
+
+5. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000)
 
 ### Available Scripts
@@ -137,7 +152,32 @@ npm run dev
 - `npm run build` - Build for production
 - `npm run start` - Start production server
 - `npm run lint` - Run ESLint
-- `npm test` - Run test suite
+
+### Firebase Real-Time Battles
+
+The battle system uses Firebase Firestore for real-time multiplayer battles with automatic synchronization.
+
+**Features:**
+- **Real-time Updates**: Battle state changes are instantly synchronized between players
+- **Move Coordination**: Turn-based move selection with automatic conflict resolution
+- **State Management**: Battle state, Pokemon health, and turn progression
+- **Offline Support**: Graceful handling of connection issues
+
+**Environment Variables:**
+- `NEXT_PUBLIC_FIREBASE_API_KEY` - Firebase API key
+- `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` - Firebase auth domain
+- `NEXT_PUBLIC_FIREBASE_PROJECT_ID` - Firebase project ID
+- `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` - Firebase storage bucket
+- `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` - Firebase messaging sender ID
+- `NEXT_PUBLIC_FIREBASE_APP_ID` - Firebase app ID
+
+**Development Setup:**
+1. Configure Firebase project and add environment variables
+2. Run the app: `npm run dev`
+3. Firebase handles all real-time synchronization automatically
+
+**Production Setup:**
+Deploy to Vercel or Firebase Hosting - no additional servers needed!
 
 ## 📊 API Integration
 

@@ -12,12 +12,15 @@ import {
 import { db } from './firebase';
 import { auth } from './firebase';
 
-export interface BattleMove {
+export interface BattleAction {
   playerId: string;
   playerName: string;
-  moveIndex: number;
-  moveName: string;
+  type: 'move' | 'switch';
+  moveId?: string;
+  moveName?: string;
+  switchIndex?: number;
   turnNumber?: number;
+  timestamp?: number;
 }
 
 export interface MultiplayerBattleState {
@@ -30,11 +33,12 @@ export interface MultiplayerBattleState {
   guestName: string;
   guestTeam: unknown;
   currentTurn: 'host' | 'guest';
-  turnNumber: number;
-  moves: BattleMove[];
+  turn: number;
+  actions: BattleAction[]; // Changed from moves to actions
   battleData: unknown; // The actual battle state from the game engine
   status: 'waiting' | 'active' | 'completed';
   winner?: string;
+  phase: 'choice' | 'resolution' | 'end_of_turn' | 'replacement';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -42,10 +46,11 @@ export interface MultiplayerBattleState {
 export interface BattleUpdate {
   currentTurn?: 'host' | 'guest';
   turnNumber?: number;
-  moves?: BattleMove[];
+  actions?: BattleAction[];
   battleData?: unknown;
   status?: 'waiting' | 'active' | 'completed';
   winner?: string;
+  phase?: 'choice' | 'resolution' | 'end_of_turn' | 'replacement';
   updatedAt?: unknown;
 }
 
@@ -97,10 +102,11 @@ class BattleService {
       guestName,
       guestTeam,
       currentTurn: 'host' as const,
-      turnNumber: 1,
-      moves: [],
+      turn: 1,
+      actions: [],
       battleData: null, // Will be set when battle starts
       status: 'waiting' as const,
+      phase: 'choice' as const,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     };
@@ -159,17 +165,17 @@ class BattleService {
     });
   }
 
-  // Add a move to the battle
-  async addMove(battleId: string, playerId: string, playerName: string, moveIndex: number, moveName: string): Promise<void> {
+  // Add an action to the battle (move or switch)
+  async addAction(battleId: string, action: BattleAction): Promise<void> {
     if (!db) throw new Error('Firebase not initialized');
     if (!auth?.currentUser) throw new Error('User not authenticated');
     
-    console.log('📤 === BATTLE SERVICE ADD MOVE ===');
+    console.log('📤 === BATTLE SERVICE ADD ACTION ===');
     console.log('🆔 Battle ID:', battleId);
-    console.log('👤 Player ID:', playerId);
-    console.log('👤 Player Name:', playerName);
-    console.log('🎯 Move Index:', moveIndex);
-    console.log('⚡ Move Name:', moveName);
+    console.log('👤 Player ID:', action.playerId);
+    console.log('👤 Player Name:', action.playerName);
+    console.log('🎯 Action Type:', action.type);
+    console.log('⚡ Action Details:', action);
     
     const battleRef = doc(db, this.battlesCollection, battleId);
     const battleSnap = await getDoc(battleRef);
@@ -182,44 +188,56 @@ class BattleService {
     console.log('📊 Current battle data:', {
       turnNumber: battleData.turnNumber,
       currentTurn: battleData.currentTurn,
-      movesCount: (battleData.moves || []).length
+      actionsCount: (battleData.actions || []).length
     });
     
-    // Check if this player has already made a move for the current turn
+    // Check if this player has already made an action for the current turn
     const currentTurnNumber = battleData.turnNumber || 1;
-    const existingMoveForTurn = (battleData.moves || []).find((move: { playerId?: string; turnNumber?: number }) => 
-      move.playerId === playerId && move.turnNumber === currentTurnNumber
+    const existingActionForTurn = (battleData.actions || []).find((existingAction: { playerId?: string; turnNumber?: number }) => 
+      existingAction.playerId === action.playerId && existingAction.turnNumber === currentTurnNumber
     );
     
-    if (existingMoveForTurn) {
-      console.log('⚠️ Player has already made a move for this turn, skipping duplicate');
+    if (existingActionForTurn) {
+      console.log('⚠️ Player has already made an action for this turn, skipping duplicate');
       return;
     }
     
-    const newMove = {
-      playerId,
-      playerName,
-      moveIndex,
-      moveName,
-      turnNumber: currentTurnNumber
+    const newAction = {
+      ...action,
+      turnNumber: currentTurnNumber,
+      timestamp: Date.now()
     };
     
-    console.log('📝 Adding new move:', newMove);
+    console.log('📝 Adding new action:', newAction);
     
-    // Add the move to the moves array (without serverTimestamp in the array)
-    const updatedMoves = [...(battleData.moves || []), newMove];
+    // Add the action to the actions array
+    const updatedActions = [...(battleData.actions || []), newAction];
     
-    console.log('📊 Updated moves array length:', updatedMoves.length);
+    console.log('📊 Updated actions array length:', updatedActions.length);
     
     // Update the battle document (single write to reduce contention)
     await updateDoc(battleRef, {
-      moves: updatedMoves,
-      lastMoveAt: serverTimestamp(),
+      actions: updatedActions,
+      lastActionAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     });
     
-    console.log('✅ Move added to Firebase successfully');
-    console.log('📡 Other players should now receive this move via Firebase listener');
+    console.log('✅ Action added to Firebase successfully');
+    console.log('📡 Other players should now receive this action via Firebase listener');
+  }
+
+  // Legacy method for backward compatibility
+  async addMove(battleId: string, playerId: string, playerName: string, moveIndex: number, moveName: string): Promise<void> {
+    const action: BattleAction = {
+      playerId,
+      playerName,
+      type: 'move',
+      moveId: moveName, // Use moveName as moveId for now
+      moveName,
+      timestamp: Date.now()
+    };
+    
+    return this.addAction(battleId, action);
   }
 
   // Start the battle (initialize battle data)
@@ -295,6 +313,23 @@ class BattleService {
       console.error('Error details:', error.code, error.message);
       // Don't call callback with null on error, let the user handle it
     });
+  }
+
+  // Leave battle (cleanup when user leaves)
+  async leaveBattle(battleId: string, userId: string): Promise<void> {
+    if (!db) throw new Error('Firebase not initialized');
+    
+    console.log('🧹 Leaving battle:', battleId, 'for user:', userId);
+    
+    // For now, we'll use deleteBattle as the cleanup action
+    // In a more complex implementation, this might update player status instead
+    try {
+      await this.deleteBattle(battleId);
+      console.log('✅ Successfully left battle:', battleId);
+    } catch (error) {
+      console.error('❌ Error leaving battle:', error);
+      throw error;
+    }
   }
 
   // Delete battle

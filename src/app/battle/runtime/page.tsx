@@ -10,13 +10,11 @@ import { GYM_CHAMPIONS } from "@/lib/gym_champions";
 import { 
   BattleState as TeamBattleState,
   initializeTeamBattle,
-  executeTeamAction,
+  processBattleTurn,
   getCurrentPokemon,
-  createExecutionQueue,
-  handleAutomaticSwitching,
-  handleMultiplayerSwitching,
   switchToSelectedPokemon,
-  bothPlayersSelectedMoves
+  isTeamDefeated,
+  BattleAction
 } from "@/lib/team-battle-engine";
 import TypeBadge from "@/components/TypeBadge";
 import HealthBar from "@/components/HealthBar";
@@ -25,8 +23,11 @@ import BattleOverDialog from "@/components/BattleOverDialog";
 import { ToastContainer, useToast } from "@/components/Toast";
 import { chatService } from "@/lib/chatService";
 import { battleService, type MultiplayerBattleState } from '@/lib/battleService';
+import { roomService } from '@/lib/roomService';
 import { useAuth } from "@/contexts/AuthContext";
 import { type MoveData } from '@/lib/userTeams';
+import { createBattleSyncManager, BattleSyncManager, SyncStatus } from '@/lib/battle-sync-manager';
+import { BattleStateValidator } from '@/lib/battle-state-validator';
 
 const STORAGE_KEY = "pokemon-team-builder";
 
@@ -43,32 +44,76 @@ function BattleRuntimePage() {
   const { toasts, removeToast } = useToast();
   
   const [battleState, setBattleState] = useState<TeamBattleState | null>(null);
+  const [syncManager, setSyncManager] = useState<BattleSyncManager | null>(null);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>({
+    isConnected: false,
+    lastSync: 0,
+    pendingActions: 0,
+    conflicts: 0,
+    latency: 0
+  });
   const lastBattleStateJSONRef = useRef<string>('');
 
   const setBattleStateIfChanged = useCallback((next: TeamBattleState) => {
     try {
+      // Validate battle state before applying
+      const validation = BattleStateValidator.validateBattleState(next);
+      if (!validation.isValid) {
+        console.error('❌ Invalid battle state detected:', validation.errors);
+        // Sanitize the state to fix issues
+        const sanitized = BattleStateValidator.sanitizeBattleState(next);
+        console.log('🔧 Sanitized battle state applied');
+        setBattleState(sanitized);
+        return;
+      }
+
+      if (validation.warnings.length > 0) {
+        console.warn('⚠️ Battle state warnings:', validation.warnings);
+      }
+
       const serialized = JSON.stringify(next);
       if (serialized !== lastBattleStateJSONRef.current) {
         console.log('=== BATTLE STATE UPDATE ===');
-        console.log('Previous battle log length:', battleState?.battleLog?.length || 0);
+        console.log('Previous battle log length:', lastBattleStateJSONRef.current ? JSON.parse(lastBattleStateJSONRef.current).battleLog?.length || 0 : 0);
         console.log('New battle log length:', next.battleLog?.length || 0);
-        console.log('Previous turn number:', battleState?.turnNumber);
-        console.log('New turn number:', next.turnNumber);
+        console.log('Previous turn number:', lastBattleStateJSONRef.current ? JSON.parse(lastBattleStateJSONRef.current).turn : 0);
+        console.log('New turn number:', next.turn);
         console.log('State changed, updating battle state');
         lastBattleStateJSONRef.current = serialized;
         setBattleState(next);
+
+        // Mark that initial battle state has been set (prevents team swapping in Firebase sync)
+        if (!initialBattleStateSetRef.current) {
+          initialBattleStateSetRef.current = true;
+          console.log('🔒 Initial battle state established - team positions locked');
+        }
+
+        // Sync to Firebase if available - use ref to avoid dependency
+        // Skip Firebase sync during Firebase updates to prevent loops
+        const currentSyncManager = syncManager;
+        if (currentSyncManager && !isApplyingFirebaseUpdateRef.current) {
+          console.log('🔄 Syncing battle state to sync manager');
+          console.log('📊 Syncing state:', {
+            turn: next.turn,
+            phase: next.phase,
+            playerHp: next.player?.pokemon?.[next.player.currentIndex]?.currentHp,
+            opponentHp: next.opponent?.pokemon?.[next.opponent.currentIndex]?.currentHp,
+            battleLogLength: next.battleLog?.length
+          });
+          currentSyncManager.setBattleState(next);
+        } else if (!currentSyncManager) {
+          console.log('⚠️ Sync manager not available yet, battle state not synced');
+        }
       } else {
         console.log('=== BATTLE STATE NO CHANGE ===');
         console.log('Battle state unchanged, skipping update');
-        console.log('Current battle log length:', battleState?.battleLog?.length || 0);
-        console.log('New battle log length:', next.battleLog?.length || 0);
       }
     } catch (error) {
       console.error('Error in setBattleStateIfChanged:', error);
       // Fallback: if serialization fails, still set once
       setBattleState(next);
     }
-  }, []);
+  }, []); // Remove dependencies to prevent infinite loops
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
@@ -129,6 +174,7 @@ function BattleRuntimePage() {
   const teamFlippingAppliedRef = useRef<boolean>(false);
   const lastAppliedTurnNumberRef = useRef<number>(0);
   const initialBattleStateSetRef = useRef<boolean>(false);
+  const isApplyingFirebaseUpdateRef = useRef<boolean>(false);
 
   const playerTeamId = searchParams.get("player");
   const opponentKind = searchParams.get("opponentKind");
@@ -155,6 +201,168 @@ function BattleRuntimePage() {
     }
   }, [multiplayerRoomId, urlBattleId]);
 
+  // Initialize Firebase sync manager for multiplayer battles
+  useEffect(() => {
+    if (!urlBattleId || !user?.uid || !isMultiplayer) return;
+
+    const initializeSyncManager = async () => {
+      try {
+        console.log('🔥 Initializing Firebase sync manager...');
+        const manager = createBattleSyncManager({
+          battleId: urlBattleId,
+          playerId: user.uid,
+          isHost: isHostParam === 'true'
+        });
+
+        await manager.initialize();
+        setSyncManager(manager);
+
+        // Set initial battle state if available
+        if (battleState) {
+          console.log('🔄 Setting initial battle state in sync manager');
+          manager.setBattleState(battleState);
+        } else {
+          console.log('⚠️ No battle state available yet when sync manager initialized');
+        }
+
+        // Set up event listeners
+        const unsubscribeState = manager.onStateChange((state) => {
+          console.log('📥 Received state update from sync manager');
+          setBattleStateIfChanged(state);
+        });
+
+        const unsubscribeStatus = manager.onSyncStatusChange((status) => {
+          console.log('📊 Sync status updated:', status);
+          setSyncStatus(status);
+        });
+
+        return () => {
+          unsubscribeState();
+          unsubscribeStatus();
+          manager.disconnect();
+        };
+      } catch (error) {
+        console.error('❌ Failed to initialize sync manager:', error);
+        setError('Failed to connect to battle server');
+      }
+    };
+
+    initializeSyncManager();
+  }, [urlBattleId, user?.uid, isMultiplayer, isHostParam]);
+
+  // Sync battle state to sync manager when both are available
+  useEffect(() => {
+    if (syncManager && battleState && !isApplyingFirebaseUpdateRef.current) {
+      console.log('🔄 Syncing existing battle state to newly available sync manager');
+      syncManager.setBattleState(battleState);
+    }
+  }, [syncManager, battleState]);
+
+  // Battle cleanup when navigating away
+  useEffect(() => {
+    const cleanup = async () => {
+      console.log('🧹 Cleaning up battle on navigation away');
+      
+      // Disconnect sync manager
+      if (syncManager) {
+        try {
+          await syncManager.disconnect();
+          console.log('✅ Sync manager disconnected');
+        } catch (error) {
+          console.error('❌ Error disconnecting sync manager:', error);
+        }
+      }
+
+      // Clean up multiplayer battle if applicable
+      if (isMultiplayer && urlBattleId && user?.uid) {
+        try {
+          console.log('🧹 Cleaning up multiplayer battle:', urlBattleId);
+          await battleService.leaveBattle(urlBattleId, user.uid);
+          console.log('✅ Left multiplayer battle');
+        } catch (error) {
+          console.error('❌ Error leaving battle:', error);
+        }
+      }
+    };
+
+    // Browser back/forward button
+    const handlePopState = () => {
+      console.log('🔙 Browser back/forward detected');
+      cleanup().then(() => {
+        router.push('/lobby');
+      });
+    };
+
+    // Page unload (browser close, refresh, navigation)
+    const handleBeforeUnload = () => {
+      console.log('🔄 Page unload detected');
+      cleanup();
+    };
+
+    // Page visibility change (browser tab switch, minimize)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        console.log('👁️ Page became hidden');
+        cleanup();
+      }
+    };
+
+    // Add event listeners
+    window.addEventListener('popstate', handlePopState);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Cleanup on component unmount
+    return () => {
+      console.log('🧹 Component unmounting, cleaning up battle');
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      cleanup();
+    };
+  }, [syncManager, isMultiplayer, urlBattleId, user?.uid, router]);
+
+  // Handle battle turn processing in the new Gen-8/9 system
+  useEffect(() => {
+    if (!battleState || battleState.phase !== 'resolution') return;
+
+    console.log('⚡ Battle in resolution phase - processing turn');
+    console.log('📋 Action queue:', battleState.actionQueue);
+    console.log('🔄 Turn number:', battleState.turn);
+
+    // The new system processes the entire turn at once
+    // This effect is mainly for logging and UI updates
+    console.log('✅ Turn processed');
+  }, [battleState?.phase, battleState?.actionQueue, battleState?.turn]);
+
+  // Process battle turn when both players have made their choices
+  const processTurn = useCallback(async (playerAction: BattleAction, opponentAction: BattleAction) => {
+    if (!battleState) return;
+
+    try {
+      console.log('🔄 Processing battle turn with actions:', { playerAction, opponentAction });
+      
+      // Use the new Gen-8/9 battle flow
+      const newState = await processBattleTurn(battleState, playerAction, opponentAction);
+      
+      console.log('✅ Turn processed:', {
+        turn: newState.turn,
+        phase: newState.phase,
+        isComplete: newState.isComplete,
+        winner: newState.winner
+      });
+      
+      setBattleStateIfChanged(newState);
+      
+      // Sync to Firebase if in multiplayer
+      if (syncManager) {
+        syncManager.setBattleState(newState);
+      }
+    } catch (error) {
+      console.error('❌ Error processing battle turn:', error);
+    }
+  }, [battleState, syncManager]);
+
   // Listen to multiplayer battle changes (gate on auth and brief backoff if needed)
   useEffect(() => {
     if (!battleId || !isMultiplayer || authLoading || !user) return;
@@ -179,7 +387,7 @@ function BattleRuntimePage() {
           console.log('👤 Current user:', user?.displayName || user?.uid || 'Anonymous');
           console.log('🆔 Battle ID:', battle.id);
           console.log('📊 Battle status:', battle.status);
-          console.log('🔄 Turn number:', battle.turnNumber);
+          console.log('🔄 Turn number:', battle.turn);
           console.log('👥 Current turn:', battle.currentTurn);
           console.log('📝 Moves count:', battle.moves?.length || 0);
           console.log('🎮 Battle data exists:', !!battle.battleData);
@@ -191,13 +399,13 @@ function BattleRuntimePage() {
                 id: prev.id,
                 status: prev.status,
                 currentTurn: prev.currentTurn,
-                turnNumber: prev.turnNumber
+                turn: prev.turn
               }) : '';
               const b = JSON.stringify({
                 id: battle.id,
                 status: battle.status,
                 currentTurn: battle.currentTurn,
-                turnNumber: battle.turnNumber
+                turn: battle.turn
               });
               if (a === b) {
                 return prev;
@@ -219,17 +427,17 @@ function BattleRuntimePage() {
             );
             
             const shouldApplyServerUpdate = !initialBattleStateSetRef.current || 
-              (battle.turnNumber && battle.turnNumber > lastAppliedTurnNumberRef.current) ||
-              (battle.battleData && battle.status === 'active' && battle.turnNumber !== lastAppliedTurnNumberRef.current);
+              (battle.turn && battle.turn > lastAppliedTurnNumberRef.current) ||
+              (battle.battleData && battle.status === 'active' && battle.turn !== lastAppliedTurnNumberRef.current);
             
             console.log('🔄 === SERVER UPDATE EVALUATION ===');
             console.log('👤 Current user:', user?.displayName || user?.uid || 'Anonymous');
             console.log('🏁 Initial battle state set:', initialBattleStateSetRef.current);
-            console.log('🔄 Battle turn number:', battle.turnNumber);
+            console.log('🔄 Battle turn number:', battle.turn);
             console.log('📊 Last applied turn number:', lastAppliedTurnNumberRef.current);
             console.log('📊 Battle status:', battle.status);
             console.log('🎮 Battle data exists:', !!battle.battleData);
-            console.log('🔄 Battle data turn number:', (battle.battleData as TeamBattleState)?.turnNumber);
+            console.log('🔄 Battle data turn number:', (battle.battleData as TeamBattleState)?.turn);
             console.log('🔍 Has battle data changes:', hasBattleDataChanges);
             console.log('🚫 Just resolved this turn:', false); // Will be updated after isHostUser is declared
             console.log('✅ Should apply server update:', shouldApplyServerUpdate);
@@ -274,26 +482,50 @@ function BattleRuntimePage() {
                 
                 if (battleState) {
                   // Merge with existing local state to preserve team positioning.
-                  // IMPORTANT: Server state is always host-perspective. If the local user is the guest,
-                  // overlay opponent server data onto local player and vice-versa to avoid side flips.
-                  const isHostUser = Boolean(user?.uid && battle.hostId && user.uid === battle.hostId);
-                  const serverPlayerTeam = isHostUser ? serverData.player : serverData.opponent;
-                  const serverOpponentTeam = isHostUser ? serverData.opponent : serverData.player;
-
-                  // Remap selection bookkeeping to local perspective
-                  const remappedSelectedMoves = isHostUser
-                    ? (serverData.selectedMoves || {})
-                    : {
+                  // CRITICAL FIX: Once teams are established, NEVER swap them regardless of server perspective
+                  // Only sync dynamic battle state (HP, status, moves, etc.) without changing team identities
+                  console.log('🔒 Preserving established team positions, syncing only dynamic state');
+                  
+                  // Determine which server teams correspond to which local teams based on Pokemon IDs
+                  // This ensures we sync the correct state without swapping team positions
+                  const localPlayerPokemonId = battleState.player.pokemon[0]?.pokemon?.id;
+                  const localOpponentPokemonId = battleState.opponent.pokemon[0]?.pokemon?.id;
+                  const serverPlayerPokemonId = serverData.player?.pokemon?.[0]?.pokemon?.id;
+                  const serverOpponentPokemonId = serverData.opponent?.pokemon?.[0]?.pokemon?.id;
+                  
+                  console.log('🔍 Team identification:', {
+                    localPlayer: localPlayerPokemonId,
+                    localOpponent: localOpponentPokemonId,
+                    serverPlayer: serverPlayerPokemonId,
+                    serverOpponent: serverOpponentPokemonId
+                  });
+                  
+                  // Match teams by Pokemon ID to avoid swapping
+                  let serverPlayerTeam, serverOpponentTeam, remappedSelectedMoves;
+                  if (localPlayerPokemonId === serverPlayerPokemonId) {
+                    // Direct mapping: local player = server player
+                    serverPlayerTeam = serverData.player;
+                    serverOpponentTeam = serverData.opponent;
+                    remappedSelectedMoves = serverData.selectedMoves || {};
+                  } else if (localPlayerPokemonId === serverOpponentPokemonId) {
+                    // Swapped mapping: local player = server opponent
+                    serverPlayerTeam = serverData.opponent;
+                    serverOpponentTeam = serverData.player;
+                    remappedSelectedMoves = {
                         player: serverData.selectedMoves?.opponent,
                         opponent: serverData.selectedMoves?.player
                       };
-                  const remappedExecutionQueue = (serverData.executionQueue || []).map(item => (
-                    isHostUser ? item : { ...item, isPlayer: !item.isPlayer }
-                  ));
+                  } else {
+                    // Fallback: preserve local state if Pokemon IDs don't match
+                    console.warn('⚠️ Pokemon ID mismatch, preserving local state');
+                    serverPlayerTeam = null;
+                    serverOpponentTeam = null;
+                    remappedSelectedMoves = battleState.selectedMoves || {};
+                  }
 
                   synchronizedState = {
                     ...serverData,
-                    // Preserve local team composition; overlay dynamic fields from the correct server side
+                    // Preserve local team composition and identities; only sync dynamic fields
                     player: {
                       ...battleState.player,
                       pokemon: battleState.player.pokemon.map((localPokemon, index) => {
@@ -331,7 +563,7 @@ function BattleRuntimePage() {
                     // Preserve phase system data from server
                     phase: serverData.phase || 'selection',
                     selectedMoves: remappedSelectedMoves,
-                    executionQueue: remappedExecutionQueue
+                    executionQueue: serverData.executionQueue || []
                   } as TeamBattleState;
                 } else {
                   // No local state: align server (host-perspective) data to local user's perspective
@@ -348,6 +580,8 @@ function BattleRuntimePage() {
                       } as TeamBattleState;
                     }
                     // Guest viewing host-authored state: swap sides so local user is always `player`
+                    // BUT only do this if we haven't already established teams (prevent mid-battle swapping)
+                    if (!initialBattleStateSetRef.current) {
                     return {
                       ...state,
                       player: { ...state.opponent },
@@ -360,6 +594,16 @@ function BattleRuntimePage() {
                       phase: state.phase || 'selection',
                       executionQueue: state.executionQueue || []
                     } as TeamBattleState;
+                    } else {
+                      // Teams already established, only sync state changes without swapping teams
+                      console.log('🔒 Teams already established, preserving team positions');
+                      return {
+                        ...state,
+                        phase: state.phase || 'selection',
+                        selectedMoves: state.selectedMoves || {},
+                        executionQueue: state.executionQueue || []
+                      } as TeamBattleState;
+                    }
                   };
 
                   synchronizedState = normalizeState(serverData, isHostUser);
@@ -379,7 +623,13 @@ function BattleRuntimePage() {
                 console.log('📊 Previous battle state log length:', battleState?.battleLog?.length || 0);
                 console.log('📊 New battle state log length:', synchronizedState.battleLog?.length || 0);
                 
+                // Set flag to prevent update loops
+                isApplyingFirebaseUpdateRef.current = true;
                 setBattleStateIfChanged(synchronizedState);
+                // Reset flag after a brief delay to allow state to settle
+                setTimeout(() => {
+                  isApplyingFirebaseUpdateRef.current = false;
+                }, 100);
               } catch (error) {
                 console.error('Error applying server update:', error);
                 // Fallback to local state if sync fails (only if we have local state)
@@ -457,11 +707,16 @@ function BattleRuntimePage() {
                   // Persist results and advance to next turn (no currentTurn switching needed)
                   const nextTurn = (battle.turnNumber || 1) + 1;
 
+                  // Only update if we're not currently applying a Firebase update
+                  if (!isApplyingFirebaseUpdateRef.current) {
                   await battleService.updateBattle(battle.id, {
                     battleData: working as unknown,
                     turnNumber: nextTurn,
                     moves: []
                   });
+                  } else {
+                    console.log('🔄 Skipping host resolution Firebase update - currently applying Firebase update to prevent loop');
+                  }
 
                   console.log('✅ Host wrote resolved battle state for turn', currentTurnNumber, '-> next turn', nextTurn);
                   // Mark this turn as resolved to prevent double resolution from rapid snapshots
@@ -713,7 +968,7 @@ function BattleRuntimePage() {
         }
       }, 1500); // 1.5 second delay for execution
     }
-  }, [isMultiplayer, battleState?.phase, battleState?.executionQueue.length, switchingInProgress]);
+  }, [isMultiplayer, battleState?.phase, battleState?.actionQueue?.length, switchingInProgress]);
 
   // Removed direct HP monitoring to prevent infinite loops
 
@@ -1650,9 +1905,9 @@ function BattleRuntimePage() {
       return;
     }
 
-    // Only allow move selection during selection phase
-    if (battleState.phase !== 'selection') {
-      console.log('❌ Move blocked - not in selection phase, current phase:', battleState.phase);
+    // Only allow move selection during choice phase
+    if (battleState.phase !== 'choice') {
+      console.log('❌ Move blocked - not in choice phase, current phase:', battleState.phase);
       return;
     }
 
@@ -1662,7 +1917,7 @@ function BattleRuntimePage() {
     if (isMultiplayer && battleId && multiplayerBattle) {
       // Multiplayer mode - sync move selection with other player
       try {
-        // Get the Pokémon from the player position (teams are already correctly assigned)
+        // Get the Pokémon from the player position
         const currentPokemon = getCurrentPokemon(battleState.player);
         const moveName = currentPokemon.moves[moveIndex]?.name || 'Unknown Move';
         
@@ -1670,81 +1925,82 @@ function BattleRuntimePage() {
         console.log('👤 Player:', user?.displayName || user?.uid || 'Anonymous');
         console.log('🔍 Player Pokémon:', currentPokemon.pokemon.name);
         console.log('⚡ Move name:', moveName);
-        console.log('📊 Current selected moves:', battleState.selectedMoves);
         
-        // Add move to battle service
-        console.log('📤 === ADDING MOVE TO BATTLE SERVICE ===');
-        console.log('🆔 Battle ID:', battleId);
-        console.log('👤 User ID:', user?.uid);
-        console.log('🎯 Move index:', moveIndex);
-        console.log('⚡ Move name:', moveName);
-        
-        await battleService.addMove(
-          battleId,
-          user?.uid || '',
-          user?.displayName || 'Anonymous',
-          moveIndex,
-          moveName
-        );
-        
-        console.log('✅ Move added to battle service successfully');
-        console.log('📡 Move should now be visible to other players via Firebase');
-        
-        // Select move locally (update local state only; host will resolve execution)
-        const newState = await executeTeamAction(battleState, { type: 'move', moveIndex }, true);
-        console.log('🎯 === LOCAL MOVE SELECTION RESULT ===');
-        console.log('👤 Player:', user?.displayName || user?.uid || 'Anonymous');
-        console.log('🔄 New state phase:', newState.phase);
-        console.log('📊 New state selected moves:', newState.selectedMoves);
-        console.log('✅ Both players selected moves:', bothPlayersSelectedMoves(newState));
-        console.log('⚡ Execution queue length:', newState.executionQueue?.length || 0);
-        
-        setBattleStateIfChanged(newState);
-        
-        // Only host updates battleData during selection to avoid conflicting perspectives
-        if (user?.uid === multiplayerBattle.hostId) {
-          await battleService.updateBattle(battleId, {
-            battleData: newState as unknown
-          });
+        // Use Firebase sync manager for move selection
+        if (syncManager && syncManager.getSyncStatus().isConnected) {
+          console.log('🔥 Using Firebase sync for move selection');
+          await syncManager.selectMove(moveName, moveName);
+          console.log('✅ Move selection sent via Firebase');
+        } else if (user?.uid && battleId) {
+          console.log('📤 Using Firebase fallback for move selection');
+          
+          try {
+            await battleService.addAction(battleId, {
+              playerId: user?.uid || '',
+              playerName: user?.displayName || 'Anonymous',
+              type: 'move',
+              moveId: moveName,
+              moveName: moveName
+            });
+            
+            console.log('✅ Move action added to battle service successfully');
+            console.log('📡 Move should now be visible to other players via Firebase');
+          } catch (firebaseError) {
+            console.warn('⚠️ Firebase sync failed, continuing with local-only battle:', firebaseError);
+          }
+        } else {
+          console.log('🔧 No sync available - continuing with local-only battle');
         }
         
-        console.log('📡 Battle updated in Firebase with move selection');
-        console.log('🔄 Other players should now see phase:', newState.phase);
-        console.log('📊 Other players should now see selected moves:', newState.selectedMoves);
+        console.log('📡 Move selection sent to Firebase');
         
         // Broadcast a system-like chat message for visibility
-        try {
-          const currentUserId = userId || user?.uid;
-          const userIsHost = Boolean(currentUserId && multiplayerBattle.hostId && currentUserId === multiplayerBattle.hostId);
-          await chatService.sendSystemMessage(roomId as string, `${userIsHost ? hostName : guestName} selected ${moveName}`);
-        } catch (error) {
-          console.warn('Failed to send system message:', error);
-        }
-        
-        if (newState.isComplete) {
-          // Battle is complete
-          await battleService.endBattle(battleId, newState.winner || 'draw', newState as unknown);
-          setSelectedMove(null);
-          return;
+        if (roomId) {
+          try {
+            const currentUserId = userId || user?.uid;
+            const userIsHost = Boolean(currentUserId && multiplayerBattle.hostId && currentUserId === multiplayerBattle.hostId);
+            await chatService.sendSystemMessage(roomId as string, `${userIsHost ? hostName : guestName} selected ${moveName}`);
+          } catch (error) {
+            console.warn('Failed to send system message:', error);
+          }
         }
         
       } catch (error) {
-        console.error('Failed to sync move selection:', error);
-        alert('Failed to sync move selection with opponent. Please try again.');
+        console.error('Unexpected error in move selection:', error);
+        console.warn('⚠️ Continuing with local-only battle due to sync error');
       } finally {
         setSelectedMove(null);
       }
     } else {
       // Single player mode - select move and trigger AI selection
-      const newState = await executeTeamAction(battleState, { type: 'move', moveIndex }, true);
+      const currentPokemon = getCurrentPokemon(battleState.player);
+      const moveName = currentPokemon.moves[moveIndex]?.name || 'Unknown Move';
+      
+      // Create AI action (random move selection)
+      const aiPokemon = getCurrentPokemon(battleState.opponent);
+      const aiMoveIndex = Math.floor(Math.random() * aiPokemon.moves.length);
+      const aiMoveName = aiPokemon.moves[aiMoveIndex]?.name || 'Unknown Move';
+      
+      const playerAction: BattleAction = {
+        type: 'move',
+        moveId: moveName,
+        target: 'opponent'
+      };
+      
+      const aiAction: BattleAction = {
+        type: 'move',
+        moveId: aiMoveName,
+        target: 'player'
+      };
+      
+      // Process the turn using the new Gen-8/9 battle flow
+      const newState = await processBattleTurn(battleState, playerAction, aiAction);
       setBattleStateIfChanged(newState);
 
       if (newState.isComplete) {
         setSelectedMove(null);
         return;
       }
-
-      // If both players have selected moves, execution will happen automatically
       // AI move selection will be handled by the useEffect
       setSelectedMove(null);
     }
@@ -1776,6 +2032,7 @@ function BattleRuntimePage() {
     // The useEffect will automatically trigger initialization
   };
 
+
   if (loading || authLoading) {
     // Remove blocking overlay so upstream dialogs/pages remain visible
     return null;
@@ -1797,12 +2054,8 @@ function BattleRuntimePage() {
     );
   }
 
-  if (!battleState) return null;
-
-  const { player: playerTeam, opponent: opponentTeam, battleLog, isComplete, winner } = battleState;
-  
   // Phase-based system: no individual turns, just selection -> execution -> selection
-  const turn = battleState.turn; // Keep for single-player compatibility
+  const turn = battleState?.turn || 0; // Keep for single-player compatibility
   
   // Trainer names for display (multiplayer uses actual names by side)
   const currentUserId = userId || user?.uid;
@@ -1815,14 +2068,14 @@ function BattleRuntimePage() {
     : 'Opponent';
   
   // Teams are already correctly assigned during battle initialization
-  const player = getCurrentPokemon(playerTeam);
-  const opponent = getCurrentPokemon(opponentTeam);
+  const player = getCurrentPokemon(battleState.player);
+  const opponent = getCurrentPokemon(battleState.opponent);
   const getTypeName = (t: string | { name?: string; type?: { name?: string } } | undefined) => 
     (typeof t === 'string' ? t : (t?.name || t?.type?.name || 'unknown'));
 
   // Debug logging for move selection visibility
   console.log('Battle state debug:', {
-    isComplete,
+    isComplete: battleState.isComplete,
     turn,
     playerHp: player.currentHp,
     playerName: player.pokemon.name,
@@ -1842,13 +2095,45 @@ function BattleRuntimePage() {
     }))
   });
 
+  const handleBackFromBattle = useCallback(async () => {
+    console.log('🔙 Back button clicked - finishing battle');
+    
+    // Disconnect sync manager
+    if (syncManager) {
+      try {
+        await syncManager.disconnect();
+        console.log('✅ Sync manager disconnected');
+      } catch (error) {
+        console.error('❌ Error disconnecting sync manager:', error);
+      }
+    }
+
+    // Clean up multiplayer battle if applicable
+    if (isMultiplayer && urlBattleId && user?.uid) {
+      try {
+        console.log('🧹 Finishing multiplayer battle:', urlBattleId);
+        await battleService.leaveBattle(urlBattleId, user.uid);
+        console.log('✅ Left multiplayer battle');
+      } catch (error) {
+        console.error('❌ Error leaving battle:', error);
+      }
+    }
+
+    // Navigate to lobby
+    router.push('/lobby');
+  }, [syncManager, isMultiplayer, urlBattleId, user?.uid, router]);
+
+  if (!battleState) return null;
+
+  const { player: playerTeam, opponent: opponentTeam, battleLog, isComplete, winner } = battleState;
+
   return (
     <div className="min-h-screen bg-bg text-text">
       <header className="sticky top-0 z-50 border-b border-border bg-surface">
         <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <button
-              onClick={() => router.push(isMultiplayer ? '/lobby' : "/battle")}
+              onClick={handleBackFromBattle}
               className="flex items-center space-x-2 text-muted hover:text-text transition-colors"
             >
               <ArrowLeft className="h-5 w-5" />
@@ -1872,6 +2157,28 @@ function BattleRuntimePage() {
           </div>
         </div>
       </header>
+
+      {/* Firebase Sync Status Indicator - Only show when Firebase sync is enabled */}
+      {isMultiplayer && syncManager && (
+        <div className="fixed top-20 right-4 z-40">
+          <div 
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium cursor-pointer transition-colors ${
+              syncStatus.isConnected 
+                ? 'bg-green-100 text-green-800 hover:bg-green-200' 
+                : 'bg-red-100 text-red-800 hover:bg-red-200'
+            }`}
+            title={`Sync Status: ${syncStatus.isConnected ? 'Connected' : 'Disconnected'}\nLast Sync: ${new Date(syncStatus.lastSync).toLocaleTimeString()}\nPending Actions: ${syncStatus.pendingActions}\nConflicts: ${syncStatus.conflicts}\nLatency: ${syncStatus.latency}ms`}
+          >
+            <div className={`w-2 h-2 rounded-full ${syncStatus.isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+            <span>{syncStatus.isConnected ? 'Synced' : 'Disconnected'}</span>
+            {syncStatus.pendingActions > 0 && (
+              <span className="bg-yellow-500 text-white text-xs px-2 py-1 rounded-full">
+                {syncStatus.pendingActions}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
 
       <main className="w-full px-4 py-6">
         {/* Battle Status */}
