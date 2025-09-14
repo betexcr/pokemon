@@ -426,11 +426,15 @@ class RoomService {
     
     const wasBattling = roomData.status === 'battling';
 
-    // If room was in battle, mark as unresolved and remove it from lobby listings
+    // If room was in battle, only the host can delete the battle
     if (wasBattling) {
       try {
-        if (roomData.battleId) {
+        if (roomData.battleId && roomData.hostId === userId) {
+          console.log('🏠 Host leaving room, deleting battle:', roomData.battleId);
           await battleService.deleteBattle(roomData.battleId);
+        } else if (roomData.battleId) {
+          console.log('👋 Non-host leaving room, not deleting battle:', roomData.battleId);
+          // Non-host leaving - battle should remain active for the host
         }
       } catch (e) {
         console.warn('Failed to delete battle during leave:', e);
@@ -623,6 +627,9 @@ class RoomService {
     if (roomData.guestId && newHostReady && newGuestReady && (roomData.status === 'waiting' || roomData.status === 'ready')) {
       updates.status = 'ready';
       console.log('Room status updated to ready:', { roomId, userId, newHostReady, newGuestReady, currentStatus: roomData.status });
+      
+      // Secure team and player data by creating battle document early
+      await this.secureBattleData(roomId, roomData);
     } else if (roomData.guestId && (!newHostReady || !newGuestReady) && roomData.status === 'ready') {
       // If one player is not ready, set status back to 'waiting'
       updates.status = 'waiting';
@@ -632,9 +639,236 @@ class RoomService {
     await this.updateRoom(roomId, updates);
   }
 
+  // Secure battle data by creating battle document when both players are ready
+  async secureBattleData(roomId: string, roomData: any): Promise<void> {
+    if (!db) throw new Error('Firebase not initialized');
+    
+    try {
+      // Check if battle document already exists
+      if (roomData.battleId) {
+        console.log('Battle document already exists:', roomData.battleId);
+        return;
+      }
+      
+      // Validate that both players have teams
+      if (!roomData.hostTeam || !roomData.guestTeam) {
+        console.log('Cannot secure battle data: missing teams');
+        return;
+      }
+      
+      // Validate team structures
+      const hostTeamValid = this.validateTeamStructure(roomData.hostTeam);
+      const guestTeamValid = this.validateTeamStructure(roomData.guestTeam);
+      
+      if (!hostTeamValid || !guestTeamValid) {
+        console.log('Cannot secure battle data: invalid team structures');
+        return;
+      }
+      
+      console.log('🔒 Securing battle data - creating battle document early');
+      
+      // Create battle document with secured data
+      const { battleService } = await import('@/lib/battleService');
+      const battleId = await battleService.createBattle(
+        roomId,
+        roomData.hostId,
+        roomData.hostName,
+        roomData.hostTeam,
+        roomData.guestId,
+        roomData.guestName,
+        roomData.guestTeam
+      );
+      
+      // Update room with battle ID
+      await updateDoc(doc(db, this.roomsCollection, roomId), {
+        battleId: battleId,
+        securedAt: serverTimestamp()
+      });
+      
+      console.log('✅ Battle data secured with ID:', battleId);
+      
+    } catch (error) {
+      console.error('❌ Failed to secure battle data:', error);
+      // Don't throw error - this is a non-critical operation
+    }
+  }
+  
+  // Helper method to validate team structure
+  private validateTeamStructure(team: any): boolean {
+    if (!team) return false;
+    
+    let pokemonArray: any[] = [];
+    
+    if (Array.isArray(team)) {
+      pokemonArray = team;
+    } else if (team.slots) {
+      pokemonArray = team.slots;
+    } else if (team.pokemon) {
+      pokemonArray = team.pokemon;
+    }
+    
+    // Check if team has at least one valid Pokemon
+    const validPokemon = pokemonArray.filter((pokemon: any) => pokemon && pokemon.id && pokemon.level);
+    return validPokemon.length > 0;
+  }
+
+  // Check if battle is ready to start (without actually starting it)
+  async checkBattleReadiness(roomId: string, allowBattlingStatus: boolean = false): Promise<{ isReady: boolean; errors: string[] }> {
+    if (!db) throw new Error('Firebase not initialized');
+    
+    const roomRef = doc(db, this.roomsCollection, roomId);
+    const roomSnap = await getDoc(roomRef);
+    
+    if (!roomSnap.exists()) {
+      return { isReady: false, errors: ['Room not found'] };
+    }
+    
+    const roomData = roomSnap.data();
+    const validationErrors: string[] = [];
+    
+    console.log('🔍 === DETAILED TEAM STRUCTURE DEBUG ===');
+    console.log('Host Team Type:', typeof roomData.hostTeam);
+    console.log('Host Team Is Array:', Array.isArray(roomData.hostTeam));
+    console.log('Host Team Length:', roomData.hostTeam?.length);
+    console.log('Host Team Content:', JSON.stringify(roomData.hostTeam, null, 2));
+    console.log('Guest Team Type:', typeof roomData.guestTeam);
+    console.log('Guest Team Is Array:', Array.isArray(roomData.guestTeam));
+    console.log('Guest Team Length:', roomData.guestTeam?.length);
+    console.log('Guest Team Content:', JSON.stringify(roomData.guestTeam, null, 2));
+    
+    // Check if room has both players
+    if (!roomData.hostId || !roomData.guestId) {
+      validationErrors.push('Room must have both host and guest players');
+    }
+    
+    // Check if both players are ready
+    if (!roomData.hostReady || !roomData.guestReady) {
+      validationErrors.push('Both players must be ready before starting the battle');
+    }
+    
+    // Check if both players have teams
+    if (!roomData.hostTeam || !roomData.guestTeam) {
+      validationErrors.push('Both players must select teams before starting the battle');
+    }
+    
+    // Validate team structure - handle different team formats
+    let hostTeamValid = false;
+    let guestTeamValid = false;
+    
+    // Check host team structure
+    if (roomData.hostTeam) {
+      if (Array.isArray(roomData.hostTeam)) {
+        hostTeamValid = roomData.hostTeam.length > 0;
+      } else if (typeof roomData.hostTeam === 'object' && roomData.hostTeam.slots) {
+        // Handle team object with slots property
+        hostTeamValid = Array.isArray(roomData.hostTeam.slots) && roomData.hostTeam.slots.length > 0;
+      } else if (typeof roomData.hostTeam === 'object' && roomData.hostTeam.pokemon) {
+        // Handle team object with pokemon property
+        hostTeamValid = Array.isArray(roomData.hostTeam.pokemon) && roomData.hostTeam.pokemon.length > 0;
+      }
+    }
+    
+    if (!hostTeamValid) {
+      validationErrors.push('Host team must be a non-empty array or valid team object');
+    }
+    
+    // Check guest team structure
+    if (roomData.guestTeam) {
+      if (Array.isArray(roomData.guestTeam)) {
+        guestTeamValid = roomData.guestTeam.length > 0;
+      } else if (typeof roomData.guestTeam === 'object' && roomData.guestTeam.slots) {
+        // Handle team object with slots property
+        guestTeamValid = Array.isArray(roomData.guestTeam.slots) && roomData.guestTeam.slots.length > 0;
+      } else if (typeof roomData.guestTeam === 'object' && roomData.guestTeam.pokemon) {
+        // Handle team object with pokemon property
+        guestTeamValid = Array.isArray(roomData.guestTeam.pokemon) && roomData.guestTeam.pokemon.length > 0;
+      }
+    }
+    
+    if (!guestTeamValid) {
+      validationErrors.push('Guest team must be a non-empty array or valid team object');
+    }
+    
+    // Check if teams have valid Pokemon data - handle different team formats
+    if (hostTeamValid && roomData.hostTeam) {
+      let hostPokemonArray: any[] = [];
+      
+      if (Array.isArray(roomData.hostTeam)) {
+        hostPokemonArray = roomData.hostTeam;
+      } else if (roomData.hostTeam.slots) {
+        hostPokemonArray = roomData.hostTeam.slots;
+      } else if (roomData.hostTeam.pokemon) {
+        hostPokemonArray = roomData.hostTeam.pokemon;
+      }
+      
+      // Filter out empty slots (null IDs) and check for valid Pokemon
+      const validHostPokemon = hostPokemonArray.filter((pokemon: any) => pokemon && pokemon.id && pokemon.level);
+      console.log('🔍 Host Team Debug:');
+      console.log('Total slots:', hostPokemonArray.length);
+      console.log('Valid Pokemon slots:', validHostPokemon.length);
+      console.log('All slots:', hostPokemonArray);
+      
+      if (validHostPokemon.length === 0) {
+        validationErrors.push('Host team has no valid Pokemon selected');
+      }
+    }
+    
+    if (guestTeamValid && roomData.guestTeam) {
+      let guestPokemonArray: any[] = [];
+      
+      if (Array.isArray(roomData.guestTeam)) {
+        guestPokemonArray = roomData.guestTeam;
+      } else if (roomData.guestTeam.slots) {
+        guestPokemonArray = roomData.guestTeam.slots;
+      } else if (roomData.guestTeam.pokemon) {
+        guestPokemonArray = roomData.guestTeam.pokemon;
+      }
+      
+      // Filter out empty slots (null IDs) and check for valid Pokemon
+      const validGuestPokemon = guestPokemonArray.filter((pokemon: any) => pokemon && pokemon.id && pokemon.level);
+      console.log('🔍 Guest Team Debug:');
+      console.log('Total slots:', guestPokemonArray.length);
+      console.log('Valid Pokemon slots:', validGuestPokemon.length);
+      console.log('All slots:', guestPokemonArray);
+      
+      if (validGuestPokemon.length === 0) {
+        validationErrors.push('Guest team has no valid Pokemon selected');
+      }
+    }
+    
+    // Check room status - conditionally allow 'battling' status
+    const allowedStatuses = ['ready', 'waiting'];
+    if (allowBattlingStatus) {
+      allowedStatuses.push('battling');
+    }
+    
+    if (!allowedStatuses.includes(roomData.status)) {
+      validationErrors.push(`Room status must be ${allowedStatuses.join(' or ')}, got '${roomData.status}'`);
+    }
+    
+    // Check player count
+    if (roomData.currentPlayers !== 2) {
+      validationErrors.push(`Room must have exactly 2 players, got ${roomData.currentPlayers}`);
+    }
+    
+    return {
+      isReady: validationErrors.length === 0,
+      errors: validationErrors
+    };
+  }
+
   // Start battle
   async startBattle(roomId: string, _battleId: string): Promise<void> {
     if (!db) throw new Error('Firebase not initialized');
+    
+    // First check if battle is ready to start
+    const readinessCheck = await this.checkBattleReadiness(roomId);
+    if (!readinessCheck.isReady) {
+      console.error('❌ Battle readiness validation failed:', readinessCheck.errors);
+      throw new Error(`Battle cannot start: ${readinessCheck.errors.join(', ')}`);
+    }
+    
+    console.log('✅ All battle readiness validations passed');
     
     const roomRef = doc(db, this.roomsCollection, roomId);
     const roomSnap = await getDoc(roomRef);
@@ -645,15 +879,13 @@ class RoomService {
     
     const roomData = roomSnap.data();
     
-    // Check if both players are ready
-    if (!roomData.hostReady || !roomData.guestReady) {
-      throw new Error('Both players must be ready before starting the battle');
-    }
-    
-    // Check if both players have teams
-    if (!roomData.hostTeam || !roomData.guestTeam) {
-      throw new Error('Both players must select teams before starting the battle');
-    }
+    console.log('🔍 === BATTLE START DETAILS ===');
+    console.log('Room ID:', roomId);
+    console.log('Room Status:', roomData.status);
+    console.log('Host ID:', roomData.hostId);
+    console.log('Guest ID:', roomData.guestId);
+    console.log('Has Host Team:', !!roomData.hostTeam);
+    console.log('Has Guest Team:', !!roomData.guestTeam);
     
     // Check if teams are identical (prevent same team battles)
     // More robust comparison that handles different property orders
@@ -677,21 +909,33 @@ class RoomService {
       throw new Error('Both players cannot use the same team. Please select different teams.');
     }
     
-    // Create battle in Firestore
-    console.log('=== BATTLE CREATION DEBUG ===');
-    console.log('Host team being passed to battle:', roomData.hostTeam);
-    console.log('Guest team being passed to battle:', roomData.guestTeam);
-    console.log('Teams are identical:', teamsAreIdentical);
+    // Use existing battle document or create new one if needed
+    let actualBattleId = roomData.battleId;
     
-    const actualBattleId = await battleService.createBattle(
-      roomId,
-      roomData.hostId,
-      roomData.hostName,
-      roomData.hostTeam,
-      roomData.guestId,
-      roomData.guestName,
-      roomData.guestTeam
-    );
+    if (actualBattleId) {
+      console.log('✅ Using existing battle document:', actualBattleId);
+    } else {
+      console.log('=== BATTLE CREATION DEBUG (fallback) ===');
+      console.log('Host team being passed to battle:', roomData.hostTeam);
+      console.log('Guest team being passed to battle:', roomData.guestTeam);
+      console.log('Teams are identical:', teamsAreIdentical);
+      
+      // Fallback: create battle document if it doesn't exist
+      const { battleService } = await import('@/lib/battleService');
+      actualBattleId = await battleService.createBattle(
+        roomId,
+        roomData.hostId,
+        roomData.hostName,
+        roomData.hostTeam,
+        roomData.guestId,
+        roomData.guestName,
+        roomData.guestTeam
+      );
+      
+      // Add a small delay to ensure Firestore consistency before updating room
+      console.log('⏳ Waiting for battle document consistency...');
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
     
     await updateDoc(roomRef, {
       status: 'battling',

@@ -3,9 +3,13 @@ import {
   doc, 
   addDoc, 
   getDoc, 
+  getDocs,
   updateDoc, 
   deleteDoc, 
+  setDoc,
   onSnapshot, 
+  query,
+  where,
   serverTimestamp,
   type Unsubscribe
 } from 'firebase/firestore';
@@ -57,21 +61,48 @@ export interface BattleUpdate {
 
 class BattleService {
   private battlesCollection = 'battles';
+  private auth = auth;
   
   private ensureAuthenticated(): void {
-    if (!auth?.currentUser?.uid) {
+    console.log('🔍 Authentication state check:', {
+      authObjectExists: !!this.auth,
+      currentUserExists: !!this.auth?.currentUser,
+      currentUserUid: this.auth?.currentUser?.uid,
+      currentUserEmail: this.auth?.currentUser?.email,
+      currentUserEmailVerified: this.auth?.currentUser?.emailVerified,
+      currentUserDisplayName: this.auth?.currentUser?.displayName
+    });
+    
+    if (!this.auth?.currentUser?.uid) {
       console.error('❌ Authentication check failed: No current user');
+      console.error('❌ Auth object exists:', !!this.auth);
+      console.error('❌ Current user exists:', !!this.auth?.currentUser);
+      console.error('❌ Current user UID exists:', !!this.auth?.currentUser?.uid);
       throw new Error('User not authenticated');
     }
     
     // Check if the user's token is still valid
-    if (auth.currentUser) {
-      auth.currentUser.getIdToken().then(token => {
+    if (this.auth.currentUser) {
+      this.auth.currentUser.getIdToken().then(token => {
         console.log('🔑 User token is valid, length:', token.length);
       }).catch(error => {
         console.error('❌ User token validation failed:', error);
       });
     }
+  }
+
+  private getCurrentUserId(): string {
+    const uid = this.auth?.currentUser?.uid;
+    if (!uid) {
+      console.error('❌ Cannot get current user ID - user not authenticated');
+      console.error('❌ Auth state:', {
+        authExists: !!this.auth,
+        currentUserExists: !!this.auth?.currentUser,
+        uidExists: !!this.auth?.currentUser?.uid
+      });
+      throw new Error('User not authenticated');
+    }
+    return uid;
   }
 
   // Recursively replace undefined with null so Firestore accepts the payload
@@ -129,6 +160,16 @@ class BattleService {
       updatedAt: serverTimestamp()
     };
 
+    console.log('📝 Creating battle document with data:', {
+      roomId,
+      hostId,
+      hostName,
+      guestId,
+      guestName,
+      hasHostTeam: !!hostTeam,
+      hasGuestTeam: !!guestTeam
+    });
+
     const docRef = await addDoc(collection(db, this.battlesCollection), battleData);
     console.log('✅ Battle document created with ID:', docRef.id);
     console.log('📊 Battle data structure:', {
@@ -139,6 +180,21 @@ class BattleService {
       hasHostTeam: !!battleData.hostTeam,
       hasGuestTeam: !!battleData.guestTeam
     });
+    
+    // Verify the document was created successfully by immediately reading it back
+    try {
+      const verificationDoc = await getDoc(doc(db, this.battlesCollection, docRef.id));
+      if (verificationDoc.exists()) {
+        console.log('✅ Battle document verification successful');
+      } else {
+        console.error('❌ Battle document verification failed - document does not exist after creation');
+        throw new Error('Battle document was not created properly');
+      }
+    } catch (verificationError) {
+      console.error('❌ Battle document verification error:', verificationError);
+      throw new Error(`Battle document creation verification failed: ${verificationError instanceof Error ? verificationError.message : 'Unknown error'}`);
+    }
+    
     return docRef.id;
   }
 
@@ -169,9 +225,10 @@ class BattleService {
     this.ensureAuthenticated();
     
     console.log('🔄 Updating battle:', { battleId, updates });
-    console.log('🔑 Current user UID:', this.auth?.currentUser?.uid);
+    const currentUserId = this.getCurrentUserId();
+    console.log('🔑 Current user UID:', currentUserId);
     console.log('🔑 User authenticated:', this.auth?.currentUser ? 'Yes' : 'No');
-    console.log('🔑 Auth token valid:', this.auth?.currentUser?.uid ? 'Yes' : 'No');
+    console.log('🔑 Auth token valid:', currentUserId ? 'Yes' : 'No');
     
     const battleRef = doc(db, this.battlesCollection, battleId);
     const snap = await getDoc(battleRef);
@@ -183,8 +240,15 @@ class BattleService {
       console.log('  - Guest ID:', current.guestId);
       console.log('  - Room ID:', current.roomId);
       console.log('  - Status:', current.status);
-      console.log('  - Current user matches host:', this.auth?.currentUser?.uid === current.hostId);
-      console.log('  - Current user matches guest:', this.auth?.currentUser?.uid === current.guestId);
+      console.log('  - Current user matches host:', currentUserId === current.hostId);
+      console.log('  - Current user matches guest:', currentUserId === current.guestId);
+      console.log('  - Document ID:', snap.id);
+      console.log('  - All document fields:', Object.keys(current));
+      console.log('  - Field types:', {
+        hostId: typeof current.hostId,
+        guestId: typeof current.guestId,
+        roomId: typeof current.roomId
+      });
       
       // Build a comparable subset without updatedAt
       const keys = Object.keys(updates).filter(k => k !== 'updatedAt');
@@ -221,13 +285,13 @@ class BattleService {
       };
       
       console.log('📤 Final update data being sent to Firebase:', updateData);
-      console.log('🔑 Current user UID:', this.auth?.currentUser?.uid);
+      console.log('🔑 Current user UID:', currentUserId);
       console.log('🏠 Battle host ID:', snap.data()?.hostId);
       console.log('👥 Battle guest ID:', snap.data()?.guestId);
       console.log('🔍 Update fields being sent:', Object.keys(updateData));
       console.log('🔍 User has permission to update:', 
-        this.auth?.currentUser?.uid === snap.data()?.hostId || 
-        this.auth?.currentUser?.uid === snap.data()?.guestId
+        currentUserId === snap.data()?.hostId || 
+        currentUserId === snap.data()?.guestId
       );
       
       await updateDoc(battleRef, updateData);
@@ -258,10 +322,22 @@ class BattleService {
       // Check if it's a permissions error
       if (errorDetails.code === 'permission-denied') {
         console.error('🔒 Permission denied - checking user authentication and battle access');
-        console.error('Current user UID:', this.auth?.currentUser?.uid);
+        console.error('Current user UID:', currentUserId);
         console.error('Battle host ID:', snap.data()?.hostId);
         console.error('Battle guest ID:', snap.data()?.guestId);
         console.error('Battle room ID:', snap.data()?.roomId);
+        
+        // Check if the battle document has missing required fields
+        const battleData = snap.data();
+        if (battleData && (battleData.hostId === undefined || battleData.guestId === undefined || battleData.roomId === undefined)) {
+          console.error('❌ Battle document has missing required fields - this is likely a data corruption issue');
+          console.error('❌ Missing fields:', {
+            hostId: battleData.hostId === undefined ? 'MISSING' : 'PRESENT',
+            guestId: battleData.guestId === undefined ? 'MISSING' : 'PRESENT', 
+            roomId: battleData.roomId === undefined ? 'MISSING' : 'PRESENT'
+          });
+          throw new Error('Battle document is corrupted - missing required fields (hostId, guestId, or roomId). Please create a new battle.');
+        }
         
         // Try to get room data to check permissions
         if (snap.data()?.roomId) {
@@ -296,7 +372,8 @@ class BattleService {
     console.log('👤 Player Name:', action.playerName);
     console.log('🎯 Action Type:', action.type);
     console.log('⚡ Action Details:', action);
-    console.log('🔑 Current user UID:', this.auth?.currentUser?.uid);
+    const currentUserId = this.getCurrentUserId();
+    console.log('🔑 Current user UID:', currentUserId);
     
     const battleRef = doc(db, this.battlesCollection, battleId);
     const battleSnap = await getDoc(battleRef);
@@ -352,11 +429,18 @@ class BattleService {
       console.log('✅ Action added successfully');
     } catch (error) {
       console.error('❌ Failed to add action:', error);
-      console.error('❌ Error details:', {
-        code: (error as any)?.code || 'unknown',
-        message: (error as any)?.message || String(error),
-        details: (error as any)?.details || 'no details available'
-      });
+      
+      const errorDetails = {
+        errorType: error?.constructor?.name || 'Unknown',
+        errorMessage: (error as any)?.message || String(error),
+        errorCode: (error as any)?.code || 'unknown',
+        errorDetails: (error as any)?.details || 'no details available',
+        actionType,
+        battleId,
+        currentUser: currentUserId
+      };
+      
+      console.error('❌ Error details:', errorDetails);
       throw error;
     }
     
@@ -387,29 +471,44 @@ class BattleService {
     
     const battleRef = doc(db, this.battlesCollection, battleId);
     
-    // Retry mechanism for race conditions
-    let retries = 3;
+    // Add initial delay to account for Firestore eventual consistency
+    console.log('⏳ Waiting for Firestore consistency...');
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Use dynamic retry system for battle document retrieval
+    const { DynamicRetry, BATTLE_RETRY_CONFIG } = await import('@/lib/retryUtils');
+    
     let snap;
     
-    while (retries > 0) {
-      snap = await getDoc(battleRef);
-      
-      if (snap.exists()) {
-        break;
-      }
-      
-      console.log(`⏳ Battle document not found, retrying... (${retries} attempts left)`);
-      retries--;
-      
-      if (retries > 0) {
-        // Wait a bit before retrying
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
+    try {
+      await DynamicRetry.retry(
+        async () => {
+          snap = await getDoc(battleRef);
+          
+          if (!snap.exists()) {
+            throw new Error(`Battle document ${battleId} not found`);
+          }
+          
+          console.log('✅ Battle document found');
+          return snap;
+        },
+        BATTLE_RETRY_CONFIG,
+        (attempt, delay, error) => {
+          console.log(`⏳ Battle document retrieval attempt ${attempt} failed:`, {
+            error: error?.message || error,
+            nextRetryIn: `${delay}ms`,
+            battleId
+          });
+        }
+      );
+    } catch (error) {
+      console.error('❌ Battle document retrieval failed after all retries:', error);
+      throw error;
     }
     
+    // At this point, we should have a valid snap from the retry system
     if (!snap || !snap.exists()) {
-      console.log('❌ Battle document does not exist after retries! Cannot start battle.');
-      throw new Error(`Battle document ${battleId} does not exist`);
+      throw new Error(`Battle document ${battleId} does not exist - this should not happen after successful retry`);
     }
     
     const data = snap.data();
@@ -489,10 +588,16 @@ class BattleService {
       }
     }, (error) => {
       console.error('Battle snapshot listener error:', error);
-      console.error('Error details:', {
-        code: (error as any)?.code || 'unknown',
-        message: (error as any)?.message || String(error)
-      });
+      
+      const errorDetails = {
+        errorType: error?.constructor?.name || 'Unknown',
+        errorMessage: (error as any)?.message || String(error),
+        errorCode: (error as any)?.code || 'unknown',
+        battleId,
+        currentUser: this.auth?.currentUser?.uid
+      };
+      
+      console.error('Error details:', errorDetails);
       // Don't call callback with null on error, let the user handle it
     });
   }
@@ -503,13 +608,40 @@ class BattleService {
     this.ensureAuthenticated();
     
     console.log('🧹 Leaving battle:', battleId, 'for user:', userId);
-    console.log('🔑 Current user UID:', this.auth?.currentUser?.uid);
-    console.log('🔑 User matches provided userId:', this.auth?.currentUser?.uid === userId);
+    const currentUserId = this.getCurrentUserId();
+    console.log('🔑 Current user UID:', currentUserId);
+    console.log('🔑 User matches provided userId:', currentUserId === userId);
     
     // Check if user is the host before attempting to delete
     try {
+      console.log('🔍 Step 1: Getting battle document reference');
       const battleRef = doc(db, this.battlesCollection, battleId);
-      const battleSnap = await getDoc(battleRef);
+      console.log('🔍 Step 2: Attempting to fetch battle document');
+      
+      let battleSnap;
+      try {
+        battleSnap = await getDoc(battleRef);
+        console.log('🔍 Step 3: Battle document fetch result:', {
+          exists: battleSnap.exists(),
+          id: battleSnap.id
+        });
+      } catch (fetchError) {
+        console.error('❌ Error fetching battle document:', fetchError);
+        console.error('❌ Fetch error details:', {
+          errorType: fetchError?.constructor?.name,
+          errorCode: (fetchError as any)?.code,
+          errorMessage: (fetchError as any)?.message,
+          errorDetails: (fetchError as any)?.details,
+          battleId,
+          currentUser: this.auth?.currentUser?.uid,
+          authState: {
+            isAuthenticated: !!this.auth?.currentUser,
+            uid: this.auth?.currentUser?.uid,
+            email: this.auth?.currentUser?.email
+          }
+        });
+        throw fetchError;
+      }
       
       if (battleSnap.exists()) {
         const battleData = battleSnap.data();
@@ -518,17 +650,17 @@ class BattleService {
           guestId: battleData.guestId,
           status: battleData.status
         });
-        console.log('🔍 User is host:', battleData.hostId === userId);
-        console.log('🔍 User is guest:', battleData.guestId === userId);
+        console.log('🔍 User is host:', battleData.hostId === currentUserId);
+        console.log('🔍 User is guest:', battleData.guestId === currentUserId);
         
-        if (battleData.hostId === userId) {
+        if (battleData.hostId === currentUserId) {
           // Only host can delete the battle
-          console.log('🗑️ Host leaving - deleting battle');
+          console.log('🗑️ Step 4: Host leaving - attempting to delete battle');
           await this.deleteBattle(battleId);
           console.log('✅ Successfully left battle (host deleted):', battleId);
         } else {
           // Non-host just logs out, doesn't delete battle
-          console.log('👋 Non-host leaving - not deleting battle');
+          console.log('👋 Step 4: Non-host leaving - not deleting battle');
           console.log('✅ Successfully left battle (non-host):', battleId);
         }
       } else {
@@ -537,32 +669,148 @@ class BattleService {
     } catch (error) {
       console.error('❌ Error leaving battle:', error);
       
-      // More robust error details extraction
-      const errorDetails = {
+      // More comprehensive error analysis
+      let errorInfo = {
         battleId,
         userId,
-        currentUser: this.auth?.currentUser?.uid,
-        errorType: error?.constructor?.name || 'Unknown',
-        errorString: String(error),
-        errorMessage: (error as any)?.message || 'No message available',
-        errorCode: (error as any)?.code || 'No code available',
-        errorStack: (error as any)?.stack || 'No stack available',
-        errorName: (error as any)?.name || 'No name available'
+        currentUser: currentUserId,
+        timestamp: new Date().toISOString(),
+        authState: {
+          isAuthenticated: !!this.auth?.currentUser,
+          uid: this.auth?.currentUser?.uid,
+          email: this.auth?.currentUser?.email,
+          emailVerified: this.auth?.currentUser?.emailVerified
+        }
       };
       
-      console.error('❌ Error details:', errorDetails);
+      // Try to extract error information in multiple ways
+      if (error === null || error === undefined) {
+        errorInfo.errorType = 'null/undefined';
+        errorInfo.errorMessage = 'Error is null or undefined';
+      } else if (typeof error === 'string') {
+        errorInfo.errorType = 'string';
+        errorInfo.errorMessage = error;
+      } else if (typeof error === 'object') {
+        errorInfo.errorType = error?.constructor?.name || 'Object';
+        errorInfo.errorMessage = (error as any)?.message || String(error);
+        errorInfo.errorCode = (error as any)?.code;
+        errorInfo.errorStack = (error as any)?.stack;
+        errorInfo.errorName = (error as any)?.name;
+        
+        // Firebase-specific error properties
+        if ((error as any)?.code) {
+          errorInfo.firebaseError = {
+            code: (error as any).code,
+            message: (error as any).message,
+            customData: (error as any).customData,
+            details: (error as any).details,
+            stack: (error as any).stack
+          };
+        }
+        
+        // Try to get all enumerable properties
+        try {
+          errorInfo.errorProperties = Object.getOwnPropertyNames(error);
+          errorInfo.enumerableProperties = Object.keys(error);
+        } catch (e) {
+          errorInfo.errorProperties = 'Could not enumerate properties';
+          errorInfo.enumerableProperties = 'Could not get enumerable properties';
+        }
+        
+        // Try to access common Firebase error properties
+        try {
+          errorInfo.firebaseSpecific = {
+            code: (error as any)?.code,
+            message: (error as any)?.message,
+            serverResponse: (error as any)?.serverResponse,
+            customData: (error as any)?.customData,
+            details: (error as any)?.details
+          };
+        } catch (e) {
+          errorInfo.firebaseSpecific = 'Could not access Firebase properties';
+        }
+      } else {
+        errorInfo.errorType = typeof error;
+        errorInfo.errorMessage = String(error);
+      }
       
-      // Log the raw error object structure for debugging
-      console.error('❌ Raw error object:', {
-        keys: Object.keys(error || {}),
-        type: typeof error,
-        isError: error instanceof Error,
-        valueOf: error?.valueOf?.(),
-        toString: error?.toString?.()
-      });
+      console.error('❌ Error details:', errorInfo);
+      
+      // Additional debugging for completely empty objects
+      if (error && typeof error === 'object' && Object.keys(error).length === 0) {
+        console.error('❌ Empty error object detected - possible serialization issue');
+        console.error('❌ Error prototype chain:', {
+          constructor: error.constructor?.name,
+          prototype: Object.getPrototypeOf(error)?.constructor?.name,
+          hasOwnProperty: error.hasOwnProperty?.toString(),
+          toString: error.toString?.toString()
+        });
+        
+        // Try to access the error as if it's a Firebase error
+        console.error('❌ Attempting Firebase error property access:', {
+          'error.code': (error as any)?.code,
+          'error.message': (error as any)?.message,
+          'error.details': (error as any)?.details,
+          'error.customData': (error as any)?.customData,
+          'error.serverResponse': (error as any)?.serverResponse,
+          'error.toJSON': (error as any)?.toJSON?.()
+        });
+      }
       
       // Don't throw error for leave operations to avoid breaking navigation
       console.log('⚠️ Continuing despite leave error');
+    }
+  }
+
+  // Recover corrupted battle by recreating it with proper data
+  async recoverBattle(battleId: string, roomId: string, hostId: string, hostName: string, hostTeam: unknown, guestId: string, guestName: string, guestTeam: unknown): Promise<void> {
+    if (!db) throw new Error('Firebase not initialized');
+    this.ensureAuthenticated();
+    
+    console.log('🔧 Attempting to recover corrupted battle:', battleId);
+    
+    const currentUserId = this.getCurrentUserId();
+    if (currentUserId !== hostId) {
+      throw new Error('Only the battle host can recover a corrupted battle');
+    }
+    
+    const battleRef = doc(db, this.battlesCollection, battleId);
+    
+    // Delete the corrupted battle
+    try {
+      await deleteDoc(battleRef);
+      console.log('🗑️ Deleted corrupted battle document');
+    } catch (error) {
+      console.error('❌ Failed to delete corrupted battle:', error);
+      throw error;
+    }
+    
+    // Recreate the battle with proper data
+    try {
+      const battleData = {
+        roomId,
+        hostId,
+        hostName,
+        hostTeam,
+        guestId,
+        guestName,
+        guestTeam,
+        currentTurn: 'host' as const,
+        turnNumber: 1,
+        actions: [],
+        battleData: null,
+        status: 'waiting' as const,
+        phase: 'choice' as const,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+      
+      // Create a new document with the same ID
+      await setDoc(battleRef, battleData);
+      console.log('✅ Successfully recovered battle with proper data structure');
+    } catch (error) {
+      console.error('❌ Failed to recreate battle:', error);
+      throw error;
     }
   }
 
@@ -572,24 +820,205 @@ class BattleService {
     this.ensureAuthenticated();
     
     console.log('🗑️ Deleting battle:', battleId);
-    console.log('🔑 Current user UID:', this.auth?.currentUser?.uid);
+    const currentUserId = this.getCurrentUserId();
+    console.log('🔑 Current user UID:', currentUserId);
     
     const battleRef = doc(db, this.battlesCollection, battleId);
     
     // First check if the user has permission to delete this battle
+    console.log('🔍 Step 1: Checking battle permissions before deletion');
     const battleSnap = await getDoc(battleRef);
-    if (battleSnap.exists()) {
-      const battleData = battleSnap.data();
-      console.log('📊 Battle data for deletion check:', {
-        hostId: battleData.hostId,
-        guestId: battleData.guestId,
-        status: battleData.status
-      });
-      console.log('🔍 User is host (can delete):', battleData.hostId === this.auth?.currentUser?.uid);
+    
+    if (!battleSnap.exists()) {
+      console.log('⚠️ Battle document does not exist, skipping deletion');
+      return;
     }
     
-    await deleteDoc(battleRef);
-    console.log('✅ Battle deleted successfully:', battleId);
+    const battleData = battleSnap.data();
+    console.log('📊 Battle data for deletion check:', {
+      hostId: battleData.hostId,
+      guestId: battleData.guestId,
+      status: battleData.status,
+      hasHostId: !!battleData.hostId,
+      hostIdType: typeof battleData.hostId
+    });
+    
+    const isHost = battleData.hostId === currentUserId;
+    console.log('🔍 User is host (can delete):', isHost);
+    console.log('🔍 Permission check details:', {
+      currentUserId,
+      battleHostId: battleData.hostId,
+      areEqual: battleData.hostId === currentUserId,
+      currentUserType: typeof currentUserId,
+      battleHostIdType: typeof battleData.hostId
+    });
+    
+    if (!isHost) {
+      throw new Error(`User ${currentUserId} is not the host (${battleData.hostId}) and cannot delete battle ${battleId}`);
+    }
+    
+    console.log('🔍 Step 2: Attempting to delete battle document');
+    console.log('🔍 Firebase context for deletion:', {
+      auth: {
+        uid: currentUserId,
+        email: this.auth?.currentUser?.email,
+        emailVerified: this.auth?.currentUser?.emailVerified
+      },
+      documentPath: `${this.battlesCollection}/${battleId}`,
+      documentData: {
+        hostId: battleData.hostId,
+        status: battleData.status
+      }
+    });
+    
+    // Re-fetch the document right before deletion to ensure we have the latest state
+    console.log('🔍 Step 2.1: Re-fetching document before deletion');
+    let finalBattleSnap;
+    try {
+      finalBattleSnap = await getDoc(battleRef);
+      if (finalBattleSnap.exists()) {
+        const finalBattleData = finalBattleSnap.data();
+        console.log('🔍 Final document state before deletion:', {
+          exists: finalBattleSnap.exists(),
+          hostId: finalBattleData.hostId,
+          guestId: finalBattleData.guestId,
+          status: finalBattleData.status,
+          currentUserMatchesHost: finalBattleData.hostId === currentUserId,
+          documentId: finalBattleSnap.id,
+          hostIdType: typeof finalBattleData.hostId,
+          hostIdValue: finalBattleData.hostId,
+          currentUserIdValue: currentUserId,
+          areEqual: finalBattleData.hostId === currentUserId,
+          documentKeys: Object.keys(finalBattleData),
+          fullDocumentData: finalBattleData
+        });
+      } else {
+        console.log('⚠️ Document no longer exists before deletion attempt');
+        return;
+      }
+    } catch (fetchError) {
+      console.error('❌ Error fetching document before deletion:', fetchError);
+      throw fetchError;
+    }
+    
+    // Verify authentication state one more time before deletion
+    console.log('🔍 Step 2.2: Final authentication verification');
+    const finalAuthState = {
+      currentUser: this.auth?.currentUser?.uid,
+      email: this.auth?.currentUser?.email,
+      emailVerified: this.auth?.currentUser?.emailVerified,
+      tokenValid: false
+    };
+    
+    try {
+      if (this.auth?.currentUser) {
+        const token = await this.auth.currentUser.getIdToken();
+        finalAuthState.tokenValid = !!token;
+        console.log('🔍 Auth token check result:', { tokenLength: token?.length });
+      }
+    } catch (tokenError) {
+      console.error('❌ Token validation failed:', tokenError);
+      finalAuthState.tokenValid = false;
+    }
+    
+    console.log('🔍 Final auth state before deletion:', finalAuthState);
+    
+    try {
+      console.log('🔍 About to call deleteDoc with:', {
+        documentPath: `${this.battlesCollection}/${battleId}`,
+        auth: {
+          uid: this.auth?.currentUser?.uid,
+          email: this.auth?.currentUser?.email
+        },
+        documentExists: finalBattleSnap?.exists(),
+        documentData: finalBattleSnap?.exists() ? finalBattleSnap.data() : null
+      });
+      
+      await deleteDoc(battleRef);
+      console.log('✅ Battle deleted successfully:', battleId);
+    } catch (deleteError) {
+      console.error('❌ Firebase deleteDoc error:', deleteError);
+      
+      // More robust error details extraction
+      let errorDetails = {
+        battleId,
+        currentUser: currentUserId,
+        battleHostId: battleData.hostId,
+        isHost: battleData.hostId === currentUserId,
+        finalAuthState,
+        finalDocumentState: finalBattleSnap?.exists() ? {
+          hostId: finalBattleSnap.data()?.hostId,
+          guestId: finalBattleSnap.data()?.guestId,
+          status: finalBattleSnap.data()?.status
+        } : 'Document does not exist',
+        timestamp: new Date().toISOString()
+      };
+      
+      // Try to extract error information in multiple ways
+      if (deleteError === null || deleteError === undefined) {
+        errorDetails.errorType = 'null/undefined';
+        errorDetails.errorMessage = 'Error is null or undefined';
+      } else if (typeof deleteError === 'string') {
+        errorDetails.errorType = 'string';
+        errorDetails.errorMessage = deleteError;
+      } else if (typeof deleteError === 'object') {
+        errorDetails.errorType = deleteError?.constructor?.name || 'Object';
+        errorDetails.errorMessage = (deleteError as any)?.message || String(deleteError);
+        errorDetails.errorCode = (deleteError as any)?.code;
+        errorDetails.errorDetails = (deleteError as any)?.details;
+        errorDetails.errorCustomData = (deleteError as any)?.customData;
+        errorDetails.errorStack = (deleteError as any)?.stack;
+        errorDetails.errorName = (deleteError as any)?.name;
+        
+        // Try to get all enumerable properties
+        try {
+          errorDetails.errorProperties = Object.getOwnPropertyNames(deleteError);
+          errorDetails.enumerableProperties = Object.keys(deleteError);
+        } catch (e) {
+          errorDetails.errorProperties = 'Could not enumerate properties';
+          errorDetails.enumerableProperties = 'Could not get enumerable properties';
+        }
+        
+        // Firebase-specific error properties
+        if ((deleteError as any)?.code) {
+          errorDetails.firebaseError = {
+            code: (deleteError as any).code,
+            message: (deleteError as any).message,
+            customData: (deleteError as any).customData,
+            details: (deleteError as any).details,
+            stack: (deleteError as any).stack
+          };
+        }
+      } else {
+        errorDetails.errorType = typeof deleteError;
+        errorDetails.errorMessage = String(deleteError);
+      }
+      
+      console.error('❌ Delete error details:', errorDetails);
+      
+      // Additional debugging for completely empty objects
+      if (deleteError && typeof deleteError === 'object' && Object.keys(deleteError).length === 0) {
+        console.error('❌ Empty error object detected - possible serialization issue');
+        console.error('❌ Error prototype chain:', {
+          constructor: deleteError.constructor?.name,
+          prototype: Object.getPrototypeOf(deleteError)?.constructor?.name,
+          hasOwnProperty: deleteError.hasOwnProperty?.toString(),
+          toString: deleteError.toString?.toString()
+        });
+        
+        // Try to access the error as if it's a Firebase error
+        console.error('❌ Attempting Firebase error property access:', {
+          'error.code': (deleteError as any)?.code,
+          'error.message': (deleteError as any)?.message,
+          'error.details': (deleteError as any)?.details,
+          'error.customData': (deleteError as any)?.customData,
+          'error.serverResponse': (deleteError as any)?.serverResponse,
+          'error.toJSON': (deleteError as any)?.toJSON?.()
+        });
+      }
+      
+      throw deleteError;
+    }
   }
 }
 

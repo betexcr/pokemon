@@ -8,6 +8,7 @@ interface BattleStartDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onBattleStart: () => void;
+  roomId?: string;
 }
 
 // Pokemon-themed loading messages
@@ -21,13 +22,66 @@ const LOADING_MESSAGES = [
   "Ready to battle!"
 ];
 
-export default function BattleStartDialog({ isOpen, onClose, onBattleStart }: BattleStartDialogProps) {
+export default function BattleStartDialog({ isOpen, onClose, onBattleStart, roomId }: BattleStartDialogProps) {
   const [mounted, setMounted] = useState(false);
   const [countdown, setCountdown] = useState(3);
   const [progress, setProgress] = useState(0);
   const [currentMessage, setCurrentMessage] = useState(0);
   const [isStarting, setIsStarting] = useState(false);
   const [minCloseAt, setMinCloseAt] = useState<number>(0);
+  const [readinessStatus, setReadinessStatus] = useState<{
+    isReady: boolean;
+    errors: string[];
+    lastCheck: Date | null;
+  }>({ isReady: true, errors: [], lastCheck: null });
+  const [retryStatus, setRetryStatus] = useState<{
+    isRetrying: boolean;
+    attempt: number;
+    maxAttempts: number;
+    nextRetryIn: number;
+  }>({ isRetrying: false, attempt: 0, maxAttempts: 0, nextRetryIn: 0 });
+
+  // Check battle readiness with dynamic retry
+  const checkReadiness = async (allowBattlingStatus: boolean = false) => {
+    if (!roomId) return;
+    
+    try {
+      const { roomService } = await import('@/lib/roomService');
+      const { DynamicRetry, ROOM_RETRY_CONFIG } = await import('@/lib/retryUtils');
+      
+      const readinessCheck = await DynamicRetry.retry(
+        async () => {
+          return await roomService.checkBattleReadiness(roomId!, allowBattlingStatus);
+        },
+        ROOM_RETRY_CONFIG,
+        (attempt, delay, error) => {
+          setRetryStatus({
+            isRetrying: true,
+            attempt,
+            maxAttempts: ROOM_RETRY_CONFIG.maxAttempts || 8,
+            nextRetryIn: delay
+          });
+        }
+      );
+      
+      setRetryStatus({ isRetrying: false, attempt: 0, maxAttempts: 0, nextRetryIn: 0 });
+      setReadinessStatus({
+        isReady: readinessCheck.isReady,
+        errors: readinessCheck.errors,
+        lastCheck: new Date()
+      });
+      return readinessCheck.isReady;
+    } catch (error) {
+      console.error('Failed to check battle readiness:', error);
+      setRetryStatus({ isRetrying: false, attempt: 0, maxAttempts: 0, nextRetryIn: 0 });
+      setReadinessStatus({
+        isReady: false,
+        errors: ['Failed to check battle readiness'],
+        lastCheck: new Date()
+      });
+      return false;
+    }
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -42,6 +96,7 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart }: Ba
       setCurrentMessage(0);
       setIsStarting(false);
       setMinCloseAt(0);
+      setReadinessStatus({ isReady: true, errors: [], lastCheck: null });
       return;
     }
 
@@ -50,19 +105,31 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart }: Ba
       setIsStarting(true);
       // Enforce minimum visible time of 3 seconds
       setMinCloseAt(Date.now() + 3000);
+      
+      // Check readiness before starting countdown
+      checkReadiness();
     }
     
     // Countdown timer
-    const countdownInterval = setInterval(() => {
+    const countdownInterval = setInterval(async () => {
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(countdownInterval);
-          // Start battle after countdown, but ensure dialog stayed up at least 3s
-          const remaining = Math.max(0, minCloseAt - Date.now());
-          setTimeout(() => {
-            onBattleStart();
-            onClose();
-          }, Math.max(500, remaining));
+          // Final readiness check before starting battle
+          setTimeout(async () => {
+            // Allow battling status since the battle may have already started
+            const isReady = await checkReadiness(true);
+            if (isReady) {
+              onBattleStart();
+              onClose();
+            } else {
+              console.error('❌ Battle not ready at countdown end:', readinessStatus.errors);
+              // Proceed anyway if it's just a status issue
+              console.log('⚠️ Proceeding with battle start despite readiness check failure');
+              onBattleStart();
+              onClose();
+            }
+          }, Math.max(500, minCloseAt - Date.now()));
           return 0;
         }
         return prev - 1;
@@ -204,6 +271,60 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart }: Ba
             >
               {LOADING_MESSAGES[currentMessage]}
             </p>
+            
+            {/* Readiness Status */}
+            {readinessStatus.lastCheck && (
+              <div className="mt-2 text-sm">
+                {readinessStatus.isReady ? (
+                  <span 
+                    className="text-green-600 font-semibold"
+                    style={{ 
+                      fontFamily: 'Pocket Monk, monospace',
+                      textShadow: '1px 1px 0px #000',
+                      letterSpacing: '0.5px'
+                    }}
+                  >
+                    ✅ BATTLE READY
+                  </span>
+                ) : (
+                  <div>
+                    <span 
+                      className="text-red-600 font-semibold"
+                      style={{ 
+                        fontFamily: 'Pocket Monk, monospace',
+                        textShadow: '1px 1px 0px #000',
+                        letterSpacing: '0.5px'
+                      }}
+                    >
+                      ❌ NOT READY
+                    </span>
+                    {readinessStatus.errors.length > 0 && (
+                      <div className="mt-1 text-xs text-red-500">
+                        {readinessStatus.errors[0]}
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* Retry Status */}
+                {retryStatus.isRetrying && (
+                  <div className="mt-2 text-xs text-blue-600">
+                    <div 
+                      style={{ 
+                        fontFamily: 'Pocket Monk, monospace',
+                        textShadow: '1px 1px 0px #000',
+                        letterSpacing: '0.5px'
+                      }}
+                    >
+                      🔄 Retrying... ({retryStatus.attempt}/{retryStatus.maxAttempts})
+                    </div>
+                    <div className="mt-1">
+                      Next retry in {Math.round(retryStatus.nextRetryIn / 1000)}s
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Pixelated Health Bar */}

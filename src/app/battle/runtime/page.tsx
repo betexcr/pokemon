@@ -117,6 +117,7 @@ function BattleRuntimePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
+  const [battleStarting, setBattleStarting] = useState(false);
   const [selectedMove, setSelectedMove] = useState<number | null>(null);
   const [isAITurn, setIsAITurn] = useState(false);
   const [switchingInProgress, setSwitchingInProgress] = useState(false);
@@ -280,10 +281,25 @@ function BattleRuntimePage() {
       if (isMultiplayer && urlBattleId && user?.uid) {
         try {
           console.log('🧹 Cleaning up multiplayer battle:', urlBattleId);
+          
+          // Add delay to prevent premature deletion during retries
+          // Only delay if battle is still starting or initializing
+          if (battleStarting || !initialized || !battleState) {
+            console.log('⏳ Battle still initializing, delaying cleanup by 5 seconds...');
+            await new Promise(resolve => setTimeout(resolve, 5000));
+          }
+          
           await battleService.leaveBattle(urlBattleId, user.uid);
           console.log('✅ Left multiplayer battle');
         } catch (error) {
-          console.error('❌ Error leaving battle:', error);
+          console.error('❌ Error leaving battle in cleanup:', error);
+          console.error('❌ Cleanup error details:', {
+            errorType: error?.constructor?.name || 'Unknown',
+            errorMessage: (error as any)?.message || String(error),
+            battleId: urlBattleId,
+            userId: user?.uid,
+            isMultiplayer
+          });
         }
       }
     };
@@ -303,10 +319,23 @@ function BattleRuntimePage() {
     };
 
     // Page visibility change (browser tab switch, minimize)
+    // FIXED: Don't cleanup battle when page becomes hidden during initialization
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
         console.log('👁️ Page became hidden');
-        cleanup();
+        // Only cleanup if battle is fully initialized and stable
+        // Add additional check for battle state to ensure battle is actually running
+        if (initialized && !loading && !battleStarting && battleState) {
+          console.log('🧹 Battle initialized and running, cleaning up on visibility change');
+          cleanup();
+        } else {
+          console.log('⏳ Battle still initializing/starting or no battle state, skipping cleanup on visibility change', {
+            initialized,
+            loading,
+            battleStarting,
+            hasBattleState: !!battleState
+          });
+        }
       }
     };
 
@@ -323,7 +352,7 @@ function BattleRuntimePage() {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       cleanup();
     };
-  }, [syncManager, isMultiplayer, urlBattleId, user?.uid, router]);
+  }, [syncManager, isMultiplayer, urlBattleId, user?.uid, router, initialized, loading, battleStarting, battleState]);
 
   // Handle battle turn processing in the new Gen-8/9 system
   useEffect(() => {
@@ -1199,7 +1228,20 @@ function BattleRuntimePage() {
         
         // Start the battle in Firestore
         if (effectiveBattleId) {
-          await battleService.startBattle(effectiveBattleId, battleState as unknown);
+          try {
+            console.log('🚀 Starting battle:', effectiveBattleId);
+            await battleService.startBattle(effectiveBattleId, battleState as unknown);
+            console.log('✅ Battle started successfully');
+          } catch (error) {
+            console.error('❌ Failed to start battle:', error);
+            console.error('❌ Battle start error context:', {
+              battleId: effectiveBattleId,
+              userId: user?.uid,
+              errorType: error?.constructor?.name,
+              errorMessage: (error as any)?.message || String(error)
+            });
+            throw error; // Re-throw to prevent battle from starting
+          }
         }
         
         // Mark this player as ready for battle
@@ -1892,13 +1934,54 @@ function BattleRuntimePage() {
           
           // Start the battle in Firestore (host only)
           if (effectiveBattleId && user?.uid === battleMeta.hostId) {
-            await battleService.startBattle(effectiveBattleId, battleState as unknown);
-            // Set initial server turn based on host
-            await battleService.updateBattle(effectiveBattleId, {
-              currentTurn: 'host',
-              turnNumber: 1,
-              battleData: battleState as unknown
-            });
+            try {
+              console.log('🚀 Host starting battle:', effectiveBattleId);
+              setBattleStarting(true);
+              
+              // Final readiness check before starting battle
+              console.log('🔍 Final battle readiness check...');
+              if (roomId) {
+                const { roomService } = await import('@/lib/roomService');
+                const readinessCheck = await roomService.checkBattleReadiness(roomId);
+                
+                if (!readinessCheck.isReady) {
+                  console.error('❌ Battle not ready at runtime start:', readinessCheck.errors);
+                  throw new Error(`Battle not ready: ${readinessCheck.errors.join(', ')}`);
+                }
+                
+                console.log('✅ Battle readiness confirmed, starting battle...');
+              }
+              
+              // Add a small delay to ensure room updates have propagated
+              console.log('⏳ Waiting for room updates to propagate...');
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              
+              await battleService.startBattle(effectiveBattleId, battleState as unknown);
+              
+              // Set initial server turn based on host
+              await battleService.updateBattle(effectiveBattleId, {
+                currentTurn: 'host',
+                turnNumber: 1,
+                battleData: battleState as unknown
+              });
+              console.log('✅ Battle started successfully');
+              setBattleStarting(false);
+            } catch (error) {
+              console.error('❌ Failed to start battle:', error);
+              console.error('❌ Battle start error context:', {
+                battleId: effectiveBattleId,
+                hostId: user?.uid,
+                battleMeta: {
+                  hostId: battleMeta.hostId,
+                  guestId: battleMeta.guestId,
+                  status: battleMeta.status
+                },
+                errorType: error?.constructor?.name,
+                errorMessage: (error as any)?.message || String(error)
+              });
+              setBattleStarting(false);
+              throw error; // Re-throw to prevent battle from starting
+            }
           }
           
           // Mark this player as ready for battle

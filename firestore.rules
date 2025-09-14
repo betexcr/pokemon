@@ -12,18 +12,6 @@ service cloud.firestore {
     }
     
     
-    function isValidBattleData() {
-      return request.resource.data.keys().hasAll(['roomId', 'hostId', 'hostName', 'guestId', 'guestName', 'status', 'createdAt', 'updatedAt']) &&
-             request.resource.data.roomId is string &&
-             request.resource.data.hostId is string &&
-             request.resource.data.hostName is string &&
-             request.resource.data.guestId is string &&
-             request.resource.data.guestName is string &&
-             request.resource.data.status in ['waiting', 'active', 'completed', 'cancelled'] &&
-             request.resource.data.createdAt is timestamp &&
-             request.resource.data.updatedAt is timestamp;
-    }
-    
     // User teams collection
     match /userTeams/{teamId} {
       // Users can read their own teams
@@ -104,19 +92,22 @@ service cloud.firestore {
 
       // Allow battle participants to update battles
       allow update: if isAuthenticated() && (
-        // Direct participants (host or guest)
-        request.auth.uid == resource.data.hostId ||
-        request.auth.uid == resource.data.guestId ||
+        // Direct participants (host or guest) - with null checks
+        (resource.data.hostId != null && request.auth.uid == resource.data.hostId) ||
+        (resource.data.guestId != null && request.auth.uid == resource.data.guestId) ||
         // Allow guest to claim spot by setting guestId when currently null
         (resource.data.guestId == null &&
          request.resource.data.guestId == request.auth.uid) ||
-        // Allow updating specific battle fields for participants
-        ((request.auth.uid == resource.data.hostId || request.auth.uid == resource.data.guestId) &&
+        // Allow updating specific battle fields for participants - with null checks
+        (((resource.data.hostId != null && request.auth.uid == resource.data.hostId) || 
+          (resource.data.guestId != null && request.auth.uid == resource.data.guestId)) &&
          request.resource.data.keys().hasAny(['actions', 'battleData', 'phase', 'turn', 'currentTurn', 'winner', 'status', 'lastActionAt', 'updatedAt', 'turnNumber']))
       );
 
       // Allow battle host to delete battles
+      // Debug: Check if the user is authenticated and matches the host
       allow delete: if isAuthenticated() && 
+        resource.data.hostId != null &&
         request.auth.uid == resource.data.hostId;
     }
     
