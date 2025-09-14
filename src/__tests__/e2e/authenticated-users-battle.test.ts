@@ -61,7 +61,7 @@ test.describe('Authenticated Users Pokemon Battle', () => {
           loginClicked = true;
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -95,7 +95,7 @@ test.describe('Authenticated Users Pokemon Battle', () => {
           emailFilled = true;
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -122,7 +122,7 @@ test.describe('Authenticated Users Pokemon Battle', () => {
           passwordFilled = true;
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -150,7 +150,7 @@ test.describe('Authenticated Users Pokemon Battle', () => {
           submitted = true;
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -214,7 +214,7 @@ test.describe('Authenticated Users Pokemon Battle', () => {
           await hostPage.waitForTimeout(2000);
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -291,7 +291,7 @@ test.describe('Authenticated Users Pokemon Battle', () => {
           await hostPage.waitForTimeout(1000);
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -320,7 +320,7 @@ test.describe('Authenticated Users Pokemon Battle', () => {
           await guestPage.waitForTimeout(1000);
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -347,7 +347,7 @@ test.describe('Authenticated Users Pokemon Battle', () => {
           await hostPage.waitForTimeout(1000);
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -363,7 +363,7 @@ test.describe('Authenticated Users Pokemon Battle', () => {
           await guestPage.waitForTimeout(1000);
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -391,7 +391,7 @@ test.describe('Authenticated Users Pokemon Battle', () => {
           await hostPage.waitForTimeout(3000);
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -438,11 +438,11 @@ test.describe('Authenticated Users Pokemon Battle', () => {
             await elements[0].click();
             console.log('🎯 Clicked battle control');
             await hostPage.waitForTimeout(1000);
-          } catch (error) {
+          } catch (_error) {
             console.log('⚠️ Could not click battle control');
           }
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -468,7 +468,7 @@ test.describe('Authenticated Users Pokemon Battle', () => {
           console.log(`✅ Found ${elements.length} Pokemon images: ${selector}`);
           pokemonFound += elements.length;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }

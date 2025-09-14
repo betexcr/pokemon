@@ -27,22 +27,18 @@ try {
   // Connect to emulators in development mode
   if (isDevelopment && typeof window !== 'undefined') {
     // Only connect to emulators once
-    if (!auth._delegate._config.emulator) {
-      try {
-        connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
-        console.log('🔗 Connected to Firebase Auth Emulator');
-      } catch (error) {
-        console.log('ℹ️ Auth emulator already connected or not available');
-      }
+    try {
+      connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+      console.log('🔗 Connected to Firebase Auth Emulator');
+    } catch (error) {
+      console.log('ℹ️ Auth emulator already connected or not available');
     }
 
-    if (!db._delegate._databaseId.projectId.includes('demo-')) {
-      try {
-        connectFirestoreEmulator(db, '127.0.0.1', 8080);
-        console.log('🔗 Connected to Firebase Firestore Emulator');
-      } catch (error) {
-        console.log('ℹ️ Firestore emulator already connected or not available');
-      }
+    try {
+      connectFirestoreEmulator(db, '127.0.0.1', 8080);
+      console.log('🔗 Connected to Firebase Firestore Emulator');
+    } catch (error) {
+      console.log('ℹ️ Firestore emulator already connected or not available');
     }
   }
 

@@ -5,9 +5,10 @@ import { useAuth } from '@/contexts/AuthContext';
 
 interface LoginFormProps {
   onToggleMode: () => void;
+  onSuccess?: () => void;
 }
 
-export default function LoginForm({ onToggleMode }: LoginFormProps) {
+export default function LoginForm({ onToggleMode, onSuccess }: LoginFormProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordVisible, setPasswordVisible] = useState(false);
@@ -28,6 +29,8 @@ export default function LoginForm({ onToggleMode }: LoginFormProps) {
       setError('');
       setLoading(true);
       await signIn(email, password);
+      console.log('Login successful, calling onSuccess callback');
+      onSuccess?.();
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'Failed to sign in');
     } finally {
@@ -40,6 +43,8 @@ export default function LoginForm({ onToggleMode }: LoginFormProps) {
       setError('');
       setGoogleLoading(true);
       await signInWithGoogle();
+      console.log('Google login successful, calling onSuccess callback');
+      onSuccess?.();
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'Failed to sign in with Google');
     } finally {

@@ -11,7 +11,8 @@ import {
   query,
   where,
   serverTimestamp,
-  type Unsubscribe
+  type Unsubscribe,
+  type DocumentSnapshot
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { auth } from './firebase';
@@ -340,9 +341,9 @@ class BattleService {
         }
         
         // Try to get room data to check permissions
-        if (snap.data()?.roomId) {
+        if (battleData?.roomId) {
           try {
-            const roomRef = doc(db, 'battle_rooms', snap.data().roomId);
+            const roomRef = doc(db, 'battle_rooms', battleData.roomId);
             const roomSnap = await getDoc(roomRef);
             if (roomSnap.exists()) {
               const roomData = roomSnap.data();
@@ -435,7 +436,7 @@ class BattleService {
         errorMessage: (error as any)?.message || String(error),
         errorCode: (error as any)?.code || 'unknown',
         errorDetails: (error as any)?.details || 'no details available',
-        actionType,
+        actionType: action.type,
         battleId,
         currentUser: currentUserId
       };
@@ -478,7 +479,7 @@ class BattleService {
     // Use dynamic retry system for battle document retrieval
     const { DynamicRetry, BATTLE_RETRY_CONFIG } = await import('@/lib/retryUtils');
     
-    let snap;
+    let snap: DocumentSnapshot | undefined;
     
     try {
       await DynamicRetry.retry(
@@ -670,7 +671,7 @@ class BattleService {
       console.error('❌ Error leaving battle:', error);
       
       // More comprehensive error analysis
-      let errorInfo = {
+      const errorInfo = {
         battleId,
         userId,
         currentUser: currentUserId,
@@ -680,7 +681,16 @@ class BattleService {
           uid: this.auth?.currentUser?.uid,
           email: this.auth?.currentUser?.email,
           emailVerified: this.auth?.currentUser?.emailVerified
-        }
+        },
+        errorType: 'unknown' as string,
+        errorMessage: '',
+        errorCode: '',
+        errorStack: '',
+        errorName: '',
+        firebaseError: undefined as any,
+        errorProperties: [] as string[],
+        enumerableProperties: [] as string[],
+        firebaseSpecific: undefined as any
       };
       
       // Try to extract error information in multiple ways
@@ -713,8 +723,8 @@ class BattleService {
           errorInfo.errorProperties = Object.getOwnPropertyNames(error);
           errorInfo.enumerableProperties = Object.keys(error);
         } catch (e) {
-          errorInfo.errorProperties = 'Could not enumerate properties';
-          errorInfo.enumerableProperties = 'Could not get enumerable properties';
+          errorInfo.errorProperties = ['Could not enumerate properties'];
+          errorInfo.enumerableProperties = ['Could not get enumerable properties'];
         }
         
         // Try to access common Firebase error properties
@@ -940,7 +950,7 @@ class BattleService {
       console.error('❌ Firebase deleteDoc error:', deleteError);
       
       // More robust error details extraction
-      let errorDetails = {
+      const errorDetails = {
         battleId,
         currentUser: currentUserId,
         battleHostId: battleData.hostId,
@@ -951,7 +961,17 @@ class BattleService {
           guestId: finalBattleSnap.data()?.guestId,
           status: finalBattleSnap.data()?.status
         } : 'Document does not exist',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        errorType: '',
+        errorMessage: '',
+        errorCode: '',
+        errorDetails: undefined as any,
+        errorCustomData: undefined as any,
+        errorStack: '',
+        errorName: '',
+        errorProperties: [] as string[],
+        enumerableProperties: [] as string[],
+        firebaseError: undefined as any
       };
       
       // Try to extract error information in multiple ways
@@ -975,8 +995,8 @@ class BattleService {
           errorDetails.errorProperties = Object.getOwnPropertyNames(deleteError);
           errorDetails.enumerableProperties = Object.keys(deleteError);
         } catch (e) {
-          errorDetails.errorProperties = 'Could not enumerate properties';
-          errorDetails.enumerableProperties = 'Could not get enumerable properties';
+          errorDetails.errorProperties = ['Could not enumerate properties'];
+          errorDetails.enumerableProperties = ['Could not get enumerable properties'];
         }
         
         // Firebase-specific error properties

@@ -58,7 +58,7 @@ test.describe('Auth Wall Pokemon Battle', () => {
           authButtonClicked = true;
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -92,7 +92,7 @@ test.describe('Auth Wall Pokemon Battle', () => {
           emailFilled = true;
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -119,7 +119,7 @@ test.describe('Auth Wall Pokemon Battle', () => {
           passwordFilled = true;
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -149,7 +149,7 @@ test.describe('Auth Wall Pokemon Battle', () => {
           submitted = true;
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -167,8 +167,8 @@ test.describe('Auth Wall Pokemon Battle', () => {
     // Step 1: Handle auth wall for both users
     console.log('\n🔐 Step 1: Handling authentication wall');
     
-    const hostAuthSuccess = await handleAuthWall(hostPage, 'testbattle1@pokemon-battles.test', 'Host');
-    const guestAuthSuccess = await handleAuthWall(guestPage, 'testbattle2@pokemon-battles.test', 'Guest');
+    await handleAuthWall(hostPage, 'testbattle1@pokemon-battles.test', 'Host');
+    await handleAuthWall(guestPage, 'testbattle2@pokemon-battles.test', 'Guest');
     
     console.log('✅ Both users handled auth wall');
     
@@ -211,7 +211,7 @@ test.describe('Auth Wall Pokemon Battle', () => {
           await hostPage.waitForTimeout(2000);
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -288,7 +288,7 @@ test.describe('Auth Wall Pokemon Battle', () => {
           await hostPage.waitForTimeout(1000);
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -317,7 +317,7 @@ test.describe('Auth Wall Pokemon Battle', () => {
           await guestPage.waitForTimeout(1000);
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -344,7 +344,7 @@ test.describe('Auth Wall Pokemon Battle', () => {
           await hostPage.waitForTimeout(1000);
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -360,7 +360,7 @@ test.describe('Auth Wall Pokemon Battle', () => {
           await guestPage.waitForTimeout(1000);
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -388,7 +388,7 @@ test.describe('Auth Wall Pokemon Battle', () => {
           await hostPage.waitForTimeout(3000);
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -435,11 +435,11 @@ test.describe('Auth Wall Pokemon Battle', () => {
             await elements[0].click();
             console.log('🎯 Clicked battle control');
             await hostPage.waitForTimeout(1000);
-          } catch (error) {
+          } catch (_error) {
             console.log('⚠️ Could not click battle control');
           }
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -465,7 +465,7 @@ test.describe('Auth Wall Pokemon Battle', () => {
           console.log(`✅ Found ${elements.length} Pokemon images: ${selector}`);
           pokemonFound += elements.length;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }

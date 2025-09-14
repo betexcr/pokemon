@@ -1,0 +1,518 @@
+<testsuites id="" name="" tests="1" failures="1" skipped="0" errors="0" time="67.646879">
+<testsuite name="authenticated-users-battle.test.ts" timestamp="2025-09-14T21:39:44.791Z" hostname="chromium" tests="1" failures="1" skipped="0" time="60.24" errors="0">
+<testcase name="Authenticated Users Pokemon Battle › Complete Authenticated Users Pokemon Battle Flow" classname="authenticated-users-battle.test.ts" time="60.24">
+<failure message="authenticated-users-battle.test.ts:165:7 Complete Authenticated Users Pokemon Battle Flow" type="FAILURE">
+<![CDATA[  [chromium] › authenticated-users-battle.test.ts:165:7 › Authenticated Users Pokemon Battle › Complete Authenticated Users Pokemon Battle Flow 
+
+    Test timeout of 60000ms exceeded.
+
+    Error: page.waitForTimeout: Target page, context or browser has been closed
+
+      157 |     
+      158 |     // Wait for login to complete
+    > 159 |     await page.waitForTimeout(3000);
+          |                ^
+      160 |     
+      161 |     console.log(`✅ ${userType} login process completed`);
+      162 |     return emailFilled && passwordFilled && submitted;
+        at loginUser (/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/authenticated-users-battle.test.ts:159:16)
+        at /Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/authenticated-users-battle.test.ts:172:31
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../test-results/authenticated-users-battle-647e3-d-Users-Pokemon-Battle-Flow-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../test-results/authenticated-users-battle-647e3-d-Users-Pokemon-Battle-Flow-chromium/test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../test-results/authenticated-users-battle-647e3-d-Users-Pokemon-Battle-Flow-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[🎮 Setting up authenticated users Pokemon battle test
+🎮 Starting complete authenticated users Pokemon battle flow
+
+🔐 Step 1: Authenticating both users
+
+🔐 Logging in Host: testbattle1@pokemon-battles.test
+HOST: %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+HOST: 🔗 Connected to Firebase Auth Emulator
+HOST: 🔗 Connected to Firebase Firestore Emulator
+HOST: Current pathname: / Actual pathname: /
+HOST: Current theme: light isModernTheme: true loading: true
+HOST: Current pathname: / Actual pathname: /
+HOST: Current theme: light isModernTheme: true loading: true
+HOST: ModernPokedexLayout rendered with pokemonList length: 0
+HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+HOST: ModernPokedexLayout rendered with pokemonList length: 0
+HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+HOST: loadInitialPokemon effect running: {isAllGenerations: true, allGenerationsPokemonLength: 0}
+HOST: Loading initial Pokemon data...
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon?limit=100&offset=0
+HOST: Looking for sentinel element: null
+HOST: Sentinel not found, retrying...
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon?limit=30&offset=0
+HOST: Current pathname: / Actual pathname: /
+HOST: Current theme: light isModernTheme: true loading: true
+HOST: Current pathname: / Actual pathname: /
+HOST: Current theme: light isModernTheme: true loading: true
+HOST: ModernPokedexLayout rendered with pokemonList length: 0
+HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+HOST: ModernPokedexLayout rendered with pokemonList length: 0
+HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+HOST: Current pathname: / Actual pathname: /
+HOST: Current theme: light isModernTheme: true loading: true
+HOST: Current pathname: / Actual pathname: /
+HOST: Current theme: light isModernTheme: true loading: true
+HOST: ModernPokedexLayout rendered with pokemonList length: 0
+HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+HOST: ModernPokedexLayout rendered with pokemonList length: 0
+HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+HOST: ModernPokedexLayout rendered with pokemonList length: 0
+HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+HOST: ModernPokedexLayout rendered with pokemonList length: 0
+HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+HOST: ModernPokedexLayout rendered with pokemonList length: 0
+HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+HOST: ModernPokedexLayout rendered with pokemonList length: 0
+HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+HOST: ModernPokedexLayout rendered with pokemonList length: 0
+HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+HOST: ModernPokedexLayout rendered with pokemonList length: 0
+HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+HOST: Looking for sentinel element: null
+HOST: Sentinel still not found after retry
+HOST: ModernPokedexLayout rendered with pokemonList length: 0
+HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+HOST: ModernPokedexLayout rendered with pokemonList length: 0
+HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+HOST: ModernPokedexLayout rendered with pokemonList length: 0
+HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+HOST: ModernPokedexLayout rendered with pokemonList length: 0
+HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+HOST: ModernPokedexLayout rendered with pokemonList length: 0
+HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+HOST: ModernPokedexLayout rendered with pokemonList length: 0
+HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/1
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/2
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/3
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/4
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/5
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/6
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/7
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/8
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/9
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/10
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/11
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/12
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/13
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/14
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/15
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/16
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/17
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/18
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/19
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/20
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/21
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/22
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/23
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/24
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/25
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/26
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/27
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/28
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/29
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/30
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/31
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/32
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/33
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/34
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/35
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/36
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/37
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/38
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/39
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/40
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/41
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/42
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/43
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/44
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/45
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/46
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/47
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/48
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/49
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/50
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/51
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/52
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/53
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/54
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/55
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/56
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/57
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/58
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/59
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/60
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/61
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/62
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/63
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/64
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/65
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/66
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/67
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/68
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/69
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/70
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/71
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/72
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/73
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/74
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/75
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/76
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/77
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/78
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/79
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/80
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/81
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/82
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/83
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/84
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/85
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/86
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/87
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/88
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/89
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/90
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/91
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/92
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/93
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/94
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/95
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/96
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/97
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/98
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/99
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/100
+HOST: Current pathname: / Actual pathname: /
+HOST: Current theme: light isModernTheme: true loading: false
+HOST: Current pathname: / Actual pathname: /
+HOST: Current theme: light isModernTheme: true loading: false
+HOST: ModernPokedexLayout rendered with pokemonList length: 30
+HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+HOST: ModernPokedexLayout rendered with pokemonList length: 30
+HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+HOST: ModernPokedexLayout rendered with pokemonList length: 30
+HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+HOST: ModernPokedexLayout rendered with pokemonList length: 30
+HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+HOST: ModernPokedexLayout rendered with pokemonList length: 30
+HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+HOST: ModernPokedexLayout rendered with pokemonList length: 30
+HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+HOST: Loaded initial Pokemon: 100 Pokemon
+HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon?limit=1&offset=0
+HOST: ModernPokedexLayout rendered with pokemonList length: 30
+HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 100, isAllGenerations: true, hasMorePokemon: true}
+HOST: ModernPokedexLayout rendered with pokemonList length: 30
+HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 100, isAllGenerations: true, hasMorePokemon: true}
+HOST: Setting filteredPokemon from allGenerationsPokemon: 100 Pokemon
+HOST: Looking for sentinel element: null
+HOST: Sentinel not found, retrying...
+HOST: ModernPokedexLayout rendered with pokemonList length: 30
+HOST: Render state: {isFiltering: false, sortedPokemonLength: 100, allGenerationsPokemonLength: 100, isAllGenerations: true, hasMorePokemon: true}
+HOST: ModernPokedexLayout rendered with pokemonList length: 30
+HOST: Render state: {isFiltering: false, sortedPokemonLength: 100, allGenerationsPokemonLength: 100, isAllGenerations: true, hasMorePokemon: true}
+HOST: ModernPokedexLayout rendered with pokemonList length: 30
+HOST: Render state: {isFiltering: false, sortedPokemonLength: 100, allGenerationsPokemonLength: 100, isAllGenerations: true, hasMorePokemon: true}
+HOST: ModernPokedexLayout rendered with pokemonList length: 30
+HOST: Render state: {isFiltering: false, sortedPokemonLength: 100, allGenerationsPokemonLength: 100, isAllGenerations: true, hasMorePokemon: true}
+HOST: Looking for sentinel element: JSHandle@node
+HOST: Sentinel found on retry, setting up observer
+HOST: Intersection observer triggered: {isIntersecting: false, isLoadingMore: false, hasMorePokemon: true, currentOffset: 100, totalPokemonCount: null}
+HOST: Total Pokémon count from API: 1302
+HOST: Fetched total Pokemon count: 1302
+HOST: ModernPokedexLayout rendered with pokemonList length: 30
+HOST: Render state: {isFiltering: false, sortedPokemonLength: 100, allGenerationsPokemonLength: 100, isAllGenerations: true, hasMorePokemon: true}
+HOST: ModernPokedexLayout rendered with pokemonList length: 30
+HOST: Render state: {isFiltering: false, sortedPokemonLength: 100, allGenerationsPokemonLength: 100, isAllGenerations: true, hasMorePokemon: true}
+HOST: Looking for sentinel element: JSHandle@node
+HOST: Sentinel found immediately, setting up observer
+HOST: Intersection observer triggered: {isIntersecting: false, isLoadingMore: false, hasMorePokemon: true, currentOffset: 100, totalPokemonCount: 1302}
+✅ Host found login button: button:has-text("Sign In")
+HOST: Creating portal to document.body: JSHandle@node
+HOST: Creating portal to document.body: JSHandle@node
+HOST: Blocked aria-hidden on an element because its descendant retained focus. The focus must not be hidden from assistive technology users. Avoid using aria-hidden on a focused element or its ancestor. Consider using the inert attribute instead, which will also prevent focus. For more details, see the aria-hidden section of the WAI-ARIA specification at https://w3c.github.io/aria/#aria-hidden.
+Element with focus: <button.flex w-full items-center px-4 py-3 text-sm text-blue-600 transition hover:bg-blue-50 focus:bg-blue-50 rounded-b-lg>
+Ancestor with aria-hidden: <div.absolute right-0 mt-2 rounded-lg border border-gray-200 shadow-lg z-50 origin-top-right transition duration-150 ease-out opacity-0 -translate-y-1 scale-95 pointer-events-none>
+🔐 Host clicked login button
+HOST: Image with src "http://localhost:3000/header-icons/auth-hero.png" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio.
+HOST: [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o
+✅ Host found email input: input[type="email"]
+📧 Host entered email: testbattle1@pokemon-battles.test
+✅ Host found password input: input[type="password"]
+🔒 Host entered password
+✅ Host found submit button: button[type="submit"]
+🚀 Host submitted login form
+HOST: Failed to load resource: net::ERR_CONNECTION_REFUSED
+HOST: Error signing in: FirebaseError: Firebase: Error (auth/network-request-failed).
+    at createErrorInternal (http://localhost:3000/_next/static/chunks/node_modules_%40firebase_auth_dist_esm_d3951ae3._.js:660:41)
+    at _fail (http://localhost:3000/_next/static/chunks/node_modules_%40firebase_auth_dist_esm_d3951ae3._.js:618:11)
+    at _performFetchWithErrorHandling (http://localhost:3000/_next/static/chunks/node_modules_%40firebase_auth_dist_esm_d3951ae3._.js:1106:9)
+    at async _performSignInRequest (http://localhost:3000/_next/static/chunks/node_modules_%40firebase_auth_dist_esm_d3951ae3._.js:1113:28)
+    at async _signInWithCredential (http://localhost:3000/_next/static/chunks/node_modules_%40firebase_auth_dist_esm_d3951ae3._.js:5679:22)
+    at async signIn (http://localhost:3000/_next/static/chunks/src_b1e5c616._.js:254:13)
+    at async handleSubmit (http://localhost:3000/_next/static/chunks/src_components_857b40fd._.js:1323:13)
+✅ Host login process completed
+
+🔐 Logging in Guest: testbattle2@pokemon-battles.test
+GUEST: %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+GUEST: 🔗 Connected to Firebase Auth Emulator
+GUEST: 🔗 Connected to Firebase Firestore Emulator
+GUEST: Current pathname: / Actual pathname: /
+GUEST: Current theme: light isModernTheme: true loading: true
+GUEST: Current pathname: / Actual pathname: /
+GUEST: Current theme: light isModernTheme: true loading: true
+GUEST: ModernPokedexLayout rendered with pokemonList length: 0
+GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+GUEST: ModernPokedexLayout rendered with pokemonList length: 0
+GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+GUEST: loadInitialPokemon effect running: {isAllGenerations: true, allGenerationsPokemonLength: 0}
+GUEST: Loading initial Pokemon data...
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon?limit=100&offset=0
+GUEST: Looking for sentinel element: null
+GUEST: Sentinel not found, retrying...
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon?limit=30&offset=0
+GUEST: Current pathname: / Actual pathname: /
+GUEST: Current theme: light isModernTheme: true loading: true
+GUEST: Current pathname: / Actual pathname: /
+GUEST: Current theme: light isModernTheme: true loading: true
+GUEST: ModernPokedexLayout rendered with pokemonList length: 0
+GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+GUEST: ModernPokedexLayout rendered with pokemonList length: 0
+GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+GUEST: Current pathname: / Actual pathname: /
+GUEST: Current theme: light isModernTheme: true loading: true
+GUEST: Current pathname: / Actual pathname: /
+GUEST: Current theme: light isModernTheme: true loading: true
+GUEST: ModernPokedexLayout rendered with pokemonList length: 0
+GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+GUEST: ModernPokedexLayout rendered with pokemonList length: 0
+GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+GUEST: ModernPokedexLayout rendered with pokemonList length: 0
+GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+GUEST: ModernPokedexLayout rendered with pokemonList length: 0
+GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+GUEST: ModernPokedexLayout rendered with pokemonList length: 0
+GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+GUEST: ModernPokedexLayout rendered with pokemonList length: 0
+GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+GUEST: ModernPokedexLayout rendered with pokemonList length: 0
+GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+GUEST: ModernPokedexLayout rendered with pokemonList length: 0
+GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+GUEST: Looking for sentinel element: null
+GUEST: Sentinel still not found after retry
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/1
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/2
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/3
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/4
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/5
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/6
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/7
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/8
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/9
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/10
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/11
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/12
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/13
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/14
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/15
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/16
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/17
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/18
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/19
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/20
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/21
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/22
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/23
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/24
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/25
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/26
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/27
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/28
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/29
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/30
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/31
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/32
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/33
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/34
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/35
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/36
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/37
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/38
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/39
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/40
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/41
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/42
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/43
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/44
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/45
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/46
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/47
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/48
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/49
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/50
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/51
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/52
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/53
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/54
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/55
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/56
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/57
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/58
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/59
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/60
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/61
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/62
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/63
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/64
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/65
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/66
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/67
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/68
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/69
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/70
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/71
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/72
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/73
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/74
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/75
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/76
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/77
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/78
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/79
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/80
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/81
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/82
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/83
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/84
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/85
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/86
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/87
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/88
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/89
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/90
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/91
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/92
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/93
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/94
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/95
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/96
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/97
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/98
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/99
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/100
+GUEST: ModernPokedexLayout rendered with pokemonList length: 0
+GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+GUEST: ModernPokedexLayout rendered with pokemonList length: 0
+GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+GUEST: ModernPokedexLayout rendered with pokemonList length: 0
+GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+GUEST: ModernPokedexLayout rendered with pokemonList length: 0
+GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+GUEST: ModernPokedexLayout rendered with pokemonList length: 0
+GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+GUEST: ModernPokedexLayout rendered with pokemonList length: 0
+GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+GUEST: Current pathname: / Actual pathname: /
+GUEST: Current theme: light isModernTheme: true loading: false
+GUEST: Current pathname: / Actual pathname: /
+GUEST: Current theme: light isModernTheme: true loading: false
+GUEST: ModernPokedexLayout rendered with pokemonList length: 30
+GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+GUEST: ModernPokedexLayout rendered with pokemonList length: 30
+GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+GUEST: ModernPokedexLayout rendered with pokemonList length: 30
+GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+GUEST: ModernPokedexLayout rendered with pokemonList length: 30
+GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+GUEST: ModernPokedexLayout rendered with pokemonList length: 30
+GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+GUEST: ModernPokedexLayout rendered with pokemonList length: 30
+GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}
+GUEST: Loaded initial Pokemon: 100 Pokemon
+GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon?limit=1&offset=0
+GUEST: ModernPokedexLayout rendered with pokemonList length: 30
+GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 100, isAllGenerations: true, hasMorePokemon: true}
+GUEST: ModernPokedexLayout rendered with pokemonList length: 30
+GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 100, isAllGenerations: true, hasMorePokemon: true}
+GUEST: Setting filteredPokemon from allGenerationsPokemon: 100 Pokemon
+GUEST: Looking for sentinel element: null
+GUEST: Sentinel not found, retrying...
+GUEST: ModernPokedexLayout rendered with pokemonList length: 30
+GUEST: Render state: {isFiltering: false, sortedPokemonLength: 100, allGenerationsPokemonLength: 100, isAllGenerations: true, hasMorePokemon: true}
+GUEST: ModernPokedexLayout rendered with pokemonList length: 30
+GUEST: Render state: {isFiltering: false, sortedPokemonLength: 100, allGenerationsPokemonLength: 100, isAllGenerations: true, hasMorePokemon: true}
+GUEST: ModernPokedexLayout rendered with pokemonList length: 30
+GUEST: Render state: {isFiltering: false, sortedPokemonLength: 100, allGenerationsPokemonLength: 100, isAllGenerations: true, hasMorePokemon: true}
+GUEST: ModernPokedexLayout rendered with pokemonList length: 30
+GUEST: Render state: {isFiltering: false, sortedPokemonLength: 100, allGenerationsPokemonLength: 100, isAllGenerations: true, hasMorePokemon: true}
+GUEST: Looking for sentinel element: JSHandle@node
+GUEST: Sentinel found on retry, setting up observer
+GUEST: Intersection observer triggered: {isIntersecting: false, isLoadingMore: false, hasMorePokemon: true, currentOffset: 100, totalPokemonCount: null}
+GUEST: Total Pokémon count from API: 1302
+GUEST: Fetched total Pokemon count: 1302
+GUEST: ModernPokedexLayout rendered with pokemonList length: 30
+GUEST: Render state: {isFiltering: false, sortedPokemonLength: 100, allGenerationsPokemonLength: 100, isAllGenerations: true, hasMorePokemon: true}
+GUEST: ModernPokedexLayout rendered with pokemonList length: 30
+GUEST: Render state: {isFiltering: false, sortedPokemonLength: 100, allGenerationsPokemonLength: 100, isAllGenerations: true, hasMorePokemon: true}
+GUEST: Looking for sentinel element: JSHandle@node
+GUEST: Sentinel found immediately, setting up observer
+GUEST: Intersection observer triggered: {isIntersecting: false, isLoadingMore: false, hasMorePokemon: true, currentOffset: 100, totalPokemonCount: 1302}
+✅ Guest found login button: button:has-text("Sign In")
+HOST: Failed to load resource: net::ERR_CONNECTION_REFUSED
+HOST: Error signing in: FirebaseError: Firebase: Error (auth/network-request-failed).
+    at createErrorInternal (http://localhost:3000/_next/static/chunks/node_modules_%40firebase_auth_dist_esm_d3951ae3._.js:660:41)
+    at _fail (http://localhost:3000/_next/static/chunks/node_modules_%40firebase_auth_dist_esm_d3951ae3._.js:618:11)
+    at _performFetchWithErrorHandling (http://localhost:3000/_next/static/chunks/node_modules_%40firebase_auth_dist_esm_d3951ae3._.js:1106:9)
+    at async _performSignInRequest (http://localhost:3000/_next/static/chunks/node_modules_%40firebase_auth_dist_esm_d3951ae3._.js:1113:28)
+    at async _signInWithCredential (http://localhost:3000/_next/static/chunks/node_modules_%40firebase_auth_dist_esm_d3951ae3._.js:5679:22)
+    at async signIn (http://localhost:3000/_next/static/chunks/src_b1e5c616._.js:254:13)
+    at async handleSubmit (http://localhost:3000/_next/static/chunks/src_components_857b40fd._.js:1323:13)
+GUEST: Creating portal to document.body: JSHandle@node
+GUEST: Creating portal to document.body: JSHandle@node
+GUEST: Blocked aria-hidden on an element because its descendant retained focus. The focus must not be hidden from assistive technology users. Avoid using aria-hidden on a focused element or its ancestor. Consider using the inert attribute instead, which will also prevent focus. For more details, see the aria-hidden section of the WAI-ARIA specification at https://w3c.github.io/aria/#aria-hidden.
+Element with focus: <button.flex w-full items-center px-4 py-3 text-sm text-blue-600 transition hover:bg-blue-50 focus:bg-blue-50 rounded-b-lg>
+Ancestor with aria-hidden: <div.absolute right-0 mt-2 rounded-lg border border-gray-200 shadow-lg z-50 origin-top-right transition duration-150 ease-out opacity-0 -translate-y-1 scale-95 pointer-events-none>
+🔐 Guest clicked login button
+GUEST: Image with src "http://localhost:3000/header-icons/auth-hero.png" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio.
+GUEST: [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o
+✅ Guest found email input: input[type="email"]
+📧 Guest entered email: testbattle2@pokemon-battles.test
+✅ Guest found password input: input[type="password"]
+🔒 Guest entered password
+✅ Guest found submit button: button[type="submit"]
+🚀 Guest submitted login form
+GUEST: Failed to load resource: net::ERR_CONNECTION_REFUSED
+GUEST: Error signing in: FirebaseError: Firebase: Error (auth/network-request-failed).
+    at createErrorInternal (http://localhost:3000/_next/static/chunks/node_modules_%40firebase_auth_dist_esm_d3951ae3._.js:660:41)
+    at _fail (http://localhost:3000/_next/static/chunks/node_modules_%40firebase_auth_dist_esm_d3951ae3._.js:618:11)
+    at _performFetchWithErrorHandling (http://localhost:3000/_next/static/chunks/node_modules_%40firebase_auth_dist_esm_d3951ae3._.js:1106:9)
+    at async _performSignInRequest (http://localhost:3000/_next/static/chunks/node_modules_%40firebase_auth_dist_esm_d3951ae3._.js:1113:28)
+    at async _signInWithCredential (http://localhost:3000/_next/static/chunks/node_modules_%40firebase_auth_dist_esm_d3951ae3._.js:5679:22)
+    at async signIn (http://localhost:3000/_next/static/chunks/src_b1e5c616._.js:254:13)
+    at async handleSubmit (http://localhost:3000/_next/static/chunks/src_components_857b40fd._.js:1323:13)
+🧹 Cleaning up authenticated users Pokemon battle test
+
+[[ATTACHMENT|authenticated-users-battle-647e3-d-Users-Pokemon-Battle-Flow-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|authenticated-users-battle-647e3-d-Users-Pokemon-Battle-Flow-chromium/test-failed-2.png]]
+
+[[ATTACHMENT|authenticated-users-battle-647e3-d-Users-Pokemon-Battle-Flow-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+</testsuites>

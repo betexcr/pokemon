@@ -85,8 +85,8 @@ test.describe('Bypass Auth Pokemon Battle', () => {
     // Step 1: Bypass authentication for both users
     console.log('\n🔐 Step 1: Bypassing authentication');
     
-    const hostBypassSuccess = await bypassAuth(hostPage, 'testbattle1@pokemon-battles.test', 'Host');
-    const guestBypassSuccess = await bypassAuth(guestPage, 'testbattle2@pokemon-battles.test', 'Guest');
+    await bypassAuth(hostPage, 'testbattle1@pokemon-battles.test', 'Host');
+    await bypassAuth(guestPage, 'testbattle2@pokemon-battles.test', 'Guest');
     
     console.log('✅ Both users have bypassed authentication');
     
@@ -129,7 +129,7 @@ test.describe('Bypass Auth Pokemon Battle', () => {
           await hostPage.waitForTimeout(2000);
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -206,7 +206,7 @@ test.describe('Bypass Auth Pokemon Battle', () => {
           await hostPage.waitForTimeout(1000);
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -235,7 +235,7 @@ test.describe('Bypass Auth Pokemon Battle', () => {
           await guestPage.waitForTimeout(1000);
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -262,7 +262,7 @@ test.describe('Bypass Auth Pokemon Battle', () => {
           await hostPage.waitForTimeout(1000);
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -278,7 +278,7 @@ test.describe('Bypass Auth Pokemon Battle', () => {
           await guestPage.waitForTimeout(1000);
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -306,7 +306,7 @@ test.describe('Bypass Auth Pokemon Battle', () => {
           await hostPage.waitForTimeout(3000);
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -353,11 +353,11 @@ test.describe('Bypass Auth Pokemon Battle', () => {
             await elements[0].click();
             console.log('🎯 Clicked battle control');
             await hostPage.waitForTimeout(1000);
-          } catch (error) {
+          } catch (_error) {
             console.log('⚠️ Could not click battle control');
           }
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -383,7 +383,7 @@ test.describe('Bypass Auth Pokemon Battle', () => {
           console.log(`✅ Found ${elements.length} Pokemon images: ${selector}`);
           pokemonFound += elements.length;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }

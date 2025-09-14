@@ -5,9 +5,10 @@ import { useAuth } from '@/contexts/AuthContext';
 
 interface RegisterFormProps {
   onToggleMode: () => void;
+  onSuccess?: () => void;
 }
 
-export default function RegisterForm({ onToggleMode }: RegisterFormProps) {
+export default function RegisterForm({ onToggleMode, onSuccess }: RegisterFormProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -40,6 +41,8 @@ export default function RegisterForm({ onToggleMode }: RegisterFormProps) {
       setError('');
       setLoading(true);
       await signUp(email, password, displayName);
+      console.log('Signup successful, calling onSuccess callback');
+      onSuccess?.();
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'Failed to create account');
     } finally {

@@ -88,7 +88,7 @@ test.describe('Emulator Auth Pokemon Battle', () => {
           authButtonClicked = true;
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -122,7 +122,7 @@ test.describe('Emulator Auth Pokemon Battle', () => {
           emailFilled = true;
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -149,7 +149,7 @@ test.describe('Emulator Auth Pokemon Battle', () => {
           passwordFilled = true;
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -179,7 +179,7 @@ test.describe('Emulator Auth Pokemon Battle', () => {
           submitted = true;
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -197,16 +197,16 @@ test.describe('Emulator Auth Pokemon Battle', () => {
     // Step 1: Create test users in Firebase emulator
     console.log('\n🔐 Step 1: Creating test users in Firebase emulator');
     
-    const hostUserCreated = await createTestUser(hostPage, 'testbattle1@pokemon-battles.test', 'test1234', 'Host');
-    const guestUserCreated = await createTestUser(guestPage, 'testbattle2@pokemon-battles.test', 'test1234', 'Guest');
+    await createTestUser(hostPage, 'testbattle1@pokemon-battles.test', 'test1234', 'Host');
+    await createTestUser(guestPage, 'testbattle2@pokemon-battles.test', 'test1234', 'Guest');
     
     console.log('✅ Test users created in Firebase emulator');
     
     // Step 2: Login both users
     console.log('\n🔐 Step 2: Logging in both users');
     
-    const hostLoginSuccess = await loginUser(hostPage, 'testbattle1@pokemon-battles.test', 'test1234', 'Host');
-    const guestLoginSuccess = await loginUser(guestPage, 'testbattle2@pokemon-battles.test', 'test1234', 'Guest');
+    await loginUser(hostPage, 'testbattle1@pokemon-battles.test', 'test1234', 'Host');
+    await loginUser(guestPage, 'testbattle2@pokemon-battles.test', 'test1234', 'Guest');
     
     console.log('✅ Both users login attempts completed');
     
@@ -249,7 +249,7 @@ test.describe('Emulator Auth Pokemon Battle', () => {
           await hostPage.waitForTimeout(2000);
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -329,7 +329,7 @@ test.describe('Emulator Auth Pokemon Battle', () => {
           await hostPage.waitForTimeout(1000);
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -358,7 +358,7 @@ test.describe('Emulator Auth Pokemon Battle', () => {
           await guestPage.waitForTimeout(1000);
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -385,7 +385,7 @@ test.describe('Emulator Auth Pokemon Battle', () => {
           await hostPage.waitForTimeout(1000);
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -401,7 +401,7 @@ test.describe('Emulator Auth Pokemon Battle', () => {
           await guestPage.waitForTimeout(1000);
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
@@ -429,7 +429,7 @@ test.describe('Emulator Auth Pokemon Battle', () => {
           await hostPage.waitForTimeout(3000);
           break;
         }
-      } catch (error) {
+      } catch (_error) {
         // Continue to next selector
       }
     }
