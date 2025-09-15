@@ -116,7 +116,6 @@ export default function ComparisonOverlay({
                   key={pokemon.id}
                   className="flex items-center space-x-3 p-2 rounded-lg bg-gray-50 dark:bg-gray-800"
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={getPokemonMainPageImage(pokemon.id)}
                     alt={formatPokemonName(pokemon.name)}

@@ -1,0 +1,99 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e4]:
+    - heading "Authentication Required" [level=1] [ref=e5]
+    - paragraph [ref=e6]: You need to sign in to access this feature. Create an account to save your teams and battle other trainers!
+    - button "Sign In / Sign Up" [ref=e7]
+  - generic [active]:
+    - generic [ref=e10]:
+      - generic [ref=e11]:
+        - generic [ref=e12]:
+          - navigation [ref=e13]:
+            - button "previous" [disabled] [ref=e14]:
+              - img "previous" [ref=e15]
+            - generic [ref=e17]:
+              - generic [ref=e18]: 1/
+              - generic [ref=e19]: "1"
+            - button "next" [disabled] [ref=e20]:
+              - img "next" [ref=e21]
+          - img
+        - generic [ref=e23]:
+          - link "Next.js 15.5.2 (stale) Turbopack" [ref=e24]:
+            - /url: https://nextjs.org/docs/messages/version-staleness
+            - img [ref=e25]
+            - generic "There is a newer version (15.5.3) available, upgrade recommended!" [ref=e27]: Next.js 15.5.2 (stale)
+            - generic [ref=e28]: Turbopack
+          - img
+      - dialog "Build Error" [ref=e30]:
+        - generic [ref=e33]:
+          - generic [ref=e34]:
+            - generic [ref=e35]:
+              - generic [ref=e37]: Build Error
+              - generic [ref=e38]:
+                - button "Copy Error Info" [ref=e39] [cursor=pointer]:
+                  - img [ref=e40] [cursor=pointer]
+                - button "No related documentation found" [disabled] [ref=e42]:
+                  - img [ref=e43]
+                - link "Learn more about enabling Node.js inspector for server code with Chrome DevTools" [ref=e45]:
+                  - /url: https://nextjs.org/docs/app/building-your-application/configuring/debugging#server-side-code
+                  - img [ref=e46]
+            - paragraph [ref=e58]: Parsing ecmascript source code failed
+          - generic [ref=e60]:
+            - generic [ref=e62]:
+              - img [ref=e64]
+              - generic [ref=e68]: ./src/app/battle/runtime/page.tsx (2339:15)
+              - button "Open in editor" [ref=e69] [cursor=pointer]:
+                - img [ref=e71] [cursor=pointer]
+            - generic [ref=e74]:
+              - generic [ref=e75]: Parsing ecmascript source code failed
+              - generic [ref=e77]: 2337 |
+              - generic [ref=e79]: <
+              - generic [ref=e80]: /
+              - generic [ref=e81]: div
+              - generic [ref=e82]: ">"
+              - generic [ref=e84]: 2338 |
+              - generic [ref=e86]: <
+              - generic [ref=e87]: /
+              - generic [ref=e88]: div
+              - generic [ref=e89]: ">"
+              - generic [ref=e90]: ">"
+              - generic [ref=e91]: 2339 |
+              - generic [ref=e93]: <
+              - generic [ref=e94]: /
+              - generic [ref=e95]: div
+              - generic [ref=e96]: ">"
+              - generic [ref=e98]: "|"
+              - generic [ref=e100]: ^
+              - generic [ref=e101]: ^
+              - generic [ref=e102]: ^
+              - generic [ref=e103]: ^
+              - generic [ref=e105]: 2340 |
+              - generic [ref=e107]: 2341 |
+              - generic [ref=e108]: "{"
+              - generic [ref=e109]: /* Health Bar */
+              - generic [ref=e110]: "}"
+              - generic [ref=e111]: 2342 |
+              - generic [ref=e113]: <
+              - generic [ref=e114]: div
+              - generic [ref=e115]: className
+              - generic [ref=e116]: =
+              - generic [ref=e117]: "\"mb-2\""
+              - generic [ref=e118]: ">"
+              - generic [ref=e119]: "Expression expected Import traces: Client Component Browser: ./src/app/battle/runtime/page.tsx [Client Component Browser] ./src/app/battle/runtime/page.tsx [Server Component] Client Component SSR: ./src/app/battle/runtime/page.tsx [Client Component SSR] ./src/app/battle/runtime/page.tsx [Server Component]"
+        - generic [ref=e120]:
+          - generic [ref=e121]: "1"
+          - generic [ref=e122]: "2"
+    - generic [ref=e127] [cursor=pointer]:
+      - button "Open Next.js Dev Tools" [ref=e128] [cursor=pointer]:
+        - img [ref=e129] [cursor=pointer]
+      - button "Open issues overlay" [ref=e135] [cursor=pointer]:
+        - generic [ref=e136] [cursor=pointer]:
+          - generic [ref=e137] [cursor=pointer]: "0"
+          - generic [ref=e138] [cursor=pointer]: "1"
+        - generic [ref=e139] [cursor=pointer]: Issue
+  - alert [ref=e140]
+  - iframe [ref=e141]:
+    
+```

@@ -341,11 +341,11 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
   // Navigation happens only after the dialog completes.
   useEffect(() => {
     if (!room || !user) return;
-    if (room.status === 'battling' && room.battleId) {
-      console.log('Room status changed to battling, showing start dialog:', room.battleId);
+    if (room.status === 'battling' && room.battleId && !showBattleStartDialog) {
+      console.log('Room status changed to battling, showing start dialog for both players:', room.battleId);
       setShowBattleStartDialog(true);
     }
-  }, [room?.status, room?.battleId, user]);
+  }, [room?.status, room?.battleId, user, showBattleStartDialog]);
 
   const copyRoomCode = async () => {
     try {
@@ -556,8 +556,8 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
       
       console.log('Starting battle for room:', roomId, 'with both teams present');
       
-      // Show the battle start dialog
-      setShowBattleStartDialog(true);
+      // Note: The battle start dialog will be shown automatically when room status changes to 'battling'
+      // This ensures both players see the dialog at the same time
     } catch (error) {
       console.error('Failed to start battle:', error);
       
@@ -576,30 +576,77 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
     }
   };
 
-  const handleBattleStart = () => {
-    // Navigate to battle after dialog completes with role information
+  const handleBattleStart = async () => {
+    if (!user || !room) return;
+    
     const isHost = Boolean(user?.uid && room?.hostId && user.uid === room.hostId);
     const role = isHost ? 'host' : 'guest';
     
-    // Get the Pokemon list from the selected team
-    const pokemonList = selectedTeam?.slots?.filter(slot => slot.id !== null).map(slot => ({
-      id: slot.id,
-      level: slot.level,
-      moves: slot.moves || []
-    })) || [];
+    // Get team data from the room
+    const hostTeam = room.hostTeam as SavedTeam | LocalTeam | null;
+    const guestTeam = room.guestTeam as SavedTeam | LocalTeam | null;
     
-    // Create URL parameters with Pokemon list and user info
-    const params = new URLSearchParams({
-      roomId: roomId,
-      battleId: room?.battleId || '',
-      role: role,
-      isHost: isHost.toString(),
-      userId: user?.uid || '',
-      userName: user?.displayName || 'Anonymous',
-      pokemonList: JSON.stringify(pokemonList)
-    });
+    if (!hostTeam || !guestTeam) {
+      alert('Both players must select their teams before starting the battle!');
+      return;
+    }
     
-    router.push(`/battle/runtime?${params.toString()}`);
+    try {
+      // Import the Cloud Function
+      const { httpsCallable } = await import('firebase/functions');
+      const { functions } = await import('@/lib/firebase');
+      
+      // Convert team data to the format expected by the Cloud Function
+      const convertTeamToPokemon = (team: SavedTeam | LocalTeam): any[] => {
+        return team.slots
+          .filter(slot => slot.id !== null)
+          .map(slot => ({
+            species: `pokemon-${slot.id}`, // Convert to species name format
+            level: slot.level || 50,
+            types: [], // Will be populated by the Cloud Function
+            stats: { hp: 100, atk: 100, def: 100, spa: 100, spd: 100, spe: 100 }, // Will be populated by the Cloud Function
+            item: '',
+            ability: '',
+            moves: (slot.moves || []).map(move => ({
+              id: move.id || 'tackle',
+              pp: move.pp || 35
+            })),
+            status: null,
+            fainted: false
+          }));
+      };
+      
+      const createBattle = httpsCallable(functions, "createBattleWithTeams");
+      const res: any = await createBattle({
+        roomId: roomId,
+        p1Uid: room.hostId,
+        p2Uid: room.guestId,
+        p1Team: convertTeamToPokemon(hostTeam),
+        p2Team: convertTeamToPokemon(guestTeam)
+      });
+      
+      const battleId: string = res.data.battleId;
+      
+      console.log('✅ Battle created successfully:', battleId);
+      
+      // Add a small delay to ensure data is written to RTDB
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Navigate to battle with the new battle ID
+      const params = new URLSearchParams({
+        roomId: roomId,
+        battleId: battleId,
+        role: role,
+        isHost: isHost.toString(),
+        userId: user.uid,
+        userName: user.displayName || 'Anonymous'
+      });
+      
+      router.push(`/battle/runtime?${params.toString()}`);
+    } catch (error) {
+      console.error('Failed to start battle:', error);
+      alert('Failed to start battle. Please try again.');
+    }
   };
 
   const isHost = Boolean(user?.uid && room?.hostId && user.uid === room.hostId) as boolean;

@@ -3,6 +3,13 @@
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
   },
+  "functions": {
+    "source": "functions",
+    "runtime": "nodejs18"
+  },
+  "database": {
+    "rules": "database.rules.json"
+  },
   "hosting": {
     "public": "out",
     "ignore": [
@@ -51,6 +58,12 @@
     },
     "firestore": {
       "port": 8080
+    },
+    "database": {
+      "port": 9000
+    },
+    "functions": {
+      "port": 5001
     },
     "hosting": {
       "port": 5000

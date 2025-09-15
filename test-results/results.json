@@ -11,7 +11,7 @@
     "grepInvert": null,
     "maxFailures": 0,
     "metadata": {
-      "actualWorkers": 1
+      "actualWorkers": 4
     },
     "preserveOutput": "always",
     "reporter": [
@@ -45,7 +45,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 1
+          "actualWorkers": 4
         },
         "id": "chromium",
         "name": "chromium",
@@ -61,7 +61,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 1
+          "actualWorkers": 4
         },
         "id": "firefox",
         "name": "firefox",
@@ -77,7 +77,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 1
+          "actualWorkers": 4
         },
         "id": "webkit",
         "name": "webkit",
@@ -93,7 +93,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 1
+          "actualWorkers": 4
         },
         "id": "Mobile Chrome",
         "name": "Mobile Chrome",
@@ -109,7 +109,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 1
+          "actualWorkers": 4
         },
         "id": "Mobile Safari",
         "name": "Mobile Safari",
@@ -135,20 +135,20 @@
   },
   "suites": [
     {
-      "title": "authenticated-users-battle.test.ts",
-      "file": "authenticated-users-battle.test.ts",
+      "title": "multiplayer-battle-custom-uid.test.ts",
+      "file": "multiplayer-battle-custom-uid.test.ts",
       "column": 0,
       "line": 0,
       "specs": [],
       "suites": [
         {
-          "title": "Authenticated Users Pokemon Battle",
-          "file": "authenticated-users-battle.test.ts",
-          "line": 3,
+          "title": "Multiplayer Battle System with Custom UIDs",
+          "file": "multiplayer-battle-custom-uid.test.ts",
+          "line": 136,
           "column": 6,
           "specs": [
             {
-              "title": "Complete Authenticated Users Pokemon Battle Flow",
+              "title": "Complete multiplayer battle flow with custom UIDs",
               "ok": false,
               "tags": [],
               "tests": [
@@ -162,1397 +162,1297 @@
                     {
                       "workerIndex": 0,
                       "parallelIndex": 0,
-                      "status": "timedOut",
-                      "duration": 60240,
+                      "status": "failed",
+                      "duration": 12055,
                       "error": {
-                        "message": "\u001b[31mTest timeout of 60000ms exceeded.\u001b[39m",
-                        "stack": "\u001b[31mTest timeout of 60000ms exceeded.\u001b[39m"
+                        "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"auth-modal\"]') to be visible\u001b[22m\n",
+                        "stack": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"auth-modal\"]') to be visible\u001b[22m\n\n    at authenticateUser (/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts:37:14)\n    at /Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts:187:11",
+                        "location": {
+                          "file": "/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts",
+                          "column": 14,
+                          "line": 37
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 35 |\u001b[39m   \n \u001b[90m 36 |\u001b[39m   \u001b[90m// Wait for auth modal to appear\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 37 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'[data-testid=\"auth-modal\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 38 |\u001b[39m   \n \u001b[90m 39 |\u001b[39m   \u001b[90m// Fill in email and password\u001b[39m\n \u001b[90m 40 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[type=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m email)\u001b[33m;\u001b[39m\u001b[0m"
                       },
                       "errors": [
                         {
-                          "message": "\u001b[31mTest timeout of 60000ms exceeded.\u001b[39m"
-                        },
-                        {
                           "location": {
-                            "file": "/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/authenticated-users-battle.test.ts",
-                            "column": 16,
-                            "line": 159
+                            "file": "/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts",
+                            "column": 14,
+                            "line": 37
                           },
-                          "message": "Error: page.waitForTimeout: Target page, context or browser has been closed\n\n\u001b[0m \u001b[90m 157 |\u001b[39m     \n \u001b[90m 158 |\u001b[39m     \u001b[90m// Wait for login to complete\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 159 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForTimeout(\u001b[35m3000\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 160 |\u001b[39m     \n \u001b[90m 161 |\u001b[39m     console\u001b[33m.\u001b[39mlog(\u001b[32m`✅ ${userType} login process completed`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 162 |\u001b[39m     \u001b[36mreturn\u001b[39m emailFilled \u001b[33m&&\u001b[39m passwordFilled \u001b[33m&&\u001b[39m submitted\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at loginUser (/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/authenticated-users-battle.test.ts:159:16)\u001b[22m\n\u001b[2m    at /Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/authenticated-users-battle.test.ts:172:31\u001b[22m"
+                          "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"auth-modal\"]') to be visible\u001b[22m\n\n\n\u001b[0m \u001b[90m 35 |\u001b[39m   \n \u001b[90m 36 |\u001b[39m   \u001b[90m// Wait for auth modal to appear\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 37 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'[data-testid=\"auth-modal\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 38 |\u001b[39m   \n \u001b[90m 39 |\u001b[39m   \u001b[90m// Fill in email and password\u001b[39m\n \u001b[90m 40 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[type=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m email)\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at authenticateUser (/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts:37:14)\u001b[22m\n\u001b[2m    at /Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts:187:11\u001b[22m"
                         }
                       ],
                       "stdout": [
                         {
-                          "text": "🎮 Setting up authenticated users Pokemon battle test\n"
+                          "text": "🚀 Setting up multiplayer battle test with custom UIDs\n"
                         },
                         {
-                          "text": "🎮 Starting complete authenticated users Pokemon battle flow\n"
+                          "text": "🎯 Target UIDs - Host: testbattle1-cli-uid, Guest: testbattle2-cli-uid\n"
                         },
                         {
-                          "text": "\n🔐 Step 1: Authenticating both users\n"
+                          "text": "🎮 Starting complete multiplayer battle test with custom UIDs\n"
                         },
                         {
-                          "text": "\n🔐 Logging in Host: testbattle1@pokemon-battles.test\n"
+                          "text": "\n📝 Step 1: Host creates room\n"
+                        },
+                        {
+                          "text": "HOST NETWORK: 200 http://localhost:3000/_next/static/chunks/node_modules_%40firebase_auth_dist_esm_d3951ae3._.js\n"
                         },
                         {
                           "text": "HOST: %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold\n"
                         },
                         {
-                          "text": "HOST: 🔗 Connected to Firebase Auth Emulator\n"
+                          "text": "HOST NETWORK: 200 http://localhost:3000/_next/static/chunks/node_modules_%40firebase_database_dist_index_esm_3663ff2c.js\n"
                         },
                         {
-                          "text": "HOST: 🔗 Connected to Firebase Firestore Emulator\n"
+                          "text": "HOST NETWORK: 200 http://localhost:3000/_next/static/chunks/node_modules_%40firebase_firestore_dist_index_esm_af799df8.js\n"
                         },
                         {
-                          "text": "HOST: Current pathname: / Actual pathname: /\n"
+                          "text": "🔐 Authenticating user: testbattle1@pokemon-battles.test\n"
                         },
                         {
-                          "text": "HOST: Current theme: light isModernTheme: true loading: true\n"
-                        },
-                        {
-                          "text": "HOST: Current pathname: / Actual pathname: /\n"
-                        },
-                        {
-                          "text": "HOST: Current theme: light isModernTheme: true loading: true\n"
-                        },
-                        {
-                          "text": "HOST: ModernPokedexLayout rendered with pokemonList length: 0\n"
-                        },
-                        {
-                          "text": "HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "HOST: ModernPokedexLayout rendered with pokemonList length: 0\n"
-                        },
-                        {
-                          "text": "HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "HOST: loadInitialPokemon effect running: {isAllGenerations: true, allGenerationsPokemonLength: 0}\n"
-                        },
-                        {
-                          "text": "HOST: Loading initial Pokemon data...\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon?limit=100&offset=0\n"
-                        },
-                        {
-                          "text": "HOST: Looking for sentinel element: null\n"
-                        },
-                        {
-                          "text": "HOST: Sentinel not found, retrying...\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon?limit=30&offset=0\n"
-                        },
-                        {
-                          "text": "HOST: Current pathname: / Actual pathname: /\n"
-                        },
-                        {
-                          "text": "HOST: Current theme: light isModernTheme: true loading: true\n"
-                        },
-                        {
-                          "text": "HOST: Current pathname: / Actual pathname: /\n"
-                        },
-                        {
-                          "text": "HOST: Current theme: light isModernTheme: true loading: true\n"
-                        },
-                        {
-                          "text": "HOST: ModernPokedexLayout rendered with pokemonList length: 0\n"
-                        },
-                        {
-                          "text": "HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "HOST: ModernPokedexLayout rendered with pokemonList length: 0\n"
-                        },
-                        {
-                          "text": "HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "HOST: Current pathname: / Actual pathname: /\n"
-                        },
-                        {
-                          "text": "HOST: Current theme: light isModernTheme: true loading: true\n"
-                        },
-                        {
-                          "text": "HOST: Current pathname: / Actual pathname: /\n"
-                        },
-                        {
-                          "text": "HOST: Current theme: light isModernTheme: true loading: true\n"
-                        },
-                        {
-                          "text": "HOST: ModernPokedexLayout rendered with pokemonList length: 0\n"
-                        },
-                        {
-                          "text": "HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "HOST: ModernPokedexLayout rendered with pokemonList length: 0\n"
-                        },
-                        {
-                          "text": "HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "HOST: ModernPokedexLayout rendered with pokemonList length: 0\n"
-                        },
-                        {
-                          "text": "HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "HOST: ModernPokedexLayout rendered with pokemonList length: 0\n"
-                        },
-                        {
-                          "text": "HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "HOST: ModernPokedexLayout rendered with pokemonList length: 0\n"
-                        },
-                        {
-                          "text": "HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "HOST: ModernPokedexLayout rendered with pokemonList length: 0\n"
-                        },
-                        {
-                          "text": "HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "HOST: ModernPokedexLayout rendered with pokemonList length: 0\n"
-                        },
-                        {
-                          "text": "HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "HOST: ModernPokedexLayout rendered with pokemonList length: 0\n"
-                        },
-                        {
-                          "text": "HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "HOST: Looking for sentinel element: null\n"
-                        },
-                        {
-                          "text": "HOST: Sentinel still not found after retry\n"
-                        },
-                        {
-                          "text": "HOST: ModernPokedexLayout rendered with pokemonList length: 0\n"
-                        },
-                        {
-                          "text": "HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "HOST: ModernPokedexLayout rendered with pokemonList length: 0\n"
-                        },
-                        {
-                          "text": "HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "HOST: ModernPokedexLayout rendered with pokemonList length: 0\n"
-                        },
-                        {
-                          "text": "HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "HOST: ModernPokedexLayout rendered with pokemonList length: 0\n"
-                        },
-                        {
-                          "text": "HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "HOST: ModernPokedexLayout rendered with pokemonList length: 0\n"
-                        },
-                        {
-                          "text": "HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "HOST: ModernPokedexLayout rendered with pokemonList length: 0\n"
-                        },
-                        {
-                          "text": "HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/1\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/2\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/3\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/4\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/5\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/6\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/7\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/8\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/9\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/10\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/11\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/12\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/13\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/14\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/15\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/16\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/17\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/18\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/19\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/20\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/21\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/22\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/23\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/24\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/25\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/26\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/27\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/28\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/29\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/30\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/31\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/32\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/33\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/34\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/35\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/36\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/37\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/38\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/39\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/40\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/41\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/42\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/43\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/44\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/45\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/46\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/47\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/48\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/49\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/50\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/51\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/52\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/53\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/54\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/55\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/56\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/57\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/58\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/59\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/60\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/61\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/62\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/63\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/64\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/65\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/66\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/67\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/68\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/69\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/70\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/71\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/72\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/73\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/74\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/75\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/76\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/77\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/78\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/79\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/80\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/81\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/82\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/83\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/84\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/85\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/86\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/87\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/88\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/89\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/90\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/91\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/92\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/93\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/94\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/95\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/96\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/97\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/98\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/99\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/100\n"
-                        },
-                        {
-                          "text": "HOST: Current pathname: / Actual pathname: /\n"
-                        },
-                        {
-                          "text": "HOST: Current theme: light isModernTheme: true loading: false\n"
-                        },
-                        {
-                          "text": "HOST: Current pathname: / Actual pathname: /\n"
-                        },
-                        {
-                          "text": "HOST: Current theme: light isModernTheme: true loading: false\n"
-                        },
-                        {
-                          "text": "HOST: ModernPokedexLayout rendered with pokemonList length: 30\n"
-                        },
-                        {
-                          "text": "HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "HOST: ModernPokedexLayout rendered with pokemonList length: 30\n"
-                        },
-                        {
-                          "text": "HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "HOST: ModernPokedexLayout rendered with pokemonList length: 30\n"
-                        },
-                        {
-                          "text": "HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "HOST: ModernPokedexLayout rendered with pokemonList length: 30\n"
-                        },
-                        {
-                          "text": "HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "HOST: ModernPokedexLayout rendered with pokemonList length: 30\n"
-                        },
-                        {
-                          "text": "HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "HOST: ModernPokedexLayout rendered with pokemonList length: 30\n"
-                        },
-                        {
-                          "text": "HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "HOST: Loaded initial Pokemon: 100 Pokemon\n"
-                        },
-                        {
-                          "text": "HOST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon?limit=1&offset=0\n"
-                        },
-                        {
-                          "text": "HOST: ModernPokedexLayout rendered with pokemonList length: 30\n"
-                        },
-                        {
-                          "text": "HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 100, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "HOST: ModernPokedexLayout rendered with pokemonList length: 30\n"
-                        },
-                        {
-                          "text": "HOST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 100, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "HOST: Setting filteredPokemon from allGenerationsPokemon: 100 Pokemon\n"
-                        },
-                        {
-                          "text": "HOST: Looking for sentinel element: null\n"
-                        },
-                        {
-                          "text": "HOST: Sentinel not found, retrying...\n"
-                        },
-                        {
-                          "text": "HOST: ModernPokedexLayout rendered with pokemonList length: 30\n"
-                        },
-                        {
-                          "text": "HOST: Render state: {isFiltering: false, sortedPokemonLength: 100, allGenerationsPokemonLength: 100, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "HOST: ModernPokedexLayout rendered with pokemonList length: 30\n"
-                        },
-                        {
-                          "text": "HOST: Render state: {isFiltering: false, sortedPokemonLength: 100, allGenerationsPokemonLength: 100, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "HOST: ModernPokedexLayout rendered with pokemonList length: 30\n"
-                        },
-                        {
-                          "text": "HOST: Render state: {isFiltering: false, sortedPokemonLength: 100, allGenerationsPokemonLength: 100, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "HOST: ModernPokedexLayout rendered with pokemonList length: 30\n"
-                        },
-                        {
-                          "text": "HOST: Render state: {isFiltering: false, sortedPokemonLength: 100, allGenerationsPokemonLength: 100, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "HOST: Looking for sentinel element: JSHandle@node\n"
-                        },
-                        {
-                          "text": "HOST: Sentinel found on retry, setting up observer\n"
-                        },
-                        {
-                          "text": "HOST: Intersection observer triggered: {isIntersecting: false, isLoadingMore: false, hasMorePokemon: true, currentOffset: 100, totalPokemonCount: null}\n"
-                        },
-                        {
-                          "text": "HOST: Total Pokémon count from API: 1302\n"
-                        },
-                        {
-                          "text": "HOST: Fetched total Pokemon count: 1302\n"
-                        },
-                        {
-                          "text": "HOST: ModernPokedexLayout rendered with pokemonList length: 30\n"
-                        },
-                        {
-                          "text": "HOST: Render state: {isFiltering: false, sortedPokemonLength: 100, allGenerationsPokemonLength: 100, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "HOST: ModernPokedexLayout rendered with pokemonList length: 30\n"
-                        },
-                        {
-                          "text": "HOST: Render state: {isFiltering: false, sortedPokemonLength: 100, allGenerationsPokemonLength: 100, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "HOST: Looking for sentinel element: JSHandle@node\n"
-                        },
-                        {
-                          "text": "HOST: Sentinel found immediately, setting up observer\n"
-                        },
-                        {
-                          "text": "HOST: Intersection observer triggered: {isIntersecting: false, isLoadingMore: false, hasMorePokemon: true, currentOffset: 100, totalPokemonCount: 1302}\n"
-                        },
-                        {
-                          "text": "✅ Host found login button: button:has-text(\"Sign In\")\n"
-                        },
-                        {
-                          "text": "HOST: Creating portal to document.body: JSHandle@node\n"
-                        },
-                        {
-                          "text": "HOST: Creating portal to document.body: JSHandle@node\n"
-                        },
-                        {
-                          "text": "HOST: Blocked aria-hidden on an element because its descendant retained focus. The focus must not be hidden from assistive technology users. Avoid using aria-hidden on a focused element or its ancestor. Consider using the inert attribute instead, which will also prevent focus. For more details, see the aria-hidden section of the WAI-ARIA specification at https://w3c.github.io/aria/#aria-hidden.\nElement with focus: <button.flex w-full items-center px-4 py-3 text-sm text-blue-600 transition hover:bg-blue-50 focus:bg-blue-50 rounded-b-lg>\nAncestor with aria-hidden: <div.absolute right-0 mt-2 rounded-lg border border-gray-200 shadow-lg z-50 origin-top-right transition duration-150 ease-out opacity-0 -translate-y-1 scale-95 pointer-events-none>\n"
-                        },
-                        {
-                          "text": "🔐 Host clicked login button\n"
-                        },
-                        {
-                          "text": "HOST: Image with src \"http://localhost:3000/header-icons/auth-hero.png\" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: \"auto\"' or 'height: \"auto\"' to maintain the aspect ratio.\n"
-                        },
-                        {
-                          "text": "HOST: [DOM] Input elements should have autocomplete attributes (suggested: \"current-password\"): (More info: https://goo.gl/9p2vKq) %o\n"
-                        },
-                        {
-                          "text": "✅ Host found email input: input[type=\"email\"]\n"
-                        },
-                        {
-                          "text": "📧 Host entered email: testbattle1@pokemon-battles.test\n"
-                        },
-                        {
-                          "text": "✅ Host found password input: input[type=\"password\"]\n"
-                        },
-                        {
-                          "text": "🔒 Host entered password\n"
-                        },
-                        {
-                          "text": "✅ Host found submit button: button[type=\"submit\"]\n"
-                        },
-                        {
-                          "text": "🚀 Host submitted login form\n"
-                        },
-                        {
-                          "text": "HOST: Failed to load resource: net::ERR_CONNECTION_REFUSED\n"
-                        },
-                        {
-                          "text": "HOST: Error signing in: FirebaseError: Firebase: Error (auth/network-request-failed).\n    at createErrorInternal (http://localhost:3000/_next/static/chunks/node_modules_%40firebase_auth_dist_esm_d3951ae3._.js:660:41)\n    at _fail (http://localhost:3000/_next/static/chunks/node_modules_%40firebase_auth_dist_esm_d3951ae3._.js:618:11)\n    at _performFetchWithErrorHandling (http://localhost:3000/_next/static/chunks/node_modules_%40firebase_auth_dist_esm_d3951ae3._.js:1106:9)\n    at async _performSignInRequest (http://localhost:3000/_next/static/chunks/node_modules_%40firebase_auth_dist_esm_d3951ae3._.js:1113:28)\n    at async _signInWithCredential (http://localhost:3000/_next/static/chunks/node_modules_%40firebase_auth_dist_esm_d3951ae3._.js:5679:22)\n    at async signIn (http://localhost:3000/_next/static/chunks/src_b1e5c616._.js:254:13)\n    at async handleSubmit (http://localhost:3000/_next/static/chunks/src_components_857b40fd._.js:1323:13)\n"
-                        },
-                        {
-                          "text": "✅ Host login process completed\n"
-                        },
-                        {
-                          "text": "\n🔐 Logging in Guest: testbattle2@pokemon-battles.test\n"
-                        },
-                        {
-                          "text": "GUEST: %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold\n"
-                        },
-                        {
-                          "text": "GUEST: 🔗 Connected to Firebase Auth Emulator\n"
-                        },
-                        {
-                          "text": "GUEST: 🔗 Connected to Firebase Firestore Emulator\n"
-                        },
-                        {
-                          "text": "GUEST: Current pathname: / Actual pathname: /\n"
-                        },
-                        {
-                          "text": "GUEST: Current theme: light isModernTheme: true loading: true\n"
-                        },
-                        {
-                          "text": "GUEST: Current pathname: / Actual pathname: /\n"
-                        },
-                        {
-                          "text": "GUEST: Current theme: light isModernTheme: true loading: true\n"
-                        },
-                        {
-                          "text": "GUEST: ModernPokedexLayout rendered with pokemonList length: 0\n"
-                        },
-                        {
-                          "text": "GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "GUEST: ModernPokedexLayout rendered with pokemonList length: 0\n"
-                        },
-                        {
-                          "text": "GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "GUEST: loadInitialPokemon effect running: {isAllGenerations: true, allGenerationsPokemonLength: 0}\n"
-                        },
-                        {
-                          "text": "GUEST: Loading initial Pokemon data...\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon?limit=100&offset=0\n"
-                        },
-                        {
-                          "text": "GUEST: Looking for sentinel element: null\n"
-                        },
-                        {
-                          "text": "GUEST: Sentinel not found, retrying...\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon?limit=30&offset=0\n"
-                        },
-                        {
-                          "text": "GUEST: Current pathname: / Actual pathname: /\n"
-                        },
-                        {
-                          "text": "GUEST: Current theme: light isModernTheme: true loading: true\n"
-                        },
-                        {
-                          "text": "GUEST: Current pathname: / Actual pathname: /\n"
-                        },
-                        {
-                          "text": "GUEST: Current theme: light isModernTheme: true loading: true\n"
-                        },
-                        {
-                          "text": "GUEST: ModernPokedexLayout rendered with pokemonList length: 0\n"
-                        },
-                        {
-                          "text": "GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "GUEST: ModernPokedexLayout rendered with pokemonList length: 0\n"
-                        },
-                        {
-                          "text": "GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "GUEST: Current pathname: / Actual pathname: /\n"
-                        },
-                        {
-                          "text": "GUEST: Current theme: light isModernTheme: true loading: true\n"
-                        },
-                        {
-                          "text": "GUEST: Current pathname: / Actual pathname: /\n"
-                        },
-                        {
-                          "text": "GUEST: Current theme: light isModernTheme: true loading: true\n"
-                        },
-                        {
-                          "text": "GUEST: ModernPokedexLayout rendered with pokemonList length: 0\n"
-                        },
-                        {
-                          "text": "GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "GUEST: ModernPokedexLayout rendered with pokemonList length: 0\n"
-                        },
-                        {
-                          "text": "GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "GUEST: ModernPokedexLayout rendered with pokemonList length: 0\n"
-                        },
-                        {
-                          "text": "GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "GUEST: ModernPokedexLayout rendered with pokemonList length: 0\n"
-                        },
-                        {
-                          "text": "GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "GUEST: ModernPokedexLayout rendered with pokemonList length: 0\n"
-                        },
-                        {
-                          "text": "GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "GUEST: ModernPokedexLayout rendered with pokemonList length: 0\n"
-                        },
-                        {
-                          "text": "GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "GUEST: ModernPokedexLayout rendered with pokemonList length: 0\n"
-                        },
-                        {
-                          "text": "GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "GUEST: ModernPokedexLayout rendered with pokemonList length: 0\n"
-                        },
-                        {
-                          "text": "GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "GUEST: Looking for sentinel element: null\n"
-                        },
-                        {
-                          "text": "GUEST: Sentinel still not found after retry\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/1\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/2\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/3\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/4\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/5\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/6\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/7\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/8\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/9\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/10\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/11\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/12\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/13\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/14\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/15\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/16\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/17\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/18\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/19\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/20\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/21\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/22\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/23\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/24\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/25\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/26\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/27\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/28\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/29\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/30\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/31\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/32\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/33\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/34\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/35\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/36\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/37\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/38\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/39\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/40\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/41\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/42\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/43\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/44\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/45\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/46\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/47\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/48\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/49\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/50\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/51\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/52\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/53\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/54\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/55\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/56\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/57\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/58\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/59\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/60\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/61\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/62\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/63\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/64\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/65\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/66\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/67\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/68\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/69\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/70\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/71\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/72\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/73\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/74\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/75\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/76\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/77\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/78\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/79\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/80\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/81\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/82\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/83\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/84\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/85\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/86\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/87\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/88\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/89\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/90\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/91\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/92\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/93\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/94\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/95\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/96\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/97\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/98\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/99\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon/100\n"
-                        },
-                        {
-                          "text": "GUEST: ModernPokedexLayout rendered with pokemonList length: 0\n"
-                        },
-                        {
-                          "text": "GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "GUEST: ModernPokedexLayout rendered with pokemonList length: 0\n"
-                        },
-                        {
-                          "text": "GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "GUEST: ModernPokedexLayout rendered with pokemonList length: 0\n"
-                        },
-                        {
-                          "text": "GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "GUEST: ModernPokedexLayout rendered with pokemonList length: 0\n"
-                        },
-                        {
-                          "text": "GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "GUEST: ModernPokedexLayout rendered with pokemonList length: 0\n"
-                        },
-                        {
-                          "text": "GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "GUEST: ModernPokedexLayout rendered with pokemonList length: 0\n"
-                        },
-                        {
-                          "text": "GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "GUEST: Current pathname: / Actual pathname: /\n"
-                        },
-                        {
-                          "text": "GUEST: Current theme: light isModernTheme: true loading: false\n"
-                        },
-                        {
-                          "text": "GUEST: Current pathname: / Actual pathname: /\n"
-                        },
-                        {
-                          "text": "GUEST: Current theme: light isModernTheme: true loading: false\n"
-                        },
-                        {
-                          "text": "GUEST: ModernPokedexLayout rendered with pokemonList length: 30\n"
-                        },
-                        {
-                          "text": "GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "GUEST: ModernPokedexLayout rendered with pokemonList length: 30\n"
-                        },
-                        {
-                          "text": "GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "GUEST: ModernPokedexLayout rendered with pokemonList length: 30\n"
-                        },
-                        {
-                          "text": "GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "GUEST: ModernPokedexLayout rendered with pokemonList length: 30\n"
-                        },
-                        {
-                          "text": "GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "GUEST: ModernPokedexLayout rendered with pokemonList length: 30\n"
-                        },
-                        {
-                          "text": "GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "GUEST: ModernPokedexLayout rendered with pokemonList length: 30\n"
-                        },
-                        {
-                          "text": "GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 0, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "GUEST: Loaded initial Pokemon: 100 Pokemon\n"
-                        },
-                        {
-                          "text": "GUEST: 🌐 API Call: https://pokeapi.co/api/v2/pokemon?limit=1&offset=0\n"
-                        },
-                        {
-                          "text": "GUEST: ModernPokedexLayout rendered with pokemonList length: 30\n"
-                        },
-                        {
-                          "text": "GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 100, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "GUEST: ModernPokedexLayout rendered with pokemonList length: 30\n"
-                        },
-                        {
-                          "text": "GUEST: Render state: {isFiltering: false, sortedPokemonLength: 0, allGenerationsPokemonLength: 100, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "GUEST: Setting filteredPokemon from allGenerationsPokemon: 100 Pokemon\n"
-                        },
-                        {
-                          "text": "GUEST: Looking for sentinel element: null\n"
-                        },
-                        {
-                          "text": "GUEST: Sentinel not found, retrying...\n"
-                        },
-                        {
-                          "text": "GUEST: ModernPokedexLayout rendered with pokemonList length: 30\n"
-                        },
-                        {
-                          "text": "GUEST: Render state: {isFiltering: false, sortedPokemonLength: 100, allGenerationsPokemonLength: 100, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "GUEST: ModernPokedexLayout rendered with pokemonList length: 30\n"
-                        },
-                        {
-                          "text": "GUEST: Render state: {isFiltering: false, sortedPokemonLength: 100, allGenerationsPokemonLength: 100, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "GUEST: ModernPokedexLayout rendered with pokemonList length: 30\n"
-                        },
-                        {
-                          "text": "GUEST: Render state: {isFiltering: false, sortedPokemonLength: 100, allGenerationsPokemonLength: 100, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "GUEST: ModernPokedexLayout rendered with pokemonList length: 30\n"
-                        },
-                        {
-                          "text": "GUEST: Render state: {isFiltering: false, sortedPokemonLength: 100, allGenerationsPokemonLength: 100, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "GUEST: Looking for sentinel element: JSHandle@node\n"
-                        },
-                        {
-                          "text": "GUEST: Sentinel found on retry, setting up observer\n"
-                        },
-                        {
-                          "text": "GUEST: Intersection observer triggered: {isIntersecting: false, isLoadingMore: false, hasMorePokemon: true, currentOffset: 100, totalPokemonCount: null}\n"
-                        },
-                        {
-                          "text": "GUEST: Total Pokémon count from API: 1302\n"
-                        },
-                        {
-                          "text": "GUEST: Fetched total Pokemon count: 1302\n"
-                        },
-                        {
-                          "text": "GUEST: ModernPokedexLayout rendered with pokemonList length: 30\n"
-                        },
-                        {
-                          "text": "GUEST: Render state: {isFiltering: false, sortedPokemonLength: 100, allGenerationsPokemonLength: 100, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "GUEST: ModernPokedexLayout rendered with pokemonList length: 30\n"
-                        },
-                        {
-                          "text": "GUEST: Render state: {isFiltering: false, sortedPokemonLength: 100, allGenerationsPokemonLength: 100, isAllGenerations: true, hasMorePokemon: true}\n"
-                        },
-                        {
-                          "text": "GUEST: Looking for sentinel element: JSHandle@node\n"
-                        },
-                        {
-                          "text": "GUEST: Sentinel found immediately, setting up observer\n"
-                        },
-                        {
-                          "text": "GUEST: Intersection observer triggered: {isIntersecting: false, isLoadingMore: false, hasMorePokemon: true, currentOffset: 100, totalPokemonCount: 1302}\n"
-                        },
-                        {
-                          "text": "✅ Guest found login button: button:has-text(\"Sign In\")\n"
-                        },
-                        {
-                          "text": "HOST: Failed to load resource: net::ERR_CONNECTION_REFUSED\n"
-                        },
-                        {
-                          "text": "HOST: Error signing in: FirebaseError: Firebase: Error (auth/network-request-failed).\n    at createErrorInternal (http://localhost:3000/_next/static/chunks/node_modules_%40firebase_auth_dist_esm_d3951ae3._.js:660:41)\n    at _fail (http://localhost:3000/_next/static/chunks/node_modules_%40firebase_auth_dist_esm_d3951ae3._.js:618:11)\n    at _performFetchWithErrorHandling (http://localhost:3000/_next/static/chunks/node_modules_%40firebase_auth_dist_esm_d3951ae3._.js:1106:9)\n    at async _performSignInRequest (http://localhost:3000/_next/static/chunks/node_modules_%40firebase_auth_dist_esm_d3951ae3._.js:1113:28)\n    at async _signInWithCredential (http://localhost:3000/_next/static/chunks/node_modules_%40firebase_auth_dist_esm_d3951ae3._.js:5679:22)\n    at async signIn (http://localhost:3000/_next/static/chunks/src_b1e5c616._.js:254:13)\n    at async handleSubmit (http://localhost:3000/_next/static/chunks/src_components_857b40fd._.js:1323:13)\n"
-                        },
-                        {
-                          "text": "GUEST: Creating portal to document.body: JSHandle@node\n"
-                        },
-                        {
-                          "text": "GUEST: Creating portal to document.body: JSHandle@node\n"
-                        },
-                        {
-                          "text": "GUEST: Blocked aria-hidden on an element because its descendant retained focus. The focus must not be hidden from assistive technology users. Avoid using aria-hidden on a focused element or its ancestor. Consider using the inert attribute instead, which will also prevent focus. For more details, see the aria-hidden section of the WAI-ARIA specification at https://w3c.github.io/aria/#aria-hidden.\nElement with focus: <button.flex w-full items-center px-4 py-3 text-sm text-blue-600 transition hover:bg-blue-50 focus:bg-blue-50 rounded-b-lg>\nAncestor with aria-hidden: <div.absolute right-0 mt-2 rounded-lg border border-gray-200 shadow-lg z-50 origin-top-right transition duration-150 ease-out opacity-0 -translate-y-1 scale-95 pointer-events-none>\n"
-                        },
-                        {
-                          "text": "🔐 Guest clicked login button\n"
-                        },
-                        {
-                          "text": "GUEST: Image with src \"http://localhost:3000/header-icons/auth-hero.png\" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: \"auto\"' or 'height: \"auto\"' to maintain the aspect ratio.\n"
-                        },
-                        {
-                          "text": "GUEST: [DOM] Input elements should have autocomplete attributes (suggested: \"current-password\"): (More info: https://goo.gl/9p2vKq) %o\n"
-                        },
-                        {
-                          "text": "✅ Guest found email input: input[type=\"email\"]\n"
-                        },
-                        {
-                          "text": "📧 Guest entered email: testbattle2@pokemon-battles.test\n"
-                        },
-                        {
-                          "text": "✅ Guest found password input: input[type=\"password\"]\n"
-                        },
-                        {
-                          "text": "🔒 Guest entered password\n"
-                        },
-                        {
-                          "text": "✅ Guest found submit button: button[type=\"submit\"]\n"
-                        },
-                        {
-                          "text": "🚀 Guest submitted login form\n"
-                        },
-                        {
-                          "text": "GUEST: Failed to load resource: net::ERR_CONNECTION_REFUSED\n"
-                        },
-                        {
-                          "text": "GUEST: Error signing in: FirebaseError: Firebase: Error (auth/network-request-failed).\n    at createErrorInternal (http://localhost:3000/_next/static/chunks/node_modules_%40firebase_auth_dist_esm_d3951ae3._.js:660:41)\n    at _fail (http://localhost:3000/_next/static/chunks/node_modules_%40firebase_auth_dist_esm_d3951ae3._.js:618:11)\n    at _performFetchWithErrorHandling (http://localhost:3000/_next/static/chunks/node_modules_%40firebase_auth_dist_esm_d3951ae3._.js:1106:9)\n    at async _performSignInRequest (http://localhost:3000/_next/static/chunks/node_modules_%40firebase_auth_dist_esm_d3951ae3._.js:1113:28)\n    at async _signInWithCredential (http://localhost:3000/_next/static/chunks/node_modules_%40firebase_auth_dist_esm_d3951ae3._.js:5679:22)\n    at async signIn (http://localhost:3000/_next/static/chunks/src_b1e5c616._.js:254:13)\n    at async handleSubmit (http://localhost:3000/_next/static/chunks/src_components_857b40fd._.js:1323:13)\n"
-                        },
-                        {
-                          "text": "🧹 Cleaning up authenticated users Pokemon battle test\n"
+                          "text": "🧹 Cleaning up multiplayer battle test\n"
                         }
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-09-14T21:39:45.070Z",
+                      "startTime": "2025-09-15T01:39:24.720Z",
                       "annotations": [],
                       "attachments": [
                         {
                           "name": "screenshot",
                           "contentType": "image/png",
-                          "path": "/Users/albertomunoz/Documents/Code/pokemon/test-results/authenticated-users-battle-647e3-d-Users-Pokemon-Battle-Flow-chromium/test-failed-1.png"
+                          "path": "/Users/albertomunoz/Documents/Code/pokemon/test-results/multiplayer-battle-custom--3325e-attle-flow-with-custom-UIDs-chromium/test-failed-1.png"
                         },
                         {
                           "name": "screenshot",
                           "contentType": "image/png",
-                          "path": "/Users/albertomunoz/Documents/Code/pokemon/test-results/authenticated-users-battle-647e3-d-Users-Pokemon-Battle-Flow-chromium/test-failed-2.png"
+                          "path": "/Users/albertomunoz/Documents/Code/pokemon/test-results/multiplayer-battle-custom--3325e-attle-flow-with-custom-UIDs-chromium/test-failed-2.png"
                         },
                         {
                           "name": "error-context",
                           "contentType": "text/markdown",
-                          "path": "/Users/albertomunoz/Documents/Code/pokemon/test-results/authenticated-users-battle-647e3-d-Users-Pokemon-Battle-Flow-chromium/error-context.md"
+                          "path": "/Users/albertomunoz/Documents/Code/pokemon/test-results/multiplayer-battle-custom--3325e-attle-flow-with-custom-UIDs-chromium/error-context.md"
                         }
-                      ]
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts",
+                        "column": 14,
+                        "line": 37
+                      }
                     }
                   ],
                   "status": "unexpected"
                 }
               ],
-              "id": "d57730a68958fec15c2e-80572d2b107b567dbcf9",
-              "file": "authenticated-users-battle.test.ts",
-              "line": 165,
+              "id": "204d351b34b5a29131f3-93b4ba19572e94eca505",
+              "file": "multiplayer-battle-custom-uid.test.ts",
+              "line": 178,
+              "column": 7
+            },
+            {
+              "title": "Test UID verification in different contexts",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 12056,
+                      "error": {
+                        "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"auth-modal\"]') to be visible\u001b[22m\n",
+                        "stack": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"auth-modal\"]') to be visible\u001b[22m\n\n    at authenticateUser (/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts:37:14)\n    at /Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts:430:11",
+                        "location": {
+                          "file": "/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts",
+                          "column": 14,
+                          "line": 37
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 35 |\u001b[39m   \n \u001b[90m 36 |\u001b[39m   \u001b[90m// Wait for auth modal to appear\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 37 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'[data-testid=\"auth-modal\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 38 |\u001b[39m   \n \u001b[90m 39 |\u001b[39m   \u001b[90m// Fill in email and password\u001b[39m\n \u001b[90m 40 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[type=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m email)\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts",
+                            "column": 14,
+                            "line": 37
+                          },
+                          "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"auth-modal\"]') to be visible\u001b[22m\n\n\n\u001b[0m \u001b[90m 35 |\u001b[39m   \n \u001b[90m 36 |\u001b[39m   \u001b[90m// Wait for auth modal to appear\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 37 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'[data-testid=\"auth-modal\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 38 |\u001b[39m   \n \u001b[90m 39 |\u001b[39m   \u001b[90m// Fill in email and password\u001b[39m\n \u001b[90m 40 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[type=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m email)\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at authenticateUser (/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts:37:14)\u001b[22m\n\u001b[2m    at /Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts:430:11\u001b[22m"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "🚀 Setting up multiplayer battle test with custom UIDs\n"
+                        },
+                        {
+                          "text": "🎯 Target UIDs - Host: testbattle1-cli-uid, Guest: testbattle2-cli-uid\n"
+                        },
+                        {
+                          "text": "🔍 Testing UID verification in different contexts\n"
+                        },
+                        {
+                          "text": "HOST NETWORK: 200 http://localhost:3000/_next/static/chunks/node_modules_%40firebase_auth_dist_esm_d3951ae3._.js\n"
+                        },
+                        {
+                          "text": "HOST: %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold\n"
+                        },
+                        {
+                          "text": "HOST NETWORK: 200 http://localhost:3000/_next/static/chunks/node_modules_%40firebase_database_dist_index_esm_3663ff2c.js\n"
+                        },
+                        {
+                          "text": "HOST NETWORK: 200 http://localhost:3000/_next/static/chunks/node_modules_%40firebase_firestore_dist_index_esm_af799df8.js\n"
+                        },
+                        {
+                          "text": "🔐 Authenticating user: testbattle1@pokemon-battles.test\n"
+                        },
+                        {
+                          "text": "🧹 Cleaning up multiplayer battle test\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-15T01:39:24.720Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/albertomunoz/Documents/Code/pokemon/test-results/multiplayer-battle-custom--4ad5a-ation-in-different-contexts-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/albertomunoz/Documents/Code/pokemon/test-results/multiplayer-battle-custom--4ad5a-ation-in-different-contexts-chromium/test-failed-2.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/albertomunoz/Documents/Code/pokemon/test-results/multiplayer-battle-custom--4ad5a-ation-in-different-contexts-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts",
+                        "column": 14,
+                        "line": 37
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "204d351b34b5a29131f3-f64331fe5ca77136e26d",
+              "file": "multiplayer-battle-custom-uid.test.ts",
+              "line": 424,
+              "column": 7
+            },
+            {
+              "title": "Complete multiplayer battle flow with custom UIDs",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "failed",
+                      "duration": 12328,
+                      "error": {
+                        "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"auth-modal\"]') to be visible\u001b[22m\n",
+                        "stack": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"auth-modal\"]') to be visible\u001b[22m\n\n    at authenticateUser (/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts:37:14)\n    at /Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts:187:11",
+                        "location": {
+                          "file": "/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts",
+                          "column": 14,
+                          "line": 37
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 35 |\u001b[39m   \n \u001b[90m 36 |\u001b[39m   \u001b[90m// Wait for auth modal to appear\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 37 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'[data-testid=\"auth-modal\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 38 |\u001b[39m   \n \u001b[90m 39 |\u001b[39m   \u001b[90m// Fill in email and password\u001b[39m\n \u001b[90m 40 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[type=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m email)\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts",
+                            "column": 14,
+                            "line": 37
+                          },
+                          "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"auth-modal\"]') to be visible\u001b[22m\n\n\n\u001b[0m \u001b[90m 35 |\u001b[39m   \n \u001b[90m 36 |\u001b[39m   \u001b[90m// Wait for auth modal to appear\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 37 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'[data-testid=\"auth-modal\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 38 |\u001b[39m   \n \u001b[90m 39 |\u001b[39m   \u001b[90m// Fill in email and password\u001b[39m\n \u001b[90m 40 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[type=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m email)\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at authenticateUser (/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts:37:14)\u001b[22m\n\u001b[2m    at /Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts:187:11\u001b[22m"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "🚀 Setting up multiplayer battle test with custom UIDs\n"
+                        },
+                        {
+                          "text": "🎯 Target UIDs - Host: testbattle1-cli-uid, Guest: testbattle2-cli-uid\n"
+                        },
+                        {
+                          "text": "🎮 Starting complete multiplayer battle test with custom UIDs\n"
+                        },
+                        {
+                          "text": "\n📝 Step 1: Host creates room\n"
+                        },
+                        {
+                          "text": "HOST NETWORK: 200 http://localhost:3000/_next/static/chunks/node_modules_%40firebase_auth_dist_esm_d3951ae3._.js\n"
+                        },
+                        {
+                          "text": "HOST NETWORK: 200 http://localhost:3000/_next/static/chunks/node_modules_%40firebase_firestore_dist_index_esm_af799df8.js\n"
+                        },
+                        {
+                          "text": "HOST NETWORK: 200 http://localhost:3000/_next/static/chunks/node_modules_%40firebase_database_dist_index_esm_3663ff2c.js\n"
+                        },
+                        {
+                          "text": "HOST: Download the React DevTools for a better development experience: https://react.dev/link/react-devtools\n"
+                        },
+                        {
+                          "text": "🔐 Authenticating user: testbattle1@pokemon-battles.test\n"
+                        },
+                        {
+                          "text": "HOST: [JavaScript Warning: \"The resource at “http://localhost:3000/_next/static/media/83afe278b6a6bb3c-s.p.3a6ba036.woff2” preloaded with link preload was not used within a few seconds. Make sure all attributes of the preload tag are set correctly.\" {file: \"http://localhost:3000/lobby\" line: 0}]\n"
+                        },
+                        {
+                          "text": "HOST: [Fast Refresh] rebuilding\n"
+                        },
+                        {
+                          "text": "🧹 Cleaning up multiplayer battle test\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-15T01:39:24.713Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/albertomunoz/Documents/Code/pokemon/test-results/multiplayer-battle-custom--3325e-attle-flow-with-custom-UIDs-firefox/test-failed-1.png"
+                        },
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/albertomunoz/Documents/Code/pokemon/test-results/multiplayer-battle-custom--3325e-attle-flow-with-custom-UIDs-firefox/test-failed-2.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/albertomunoz/Documents/Code/pokemon/test-results/multiplayer-battle-custom--3325e-attle-flow-with-custom-UIDs-firefox/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts",
+                        "column": 14,
+                        "line": 37
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "204d351b34b5a29131f3-98c100320aac63f5497f",
+              "file": "multiplayer-battle-custom-uid.test.ts",
+              "line": 178,
+              "column": 7
+            },
+            {
+              "title": "Test UID verification in different contexts",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "failed",
+                      "duration": 11748,
+                      "error": {
+                        "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"auth-modal\"]') to be visible\u001b[22m\n",
+                        "stack": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"auth-modal\"]') to be visible\u001b[22m\n\n    at authenticateUser (/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts:37:14)\n    at /Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts:430:11",
+                        "location": {
+                          "file": "/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts",
+                          "column": 14,
+                          "line": 37
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 35 |\u001b[39m   \n \u001b[90m 36 |\u001b[39m   \u001b[90m// Wait for auth modal to appear\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 37 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'[data-testid=\"auth-modal\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 38 |\u001b[39m   \n \u001b[90m 39 |\u001b[39m   \u001b[90m// Fill in email and password\u001b[39m\n \u001b[90m 40 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[type=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m email)\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts",
+                            "column": 14,
+                            "line": 37
+                          },
+                          "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"auth-modal\"]') to be visible\u001b[22m\n\n\n\u001b[0m \u001b[90m 35 |\u001b[39m   \n \u001b[90m 36 |\u001b[39m   \u001b[90m// Wait for auth modal to appear\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 37 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'[data-testid=\"auth-modal\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 38 |\u001b[39m   \n \u001b[90m 39 |\u001b[39m   \u001b[90m// Fill in email and password\u001b[39m\n \u001b[90m 40 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[type=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m email)\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at authenticateUser (/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts:37:14)\u001b[22m\n\u001b[2m    at /Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts:430:11\u001b[22m"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "🚀 Setting up multiplayer battle test with custom UIDs\n"
+                        },
+                        {
+                          "text": "🎯 Target UIDs - Host: testbattle1-cli-uid, Guest: testbattle2-cli-uid\n"
+                        },
+                        {
+                          "text": "🔍 Testing UID verification in different contexts\n"
+                        },
+                        {
+                          "text": "HOST NETWORK: 200 http://localhost:3000/_next/static/chunks/node_modules_%40firebase_auth_dist_esm_d3951ae3._.js\n"
+                        },
+                        {
+                          "text": "HOST NETWORK: 200 http://localhost:3000/_next/static/chunks/node_modules_%40firebase_firestore_dist_index_esm_af799df8.js\n"
+                        },
+                        {
+                          "text": "HOST NETWORK: 200 http://localhost:3000/_next/static/chunks/node_modules_%40firebase_database_dist_index_esm_3663ff2c.js\n"
+                        },
+                        {
+                          "text": "HOST: Download the React DevTools for a better development experience: https://react.dev/link/react-devtools\n"
+                        },
+                        {
+                          "text": "🔐 Authenticating user: testbattle1@pokemon-battles.test\n"
+                        },
+                        {
+                          "text": "HOST: [Fast Refresh] rebuilding\n"
+                        },
+                        {
+                          "text": "HOST: [JavaScript Warning: \"The resource at “http://localhost:3000/_next/static/media/83afe278b6a6bb3c-s.p.3a6ba036.woff2” preloaded with link preload was not used within a few seconds. Make sure all attributes of the preload tag are set correctly.\" {file: \"http://localhost:3000/lobby\" line: 0}]\n"
+                        },
+                        {
+                          "text": "🧹 Cleaning up multiplayer battle test\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-15T01:39:24.707Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/albertomunoz/Documents/Code/pokemon/test-results/multiplayer-battle-custom--4ad5a-ation-in-different-contexts-firefox/test-failed-1.png"
+                        },
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/albertomunoz/Documents/Code/pokemon/test-results/multiplayer-battle-custom--4ad5a-ation-in-different-contexts-firefox/test-failed-2.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/albertomunoz/Documents/Code/pokemon/test-results/multiplayer-battle-custom--4ad5a-ation-in-different-contexts-firefox/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts",
+                        "column": 14,
+                        "line": 37
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "204d351b34b5a29131f3-ebc247161f7c7463c59a",
+              "file": "multiplayer-battle-custom-uid.test.ts",
+              "line": 424,
+              "column": 7
+            },
+            {
+              "title": "Complete multiplayer battle flow with custom UIDs",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 14974,
+                      "error": {
+                        "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"auth-modal\"]') to be visible\u001b[22m\n",
+                        "stack": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"auth-modal\"]') to be visible\u001b[22m\n\n    at authenticateUser (/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts:37:14)\n    at /Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts:187:11",
+                        "location": {
+                          "file": "/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts",
+                          "column": 14,
+                          "line": 37
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 35 |\u001b[39m   \n \u001b[90m 36 |\u001b[39m   \u001b[90m// Wait for auth modal to appear\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 37 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'[data-testid=\"auth-modal\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 38 |\u001b[39m   \n \u001b[90m 39 |\u001b[39m   \u001b[90m// Fill in email and password\u001b[39m\n \u001b[90m 40 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[type=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m email)\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts",
+                            "column": 14,
+                            "line": 37
+                          },
+                          "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"auth-modal\"]') to be visible\u001b[22m\n\n\n\u001b[0m \u001b[90m 35 |\u001b[39m   \n \u001b[90m 36 |\u001b[39m   \u001b[90m// Wait for auth modal to appear\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 37 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'[data-testid=\"auth-modal\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 38 |\u001b[39m   \n \u001b[90m 39 |\u001b[39m   \u001b[90m// Fill in email and password\u001b[39m\n \u001b[90m 40 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[type=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m email)\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at authenticateUser (/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts:37:14)\u001b[22m\n\u001b[2m    at /Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts:187:11\u001b[22m"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "🚀 Setting up multiplayer battle test with custom UIDs\n"
+                        },
+                        {
+                          "text": "🎯 Target UIDs - Host: testbattle1-cli-uid, Guest: testbattle2-cli-uid\n"
+                        },
+                        {
+                          "text": "🎮 Starting complete multiplayer battle test with custom UIDs\n"
+                        },
+                        {
+                          "text": "\n📝 Step 1: Host creates room\n"
+                        },
+                        {
+                          "text": "HOST: Successfully preconnected to https://fonts.gstatic.com/\n"
+                        },
+                        {
+                          "text": "HOST: Successfully preconnected to https://fonts.googleapis.com/\n"
+                        },
+                        {
+                          "text": "HOST NETWORK: 200 http://localhost:3000/_next/static/chunks/node_modules_%40firebase_auth_dist_esm_d3951ae3._.js\n"
+                        },
+                        {
+                          "text": "HOST NETWORK: 200 http://localhost:3000/_next/static/chunks/node_modules_%40firebase_firestore_dist_index_esm_af799df8.js\n"
+                        },
+                        {
+                          "text": "HOST NETWORK: 200 http://localhost:3000/_next/static/chunks/node_modules_%40firebase_database_dist_index_esm_3663ff2c.js\n"
+                        },
+                        {
+                          "text": "HOST NETWORK: 200 https://pokemon-battles-86a0d.firebaseapp.com/__/auth/iframe?apiKey=AIzaSyASbdOWHRBH_QAqpjRrp9KyzPWheNuUZmY&appName=%5BDEFAULT%5D&v=12.2.0&eid=p&usegapi=1&jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.PLtFj_-5DjQ.O%2Fd%3D1%2Frs%3DAHpOoo-J85zQk73PCqZPyWTydWEIq3_4KA%2Fm%3D__features__\n"
+                        },
+                        {
+                          "text": "HOST NETWORK: 200 https://pokemon-battles-86a0d.firebaseapp.com/__/auth/iframe.js\n"
+                        },
+                        {
+                          "text": "🔐 Authenticating user: testbattle1@pokemon-battles.test\n"
+                        },
+                        {
+                          "text": "HOST: [Fast Refresh] rebuilding\n"
+                        },
+                        {
+                          "text": "HOST: ./src/app/battle/runtime/page.tsx:2339:15\nParsing ecmascript source code failed\n  2337 |                 </div>\n  2338 |               </div>\n> 2339 |             </div>\n       |               ^^^^\n  2340 |             \n  2341 |             {/* Health Bar */}\n  2342 |             <div className=\"mb-2\">\n\nExpression expected\n\nImport traces:\n  Client Component Browser:\n    ./src/app/battle/runtime/page.tsx [Client Component Browser]\n    ./src/app/battle/runtime/page.tsx [Server Component]\n\n  Client Component SSR:\n    ./src/app/battle/runtime/page.tsx [Client Component SSR]\n    ./src/app/battle/runtime/page.tsx [Server Component]\n"
+                        },
+                        {
+                          "text": "HOST: {file: undefined}\n"
+                        },
+                        {
+                          "text": "HOST: [Fast Refresh] rebuilding\n"
+                        },
+                        {
+                          "text": "🧹 Cleaning up multiplayer battle test\n"
+                        },
+                        {
+                          "text": "HOST: ./src/app/battle/runtime/page.tsx:2317:19\nParsing ecmascript source code failed\n  2315 |                     </div>\n  2316 |                   )}\n> 2317 |                 </div>\n       |                   ^^^^\n  2318 |                 <div className=\"relative w-24 h-24 flex items-center justify-end\">\n  2319 |                   <Image\n  2320 |                     src={opponent.pokemon.sprites.front_default || opponent.pokemon.sprites.front_shiny || '/placeholder-pokemon.png'}\n\nExpression expected\n\nImport traces:\n  Client Component Browser:\n    ./src/app/battle/runtime/page.tsx [Client Component Browser]\n    ./src/app/battle/runtime/page.tsx [Server Component]\n\n  Client Component SSR:\n    ./src/app/battle/runtime/page.tsx [Client Component SSR]\n    ./src/app/battle/runtime/page.tsx [Server Component]\n"
+                        },
+                        {
+                          "text": "HOST: {file: undefined}\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-15T01:39:37.651Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/albertomunoz/Documents/Code/pokemon/test-results/multiplayer-battle-custom--3325e-attle-flow-with-custom-UIDs-webkit/test-failed-2.png"
+                        },
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/albertomunoz/Documents/Code/pokemon/test-results/multiplayer-battle-custom--3325e-attle-flow-with-custom-UIDs-webkit/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/albertomunoz/Documents/Code/pokemon/test-results/multiplayer-battle-custom--3325e-attle-flow-with-custom-UIDs-webkit/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts",
+                        "column": 14,
+                        "line": 37
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "204d351b34b5a29131f3-1abf564f0362ef7b2485",
+              "file": "multiplayer-battle-custom-uid.test.ts",
+              "line": 178,
+              "column": 7
+            },
+            {
+              "title": "Test UID verification in different contexts",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 14996,
+                      "error": {
+                        "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"auth-modal\"]') to be visible\u001b[22m\n",
+                        "stack": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"auth-modal\"]') to be visible\u001b[22m\n\n    at authenticateUser (/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts:37:14)\n    at /Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts:430:11",
+                        "location": {
+                          "file": "/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts",
+                          "column": 14,
+                          "line": 37
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 35 |\u001b[39m   \n \u001b[90m 36 |\u001b[39m   \u001b[90m// Wait for auth modal to appear\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 37 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'[data-testid=\"auth-modal\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 38 |\u001b[39m   \n \u001b[90m 39 |\u001b[39m   \u001b[90m// Fill in email and password\u001b[39m\n \u001b[90m 40 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[type=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m email)\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts",
+                            "column": 14,
+                            "line": 37
+                          },
+                          "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"auth-modal\"]') to be visible\u001b[22m\n\n\n\u001b[0m \u001b[90m 35 |\u001b[39m   \n \u001b[90m 36 |\u001b[39m   \u001b[90m// Wait for auth modal to appear\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 37 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'[data-testid=\"auth-modal\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 38 |\u001b[39m   \n \u001b[90m 39 |\u001b[39m   \u001b[90m// Fill in email and password\u001b[39m\n \u001b[90m 40 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[type=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m email)\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at authenticateUser (/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts:37:14)\u001b[22m\n\u001b[2m    at /Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts:430:11\u001b[22m"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "🚀 Setting up multiplayer battle test with custom UIDs\n"
+                        },
+                        {
+                          "text": "🎯 Target UIDs - Host: testbattle1-cli-uid, Guest: testbattle2-cli-uid\n"
+                        },
+                        {
+                          "text": "🔍 Testing UID verification in different contexts\n"
+                        },
+                        {
+                          "text": "HOST: Successfully preconnected to https://fonts.gstatic.com/\n"
+                        },
+                        {
+                          "text": "HOST: Successfully preconnected to https://fonts.googleapis.com/\n"
+                        },
+                        {
+                          "text": "HOST NETWORK: 200 http://localhost:3000/_next/static/chunks/node_modules_%40firebase_auth_dist_esm_d3951ae3._.js\n"
+                        },
+                        {
+                          "text": "HOST NETWORK: 200 http://localhost:3000/_next/static/chunks/node_modules_%40firebase_firestore_dist_index_esm_af799df8.js\n"
+                        },
+                        {
+                          "text": "HOST NETWORK: 200 http://localhost:3000/_next/static/chunks/node_modules_%40firebase_database_dist_index_esm_3663ff2c.js\n"
+                        },
+                        {
+                          "text": "HOST NETWORK: 200 https://pokemon-battles-86a0d.firebaseapp.com/__/auth/iframe?apiKey=AIzaSyASbdOWHRBH_QAqpjRrp9KyzPWheNuUZmY&appName=%5BDEFAULT%5D&v=12.2.0&eid=p&usegapi=1&jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.PLtFj_-5DjQ.O%2Fd%3D1%2Frs%3DAHpOoo-J85zQk73PCqZPyWTydWEIq3_4KA%2Fm%3D__features__\n"
+                        },
+                        {
+                          "text": "HOST NETWORK: 200 https://pokemon-battles-86a0d.firebaseapp.com/__/auth/iframe.js\n"
+                        },
+                        {
+                          "text": "🔐 Authenticating user: testbattle1@pokemon-battles.test\n"
+                        },
+                        {
+                          "text": "HOST: [Fast Refresh] rebuilding\n"
+                        },
+                        {
+                          "text": "HOST: ./src/app/battle/runtime/page.tsx:2339:15\nParsing ecmascript source code failed\n  2337 |                 </div>\n  2338 |               </div>\n> 2339 |             </div>\n       |               ^^^^\n  2340 |             \n  2341 |             {/* Health Bar */}\n  2342 |             <div className=\"mb-2\">\n\nExpression expected\n\nImport traces:\n  Client Component Browser:\n    ./src/app/battle/runtime/page.tsx [Client Component Browser]\n    ./src/app/battle/runtime/page.tsx [Server Component]\n\n  Client Component SSR:\n    ./src/app/battle/runtime/page.tsx [Client Component SSR]\n    ./src/app/battle/runtime/page.tsx [Server Component]\n"
+                        },
+                        {
+                          "text": "HOST: {file: undefined}\n"
+                        },
+                        {
+                          "text": "HOST: [Fast Refresh] rebuilding\n"
+                        },
+                        {
+                          "text": "HOST: ./src/app/battle/runtime/page.tsx:2317:19\nParsing ecmascript source code failed\n  2315 |                     </div>\n  2316 |                   )}\n> 2317 |                 </div>\n       |                   ^^^^\n  2318 |                 <div className=\"relative w-24 h-24 flex items-center justify-end\">\n  2319 |                   <Image\n  2320 |                     src={opponent.pokemon.sprites.front_default || opponent.pokemon.sprites.front_shiny || '/placeholder-pokemon.png'}\n\nExpression expected\n\nImport traces:\n  Client Component Browser:\n    ./src/app/battle/runtime/page.tsx [Client Component Browser]\n    ./src/app/battle/runtime/page.tsx [Server Component]\n\n  Client Component SSR:\n    ./src/app/battle/runtime/page.tsx [Client Component SSR]\n    ./src/app/battle/runtime/page.tsx [Server Component]\n"
+                        },
+                        {
+                          "text": "HOST: {file: undefined}\n"
+                        },
+                        {
+                          "text": "🧹 Cleaning up multiplayer battle test\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-15T01:39:37.651Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/albertomunoz/Documents/Code/pokemon/test-results/multiplayer-battle-custom--4ad5a-ation-in-different-contexts-webkit/test-failed-2.png"
+                        },
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/albertomunoz/Documents/Code/pokemon/test-results/multiplayer-battle-custom--4ad5a-ation-in-different-contexts-webkit/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/albertomunoz/Documents/Code/pokemon/test-results/multiplayer-battle-custom--4ad5a-ation-in-different-contexts-webkit/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts",
+                        "column": 14,
+                        "line": 37
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "204d351b34b5a29131f3-f1102bf0f94c0f5f36a2",
+              "file": "multiplayer-battle-custom-uid.test.ts",
+              "line": 424,
+              "column": 7
+            },
+            {
+              "title": "Complete multiplayer battle flow with custom UIDs",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 2,
+                      "status": "failed",
+                      "duration": 12609,
+                      "error": {
+                        "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"auth-modal\"]') to be visible\u001b[22m\n",
+                        "stack": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"auth-modal\"]') to be visible\u001b[22m\n\n    at authenticateUser (/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts:37:14)\n    at /Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts:187:11",
+                        "location": {
+                          "file": "/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts",
+                          "column": 14,
+                          "line": 37
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 35 |\u001b[39m   \n \u001b[90m 36 |\u001b[39m   \u001b[90m// Wait for auth modal to appear\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 37 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'[data-testid=\"auth-modal\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 38 |\u001b[39m   \n \u001b[90m 39 |\u001b[39m   \u001b[90m// Fill in email and password\u001b[39m\n \u001b[90m 40 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[type=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m email)\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts",
+                            "column": 14,
+                            "line": 37
+                          },
+                          "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"auth-modal\"]') to be visible\u001b[22m\n\n\n\u001b[0m \u001b[90m 35 |\u001b[39m   \n \u001b[90m 36 |\u001b[39m   \u001b[90m// Wait for auth modal to appear\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 37 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'[data-testid=\"auth-modal\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 38 |\u001b[39m   \n \u001b[90m 39 |\u001b[39m   \u001b[90m// Fill in email and password\u001b[39m\n \u001b[90m 40 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[type=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m email)\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at authenticateUser (/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts:37:14)\u001b[22m\n\u001b[2m    at /Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts:187:11\u001b[22m"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "🚀 Setting up multiplayer battle test with custom UIDs\n"
+                        },
+                        {
+                          "text": "🎯 Target UIDs - Host: testbattle1-cli-uid, Guest: testbattle2-cli-uid\n"
+                        },
+                        {
+                          "text": "🎮 Starting complete multiplayer battle test with custom UIDs\n"
+                        },
+                        {
+                          "text": "\n📝 Step 1: Host creates room\n"
+                        },
+                        {
+                          "text": "HOST NETWORK: 200 http://localhost:3000/_next/static/chunks/node_modules_%40firebase_auth_dist_esm_d3951ae3._.js\n"
+                        },
+                        {
+                          "text": "HOST NETWORK: 200 http://localhost:3000/_next/static/chunks/node_modules_%40firebase_database_dist_index_esm_3663ff2c.js\n"
+                        },
+                        {
+                          "text": "HOST NETWORK: 200 http://localhost:3000/_next/static/chunks/node_modules_%40firebase_firestore_dist_index_esm_af799df8.js\n"
+                        },
+                        {
+                          "text": "HOST: %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold\n"
+                        },
+                        {
+                          "text": "HOST NETWORK: 200 https://pokemon-battles-86a0d.firebaseapp.com/__/auth/iframe?apiKey=AIzaSyASbdOWHRBH_QAqpjRrp9KyzPWheNuUZmY&appName=%5BDEFAULT%5D&v=12.2.0&eid=p&usegapi=1&jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.PLtFj_-5DjQ.O%2Fd%3D1%2Frs%3DAHpOoo-J85zQk73PCqZPyWTydWEIq3_4KA%2Fm%3D__features__\n"
+                        },
+                        {
+                          "text": "HOST NETWORK: 200 https://pokemon-battles-86a0d.firebaseapp.com/__/auth/iframe.js\n"
+                        },
+                        {
+                          "text": "🔐 Authenticating user: testbattle1@pokemon-battles.test\n"
+                        },
+                        {
+                          "text": "HOST: [Fast Refresh] rebuilding\n"
+                        },
+                        {
+                          "text": "HOST: ./src/app/battle/runtime/page.tsx:2339:15\nParsing ecmascript source code failed\n  2337 |                 </div>\n  2338 |               </div>\n> 2339 |             </div>\n       |               ^^^^\n  2340 |             \n  2341 |             {/* Health Bar */}\n  2342 |             <div className=\"mb-2\">\n\nExpression expected\n\nImport traces:\n  Client Component Browser:\n    ./src/app/battle/runtime/page.tsx [Client Component Browser]\n    ./src/app/battle/runtime/page.tsx [Server Component]\n\n  Client Component SSR:\n    ./src/app/battle/runtime/page.tsx [Client Component SSR]\n    ./src/app/battle/runtime/page.tsx [Server Component]\n"
+                        },
+                        {
+                          "text": "HOST: {file: Object}\n"
+                        },
+                        {
+                          "text": "HOST: [Fast Refresh] rebuilding\n"
+                        },
+                        {
+                          "text": "HOST: ./src/app/battle/runtime/page.tsx:2317:19\nParsing ecmascript source code failed\n  2315 |                     </div>\n  2316 |                   )}\n> 2317 |                 </div>\n       |                   ^^^^\n  2318 |                 <div className=\"relative w-24 h-24 flex items-center justify-end\">\n  2319 |                   <Image\n  2320 |                     src={opponent.pokemon.sprites.front_default || opponent.pokemon.sprites.front_shiny || '/placeholder-pokemon.png'}\n\nExpression expected\n\nImport traces:\n  Client Component Browser:\n    ./src/app/battle/runtime/page.tsx [Client Component Browser]\n    ./src/app/battle/runtime/page.tsx [Server Component]\n\n  Client Component SSR:\n    ./src/app/battle/runtime/page.tsx [Client Component SSR]\n    ./src/app/battle/runtime/page.tsx [Server Component]\n"
+                        },
+                        {
+                          "text": "HOST: {file: Object}\n"
+                        },
+                        {
+                          "text": "HOST: ./src/app/battle/runtime/page.tsx:2317:19\nParsing ecmascript source code failed\n  2315 |                     </div>\n  2316 |                   )}\n> 2317 |                 </div>\n       |                   ^^^^\n  2318 |                 <div className=\"relative w-24 h-24 flex items-center justify-end\">\n  2319 |                   <Image\n  2320 |                     src={opponent.pokemon.sprites.front_default || opponent.pokemon.sprites.front_shiny || '/placeholder-pokemon.png'}\n\nExpression expected\n\nImport traces:\n  Client Component Browser:\n    ./src/app/battle/runtime/page.tsx [Client Component Browser]\n    ./src/app/battle/runtime/page.tsx [Server Component]\n\n  Client Component SSR:\n    ./src/app/battle/runtime/page.tsx [Client Component SSR]\n    ./src/app/battle/runtime/page.tsx [Server Component]\n"
+                        },
+                        {
+                          "text": "HOST: [Fast Refresh] rebuilding\n"
+                        },
+                        {
+                          "text": "HOST: ./src/app/battle/runtime/page.tsx:2317:19\nParsing ecmascript source code failed\n  2315 |                     </div>\n  2316 |                   )}\n> 2317 |                 </div>\n       |                   ^^^^\n  2318 |                 <div className=\"relative w-24 h-24 flex items-center justify-end\">\n  2319 |                   <Image\n  2320 |                     src={opponent.pokemon.sprites.front_default || opponent.pokemon.sprites.front_shiny || '/placeholder-pokemon.png'}\n\nExpression expected\n\nImport traces:\n  Client Component Browser:\n    ./src/app/battle/runtime/page.tsx [Client Component Browser]\n    ./src/app/battle/runtime/page.tsx [Server Component]\n\n  Client Component SSR:\n    ./src/app/battle/runtime/page.tsx [Client Component SSR]\n    ./src/app/battle/runtime/page.tsx [Server Component]\n"
+                        },
+                        {
+                          "text": "🧹 Cleaning up multiplayer battle test\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-15T01:39:43.692Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/albertomunoz/Documents/Code/pokemon/test-results/multiplayer-battle-custom--3325e-attle-flow-with-custom-UIDs-Mobile-Chrome/test-failed-2.png"
+                        },
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/albertomunoz/Documents/Code/pokemon/test-results/multiplayer-battle-custom--3325e-attle-flow-with-custom-UIDs-Mobile-Chrome/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/albertomunoz/Documents/Code/pokemon/test-results/multiplayer-battle-custom--3325e-attle-flow-with-custom-UIDs-Mobile-Chrome/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts",
+                        "column": 14,
+                        "line": 37
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "204d351b34b5a29131f3-8e2e3c5ea0ad416b02e8",
+              "file": "multiplayer-battle-custom-uid.test.ts",
+              "line": 178,
+              "column": 7
+            },
+            {
+              "title": "Test UID verification in different contexts",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 3,
+                      "status": "failed",
+                      "duration": 12197,
+                      "error": {
+                        "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"auth-modal\"]') to be visible\u001b[22m\n",
+                        "stack": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"auth-modal\"]') to be visible\u001b[22m\n\n    at authenticateUser (/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts:37:14)\n    at /Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts:430:11",
+                        "location": {
+                          "file": "/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts",
+                          "column": 14,
+                          "line": 37
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 35 |\u001b[39m   \n \u001b[90m 36 |\u001b[39m   \u001b[90m// Wait for auth modal to appear\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 37 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'[data-testid=\"auth-modal\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 38 |\u001b[39m   \n \u001b[90m 39 |\u001b[39m   \u001b[90m// Fill in email and password\u001b[39m\n \u001b[90m 40 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[type=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m email)\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts",
+                            "column": 14,
+                            "line": 37
+                          },
+                          "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"auth-modal\"]') to be visible\u001b[22m\n\n\n\u001b[0m \u001b[90m 35 |\u001b[39m   \n \u001b[90m 36 |\u001b[39m   \u001b[90m// Wait for auth modal to appear\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 37 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'[data-testid=\"auth-modal\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 38 |\u001b[39m   \n \u001b[90m 39 |\u001b[39m   \u001b[90m// Fill in email and password\u001b[39m\n \u001b[90m 40 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[type=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m email)\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at authenticateUser (/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts:37:14)\u001b[22m\n\u001b[2m    at /Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts:430:11\u001b[22m"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "🚀 Setting up multiplayer battle test with custom UIDs\n"
+                        },
+                        {
+                          "text": "🎯 Target UIDs - Host: testbattle1-cli-uid, Guest: testbattle2-cli-uid\n"
+                        },
+                        {
+                          "text": "🔍 Testing UID verification in different contexts\n"
+                        },
+                        {
+                          "text": "HOST NETWORK: 200 http://localhost:3000/_next/static/chunks/node_modules_%40firebase_auth_dist_esm_d3951ae3._.js\n"
+                        },
+                        {
+                          "text": "HOST NETWORK: 200 http://localhost:3000/_next/static/chunks/node_modules_%40firebase_database_dist_index_esm_3663ff2c.js\n"
+                        },
+                        {
+                          "text": "HOST NETWORK: 200 http://localhost:3000/_next/static/chunks/node_modules_%40firebase_firestore_dist_index_esm_af799df8.js\n"
+                        },
+                        {
+                          "text": "HOST: %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold\n"
+                        },
+                        {
+                          "text": "HOST NETWORK: 200 https://pokemon-battles-86a0d.firebaseapp.com/__/auth/iframe?apiKey=AIzaSyASbdOWHRBH_QAqpjRrp9KyzPWheNuUZmY&appName=%5BDEFAULT%5D&v=12.2.0&eid=p&usegapi=1&jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.PLtFj_-5DjQ.O%2Fd%3D1%2Frs%3DAHpOoo-J85zQk73PCqZPyWTydWEIq3_4KA%2Fm%3D__features__\n"
+                        },
+                        {
+                          "text": "HOST NETWORK: 200 https://pokemon-battles-86a0d.firebaseapp.com/__/auth/iframe.js\n"
+                        },
+                        {
+                          "text": "🔐 Authenticating user: testbattle1@pokemon-battles.test\n"
+                        },
+                        {
+                          "text": "HOST: [Fast Refresh] rebuilding\n"
+                        },
+                        {
+                          "text": "HOST: ./src/app/battle/runtime/page.tsx:2339:15\nParsing ecmascript source code failed\n  2337 |                 </div>\n  2338 |               </div>\n> 2339 |             </div>\n       |               ^^^^\n  2340 |             \n  2341 |             {/* Health Bar */}\n  2342 |             <div className=\"mb-2\">\n\nExpression expected\n\nImport traces:\n  Client Component Browser:\n    ./src/app/battle/runtime/page.tsx [Client Component Browser]\n    ./src/app/battle/runtime/page.tsx [Server Component]\n\n  Client Component SSR:\n    ./src/app/battle/runtime/page.tsx [Client Component SSR]\n    ./src/app/battle/runtime/page.tsx [Server Component]\n"
+                        },
+                        {
+                          "text": "HOST: {file: Object}\n"
+                        },
+                        {
+                          "text": "HOST: [Fast Refresh] rebuilding\n"
+                        },
+                        {
+                          "text": "HOST: ./src/app/battle/runtime/page.tsx:2317:19\nParsing ecmascript source code failed\n  2315 |                     </div>\n  2316 |                   )}\n> 2317 |                 </div>\n       |                   ^^^^\n  2318 |                 <div className=\"relative w-24 h-24 flex items-center justify-end\">\n  2319 |                   <Image\n  2320 |                     src={opponent.pokemon.sprites.front_default || opponent.pokemon.sprites.front_shiny || '/placeholder-pokemon.png'}\n\nExpression expected\n\nImport traces:\n  Client Component Browser:\n    ./src/app/battle/runtime/page.tsx [Client Component Browser]\n    ./src/app/battle/runtime/page.tsx [Server Component]\n\n  Client Component SSR:\n    ./src/app/battle/runtime/page.tsx [Client Component SSR]\n    ./src/app/battle/runtime/page.tsx [Server Component]\n"
+                        },
+                        {
+                          "text": "HOST: {file: Object}\n"
+                        },
+                        {
+                          "text": "HOST: ./src/app/battle/runtime/page.tsx:2317:19\nParsing ecmascript source code failed\n  2315 |                     </div>\n  2316 |                   )}\n> 2317 |                 </div>\n       |                   ^^^^\n  2318 |                 <div className=\"relative w-24 h-24 flex items-center justify-end\">\n  2319 |                   <Image\n  2320 |                     src={opponent.pokemon.sprites.front_default || opponent.pokemon.sprites.front_shiny || '/placeholder-pokemon.png'}\n\nExpression expected\n\nImport traces:\n  Client Component Browser:\n    ./src/app/battle/runtime/page.tsx [Client Component Browser]\n    ./src/app/battle/runtime/page.tsx [Server Component]\n\n  Client Component SSR:\n    ./src/app/battle/runtime/page.tsx [Client Component SSR]\n    ./src/app/battle/runtime/page.tsx [Server Component]\n"
+                        },
+                        {
+                          "text": "HOST: [Fast Refresh] rebuilding\n"
+                        },
+                        {
+                          "text": "🧹 Cleaning up multiplayer battle test\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-15T01:39:43.769Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/albertomunoz/Documents/Code/pokemon/test-results/multiplayer-battle-custom--4ad5a-ation-in-different-contexts-Mobile-Chrome/test-failed-2.png"
+                        },
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/albertomunoz/Documents/Code/pokemon/test-results/multiplayer-battle-custom--4ad5a-ation-in-different-contexts-Mobile-Chrome/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/albertomunoz/Documents/Code/pokemon/test-results/multiplayer-battle-custom--4ad5a-ation-in-different-contexts-Mobile-Chrome/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts",
+                        "column": 14,
+                        "line": 37
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "204d351b34b5a29131f3-6a21faf5b6e17a85f5e6",
+              "file": "multiplayer-battle-custom-uid.test.ts",
+              "line": 424,
+              "column": 7
+            },
+            {
+              "title": "Complete multiplayer battle flow with custom UIDs",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 12815,
+                      "error": {
+                        "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"auth-modal\"]') to be visible\u001b[22m\n\u001b[2m    - waiting for\" http://localhost:3000/lobby\" navigation to finish...\u001b[22m\n\u001b[2m    - navigated to \"http://localhost:3000/lobby\"\u001b[22m\n",
+                        "stack": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"auth-modal\"]') to be visible\u001b[22m\n\u001b[2m    - waiting for\" http://localhost:3000/lobby\" navigation to finish...\u001b[22m\n\u001b[2m    - navigated to \"http://localhost:3000/lobby\"\u001b[22m\n\n    at authenticateUser (/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts:37:14)\n    at /Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts:187:11",
+                        "location": {
+                          "file": "/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts",
+                          "column": 14,
+                          "line": 37
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 35 |\u001b[39m   \n \u001b[90m 36 |\u001b[39m   \u001b[90m// Wait for auth modal to appear\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 37 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'[data-testid=\"auth-modal\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 38 |\u001b[39m   \n \u001b[90m 39 |\u001b[39m   \u001b[90m// Fill in email and password\u001b[39m\n \u001b[90m 40 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[type=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m email)\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts",
+                            "column": 14,
+                            "line": 37
+                          },
+                          "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"auth-modal\"]') to be visible\u001b[22m\n\u001b[2m    - waiting for\" http://localhost:3000/lobby\" navigation to finish...\u001b[22m\n\u001b[2m    - navigated to \"http://localhost:3000/lobby\"\u001b[22m\n\n\n\u001b[0m \u001b[90m 35 |\u001b[39m   \n \u001b[90m 36 |\u001b[39m   \u001b[90m// Wait for auth modal to appear\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 37 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'[data-testid=\"auth-modal\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 38 |\u001b[39m   \n \u001b[90m 39 |\u001b[39m   \u001b[90m// Fill in email and password\u001b[39m\n \u001b[90m 40 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[type=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m email)\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at authenticateUser (/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts:37:14)\u001b[22m\n\u001b[2m    at /Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts:187:11\u001b[22m"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "🚀 Setting up multiplayer battle test with custom UIDs\n"
+                        },
+                        {
+                          "text": "🎯 Target UIDs - Host: testbattle1-cli-uid, Guest: testbattle2-cli-uid\n"
+                        },
+                        {
+                          "text": "🎮 Starting complete multiplayer battle test with custom UIDs\n"
+                        },
+                        {
+                          "text": "\n📝 Step 1: Host creates room\n"
+                        },
+                        {
+                          "text": "HOST: Failed to load resource: the server responded with a status of 500 (Internal Server Error)\n"
+                        },
+                        {
+                          "text": "HOST: [HMR] connected\n"
+                        },
+                        {
+                          "text": "HOST: ./src/app/battle/runtime/page.tsx:2317:19\nParsing ecmascript source code failed\n  2315 |                     </div>\n  2316 |                   )}\n> 2317 |                 </div>\n       |                   ^^^^\n  2318 |                 <div className=\"relative w-24 h-24 flex items-center justify-end\">\n  2319 |                   <Image\n  2320 |                     src={opponent.pokemon.sprites.front_default || opponent.pokemon.sprites.front_shiny || '/placeholder-pokemon.png'}\n\nExpression expected\n\nImport traces:\n  Client Component Browser:\n    ./src/app/battle/runtime/page.tsx [Client Component Browser]\n    ./src/app/battle/runtime/page.tsx [Server Component]\n\n  Client Component SSR:\n    ./src/app/battle/runtime/page.tsx [Client Component SSR]\n    ./src/app/battle/runtime/page.tsx [Server Component]\n"
+                        },
+                        {
+                          "text": "HOST: {file: undefined}\n"
+                        },
+                        {
+                          "text": "HOST: \n"
+                        },
+                        {
+                          "text": "HOST: ./src/app/battle/runtime/page.tsx:2317:19\nParsing ecmascript source code failed\n  2315 |                     </div>\n  2316 |                   )}\n> 2317 |                 </div>\n       |                   ^^^^\n  2318 |                 <div className=\"relative w-24 h-24 flex items-center justify-end\">\n  2319 |                   <Image\n  2320 |                     src={opponent.pokemon.sprites.front_default || opponent.pokemon.sprites.front_shiny || '/placeholder-pokemon.png'}\n\nExpression expected\n\nImport traces:\n  Client Component Browser:\n    ./src/app/battle/runtime/page.tsx [Client Component Browser]\n    ./src/app/battle/runtime/page.tsx [Server Component]\n\n  Client Component SSR:\n    ./src/app/battle/runtime/page.tsx [Client Component SSR]\n    ./src/app/battle/runtime/page.tsx [Server Component]\n"
+                        },
+                        {
+                          "text": "HOST: [Fast Refresh] rebuilding\n"
+                        },
+                        {
+                          "text": "🔐 Authenticating user: testbattle1@pokemon-battles.test\n"
+                        },
+                        {
+                          "text": "HOST: [Fast Refresh] rebuilding\n"
+                        },
+                        {
+                          "text": "HOST: \n"
+                        },
+                        {
+                          "text": "HOST: ./src/app/battle/runtime/page.tsx:2304:19\nParsing ecmascript source code failed\n  2302 |                     </div>\n  2303 |                   )}\n> 2304 |                 </div>\n       |                   ^^^^\n  2305 |                 <div className=\"relative w-24 h-24 flex items-center justify-end\">\n  2306 |                   <Image\n  2307 |                     src={opponent.pokemon.sprites.front_default || opponent.pokemon.sprites.front_shiny || '/placeholder-pokemon.png'}\n\nExpression expected\n\nImport traces:\n  Client Component Browser:\n    ./src/app/battle/runtime/page.tsx [Client Component Browser]\n    ./src/app/battle/runtime/page.tsx [Server Component]\n\n  Client Component SSR:\n    ./src/app/battle/runtime/page.tsx [Client Component SSR]\n    ./src/app/battle/runtime/page.tsx [Server Component]\n"
+                        },
+                        {
+                          "text": "HOST: {file: undefined}\n"
+                        },
+                        {
+                          "text": "HOST: [Fast Refresh] rebuilding\n"
+                        },
+                        {
+                          "text": "HOST: [Fast Refresh] performing full reload because your application had an unrecoverable error\n"
+                        },
+                        {
+                          "text": "HOST: \n"
+                        },
+                        {
+                          "text": "HOST: [Fast Refresh] done in 616ms\n"
+                        },
+                        {
+                          "text": "HOST: [Fast Refresh] rebuilding\n"
+                        },
+                        {
+                          "text": "HOST: [Fast Refresh] done in 346ms\n"
+                        },
+                        {
+                          "text": "HOST: [Fast Refresh] rebuilding\n"
+                        },
+                        {
+                          "text": "HOST: [Fast Refresh] done in 178ms\n"
+                        },
+                        {
+                          "text": "HOST: Successfully preconnected to https://fonts.gstatic.com/\n"
+                        },
+                        {
+                          "text": "HOST: Successfully preconnected to https://fonts.googleapis.com/\n"
+                        },
+                        {
+                          "text": "HOST NETWORK: 200 http://localhost:3000/_next/static/chunks/node_modules_%40firebase_auth_dist_esm_d3951ae3._.js\n"
+                        },
+                        {
+                          "text": "HOST NETWORK: 200 http://localhost:3000/_next/static/chunks/node_modules_%40firebase_firestore_dist_index_esm_af799df8.js\n"
+                        },
+                        {
+                          "text": "HOST NETWORK: 200 http://localhost:3000/_next/static/chunks/node_modules_%40firebase_database_dist_index_esm_3663ff2c.js\n"
+                        },
+                        {
+                          "text": "HOST: [Fast Refresh] rebuilding\n"
+                        },
+                        {
+                          "text": "HOST NETWORK: 200 https://pokemon-battles-86a0d.firebaseapp.com/__/auth/iframe?apiKey=AIzaSyASbdOWHRBH_QAqpjRrp9KyzPWheNuUZmY&appName=%5BDEFAULT%5D&v=12.2.0&eid=p&usegapi=1&jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.PLtFj_-5DjQ.O%2Fd%3D1%2Frs%3DAHpOoo-J85zQk73PCqZPyWTydWEIq3_4KA%2Fm%3D__features__\n"
+                        },
+                        {
+                          "text": "HOST NETWORK: 200 https://pokemon-battles-86a0d.firebaseapp.com/__/auth/iframe.js\n"
+                        },
+                        {
+                          "text": "HOST: [Fast Refresh] done in 445ms\n"
+                        },
+                        {
+                          "text": "🧹 Cleaning up multiplayer battle test\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-15T01:39:54.796Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/albertomunoz/Documents/Code/pokemon/test-results/multiplayer-battle-custom--3325e-attle-flow-with-custom-UIDs-Mobile-Safari/test-failed-2.png"
+                        },
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/albertomunoz/Documents/Code/pokemon/test-results/multiplayer-battle-custom--3325e-attle-flow-with-custom-UIDs-Mobile-Safari/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/albertomunoz/Documents/Code/pokemon/test-results/multiplayer-battle-custom--3325e-attle-flow-with-custom-UIDs-Mobile-Safari/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts",
+                        "column": 14,
+                        "line": 37
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "204d351b34b5a29131f3-ac547cac3bad2ec4a5f4",
+              "file": "multiplayer-battle-custom-uid.test.ts",
+              "line": 178,
+              "column": 7
+            },
+            {
+              "title": "Test UID verification in different contexts",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 12822,
+                      "error": {
+                        "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"auth-modal\"]') to be visible\u001b[22m\n\u001b[2m    - waiting for\" http://localhost:3000/lobby\" navigation to finish...\u001b[22m\n\u001b[2m    - navigated to \"http://localhost:3000/lobby\"\u001b[22m\n",
+                        "stack": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"auth-modal\"]') to be visible\u001b[22m\n\u001b[2m    - waiting for\" http://localhost:3000/lobby\" navigation to finish...\u001b[22m\n\u001b[2m    - navigated to \"http://localhost:3000/lobby\"\u001b[22m\n\n    at authenticateUser (/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts:37:14)\n    at /Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts:430:11",
+                        "location": {
+                          "file": "/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts",
+                          "column": 14,
+                          "line": 37
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 35 |\u001b[39m   \n \u001b[90m 36 |\u001b[39m   \u001b[90m// Wait for auth modal to appear\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 37 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'[data-testid=\"auth-modal\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 38 |\u001b[39m   \n \u001b[90m 39 |\u001b[39m   \u001b[90m// Fill in email and password\u001b[39m\n \u001b[90m 40 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[type=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m email)\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts",
+                            "column": 14,
+                            "line": 37
+                          },
+                          "message": "TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"auth-modal\"]') to be visible\u001b[22m\n\u001b[2m    - waiting for\" http://localhost:3000/lobby\" navigation to finish...\u001b[22m\n\u001b[2m    - navigated to \"http://localhost:3000/lobby\"\u001b[22m\n\n\n\u001b[0m \u001b[90m 35 |\u001b[39m   \n \u001b[90m 36 |\u001b[39m   \u001b[90m// Wait for auth modal to appear\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 37 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForSelector(\u001b[32m'[data-testid=\"auth-modal\"]'\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 38 |\u001b[39m   \n \u001b[90m 39 |\u001b[39m   \u001b[90m// Fill in email and password\u001b[39m\n \u001b[90m 40 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[type=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m email)\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at authenticateUser (/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts:37:14)\u001b[22m\n\u001b[2m    at /Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts:430:11\u001b[22m"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "🚀 Setting up multiplayer battle test with custom UIDs\n"
+                        },
+                        {
+                          "text": "🎯 Target UIDs - Host: testbattle1-cli-uid, Guest: testbattle2-cli-uid\n"
+                        },
+                        {
+                          "text": "🔍 Testing UID verification in different contexts\n"
+                        },
+                        {
+                          "text": "HOST: Failed to load resource: the server responded with a status of 500 (Internal Server Error)\n"
+                        },
+                        {
+                          "text": "HOST: [HMR] connected\n"
+                        },
+                        {
+                          "text": "HOST: ./src/app/battle/runtime/page.tsx:2317:19\nParsing ecmascript source code failed\n  2315 |                     </div>\n  2316 |                   )}\n> 2317 |                 </div>\n       |                   ^^^^\n  2318 |                 <div className=\"relative w-24 h-24 flex items-center justify-end\">\n  2319 |                   <Image\n  2320 |                     src={opponent.pokemon.sprites.front_default || opponent.pokemon.sprites.front_shiny || '/placeholder-pokemon.png'}\n\nExpression expected\n\nImport traces:\n  Client Component Browser:\n    ./src/app/battle/runtime/page.tsx [Client Component Browser]\n    ./src/app/battle/runtime/page.tsx [Server Component]\n\n  Client Component SSR:\n    ./src/app/battle/runtime/page.tsx [Client Component SSR]\n    ./src/app/battle/runtime/page.tsx [Server Component]\n"
+                        },
+                        {
+                          "text": "HOST: {file: undefined}\n"
+                        },
+                        {
+                          "text": "HOST: \n"
+                        },
+                        {
+                          "text": "HOST: ./src/app/battle/runtime/page.tsx:2317:19\nParsing ecmascript source code failed\n  2315 |                     </div>\n  2316 |                   )}\n> 2317 |                 </div>\n       |                   ^^^^\n  2318 |                 <div className=\"relative w-24 h-24 flex items-center justify-end\">\n  2319 |                   <Image\n  2320 |                     src={opponent.pokemon.sprites.front_default || opponent.pokemon.sprites.front_shiny || '/placeholder-pokemon.png'}\n\nExpression expected\n\nImport traces:\n  Client Component Browser:\n    ./src/app/battle/runtime/page.tsx [Client Component Browser]\n    ./src/app/battle/runtime/page.tsx [Server Component]\n\n  Client Component SSR:\n    ./src/app/battle/runtime/page.tsx [Client Component SSR]\n    ./src/app/battle/runtime/page.tsx [Server Component]\n"
+                        },
+                        {
+                          "text": "HOST: [Fast Refresh] rebuilding\n"
+                        },
+                        {
+                          "text": "🔐 Authenticating user: testbattle1@pokemon-battles.test\n"
+                        },
+                        {
+                          "text": "HOST: [Fast Refresh] rebuilding\n"
+                        },
+                        {
+                          "text": "HOST: \n"
+                        },
+                        {
+                          "text": "HOST: ./src/app/battle/runtime/page.tsx:2304:19\nParsing ecmascript source code failed\n  2302 |                     </div>\n  2303 |                   )}\n> 2304 |                 </div>\n       |                   ^^^^\n  2305 |                 <div className=\"relative w-24 h-24 flex items-center justify-end\">\n  2306 |                   <Image\n  2307 |                     src={opponent.pokemon.sprites.front_default || opponent.pokemon.sprites.front_shiny || '/placeholder-pokemon.png'}\n\nExpression expected\n\nImport traces:\n  Client Component Browser:\n    ./src/app/battle/runtime/page.tsx [Client Component Browser]\n    ./src/app/battle/runtime/page.tsx [Server Component]\n\n  Client Component SSR:\n    ./src/app/battle/runtime/page.tsx [Client Component SSR]\n    ./src/app/battle/runtime/page.tsx [Server Component]\n"
+                        },
+                        {
+                          "text": "HOST: {file: undefined}\n"
+                        },
+                        {
+                          "text": "HOST: [Fast Refresh] rebuilding\n"
+                        },
+                        {
+                          "text": "HOST: [Fast Refresh] performing full reload because your application had an unrecoverable error\n"
+                        },
+                        {
+                          "text": "HOST: \n"
+                        },
+                        {
+                          "text": "HOST: [Fast Refresh] done in 607ms\n"
+                        },
+                        {
+                          "text": "HOST: [Fast Refresh] rebuilding\n"
+                        },
+                        {
+                          "text": "HOST: [Fast Refresh] done in 346ms\n"
+                        },
+                        {
+                          "text": "HOST: [Fast Refresh] rebuilding\n"
+                        },
+                        {
+                          "text": "HOST: [Fast Refresh] done in 177ms\n"
+                        },
+                        {
+                          "text": "HOST: Successfully preconnected to https://fonts.gstatic.com/\n"
+                        },
+                        {
+                          "text": "HOST NETWORK: 200 http://localhost:3000/_next/static/chunks/node_modules_%40firebase_auth_dist_esm_d3951ae3._.js\n"
+                        },
+                        {
+                          "text": "HOST: Successfully preconnected to https://fonts.googleapis.com/\n"
+                        },
+                        {
+                          "text": "HOST NETWORK: 200 http://localhost:3000/_next/static/chunks/node_modules_%40firebase_firestore_dist_index_esm_af799df8.js\n"
+                        },
+                        {
+                          "text": "HOST NETWORK: 200 http://localhost:3000/_next/static/chunks/node_modules_%40firebase_database_dist_index_esm_3663ff2c.js\n"
+                        },
+                        {
+                          "text": "HOST: [Fast Refresh] rebuilding\n"
+                        },
+                        {
+                          "text": "HOST NETWORK: 200 https://pokemon-battles-86a0d.firebaseapp.com/__/auth/iframe?apiKey=AIzaSyASbdOWHRBH_QAqpjRrp9KyzPWheNuUZmY&appName=%5BDEFAULT%5D&v=12.2.0&eid=p&usegapi=1&jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.PLtFj_-5DjQ.O%2Fd%3D1%2Frs%3DAHpOoo-J85zQk73PCqZPyWTydWEIq3_4KA%2Fm%3D__features__\n"
+                        },
+                        {
+                          "text": "HOST NETWORK: 200 https://pokemon-battles-86a0d.firebaseapp.com/__/auth/iframe.js\n"
+                        },
+                        {
+                          "text": "HOST: [Fast Refresh] done in 446ms\n"
+                        },
+                        {
+                          "text": "🧹 Cleaning up multiplayer battle test\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-15T01:39:54.795Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/albertomunoz/Documents/Code/pokemon/test-results/multiplayer-battle-custom--4ad5a-ation-in-different-contexts-Mobile-Safari/test-failed-2.png"
+                        },
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/albertomunoz/Documents/Code/pokemon/test-results/multiplayer-battle-custom--4ad5a-ation-in-different-contexts-Mobile-Safari/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/albertomunoz/Documents/Code/pokemon/test-results/multiplayer-battle-custom--4ad5a-ation-in-different-contexts-Mobile-Safari/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/albertomunoz/Documents/Code/pokemon/src/__tests__/e2e/multiplayer-battle-custom-uid.test.ts",
+                        "column": 14,
+                        "line": 37
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "204d351b34b5a29131f3-8a95097184ef5f6aa269",
+              "file": "multiplayer-battle-custom-uid.test.ts",
+              "line": 424,
               "column": 7
             }
           ]
@@ -1562,11 +1462,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2025-09-14T21:39:39.659Z",
-    "duration": 67646.879,
+    "startTime": "2025-09-15T01:39:22.257Z",
+    "duration": 46366.364,
     "expected": 0,
     "skipped": 0,
-    "unexpected": 1,
+    "unexpected": 10,
     "flaky": 0
   }
 }

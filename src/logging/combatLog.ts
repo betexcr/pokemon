@@ -135,7 +135,6 @@ export function printTurnLog(
   res: TurnResult,
   opts?: PrintOptions
 ) {
-  // eslint-disable-next-line no-console
   console.log(formatTurnLog(attacker, defender, beforeAHP, beforeBHP, res, opts));
 }
 

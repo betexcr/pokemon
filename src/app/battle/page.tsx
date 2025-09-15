@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Swords } from "lucide-react";
 import { GYM_CHAMPIONS } from "@/lib/gym_champions";
+import { generateBattleId } from "@/lib/utils";
 import UserDropdown from "@/components/UserDropdown";
 import TrainerRoster from "@/components/battle/TrainerRoster";
 import TeamSelector from "@/components/TeamSelector";
@@ -21,6 +22,14 @@ function BattlePage() {
   const [opponentType, setOpponentType] = useState<"champion" | "team">("champion");
   const [opponentChampionId, setOpponentChampionId] = useState<string>(GYM_CHAMPIONS[0]?.id ?? "");
   const [generationFilter, setGenerationFilter] = useState<string>("");
+  const [isAutoStarting, setIsAutoStarting] = useState(false);
+
+  // Reset function to allow selecting a different team
+  const resetSelection = () => {
+    setSelectedPlayerTeam(null);
+    setIsAutoStarting(false);
+    setOpponentChampionId(GYM_CHAMPIONS[0]?.id ?? "");
+  };
 
   // useEffect(() => {
   //   try {
@@ -30,6 +39,40 @@ function BattlePage() {
   // }, []);
 
   // const playerTeamsOptions = useMemo(() => savedTeams.map(t => ({ id: t.id, name: t.name })), [savedTeams]);
+
+  // Auto-start battle when player team is selected
+  useEffect(() => {
+    if (selectedPlayerTeam && !isAutoStarting) {
+      setIsAutoStarting(true);
+      
+      // Select a random AI opponent
+      const randomChampion = GYM_CHAMPIONS[Math.floor(Math.random() * GYM_CHAMPIONS.length)];
+      setOpponentChampionId(randomChampion.id);
+      
+      // Start battle after a short delay to show the selection
+      setTimeout(() => {
+        startBattleWithOpponent(selectedPlayerTeam, randomChampion);
+      }, 1000);
+    }
+  }, [selectedPlayerTeam, isAutoStarting]);
+
+  const startBattleWithOpponent = (playerTeam: SavedTeam, champion: any) => {
+    const opponent = champion.team;
+    
+    if (!playerTeam || !opponent) return;
+
+    // Generate a battle ID for AI battles
+    const battleId = generateBattleId();
+
+    // Navigate to battle runtime with battle ID and encoded settings
+    const params = new URLSearchParams({
+      battleId: battleId,
+      player: playerTeam.id,
+      opponentKind: "champion",
+      opponentId: champion.id,
+    });
+    router.push(`/battle/runtime?${params.toString()}`);
+  };
 
   const startBattle = () => {
     if (!selectedPlayerTeam) return alert("Select your team");
@@ -50,8 +93,12 @@ function BattlePage() {
 
     if (!selectedPlayerTeam || !opponent) return;
 
-    // Navigate to a future battle runtime route with encoded settings
+    // Generate a battle ID for AI battles
+    const battleId = generateBattleId();
+
+    // Navigate to a future battle runtime route with battle ID and encoded settings
     const params = new URLSearchParams({
+      battleId: battleId,
       player: selectedPlayerTeam.id,
       opponentKind: opponentType,
       opponentId: opponentType === "champion" ? opponentChampionId : (selectedOpponentTeam?.id || ""),
@@ -101,12 +148,22 @@ function BattlePage() {
         <section className="border border-border rounded-xl bg-surface p-4">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-bold text-text">Your Team</h2>
-            <button
-              onClick={() => router.push("/team")}
-              className="text-sm text-poke-blue hover:text-poke-blue/80 hover:underline transition-colors"
-            >
-              Go to Team Builder
-            </button>
+            <div className="flex gap-2">
+              {selectedPlayerTeam && (
+                <button
+                  onClick={resetSelection}
+                  className="text-sm text-orange-600 hover:text-orange-700 hover:underline transition-colors"
+                >
+                  Select Different Team
+                </button>
+              )}
+              <button
+                onClick={() => router.push("/team")}
+                className="text-sm text-poke-blue hover:text-poke-blue/80 hover:underline transition-colors"
+              >
+                Go to Team Builder
+              </button>
+            </div>
           </div>
           <TeamSelector
             selectedTeamId={selectedPlayerTeam?.id}
@@ -118,51 +175,31 @@ function BattlePage() {
 
         {/* Opponent selection */}
         <section className="border border-border rounded-xl bg-surface p-4">
-          <h2 className="text-lg font-bold mb-3 text-text">Opponent</h2>
-          <div className="flex items-center gap-3 mb-3">
-            <label className="flex items-center gap-2 text-sm font-medium text-text">
-              <input type="radio" checked={opponentType === "champion"} onChange={()=> setOpponentType("champion")} />
-              Gym Champion
-            </label>
-            <label className="flex items-center gap-2 text-sm font-medium text-text">
-              <input type="radio" checked={opponentType === "team"} onChange={()=> {
-                setOpponentType("team");
-                setGenerationFilter(""); // Reset generation filter when switching to saved team
-              }} />
-              Saved Team
-            </label>
-          </div>
-
-          {opponentType === "champion" ? (
-            <TrainerRoster
-              champions={GYM_CHAMPIONS}
-              selectedChampionId={opponentChampionId}
-              onChampionSelect={setOpponentChampionId}
-              generationFilter={generationFilter}
-              onGenerationFilterChange={setGenerationFilter}
-            />
+          <h2 className="text-lg font-bold mb-3 text-text">AI Opponent</h2>
+          
+          {isAutoStarting ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-poke-blue mx-auto mb-4"></div>
+              <p className="text-text mb-2">Selecting AI opponent...</p>
+              <p className="text-sm text-muted">
+                {opponentChampionId ? 
+                  `Facing ${GYM_CHAMPIONS.find(c => c.id === opponentChampionId)?.name || 'Unknown Champion'}...` :
+                  'Preparing battle...'
+                }
+              </p>
+            </div>
           ) : (
-            <TeamSelector
-              selectedTeamId={selectedOpponentTeam?.id}
-              onTeamSelect={setSelectedOpponentTeam}
-              label="Select Opponent Team"
-              showStorageIndicator={true}
-            />
+            <div className="text-center py-8">
+              <p className="text-muted">AI opponent will be selected automatically when you choose your team</p>
+            </div>
           )}
         </section>
 
-        <div className="flex justify-end">
-          <button
-            onClick={startBattle}
-            disabled={!selectedPlayerTeam || (opponentType === "champion" && !opponentChampionId) || (opponentType === "team" && !selectedOpponentTeam)}
-            className="px-4 py-2 rounded-lg bg-poke-blue text-white hover:bg-poke-blue/90 disabled:bg-gray-400 disabled:cursor-not-allowed"
-          >
-            {!selectedPlayerTeam ? "Select Your Team" : 
-             opponentType === "champion" && !opponentChampionId ? "Select Champion" :
-             opponentType === "team" && !selectedOpponentTeam ? "Select Opponent Team" :
-             "Start Battle"}
-          </button>
-        </div>
+        {!selectedPlayerTeam && (
+          <div className="text-center py-8">
+            <p className="text-lg text-muted">Select your team above to start an AI battle!</p>
+          </div>
+        )}
         </div>
       </main>
     </div>

@@ -43,9 +43,9 @@ export default function AppHeader({
 
   return (
     <header className="sticky top-0 z-50 bg-gradient-to-r from-surface via-surface to-surface border-b border-border shadow-lg">
-      <div className="w-full max-w-full px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20 lg:h-24 py-3 list-none min-w-0">
-          <div className="flex items-center space-x-3 lg:space-x-6 min-w-0">
+      <div className="w-full max-w-full px-2 sm:px-4 md:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 sm:h-18 md:h-20 lg:h-24 py-2 sm:py-3 list-none min-w-0">
+          <div className="flex items-center space-x-2 sm:space-x-3 lg:space-x-6 min-w-0">
             {backLink && (
               <button
                 onClick={handleBack}
@@ -58,7 +58,7 @@ export default function AppHeader({
             )}
             <div className="flex items-center space-x-2 lg:space-x-3 mx-auto">
               <div className="flex flex-col">
-                <h2 className="text-lg lg:text-xl font-bold text-poke-blue dark:bg-gradient-to-r dark:from-poke-blue dark:via-poke-red dark:to-poke-blue dark:bg-clip-text dark:text-transparent" style={{ fontFamily: 'Pokemon Solid, sans-serif', color: 'var(--color-poke-blue) !important' }}>
+                <h2 className="text-base sm:text-lg lg:text-xl font-bold text-poke-blue dark:bg-gradient-to-r dark:from-poke-blue dark:via-poke-red dark:to-poke-blue dark:bg-clip-text dark:text-transparent" style={{ fontFamily: 'Pokemon Solid, sans-serif', color: 'var(--color-poke-blue) !important' }}>
                   {title}
                 </h2>
                 {subtitle ? (
@@ -70,12 +70,12 @@ export default function AppHeader({
             </div>
           </div>
 
-          <div className="flex items-center space-x-6 min-w-0 flex-shrink-0">
+          <div className="flex items-center space-x-2 sm:space-x-4 md:space-x-6 min-w-0 flex-shrink-0">
             {showThemeToggle && (
               <ThemeToggle />
             )}
             {showToolbar && (
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-1 sm:space-x-2">
                 <HeaderIcons 
                   comparisonList={comparisonList}
                   showSidebar={showSidebar}

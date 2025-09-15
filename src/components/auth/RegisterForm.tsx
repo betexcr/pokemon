@@ -60,16 +60,16 @@ export default function RegisterForm({ onToggleMode, onSuccess }: RegisterFormPr
       )}
       
       {/* Form */}
-      <form onSubmit={handleSubmit} className="mx-auto w-full max-w-3xl">
+      <form onSubmit={handleSubmit} className="mx-auto w-full">
         {/* Name */}
         <label className="block mb-3">
-          <span className="block text-[18px] font-semibold text-[#2b2f38] mb-2">Name</span>
+          <span className="block text-base sm:text-lg font-semibold text-[#2b2f38] mb-2">Name</span>
           <input
             type="text"
             id="displayName"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
-            className="w-full h-[52px] rounded-[18px] border border-black/10 px-4 text-[18px] font-medium outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-500"
+            className="w-full h-12 sm:h-[52px] rounded-2xl sm:rounded-[18px] border border-black/10 px-3 sm:px-4 text-base sm:text-lg font-medium outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-500"
             style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
             placeholder="Ash K."
             required
@@ -78,13 +78,13 @@ export default function RegisterForm({ onToggleMode, onSuccess }: RegisterFormPr
 
         {/* Email */}
         <label className="block mb-3">
-          <span className="block text-[18px] font-semibold text-[#2b2f38] mb-2">Email</span>
+          <span className="block text-base sm:text-lg font-semibold text-[#2b2f38] mb-2">Email</span>
           <input
             type="email"
             id="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full h-[52px] rounded-[18px] border border-black/10 px-4 text-[18px] font-medium outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-500"
+            className="w-full h-12 sm:h-[52px] rounded-2xl sm:rounded-[18px] border border-black/10 px-3 sm:px-4 text-base sm:text-lg font-medium outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-500"
             style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
             placeholder="Email"
             required
@@ -93,14 +93,14 @@ export default function RegisterForm({ onToggleMode, onSuccess }: RegisterFormPr
 
         {/* Password */}
         <label className="block mb-3">
-          <span className="block text-[18px] font-semibold text-[#2b2f38] mb-2">Password</span>
+          <span className="block text-base sm:text-lg font-semibold text-[#2b2f38] mb-2">Password</span>
           <div className="relative">
             <input
               type={passwordVisible ? "text" : "password"}
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full h-[52px] rounded-[18px] border border-black/10 px-4 text-[18px] font-medium outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-500"
+              className="w-full h-12 sm:h-[52px] rounded-2xl sm:rounded-[18px] border border-black/10 px-3 sm:px-4 text-base sm:text-lg font-medium outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-500"
               style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
               placeholder="Password"
               required
@@ -108,7 +108,7 @@ export default function RegisterForm({ onToggleMode, onSuccess }: RegisterFormPr
             <button
               type="button"
               onClick={() => setPasswordVisible((s) => !s)}
-              className="absolute inset-y-0 right-4 text-[15px] text-gray-500"
+              className="absolute inset-y-0 right-3 sm:right-4 text-sm sm:text-[15px] text-gray-500"
               aria-pressed={passwordVisible}
             >
               {passwordVisible ? "Hide" : "Show"}
@@ -118,7 +118,7 @@ export default function RegisterForm({ onToggleMode, onSuccess }: RegisterFormPr
 
         {/* Confirm Password */}
         <label className="block mb-4">
-          <span className="block text-[18px] font-semibold text-[#2b2f38] mb-2">
+          <span className="block text-base sm:text-lg font-semibold text-[#2b2f38] mb-2">
             Confirm Password
           </span>
           <div className="relative">
@@ -127,7 +127,7 @@ export default function RegisterForm({ onToggleMode, onSuccess }: RegisterFormPr
               id="confirmPassword"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full h-[52px] rounded-[18px] border border-black/10 px-4 text-[18px] font-medium outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-500"
+              className="w-full h-12 sm:h-[52px] rounded-2xl sm:rounded-[18px] border border-black/10 px-3 sm:px-4 text-base sm:text-lg font-medium outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-500"
               style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
               placeholder="Confirm password"
               required
@@ -135,7 +135,7 @@ export default function RegisterForm({ onToggleMode, onSuccess }: RegisterFormPr
             <button
               type="button"
               onClick={() => setConfirmPasswordVisible((s) => !s)}
-              className="absolute inset-y-0 right-4 text-[15px] text-gray-500"
+              className="absolute inset-y-0 right-3 sm:right-4 text-sm sm:text-[15px] text-gray-500"
               aria-pressed={confirmPasswordVisible}
             >
               {confirmPasswordVisible ? "Hide" : "Show"}
@@ -147,7 +147,7 @@ export default function RegisterForm({ onToggleMode, onSuccess }: RegisterFormPr
         <button
           type="submit"
           disabled={loading}
-          className="w-full h-[56px] rounded-[18px] bg-[#ffcf3a] text-[#0f172a] font-extrabold text-[24px] shadow-[0_6px_18px_rgba(255,207,58,.35)] transition active:translate-y-px hover:brightness-105 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full h-12 sm:h-14 rounded-2xl sm:rounded-[18px] bg-[#ffcf3a] text-[#0f172a] font-extrabold text-lg sm:text-xl lg:text-[24px] shadow-[0_6px_18px_rgba(255,207,58,.35)] transition active:translate-y-px hover:brightness-105 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? 'Creating Account...' : 'Sign Up'}
         </button>
@@ -157,9 +157,9 @@ export default function RegisterForm({ onToggleMode, onSuccess }: RegisterFormPr
       {/* Footer */}
       <button
         onClick={onToggleMode}
-        className="w-full h-[56px] rounded-[18px] border border-google-border bg-signup-bg flex items-center justify-center gap-3 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 mt-4"
+        className="w-full h-12 sm:h-14 rounded-2xl sm:rounded-[18px] border border-google-border bg-signup-bg flex items-center justify-center gap-2 sm:gap-3 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 mt-4"
       >
-        <span className="font-extrabold text-[24px]">
+        <span className="font-extrabold text-base sm:text-lg lg:text-[24px]">
           Already have an account?{" "}
           <span className="text-signup-text hover:text-signup-hover">
             Sign in

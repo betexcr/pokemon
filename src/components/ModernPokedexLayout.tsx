@@ -260,11 +260,7 @@ export default function ModernPokedexLayout({
       const isMobileScreen = window.innerWidth < 768
       setIsMobile(isMobileScreen)
 
-      // If switching to mobile and current density is not available on mobile, switch to 3cols
-      if (isMobileScreen && (cardDensity === '6cols' || cardDensity === '9cols')) {
-        setCardDensity('3cols')
-      }
-
+      // Only close mobile menu on large screens, don't change density
       if (!isMobileScreen && showMobileMenu) {
         setShowMobileMenu(false)
       }
@@ -275,7 +271,7 @@ export default function ModernPokedexLayout({
 
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
-  }, [showMobileMenu, cardDensity])
+  }, [showMobileMenu])
 
 
   // Prevent background scroll when mobile menu is open

@@ -35,7 +35,7 @@ export async function generateStaticParams() {
 }
 
 interface RoomPageProps {
-  params: { roomId: string };
+  params: Promise<{ roomId: string }>;
 }
 
 export default async function RoomPage({ params }: RoomPageProps) {

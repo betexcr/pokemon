@@ -64,7 +64,7 @@ export default function UserDropdown({ isMobile = false }: UserDropdownProps) {
     const name = user.displayName || user.email || 'User';
     return name
       .split(' ')
-      .map(word => word.charAt(0))
+      .map((word: string) => word.charAt(0))
       .join('')
       .toUpperCase()
       .slice(0, 2);
@@ -75,17 +75,17 @@ export default function UserDropdown({ isMobile = false }: UserDropdownProps) {
     return (
       <div className="relative inline-block text-left user-dropdown-container">
         <button 
-          className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-300 hover:border-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 user-dropdown-button" 
+          className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-full overflow-hidden border-2 border-gray-300 hover:border-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 user-dropdown-button touch-manipulation" 
           style={{
-            width: '64px !important',
-            height: '64px !important',
+            width: '40px !important',
+            height: '40px !important',
             borderRadius: '50% !important',
             aspectRatio: '1 / 1 !important',
-            minWidth: '64px !important',
-            minHeight: '64px !important',
-            maxWidth: '64px !important',
-            maxHeight: '64px !important',
-            '--user-dropdown-size': '64px'
+            minWidth: '40px !important',
+            minHeight: '40px !important',
+            maxWidth: '40px !important',
+            maxHeight: '40px !important',
+            '--user-dropdown-size': '40px'
           } as React.CSSProperties}
           title="Loading..."
         >
@@ -119,17 +119,17 @@ export default function UserDropdown({ isMobile = false }: UserDropdownProps) {
           onClick={() => setOpen((v) => !v)}
           aria-haspopup="menu"
           aria-expanded={open}
-          className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-300 hover:border-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 user-dropdown-button"
+          className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-full overflow-hidden border-2 border-gray-300 hover:border-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 user-dropdown-button touch-manipulation"
           style={{
-            width: '64px !important',
-            height: '64px !important',
+            width: '40px !important',
+            height: '40px !important',
             borderRadius: '50% !important',
             aspectRatio: '1 / 1 !important',
-            minWidth: '64px !important',
-            minHeight: '64px !important',
-            maxWidth: '64px !important',
-            maxHeight: '64px !important',
-            '--user-dropdown-size': '64px'
+            minWidth: '40px !important',
+            minHeight: '40px !important',
+            maxWidth: '40px !important',
+            maxHeight: '40px !important',
+            '--user-dropdown-size': '40px'
           } as React.CSSProperties}
           title="Sign In"
         >
@@ -211,17 +211,17 @@ export default function UserDropdown({ isMobile = false }: UserDropdownProps) {
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-300 hover:border-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 user-dropdown-button"
+        className="w-16 h-16 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 border-gray-300 hover:border-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 user-dropdown-button touch-manipulation"
         style={{
-          width: '64px !important',
-          height: '64px !important',
+          width: '72px !important',
+          height: '72px !important',
           borderRadius: '50% !important',
           aspectRatio: '1 / 1 !important',
-          minWidth: '64px !important',
-          minHeight: '64px !important',
-          maxWidth: '64px !important',
-          maxHeight: '64px !important',
-          '--user-dropdown-size': '64px'
+          minWidth: '72px !important',
+          minHeight: '72px !important',
+          maxWidth: '72px !important',
+          maxHeight: '72px !important',
+          '--user-dropdown-size': '72px'
         } as React.CSSProperties}
         title={user?.displayName || user?.email || 'User Profile'}
       >

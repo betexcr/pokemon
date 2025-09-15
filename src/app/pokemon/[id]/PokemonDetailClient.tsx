@@ -253,7 +253,6 @@ export default function PokemonDetailClient({ pokemon, error }: PokemonDetailCli
         {/* Pokemon Header */}
         <div className="text-center mb-8">
           <div className="relative inline-block">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={pokemon.sprites.other?.['official-artwork']?.front_default || pokemon.sprites.front_default || '/placeholder-pokemon.png'}
               alt={formatPokemonName(pokemon.name)}
