@@ -42,16 +42,21 @@ export default function AdvancedFilters({
       {/* Desktop Sidebar - Advanced Filters */}
       <div className={`${
         showSidebar ? 'block' : 'hidden'
-      } lg:block flex-none shrink-0 w-80 min-w-[20rem] border-r border-border bg-surface`}>
+      } flex-none shrink-0 w-80 min-w-[20rem] border-r border-border bg-surface`}>
         <div className="h-screen flex flex-col relative sidebar-stable">
           {/* Header - Fixed */}
           <div className="flex-shrink-0 p-6 border-b border-border bg-surface sticky top-0 z-10">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">Advanced Filters</h2>
               <button
-                onClick={() => setShowSidebar(false)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('Close button clicked');
+                  setShowSidebar(false);
+                }}
                 aria-label="Close advanced filters"
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
               >
                 <X className="h-5 w-5" />
               </button>
