@@ -50,13 +50,33 @@ export default function PokedexListView({
               {/* Left: image + text */}
               <div className="flex items-center gap-4 min-w-0 flex-1">
                 {/* Image container keeps consistent size */}
-                <div className="w-20 h-20 shrink-0 rounded-md bg-surface/60 grid place-items-center">
+                <div className="w-20 h-20 shrink-0 rounded-md bg-surface/60 grid place-items-center relative">
                   <Image
                     src={pokemon.sprites?.other?.['official-artwork']?.front_default || pokemon.sprites?.front_default || '/placeholder-pokemon.png'}
                     alt={pokemon.name}
                     width={80}
                     height={80}
                     className="w-16 h-16 object-contain"
+                    onLoadingComplete={(img) => {
+                      const wrapper = (img as any).parentElement as HTMLElement | null;
+                      if (!wrapper) return;
+                      const loader = wrapper.querySelector('[data-img-loader]') as HTMLElement | null;
+                      if (loader) loader.style.display = 'none';
+                    }}
+                    onError={(e) => {
+                      const wrapper = (e.currentTarget as any).parentElement as HTMLElement | null;
+                      if (!wrapper) return;
+                      const loader = wrapper.querySelector('[data-img-loader]') as HTMLElement | null;
+                      if (loader) loader.style.display = 'none';
+                    }}
+                  />
+                  <img
+                    src="/loading.gif"
+                    alt="Loading"
+                    width={24}
+                    height={24}
+                    data-img-loader
+                    className="absolute inset-0 m-auto w-6 h-6 opacity-70"
                   />
                 </div>
 

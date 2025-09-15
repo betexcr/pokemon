@@ -899,7 +899,13 @@ class RoomService {
       return team.map(pokemon => ({
         id: pokemon.id,
         level: pokemon.level,
-        moves: pokemon.moves ? pokemon.moves.sort((a: any, b: any) => a.name.localeCompare(b.name)) : []
+        // Cloud engine expects move IDs (names) array; extract from objects when present
+        moves: Array.isArray(pokemon.moves)
+          ? pokemon.moves
+              .map((m: any) => (typeof m === 'string' ? m : (m?.id || m?.name)))
+              .filter((m: any) => typeof m === 'string' && m)
+              .slice(0, 4)
+          : []
       })).sort((a, b) => a.id - b.id);
     };
     

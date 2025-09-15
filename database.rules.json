@@ -63,6 +63,24 @@
           }
         }
       }
+    },
+
+    "presence": {
+      "$uid": {
+        ".read": "auth != null && auth.uid == $uid",
+        ".write": "auth != null && auth.uid == $uid && newData.hasChildren(['connected','lastActiveAt'])"
+      }
+    },
+
+    "lobbies": {
+      "$region": {
+        "queue": {
+          "$uid": {
+            ".read": "auth != null && auth.uid == $uid",
+            ".write": "auth != null && auth.uid == $uid && (newData.exists() ? newData.hasChildren(['joinedAt','prefs']) : true)"
+          }
+        }
+      }
     }
   }
 }

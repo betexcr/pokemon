@@ -1214,6 +1214,35 @@ export const createBattleWithTeams = functions.https.onCall(async (data, context
         // Calculate other stats: ((2 * base + 31 + (252/4)) * level / 100) + 5
         const calcStat = (base: number) => Math.floor(((2 * base + 31 + 63) * level / 100) + 5);
         
+        // Normalize and enrich moves (accepts strings or objects with id/name)
+        const normalizeMoveId = (m: any): string => {
+          try {
+            const raw = typeof m === 'string' ? m : (m?.id || m?.name || '');
+            const id = String(raw)
+              .trim()
+              .toLowerCase()
+              .replace(/\s+/g, '-')
+              .replace(/[^a-z0-9-]/g, '');
+            return id || 'tackle';
+          } catch {
+            return 'tackle';
+          }
+        };
+
+        const moves: Move[] = await Promise.all(
+          (Array.isArray(slot.moves) ? slot.moves : [])
+            .slice(0, 4)
+            .map(async (m: any) => {
+              const id = normalizeMoveId(m);
+              const data = await getMoveData(id);
+              const ppFromInput = (typeof m === 'object' && m && 'pp' in m) ? Number(m.pp) : NaN;
+              const pp = Number.isFinite(ppFromInput) && ppFromInput > 0
+                ? ppFromInput
+                : (data?.pp ?? 35);
+              return { id, pp } as Move;
+            })
+        );
+
         const pokemon: Pokemon = {
           species: pokemonData.name,
           level: level,
@@ -1228,10 +1257,7 @@ export const createBattleWithTeams = functions.https.onCall(async (data, context
           },
           item: slot.item || '',
           ability: slot.ability || (pokemonData.abilities.find((a: any) => a.is_default)?.ability?.name || ''),
-          moves: (slot.moves || []).map((move: any) => ({
-            id: move.id || 'tackle',
-            pp: move.pp || 35
-          })),
+          moves: moves.length ? moves : [{ id: 'tackle', pp: 35 }],
           status: null,
           fainted: false
         };

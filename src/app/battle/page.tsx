@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Swords } from "lucide-react";
+import { Swords } from "lucide-react";
 import { GYM_CHAMPIONS } from "@/lib/gym_champions";
 import { generateBattleId } from "@/lib/utils";
-import UserDropdown from "@/components/UserDropdown";
+import AppHeader from "@/components/AppHeader";
 import TrainerRoster from "@/components/battle/TrainerRoster";
 import TeamSelector from "@/components/TeamSelector";
 
@@ -20,15 +20,28 @@ function BattlePage() {
   const [selectedPlayerTeam, setSelectedPlayerTeam] = useState<SavedTeam | null>(null);
   const [selectedOpponentTeam, setSelectedOpponentTeam] = useState<SavedTeam | null>(null);
   const [opponentType, setOpponentType] = useState<"champion" | "team">("champion");
-  const [opponentChampionId, setOpponentChampionId] = useState<string>(GYM_CHAMPIONS[0]?.id ?? "");
+  const [opponentChampionId, setOpponentChampionId] = useState<string>("");
   const [generationFilter, setGenerationFilter] = useState<string>("");
-  const [isAutoStarting, setIsAutoStarting] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [showTooltip, setShowTooltip] = useState<string | null>(null);
+  const [lastTapTime, setLastTapTime] = useState<number>(0);
+
+  // Check if mobile on mount and resize
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Reset function to allow selecting a different team
   const resetSelection = () => {
     setSelectedPlayerTeam(null);
-    setIsAutoStarting(false);
-    setOpponentChampionId(GYM_CHAMPIONS[0]?.id ?? "");
+    setOpponentChampionId("");
+    setShowTooltip(null);
   };
 
   // useEffect(() => {
@@ -40,21 +53,49 @@ function BattlePage() {
 
   // const playerTeamsOptions = useMemo(() => savedTeams.map(t => ({ id: t.id, name: t.name })), [savedTeams]);
 
-  // Auto-start battle when player team is selected
-  useEffect(() => {
-    if (selectedPlayerTeam && !isAutoStarting) {
-      setIsAutoStarting(true);
-      
-      // Select a random AI opponent
-      const randomChampion = GYM_CHAMPIONS[Math.floor(Math.random() * GYM_CHAMPIONS.length)];
-      setOpponentChampionId(randomChampion.id);
-      
-      // Start battle after a short delay to show the selection
-      setTimeout(() => {
-        startBattleWithOpponent(selectedPlayerTeam, randomChampion);
-      }, 1000);
+  // Handle trainer selection with mobile/desktop interactions
+  const handleTrainerClick = (championId: string) => {
+    const currentTime = new Date().getTime();
+    const tapLength = currentTime - lastTapTime;
+    
+    if (isMobile) {
+      // Mobile: Single tap shows tooltip, double tap starts battle
+      if (tapLength < 500 && lastTapTime !== 0) {
+        // Double tap - start battle
+        if (selectedPlayerTeam) {
+          const champion = GYM_CHAMPIONS.find(c => c.id === championId);
+          if (champion) {
+            startBattleWithOpponent(selectedPlayerTeam, champion);
+          }
+        }
+        setShowTooltip(null);
+      } else {
+        // Single tap - show/hide tooltip
+        setShowTooltip(showTooltip === championId ? null : championId);
+        setOpponentChampionId(championId);
+      }
+    } else {
+      // Desktop: Single click starts battle
+      if (selectedPlayerTeam) {
+        const champion = GYM_CHAMPIONS.find(c => c.id === championId);
+        if (champion) {
+          startBattleWithOpponent(selectedPlayerTeam, champion);
+        }
+      }
     }
-  }, [selectedPlayerTeam, isAutoStarting]);
+    
+    setLastTapTime(currentTime);
+  };
+
+  // Handle hover for desktop tooltip
+  const handleTrainerHover = (championId: string | null) => {
+    if (!isMobile) {
+      setShowTooltip(championId);
+      if (championId) {
+        setOpponentChampionId(championId);
+      }
+    }
+  };
 
   const startBattleWithOpponent = (playerTeam: SavedTeam, champion: any) => {
     const opponent = champion.team;
@@ -108,38 +149,24 @@ function BattlePage() {
 
   return (
     <div className="h-screen bg-bg text-text flex flex-col overflow-hidden">
-      {/* Fixed Header */}
-      <header className="flex-shrink-0 border-b border-border bg-surface">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <button
-              onClick={() => router.push("/")}
-              className="flex items-center space-x-2 text-muted hover:text-text transition-colors"
-              title="Back to PokéDex"
-            >
-              <ArrowLeft className="h-5 w-5" />
-              <span className="font-medium text-text">Back to PokéDex</span>
-            </button>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Swords className="h-5 w-5 text-poke-blue" />
-                <h1 className="text-lg font-semibold text-text">AI Battle</h1>
-              </div>
-              
-              <button
-                onClick={() => router.push("/lobby")}
-                className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-              >
-                <Swords className="w-4 h-4" />
-                <span>Online Battles</span>
-              </button>
-              
-              {/* User Profile */}
-              <UserDropdown />
-            </div>
-          </div>
-        </div>
-      </header>
+      <AppHeader
+        title="AI Battle"
+        backLink="/"
+        backLabel="Back to PokéDex"
+        showToolbar={false}
+        showThemeToggle={false}
+        iconKey="battle"
+        showIcon={true}
+        rightContent={
+          <button
+            onClick={() => router.push("/lobby")}
+            className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+          >
+            <Swords className="w-4 h-4" />
+            <span>Online Battles</span>
+          </button>
+        }
+      />
 
       {/* Scrollable Content Area */}
       <main className="flex-1 min-h-0 overflow-y-auto">
@@ -177,20 +204,33 @@ function BattlePage() {
         <section className="border border-border rounded-xl bg-surface p-4">
           <h2 className="text-lg font-bold mb-3 text-text">AI Opponent</h2>
           
-          {isAutoStarting ? (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-poke-blue mx-auto mb-4"></div>
-              <p className="text-text mb-2">Selecting AI opponent...</p>
-              <p className="text-sm text-muted">
-                {opponentChampionId ? 
-                  `Facing ${GYM_CHAMPIONS.find(c => c.id === opponentChampionId)?.name || 'Unknown Champion'}...` :
-                  'Preparing battle...'
-                }
-              </p>
+          {selectedPlayerTeam ? (
+            <div className="space-y-4">
+              <div className="text-center py-2">
+                <p className="text-sm text-muted mb-2">
+                  {isMobile ? 'Tap once to see details, tap twice to battle' : 'Hover to see details, click to battle'}
+                </p>
+                {opponentChampionId && (
+                  <p className="text-sm font-medium text-text">
+                    Selected: {GYM_CHAMPIONS.find(c => c.id === opponentChampionId)?.name || 'Unknown Champion'}
+                  </p>
+                )}
+              </div>
+              
+              <TrainerRoster
+                champions={GYM_CHAMPIONS}
+                selectedChampionId={opponentChampionId}
+                onChampionSelect={handleTrainerClick}
+                generationFilter={generationFilter}
+                onGenerationFilterChange={setGenerationFilter}
+                showTooltip={showTooltip}
+                onTrainerHover={handleTrainerHover}
+                isMobile={isMobile}
+              />
             </div>
           ) : (
             <div className="text-center py-8">
-              <p className="text-muted">AI opponent will be selected automatically when you choose your team</p>
+              <p className="text-muted">Select your team above to choose an AI opponent</p>
             </div>
           )}
         </section>

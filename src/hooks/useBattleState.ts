@@ -124,6 +124,7 @@ export function useBattleState(battleId: string): UseBattleState {
     return () => unsubscribe();
   }, []);
 
+  // Subscribe to meta and public state early; defer private until we confirm auth + membership
   useEffect(() => {
     if (!battleId) {
       console.log('useBattleState: No battleId provided');
@@ -172,17 +173,7 @@ export function useBattleState(battleId: string): UseBattleState {
       }
     ));
     
-    unsubs.push(onValue(
-      dbRef(rtdb, `/battles/${battleId}/private/${meUid}`), 
-      s => {
-        console.log('useBattleState: Private data received:', s.val());
-        setMe(s.val() ?? null);
-      }, 
-      e => {
-        console.error('useBattleState: Private listener error:', e);
-        setError(e.message);
-      }
-    ));
+    // IMPORTANT: Do not subscribe to private path yet; it requires correct uid membership.
     
     unsubs.push(onValue(
       dbRef(rtdb, "/.info/serverTimeOffset"), 
@@ -195,6 +186,39 @@ export function useBattleState(battleId: string): UseBattleState {
       unsubs.forEach(u => u()); 
     };
   }, [battleId, meUid, authLoading]);
+
+  // Late-bind private subscription only after we know meta and user membership
+  useEffect(() => {
+    if (!battleId) return;
+    if (authLoading) return;
+    if (!meUid) return; // wait for auth
+    if (!meta) return;  // wait for meta so we can verify membership
+
+    const isParticipant = meta.players?.p1?.uid === meUid || meta.players?.p2?.uid === meUid;
+    if (!isParticipant) {
+      console.warn('useBattleState: current user is not a participant of this battle; skipping private subscription');
+      // Show a gentle message but do not throw hard error during warmup
+      setError('You are not a participant in this battle.');
+      return;
+    }
+
+    console.log('useBattleState: Subscribing to private state for user:', meUid);
+    const unsub = onValue(
+      dbRef(rtdb, `/battles/${battleId}/private/${meUid}`),
+      s => {
+        console.log('useBattleState: Private data received:', s.val());
+        setMe(s.val() ?? null);
+        // Clear any prior permission error once we successfully subscribe
+        setError(prev => (prev === 'You are not a participant in this battle.' ? null : prev));
+      },
+      e => {
+        console.error('useBattleState: Private listener error:', e);
+        setError(e.message);
+      }
+    );
+
+    return () => unsub();
+  }, [battleId, meUid, authLoading, meta]);
 
   useEffect(() => {
     if (authLoading) {
@@ -219,7 +243,54 @@ export function useBattleState(battleId: string): UseBattleState {
   // UI legality (server still authoritative)
   const legalMoves = useMemo(() => {
     if (!myPrivateActive) return [];
-    const list = myPrivateActive.moves ?? [];
+    let list = myPrivateActive.moves ?? [];
+
+    // Multiplayer fallback: If moves look uninitialized (e.g., all 'tackle' or empty),
+    // try to hydrate from local current team so the UI shows correct moves without
+    // altering server logic.
+    const looksUninitialized = list.length === 0 || (list.length > 0 && list.every(m => (m.id || '').toLowerCase() === 'tackle'));
+    if (looksUninitialized) {
+      try {
+        const raw = typeof window !== 'undefined' ? window.localStorage.getItem('pokemon-current-team') : null;
+        if (raw) {
+          const saved = JSON.parse(raw) as Array<{ id: number; moves?: Array<{ name: string }> }>;
+          // Find matching by species id
+          const getId = (name: string) => {
+            try {
+              // lazy import to avoid cycles
+              // eslint-disable-next-line @typescript-eslint/no-var-requires
+              const utils = require('@/lib/utils') as { getPokemonIdFromSpecies: (s: string)=>number|null };
+              return utils.getPokemonIdFromSpecies(name) || null;
+            } catch { return null; }
+          };
+          const activeId = getId(myPrivateActive.species || '');
+          const candidate = activeId ? saved.find(s => s.id === activeId) : saved[0];
+          if (candidate?.moves?.length) {
+            list = candidate.moves.slice(0, 4).map(m => ({ id: m.name, pp: 20 }));
+          }
+        }
+        // Secondary fallback: first saved team in team-builder storage
+        if ((!list || list.length === 0 || list.every(m => (m.id || '').toLowerCase() === 'tackle'))) {
+          const savedTeamsRaw = typeof window !== 'undefined' ? window.localStorage.getItem('pokemon-team-builder') : null;
+          if (savedTeamsRaw) {
+            const teams = JSON.parse(savedTeamsRaw) as Array<{ slots: Array<{ id: number; moves?: Array<{ name: string }> }> }>;
+            const activeId = (() => {
+              try {
+                const utils = require('@/lib/utils') as { getPokemonIdFromSpecies: (s: string)=>number|null };
+                return utils.getPokemonIdFromSpecies(myPrivateActive.species || '') || null;
+              } catch { return null; }
+            })();
+            const firstTeam = teams?.[0];
+            const slot = activeId && firstTeam ? firstTeam.slots.find(s => s.id === activeId) : undefined;
+            if (slot?.moves?.length) {
+              list = slot.moves.slice(0, 4).map(m => ({ id: m.name, pp: 20 }));
+            }
+          }
+        }
+      } catch {
+        // ignore fallback errors silently
+      }
+    }
     const choiceLockMoveId = me?.choiceLock?.locked ? me?.choiceLock?.moveId : undefined;
     const disableMoveId = me?.disable?.moveId;
     const encoreMoveId = me?.encoreMoveId;

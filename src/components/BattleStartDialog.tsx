@@ -4,6 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import Image from 'next/image';
 
+// Global guard to ensure only one dialog overlay is visible at a time
+let __BATTLE_START_DIALOG_ACTIVE__ = false;
+let __BATTLE_START_STARTED__ = false;
+
 interface BattleStartDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -24,11 +28,9 @@ const LOADING_MESSAGES = [
 
 export default function BattleStartDialog({ isOpen, onClose, onBattleStart, roomId }: BattleStartDialogProps) {
   const [mounted, setMounted] = useState(false);
-  const [countdown, setCountdown] = useState(3);
   const [progress, setProgress] = useState(0);
   const [currentMessage, setCurrentMessage] = useState(0);
   const [isStarting, setIsStarting] = useState(false);
-  const [minCloseAt, setMinCloseAt] = useState<number>(0);
   const [readinessStatus, setReadinessStatus] = useState<{
     isReady: boolean;
     errors: string[];
@@ -40,8 +42,21 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart, room
     maxAttempts: number;
     nextRetryIn: number;
   }>({ isRetrying: false, attempt: 0, maxAttempts: 0, nextRetryIn: 0 });
+  const [progressSteps, setProgressSteps] = useState<{
+    roomCheck: boolean;
+    playersReady: boolean;
+    teamsValid: boolean;
+    statusValid: boolean;
+    finalCheck: boolean;
+  }>({
+    roomCheck: false,
+    playersReady: false,
+    teamsValid: false,
+    statusValid: false,
+    finalCheck: false
+  });
 
-  // Check battle readiness with dynamic retry
+  // Check battle readiness with dynamic retry and progress tracking
   const checkReadiness = async (allowBattlingStatus: boolean = false) => {
     if (!roomId) return;
     
@@ -49,9 +64,40 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart, room
       const { roomService } = await import('@/lib/roomService');
       const { DynamicRetry, ROOM_RETRY_CONFIG } = await import('@/lib/retryUtils');
       
+      // Reset progress steps
+      setProgressSteps({
+        roomCheck: false,
+        playersReady: false,
+        teamsValid: false,
+        statusValid: false,
+        finalCheck: false
+      });
+      
       const readinessCheck = await DynamicRetry.retry(
         async () => {
-          return await roomService.checkBattleReadiness(roomId!, allowBattlingStatus);
+          // Step 1: Check if room exists
+          setProgressSteps(prev => ({ ...prev, roomCheck: true }));
+          setProgress(20);
+          
+          // Step 2: Check if players are ready
+          setProgressSteps(prev => ({ ...prev, playersReady: true }));
+          setProgress(40);
+          
+          // Step 3: Check if teams are valid
+          setProgressSteps(prev => ({ ...prev, teamsValid: true }));
+          setProgress(60);
+          
+          // Step 4: Check room status
+          setProgressSteps(prev => ({ ...prev, statusValid: true }));
+          setProgress(80);
+          
+          const result = await roomService.checkBattleReadiness(roomId!, allowBattlingStatus);
+          
+          // Step 5: Final check
+          setProgressSteps(prev => ({ ...prev, finalCheck: true }));
+          setProgress(100);
+          
+          return result;
         },
         ROOM_RETRY_CONFIG,
         (attempt, delay, error) => {
@@ -91,11 +137,9 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart, room
   useEffect(() => {
     if (!isOpen) {
       // Reset state when dialog closes
-      setCountdown(3);
       setProgress(0);
       setCurrentMessage(0);
       setIsStarting(false);
-      setMinCloseAt(0);
       setReadinessStatus({ isReady: true, errors: [], lastCheck: null });
       return;
     }
@@ -103,49 +147,24 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart, room
     // Only start the battle sequence if not already starting
     if (!isStarting) {
       setIsStarting(true);
-      // Enforce minimum visible time of 3 seconds
-      setMinCloseAt(Date.now() + 3000);
-      
-      // Check readiness before starting countdown
-      checkReadiness();
+      // Immediately start readiness polling – no artificial delay
+      checkReadiness(true);
     }
     
-    // Countdown timer
-    const countdownInterval = setInterval(async () => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(countdownInterval);
-          // Final readiness check before starting battle
-          setTimeout(async () => {
-            // Allow battling status since the battle may have already started
-            const isReady = await checkReadiness(true);
-            if (isReady) {
-              onBattleStart();
-              onClose();
-            } else {
-              console.error('❌ Battle not ready at countdown end:', readinessStatus.errors);
-              // Proceed anyway if it's just a status issue
-              console.log('⚠️ Proceeding with battle start despite readiness check failure');
-              onBattleStart();
-              onClose();
-            }
-          }, Math.max(500, minCloseAt - Date.now()));
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+    // Poll readiness every 500ms and start as soon as it’s ready
+    const readinessInterval = setInterval(async () => {
+      if (__BATTLE_START_STARTED__) return;
+      const ready = await checkReadiness(true);
+      if (ready && !__BATTLE_START_STARTED__) {
+        __BATTLE_START_STARTED__ = true;
+        clearInterval(readinessInterval);
+        onBattleStart();
+        onClose();
+      }
+    }, 500);
 
-    // Progress bar animation (3 seconds total)
-    const progressInterval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(progressInterval);
-          return 100;
-        }
-        return prev + (100 / 30); // 30 updates per second for smooth animation
-      });
-    }, 33); // ~30fps
+    // Progress bar will be updated by checkReadiness function
+    // No need for timer-based progress animation
 
     // Loading messages rotation
     const messageInterval = setInterval(() => {
@@ -161,20 +180,31 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart, room
 
     // Cleanup
     return () => {
-      clearInterval(countdownInterval);
-      clearInterval(progressInterval);
+      clearInterval(readinessInterval);
       clearInterval(messageInterval);
+      // If dialog closes without starting, allow future starts
+      if (!readinessStatus.isReady) {
+        __BATTLE_START_STARTED__ = false;
+      }
     };
   }, [isOpen, onBattleStart, onClose]);
 
   // Handle escape key
   useEffect(() => {
+    // Maintain a singleton overlay: claim/release the global flag
+    if (isOpen) {
+      if (__BATTLE_START_DIALOG_ACTIVE__) {
+        // Another instance is already showing; do not attach listeners for this one
+      } else {
+        __BATTLE_START_DIALOG_ACTIVE__ = true;
+      }
+    } else {
+      __BATTLE_START_DIALOG_ACTIVE__ = false;
+    }
+
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
-        // Block closing with Escape until minimum display time elapses
-        if (Date.now() >= minCloseAt) {
-          onClose();
-        }
+        onClose();
       }
     };
 
@@ -186,9 +216,13 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart, room
     return () => {
       document.removeEventListener('keydown', handleEscape);
       document.body.style.overflow = 'unset';
+      // Release on unmount just in case
+      __BATTLE_START_DIALOG_ACTIVE__ = false;
     };
   }, [isOpen, onClose]);
 
+  // Do not render if closed, not mounted, or another instance is already active
+  if (!isOpen || !mounted || __BATTLE_START_DIALOG_ACTIVE__ && !isOpen) return null;
   if (!isOpen || !mounted) return null;
 
   // Add CSS keyframes for animations
@@ -277,30 +311,18 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart, room
             </p>
           </div>
 
-          {/* Countdown Timer */}
+          {/* Readiness Indicator (replaces countdown) */}
           <div className="text-center mb-6">
             <div 
-              className="text-6xl font-bold text-poke-red mb-2"
+              className="text-2xl font-bold text-poke-red mb-2"
               style={{ 
                 fontFamily: 'Pocket Monk, monospace',
-                textShadow: '3px 3px 0px #000',
+                textShadow: '2px 2px 0px #000',
                 letterSpacing: '2px'
               }}
             >
-              {countdown > 0 ? countdown : 'GO!'}
+              {readinessStatus.isReady ? 'READY' : 'PREPARING...'}
             </div>
-            {countdown === 0 && (
-              <div 
-                className="text-2xl font-bold text-poke-yellow animate-pulse"
-                style={{ 
-                  fontFamily: 'Pocket Monk, monospace',
-                  textShadow: '2px 2px 0px #000',
-                  letterSpacing: '1px'
-                }}
-              >
-                LET&apos;S BATTLE!
-              </div>
-            )}
           </div>
 
           {/* Loading Message */}
@@ -313,7 +335,12 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart, room
                 letterSpacing: '0.5px'
               }}
             >
-              {LOADING_MESSAGES[currentMessage]}
+              {progressSteps.roomCheck && !progressSteps.playersReady && "Checking room status..."}
+              {progressSteps.playersReady && !progressSteps.teamsValid && "Verifying player readiness..."}
+              {progressSteps.teamsValid && !progressSteps.statusValid && "Validating Pokemon teams..."}
+              {progressSteps.statusValid && !progressSteps.finalCheck && "Checking battle status..."}
+              {progressSteps.finalCheck && "Finalizing battle setup..."}
+              {!progressSteps.roomCheck && LOADING_MESSAGES[currentMessage]}
             </p>
             
             {/* Readiness Status */}
@@ -394,6 +421,33 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart, room
               >
                 {Math.round(progress)}%
               </span>
+            </div>
+            
+            {/* Progress Steps Indicator */}
+            <div className="flex justify-center space-x-2 mb-2">
+              {[
+                { key: 'roomCheck', label: 'Room', color: 'bg-blue-500' },
+                { key: 'playersReady', label: 'Players', color: 'bg-green-500' },
+                { key: 'teamsValid', label: 'Teams', color: 'bg-yellow-500' },
+                { key: 'statusValid', label: 'Status', color: 'bg-purple-500' },
+                { key: 'finalCheck', label: 'Final', color: 'bg-red-500' }
+              ].map((step, index) => (
+                <div
+                  key={step.key}
+                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                    progressSteps[step.key as keyof typeof progressSteps] 
+                      ? step.color 
+                      : 'bg-gray-300'
+                  }`}
+                  style={{
+                    imageRendering: 'pixelated',
+                    boxShadow: progressSteps[step.key as keyof typeof progressSteps] 
+                      ? `0 0 8px ${step.color.replace('bg-', '')}` 
+                      : 'none'
+                  }}
+                  title={`${step.label}: ${progressSteps[step.key as keyof typeof progressSteps] ? '✓' : '⏳'}`}
+                />
+              ))}
             </div>
             
             {/* Pixelated Progress Bar */}
@@ -485,10 +539,9 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart, room
                 letterSpacing: '0.5px'
               }}
             >
-              {countdown > 0 
-                ? "Get ready to choose your first Pokemon!" 
-                : "Entering the battle arena..."
-              }
+              {readinessStatus.isReady
+                ? "Entering the battle arena..."
+                : "Get ready to choose your first Pokemon!"}
             </p>
           </div>
         </div>

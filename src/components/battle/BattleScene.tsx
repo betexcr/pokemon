@@ -5,6 +5,7 @@ import { onValue, ref as dbRef } from 'firebase/database';
 import { Database } from 'firebase/database';
 import { BattleSprite, BattleSpriteRef } from './BattleSprite';
 import { useBattleState } from '@/hooks/useBattleState';
+import Tooltip from '@/components/Tooltip';
 
 // UI Event types for precise animation control
 export type UIEvent =
@@ -37,6 +38,8 @@ export const BattleScene: React.FC<BattleSceneProps> = ({
   const [lastLogLine, setLastLogLine] = useState<string>('');
   const [isAnimating, setIsAnimating] = useState(false);
   const [projectiles, setProjectiles] = useState<Array<{id: string; side: 'p1' | 'p2'; typeColor: string}>>([]);
+  const [moveInfo, setMoveInfo] = useState<Record<string, { type: string; short_effect?: string }>>({});
+  const [myAbilityInfo, setMyAbilityInfo] = useState<{ name: string; short_effect?: string } | null>(null);
 
   // Animation scheduler for sequenced effects
   const step = useCallback((fn: () => void, delay: number = 100) => {
@@ -64,6 +67,47 @@ export const BattleScene: React.FC<BattleSceneProps> = ({
     chooseSwitch,
     forfeit
   } = useBattleState(battleId);
+
+  // Prefetch move details for tooltips
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      const entries = await Promise.all(
+        (legalMoves || []).map(async (m) => {
+          try {
+            const mv: any = await (await import('@/lib/moveCache')).getMove(m.id);
+            const english = (mv.effect_entries || []).find((e: any) => e.language?.name === 'en');
+            return [m.id, { type: mv.type?.name || 'normal', short_effect: english?.short_effect || english?.effect }];
+          } catch {
+            return [m.id, { type: 'normal' }];
+          }
+        })
+      );
+      if (!cancelled) {
+        const next: Record<string, { type: string; short_effect?: string }> = {};
+        for (const [k, v] of entries) next[k as string] = v as any;
+        setMoveInfo(next);
+      }
+    };
+    if (legalMoves?.length) run();
+    return () => { cancelled = true; };
+  }, [legalMoves]);
+
+  // Prefetch my active ability
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const abilityId = (me?.team?.[0]?.ability as any) || null;
+      if (!abilityId) { setMyAbilityInfo(null); return; }
+      try {
+        const ab: any = await (await import('@/lib/api')).getAbility(abilityId);
+        const english = (ab.effect_entries || []).find((e: any) => e.language?.name === 'en');
+        if (!cancelled) setMyAbilityInfo({ name: ab.name, short_effect: english?.short_effect || english?.effect });
+      } catch { if (!cancelled) setMyAbilityInfo({ name: String(abilityId) }); }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [me?.team?.[0]?.ability]);
 
   // Get current active Pokemon
   const myActive = meUid ? pub?.[meUid]?.active : null;
@@ -128,8 +172,8 @@ export const BattleScene: React.FC<BattleSceneProps> = ({
     setIsAnimating(true);
 
     for (const event of events) {
-      const targetSprite = event.target === 'p1' ? playerSpriteRef.current : opponentSpriteRef.current;
-      const actorSprite = event.actor === 'p1' ? playerSpriteRef.current : opponentSpriteRef.current;
+      const targetSprite = 'target' in event && event.target === 'p1' ? playerSpriteRef.current : opponentSpriteRef.current;
+      const actorSprite = 'actor' in event && event.actor === 'p1' ? playerSpriteRef.current : opponentSpriteRef.current;
 
       switch (event.kind) {
         case 'attack':
@@ -139,7 +183,7 @@ export const BattleScene: React.FC<BattleSceneProps> = ({
             setProjectiles(prev => [...prev, {
               id: projId,
               side: event.actor,
-              typeColor: event.typeColor
+              typeColor: event.typeColor || '#ff0000'
             }]);
             
             // Remove projectile after animation
@@ -198,6 +242,32 @@ export const BattleScene: React.FC<BattleSceneProps> = ({
       processEvents(currentEvents);
     }
   }, [currentEvents, processEvents]);
+
+  // Emit readable toasts for online battles (animated view)
+  useEffect(() => {
+    const summary = pub?.lastResultSummary || '';
+    if (!summary) return;
+    try {
+      const lower = summary.toLowerCase();
+      // Simple title/message split
+      let title = summary;
+      let message = '';
+      const usedIdx = lower.indexOf(' used ');
+      if (usedIdx > -1) {
+        // e.g., "Pikachu used thunderbolt! It dealt ..."
+        title = summary.slice(0, usedIdx + ' used '.length) + summary.slice(usedIdx + ' used '.length).split('!')[0] + '!';
+        message = summary.slice((summary.toLowerCase().indexOf('!', usedIdx) + 1) || summary.length).trim();
+      }
+      // Append effectiveness cues if present
+      const eff = lower.includes('super effective') ? 'It\'s super effective!' : lower.includes('not very effective') ? "It\'s not very effective." : '';
+      if (eff) {
+        message = message ? `${message} ${eff}` : eff;
+      }
+      if (typeof window !== 'undefined' && (window as any).__battle_toast) {
+        (window as any).__battle_toast({ title, message, type: 'info', duration: 3500 });
+      }
+    } catch {}
+  }, [pub?.lastResultSummary]);
 
   // Handle move selection
   const handleMoveSelection = useCallback(async (moveId: string) => {
@@ -295,14 +365,22 @@ export const BattleScene: React.FC<BattleSceneProps> = ({
                 ref={playerSpriteRef}
                 species={myActive.species}
                 level={myActive.level}
-                hp={{ cur: myActive.hp?.cur ?? myActive.hp, max: myActive.hp?.max ?? myActive.maxHp }}
+                hp={{ cur: myActive.hp?.cur ?? myActive.hp, max: myActive.hp?.max ?? myActive.hp }}
                 status={myActive.status}
                 volatiles={myActive.volatiles}
                 types={myActive.types}
                 side="player"
                 field={fieldP1}
                 className="transform scale-110"
+                spriteMode="animated"
               />
+            )}
+            {myAbilityInfo && (
+              <div className="mt-2 text-sm text-gray-700">
+                <Tooltip content={myAbilityInfo.short_effect || '—'} variant="ability" position="top" maxWidth="w-80">
+                  <span className="cursor-help font-medium capitalize">Ability: {myAbilityInfo.name}</span>
+                </Tooltip>
+              </div>
             )}
           </div>
 
@@ -316,13 +394,14 @@ export const BattleScene: React.FC<BattleSceneProps> = ({
                 ref={opponentSpriteRef}
                 species={oppActive.species}
                 level={oppActive.level}
-                hp={{ cur: oppActive.hp?.cur ?? oppActive.hp, max: oppActive.hp?.max ?? oppActive.maxHp }}
+                hp={{ cur: oppActive.hp?.cur ?? oppActive.hp, max: oppActive.hp?.max ?? oppActive.hp }}
                 status={oppActive.status}
                 volatiles={oppActive.volatiles}
                 types={oppActive.types}
                 side="opponent"
                 field={fieldP2}
                 className="transform scale-110"
+                spriteMode="animated"
               />
             )}
           </div>
@@ -359,7 +438,18 @@ export const BattleScene: React.FC<BattleSceneProps> = ({
                         : 'border-blue-500 bg-blue-50 hover:bg-blue-100 hover:border-blue-600 hover:shadow-md'
                     }`}
                   >
-                    <div className="font-medium capitalize">{move.id}</div>
+                    <div className="font-medium capitalize">
+                      <Tooltip
+                        content={moveInfo[move.id]?.short_effect || ''}
+                        type={(moveInfo[move.id]?.type as any) || 'normal'}
+                        variant="move"
+                        position="top"
+                        containViewport
+                        maxWidth="w-80"
+                      >
+                        <span className="cursor-help">{move.id}</span>
+                      </Tooltip>
+                    </div>
                     <div className="text-sm text-gray-600">PP: {move.pp}</div>
                     {move.reason && (
                       <div className="text-xs text-red-600">{move.reason}</div>
@@ -415,7 +505,7 @@ export const BattleScene: React.FC<BattleSceneProps> = ({
       )}
 
       {/* Battle Log */}
-      {pub.lastResultSummary && (
+      {pub?.lastResultSummary && (
         <div className="bg-black/80 text-white p-4 text-sm font-mono">
           <div className="max-w-4xl mx-auto">
             <div className="text-green-400">{pub.lastResultSummary}</div>

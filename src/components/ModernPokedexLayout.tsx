@@ -94,7 +94,7 @@ export default function ModernPokedexLayout({
   // filters: _filters,
   // setFilters: _setFilters
 }: ModernPokedexLayoutProps) {
-  console.log('ModernPokedexLayout rendered with pokemonList length:', pokemonList.length);
+  // console debug removed
   const router = useRouter()
   const { user } = useAuth()
   
@@ -214,26 +214,26 @@ export default function ModernPokedexLayout({
   // Load initial Pokemon data when component mounts
   useEffect(() => {
     const loadInitialPokemon = async () => {
-      console.log('loadInitialPokemon effect running:', { isAllGenerations, allGenerationsPokemonLength: allGenerationsPokemon.length });
+      // debug removed
       if (isAllGenerations && allGenerationsPokemon.length === 0) {
-        console.log('Loading initial Pokemon data...');
+        
         try {
           const initialPokemon = await getPokemonWithPagination(100, 0);
-          console.log('Loaded initial Pokemon:', initialPokemon.length, 'Pokemon');
+          
           setAllGenerationsPokemon(initialPokemon);
           setCurrentOffset(100);
           
           // Fetch total count
           try {
             const count = await getPokemonTotalCount();
-            console.log('Fetched total Pokemon count:', count);
+            
             setTotalPokemonCount(count || null);
           } catch (error) {
-            console.error('Error fetching total count:', error);
+            
             setTotalPokemonCount(1302);
           }
         } catch (error) {
-          console.error('Error loading initial Pokemon:', error);
+          
         }
       }
     };
@@ -344,6 +344,7 @@ export default function ModernPokedexLayout({
         } else if (advancedFilters.types.length > 0) {
           // "All generations" with type filter - fetch ALL Pokémon of the selected types
           setIsAllGenerations(false)
+          setHasMorePokemon(false) // Disable infinite scroll for type filters since we load all at once
           if (advancedFilters.types.length === 1) {
             // Single type - fetch all Pokémon of that type
             results = await getPokemonByType(advancedFilters.types[0])
@@ -407,7 +408,7 @@ export default function ModernPokedexLayout({
                   try {
                     return await getPokemon(id);
                   } catch (error) {
-                    console.warn(`Failed to fetch full data for Pokémon ${id}:`, error);
+                    
                     return null;
                   }
                 })
@@ -417,7 +418,7 @@ export default function ModernPokedexLayout({
               results = legendaryMythicalPokemon.filter(pokemon => pokemon !== null) as Pokemon[];
               
             } catch (error) {
-              console.error('Error in efficient legendary/mythical filtering:', error);
+              
               // Fallback to infinite scroll
               setIsAllGenerations(true)
               if (allGenerationsPokemon.length === 0) {
@@ -457,7 +458,7 @@ export default function ModernPokedexLayout({
               results = allPokemon;
               
             } catch (error) {
-              console.error('Error in efficient weight/height/sorting filtering:', error);
+              
               // Fallback to infinite scroll
               setIsAllGenerations(true)
               setHasMorePokemon(true)
@@ -489,6 +490,22 @@ export default function ModernPokedexLayout({
           setIsAllGenerations(false)
         }
 
+        // Enrich search results with full details so types are available
+        try {
+          const needEnrichment = results.filter(p => (p.types?.length || 0) === 0)
+          if (needEnrichment.length > 0) {
+            const toFetch = needEnrichment.slice(0, 50).map(p => p.id)
+            const fetched = await Promise.allSettled(toFetch.map(id => getPokemon(id)))
+            const byId = new Map<number, Pokemon>()
+            fetched.forEach(res => {
+              if (res.status === 'fulfilled' && res.value) byId.set(res.value.id, res.value)
+            })
+            if (byId.size > 0) {
+              results = results.map(p => byId.get(p.id) || p)
+            }
+          }
+        } catch {}
+
         // Apply height/weight filters only if we have detailed data
         const hasDetailedData = results.length > 0 && results[0].height > 0 && results[0].weight > 0;
         if (hasDetailedData) {
@@ -505,11 +522,7 @@ export default function ModernPokedexLayout({
 
         // Legendary and Mythical filters - apply only if not already filtered at data level
         if ((advancedFilters.legendary || advancedFilters.mythical) && advancedFilters.generation !== 'all') {
-          console.log('Applying legendary/mythical filters:', { 
-            legendary: advancedFilters.legendary, 
-            mythical: advancedFilters.mythical,
-            totalPokemon: results.length 
-          });
+          
           
           results = results.filter(pokemon => {
             const isLegendary = LEGENDARY_POKEMON.has(pokemon.id)
@@ -526,17 +539,17 @@ export default function ModernPokedexLayout({
             return true
           })
           
-          console.log(`After ${advancedFilters.legendary && advancedFilters.mythical ? 'legendary AND mythical' : advancedFilters.legendary ? 'legendary' : 'mythical'} filtering:`, results.length, 'Pokémon found');
+          
         }
 
 
 
         setFilteredPokemon(results)
       } catch (error) {
-        console.error('Error applying filters:', error)
+        
         setFilteredPokemon([])
         // Show a more user-friendly error message
-        console.warn('Filtering failed, showing empty results. Try refreshing the page.')
+        
       } finally {
         setIsFiltering(false)
       }
@@ -548,7 +561,7 @@ export default function ModernPokedexLayout({
   // Handle allGenerationsPokemon updates separately to avoid infinite loops
   useEffect(() => {
     if (allGenerationsPokemon.length > 0) {
-      console.log('Setting filteredPokemon from allGenerationsPokemon:', allGenerationsPokemon.length, 'Pokemon');
+      
       setFilteredPokemon(allGenerationsPokemon)
     }
   }, [allGenerationsPokemon])
@@ -611,7 +624,7 @@ export default function ModernPokedexLayout({
         const availableComparison = filteredPokemon.filter(p => comparisonList.includes(p.id))
         setComparisonPokemon([...availableComparison, ...fetchedPokemon])
       } catch (error) {
-        console.error('Error fetching comparison Pokémon:', error)
+        
         // Fallback to only available Pokémon
         const availableComparison = filteredPokemon.filter(p => comparisonList.includes(p.id))
         setComparisonPokemon(availableComparison)
@@ -664,12 +677,12 @@ export default function ModernPokedexLayout({
 
   // Load more Pokémon for infinite scrolling with improved error handling
   const loadMorePokemon = useCallback(async () => {
-    if (isLoadingMore || !hasMorePokemon || !isAllGenerations) {
-      console.log('Skipping loadMorePokemon:', { isLoadingMore, hasMorePokemon, isAllGenerations });
+    if (isLoadingMore || !hasMorePokemon) {
+      
       return;
     }
     
-    console.log('Loading more Pokemon. Current offset:', currentOffset, 'Total count:', totalPokemonCount);
+    
     
     // Protection against rapid calls
     const now = Date.now();
@@ -683,8 +696,21 @@ export default function ModernPokedexLayout({
     
     try {
       const pageSize = 75;
-      const newPokemon = await getPokemonWithPagination(pageSize, currentOffset);
+      let newPokemon: Pokemon[] = [];
       
+      // Handle different loading strategies based on current filter state
+      if (isAllGenerations && advancedFilters.types.length === 0) {
+        // Standard pagination for "All Generations" mode without type filters
+        newPokemon = await getPokemonWithPagination(pageSize, currentOffset);
+      } else if (advancedFilters.types.length > 0) {
+        // For type filters, we need to load more Pokemon of that type
+        // Since type filtering loads all Pokemon of that type at once, we don't need pagination
+        // Just return empty to indicate no more Pokemon
+        newPokemon = [];
+      } else {
+        // For other filters (generation, legendary, etc.), use standard pagination
+        newPokemon = await getPokemonWithPagination(pageSize, currentOffset);
+      }
       
       if (newPokemon.length === 0) {
         // Handle empty batch with retry logic
@@ -720,14 +746,14 @@ export default function ModernPokedexLayout({
         // Use a more reasonable limit based on actual Pokemon count
         const maxPokemonCount = totalPokemonCount || 1302; // Fallback to known total
         if (newOffset >= maxPokemonCount) {
-          console.log(`Reached end of Pokemon list at offset ${newOffset}, total count: ${maxPokemonCount}`);
+          
           setHasMorePokemon(false);
         } else {
-          console.log(`Continuing to load more Pokemon. Current offset: ${newOffset}, total count: ${maxPokemonCount}`);
+          
         }
       }
     } catch (error) {
-      console.error('❌ Error loading more Pokémon:', error);
+      
       
       // Retry on error with exponential backoff
       if (emptyBatchCountRef.current < 3) {
@@ -758,16 +784,10 @@ export default function ModernPokedexLayout({
         (entries) => {
           const [entry] = entries;
           
-          console.log('Intersection observer triggered:', { 
-            isIntersecting: entry.isIntersecting, 
-            isLoadingMore, 
-            hasMorePokemon,
-            currentOffset,
-            totalPokemonCount 
-          });
+          
           
           if (entry.isIntersecting && !isLoadingMore && hasMorePokemon) {
-            console.log('Triggering loadMorePokemon from intersection observer');
+            
             loadMorePokemon();
           }
         },
@@ -788,27 +808,27 @@ export default function ModernPokedexLayout({
     // Find the sentinel element with retry mechanism
     const findSentinel = () => {
       const sentinel = document.querySelector('[data-infinite-scroll-sentinel="true"]');
-      console.log('Looking for sentinel element:', sentinel);
+      
       return sentinel;
     };
 
     let sentinel = findSentinel();
     if (!sentinel) {
-      console.log('Sentinel not found, retrying...');
+      
       // Retry finding sentinel after a short delay
       const retryTimeout = setTimeout(() => {
         sentinel = findSentinel();
         if (sentinel) {
-          console.log('Sentinel found on retry, setting up observer');
+          
           setupObserver(sentinel);
         } else {
-          console.log('Sentinel still not found after retry');
+          
         }
       }, 100);
       
       return () => clearTimeout(retryTimeout);
     } else {
-      console.log('Sentinel found immediately, setting up observer');
+      
     }
 
     // Set up scroll-based backup detection (less aggressive)
@@ -825,14 +845,7 @@ export default function ModernPokedexLayout({
         
         // Trigger loading when within 200px of bottom (reduced from 500px)
         if (distanceFromBottom < 200) {
-          console.log('Triggering loadMorePokemon from scroll detection:', { 
-            distanceFromBottom, 
-            scrollTop, 
-            scrollHeight, 
-            clientHeight,
-            isLoadingMore,
-            hasMorePokemon 
-          });
+          
           loadMorePokemon();
         }
       }, 150); // Increased debounce time
@@ -851,7 +864,7 @@ export default function ModernPokedexLayout({
       }
       clearTimeout(scrollTimeout);
     };
-  }, [isLoadingMore, hasMorePokemon, loadMorePokemon, currentOffset, isAllGenerations])
+  }, [isLoadingMore, hasMorePokemon, loadMorePokemon, currentOffset])
 
   // Clear all filters
   const clearAllFilters = useCallback(() => {
@@ -912,6 +925,8 @@ export default function ModernPokedexLayout({
         showSidebar={showSidebar}
         onToggleSidebar={() => setShowSidebar(!showSidebar)}
         showToolbar={true}
+        iconKey="pokedex"
+        showIcon={true}
       />
 
       {/* Old header temporarily disabled */}
@@ -1502,18 +1517,7 @@ export default function ModernPokedexLayout({
         <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scroll-stable scrollbar-hide">
           <div className={`${showSidebar ? 'pl-0 pr-0' : 'pl-0 pr-4 sm:pl-0 sm:pr-6 lg:pl-0 lg:pr-8'} min-h-full w-full max-w-full`}>
             {/* Pokémon Grid */}
-            {(() => {
-              console.log('Render state:', { 
-                isFiltering, 
-                sortedPokemonLength: sortedPokemon.length, 
-                allGenerationsPokemonLength: allGenerationsPokemon.length,
-                isAllGenerations,
-                hasMorePokemon,
-                currentOffset,
-                totalPokemonCount
-              });
-              return null;
-            })()}
+            
             {isFiltering ? (
               <div className="text-center py-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-poke-blue mx-auto mb-4"></div>

@@ -2,17 +2,33 @@
 
 import { useEffect, useState, useCallback, useRef, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, MessageCircle } from "lucide-react";
+import { ArrowLeft, MessageCircle, Swords } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { ToastContainer, useToast } from "@/components/Toast";
 import RTDBBattleComponent from '@/components/RTDBBattleComponent';
 import { BattleScene } from '@/components/battle/BattleScene';
+import { AIBattleScene } from '@/components/battle/AIBattleScene';
+import { GYM_CHAMPIONS } from '@/lib/gym_champions';
 
 function BattleRuntimePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
-  const { toasts, removeToast } = useToast();
+  const { toasts, removeToast, addToast } = useToast();
+
+  // Bridge: allow classic components to fire toasts via window events
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    (window as any).__battle_toast = (opts: { title?: string; message?: string; type?: 'info'|'success'|'warning'|'error'; duration?: number }) => {
+      window.dispatchEvent(new CustomEvent('battle-toast', { detail: opts }));
+    };
+    const handler = (e: any) => {
+      const d = e.detail || {};
+      addToast({ type: d.type || 'info', title: d.title || 'Move used', message: d.message || '', duration: d.duration ?? 3500 });
+    };
+    window.addEventListener('battle-toast', handler);
+    return () => { window.removeEventListener('battle-toast', handler); };
+  }, [addToast]);
   
   // Get battle ID from URL
   const urlBattleId = searchParams.get("battleId");
@@ -20,15 +36,73 @@ function BattleRuntimePage() {
   const [showChat, setShowChat] = useState(false);
   const [showBattleResults, setShowBattleResults] = useState(false);
   const [useNewBattleView, setUseNewBattleView] = useState(true); // Toggle for new battle view
+  const [playerTeam, setPlayerTeam] = useState<Array<{ id: number; level: number; moves?: string[] }>>([]);
+  const [opponentChampionId, setOpponentChampionId] = useState<string>('');
+  const [isAIBattle, setIsAIBattle] = useState(false);
+
+  // Load AI battle data from URL parameters
+  useEffect(() => {
+    const playerTeamId = searchParams.get("player");
+    const opponentKind = searchParams.get("opponentKind");
+    const opponentId = searchParams.get("opponentId");
+
+    if (opponentKind === "champion" && opponentId) {
+      setIsAIBattle(true);
+      setOpponentChampionId(opponentId);
+      
+      // Load player team from localStorage
+      if (playerTeamId) {
+        try {
+          // Try to load from current team first
+          const currentTeam = localStorage.getItem('pokemon-current-team');
+          if (currentTeam) {
+            const team = JSON.parse(currentTeam);
+            const teamData = team
+              .filter((slot: any) => slot.id !== null)
+              .map((slot: any) => ({ 
+                id: slot.id, 
+                level: slot.level,
+                moves: Array.isArray(slot.moves) ? slot.moves.slice(0,4).map((m: any) => m?.name).filter(Boolean) : undefined
+              }));
+            if (teamData.length > 0) {
+              setPlayerTeam(teamData);
+              return;
+            }
+          }
+
+          // Fallback to saved teams
+          const savedTeams = localStorage.getItem('pokemon-team-builder');
+          if (savedTeams) {
+            const teams = JSON.parse(savedTeams);
+            const team = teams.find((t: any) => t.id === playerTeamId);
+            if (team) {
+              const teamData = team.slots
+                .filter((slot: any) => slot.id !== null)
+                .map((slot: any) => ({ 
+                  id: slot.id, 
+                  level: slot.level,
+                  moves: Array.isArray(slot.moves) ? slot.moves.slice(0,4).map((m: any) => m?.name).filter(Boolean) : undefined
+                }));
+              setPlayerTeam(teamData);
+            }
+          }
+        } catch (error) {
+          console.error('Failed to load player team:', error);
+        }
+      }
+    }
+  }, [searchParams]);
 
   // Handle back navigation
   const handleBackFromBattle = useCallback(() => {
-    if (urlBattleId) {
+    if (isAIBattle) {
+      router.push("/battle");
+    } else if (urlBattleId) {
       router.push(`/lobby/${searchParams.get("roomId") || ""}`);
     } else {
       router.push("/battle");
     }
-  }, [router, urlBattleId, searchParams]);
+  }, [router, urlBattleId, searchParams, isAIBattle]);
 
   // Show loading state
   if (authLoading) {
@@ -82,13 +156,21 @@ function BattleRuntimePage() {
       <header className="sticky top-0 z-50 border-b border-border bg-surface">
         <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <button
-              onClick={handleBackFromBattle}
-              className="flex items-center space-x-2 text-muted hover:text-text transition-colors"
-            >
-              <ArrowLeft className="h-5 w-5" />
-              <span className="font-medium">Back to Lobby</span>
-            </button>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={handleBackFromBattle}
+                className="flex items-center space-x-2 text-muted hover:text-text transition-colors"
+              >
+                <ArrowLeft className="h-5 w-5" />
+                <span className="font-medium">Back to Lobby</span>
+              </button>
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-red-100 text-red-600">
+                  <Swords className="h-5 w-5" />
+                </div>
+                <h1 className="text-xl font-bold text-text">Battle</h1>
+              </div>
+            </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setUseNewBattleView(!useNewBattleView)}
@@ -109,19 +191,29 @@ function BattleRuntimePage() {
       </header>
 
       <main className="w-full px-4 py-6">
-        {/* Toggle between battle views */}
-        {useNewBattleView ? (
-          <BattleScene 
-            battleId={urlBattleId}
+        {/* Toast bridge handled via useEffect above */}
+        {/* AI Battle */}
+        {isAIBattle ? (
+          <AIBattleScene
+            playerTeam={playerTeam}
+            opponentChampionId={opponentChampionId}
+            viewMode={useNewBattleView ? 'animated' : 'classic'}
           />
         ) : (
-          <RTDBBattleComponent 
-            battleId={urlBattleId}
-            onBattleComplete={(winner) => {
-              console.log('Battle completed, winner:', winner);
-              setShowBattleResults(true);
-            }}
-          />
+          /* Regular Battle */
+          useNewBattleView ? (
+            <BattleScene 
+              battleId={urlBattleId}
+            />
+          ) : (
+            <RTDBBattleComponent 
+              battleId={urlBattleId}
+              onBattleComplete={(winner) => {
+                console.log('Battle completed, winner:', winner);
+                setShowBattleResults(true);
+              }}
+            />
+          )
         )}
       </main>
 

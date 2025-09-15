@@ -31,8 +31,8 @@ export default function ModernPokemonCard({
   const [imageError, setImageError] = useState(false);
   const router = useRouter();
 
-  // Use direct image URLs with fallbacks
-  const primaryImageUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${pokemon.id}.png`;
+  // Use animated sprite URLs with fallbacks
+  const primaryImageUrl = `https://play.pokemonshowdown.com/sprites/ani/${pokemon.id}.gif`;
   const fallbackImageUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`;
   const placeholderImageUrl = "/placeholder-pokemon.png";
 
@@ -116,10 +116,10 @@ export default function ModernPokemonCard({
               loading="lazy"
             />
 
-            {/* Loading spinner */}
+            {/* Loading GIF */}
             {!imageLoaded && !imageError && (
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                <img src="/loading.gif" alt="Loading" className="w-4 h-4 opacity-80" />
               </div>
             )}
 
@@ -256,10 +256,10 @@ export default function ModernPokemonCard({
               loading="lazy"
             />
 
-            {/* Loading spinner */}
+            {/* Loading GIF */}
             {!imageLoaded && !imageError && (
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-6 h-6 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                <img src="/loading.gif" alt="Loading" className="w-6 h-6 opacity-80" />
               </div>
             )}
 

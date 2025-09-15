@@ -556,4 +556,430 @@ export const GYM_CHAMPIONS: Champion[] = [
       ],
     },
   },
+
+  // ===== Generation IV - Sinnoh (placeholders; teams will be refined) =====
+  { id: 'roark-sinnoh', name: 'Roark (Sinnoh)', generation: '4th Generation', team: { name: 'Oreburgh Leader', slots: [
+    { id: 74, level: 12 }, // Geodude
+    { id: 95, level: 12 }, // Onix
+    { id: 408, level: 14 }, // Cranidos
+  ] } },
+  { id: 'gardenia-sinnoh', name: 'Gardenia (Sinnoh)', generation: '4th Generation', team: { name: 'Eterna Leader', slots: [
+    { id: 420, level: 19 }, // Cherubi
+    { id: 387, level: 19 }, // Turtwig
+    { id: 407, level: 22 }, // Roserade
+  ] } },
+  { id: 'maylene-sinnoh', name: 'Maylene (Sinnoh)', generation: '4th Generation', team: { name: 'Veilstone Leader', slots: [
+    { id: 307, level: 27 }, // Meditite
+    { id: 67, level: 27 },  // Machoke
+    { id: 448, level: 30 }, // Lucario
+  ] } },
+  { id: 'wake-sinnoh', name: 'Crasher Wake (Sinnoh)', generation: '4th Generation', team: { name: 'Pastoria Leader', slots: [
+    { id: 130, level: 27 }, // Gyarados
+    { id: 195, level: 27 }, // Quagsire
+    { id: 419, level: 30 }, // Floatzel
+  ] } },
+  { id: 'fantina-sinnoh', name: 'Fantina (Sinnoh)', generation: '4th Generation', team: { name: 'Hearthome Leader', slots: [
+    { id: 426, level: 24 }, // Drifblim
+    { id: 94, level: 24 },  // Gengar
+    { id: 429, level: 26 }, // Mismagius
+  ] } },
+  { id: 'byron-sinnoh', name: 'Byron (Sinnoh)', generation: '4th Generation', team: { name: 'Canalave Leader', slots: [
+    { id: 436, level: 36 }, // Bronzor
+    { id: 208, level: 36 }, // Steelix
+    { id: 411, level: 39 }, // Bastiodon
+  ] } },
+  { id: 'candice-sinnoh', name: 'Candice (Sinnoh)', generation: '4th Generation', team: { name: 'Snowpoint Leader', slots: [
+    { id: 459, level: 38 }, // Snover
+    { id: 215, level: 38 }, // Sneasel
+    { id: 308, level: 40 }, // Medicham
+    { id: 460, level: 42 }, // Abomasnow
+  ] } },
+  { id: 'volkner-sinnoh', name: 'Volkner (Sinnoh)', generation: '4th Generation', team: { name: 'Sunyshore Leader', slots: [
+    { id: 26, level: 46 },  // Raichu
+    { id: 424, level: 47 }, // Ambipom
+    { id: 224, level: 47 }, // Octillery
+    { id: 405, level: 49 }, // Luxray
+  ] } },
+  { id: 'aaron-elite-sinnoh', name: 'Aaron (Elite Four)', generation: '4th Generation', team: { name: 'Bug Elite', slots: [
+    { id: 269, level: 53 }, // Dustox
+    { id: 267, level: 53 }, // Beautifly
+    { id: 416, level: 54 }, // Vespiquen
+    { id: 214, level: 54 }, // Heracross
+    { id: 452, level: 57 }, // Drapion
+  ] } },
+  { id: 'bertha-elite-sinnoh', name: 'Bertha (Elite Four)', generation: '4th Generation', team: { name: 'Ground Elite', slots: [
+    { id: 195, level: 55 }, // Quagsire
+    { id: 340, level: 55 }, // Whiscash
+    { id: 76, level: 56 },  // Golem
+    { id: 185, level: 56 }, // Sudowoodo
+    { id: 450, level: 59 }, // Hippowdon
+  ] } },
+  { id: 'flint-elite-sinnoh', name: 'Flint (Elite Four)', generation: '4th Generation', team: { name: 'Fire Elite', slots: [
+    { id: 78, level: 58 },  // Rapidash
+    { id: 208, level: 57 }, // Steelix
+    { id: 426, level: 58 }, // Drifblim
+    { id: 428, level: 57 }, // Lopunny
+    { id: 392, level: 61 }, // Infernape
+  ] } },
+  { id: 'lucian-elite-sinnoh', name: 'Lucian (Elite Four)', generation: '4th Generation', team: { name: 'Psychic Elite', slots: [
+    { id: 122, level: 59 }, // Mr. Mime
+    { id: 203, level: 59 }, // Girafarig
+    { id: 308, level: 60 }, // Medicham
+    { id: 65, level: 60 },  // Alakazam
+    { id: 437, level: 63 }, // Bronzong
+  ] } },
+  { id: 'cynthia-champion-sinnoh', name: 'Cynthia (Champion)', generation: '4th Generation', team: { name: 'Sinnoh Champion', slots: [
+    { id: 442, level: 61 }, // Spiritomb
+    { id: 407, level: 60 }, // Roserade
+    { id: 423, level: 60 }, // Gastrodon
+    { id: 448, level: 63 }, // Lucario
+    { id: 350, level: 63 }, // Milotic
+    { id: 445, level: 66 }, // Garchomp
+  ] } },
+
+  // ===== Generation V - Unova =====
+  { id: 'cilan-unova', name: 'Cilan (Unova)', generation: '5th Generation', team: { name: 'Striaton (Grass)', slots: [
+    { id: 506, level: 12 }, // Lillipup
+    { id: 511, level: 14 }, // Pansage
+  ] } },
+  { id: 'chili-unova', name: 'Chili (Unova)', generation: '5th Generation', team: { name: 'Striaton (Fire)', slots: [
+    { id: 506, level: 12 }, // Lillipup
+    { id: 513, level: 14 }, // Pansear
+  ] } },
+  { id: 'cress-unova', name: 'Cress (Unova)', generation: '5th Generation', team: { name: 'Striaton (Water)', slots: [
+    { id: 506, level: 12 }, // Lillipup
+    { id: 515, level: 14 }, // Panpour
+  ] } },
+  { id: 'lenora-unova', name: 'Lenora (Unova)', generation: '5th Generation', team: { name: 'Nacrene Leader', slots: [
+    { id: 507, level: 18 }, // Herdier
+    { id: 505, level: 20 }, // Watchog
+  ] } },
+  { id: 'burgh-unova', name: 'Burgh (Unova)', generation: '5th Generation', team: { name: 'Castelia Leader', slots: [
+    { id: 544, level: 21 }, // Whirlipede
+    { id: 557, level: 21 }, // Dwebble
+    { id: 542, level: 23 }, // Leavanny
+  ] } },
+  { id: 'elesa-unova', name: 'Elesa (Unova)', generation: '5th Generation', team: { name: 'Nimbasa Leader', slots: [
+    { id: 587, level: 25 }, // Emolga
+    { id: 587, level: 25 }, // Emolga
+    { id: 523, level: 27 }, // Zebstrika
+  ] } },
+  { id: 'clay-unova', name: 'Clay (Unova)', generation: '5th Generation', team: { name: 'Driftveil Leader', slots: [
+    { id: 552, level: 29 }, // Krokorok
+    { id: 536, level: 29 }, // Palpitoad
+    { id: 530, level: 31 }, // Excadrill
+  ] } },
+  { id: 'skyla-unova', name: 'Skyla (Unova)', generation: '5th Generation', team: { name: 'Mistralton Leader', slots: [
+    { id: 528, level: 33 }, // Swoobat
+    { id: 521, level: 33 }, // Unfezant
+    { id: 581, level: 35 }, // Swanna
+  ] } },
+  { id: 'brycen-unova', name: 'Brycen (Unova)', generation: '5th Generation', team: { name: 'Icirrus Leader', slots: [
+    { id: 583, level: 37 }, // Vanillish
+    { id: 615, level: 37 }, // Cryogonal
+    { id: 614, level: 39 }, // Beartic
+  ] } },
+  { id: 'drayden-unova', name: 'Drayden/Iris (Unova)', generation: '5th Generation', team: { name: 'Opelucid Leader', slots: [
+    { id: 611, level: 41 }, // Fraxure
+    { id: 621, level: 41 }, // Druddigon
+    { id: 612, level: 43 }, // Haxorus
+  ] } },
+  { id: 'shauntal-elite-unova', name: 'Shauntal (Elite Four)', generation: '5th Generation', team: { name: 'Ghost Elite', slots: [
+    { id: 563, level: 48 }, // Cofagrigus
+    { id: 593, level: 48 }, // Jellicent
+    { id: 623, level: 48 }, // Golurk
+    { id: 609, level: 50 }, // Chandelure
+  ] } },
+  { id: 'grimsley-elite-unova', name: 'Grimsley (Elite Four)', generation: '5th Generation', team: { name: 'Dark Elite', slots: [
+    { id: 560, level: 48 }, // Scrafty
+    { id: 510, level: 48 }, // Liepard
+    { id: 625, level: 50 }, // Bisharp
+    { id: 553, level: 48 }, // Krookodile
+  ] } },
+  { id: 'caitlin-elite-unova', name: 'Caitlin (Elite Four)', generation: '5th Generation', team: { name: 'Psychic Elite', slots: [
+    { id: 579, level: 48 }, // Reuniclus
+    { id: 561, level: 48 }, // Sigilyph
+    { id: 518, level: 48 }, // Musharna
+    { id: 576, level: 50 }, // Gothitelle
+  ] } },
+  { id: 'marshal-elite-unova', name: 'Marshal (Elite Four)', generation: '5th Generation', team: { name: 'Fighting Elite', slots: [
+    { id: 538, level: 48 }, // Throh
+    { id: 539, level: 48 }, // Sawk
+    { id: 534, level: 48 }, // Conkeldurr
+    { id: 620, level: 50 }, // Mienshao
+  ] } },
+  { id: 'alder-champion-unova', name: 'Alder (Champion)', generation: '5th Generation', team: { name: 'Unova Champion', slots: [
+    { id: 617, level: 75 }, // Accelgor
+    { id: 626, level: 75 }, // Bouffalant
+    { id: 589, level: 75 }, // Escavalier
+    { id: 584, level: 75 }, // Vanilluxe
+    { id: 621, level: 75 }, // Druddigon
+    { id: 637, level: 77 }, // Volcarona
+  ] } },
+  { id: 'iris-champion-unova', name: 'Iris (Champion B2W2)', generation: '5th Generation', team: { name: 'B2W2 Champion', slots: [
+    { id: 635, level: 57 }, // Hydreigon
+    { id: 131, level: 57 }, // Lapras
+    { id: 306, level: 57 }, // Aggron
+    { id: 567, level: 57 }, // Archeops
+    { id: 621, level: 57 }, // Druddigon
+    { id: 612, level: 59 }, // Haxorus
+  ] } },
+
+  // ===== Generation VI - Kalos =====
+  { id: 'viola-kalos', name: 'Viola (Kalos)', generation: '6th Generation', team: { name: 'Santalune Leader', slots: [
+    { id: 283, level: 10 }, // Surskit
+    { id: 666, level: 12 }, // Vivillon
+  ] } },
+  { id: 'grant-kalos', name: 'Grant (Kalos)', generation: '6th Generation', team: { name: 'Cyllage Leader', slots: [
+    { id: 698, level: 25 }, // Amaura
+    { id: 696, level: 25 }, // Tyrunt
+  ] } },
+  { id: 'korrina-kalos', name: 'Korrina (Kalos)', generation: '6th Generation', team: { name: 'Shalour Leader', slots: [
+    { id: 619, level: 29 }, // Mienfoo
+    { id: 67, level: 28 },  // Machoke
+    { id: 701, level: 32 }, // Hawlucha
+  ] } },
+  { id: 'ramos-kalos', name: 'Ramos (Kalos)', generation: '6th Generation', team: { name: 'Coumarine Leader', slots: [
+    { id: 189, level: 30 }, // Jumpluff
+    { id: 70, level: 31 },  // Weepinbell
+    { id: 673, level: 34 }, // Gogoat
+  ] } },
+  { id: 'clemont-kalos', name: 'Clemont (Kalos)', generation: '6th Generation', team: { name: 'Lumiose Leader', slots: [
+    { id: 587, level: 35 }, // Emolga
+    { id: 82, level: 35 },  // Magneton
+    { id: 695, level: 37 }, // Heliolisk
+  ] } },
+  { id: 'valerie-kalos', name: 'Valerie (Kalos)', generation: '6th Generation', team: { name: 'Laverre Leader', slots: [
+    { id: 303, level: 38 }, // Mawile
+    { id: 122, level: 39 }, // Mr. Mime
+    { id: 700, level: 42 }, // Sylveon
+  ] } },
+  { id: 'olympia-kalos', name: 'Olympia (Kalos)', generation: '6th Generation', team: { name: 'Anistar Leader', slots: [
+    { id: 561, level: 44 }, // Sigilyph
+    { id: 199, level: 45 }, // Slowking
+    { id: 678, level: 48 }, // Meowstic
+  ] } },
+  { id: 'wulfric-kalos', name: 'Wulfric (Kalos)', generation: '6th Generation', team: { name: 'Snowbelle Leader', slots: [
+    { id: 460, level: 56 }, // Abomasnow
+    { id: 615, level: 55 }, // Cryogonal
+    { id: 713, level: 59 }, // Avalugg
+  ] } },
+  { id: 'kalos-elite-malva', name: 'Malva (Elite Four)', generation: '6th Generation', team: { name: 'Fire Elite', slots: [
+    { id: 668, level: 63 }, // Pyroar
+    { id: 324, level: 63 }, // Torkoal
+    { id: 609, level: 63 }, // Chandelure
+    { id: 663, level: 65 }, // Talonflame
+  ] } },
+  { id: 'kalos-elite-siebold', name: 'Siebold (Elite Four)', generation: '6th Generation', team: { name: 'Water Elite', slots: [
+    { id: 693, level: 63 }, // Clawitzer
+    { id: 121, level: 63 }, // Starmie
+    { id: 130, level: 63 }, // Gyarados
+    { id: 689, level: 65 }, // Barbaracle
+  ] } },
+  { id: 'kalos-elite-wikstrom', name: 'Wikstrom (Elite Four)', generation: '6th Generation', team: { name: 'Steel Elite', slots: [
+    { id: 707, level: 63 }, // Klefki
+    { id: 476, level: 63 }, // Probopass
+    { id: 212, level: 63 }, // Scizor
+    { id: 681, level: 65 }, // Aegislash
+  ] } },
+  { id: 'kalos-elite-drasna', name: 'Drasna (Elite Four)', generation: '6th Generation', team: { name: 'Dragon Elite', slots: [
+    { id: 691, level: 63 }, // Dragalge
+    { id: 621, level: 63 }, // Druddigon
+    { id: 334, level: 63 }, // Altaria
+    { id: 715, level: 65 }, // Noivern
+  ] } },
+  { id: 'diantha-champion-kalos', name: 'Diantha (Champion)', generation: '6th Generation', team: { name: 'Kalos Champion', slots: [
+    { id: 701, level: 64 }, // Hawlucha
+    { id: 697, level: 65 }, // Tyrantrum
+    { id: 699, level: 65 }, // Aurorus
+    { id: 711, level: 65 }, // Gourgeist
+    { id: 706, level: 66 }, // Goodra
+    { id: 282, level: 68 }, // Gardevoir
+  ] } },
+
+  // ===== Generation VII - Alola =====
+  { id: 'hala-alola', name: 'Hala (Kahuna)', generation: '7th Generation', team: { name: 'Melemele Kahuna', slots: [
+    { id: 66, level: 14 },   // Machop
+    { id: 296, level: 14 },  // Makuhita
+    { id: 739, level: 15 },  // Crabrawler
+  ] } },
+  { id: 'olivia-alola', name: 'Olivia (Kahuna)', generation: '7th Generation', team: { name: 'Akala Kahuna', slots: [
+    { id: 299, level: 26 },  // Nosepass
+    { id: 525, level: 26 },  // Boldore
+    { id: 745, level: 27 },  // Lycanroc
+  ] } },
+  { id: 'nanu-alola', name: 'Nanu (Kahuna)', generation: '7th Generation', team: { name: 'Ula’ula Kahuna', slots: [
+    { id: 302, level: 38 },  // Sableye
+    { id: 552, level: 37 },  // Krokorok
+    { id: 53, level: 39 },   // Persian (Alolan form)
+  ] } },
+  { id: 'hapu-alola', name: 'Hapu (Kahuna)', generation: '7th Generation', team: { name: 'Poni Kahuna', slots: [
+    { id: 623, level: 47 },  // Golurk
+    { id: 423, level: 47 },  // Gastrodon
+    { id: 750, level: 48 },  // Mudsdale
+  ] } },
+  { id: 'hala-elite-alola', name: 'Hala (Elite Four)', generation: '7th Generation', team: { name: 'Fighting Elite', slots: [
+    { id: 297, level: 54 },  // Hariyama
+    { id: 57, level: 54 },   // Primeape
+    { id: 740, level: 55 },  // Crabominable
+    { id: 62, level: 54 },   // Poliwrath
+    { id: 760, level: 54 },  // Bewear
+  ] } },
+  { id: 'olivia-elite-alola', name: 'Olivia (Elite Four)', generation: '7th Generation', team: { name: 'Rock Elite', slots: [
+    { id: 348, level: 54 },  // Armaldo
+    { id: 369, level: 54 },  // Relicanth
+    { id: 745, level: 55 },  // Lycanroc
+    { id: 476, level: 54 },  // Probopass
+    { id: 76, level: 54 },   // Golem (Alolan)
+  ] } },
+  { id: 'acerola-elite-alola', name: 'Acerola (Elite Four)', generation: '7th Generation', team: { name: 'Ghost Elite', slots: [
+    { id: 302, level: 54 },  // Sableye
+    { id: 426, level: 54 },  // Drifblim
+    { id: 771, level: 55 },  // Palossand (note: Palossand is 770 in National Dex; USUM list uses 771 for Pyukumuku—using 770 here)
+    { id: 478, level: 54 },  // Froslass
+    { id: 781, level: 54 },  // Dhelmise
+  ] } },
+  { id: 'kahili-elite-alola', name: 'Kahili (Elite Four)', generation: '7th Generation', team: { name: 'Flying Elite', slots: [
+    { id: 227, level: 54 },  // Skarmory
+    { id: 630, level: 54 },  // Mandibuzz
+    { id: 733, level: 55 },  // Toucannon
+    { id: 741, level: 54 },  // Oricorio (Pom-Pom)
+    { id: 169, level: 54 },  // Crobat
+  ] } },
+  { id: 'kukui-champion-alola', name: 'Kukui (Champion)', generation: '7th Generation', team: { name: 'Alola Champion', slots: [
+    { id: 745, level: 57 },  // Lycanroc
+    { id: 38, level: 56 },   // Ninetales (Alolan)
+    { id: 628, level: 56 },  // Braviary
+    { id: 462, level: 56 },  // Magnezone
+    { id: 143, level: 56 },  // Snorlax
+    { id: 724, level: 58 },  // Decidueye (starter placeholder)
+  ] } },
+  { id: 'hau-champion-alola', name: 'Hau (USUM Champion)', generation: '7th Generation', team: { name: 'USUM Champion', slots: [
+    { id: 26, level: 53 },   // Raichu (Alolan)
+    { id: 740, level: 53 },  // Crabominable
+    { id: 715, level: 53 },  // Noivern
+    { id: 128, level: 53 },  // Tauros
+    { id: 136, level: 53 },  // Flareon
+    { id: 724, level: 55 },  // Decidueye (starter placeholder)
+  ] } },
+
+  // ===== Generation VIII - Galar =====
+  { id: 'milo-galar', name: 'Milo (Galar)', generation: '8th Generation', team: { name: 'Turf Field Leader', slots: [
+    { id: 829, level: 19 }, // Gossifleur
+    { id: 830, level: 20 }, // Eldegoss
+  ] } },
+  { id: 'nessa-galar', name: 'Nessa (Galar)', generation: '8th Generation', team: { name: 'Water Leader', slots: [
+    { id: 118, level: 22 }, // Goldeen
+    { id: 846, level: 23 }, // Arrokuda
+    { id: 834, level: 24 }, // Drednaw
+  ] } },
+  { id: 'kabu-galar', name: 'Kabu (Galar)', generation: '8th Generation', team: { name: 'Fire Leader', slots: [
+    { id: 38, level: 25 },  // Ninetales
+    { id: 59, level: 25 },  // Arcanine
+    { id: 851, level: 27 }, // Centiskorch
+  ] } },
+  { id: 'bea-galar', name: 'Bea (Galar)', generation: '8th Generation', team: { name: 'Fighting Leader', slots: [
+    { id: 237, level: 34 }, // Hitmontop
+    { id: 675, level: 34 }, // Pangoro
+    { id: 865, level: 35 }, // Sirfetch’d
+    { id: 68, level: 36 },  // Machamp
+  ] } },
+  { id: 'allister-galar', name: 'Allister (Galar)', generation: '8th Generation', team: { name: 'Ghost Leader', slots: [
+    { id: 562, level: 34 }, // Yamask (Galar form)
+    { id: 778, level: 34 }, // Mimikyu
+    { id: 864, level: 35 }, // Cursola
+    { id: 94, level: 36 },  // Gengar
+  ] } },
+  { id: 'opal-galar', name: 'Opal (Galar)', generation: '8th Generation', team: { name: 'Fairy Leader', slots: [
+    { id: 110, level: 36 }, // Weezing (Galar)
+    { id: 303, level: 36 }, // Mawile
+    { id: 468, level: 37 }, // Togekiss
+    { id: 869, level: 38 }, // Alcremie
+  ] } },
+  { id: 'gordie-galar', name: 'Gordie (Galar)', generation: '8th Generation', team: { name: 'Rock Leader', slots: [
+    { id: 689, level: 40 }, // Barbaracle
+    { id: 213, level: 40 }, // Shuckle
+    { id: 874, level: 41 }, // Stonjourner
+    { id: 839, level: 42 }, // Coalossal
+  ] } },
+  { id: 'melony-galar', name: 'Melony (Galar)', generation: '8th Generation', team: { name: 'Ice Leader', slots: [
+    { id: 873, level: 40 }, // Frosmoth
+    { id: 555, level: 40 }, // Darmanitan (Galar)
+    { id: 875, level: 41 }, // Eiscue
+    { id: 131, level: 42 }, // Lapras
+  ] } },
+  { id: 'piers-galar', name: 'Piers (Galar)', generation: '8th Generation', team: { name: 'Dark Leader', slots: [
+    { id: 560, level: 44 }, // Scrafty
+    { id: 687, level: 45 }, // Malamar
+    { id: 435, level: 45 }, // Skuntank
+    { id: 862, level: 46 }, // Obstagoon
+  ] } },
+  { id: 'raihan-galar', name: 'Raihan (Galar)', generation: '8th Generation', team: { name: 'Dragon Leader', slots: [
+    { id: 526, level: 46 }, // Gigalith
+    { id: 330, level: 47 }, // Flygon
+    { id: 844, level: 46 }, // Sandaconda
+    { id: 884, level: 48 }, // Duraludon
+  ] } },
+  { id: 'leon-champion-galar', name: 'Leon (Champion)', generation: '8th Generation', team: { name: 'Galar Champion', slots: [
+    { id: 681, level: 62 }, // Aegislash
+    { id: 612, level: 64 }, // Haxorus
+    { id: 887, level: 62 }, // Dragapult
+    { id: 537, level: 64 }, // Seismitoad
+    { id: 464, level: 64 }, // Rhyperior
+    { id: 6, level: 65 },   // Charizard
+  ] } },
+
+  // ===== Generation IX - Paldea =====
+  { id: 'katy-paldea', name: 'Katy (Paldea)', generation: '9th Generation', team: { name: 'Bug Leader', slots: [
+    { id: 919, level: 14 }, // Nymble
+    { id: 917, level: 14 }, // Tarountula
+    { id: 216, level: 15 }, // Teddiursa (Bug Tera)
+  ] } },
+  { id: 'brassius-paldea', name: 'Brassius (Paldea)', generation: '9th Generation', team: { name: 'Grass Leader', slots: [
+    { id: 548, level: 16 }, // Petilil
+    { id: 928, level: 16 }, // Smoliv
+    { id: 185, level: 17 }, // Sudowoodo (Grass Tera)
+  ] } },
+  { id: 'iono-paldea', name: 'Iono (Paldea)', generation: '9th Generation', team: { name: 'Electric Leader', slots: [
+    { id: 940, level: 23 }, // Wattrel
+    { id: 939, level: 23 }, // Bellibolt
+    { id: 404, level: 23 }, // Luxio
+    { id: 429, level: 24 }, // Mismagius (Electric Tera)
+  ] } },
+  { id: 'kofu-paldea', name: 'Kofu (Paldea)', generation: '9th Generation', team: { name: 'Water Leader', slots: [
+    { id: 976, level: 29 }, // Veluza
+    { id: 961, level: 29 }, // Wugtrio
+    { id: 740, level: 30 }, // Crabominable (Water Tera)
+  ] } },
+  { id: 'larry-paldea', name: 'Larry (Paldea)', generation: '9th Generation', team: { name: 'Normal Leader', slots: [
+    { id: 775, level: 35 }, // Komala
+    { id: 982, level: 35 }, // Dudunsparce
+    { id: 398, level: 36 }, // Staraptor (Normal Tera)
+  ] } },
+  { id: 'ryme-paldea', name: 'Ryme (Paldea)', generation: '9th Generation', team: { name: 'Ghost Leader', slots: [
+    { id: 354, level: 41 }, // Banette
+    { id: 778, level: 41 }, // Mimikyu
+    { id: 972, level: 41 }, // Houndstone
+    { id: 849, level: 42 }, // Toxtricity (Amped, Ghost Tera)
+  ] } },
+  { id: 'tulip-paldea', name: 'Tulip (Paldea)', generation: '9th Generation', team: { name: 'Psychic Leader', slots: [
+    { id: 981, level: 44 }, // Farigiraf
+    { id: 282, level: 44 }, // Gardevoir
+    { id: 956, level: 44 }, // Espathra
+    { id: 671, level: 45 }, // Florges (Psychic Tera)
+  ] } },
+  { id: 'grusha-paldea', name: 'Grusha (Paldea)', generation: '9th Generation', team: { name: 'Ice Leader', slots: [
+    { id: 873, level: 47 }, // Frosmoth
+    { id: 614, level: 47 }, // Beartic
+    { id: 975, level: 47 }, // Cetitan
+    { id: 334, level: 48 }, // Altaria (Ice Tera)
+  ] } },
+  { id: 'geeta-champion-paldea', name: 'Geeta (Top Champion)', generation: '9th Generation', team: { name: 'Paldea Champion', slots: [
+    { id: 956, level: 61 }, // Espathra
+    { id: 713, level: 61 }, // Avalugg
+    { id: 983, level: 61 }, // Kingambit
+    { id: 976, level: 61 }, // Veluza
+    { id: 673, level: 61 }, // Gogoat
+    { id: 970, level: 62 }, // Glimmora
+  ] } },
 ];

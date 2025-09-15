@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 // import UserProfile from '@/components/auth/UserProfile';
+import AppHeader from '@/components/AppHeader';
 import TeamSelector from '@/components/TeamSelector';
 import Chat from '@/components/Chat';
 import ChatOverlay from '@/components/ChatOverlay';
@@ -11,7 +12,7 @@ import RoomPokeballReleaseAnimation from '@/components/RoomPokeballReleaseAnimat
 import BattleStartDialog from '@/components/BattleStartDialog';
 import FirebaseErrorDebugger from '@/components/FirebaseErrorDebugger';
 import ForfeitDialog from '@/components/ForfeitDialog';
-import { Users, Copy, MessageCircle, Bug, Check } from 'lucide-react';
+import { Users, Copy, MessageCircle, Bug, Check, Swords } from 'lucide-react';
 import type { SavedTeam } from '@/lib/userTeams';
 import Image from 'next/image';
 import { roomService, type RoomData } from '@/lib/roomService';
@@ -62,7 +63,8 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
   }>({ host: new Set(), guest: new Set() });
   const [showBattleStartDialog, setShowBattleStartDialog] = useState(false);
   const [showErrorDebugger, setShowErrorDebugger] = useState(false);
-  const [opponentForfeit, setOpponentForfeit] = useState<null | { name: string }>(null);
+  const [opponentForfeit, setOpponentForfeit] = useState<null | { name: string; isRoomFinished?: boolean }>(null);
+  const [roomInitialized, setRoomInitialized] = useState(false);
 
   console.log('RoomPageClient rendered with roomId:', roomId);
 
@@ -147,6 +149,20 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
         maxPlayers: room?.maxPlayers,
         battleId: room?.battleId
       });
+      
+        // If room doesn't exist (was deleted), redirect to main lobby
+        if (!room) {
+          console.log('🏁 Room does not exist, redirecting to main lobby');
+          setLoading(false);
+          // Show a brief message before redirecting
+          setOpponentForfeit({ name: 'This lobby no longer exists', isRoomFinished: true });
+          // Redirect to main lobby after a short delay
+          setTimeout(() => {
+            router.push('/lobby');
+          }, 2000);
+          return;
+        }
+      
       if (room) {
         // Validate room data and provide defaults for missing fields
         const validatedRoom = {
@@ -162,22 +178,40 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
         };
         
         // Detect opponent leaving: if we were guest and host disappears, or we were host and guest disappears
-        if (user) {
+        // Only show forfeit if we were previously in a room with both players and now one is missing
+        if (user && room && roomInitialized) {
           const wasGuest = user.uid === (validatedRoom.guestId || '');
           const wasHost = user.uid === (validatedRoom.hostId || '');
-          // If battle was active or ready, and the counterpart id is now missing, show forfeit dialog
-          const opponentLeft = (wasHost && !validatedRoom.guestId) || (wasGuest && !validatedRoom.hostId);
+          
+          // Only check for forfeit if we were previously part of the room and had an opponent
+          const hadOpponent = (room.guestId && room.hostId) || (room.currentPlayers >= 2);
+          const opponentLeft = hadOpponent && ((wasHost && !validatedRoom.guestId) || (wasGuest && !validatedRoom.hostId));
+          
           if (opponentLeft) {
             setOpponentForfeit({ name: wasHost ? (validatedRoom.guestName || 'Opponent') : (validatedRoom.hostName || 'Opponent') });
           }
         }
 
-        // If room is finished and user is not the host, show room finished message
-        if (validatedRoom.status === 'finished' && user && user.uid !== validatedRoom.hostId) {
-          setOpponentForfeit({ name: validatedRoom.hostName || 'Host' });
+        // If room is finished, redirect to main lobby
+        if (validatedRoom.status === 'finished') {
+          console.log('🏁 Room is finished, redirecting to main lobby');
+          // Show a brief message before redirecting
+          setOpponentForfeit({ name: 'This lobby has already finished', isRoomFinished: true });
+          // Redirect to main lobby after a short delay
+          setTimeout(() => {
+            router.push('/lobby');
+          }, 2000);
+          return;
         }
 
         setRoom(validatedRoom);
+        
+        // Mark room as initialized after first load with a small delay
+        if (!roomInitialized) {
+          setTimeout(() => {
+            setRoomInitialized(true);
+          }, 1000); // 1 second delay to ensure room is fully loaded
+        }
         
         // Fix currentPlayers count if it's incorrect
         if (room.currentPlayers !== validatedRoom.currentPlayers) {
@@ -607,7 +641,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
             stats: { hp: 100, atk: 100, def: 100, spa: 100, spd: 100, spe: 100 }, // Will be populated by the Cloud Function
             item: '',
             ability: '',
-            moves: (slot.moves || []).map(move => ({
+            moves: (slot.moves || []).map((move: any) => ({
               id: move.id || 'tackle',
               pp: move.pp || 35
             })),
@@ -1008,33 +1042,26 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100" style={{ minHeight: '100vh', backgroundSize: 'cover', backgroundRepeat: 'no-repeat', backgroundAttachment: 'scroll' }} data-testid="lobby-page">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={handleBackClick}
-                className="text-blue-600 hover:text-blue-800 transition-colors text-sm md:text-base"
-              >
-                ← <span className="hidden sm:inline">Back to Lobby</span><span className="sm:hidden">Back</span>
-              </button>
-              <h1 className="text-2xl font-bold text-gray-900">Battle Room</h1>
-            </div>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => setShowErrorDebugger(true)}
-                className="flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1 md:py-1.5 text-xs md:text-sm bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors"
-                title="View Firebase Error Logs"
-              >
-                <Bug className="w-3 h-3 md:w-4 md:h-4" />
-                <span className="hidden sm:inline">Debug Errors</span>
-                <span className="sm:hidden">Debug</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <AppHeader
+        title="Battle Room"
+        backLink="/lobby"
+        backLabel="Back to Lobby"
+        showToolbar={false}
+        showThemeToggle={false}
+        iconKey="battle"
+        showIcon={true}
+        rightContent={
+          <button
+            onClick={() => setShowErrorDebugger(true)}
+            className="flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1 md:py-1.5 text-xs md:text-sm bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors"
+            title="View Firebase Error Logs"
+          >
+            <Bug className="w-3 h-3 md:w-4 md:h-4" />
+            <span className="hidden sm:inline">Debug Errors</span>
+            <span className="sm:hidden">Debug</span>
+          </button>
+        }
+      />
 
       <div className="container mx-auto px-4 py-8 pb-16 space-y-8 max-w-7xl w-full">
         {/* Room Info */}
@@ -1462,7 +1489,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
       <ForfeitDialog
         isOpen={!!opponentForfeit}
         opponentName={opponentForfeit?.name || 'Opponent'}
-        isRoomFinished={room?.status === 'finished'}
+        isRoomFinished={opponentForfeit?.isRoomFinished || room?.status === 'finished'}
         onClose={() => setOpponentForfeit(null)}
       />
     </div>

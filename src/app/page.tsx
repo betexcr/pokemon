@@ -155,10 +155,8 @@ export default function Home() {
   }
 
   // Handle client-side routing for lobby pages
-  console.log('Current pathname:', pathname, 'Actual pathname:', actualPathname);
   
   if (actualPathname === '/lobby') {
-    console.log('Rendering LobbyPage');
     return (
       <ProtectedRoute>
         <LobbyPage />
@@ -168,9 +166,7 @@ export default function Home() {
   
   if (actualPathname.startsWith('/lobby/')) {
     const roomId = actualPathname.split('/lobby/')[1]
-    console.log('Lobby room detected, roomId:', roomId);
     if (roomId) {
-      console.log('Rendering RoomPageClient for room:', roomId);
       return (
         <ProtectedRoute>
           <RoomPageClient roomId={roomId} />
@@ -182,8 +178,7 @@ export default function Home() {
   // Determine layout mode based on theme
   const isModernTheme = theme === 'light' || theme === 'dark';
   
-  // Debug: Log the current theme and loading state
-  console.log('Current theme:', theme, 'isModernTheme:', isModernTheme, 'loading:', loading);
+  // No console logging in production to avoid noise
 
   // Render modern layout for light/dark themes
   if (isModernTheme) {

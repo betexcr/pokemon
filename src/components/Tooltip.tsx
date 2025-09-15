@@ -9,6 +9,7 @@ interface TooltipProps {
   type?: string // For type-based styling
   variant?: 'default' | 'ability' | 'move' | 'stat'
   containViewport?: boolean
+  damageClass?: 'physical' | 'special' | 'status'
 }
 
 export default function Tooltip({ 
@@ -19,24 +20,51 @@ export default function Tooltip({
   maxWidth = 'w-96',
   type = 'normal',
   variant = 'default',
-  containViewport = true
+  containViewport = true,
+  damageClass
 }: TooltipProps) {
   const positionClasses = {
-    top: 'bottom-full mb-2 left-0',
+    top: 'bottom-full mb-2 left-1/2 transform -translate-x-1/2',
     bottom: 'top-full mt-2 left-1/2 transform -translate-x-1/2',
     left: 'right-full mr-2 top-1/2 transform -translate-y-1/2',
     right: 'left-full ml-2 top-1/2 transform -translate-y-1/2'
   }
 
-  // Local open state to support tap/click on mobile in addition to hover
+  // Local open state to support tap/click/long-press on mobile in addition to hover
   const [isOpen, setIsOpen] = useState(false)
+  const [isLatched, setIsLatched] = useState(false)
+  const isTouchingRef = useRef(false)
+  const longPressTimerRef = useRef<number | null>(null)
+  const longPressActiveRef = useRef(false)
 
   // Runtime-resolved position and fixed coordinates for viewport containment
   const [resolvedPosition, setResolvedPosition] = useState<typeof position>(position)
   const [fixedCoords, setFixedCoords] = useState<{ top: number; left: number } | null>(null)
+  const [anchorCenter, setAnchorCenter] = useState<number | null>(null)
 
   const anchorRef = useRef<HTMLDivElement | null>(null)
   const tipRef = useRef<HTMLDivElement | null>(null)
+
+  // Close on outside click when latched
+  useEffect(() => {
+    if (!(isOpen && isLatched)) return
+    const handleOutside = (e: MouseEvent | TouchEvent) => {
+      const a = anchorRef.current
+      const t = tipRef.current
+      const target = e.target as Node
+      if (!a || !t) return
+      if (!a.contains(target) && !t.contains(target)) {
+        setIsOpen(false)
+        setIsLatched(false)
+      }
+    }
+    document.addEventListener('mousedown', handleOutside, true)
+    document.addEventListener('touchstart', handleOutside, true)
+    return () => {
+      document.removeEventListener('mousedown', handleOutside, true)
+      document.removeEventListener('touchstart', handleOutside, true)
+    }
+  }, [isOpen, isLatched])
 
   // Opacity behavior for hover and open state
   const hoverOpacityClass = variant === 'stat' ? 'group-hover:opacity-80' : 'group-hover:opacity-100'
@@ -132,6 +160,7 @@ export default function Tooltip({
             centerX = textRect.left + textRect.width / 2
           }
         }
+        setAnchorCenter(centerX)
         
         if (pos === 'bottom') {
           t = anchorRect.bottom + margin
@@ -186,14 +215,37 @@ export default function Tooltip({
       className={`relative group ${className}`}
       ref={anchorRef}
       onMouseEnter={() => setIsOpen(true)}
-      onMouseLeave={() => setIsOpen(false)}
-      onClick={() => setIsOpen(prev => !prev)}
-      onTouchStart={() => setIsOpen(prev => !prev)}
+      onMouseLeave={() => { if (!isLatched) setIsOpen(false) }}
+      onClick={() => { setIsOpen(prev => !prev); setIsLatched(prev => !prev ? true : false) }}
+      onTouchStart={(e) => {
+        isTouchingRef.current = true
+        longPressActiveRef.current = false
+        if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current)
+        longPressTimerRef.current = window.setTimeout(() => {
+          if (isTouchingRef.current) {
+            longPressActiveRef.current = true
+            setIsOpen(true)
+            setIsLatched(false) // temporary while holding
+          }
+        }, 350)
+      }}
+      onTouchEnd={() => {
+        isTouchingRef.current = false
+        if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current)
+        if (longPressActiveRef.current) {
+          longPressActiveRef.current = false
+          setIsOpen(false)
+          setIsLatched(false)
+        } else {
+          setIsOpen(prev => !prev)
+          setIsLatched(prev => !prev ? true : false)
+        }
+      }}
     >
       {children}
       <div 
         ref={tipRef}
-        className={`pointer-events-auto overflow-auto ${containViewport ? 'fixed' : 'absolute'} z-[9999] ${!containViewport ? positionClasses[position] : ''} ${maxWidth} rounded-2xl p-5 text-sm leading-relaxed shadow-2xl ring-1 ring-gray-200/20 ${openOpacityClass} ${hoverOpacityClass} transition-all duration-300 ease-out ${getTypeBackground()} ${getTypeAccent()} ${getTextColor()}`}
+        className={`pointer-events-auto overflow-auto ${containViewport ? 'fixed' : 'absolute'} z-[9999] ${!containViewport ? positionClasses[position] : ''} ${maxWidth} rounded-2xl p-5 text-sm leading-relaxed shadow-2xl ring-1 ring-gray-200/20 ${openOpacityClass} ${hoverOpacityClass} transition-opacity duration-200 ease-in-out ${getTypeBackground()} ${getTypeAccent()} ${getTextColor()} ${!containViewport && variant==='move' ? 'left-1/2 -translate-x-1/2' : ''}`}
         style={containViewport && fixedCoords ? { 
           ...getTypeOverlay(), 
           top: fixedCoords.top, 
@@ -211,9 +263,14 @@ export default function Tooltip({
                   style={{ backgroundColor: `var(--type-${type})` }}
                 />
               )}
-              <span className="text-sm font-semibold text-gray-700">
-                {variant === 'ability' ? 'Ability' : variant === 'move' ? 'Move' : variant === 'stat' ? 'Stat' : ''}
+              <span className="text-sm font-semibold text-gray-700 capitalize">
+                {variant === 'ability' ? 'Ability' : variant === 'move' ? (type ? type : 'Move') : variant === 'stat' ? 'Stat' : ''}
               </span>
+              {variant === 'move' && (
+                <span className="ml-auto text-xs font-medium px-2 py-0.5 rounded-full border bg-gray-50 capitalize">
+                  {damageClass || 'status'}
+                </span>
+              )}
             </div>
           )}
           <div className="text-sm leading-relaxed text-gray-800">
@@ -222,7 +279,7 @@ export default function Tooltip({
         </div>
         
         {/* Modern Arrow */}
-        <div className={`absolute ${resolvedPosition === 'top' ? 'top-full left-4' : 
+        <div className={`absolute ${resolvedPosition === 'top' ? 'top-full left-1/2 -translate-x-1/2' : 
                            resolvedPosition === 'bottom' ? 'bottom-full left-1/2 transform -translate-x-1/2' :
                            resolvedPosition === 'left' ? 'left-full top-1/2 transform -translate-y-1/2' :
                            'right-full top-1/2 transform -translate-y-1/2'} 

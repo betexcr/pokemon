@@ -1,6 +1,6 @@
 // Additional functions for the Gen-8/9 battle engine
 
-import { BattleState, BattlePokemon, getCurrentPokemon, switchToPokemon, getEffectiveSpeed, isTeamDefeated, canUseMove } from './team-battle-engine';
+import { BattleState, BattlePokemon, getCurrentPokemon, switchToPokemon, getEffectiveSpeed, isTeamDefeated, canUseMove, applyStatusMoveEffects } from './team-battle-engine';
 import { calculateComprehensiveDamage } from './damage-calculator';
 import { getMove } from './moveCache';
 
@@ -63,7 +63,7 @@ export async function resolveMove(state: BattleState, action: BattleState['actio
   }
   
   // Execute the move (simplified for now)
-  await executeMoveAction(state, attacker, defender, moveId, action.user === 'player');
+  await executeMoveAction(state, attacker, defender, moveId, action.user === 'player', action.user);
 }
 
 // Execute a move action (simplified version)
@@ -72,7 +72,8 @@ export async function executeMoveAction(
   attacker: BattlePokemon,
   defender: BattlePokemon,
   moveId: string,
-  isPlayer: boolean
+  isPlayer: boolean,
+  user: 'player' | 'opponent'
 ): Promise<void> {
   // Log the move usage
   state.battleLog.push({
@@ -89,10 +90,9 @@ export async function executeMoveAction(
     return;
   }
   
-  // Skip damage calculation for non-damaging moves
-  if (move.power === 0) {
-    console.log(`Move ${moveId} has no power, skipping damage calculation`);
-    // Handle status moves, etc.
+  // Handle status moves (no direct damage)
+  if (move.category === 'Status' || (move.power ?? 0) === 0) {
+    await applyStatusMoveEffects(attacker as any, defender as any, move as any, state as any);
     return;
   }
   
@@ -114,7 +114,7 @@ export async function executeMoveAction(
   // Calculate damage using the comprehensive damage calculator
   const damageResult = calculateComprehensiveDamage({
     level: attacker.level,
-    movePower: move.power,
+    movePower: move.power || 0,
     moveType: move.type as any,
     attackerTypes: attacker.pokemon.types.map(type => 
       (typeof type === 'string' ? type : type.type?.name || 'normal') as any
@@ -124,19 +124,9 @@ export async function executeMoveAction(
     ),
     attackStat: attackStat,
     defenseStat: defenseStat,
-    isCrit: false, // TODO: Implement critical hit logic
-    weather: 'none', // TODO: Implement weather effects
-    terrain: 'none', // TODO: Implement terrain effects
+    weather: 'None', // TODO: Implement weather effects
+    terrain: 'None', // TODO: Implement terrain effects
     isPhysical: move.category === 'Physical',
-    attackerAbility: attacker.currentAbility || 'none',
-    defenderAbility: defender.currentAbility || 'none',
-    attackerItem: 'none', // TODO: Implement item system
-    defenderItem: 'none', // TODO: Implement item system
-    attackerStatus: attacker.status || 'none',
-    defenderStatus: defender.status || 'none',
-    attackerVolatile: attacker.volatile,
-    defenderVolatile: defender.volatile,
-    field: state.field
   });
   
   const damage = damageResult.damage;
@@ -165,10 +155,10 @@ export async function executeMoveAction(
     });
     
     // Update fainted count for the defending team
-    const defendingTeam = action.user === 'player' ? state.opponent : state.player;
+    const defendingTeam = user === 'player' ? state.opponent : state.player;
     defendingTeam.faintedCount = defendingTeam.pokemon.filter(p => p.currentHp <= 0).length;
     
-    console.log(`Pokemon fainted! Updated ${action.user === 'player' ? 'opponent' : 'player'} team fainted count to ${defendingTeam.faintedCount}`);
+    console.log(`Pokemon fainted! Updated ${user === 'player' ? 'opponent' : 'player'} team fainted count to ${defendingTeam.faintedCount}`);
   }
 }
 

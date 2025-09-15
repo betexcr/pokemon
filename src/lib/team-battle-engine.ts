@@ -41,6 +41,7 @@ export type BattlePokemon = {
     protect?: { counter: number };
     perishSong?: { turns: number };
     flinched?: boolean;
+    binding?: { kind: string; turnsLeft: number; fraction: number };
   };
   // Ability system
   currentAbility?: string;
@@ -1371,6 +1372,7 @@ async function executeMoveAction(
       // Log damage if any
       if (turnResult.totalDamage > 0) {
         // Actually reduce the defender's HP
+        const wasAlive = defender.currentHp > 0;
         defender.currentHp = Math.max(0, defender.currentHp - turnResult.totalDamage);
         
         const damagePercent = calculateDamagePercentage(turnResult.totalDamage, defender.maxHp);
@@ -1394,6 +1396,33 @@ async function executeMoveAction(
           pokemon: String(defender.pokemon.name),
           damage: damagePercent,
           effectiveness: effectivenessText
+        });
+
+        // Track faint counter
+        if (wasAlive && defender.currentHp === 0) {
+          const team = isPlayer ? state.opponent : state.player;
+          team.faintedCount = Math.min(team.pokemon.length, (team.faintedCount || 0) + 1);
+        }
+      }
+      // Start binding if present
+      if (turnResult.binding) {
+        defender.volatile.binding = {
+          kind: turnResult.binding.kind,
+          turnsLeft: turnResult.binding.turns,
+          fraction: turnResult.binding.fraction
+        } as any;
+        state.battleLog.push({
+          type: 'status_effect',
+          message: `${defender.pokemon.name} was trapped by ${turnResult.binding.kind}!`,
+          pokemon: String(defender.pokemon.name)
+        });
+      }
+      // Log flinch secondary
+      if (turnResult.flinchedTarget) {
+        state.battleLog.push({
+          type: 'status_effect',
+          message: `${defender.pokemon.name} flinched!`,
+          pokemon: String(defender.pokemon.name)
         });
       }
       
@@ -1596,6 +1625,34 @@ async function endTurn(state: BattleState): Promise<BattleState> {
       status: String(newState.opponent.pokemon[newState.opponent.currentIndex].status)
     });
   }
+
+  // Binding residuals and decrement
+  function applyBindingResidual(p: BattlePokemon, side: 'player'|'opponent') {
+    const bind = (p.volatile as any).binding as { turnsLeft: number; fraction: number; kind: string } | undefined;
+    if (!bind) return 0;
+    const dmg = Math.max(1, Math.floor(p.maxHp * bind.fraction));
+    p.currentHp = Math.max(0, p.currentHp - dmg);
+    bind.turnsLeft -= 1;
+    if (bind.turnsLeft <= 0) {
+      (p.volatile as any).binding = undefined;
+      newState.battleLog.push({
+        type: 'status_effect',
+        message: `${p.pokemon.name} was freed from ${bind.kind}!`,
+        pokemon: String(p.pokemon.name)
+      });
+    } else {
+      const percent = calculateDamagePercentage(dmg, p.maxHp);
+      const remain = Math.round((p.currentHp / p.maxHp) * 100);
+      newState.battleLog.push({
+        type: 'status_damage',
+        message: `${p.pokemon.name} is hurt by ${bind.kind}! (${remain}% HP left)`,
+        pokemon: String(p.pokemon.name),
+        damage: percent
+      });
+    }
+  }
+  applyBindingResidual(newState.player.pokemon[newState.player.currentIndex], 'player');
+  applyBindingResidual(newState.opponent.pokemon[newState.opponent.currentIndex], 'opponent');
   
   // Start next turn
   newState.turn++;
@@ -1644,6 +1701,25 @@ export async function processBattleTurn(
   
   // E) Force replacements
   await processReplacements(newState);
+
+  // If an active fainted during resolution or end-of-turn, auto-select next available
+  function ensureReplacement(team: BattleTeam) {
+    const cur = team.pokemon[team.currentIndex];
+    if (cur && cur.currentHp <= 0) {
+      const idx = getNextAvailablePokemon(team);
+      if (idx !== null) {
+        switchToPokemon(team, idx);
+        const sent = getCurrentPokemon(team);
+        newState.battleLog.push({
+          type: 'pokemon_sent_out',
+          message: `Go! ${sent.pokemon.name}!`,
+          pokemon: sent.pokemon.name
+        });
+      }
+    }
+  }
+  ensureReplacement(newState.player);
+  ensureReplacement(newState.opponent);
   
   // Check if battle is over
   if (isTeamDefeated(newState.player)) {

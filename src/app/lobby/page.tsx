@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import UserDropdown from '@/components/UserDropdown';
+import { Swords } from 'lucide-react';
+import AppHeader from '@/components/AppHeader';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { roomService, type RoomData } from '@/lib/roomService';
 
@@ -97,23 +98,15 @@ function LobbyPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100" style={{ minHeight: '100vh', backgroundSize: 'cover', backgroundRepeat: 'no-repeat' }}>
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => router.push('/')}
-                className="text-blue-600 hover:text-blue-800 transition-colors"
-              >
-                ← Back to Pokédex
-              </button>
-              <h1 className="text-2xl font-bold text-gray-900">Battle Lobby</h1>
-            </div>
-            <UserDropdown />
-          </div>
-        </div>
-      </div>
+      <AppHeader
+        title="Battle Lobby"
+        backLink="/"
+        backLabel="Back to PokéDex"
+        showToolbar={false}
+        showThemeToggle={false}
+        iconKey="battle"
+        showIcon={true}
+      />
 
       <div className="container mx-auto px-4 py-8 pb-16">
         {/* Create Room Section */}

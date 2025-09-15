@@ -137,6 +137,8 @@ export type TurnResult = {
   totalDamage: number;
   missed: boolean;
   typeEffectiveness: number;
+  flinchedTarget?: boolean;
+  binding?: { kind: string; turns: number; fraction: number };
   appliedAilment?: string;
   statChanges?: string[];
   drained?: number; // HP restored to attacker
@@ -300,6 +302,40 @@ export async function executeTurn(opts: ExecuteTurnOptions): Promise<TurnResult>
       const logs: string[] = [];
       applyStatChanges(defender, move.statChanges, logs);
       if (logs.length) result.statChanges = logs;
+    }
+    // Flinch secondaries for common moves (use PokeAPI shortEffect if available in future)
+    const flinchMoves: Record<string, number> = {
+      'headbutt': 0.3,
+      'rock-slide': 0.3,
+      'air-slash': 0.3,
+      'bite': 0.3,
+      'iron-head': 0.3,
+      'zen-headbutt': 0.2,
+      'stomp': 0.3,
+      'extrasensory': 0.1,
+      'dark-pulse': 0.2
+    };
+    const f = flinchMoves[move.name.toLowerCase()];
+    if (f && Math.random() < f) {
+      (defender.volatile as any).flinched = true;
+      result.flinchedTarget = true;
+    }
+
+    // Binding/trapping residuals (apply on hit)
+    const bindingMoves: Record<string, { fraction: number }> = {
+      'bind': { fraction: 1/8 },
+      'wrap': { fraction: 1/8 },
+      'clamp': { fraction: 1/8 },
+      'whirlpool': { fraction: 1/8 },
+      'fire-spin': { fraction: 1/8 },
+      'sand-tomb': { fraction: 1/8 },
+      'magma-storm': { fraction: 1/8 },
+      'infestation': { fraction: 1/8 }
+    };
+    const b = bindingMoves[move.name.toLowerCase()];
+    if (b) {
+      const turns = (Math.random() < 0.5 ? 4 : 5);
+      result.binding = { kind: move.name.toLowerCase(), turns, fraction: b.fraction };
     }
   }
 

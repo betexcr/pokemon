@@ -13,6 +13,7 @@ type RadarPokemon = {
 
 interface MultiPokemonRadarChartProps {
   pokemons: RadarPokemon[]
+  highlightedPokemonId?: number | null
 }
 
 interface Point {
@@ -20,7 +21,7 @@ interface Point {
   y: number
 }
 
-export default function MultiPokemonRadarChart({ pokemons }: MultiPokemonRadarChartProps) {
+export default function MultiPokemonRadarChart({ pokemons, highlightedPokemonId = null }: MultiPokemonRadarChartProps) {
   const [hoveredPokemon, setHoveredPokemon] = useState<RadarPokemon | null>(null)
   const [hoveredStatIndex, setHoveredStatIndex] = useState<number | null>(null)
   const [cursorPos, setCursorPos] = useState<{x:number;y:number}>({x:0,y:0})
@@ -77,6 +78,27 @@ export default function MultiPokemonRadarChart({ pokemons }: MultiPokemonRadarCh
     })
     
     return points
+  }
+
+  // Precompute polygon points and derived metrics
+  const polygonData = pokemons.map((pokemon, index) => {
+    const pts = getStatPoints(pokemon)
+    // Compute simple area proxy (sum of radii) to rank small->large
+    const avgRadius = pts.reduce((s, p) => s + Math.hypot(p.x - centerX, p.y - centerY), 0) / pts.length
+    const color = colors[index % colors.length]
+    return { pokemon, points: pts, avgRadius, color }
+  })
+
+  // Point-in-polygon (ray casting)
+  const isPointInPolygon = (x: number, y: number, pts: Point[]): boolean => {
+    let inside = false
+    for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+      const xi = pts[i].x, yi = pts[i].y
+      const xj = pts[j].x, yj = pts[j].y
+      const intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi + 0.00001) + xi)
+      if (intersect) inside = !inside
+    }
+    return inside
   }
 
   // Generate grid circles
@@ -153,19 +175,21 @@ export default function MultiPokemonRadarChart({ pokemons }: MultiPokemonRadarCh
   })
 
   // Generate polygons for each Pokémon
-  const pokemonPolygons = pokemons.map((pokemon, index) => {
-    const color = colors[index % colors.length]
-    const points = getStatPoints(pokemon)
+  const pokemonPolygons = polygonData.map(({ pokemon, points, color }) => {
     const pointsString = points.map(p => `${p.x},${p.y}`).join(' ')
+    const isExternallyHighlighted = highlightedPokemonId !== null && pokemon.id === highlightedPokemonId
+    const isHovered = hoveredPokemon?.id === pokemon.id
+    const isActive = isExternallyHighlighted || (highlightedPokemonId === null && isHovered)
+    const dimOthers = highlightedPokemonId !== null
     
     return (
       <g key={pokemon.id}>
         <polygon
           points={pointsString}
           fill={color}
-          fillOpacity="0.2"
+          fillOpacity={isActive ? 0.35 : dimOthers ? 0.08 : 0.2}
           stroke={color}
-          strokeWidth="2"
+          strokeWidth={isActive ? 3 : 2}
           onMouseEnter={() => {
             setHoveredPokemon(pokemon)
           }}
@@ -192,6 +216,7 @@ export default function MultiPokemonRadarChart({ pokemons }: MultiPokemonRadarCh
             }}
             style={{ cursor: 'pointer' }}
             pointerEvents="all"
+            opacity={isActive ? 1 : dimOthers ? 0.4 : 0.8}
           />
         ))}
       </g>
@@ -209,6 +234,15 @@ export default function MultiPokemonRadarChart({ pokemons }: MultiPokemonRadarCh
           const x = e.clientX - rect.left
           const y = e.clientY - rect.top
           setCursorPos({ x, y })
+          // Determine hovered polygon by checking smallest avg radius first
+          const containing = polygonData
+            .filter(pd => isPointInPolygon(x, y, pd.points))
+            .sort((a, b) => a.avgRadius - b.avgRadius)
+          if (containing.length > 0) {
+            setHoveredPokemon(containing[0].pokemon)
+          } else if (!highlightedPokemonId) {
+            setHoveredPokemon(null)
+          }
           const dx = x - centerX
           const dy = y - centerY
           const distance = Math.sqrt(dx*dx + dy*dy)
@@ -225,7 +259,7 @@ export default function MultiPokemonRadarChart({ pokemons }: MultiPokemonRadarCh
             setHoveredStatIndex(null)
           }
         }}
-        onMouseLeave={() => setHoveredStatIndex(null)}
+        onMouseLeave={() => { setHoveredStatIndex(null); setHoveredPokemon(null) }}
       >
         {/* Grid circles */}
         {gridCircles}
@@ -248,8 +282,8 @@ export default function MultiPokemonRadarChart({ pokemons }: MultiPokemonRadarCh
             left: cursorPos.x,
             top: cursorPos.y,
             transform: 'translate(-50%, -120%)',
-            // White base with stat-colored overlay
-            background: `linear-gradient(180deg, ${getStatBaseColor(stats[hoveredStatIndex])}22 0%, transparent 60%), white`
+            // White base with stat-colored overlay - 30% more transparent
+            background: `linear-gradient(180deg, ${getStatBaseColor(stats[hoveredStatIndex])}15 0%, transparent 60%), rgba(255, 255, 255, 0.7)`
           }}
         >
           <div className="font-semibold mb-1">
@@ -262,8 +296,10 @@ export default function MultiPokemonRadarChart({ pokemons }: MultiPokemonRadarCh
                 value: p.stats.find(s => s.stat.name === stats[hoveredStatIndex!])?.base_stat ?? 0
               }))
               .sort((a,b) => b.value - a.value)
-              .map(({p, value}, i) => {
-              const color = colors[i % colors.length]
+              .map(({p, value}) => {
+              // Use the same color as the polygon for this Pokemon
+              const pokemonIndex = pokemons.findIndex(po => po.id === p.id)
+              const color = colors[pokemonIndex % colors.length]
               return (
                 <div key={p.id} className="flex items-center gap-2">
                   <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
@@ -276,24 +312,26 @@ export default function MultiPokemonRadarChart({ pokemons }: MultiPokemonRadarCh
         </div>
       )}
 
-      {/* Tooltip: full pokemon when hovering points/polygons */}
+      {/* Tooltip: full pokemon when hovering points/polygons (match stat tooltip styling) */}
       {hoveredPokemon && hoveredStatIndex === null && (
         <div
-          className="absolute z-10 text-white px-3 py-2 rounded-lg text-sm shadow-lg pointer-events-none border border-white/20"
+          className="absolute z-10 text-gray-800 px-3 py-2 rounded-lg text-sm shadow-lg pointer-events-none border border-gray-200"
           style={{
-            left: '50%',
-            top: '50%',
-            transform: 'translate(-50%, -50%)',
-            backgroundColor: colors[pokemons.findIndex(p => p.id === hoveredPokemon.id) % colors.length]
+            left: cursorPos.x,
+            top: cursorPos.y,
+            transform: 'translate(12px, -12px)',
+            background: `linear-gradient(180deg, ${colors[pokemons.findIndex(p => p.id === hoveredPokemon.id) % colors.length]}15 0%, transparent 60%), rgba(255, 255, 255, 0.9)`
           }}
         >
-          <div className="font-semibold capitalize">
+          <div className="font-semibold mb-1 capitalize">
             {formatPokemonName(hoveredPokemon.name)}
           </div>
-          <div className="text-xs text-white/90">
+          <div className="text-xs text-gray-700 space-y-0.5">
             {hoveredPokemon.stats.map(stat => (
-              <div key={stat.stat.name}>
-                {getStatAbbreviation(stat.stat.name)}: {stat.base_stat}
+              <div key={stat.stat.name} className="flex items-center gap-2">
+                <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: colors[pokemons.findIndex(p => p.id === hoveredPokemon.id) % colors.length] }} />
+                <span>{getStatAbbreviation(stat.stat.name)}</span>
+                <span className="ml-auto font-mono">{stat.base_stat}</span>
               </div>
             ))}
           </div>

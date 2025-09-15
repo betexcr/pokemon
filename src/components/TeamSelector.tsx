@@ -23,6 +23,7 @@ interface TeamSelectorProps {
 }
 
 const STORAGE_KEY = 'pokemon-team-builder';
+const CURRENT_TEAM_KEY = 'pokemon-current-team';
 
 // Function to get Pokemon image URL
 const getPokemonImageUrl = (pokemonId: number | null): string => {
@@ -37,7 +38,7 @@ export default function TeamSelector({
   label = "Select Team",
   showStorageIndicator = true
 }: TeamSelectorProps) {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [teams, setTeams] = useState<(SavedTeam | LocalTeam)[]>([]);
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
@@ -45,42 +46,64 @@ export default function TeamSelector({
   const [isUsingLocalStorage, setIsUsingLocalStorage] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
 
+  // Helper: load teams from localStorage with robust fallbacks
+  const loadLocalTeams = (): LocalTeam[] => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed as LocalTeam[];
+        // Some older formats may store as an object with a teams property
+        if (parsed && Array.isArray(parsed.teams)) return parsed.teams as LocalTeam[];
+      }
+    } catch {}
+
+    // Fallback: construct a single team from CURRENT_TEAM_KEY if present
+    try {
+      const currentRaw = localStorage.getItem(CURRENT_TEAM_KEY);
+      if (currentRaw) {
+        const current = JSON.parse(currentRaw);
+        if (current && Array.isArray(current.slots)) {
+          const fallbackTeam: LocalTeam = {
+            id: 'current-team',
+            name: current.name || 'Current Team',
+            slots: current.slots.map((s: any) => ({ id: s?.id ?? null, level: s?.level ?? 50, moves: Array.isArray(s?.moves) ? s.moves : [] })),
+          };
+          return [fallbackTeam];
+        }
+      }
+    } catch {}
+
+    return [];
+  };
+
   useEffect(() => {
+    if (authLoading) return; // wait for auth to resolve to avoid flashing "No teams"
+
     const loadTeams = async () => {
       try {
-        console.log('TeamSelector: Loading teams for user:', user?.uid, user?.displayName);
+        setLoading(true);
         if (user) {
-          // Load from Firebase for authenticated users
-          console.log('TeamSelector: Loading cloud teams...');
           const userTeams = await getUserTeams(user.uid);
-          console.log('TeamSelector: Loaded cloud teams:', userTeams);
           setTeams(userTeams);
           setIsUsingLocalStorage(false);
-          
-          // Set selected team if teamId is provided
           if (selectedTeamId) {
             const team = userTeams.find(t => t.id === selectedTeamId);
             setSelectedTeam(team || null);
           } else if (userTeams.length > 0 && !selectedTeam) {
-            // Auto-select first team if no team is currently selected
             const firstTeam = userTeams[0];
             setSelectedTeam(firstTeam);
             onTeamSelect(firstTeam);
           }
         } else {
-          // Load from local storage for non-authenticated users
-          const raw = localStorage.getItem(STORAGE_KEY);
-          if (raw) {
-            const localTeams: LocalTeam[] = JSON.parse(raw);
+          const localTeams: LocalTeam[] = loadLocalTeams();
+          if (localTeams.length > 0) {
             setTeams(localTeams);
             setIsUsingLocalStorage(true);
-            
-            // Set selected team if teamId is provided
             if (selectedTeamId) {
               const team = localTeams.find(t => t.id === selectedTeamId);
               setSelectedTeam(team || null);
             } else if (localTeams.length > 0 && !selectedTeam) {
-              // Auto-select first team if no team is currently selected
               const firstTeam = localTeams[0];
               setSelectedTeam(firstTeam);
               onTeamSelect(firstTeam);
@@ -91,7 +114,6 @@ export default function TeamSelector({
           }
         }
       } catch (error) {
-        console.error('Failed to load teams:', error);
         setTeams([]);
       } finally {
         setLoading(false);
@@ -99,7 +121,22 @@ export default function TeamSelector({
     };
 
     loadTeams();
-  }, [user, selectedTeamId]);
+
+    const onStorage = (e: StorageEvent) => {
+      if (!user && (e.key === STORAGE_KEY || e.key === CURRENT_TEAM_KEY)) {
+        setLoading(true);
+        const locals = loadLocalTeams();
+        setTeams(locals);
+        if (locals.length > 0 && !selectedTeam) {
+          setSelectedTeam(locals[0]);
+          onTeamSelect(locals[0]);
+        }
+        setLoading(false);
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, [user, authLoading, selectedTeamId]);
 
   const handleTeamSelect = (team: SavedTeam | LocalTeam) => {
     setSelectedTeam(team);
@@ -119,11 +156,9 @@ export default function TeamSelector({
         <label className="block text-sm font-medium text-black dark:text-text mb-2">
           {label}
         </label>
-        <div className="border border-gray-300 rounded-lg p-3 bg-gray-50">
-          <div className="animate-pulse flex items-center space-x-3">
-            <div className="h-4 w-4 bg-gray-300 rounded"></div>
-            <div className="h-4 bg-gray-300 rounded flex-1"></div>
-          </div>
+        <div className="border border-gray-300 rounded-lg p-3 bg-gray-50 flex items-center gap-3">
+          <img src="/loading.gif" alt="Loading teams" className="w-5 h-5" />
+          <span className="text-sm text-gray-700">Loading teams…</span>
         </div>
       </div>
     );
@@ -220,16 +255,25 @@ export default function TeamSelector({
                           className="relative w-6 h-6 rounded-full border border-white bg-gray-100 overflow-hidden"
                         >
                           {slot.id ? (
-                            <Image
-                              src={getPokemonImageUrl(slot.id)}
-                              alt={`Pokemon ${slot.id}`}
-                              fill
-                              className="object-cover"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.src = '/placeholder-pokemon.png';
-                              }}
-                            />
+                            <>
+                              <Image
+                                src={getPokemonImageUrl(slot.id)}
+                                alt={`Pokemon ${slot.id}`}
+                                fill
+                                className="object-cover"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.src = '/placeholder-pokemon.png';
+                                  const loader = (target.parentElement?.querySelector('[data-img-loader]') as HTMLElement | null);
+                                  if (loader) loader.style.display = 'none';
+                                }}
+                                onLoadingComplete={(img) => {
+                                  const loader = (img as any).parentElement?.querySelector('[data-img-loader]') as HTMLElement | null;
+                                  if (loader) loader.style.display = 'none';
+                                }}
+                              />
+                              <img src="/loading.gif" alt="Loading" className="absolute inset-0 m-auto w-3 h-3 opacity-80" data-img-loader />
+                            </>
                           ) : (
                             <div className="w-full h-full bg-gray-200 flex items-center justify-center">
                               <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
@@ -257,7 +301,6 @@ export default function TeamSelector({
               <div className="border-t border-gray-200 pt-2 mt-2">
                 <button
                   onClick={() => {
-                    console.log('TeamSelector auth button clicked, setting showAuthModal to true');
                     setShowAuthModal(true);
                     setIsOpen(false);
                   }}
@@ -271,7 +314,6 @@ export default function TeamSelector({
           </div>
         )}
       </div>
-
       
       {/* Auth Modal */}
       <AuthModal 
