@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { Pokemon } from '@/types/pokemon'
+import { getShowdownAnimatedSprite } from '@/lib/utils'
 import RadarChart from './RadarChart'
 import { X, Plus, BarChart3, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react'
 import { useTheme } from './ThemeProvider'
@@ -250,7 +251,12 @@ export default function PokemonComparison({ pokemonList, className = '' }: Pokem
                       <X size={12} />
                     </button>
                     <img
-                      src={pokemon.sprites.other['official-artwork'].front_default || pokemon.sprites.front_default || ''}
+                      src={getShowdownAnimatedSprite(pokemon.name, 'front', false)}
+                      onError={(e) => {
+                        const target = e.currentTarget as HTMLImageElement
+                        const fallback = pokemon.sprites.other['official-artwork'].front_default || pokemon.sprites.front_default || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`
+                        if (target.src !== fallback) target.src = fallback
+                      }}
                       alt={pokemon.name}
                       className={`w-full h-24 object-contain mb-2 ${
                         isRetro ? 'image-render-pixel' : ''

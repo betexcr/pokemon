@@ -70,7 +70,8 @@ export function getCurrentPokemon(team: BattleTeam): BattlePokemon {
 }
 
 export function isTeamDefeated(team: BattleTeam): boolean {
-  return team.faintedCount >= team.pokemon.length;
+  // Consider the team defeated only when all Pokémon have 0 HP
+  return team.pokemon.every(p => p.currentHp <= 0);
 }
 
 export function getNextAvailablePokemon(team: BattleTeam): number | null {
@@ -591,27 +592,53 @@ export function executeAction(state: BattleState, action: BattleAction): BattleS
     }
   }
   
-  // Check if battle is over
+  // Check if battle is over only when an entire team is defeated
   const playerCurrentPokemon = getCurrentPokemon(newState.player);
   const opponentCurrentPokemon = getCurrentPokemon(newState.opponent);
-  
-  if (playerCurrentPokemon.currentHp <= 0) {
+
+  if (isTeamDefeated(newState.player)) {
     newState.isComplete = true;
     newState.winner = 'opponent';
     newState.battleLog.push({
-      type: 'pokemon_fainted',
-      message: `${playerCurrentPokemon.pokemon.name} fainted!`,
-      pokemon: String(playerCurrentPokemon.pokemon.name)
+      type: 'battle_end',
+      message: 'All your Pokémon have fainted! You lost the battle!',
+      turn: newState.turnNumber
     });
-  } else if (opponentCurrentPokemon.currentHp <= 0) {
+  } else if (isTeamDefeated(newState.opponent)) {
     newState.isComplete = true;
     newState.winner = 'player';
     newState.battleLog.push({
-      type: 'pokemon_fainted',
-      message: `${opponentCurrentPokemon.pokemon.name} fainted!`,
-      pokemon: String(opponentCurrentPokemon.pokemon.name)
+      type: 'battle_end',
+      message: 'All opponent Pokémon have fainted! You won the battle!',
+      turn: newState.turnNumber
     });
   } else {
+    // If a current Pokémon fainted, auto-switch to next available
+    if (playerCurrentPokemon.currentHp <= 0) {
+      const nextIdx = getNextAvailablePokemon(newState.player);
+      if (nextIdx !== null) {
+        switchToPokemon(newState.player, nextIdx);
+        const newCurrent = getCurrentPokemon(newState.player);
+        newState.battleLog.push({
+          type: 'pokemon_sent_out',
+          message: `Go! ${newCurrent.pokemon.name}!`,
+          pokemon: String(newCurrent.pokemon.name)
+        });
+      }
+    }
+    if (opponentCurrentPokemon.currentHp <= 0) {
+      const nextIdx = getNextAvailablePokemon(newState.opponent);
+      if (nextIdx !== null) {
+        switchToPokemon(newState.opponent, nextIdx);
+        const newCurrent = getCurrentPokemon(newState.opponent);
+        newState.battleLog.push({
+          type: 'pokemon_sent_out',
+          message: `${newCurrent.pokemon.name} was sent out!`,
+          pokemon: String(newCurrent.pokemon.name)
+        });
+      }
+    }
+
     // Process end of turn status effects
     const playerStatusDamage = processEndOfTurnStatus(playerCurrentPokemon);
     const opponentStatusDamage = processEndOfTurnStatus(opponentCurrentPokemon);

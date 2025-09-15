@@ -445,22 +445,19 @@ export async function searchPokemonByName(searchTerm: string): Promise<Pokemon[]
       }
     }
 
-    // Name search - use cached basic Pokémon list if available
-    const basicPokemonCache = getCache('all-pokemon');
-    let allPokemon;
-    
-    if (basicPokemonCache) {
-      // Use cached basic data instead of making new API calls
-      allPokemon = { results: basicPokemonCache as Pokemon[] };
-    } else {
-      // Fallback: get basic list (only 1 API call instead of 1000+)
-      allPokemon = await getPokemonList(151, 0);
+    // Name search - use a comprehensive cached list of names/ids (all generations)
+    const namesCacheKey = getCacheKey('all-pokemon-names');
+    let allNames = getCache(namesCacheKey) as { name: string; url: string }[] | undefined;
+    if (!allNames) {
+      // Fetch a broad list covering all current Pokémon (limit high enough for all gens)
+      const list = await getPokemonList(2000, 0);
+      allNames = list.results as any;
+      setCache(namesCacheKey, allNames, CACHE_TTL.POKEMON_LIST);
     }
-    
-    // Filter by search term
-    const matchingPokemon = allPokemon.results.filter(pokemon =>
-      pokemon.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+
+    // Filter by search term (case-insensitive, supports partials)
+    const termLc = searchTerm.toLowerCase();
+    const matchingPokemon = (allNames || []).filter(p => p.name.toLowerCase().includes(termLc));
 
     // Limit results to first 20 to avoid too many API calls
     const limitedResults = matchingPokemon.slice(0, 20);
@@ -469,7 +466,7 @@ export async function searchPokemonByName(searchTerm: string): Promise<Pokemon[]
     const pokemonList = limitedResults.map((pokemonRef) => {
       if ('id' in pokemonRef) {
         // This is already a basic Pokémon object
-        return pokemonRef as Pokemon;
+        return pokemonRef as unknown as Pokemon;
       } else {
         // This is a reference, create basic object
         const pokemonId = pokemonRef.url.split('/').slice(-2)[0];
@@ -654,22 +651,21 @@ export function getPokemonImageUrl(id: number, variant: 'default' | 'shiny' = 'd
 }
 
 export function getPokemonSpriteUrl(id: number, variant: 'default' | 'shiny' = 'default'): string {
-  // For main page grid/list, use small sprites
-  const baseUrl = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon';
+  // Use Pokemon Showdown animated sprites for better visual appeal
+  const baseUrl = 'https://play.pokemonshowdown.com/sprites/ani';
   const suffix = variant === 'shiny' ? 'shiny' : '';
-  return `${baseUrl}/${suffix}/${id}.png`;
+  return `${baseUrl}/${suffix}/${id}.gif`;
 }
 
-// NEW: Get the most appropriate image for main page (smallest file size)
+// NEW: Get the most appropriate image for main page (animated sprites)
 export function getPokemonMainPageImage(id: number): string {
-  // Use home sprites for main page - they're much smaller than official artwork
-  // but still look good in grid/list views
-  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${id}.png`;
+  // Use Pokemon Showdown animated sprites for main page
+  return `https://play.pokemonshowdown.com/sprites/ani/${id}.gif`;
 }
 
-// NEW: Get fallback image if home sprite doesn't exist
+// NEW: Get fallback image if animated sprite doesn't exist
 export function getPokemonFallbackImage(id: number): string {
-  // Fallback to regular sprites if home sprites aren't available
+  // Fallback to static sprites if animated sprites aren't available
   return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
 }
 

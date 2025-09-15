@@ -268,11 +268,16 @@ class FirebaseRTDBService {
   ): Promise<void> {
     if (!this.db) throw new Error('RTDB not initialized');
     
+    // Read current meta.version to satisfy RTDB rules
+    const versionRef = ref(this.db, `battles/${battleId}/meta/version`);
+    const versionSnap = await get(versionRef);
+    const currentVersion = typeof versionSnap.val() === 'number' ? versionSnap.val() : 0;
+
     const choiceRef = ref(this.db, `battles/${battleId}/turns/${turn}/choices/${uid}`);
     await set(choiceRef, {
       ...choice,
       committedAt: serverTimestamp(),
-      clientVersion: 0 // Will be validated by Cloud Functions
+      clientVersion: currentVersion
     });
   }
 

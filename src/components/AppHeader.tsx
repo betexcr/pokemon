@@ -1,11 +1,12 @@
 'use client'
 
 import { ReactNode } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import ThemeToggle from '@/components/ThemeToggle'
 import HeaderIcons from '@/components/HeaderIcons'
 import UserDropdown from '@/components/UserDropdown'
+import { getHeaderIcon, getPageIconKey } from '@/lib/headerIcons'
 
 interface AppHeaderProps {
   title?: string
@@ -18,6 +19,8 @@ interface AppHeaderProps {
   rightContent?: ReactNode
   showToolbar?: boolean
   showThemeToggle?: boolean
+  iconKey?: string
+  showIcon?: boolean
 }
 
 export default function AppHeader({
@@ -30,9 +33,17 @@ export default function AppHeader({
   onToggleSidebar,
   rightContent,
   showToolbar = true,
-  showThemeToggle = true
+  showThemeToggle = true,
+  iconKey,
+  showIcon = true
 }: AppHeaderProps) {
   const router = useRouter()
+  const pathname = usePathname()
+  
+  // Determine icon to use
+  const effectiveIconKey = iconKey || getPageIconKey(pathname)
+  const iconConfig = getHeaderIcon(effectiveIconKey)
+  const IconComponent = iconConfig.icon
 
   const handleBack = () => {
     if (backLink) router.push(backLink)
@@ -49,16 +60,21 @@ export default function AppHeader({
             {backLink && (
               <button
                 onClick={handleBack}
-                className="flex items-center space-x-2 text-muted hover:text-text transition-colors"
+                className="flex items-center text-muted hover:text-text transition-colors"
                 title={backLabel}
               >
                 <ArrowLeft className="h-5 w-5" />
-                <span className="font-medium text-text hidden sm:inline">{backLabel}</span>
               </button>
             )}
             <div className="flex items-center space-x-2 lg:space-x-3 mx-auto">
+              {showIcon && (
+                <div className={`p-2 rounded-lg ${iconConfig.bgColor} ${iconConfig.color}`}>
+                  {/* Icon is purely decorative */}
+                  <IconComponent className="h-5 w-5 sm:h-6 sm:w-6" />
+                </div>
+              )}
               <div className="flex flex-col">
-                <h2 className="text-base sm:text-lg lg:text-xl font-bold text-poke-blue dark:bg-gradient-to-r dark:from-poke-blue dark:via-poke-red dark:to-poke-blue dark:bg-clip-text dark:text-transparent" style={{ fontFamily: 'Pokemon Solid, sans-serif', color: 'var(--color-poke-blue) !important' }}>
+                <h2 className="text-base sm:text-lg lg:text-xl font-bold text-poke-blue dark:bg-gradient-to-r dark:from-poke-blue dark:via-poke-red dark:to-poke-blue dark:bg-clip-text dark:text-transparent" style={{ fontFamily: 'Pokemon Solid, sans-serif' }} suppressHydrationWarning>
                   {title}
                 </h2>
                 {subtitle ? (

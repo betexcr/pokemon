@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Pokemon } from '@/types/pokemon'
-import { getPokemonList, getPokemon, getMove, getPokemonSpriteUrl, getPokemonTotalCount } from '@/lib/api'
-import { formatPokemonName } from '@/lib/utils'
+import { getPokemonList, getPokemon, getMove, getPokemonTotalCount } from '@/lib/api'
+import { formatPokemonName, getShowdownAnimatedSprite } from '@/lib/utils'
 import Image from 'next/image'
 import TypeBadge from '@/components/TypeBadge'
 import Tooltip from '@/components/Tooltip'
@@ -19,8 +19,10 @@ import {
   type TeamSlot,
   type MoveData
 } from '@/lib/userTeams'
+import { updateTeamInFirebase } from '@/lib/userTeams'
 import AuthModal from '@/components/auth/AuthModal'
 import AppHeader from '@/components/AppHeader'
+import PokemonSelector from '@/components/PokemonSelector'
 
 // Types are now imported from userTeams.ts
 
@@ -44,10 +46,12 @@ export default function TeamBuilderPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [showDropdown, setShowDropdown] = useState(false)
   const [collapsedSlots, setCollapsedSlots] = useState<Set<number>>(new Set([0, 1, 2, 3, 4, 5]))
+  const [activeSlotIndex, setActiveSlotIndex] = useState<number | null>(null)
   const [saving, setSaving] = useState(false)
   const [syncing, setSyncing] = useState(false)
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [levelMovesOnly, setLevelMovesOnly] = useState(true)
+  const [saveError, setSaveError] = useState<string | null>(null)
   
   // Virtualized scrolling state
   const [pokemonOffset, setPokemonOffset] = useState(0)
@@ -400,6 +404,12 @@ export default function TeamBuilderPage() {
     }
   }, [user])
 
+  const isTeamComplete = useMemo(() => {
+    const withPokemon = teamSlots.filter(s => s.id != null)
+    if (withPokemon.length === 0) return false
+    return withPokemon.every(s => (s.moves?.length || 0) === 4)
+  }, [teamSlots])
+
   const setSlot = async (idx: number, patch: Partial<TeamSlot>) => {
     if (patch.id && typeof patch.id === 'number') {
       // Track the last selected Pokémon for dropdown memory
@@ -407,13 +417,18 @@ export default function TeamBuilderPage() {
       
       // Fetch full Pokémon details if we don't have them
       const existingPokemon = allPokemon.find(p => p.id === patch.id)
-      if (existingPokemon && existingPokemon.types.length === 0) {
-        try {
+      try {
+        if (!existingPokemon) {
+          // Not in local list yet (e.g., added via search beyond initial page) → fetch and insert
+          const fullPokemon = await getPokemon(patch.id as number)
+          setAllPokemon(prev => [...prev, fullPokemon])
+        } else if (existingPokemon.types.length === 0 || existingPokemon.stats.length === 0) {
+          // Present but partial → upgrade to full data
           const fullPokemon = await getPokemon(patch.id as number)
           setAllPokemon(prev => prev.map(p => p.id === patch.id ? fullPokemon : p))
-        } catch (error) {
-          console.error('Failed to fetch Pokémon details:', error)
         }
+      } catch (error) {
+        console.error('Failed to fetch Pokémon details:', error)
       }
     }
     
@@ -426,7 +441,21 @@ export default function TeamBuilderPage() {
       }
     }
     
-    const newTeamSlots = teamSlots.map((s, i) => i === idx ? { ...s, ...patch } : s)
+    // If changing Pokémon in the slot, clear any existing moves to avoid leakage
+    const isPokemonChange = patch.id !== undefined && patch.id !== teamSlots[idx].id
+    const newTeamSlots = teamSlots.map((s, i) => {
+      if (i !== idx) return s
+      const merged = { ...s, ...patch }
+      if (isPokemonChange) {
+        merged.moves = [] as MoveData[]
+      }
+      // If removing Pokémon, normalize level and clear moves
+      if (patch.id === null) {
+        merged.level = merged.level || 50
+        merged.moves = [] as MoveData[]
+      }
+      return merged
+    })
     setTeamSlots(newTeamSlots)
     
     // Persist the updated team state
@@ -457,6 +486,11 @@ export default function TeamBuilderPage() {
   }
 
   const saveTeam = async () => {
+    setSaveError(null)
+    if (!isTeamComplete) {
+      setSaveError('Each Pokémon must have 4 moves before saving.')
+      return
+    }
     if (!user) {
       // User not authenticated, save to localStorage
       const name = teamName.trim() || `Team ${new Date().toLocaleString()}`
@@ -502,6 +536,46 @@ export default function TeamBuilderPage() {
     } catch (error) {
       console.error('Error saving team:', error)
       setError('Failed to save team. Please try again.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const overwriteTeam = async (team: FirebaseSavedTeam) => {
+    setSaveError(null)
+    if (!isTeamComplete) {
+      setSaveError('Each Pokémon must have 4 moves before saving.')
+      return
+    }
+
+    if (!user) {
+      // Local override
+      const updated: FirebaseSavedTeam = {
+        ...team,
+        name: teamName.trim() || team.name,
+        slots: teamSlots,
+        updatedAt: new Date()
+      }
+      const next = savedTeams.map(t => t.id === team.id ? updated : t)
+      persistTeams(next)
+      return
+    }
+
+    // Firebase override
+    try {
+      setSaving(true)
+      await updateTeamInFirebase(team.id, user.uid, {
+        name: teamName.trim() || team.name,
+        slots: teamSlots,
+        isPublic: team.isPublic,
+        description: team.description
+      })
+      // Reflect locally
+      const next = savedTeams.map(t => t.id === team.id ? { ...t, name: teamName.trim() || team.name, slots: teamSlots, updatedAt: new Date() } : t)
+      setSavedTeams(next)
+    } catch (error) {
+      console.error('Error overwriting team:', error)
+      setError('Failed to overwrite team. Please try again.')
     } finally {
       setSaving(false)
     }
@@ -728,8 +802,11 @@ export default function TeamBuilderPage() {
       const newSet = new Set(prev)
       if (newSet.has(slotIndex)) {
         newSet.delete(slotIndex)
+        // mark as active when expanded
+        setActiveSlotIndex(slotIndex)
       } else {
         newSet.add(slotIndex)
+        if (activeSlotIndex === slotIndex) setActiveSlotIndex(null)
       }
       return newSet
     })
@@ -737,30 +814,25 @@ export default function TeamBuilderPage() {
 
   // Handle move selection
   const toggleMove = (slotIndex: number, move: MoveData) => {
-    setTeamSlots(prev => prev.map((slot, i) => {
-      if (i === slotIndex) {
+    setTeamSlots(prev => {
+      const next = prev.map((slot, i) => {
+        if (i !== slotIndex) return slot
         const currentMoves = slot.moves
         if (currentMoves.some(m => m.name === move.name)) {
           // Remove move
           return { ...slot, moves: currentMoves.filter(m => m.name !== move.name) }
-        } else if (currentMoves.length < 4) {
+        }
+        if (currentMoves.length < 4) {
           // Add move (max 4)
           const newMoves = [...currentMoves, move]
-          
-          // Auto-collapse when 4 moves are added
-          if (newMoves.length === 4) {
-            setCollapsedSlots(prev => {
-              const newSet = new Set(prev)
-              newSet.add(slotIndex)
-              return newSet
-            })
-          }
-          
           return { ...slot, moves: newMoves }
         }
-      }
-      return slot
-    }))
+        return slot
+      })
+      // Persist after any move change
+      persistCurrentTeam(next)
+      return next
+    })
   }
 
   if (loading) return (
@@ -789,23 +861,55 @@ export default function TeamBuilderPage() {
         backLabel="Back to PokéDex"
         showToolbar={false}
         showThemeToggle={false}
+        iconKey="team-builder"
+        showIcon={true}
       />
 
       <main className="max-w-7xl mx-auto px-4 py-6 space-y-6 overflow-x-hidden">
         {/* Add Pokémon Search */}
         <section className="border border-border rounded-xl bg-surface p-4 overflow-visible">
           <h2 className="text-lg font-semibold mb-4 text-text">Add Pokémon</h2>
-          <div className="relative search-dropdown-container max-w-full z-[10000]">
-            <input
-              type="text"
-              placeholder="Search Pokémon by name or # (e.g., 'Lugia', '249', 'char')"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onFocus={() => setShowDropdown(true)}
-              className="w-full max-w-full px-4 py-6 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-poke-blue focus:border-transparent"
-              style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
+          
+          {/* Quick Add Pokemon Selector */}
+          <div className="mb-4">
+            <PokemonSelector
+              selectedPokemon={teamSlots.filter(slot => slot.id !== null).map(slot => allPokemon.find(p => p.id === slot.id)).filter(Boolean) as Pokemon[]}
+              onPokemonSelect={async (pokemon) => {
+                const isVisiblyEmpty = (i: number) => {
+                  const slot = teamSlots[i]
+                  if (!slot) return false
+                  if (slot.id === null) return true
+                  return !allPokemon.some(p => p.id === slot.id)
+                }
+                const preferred = (activeSlotIndex != null && isVisiblyEmpty(activeSlotIndex))
+                  ? activeSlotIndex
+                  : teamSlots.findIndex((_, i) => isVisiblyEmpty(i))
+                if (preferred !== -1) {
+                  await setSlot(preferred, { id: pokemon.id })
+                  setCollapsedSlots(prev => {
+                    const newSet = new Set(prev)
+                    newSet.delete(preferred)
+                    return newSet
+                  })
+                  setActiveSlotIndex(preferred)
+                }
+              }}
+              onPokemonRemove={(pokemonId) => {
+                const slotIndex = teamSlots.findIndex(s => s.id === pokemonId)
+                if (slotIndex !== -1) {
+                  setSlot(slotIndex, { id: null })
+                }
+              }}
+              maxSelections={6}
+              placeholder="Quick add Pokémon to team (selects first empty slot)"
+              className="w-full"
             />
-            
+          </div>
+          
+          {/* Secondary inline search removed to avoid duplicate UI; PokemonSelector on top handles search */}
+          {false && (
+          <div className="relative search-dropdown-container max-w-full z-[10000]">
+            <input/>
             {showDropdown && (
               <div className="absolute top-full left-0 w-full max-w-full mt-1 bg-white border border-border rounded-lg shadow-2xl z-[10010] max-h-96 overflow-y-auto pokemon-dropdown-list">
                 {(searchTerm.trim() ? filteredPokemon : allPokemon).length > 0 ? (
@@ -813,7 +917,7 @@ export default function TeamBuilderPage() {
                     {/* Show last selected Pokémon at the top if available and not in search mode */}
                     {!searchTerm.trim() && lastSelectedPokemon && (
                       (() => {
-                        const lastPokemon = allPokemon.find(p => p.id === lastSelectedPokemon)
+                        const lastPokemon = allPokemon.find(p => p.id === lastSelectedPokemon)!
                         return lastPokemon ? (
                           <div key={`last-${lastPokemon.id}`} className="bg-blue-50 border-b-2 border-blue-200">
                             <button
@@ -834,7 +938,7 @@ export default function TeamBuilderPage() {
                             >
                               <div className="relative w-6 h-6 flex-shrink-0 bg-blue-100 rounded">
                                 <Image
-                                  src={getPokemonSpriteUrl(lastPokemon.id)}
+                                  src={getShowdownAnimatedSprite(lastPokemon.name)}
                                   alt={lastPokemon.name}
                                   width={24}
                                   height={24}
@@ -894,7 +998,7 @@ export default function TeamBuilderPage() {
                       >
                         <div className="relative w-6 h-6 flex-shrink-0 bg-gray-100 rounded">
                           <Image
-                            src={getPokemonSpriteUrl(pokemon.id)}
+                            src={getShowdownAnimatedSprite(pokemon.name)}
                             alt={pokemon.name}
                             width={24}
                             height={24}
@@ -951,6 +1055,7 @@ export default function TeamBuilderPage() {
               </div>
             )}
           </div>
+          )}
         </section>
 
         {/* Team slots */}
@@ -969,7 +1074,7 @@ export default function TeamBuilderPage() {
               />
               <button 
                 onClick={saveTeam} 
-                disabled={saving}
+                disabled={saving || !isTeamComplete}
                 className="px-3 py-2 rounded-lg bg-poke-blue text-white hover:bg-poke-blue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {saving ? (
@@ -984,9 +1089,17 @@ export default function TeamBuilderPage() {
                   </>
                 )}
               </button>
+              {!isTeamComplete && (
+                <div className="text-xs text-red-600" title="Each Pokémon must have 4 moves to save">
+                  Complete moves to save. Your current selections are auto-saved locally and will persist on refresh.
+                </div>
+              )}
               <button onClick={clearTeam} className="px-3 py-2 rounded-lg border border-border text-text hover:bg-white/50 transition-colors">Clear</button>
             </div>
           </div>
+          {saveError && (
+            <div className="-mt-2 mb-2 text-xs text-red-600">{saveError}</div>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
             {teamSlots.map((slot, idx) => {
               const poke = allPokemon.find(p => p.id === slot.id) || null
@@ -1011,18 +1124,6 @@ export default function TeamBuilderPage() {
                       )}
                     </div>
                     <div className="flex items-center gap-2">
-                      {poke && (
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            saveTeam()
-                          }} 
-                          className="text-xs text-blue-600 hover:text-blue-800 hover:scale-110 transition-transform"
-                          title="Save team with this Pokémon"
-                        >
-                          💾
-                        </button>
-                      )}
                       <button 
                         onClick={(e) => {
                           e.stopPropagation()
@@ -1042,14 +1143,25 @@ export default function TeamBuilderPage() {
                   
                   {poke ? (
                     <div className="flex items-center gap-3 mb-3">
-                      <div className="relative w-16 h-16 flex-shrink-0">
-                        <Image
-                          src={getPokemonSpriteUrl(poke.id)}
+                      <div className="relative w-16 h-16 flex-shrink-0 overflow-hidden bg-white rounded">
+                        <img
+                          src={getShowdownAnimatedSprite(poke.name)}
                           alt={poke.name}
                           width={64}
                           height={64}
                           className="w-full h-full object-contain"
+                          onError={(e) => {
+                            const target = e.currentTarget as HTMLImageElement
+                            target.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${poke.id}.png`
+                            const loader = (target.parentElement?.querySelector('[data-img-loader]') as HTMLElement | null)
+                            if (loader) loader.style.display = 'none'
+                          }}
+                          onLoad={(e) => {
+                            const loader = (e.currentTarget.parentElement?.querySelector('[data-img-loader]') as HTMLElement | null)
+                            if (loader) loader.style.display = 'none'
+                          }}
                         />
+                        <img src="/loading.gif" alt="Loading" className="absolute inset-0 m-auto w-5 h-5 opacity-80" data-img-loader />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-medium text-text">#{poke.id} {formatPokemonName(poke.name)}</div>
@@ -1101,7 +1213,15 @@ export default function TeamBuilderPage() {
                                 <tr key={move.name} className="[&>td]:px-2 [&>td]:py-1 border-b border-gray-100">
                                   <td className="font-medium capitalize text-text">
                                     <div className="flex items-center gap-2">
-                                      <span>{move.name}</span>
+                                      {move.short_effect ? (
+                                        <Tooltip content={move.short_effect} maxWidth="w-80" variant="move" type={move.type} damageClass={move.damage_class} position="top">
+                                          <span className="cursor-help">
+                                            {move.name}
+                                          </span>
+                                        </Tooltip>
+                                      ) : (
+                                        <span>{move.name}</span>
+                                      )}
                                       <button 
                                         onClick={() => toggleMove(idx, move)}
                                         className="text-red-500 hover:text-red-700 text-xs"
@@ -1342,7 +1462,7 @@ export default function TeamBuilderPage() {
                         return poke ? (
                           <div key={idx} className="relative w-8 h-8" title={`${formatPokemonName(poke.name)} Lv.${slot.level}`}>
                             <Image
-                              src={getPokemonSpriteUrl(poke.id)}
+                              src={getShowdownAnimatedSprite(poke.name)}
                               alt={poke.name}
                               width={32}
                               height={32}

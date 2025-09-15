@@ -1,5 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useBattleState } from '@/hooks/useBattleState';
+import Tooltip from '@/components/Tooltip';
+// duplicate import removed
+import { getMove } from '@/lib/moveCache';
+import { getAbility } from '@/lib/api';
 import { getPokemonIdFromSpecies, getPokemonBattleImageWithFallback, formatPokemonName } from '@/lib/utils';
 
 interface RTDBBattleComponentProps {
@@ -95,6 +99,50 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
     forfeit
   } = useBattleState(battleId);
 
+  // duplicate state/effects removed (using direct imports below)
+
+  const [moveInfo, setMoveInfo] = useState<Record<string, { type: string; damage_class?: 'physical'|'special'|'status'; short_effect?: string }>>({});
+  const [myAbilityInfo, setMyAbilityInfo] = useState<{ name: string; short_effect?: string } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      const entries = await Promise.all(
+        (legalMoves || []).map(async (m) => {
+          try {
+            const mv: any = await getMove(m.id);
+            const english = (mv.effect_entries || []).find((e: any) => e.language?.name === 'en');
+            return [m.id, { type: mv.type?.name || 'normal', damage_class: mv.damage_class?.name || undefined, short_effect: english?.short_effect || english?.effect }];
+          } catch {
+            return [m.id, { type: 'normal' }];
+          }
+        })
+      );
+      if (!cancelled) {
+        const next: Record<string, { type: string; damage_class?: 'physical'|'special'|'status'; short_effect?: string }> = {};
+        for (const [k, v] of entries) next[k as string] = v as any;
+        setMoveInfo(next);
+      }
+    };
+    if (legalMoves?.length) run();
+    return () => { cancelled = true; };
+  }, [legalMoves]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const abilityId = (me?.team?.[0]?.ability as any) || null;
+      if (!abilityId) { setMyAbilityInfo(null); return; }
+      try {
+        const ab: any = await getAbility(abilityId);
+        const english = (ab.effect_entries || []).find((e: any) => e.language?.name === 'en');
+        if (!cancelled) setMyAbilityInfo({ name: ab.name, short_effect: english?.short_effect || english?.effect });
+      } catch { if (!cancelled) setMyAbilityInfo({ name: String(abilityId) }); }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [me?.team?.[0]?.ability]);
+
   // Handle battle completion
   useEffect(() => {
     if (meta?.phase === 'ended' && meta.winnerUid && onBattleComplete) {
@@ -104,6 +152,8 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
 
   const handleMoveSelection = async (moveId: string, target?: 'p1' | 'p2') => {
     try {
+      // Classic view: give immediate feedback on action
+      playAnim(playerAnimRef, 'animate-bounce');
       await chooseMove(moveId, target);
     } catch (err) {
       console.error('Failed to submit move:', err);
@@ -117,6 +167,87 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
       console.error('Failed to switch Pokemon:', err);
     }
   };
+
+  // Lightweight CSS animations for classic view
+  const playerAnimRef = useRef<HTMLDivElement>(null);
+  const oppAnimRef = useRef<HTMLDivElement>(null);
+  const playAnim = (ref: React.RefObject<HTMLDivElement>, cls: string) => {
+    const el = ref.current;
+    if (!el) return;
+    el.classList.remove('animate-bounce','animate-damage','animate-critical','animate-pulse');
+    // Force reflow to restart animation reliably
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    (el as any).offsetHeight;
+    el.classList.add(cls);
+    const onEnd = () => {
+      el.classList.remove(cls);
+      el.removeEventListener('animationend', onEnd);
+    };
+    el.addEventListener('animationend', onEnd);
+  };
+
+  // Parse lastResultSummary to drive simple animations
+  useEffect(() => {
+    const line = pub?.lastResultSummary?.toLowerCase?.() || '';
+    if (!line) return;
+    // Toast with move info/effect when present
+    try {
+      const detail = (pub as any)?.lastResultDetail as { actor?: 'p1'|'p2'; moveId?: string; effect?: string; effectiveness?: 'super_effective' | 'not_very_effective' | 'no_effect' | 'normal' } | undefined;
+      if (detail?.moveId) {
+        const actorName = detail.actor === 'p2' ? 'Opponent' : 'You';
+        const title = `${actorName} used ${detail.moveId}`;
+        let message = detail.effect || '';
+        if (detail.effectiveness === 'super_effective') message = `${message} It's super effective!`;
+        if (detail.effectiveness === 'not_very_effective') message = `${message} It's not very effective.`;
+        if (detail.effectiveness === 'no_effect') message = `${message} It had no effect.`;
+        (window as any).__battle_toast?.({ title, message });
+      } else {
+        // Fallback: use summary text
+        const title = line.includes('used') ? pub?.lastResultSummary : 'Battle update';
+        let message = '';
+        if (line.includes('super effective')) message = `It's super effective!`;
+        if (line.includes('not very effective')) message = `It's not very effective.`;
+        (window as any).__battle_toast?.({ title, message });
+      }
+    } catch {}
+    if (line.includes('used')) {
+      // Heuristic: if mentions opponent, animate opponent as actor
+      if (line.includes('opponent')) {
+        playAnim(oppAnimRef, 'animate-bounce');
+      } else {
+        playAnim(playerAnimRef, 'animate-bounce');
+      }
+    }
+    if (line.includes('hit') || line.includes('damage') || line.includes('fainted')) {
+      if (line.includes('opponent')) {
+        playAnim(oppAnimRef, 'animate-damage');
+      } else {
+        playAnim(playerAnimRef, 'animate-damage');
+      }
+    }
+  }, [pub?.lastResultSummary]);
+
+  // Damage animations when HP values change (robust cue)
+  const lastMyHpRef = useRef<number | null>(null);
+  const lastOppHpRef = useRef<number | null>(null);
+  useEffect(() => {
+    const cur = meUid ? pub?.[meUid]?.active?.hp?.cur : null;
+    if (typeof cur === 'number') {
+      if (lastMyHpRef.current != null && cur < lastMyHpRef.current) {
+        playAnim(playerAnimRef, 'animate-damage');
+      }
+      lastMyHpRef.current = cur;
+    }
+  }, [pub?.[meUid!]?.active?.hp?.cur, meUid, pub]);
+  useEffect(() => {
+    const cur = oppUid ? pub?.[oppUid]?.active?.hp?.cur : null;
+    if (typeof cur === 'number') {
+      if (lastOppHpRef.current != null && cur < lastOppHpRef.current) {
+        playAnim(oppAnimRef, 'animate-damage');
+      }
+      lastOppHpRef.current = cur;
+    }
+  }, [pub?.[oppUid!]?.active?.hp?.cur, oppUid, pub]);
 
   if (loading) {
     return (
@@ -166,7 +297,7 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
           <h3 className="text-lg font-semibold mb-4">Your Pokemon</h3>
           {myActive && (
             <div className="pokemon-card p-4 mb-4 rounded-lg border-2 border-blue-500 bg-blue-50 shadow-lg">
-              <div className="flex items-start gap-4">
+              <div className="flex items-start gap-4" ref={playerAnimRef}>
                 {/* Pokemon Image (Back view for player) */}
                 <PokemonBattleImage 
                   species={myActive.species} 
@@ -262,7 +393,7 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
           <h3 className="text-lg font-semibold mb-4">Opponent Pokemon</h3>
           {oppActive && (
             <div className="pokemon-card p-4 mb-4 rounded-lg border-2 border-red-500 bg-red-50 shadow-lg">
-              <div className="flex items-start gap-4">
+              <div className="flex items-start gap-4" ref={oppAnimRef}>
                 {/* Pokemon Image (Front view for opponent) */}
                 <PokemonBattleImage 
                   species={oppActive.species} 
@@ -337,7 +468,19 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
                   disabled={move.disabled}
                   title={move.reason}
                 >
-                  <div className="font-medium capitalize">{move.id}</div>
+                  <div className="font-medium capitalize">
+                    <Tooltip
+                      content={moveInfo[move.id]?.short_effect || ''}
+                      type={(moveInfo[move.id]?.type as any) || 'normal'}
+                      damageClass={moveInfo[move.id]?.damage_class}
+                      variant="move"
+                      position="top"
+                      containViewport
+                      maxWidth="w-80"
+                    >
+                      <span className="cursor-help">{move.id}</span>
+                    </Tooltip>
+                  </div>
                   <div className="text-xs">PP: {move.pp}</div>
                   {move.reason && (
                     <div className="text-xs text-red-200">{move.reason}</div>

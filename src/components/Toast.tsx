@@ -46,13 +46,26 @@ function ToastComponent({ toast, onRemove }: ToastProps) {
   const getToastStyles = () => {
     switch (toast.type) {
       case 'success':
-        return 'bg-green-50 border-green-200 text-green-800';
+        return 'bg-white border-green-500 text-green-900';
       case 'warning':
-        return 'bg-yellow-50 border-yellow-200 text-yellow-800';
+        return 'bg-white border-yellow-500 text-yellow-900';
       case 'error':
-        return 'bg-red-50 border-red-200 text-red-800';
+        return 'bg-white border-red-500 text-red-900';
       default:
-        return 'bg-blue-50 border-blue-200 text-blue-800';
+        return 'bg-white border-blue-600 text-blue-900';
+    }
+  };
+
+  const getAccentClass = () => {
+    switch (toast.type) {
+      case 'success':
+        return 'bg-green-500';
+      case 'warning':
+        return 'bg-yellow-500';
+      case 'error':
+        return 'bg-red-500';
+      default:
+        return 'bg-blue-600';
     }
   };
 
@@ -72,25 +85,26 @@ function ToastComponent({ toast, onRemove }: ToastProps) {
   return (
     <div
       className={`
-        transform transition-all duration-300 ease-in-out
+        relative transform transition-all duration-300 ease-in-out
         ${isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}
-        max-w-sm w-full bg-white border rounded-lg shadow-lg pointer-events-auto
+        w-[320px] bg-white border-2 rounded-xl shadow-xl pointer-events-auto
         ${getToastStyles()}
       `}
     >
-      <div className="p-4">
-        <div className="flex items-start">
-          <div className="flex-shrink-0">
+      <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-xl ${getAccentClass()}`} />
+      <div className="p-4 pl-5">
+        <div className="flex items-start gap-3">
+          <div className={`flex-shrink-0 text-xl ${getAccentClass().replace('bg','text')}`}>
             {typeof getIcon() === 'string' ? (
-              <span className="text-lg">{getIcon()}</span>
+              <span className="leading-none">{getIcon()}</span>
             ) : (
               getIcon()
             )}
           </div>
           <div className="ml-3 w-0 flex-1">
-            <p className="text-sm font-medium">{toast.title}</p>
+            <p className="text-base font-semibold leading-5 tracking-tight">{toast.title}</p>
             {toast.message && (
-              <p className="mt-1 text-sm opacity-90">{toast.message}</p>
+              <p className="mt-1 text-sm leading-5 opacity-90">{toast.message}</p>
             )}
             {toast.action && (
               <div className="mt-2">

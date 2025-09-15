@@ -51,8 +51,6 @@ export default defineConfig({
     hookTimeout: 10000,
     teardownTimeout: 10000,
     maxConcurrency: 5,
-    minThreads: 1,
-    maxThreads: 4,
     pool: 'threads',
     poolOptions: {
       threads: {
@@ -63,7 +61,7 @@ export default defineConfig({
     },
     retry: 2,
     bail: 0,
-    reporter: ['verbose', 'json', 'html'],
+    reporters: ['verbose', 'json', 'html'],
     outputFile: {
       json: './test-results/results.json',
       html: './test-results/index.html'
@@ -74,16 +72,9 @@ export default defineConfig({
       }
       return true;
     },
-    onConsoleWarn(warn) {
-      return false;
-    },
-    onConsoleError(err) {
-      return false;
-    },
     mockReset: true,
     restoreMocks: true,
     clearMocks: true,
-    resetMocks: true,
     fakeTimers: {
       toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval']
     },
@@ -94,7 +85,6 @@ export default defineConfig({
     isolate: true,
     passWithNoTests: true,
     allowOnly: false,
-    run: true,
     watch: false,
     ui: false,
     open: false,
@@ -117,26 +107,11 @@ export default defineConfig({
       '@/lib': resolve(__dirname, './src/lib'),
       '@/components': resolve(__dirname, './src/components')
     },
-    define: {
-      'import.meta.vitest': 'undefined'
-    },
     env: {
       NODE_ENV: 'test',
       VITEST: 'true'
     },
-    envDir: './',
-    envPrefix: ['VITE_', 'NEXT_PUBLIC_'],
-    logLevel: 'info',
     silent: false,
-    reporterOptions: {
-      json: {
-        outputFile: './test-results/results.json'
-      },
-      html: {
-        outputFile: './test-results/index.html',
-        open: 'never'
-      }
-    }
   },
   resolve: {
     alias: {

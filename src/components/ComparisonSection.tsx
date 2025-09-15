@@ -2,7 +2,7 @@
 
 import { X, Scale, ArrowRight } from 'lucide-react';
 import { Pokemon } from '@/types/pokemon';
-import { formatPokemonName } from '@/lib/utils';
+import { formatPokemonName, getShowdownAnimatedSprite } from '@/lib/utils';
 
 interface ComparisonSectionProps {
   comparisonList: number[];
@@ -72,7 +72,12 @@ export default function ComparisonSection({
                 >
                   <picture className="mr-3">
                     <img
-                      src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`}
+                      src={getShowdownAnimatedSprite(pokemon.name, 'front', false)}
+                      onError={(e) => {
+                        const target = e.currentTarget as HTMLImageElement
+                        const fallback = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`
+                        if (target.src !== fallback) target.src = fallback
+                      }}
                       alt={formatPokemonName(pokemon.name)}
                       className="w-8 h-8 object-contain"
                       loading="lazy"

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect, forwardRef, useImperativeHandle, useState } from 'react';
-import { getPokemonIdFromSpecies, getPokemonBattleImageWithFallback, formatPokemonName } from '@/lib/utils';
+import { getPokemonIdFromSpecies, getPokemonBattleImageWithFallback, formatPokemonName, getShowdownAnimatedSprite } from '@/lib/utils';
 
 export interface BattleSpriteRef {
   play: (animName: string) => Promise<void>;
@@ -29,6 +29,7 @@ interface BattleSpriteProps {
   };
   className?: string;
   onAnimationComplete?: (animName: string) => void;
+  spriteMode?: 'static' | 'animated';
 }
 
 export const BattleSprite = forwardRef<BattleSpriteRef, BattleSpriteProps>(({
@@ -41,7 +42,8 @@ export const BattleSprite = forwardRef<BattleSpriteRef, BattleSpriteProps>(({
   side,
   field,
   className = '',
-  onAnimationComplete
+  onAnimationComplete,
+  spriteMode = 'static'
 }, ref) => {
   const spriteRef = useRef<HTMLDivElement>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -50,7 +52,12 @@ export const BattleSprite = forwardRef<BattleSpriteRef, BattleSpriteProps>(({
 
   const pokemonId = getPokemonIdFromSpecies(species);
   const variant = side === 'player' ? 'back' : 'front';
-  const { primary, fallback } = pokemonId ? getPokemonBattleImageWithFallback(pokemonId, variant) : { primary: '', fallback: '' };
+  // Decide sprite source based on mode
+  const useAnimated = spriteMode === 'animated';
+  const animatedUrl = getShowdownAnimatedSprite(species, variant);
+  const { primary: staticPrimary, fallback: staticFallback } = pokemonId ? getPokemonBattleImageWithFallback(pokemonId, variant) : { primary: '', fallback: '' };
+  const primary = useAnimated ? animatedUrl : staticPrimary;
+  const fallback = useAnimated ? (staticPrimary || staticFallback) : staticFallback;
 
   // Animation system
   useImperativeHandle(ref, () => ({
@@ -64,13 +71,13 @@ export const BattleSprite = forwardRef<BattleSpriteRef, BattleSpriteProps>(({
       element.className = element.className.replace(/animate-\w+/g, '');
       
       // Add the new animation
-      element.classList.add(`animate-${animName}`);
+      element.classList.add(animName);
       
       // Wait for animation to complete
       await new Promise(resolve => {
         const handleAnimationEnd = () => {
           element.removeEventListener('animationend', handleAnimationEnd);
-          element.classList.remove(`animate-${animName}`);
+          element.classList.remove(animName);
           setIsAnimating(false);
           onAnimationComplete?.(animName);
           resolve(void 0);

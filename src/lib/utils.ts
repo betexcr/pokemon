@@ -298,13 +298,12 @@ export function getPokemonIdFromSpecies(species: string): number | null {
 
 // Pokemon image utilities for battle context
 export function getPokemonBattleImageUrl(pokemonId: number, variant: 'front' | 'back' = 'front', shiny: boolean = false): string {
+  // PokeAPI PNG battle sprites for reliable fallback
   const baseUrl = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon';
   const shinyPrefix = shiny ? 'shiny/' : '';
   const direction = variant === 'back' ? 'back' : '';
-  
-  // Construct the URL: baseUrl/shinyPrefix/direction/id.png
-  const urlParts = [baseUrl, shinyPrefix, direction].filter(Boolean);
-  return `${urlParts.join('/')}/${pokemonId}.png`;
+  const parts = [baseUrl, shinyPrefix, direction].filter(Boolean);
+  return `${parts.join('/')}/${pokemonId}.png`;
 }
 
 export function getPokemonBattleSpriteUrl(pokemonId: number, variant: 'front' | 'back' = 'front', shiny: boolean = false): string {
@@ -321,6 +320,27 @@ export function getPokemonBattleImageWithFallback(pokemonId: number, variant: 'f
     primary: getPokemonBattleSpriteUrl(pokemonId, variant, shiny),
     fallback: getPokemonBattleSpriteUrl(pokemonId, variant, false) // Always fallback to non-shiny
   };
+}
+
+// Pokemon Showdown animated sprites by species name
+export function getShowdownAnimatedSprite(species: string, variant: 'front' | 'back' = 'front', shiny: boolean = false): string {
+  // Normalize species name to Showdown sprite filename with special-case fixes
+  const base = species.toLowerCase().trim();
+  const exceptions: Record<string, string> = {
+    // Showdown uses a dot for Mr. Mime
+    'mr-mime': 'mr.mime',
+    // Mime Jr. drops hyphen and dot
+    'mime-jr': 'mimejr',
+    // Mr. Rime (Galar) uses a dot
+    'mr-rime': 'mr.rime'
+  };
+  const hyphenated = base.replace(/\s+/g, '-');
+  const mapped = exceptions[hyphenated] || hyphenated;
+  const folder = variant === 'back' ? 'ani-back' : 'ani';
+  const shinySegment = shiny ? 'shiny' : '';
+  // Showdown uses separate folders for shiny: ani-shiny and ani-back-shiny
+  const folderWithShiny = shiny ? `${folder}-shiny` : folder;
+  return `https://play.pokemonshowdown.com/sprites/${folderWithShiny}/${mapped}.gif`;
 }
 
 // Local storage utilities
