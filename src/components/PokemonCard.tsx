@@ -105,8 +105,8 @@ export default function PokemonCard({
 
       {/* First row - absolutely positioned */}
       <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between">
-        {/* Pokemon number */}
-        <span className="text-xs text-muted font-mono bg-white/90 dark:bg-black/40 backdrop-blur px-2 py-1 rounded">
+        {/* Pokemon number - avoid backdrop blur on very small views to not obscure sprite */}
+        <span className="text-xs text-muted font-mono bg-white/90 dark:bg-black/40 px-2 py-1 rounded sm:backdrop-blur">
           #{String(pokemon.id).padStart(4, "0")}
         </span>
         
@@ -118,7 +118,7 @@ export default function PokemonCard({
               "px-2 py-1 rounded-full text-xs font-medium transition-all duration-200 border flex items-center gap-1.5",
               isInComparison 
                 ? 'bg-poke-blue text-white border-poke-blue shadow-md' 
-                : 'bg-white/90 dark:bg-black/40 text-gray-500 border-gray-200 hover:bg-poke-blue hover:text-white hover:border-poke-blue backdrop-blur'
+                : 'bg-white/90 dark:bg-black/40 text-gray-500 border-gray-200 hover:bg-poke-blue hover:text-white hover:border-poke-blue sm:backdrop-blur'
             )}
             aria-label={isInComparison ? 'Remove from comparison' : 'Add to comparison'}
           >
@@ -136,7 +136,7 @@ export default function PokemonCard({
         }}
         aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
         className={clsx(
-          "absolute right-3 top-3 z-10 rounded-full bg-white/90 dark:bg-black/40 backdrop-blur p-2 shadow",
+          "absolute right-3 top-3 z-10 rounded-full bg-white/90 dark:bg-black/40 p-2 shadow sm:backdrop-blur",
           "transition transform hover:scale-110",
           isFavorite && "ring-2 ring-poke-red"
         )}
