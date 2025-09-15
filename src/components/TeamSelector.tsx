@@ -136,7 +136,7 @@ export default function TeamSelector({
           {label}
         </label>
         <div className="border border-gray-300 rounded-lg p-3 bg-gray-50 text-gray-800 dark:text-muted text-sm">
-          No teams saved. <a href="/team" className="text-blue-600 hover:underline">Create a team</a> or <a href="/auth" className="text-blue-600 hover:underline">sign in</a> to access cloud teams.
+          No teams saved. <a href="/team" className="text-blue-600 hover:underline">Create a team</a> or <button onClick={() => setShowAuthModal(true)} className="text-blue-600 hover:underline bg-transparent border-none cursor-pointer">sign in</button> to access cloud teams.
         </div>
       </div>
     );

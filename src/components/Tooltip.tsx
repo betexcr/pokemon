@@ -121,12 +121,24 @@ export default function Tooltip({
 
       const computeFor = (pos: typeof position) => {
         let t = 0, l = 0
+        
+        // For move tooltips, try to center over the text content rather than the entire anchor
+        let centerX = anchorRect.left + anchorRect.width / 2
+        if (variant === 'move') {
+          // Find the text content within the anchor to get better centering
+          const textElement = anchor.querySelector('span')
+          if (textElement) {
+            const textRect = textElement.getBoundingClientRect()
+            centerX = textRect.left + textRect.width / 2
+          }
+        }
+        
         if (pos === 'bottom') {
           t = anchorRect.bottom + margin
-          l = anchorRect.left + anchorRect.width / 2 - tipRect.width / 2
+          l = centerX - tipRect.width / 2
         } else if (pos === 'top') {
           t = anchorRect.top - tipRect.height - margin
-          l = anchorRect.left + anchorRect.width / 2 - tipRect.width / 2
+          l = centerX - tipRect.width / 2
         } else if (pos === 'left') {
           t = anchorRect.top + anchorRect.height / 2 - tipRect.height / 2
           l = anchorRect.left - tipRect.width - margin

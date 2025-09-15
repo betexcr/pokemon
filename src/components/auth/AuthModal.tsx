@@ -17,7 +17,6 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
   const [mode, setMode] = useState<'login' | 'register'>(initialMode);
   const [mounted, setMounted] = useState(false);
 
-
   useEffect(() => {
     setMounted(true);
     return () => setMounted(false);
@@ -25,23 +24,26 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
 
   useEffect(() => {
     if (isOpen) {
+      // Store original styles
+      const originalOverflow = document.body.style.overflow;
+      const originalPosition = document.body.style.position;
+      const originalWidth = document.body.style.width;
+      const originalHeight = document.body.style.height;
+      
+      // Apply modal styles
       document.body.style.overflow = 'hidden';
       document.body.style.position = 'fixed';
       document.body.style.width = '100%';
       document.body.style.height = '100%';
-    } else {
-      document.body.style.overflow = 'unset';
-      document.body.style.position = 'unset';
-      document.body.style.width = 'unset';
-      document.body.style.height = 'unset';
+      
+      return () => {
+        // Restore original styles
+        document.body.style.overflow = originalOverflow;
+        document.body.style.position = originalPosition;
+        document.body.style.width = originalWidth;
+        document.body.style.height = originalHeight;
+      };
     }
-    
-    return () => {
-      document.body.style.overflow = 'unset';
-      document.body.style.position = 'unset';
-      document.body.style.width = 'unset';
-      document.body.style.height = 'unset';
-    };
   }, [isOpen]);
 
   // Handle Escape key to close modal
@@ -65,64 +67,60 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
 
   const modalContent = (
     <div 
+      className="fixed inset-0 z-[99999] flex items-center justify-center w-full h-full p-2 sm:p-4 md:p-6"
       style={{ 
-        position: 'fixed', 
-        top: 0, 
-        left: 0, 
-        right: 0, 
-        bottom: 0, 
-        zIndex: 999999,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: '100vw',
-        height: '100vh',
-        margin: 0,
-        padding: '1rem',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backgroundColor: 'rgba(0, 0, 0, 0.75)',
         backdropFilter: 'blur(4px)',
-        WebkitBackdropFilter: 'blur(4px)'
+        WebkitBackdropFilter: 'blur(4px)',
+        display: 'flex',
+        visibility: 'visible',
+        opacity: 1,
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 99999,
+        width: '100vw',
+        height: '100vh'
       }}
       onClick={onClose}
     >
       {/* Modal Content */}
       <div 
-        className="relative bg-white rounded-2xl shadow-2xl overflow-hidden"
+        className="relative bg-white shadow-2xl overflow-hidden w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl"
         style={{
-          position: 'relative',
-          width: '100%',
-          maxWidth: '28rem',
+          borderRadius: '1.5rem',
           backgroundColor: 'white',
-          borderRadius: '1rem',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-          zIndex: 1000000,
-          margin: 'auto'
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+          maxHeight: '90vh',
+          overflowY: 'auto'
         }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute -top-2 -right-2 bg-white rounded-full p-2 shadow-lg border-none cursor-pointer flex items-center justify-center hover:bg-gray-50 transition-colors"
-          style={{ zIndex: 1000000 }}
+          className="absolute top-3 right-3 sm:top-4 sm:right-4 bg-white/90 hover:bg-white rounded-full p-2 shadow-lg border border-gray-200 cursor-pointer flex items-center justify-center hover:scale-105 transition-all duration-200 z-10 backdrop-blur-sm"
+          aria-label="Close modal"
         >
-          <X className="h-4 w-4 text-gray-600" />
+          <X className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
         </button>
         
         {/* Hero Image */}
-        <div className="w-full overflow-hidden rounded-t-2xl">
+        <div className="w-full overflow-hidden" style={{ borderRadius: '1.5rem 1.5rem 0 0' }}>
           <Image
             src="/header-icons/auth-hero.png"
-            alt=""
+            alt="Authentication"
             width={1200}
             height={360}
-            className={`w-full object-cover ${mode === 'login' ? 'h-32' : 'h-24'}`}
+            className={`w-full object-cover ${mode === 'login' ? 'h-20 sm:h-24 md:h-28' : 'h-16 sm:h-20 md:h-24'}`}
             priority
           />
         </div>
         
         {/* Auth Form */}
-        <div className={`px-6 ${mode === 'login' ? 'pb-6' : 'pb-8'}`}>
+        <div className={`px-4 sm:px-6 md:px-8 py-6 sm:py-8 ${mode === 'login' ? 'pb-6 sm:pb-8' : 'pb-8 sm:pb-10'}`}>
           {mode === 'login' ? (
             <LoginForm 
               onToggleMode={() => setMode('register')} 
@@ -139,14 +137,6 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
     </div>
   );
 
-  console.log('Creating portal to document.body:', document.body);
-  
-  // Ensure we have a proper container
-  const portalContainer = document.body;
-  if (!portalContainer) {
-    console.error('No document.body found for portal');
-    return null;
-  }
-  
-  return createPortal(modalContent, portalContainer);
+  // Create portal to document.body
+  return createPortal(modalContent, document.body);
 }

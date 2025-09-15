@@ -1,6 +1,8 @@
 // Additional functions for the Gen-8/9 battle engine
 
 import { BattleState, BattlePokemon, getCurrentPokemon, switchToPokemon, getEffectiveSpeed, isTeamDefeated, canUseMove } from './team-battle-engine';
+import { calculateComprehensiveDamage } from './damage-calculator';
+import { getMove } from './moveCache';
 
 // Resolve a switch action
 export async function resolveSwitch(state: BattleState, action: BattleState['actionQueue'][0]): Promise<void> {
@@ -72,8 +74,7 @@ export async function executeMoveAction(
   moveId: string,
   isPlayer: boolean
 ): Promise<void> {
-  // For now, use the existing move execution logic
-  // This would need to be updated to work with the new move system
+  // Log the move usage
   state.battleLog.push({
     type: 'move_used',
     message: `${attacker.pokemon.name} used ${moveId}!`,
@@ -81,13 +82,94 @@ export async function executeMoveAction(
     move: moveId
   });
   
-  // TODO: Implement full move resolution pipeline
-  // 1. Usability gates ✓
-  // 2. Target validation
-  // 3. Accuracy check
-  // 4. Critical check
-  // 5. Damage calculation
-  // 6. Post-hit effects
+  // Get move data
+  const move = await getMove(moveId);
+  if (!move) {
+    console.error(`Move ${moveId} not found`);
+    return;
+  }
+  
+  // Skip damage calculation for non-damaging moves
+  if (move.power === 0) {
+    console.log(`Move ${moveId} has no power, skipping damage calculation`);
+    // Handle status moves, etc.
+    return;
+  }
+  
+  // Get stats from the Pokemon data structure
+  const attackerAttackStat = attacker.pokemon.stats.find(s => s.stat.name === 'attack')?.base_stat || 50;
+  const attackerSpecialAttackStat = attacker.pokemon.stats.find(s => s.stat.name === 'special-attack')?.base_stat || 50;
+  const defenderDefenseStat = defender.pokemon.stats.find(s => s.stat.name === 'defense')?.base_stat || 50;
+  const defenderSpecialDefenseStat = defender.pokemon.stats.find(s => s.stat.name === 'special-defense')?.base_stat || 50;
+  
+  // Determine if this is a physical or special move
+  const isPhysical = move.category === 'Physical';
+  const attackStat = isPhysical ? attackerAttackStat : attackerSpecialAttackStat;
+  const defenseStat = isPhysical ? defenderDefenseStat : defenderSpecialDefenseStat;
+  
+  console.log(`Calculating damage for ${moveId} (power: ${move.power}, type: ${move.type}, category: ${move.category})`);
+  console.log(`Attacker: ${attacker.pokemon.name} (level ${attacker.level}, ${isPhysical ? 'attack' : 'special-attack'}: ${attackStat})`);
+  console.log(`Defender: ${defender.pokemon.name} (${isPhysical ? 'defense' : 'special-defense'}: ${defenseStat}, current HP: ${defender.currentHp})`);
+  
+  // Calculate damage using the comprehensive damage calculator
+  const damageResult = calculateComprehensiveDamage({
+    level: attacker.level,
+    movePower: move.power,
+    moveType: move.type as any,
+    attackerTypes: attacker.pokemon.types.map(type => 
+      (typeof type === 'string' ? type : type.type?.name || 'normal') as any
+    ),
+    defenderTypes: defender.pokemon.types.map(type => 
+      (typeof type === 'string' ? type : type.type?.name || 'normal') as any
+    ),
+    attackStat: attackStat,
+    defenseStat: defenseStat,
+    isCrit: false, // TODO: Implement critical hit logic
+    weather: 'none', // TODO: Implement weather effects
+    terrain: 'none', // TODO: Implement terrain effects
+    isPhysical: move.category === 'Physical',
+    attackerAbility: attacker.currentAbility || 'none',
+    defenderAbility: defender.currentAbility || 'none',
+    attackerItem: 'none', // TODO: Implement item system
+    defenderItem: 'none', // TODO: Implement item system
+    attackerStatus: attacker.status || 'none',
+    defenderStatus: defender.status || 'none',
+    attackerVolatile: attacker.volatile,
+    defenderVolatile: defender.volatile,
+    field: state.field
+  });
+  
+  const damage = damageResult.damage;
+  const oldHp = defender.currentHp;
+  defender.currentHp = Math.max(0, defender.currentHp - damage);
+  
+  console.log(`Damage calculated: ${damage} (${oldHp} -> ${defender.currentHp})`);
+  
+  // Log damage dealt
+  const damagePercent = Math.round((damage / oldHp) * 100);
+  const remainingPercent = Math.round((defender.currentHp / defender.maxHp) * 100);
+  
+  state.battleLog.push({
+    type: 'damage_dealt',
+    message: `${defender.pokemon.name} took ${damage} damage! (${remainingPercent}% HP left)`,
+    pokemon: defender.pokemon.name,
+    damage: damagePercent
+  });
+  
+  // Check if Pokemon fainted
+  if (defender.currentHp <= 0) {
+    state.battleLog.push({
+      type: 'pokemon_fainted',
+      message: `${defender.pokemon.name} fainted!`,
+      pokemon: defender.pokemon.name
+    });
+    
+    // Update fainted count for the defending team
+    const defendingTeam = action.user === 'player' ? state.opponent : state.player;
+    defendingTeam.faintedCount = defendingTeam.pokemon.filter(p => p.currentHp <= 0).length;
+    
+    console.log(`Pokemon fainted! Updated ${action.user === 'player' ? 'opponent' : 'player'} team fainted count to ${defendingTeam.faintedCount}`);
+  }
 }
 
 // Run on-entry sequence for a Pokemon
@@ -131,6 +213,7 @@ export function processResidualDamage(state: BattleState): void {
   // Poison/Burn damage
   if (playerPokemon.status === 'poisoned') {
     const damage = Math.floor(playerPokemon.maxHp / 8);
+    const oldHp = playerPokemon.currentHp;
     playerPokemon.currentHp = Math.max(0, playerPokemon.currentHp - damage);
     if (damage > 0) {
       state.battleLog.push({
@@ -140,10 +223,15 @@ export function processResidualDamage(state: BattleState): void {
         damage: Math.round((damage / playerPokemon.maxHp) * 100)
       });
     }
+    // Update fainted count if Pokemon fainted
+    if (oldHp > 0 && playerPokemon.currentHp <= 0) {
+      state.player.faintedCount = state.player.pokemon.filter(p => p.currentHp <= 0).length;
+    }
   }
   
   if (opponentPokemon.status === 'poisoned') {
     const damage = Math.floor(opponentPokemon.maxHp / 8);
+    const oldHp = opponentPokemon.currentHp;
     opponentPokemon.currentHp = Math.max(0, opponentPokemon.currentHp - damage);
     if (damage > 0) {
       state.battleLog.push({
@@ -153,11 +241,16 @@ export function processResidualDamage(state: BattleState): void {
         damage: Math.round((damage / opponentPokemon.maxHp) * 100)
       });
     }
+    // Update fainted count if Pokemon fainted
+    if (oldHp > 0 && opponentPokemon.currentHp <= 0) {
+      state.opponent.faintedCount = state.opponent.pokemon.filter(p => p.currentHp <= 0).length;
+    }
   }
   
   // Burn damage
   if (playerPokemon.status === 'burned') {
     const damage = Math.floor(playerPokemon.maxHp / 16);
+    const oldHp = playerPokemon.currentHp;
     playerPokemon.currentHp = Math.max(0, playerPokemon.currentHp - damage);
     if (damage > 0) {
       state.battleLog.push({
@@ -167,10 +260,15 @@ export function processResidualDamage(state: BattleState): void {
         damage: Math.round((damage / playerPokemon.maxHp) * 100)
       });
     }
+    // Update fainted count if Pokemon fainted
+    if (oldHp > 0 && playerPokemon.currentHp <= 0) {
+      state.player.faintedCount = state.player.pokemon.filter(p => p.currentHp <= 0).length;
+    }
   }
   
   if (opponentPokemon.status === 'burned') {
     const damage = Math.floor(opponentPokemon.maxHp / 16);
+    const oldHp = opponentPokemon.currentHp;
     opponentPokemon.currentHp = Math.max(0, opponentPokemon.currentHp - damage);
     if (damage > 0) {
       state.battleLog.push({
@@ -179,6 +277,10 @@ export function processResidualDamage(state: BattleState): void {
         pokemon: opponentPokemon.pokemon.name,
         damage: Math.round((damage / opponentPokemon.maxHp) * 100)
       });
+    }
+    // Update fainted count if Pokemon fainted
+    if (oldHp > 0 && opponentPokemon.currentHp <= 0) {
+      state.opponent.faintedCount = state.opponent.pokemon.filter(p => p.currentHp <= 0).length;
     }
   }
 }
@@ -278,6 +380,8 @@ export function processVolatileDecrements(state: BattleState): void {
         message: `${playerPokemon.pokemon.name} fainted due to Perish Song!`,
         pokemon: playerPokemon.pokemon.name
       });
+      // Update fainted count
+      state.player.faintedCount = state.player.pokemon.filter(p => p.currentHp <= 0).length;
     }
   }
   
@@ -290,6 +394,8 @@ export function processVolatileDecrements(state: BattleState): void {
         message: `${opponentPokemon.pokemon.name} fainted due to Perish Song!`,
         pokemon: opponentPokemon.pokemon.name
       });
+      // Update fainted count
+      state.opponent.faintedCount = state.opponent.pokemon.filter(p => p.currentHp <= 0).length;
     }
   }
 }

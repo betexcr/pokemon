@@ -1,0 +1,111 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e4]:
+    - heading "Authentication Required" [level=1] [ref=e5]
+    - paragraph [ref=e6]: You need to sign in to access this feature. Create an account to save your teams and battle other trainers!
+    - button "Sign In / Sign Up" [ref=e7]
+  - generic [active]:
+    - generic [ref=e10]:
+      - generic [ref=e11]:
+        - navigation [ref=e13]:
+          - button "previous" [disabled] [ref=e14]:
+            - img "previous" [ref=e15]
+          - generic [ref=e17]:
+            - generic [ref=e18]: 1/
+            - generic [ref=e19]: "1"
+          - button "next" [disabled] [ref=e20]:
+            - img "next" [ref=e21]
+        - link "Next.js 15.5.2 (stale) Turbopack" [ref=e24] [cursor=pointer]:
+          - /url: https://nextjs.org/docs/messages/version-staleness
+          - img [ref=e25] [cursor=pointer]
+          - generic "There is a newer version (15.5.3) available, upgrade recommended!" [ref=e27] [cursor=pointer]: Next.js 15.5.2 (stale)
+          - generic [ref=e28] [cursor=pointer]: Turbopack
+      - dialog "Build Error" [ref=e30]:
+        - generic [ref=e33]:
+          - generic [ref=e34]:
+            - generic [ref=e35]:
+              - generic [ref=e37]: Build Error
+              - generic [ref=e38]:
+                - button "Copy Error Info" [ref=e39] [cursor=pointer]:
+                  - img [ref=e40] [cursor=pointer]
+                - button "No related documentation found" [disabled] [ref=e42]:
+                  - img [ref=e43]
+                - link "Learn more about enabling Node.js inspector for server code with Chrome DevTools" [ref=e45] [cursor=pointer]:
+                  - /url: https://nextjs.org/docs/app/building-your-application/configuring/debugging#server-side-code
+                  - img [ref=e46] [cursor=pointer]
+            - paragraph [ref=e55]: Parsing ecmascript source code failed
+          - generic [ref=e57]:
+            - generic [ref=e59]:
+              - img [ref=e61]
+              - generic [ref=e64]: ./src/app/battle/runtime/page.tsx (2317:19)
+              - button "Open in editor" [ref=e65] [cursor=pointer]:
+                - img [ref=e67] [cursor=pointer]
+            - generic [ref=e70]:
+              - generic [ref=e71]: Parsing ecmascript source code failed
+              - generic [ref=e73]: 2315 |
+              - generic [ref=e75]: <
+              - generic [ref=e76]: /
+              - generic [ref=e77]: div
+              - generic [ref=e78]: ">"
+              - generic [ref=e80]: 2316 |
+              - generic [ref=e81]: ")}"
+              - generic [ref=e82]: ">"
+              - generic [ref=e83]: 2317 |
+              - generic [ref=e85]: <
+              - generic [ref=e86]: /
+              - generic [ref=e87]: div
+              - generic [ref=e88]: ">"
+              - generic [ref=e90]: "|"
+              - generic [ref=e92]: ^
+              - generic [ref=e93]: ^
+              - generic [ref=e94]: ^
+              - generic [ref=e95]: ^
+              - generic [ref=e97]: 2318 |
+              - generic [ref=e99]: <
+              - generic [ref=e100]: div
+              - generic [ref=e101]: className
+              - generic [ref=e102]: =
+              - generic [ref=e103]: "\"relative w-24 h-24 flex items-center justify-end\""
+              - generic [ref=e104]: ">"
+              - generic [ref=e106]: 2319 |
+              - generic [ref=e108]: <
+              - generic [ref=e109]: Image
+              - generic [ref=e111]: 2320 |
+              - generic [ref=e112]: src
+              - generic [ref=e113]: =
+              - generic [ref=e114]: "{opponent"
+              - generic [ref=e115]: .
+              - generic [ref=e116]: pokemon
+              - generic [ref=e117]: .
+              - generic [ref=e118]: sprites
+              - generic [ref=e119]: .
+              - generic [ref=e120]: front_default
+              - generic [ref=e121]: "||"
+              - generic [ref=e122]: opponent
+              - generic [ref=e123]: .
+              - generic [ref=e124]: pokemon
+              - generic [ref=e125]: .
+              - generic [ref=e126]: sprites
+              - generic [ref=e127]: .
+              - generic [ref=e128]: front_shiny
+              - generic [ref=e129]: "||"
+              - generic [ref=e131]: "'/placeholder-pokemon.png'"
+              - generic [ref=e132]: "}"
+              - generic [ref=e133]: "Expression expected Import traces: Client Component Browser: ./src/app/battle/runtime/page.tsx [Client Component Browser] ./src/app/battle/runtime/page.tsx [Server Component] Client Component SSR: ./src/app/battle/runtime/page.tsx [Client Component SSR] ./src/app/battle/runtime/page.tsx [Server Component]"
+        - generic [ref=e134]:
+          - generic [ref=e135]: "1"
+          - generic [ref=e136]: "2"
+    - generic [ref=e141] [cursor=pointer]:
+      - button "Open Next.js Dev Tools" [ref=e142] [cursor=pointer]:
+        - img [ref=e143] [cursor=pointer]
+      - button "Open issues overlay" [ref=e147] [cursor=pointer]:
+        - generic [ref=e148] [cursor=pointer]:
+          - generic [ref=e149] [cursor=pointer]: "0"
+          - generic [ref=e150] [cursor=pointer]: "1"
+        - generic [ref=e151] [cursor=pointer]: Issue
+  - alert [ref=e152]
+  - iframe [ref=e153]:
+    
+```

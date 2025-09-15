@@ -1662,6 +1662,9 @@ export async function processBattleTurn(
       message: 'All opponent Pokémon have fainted! You won!',
       turn: newState.turn
     });
+  } else {
+    // Battle continues - transition back to choice phase for next turn
+    newState.phase = 'choice';
   }
   
   return newState;

@@ -65,16 +65,16 @@ export default function MobileHeader({
             console.log('Mobile profile picture clicked, opening AuthModal');
             setShowAuthModal(true);
           }}
-          className="w-16 h-16 rounded-full overflow-hidden border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-400" 
+          className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-full overflow-hidden border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-400 touch-manipulation" 
           style={{
             borderColor: 'var(--color-border)',
             borderRadius: '50%',
-            width: '64px',
-            height: '64px',
-            minWidth: '64px',
-            minHeight: '64px',
-            maxWidth: '64px',
-            maxHeight: '64px',
+            width: '40px',
+            height: '40px',
+            minWidth: '40px',
+            minHeight: '40px',
+            maxWidth: '40px',
+            maxHeight: '40px',
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.borderColor = 'var(--color-muted)';
@@ -102,16 +102,16 @@ export default function MobileHeader({
     if (src && !imageError) {
       return (
         <button 
-          className="w-16 h-16 rounded-full overflow-hidden border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500" 
+          className="w-16 h-16 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 touch-manipulation" 
           style={{
             borderColor: 'var(--color-border)',
             borderRadius: '50%',
-            width: '64px',
-            height: '64px',
-            minWidth: '64px',
-            minHeight: '64px',
-            maxWidth: '64px',
-            maxHeight: '64px',
+            width: '40px',
+            height: '40px',
+            minWidth: '40px',
+            minHeight: '40px',
+            maxWidth: '40px',
+            maxHeight: '40px',
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.borderColor = 'var(--color-muted)';
@@ -138,16 +138,16 @@ export default function MobileHeader({
     const initial = name.trim().charAt(0).toUpperCase();
     return (
       <button 
-        className="w-8 h-8 rounded-full overflow-hidden border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500" 
+        className="w-16 h-16 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 touch-manipulation" 
         style={{
           borderColor: 'var(--color-border)',
           borderRadius: '50%',
-          width: '32px',
-          height: '32px',
-          minWidth: '32px',
-          minHeight: '32px',
-          maxWidth: '32px',
-          maxHeight: '32px',
+          width: '72px',
+          height: '72px',
+          minWidth: '72px',
+          minHeight: '72px',
+          maxWidth: '72px',
+          maxHeight: '72px',
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.borderColor = 'var(--color-muted)';
@@ -168,18 +168,18 @@ export default function MobileHeader({
     <>
       {/* Header */}
       <header className={`sticky top-0 z-50 border-b border-border bg-surface`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 md:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-14 sm:h-16">
             {/* Logo and Title */}
             <div className="flex items-center space-x-2">
-              <Zap className={`h-8 w-8 ${
+              <Zap className={`h-6 w-6 sm:h-8 sm:w-8 ${
                 theme === 'gold' ? 'text-gold-accent' 
                 : theme === 'green' ? 'text-green-accent'
                 : theme === 'red' ? 'text-red-accent'
                 : theme === 'ruby' ? 'text-ruby-accent'
                 : 'text-poke-yellow'
               }`} />
-              <h1 className={`text-xl sm:text-2xl font-bold ${
+              <h1 className={`text-lg sm:text-xl md:text-2xl font-bold ${
                 theme === 'gold' ? 'font-retro text-gold-accent'
                 : theme === 'green' ? 'font-gameboy text-green-accent'
                 : theme === 'red' ? 'font-retro text-red-accent'
@@ -224,7 +224,7 @@ export default function MobileHeader({
             </div>
 
             {/* Mobile Menu Button and Profile Picture - Only visible on mobile */}
-            <div className="md:hidden flex items-center space-x-3">
+            <div className="md:hidden flex items-center space-x-2">
               {/* Profile Picture - Always render to prevent pop-up */}
               {renderProfilePicture()}
               

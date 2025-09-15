@@ -191,13 +191,57 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart, room
 
   if (!isOpen || !mounted) return null;
 
+  // Add CSS keyframes for animations
+  const animationStyles = `
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+    @keyframes slideInUp {
+      from { 
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+      }
+      to { 
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+    @keyframes slideOutDown {
+      from { 
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+      to { 
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+      }
+    }
+  `;
+
   const modalContent = (
-    <div 
-      className="fixed inset-0 z-[999999] flex items-center justify-center w-screen h-screen m-0 p-4 bg-black/80 backdrop-blur-lg"
-    >
+    <>
+      {/* Inject CSS keyframes */}
+      <style dangerouslySetInnerHTML={{ __html: animationStyles }} />
+      
+      <div 
+        className="fixed inset-0 z-[999999] flex items-center justify-center w-screen h-screen m-0 p-4 bg-black/70 backdrop-blur-md transition-all duration-300 ease-out"
+        style={{
+          animation: isOpen ? 'fadeIn 0.3s ease-out' : 'fadeOut 0.3s ease-in',
+          backdropFilter: 'blur(8px) saturate(180%)'
+        }}
+      >
       {/* Modal Content */}
       <div 
-        className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden z-[1000000] mx-auto"
+        className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden z-[1000000] mx-auto transform transition-all duration-300 ease-out"
+        style={{
+          animation: isOpen ? 'slideInUp 0.3s ease-out' : 'slideOutDown 0.3s ease-in',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1)'
+        }}
       >
         {/* Hero GIF */}
         <div className="w-full overflow-hidden rounded-t-2xl bg-gradient-to-b from-blue-100 to-blue-200">
@@ -450,6 +494,7 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart, room
         </div>
       </div>
     </div>
+    </>
   );
 
   return createPortal(modalContent, document.body);

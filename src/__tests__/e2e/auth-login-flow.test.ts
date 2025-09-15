@@ -1,5 +1,17 @@
 import { test, expect, Page, BrowserContext } from '@playwright/test';
 
+// Parse test users data from environment
+const testUsers = process.env.TEST_USERS_DATA ? JSON.parse(process.env.TEST_USERS_DATA) : null;
+const testHostEmail = testUsers?.host?.email || process.env.TEST_HOST_EMAIL || 'testbattle1@pokemon-battles.test';
+const testHostPassword = testUsers?.host?.password || process.env.TEST_HOST_PASSWORD || 'test1234';
+
+console.log('🔍 Debug - Environment variables:');
+console.log('TEST_USERS_DATA:', process.env.TEST_USERS_DATA);
+console.log('TEST_HOST_EMAIL:', process.env.TEST_HOST_EMAIL);
+console.log('testUsers:', testUsers);
+console.log('testHostEmail:', testHostEmail);
+console.log('testHostPassword:', testHostPassword);
+
 test.describe('Authentication Login Flow', () => {
   let context: BrowserContext;
   let page: Page;
@@ -208,8 +220,8 @@ test.describe('Authentication Login Flow', () => {
         if (await input.isVisible()) {
           console.log(`✅ Found email input: ${selector}`);
           await input.clear();
-          await input.fill('testbattle1@pokemon-battles.test');
-          console.log('📧 Filled in email: testbattle1@pokemon-battles.test');
+          await input.fill(testHostEmail);
+          console.log('📧 Filled in email:', testHostEmail);
           emailFilled = true;
           break;
         }
@@ -242,7 +254,7 @@ test.describe('Authentication Login Flow', () => {
         if (await input.isVisible()) {
           console.log(`✅ Found password input: ${selector}`);
           await input.clear();
-          await input.fill('test1234');
+          await input.fill(testHostPassword);
           console.log('🔒 Filled in password');
           passwordFilled = true;
           break;

@@ -25,14 +25,14 @@ const eslintConfig = [
     ],
     rules: {
       // Make warnings non-blocking for now
-      "@typescript-eslint/no-unused-vars": "warn",
-      "@typescript-eslint/no-explicit-any": "warn",
-      "react-hooks/exhaustive-deps": "warn",
-      "@next/next/no-img-element": "warn",
-      "@next/next/no-page-custom-font": "warn",
+      "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "react-hooks/exhaustive-deps": "off",
+      "@next/next/no-img-element": "off",
+      "@next/next/no-page-custom-font": "off",
       "react-hooks/rules-of-hooks": "error", // Keep critical errors
-      "@typescript-eslint/ban-ts-comment": "warn",
-      "@typescript-eslint/no-require-imports": "warn", // Allow require imports for now
+      "@typescript-eslint/ban-ts-comment": "off",
+      "@typescript-eslint/no-require-imports": "off", // Allow require imports for now
     },
   },
 ];

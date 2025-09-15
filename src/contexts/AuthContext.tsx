@@ -9,6 +9,7 @@ import {
   onAuthStateChanged,
   updateProfile,
   GoogleAuthProvider,
+  OAuthProvider,
   signInWithPopup,
   signInWithRedirect,
   getRedirectResult,
@@ -21,6 +22,8 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, displayName: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
+  signInWithMicrosoft: () => Promise<void>;
+  signInWithTwitter: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -150,6 +153,108 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+
+  const signInWithMicrosoft = async () => {
+    if (!auth) {
+      throw new Error('Authentication service is currently unavailable. Please try again later.');
+    }
+    
+    try {
+      const provider = new OAuthProvider('microsoft.com');
+      
+      // Add scopes to get profile information
+      provider.addScope('user.read');
+      provider.addScope('email');
+      provider.addScope('profile');
+      
+      // Optional: Set custom parameters
+      provider.setCustomParameters({
+        prompt: 'select_account'
+      });
+
+      const result = await signInWithPopup(auth, provider);
+      
+      // The signed-in user info
+      const user = result.user;
+      
+      // This gives you a Microsoft Access Token
+      const credential = OAuthProvider.credentialFromResult(result);
+      const accessToken = credential?.accessToken;
+      
+      console.log('User signed in successfully with Microsoft:', {
+        displayName: user.displayName,
+        email: user.email,
+        photoURL: user.photoURL,
+        uid: user.uid
+      });
+      
+    } catch (error: unknown) {
+      console.error('Error during Microsoft sign-in:', error);
+      
+      // Handle specific error cases
+      const errorObj = error as { code?: string; message?: string };
+      if (errorObj.code === 'auth/popup-closed-by-user') {
+        throw new Error('Sign-in was cancelled. Please try again.');
+      } else if (errorObj.code === 'auth/popup-blocked') {
+        throw new Error('Popup was blocked by your browser. Please allow popups and try again.');
+      } else if (errorObj.code === 'auth/account-exists-with-different-credential') {
+        throw new Error('An account already exists with this email using a different sign-in method.');
+      } else {
+        throw new Error(errorObj.message || 'Failed to sign in with Microsoft');
+      }
+    }
+  };
+
+  const signInWithTwitter = async () => {
+    if (!auth) {
+      throw new Error('Authentication service is currently unavailable. Please try again later.');
+    }
+    
+    try {
+      const provider = new OAuthProvider('twitter.com');
+      
+      // Add scopes to get profile information
+      provider.addScope('email');
+      provider.addScope('profile');
+      
+      // Optional: Set custom parameters
+      provider.setCustomParameters({
+        lang: 'en'
+      });
+
+      const result = await signInWithPopup(auth, provider);
+      
+      // The signed-in user info
+      const user = result.user;
+      
+      // This gives you a Twitter Access Token
+      const credential = OAuthProvider.credentialFromResult(result);
+      const accessToken = credential?.accessToken;
+      
+      console.log('User signed in successfully with Twitter:', {
+        displayName: user.displayName,
+        email: user.email,
+        photoURL: user.photoURL,
+        uid: user.uid
+      });
+      
+    } catch (error: unknown) {
+      console.error('Error during Twitter sign-in:', error);
+      
+      // Handle specific error cases
+      const errorObj = error as { code?: string; message?: string };
+      if (errorObj.code === 'auth/popup-closed-by-user') {
+        throw new Error('Sign-in was cancelled. Please try again.');
+      } else if (errorObj.code === 'auth/popup-blocked') {
+        throw new Error('Popup was blocked by your browser. Please allow popups and try again.');
+      } else if (errorObj.code === 'auth/account-exists-with-different-credential') {
+        throw new Error('An account already exists with this email using a different sign-in method.');
+      } else {
+        throw new Error(errorObj.message || 'Failed to sign in with Twitter');
+      }
+    }
+  };
+
   const logout = async () => {
     if (!auth) {
       throw new Error('Authentication service is currently unavailable. Please try again later.');
@@ -168,6 +273,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signUp,
     signInWithGoogle,
+    signInWithMicrosoft,
+    signInWithTwitter,
     logout,
   };
 

@@ -836,18 +836,23 @@ class RoomService {
       }
     }
     
-    // Check room status - conditionally allow 'battling' status
+    // Check room status - conditionally allow 'battling' and 'unresolved' status
     const allowedStatuses = ['ready', 'waiting'];
     if (allowBattlingStatus) {
       allowedStatuses.push('battling');
     }
     
-    if (!allowedStatuses.includes(roomData.status)) {
+    // Allow 'unresolved' status for single player scenarios (when guest leaves)
+    if (roomData.status === 'unresolved' && roomData.currentPlayers === 1) {
+      console.log('⚠️ Room is in unresolved status with single player - allowing battle to proceed');
+    } else if (!allowedStatuses.includes(roomData.status)) {
       validationErrors.push(`Room status must be ${allowedStatuses.join(' or ')}, got '${roomData.status}'`);
     }
     
-    // Check player count
-    if (roomData.currentPlayers !== 2) {
+    // Check player count - allow single player for unresolved status
+    if (roomData.status === 'unresolved' && roomData.currentPlayers === 1) {
+      console.log('⚠️ Single player in unresolved room - allowing battle to proceed');
+    } else if (roomData.currentPlayers !== 2) {
       validationErrors.push(`Room must have exactly 2 players, got ${roomData.currentPlayers}`);
     }
     

@@ -97,7 +97,6 @@ export default function Home() {
   // Load initial data
   useEffect(() => {
     loadInitialData()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // No dependencies to prevent infinite loading
 
   // No window-based infinite scroll; Modern layout uses internal scroll container
@@ -211,7 +210,6 @@ export default function Home() {
       return (
         <div className="min-h-screen flex items-center justify-center bg-bg">
           <div className="text-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/loading.gif" width={100} height={100} alt="Loading" className="mx-auto mb-4" />
             <p className="text-muted">Loading Pokémon...</p>
           </div>
@@ -236,7 +234,6 @@ export default function Home() {
       return (
         <div className="min-h-screen flex items-center justify-center bg-bg">
           <div className="text-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/loading.gif" width={100} height={100} alt="Loading" className="mx-auto mb-4" />
             <p className="text-muted">Loading Pokémon...</p>
           </div>
@@ -261,7 +258,6 @@ export default function Home() {
       return (
         <div className="min-h-screen flex items-center justify-center bg-bg">
           <div className="text-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/loading.gif" width={100} height={100} alt="Loading" className="mx-auto mb-4" />
             <p className="text-muted">Loading Pokémon...</p>
           </div>

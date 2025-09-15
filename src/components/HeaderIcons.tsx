@@ -43,17 +43,17 @@ export default function HeaderIcons({
   return (
     <>
       <button 
-        className={`w-16 h-16 rounded-full border-2 transition-all duration-200 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 ${showSidebar ? 'bg-poke-blue/10 border-poke-blue' : ''}`}
+        className={`w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-full border-2 transition-all duration-200 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 touch-manipulation ${showSidebar ? 'bg-poke-blue/10 border-poke-blue' : ''}`}
         style={{
           borderColor: 'var(--color-border)',
           backgroundColor: 'var(--color-surface)',
           borderRadius: '50%',
-          width: '64px',
-          height: '64px',
-          minWidth: '64px',
-          minHeight: '64px',
-          maxWidth: '64px',
-          maxHeight: '64px',
+          width: '40px',
+          height: '40px',
+          minWidth: '40px',
+          minHeight: '40px',
+          maxWidth: '40px',
+          maxHeight: '40px',
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.borderColor = 'var(--color-muted)';
@@ -71,22 +71,22 @@ export default function HeaderIcons({
           alt="Advanced Filters" 
           width={48}
           height={48}
-          className="w-12 h-12 object-contain"
+          className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 object-contain"
         />
       </button>
       
       <button 
-        className="w-16 h-16 rounded-full border-2 transition-all duration-200 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500" 
+        className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-full border-2 transition-all duration-200 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 touch-manipulation" 
         style={{
           borderColor: 'var(--color-border)',
           backgroundColor: 'var(--color-surface)',
           borderRadius: '50%',
-          width: '64px',
-          height: '64px',
-          minWidth: '64px',
-          minHeight: '64px',
-          maxWidth: '64px',
-          maxHeight: '64px',
+          width: '40px',
+          height: '40px',
+          minWidth: '40px',
+          minHeight: '40px',
+          maxWidth: '40px',
+          maxHeight: '40px',
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.borderColor = 'var(--color-muted)';
@@ -104,22 +104,22 @@ export default function HeaderIcons({
           alt="Team Builder" 
           width={48}
           height={48}
-          className="w-12 h-12 object-contain"
+          className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 object-contain"
         />
       </button>
       
       <button 
-        className="w-16 h-16 rounded-full border-2 transition-all duration-200 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500" 
+        className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-full border-2 transition-all duration-200 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 touch-manipulation" 
         style={{
           borderColor: 'var(--color-border)',
           backgroundColor: 'var(--color-surface)',
           borderRadius: '50%',
-          width: '64px',
-          height: '64px',
-          minWidth: '64px',
-          minHeight: '64px',
-          maxWidth: '64px',
-          maxHeight: '64px',
+          width: '40px',
+          height: '40px',
+          minWidth: '40px',
+          minHeight: '40px',
+          maxWidth: '40px',
+          maxHeight: '40px',
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.borderColor = 'var(--color-muted)';
@@ -137,7 +137,7 @@ export default function HeaderIcons({
           alt="Battles" 
           width={48}
           height={48}
-          className="w-12 h-12 object-contain"
+          className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 object-contain"
         />
       </button>
       
@@ -147,12 +147,12 @@ export default function HeaderIcons({
           borderColor: 'var(--color-border)',
           backgroundColor: 'var(--color-surface)',
           borderRadius: '50%',
-          width: '64px',
-          height: '64px',
-          minWidth: '64px',
-          minHeight: '64px',
-          maxWidth: '64px',
-          maxHeight: '64px',
+          width: '40px',
+          height: '40px',
+          minWidth: '40px',
+          minHeight: '40px',
+          maxWidth: '40px',
+          maxHeight: '40px',
         }}
         onMouseEnter={(e) => {
           if (comparisonList.length > 0) {
@@ -174,7 +174,7 @@ export default function HeaderIcons({
           alt="Compare" 
           width={48}
           height={48}
-          className="w-12 h-12 object-contain"
+          className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 object-contain"
         />
       </button>
     </>
@@ -190,17 +190,17 @@ interface HamburgerMenuProps {
 export function HamburgerMenu({ onClick, className = '' }: HamburgerMenuProps) {
   return (
     <button 
-      className={`w-16 h-16 rounded-full border-2 transition-all duration-200 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 ${className}`}
+      className={`w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-full border-2 transition-all duration-200 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 touch-manipulation ${className}`}
       style={{
         borderColor: 'var(--color-border)',
         backgroundColor: 'var(--color-surface)',
         borderRadius: '50%',
-        width: '64px',
-        height: '64px',
-        minWidth: '64px',
-        minHeight: '64px',
-        maxWidth: '64px',
-        maxHeight: '64px',
+        width: '40px',
+        height: '40px',
+        minWidth: '40px',
+        minHeight: '40px',
+        maxWidth: '40px',
+        maxHeight: '40px',
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.borderColor = 'var(--color-muted)';

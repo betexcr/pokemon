@@ -1,6 +1,7 @@
 {
   "projects": {
-    "staging": "pokemon-battles-86a0d"
+    "staging": "pokemon-battles-86a0d",
+    "firebase projects:list": "pokemon-battles-86a0d"
   },
   "targets": {},
   "etags": {}
