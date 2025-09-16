@@ -469,17 +469,18 @@ export async function searchPokemonByName(searchTerm: string): Promise<Pokemon[]
       return nameLc.includes(termLc) || normalizedName.includes(normalizedTerm);
     });
 
-    // Limit results to first 20 to avoid too many API calls
-    const limitedResults = matchingPokemon.slice(0, 20);
+    // Limit results to first 10 to avoid too many API calls (since we'll fetch full data)
+    const limitedResults = matchingPokemon.slice(0, 10);
 
-    // For search results, we can use basic data if available, or fetch minimal data
-    const pokemonList = limitedResults.map((pokemonRef) => {
-      if ('id' in pokemonRef) {
-        // This is already a basic Pokémon object
-        return pokemonRef as unknown as Pokemon;
-      } else {
-        // This is a reference, create basic object
-        const pokemonId = pokemonRef.url.split('/').slice(-2)[0];
+    // For search results, fetch full Pokémon data to show types
+    const pokemonPromises = limitedResults.map(async (pokemonRef) => {
+      const pokemonId = pokemonRef.url.split('/').slice(-2)[0];
+      try {
+        // Fetch full Pokémon data for search results to show types
+        return await getPokemon(parseInt(pokemonId));
+      } catch (error) {
+        console.error(`Error fetching Pokémon ${pokemonId}:`, error);
+        // Fallback to basic object if fetch fails
         return {
           id: parseInt(pokemonId),
           name: pokemonRef.name,
@@ -521,6 +522,9 @@ export async function searchPokemonByName(searchTerm: string): Promise<Pokemon[]
         } as Pokemon;
       }
     });
+    
+    // Wait for all Pokémon data to be fetched
+    const pokemonList = await Promise.all(pokemonPromises);
     
     setCache(cacheKey, pokemonList, CACHE_TTL.POKEMON_DETAIL);
     return pokemonList;

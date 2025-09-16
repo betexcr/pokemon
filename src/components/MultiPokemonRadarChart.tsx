@@ -4,6 +4,9 @@ import { useState, useEffect, useRef } from 'react'
 import { formatPokemonName } from '@/lib/utils'
 import { Pokemon } from '@/types/pokemon'
 
+// Static export for Next.js 15 compatibility
+export const dynamic = 'force-dynamic'
+
 // Minimal shape needed for the radar chart; compatible with full Pokemon
 type RadarPokemon = {
   id: number
@@ -22,13 +25,14 @@ interface Point {
 }
 
 export default function MultiPokemonRadarChart({ pokemons, highlightedPokemonId = null }: MultiPokemonRadarChartProps) {
+  // Early return before any hooks to avoid hooks order issues
+  if (pokemons.length === 0) return null
+
   const [hoveredPokemon, setHoveredPokemon] = useState<RadarPokemon | null>(null)
   const [hoveredStatIndex, setHoveredStatIndex] = useState<number | null>(null)
   const [cursorPos, setCursorPos] = useState<{x:number;y:number}>({x:0,y:0})
   const [containerSize, setContainerSize] = useState({ width: 360, height: 360 })
   const containerRef = useRef<HTMLDivElement>(null)
-
-  if (pokemons.length === 0) return null
 
   const stats = ['hp', 'attack', 'defense', 'special-attack', 'special-defense', 'speed']
   const maxStat = 255
