@@ -6,7 +6,7 @@ import { BattleState, BattleAction } from '@/lib/team-battle-engine';
 import Tooltip from '@/components/Tooltip';
 import { getMove } from '@/lib/moveCache';
 import { getAbility } from '@/lib/api';
-import { getPokemonIdFromSpecies, getPokemonBattleImageWithFallback, formatPokemonName } from '@/lib/utils';
+import { getPokemonIdFromSpecies, getPokemonBattleImageWithFallback, getPokemonImageWithFallbacks, formatPokemonName } from '@/lib/utils';
 import HitShake from '@/components/battle/HitShake';
 import HPBar from '@/components/battle/HPBar';
 import StatusPopups, { StatusEvent } from '@/components/battle/StatusPopups';
@@ -36,9 +36,17 @@ interface PokemonBattleImageProps {
 function PokemonBattleImage({ species, variant, className = '', size = 'medium' }: PokemonBattleImageProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   
   const pokemonId = getPokemonIdFromSpecies(species);
-  const { primary, fallback } = pokemonId ? getPokemonBattleImageWithFallback(pokemonId, variant) : { primary: '', fallback: '' };
+  const { primary, fallbacks } = pokemonId ? getPokemonImageWithFallbacks(pokemonId, species, variant) : { primary: '', fallbacks: [] };
+  
+  // Reset image state when species changes
+  useEffect(() => {
+    setImageLoaded(false);
+    setImageError(false);
+    setCurrentImageIndex(0);
+  }, [species, variant]);
   
   const sizeClasses = {
     small: 'w-16 h-16',
@@ -61,7 +69,7 @@ function PokemonBattleImage({ species, variant, className = '', size = 'medium' 
       )}
       
       <img
-        src={primary}
+        src={currentImageIndex === 0 ? primary : fallbacks[currentImageIndex - 1]}
         alt={`${formatPokemonName(species)} ${variant}`}
         className={`w-full h-full object-contain transition-opacity duration-300 ${
           imageLoaded ? 'opacity-100' : 'opacity-0'
@@ -69,9 +77,15 @@ function PokemonBattleImage({ species, variant, className = '', size = 'medium' 
         onLoad={() => setImageLoaded(true)}
         onError={(e) => {
           const target = e.target as HTMLImageElement;
-          if (target.src === primary) {
-            target.src = fallback;
+          const nextIndex = currentImageIndex + 1;
+          
+          if (nextIndex <= fallbacks.length) {
+            // Try next fallback
+            setCurrentImageIndex(nextIndex);
+            setImageLoaded(false);
+            setImageError(false);
           } else {
+            // All fallbacks failed
             setImageError(true);
           }
         }}
