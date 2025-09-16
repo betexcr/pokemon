@@ -20,34 +20,29 @@ export default function ComparisonSection({
   onGoToComparison,
 }: ComparisonSectionProps) {
   return (
-    <div className="h-full flex flex-col border-t-4 border-blue-500 bg-blue-100 dark:bg-blue-800 overflow-hidden">
+    <div className="h-full flex flex-col bg-blue-100 dark:bg-blue-800 overflow-hidden">
       <div className="p-3 flex-1 min-h-0 flex flex-col">
-        <div className="mb-2 flex items-center">
-          <h3 className="text-lg font-semibold flex items-center">
-            <Scale className="h-5 w-5 mr-2 text-blue-500" />
-            Comparison ({comparisonList.length})
-          </h3>
-          <div className="ml-auto flex items-center space-x-2">
-            <button
-              onClick={() => { if (comparisonList.length > 0) onGoToComparison() }}
-              disabled={comparisonList.length === 0}
-              className={`p-2 rounded-lg bg-surface border border-border transition-all duration-200 shadow-sm ${comparisonList.length === 0 ? 'opacity-50 cursor-not-allowed text-muted' : 'text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 hover:shadow-md'}`}
-              title={comparisonList.length === 0 ? 'Select Pokémon to enable comparison' : 'Go to Comparison'}
-              aria-label="Go to Comparison"
-              aria-disabled={comparisonList.length === 0}
-            >
-              <ArrowRight className="h-4 w-4" />
-            </button>
-            <button
-              onClick={onClearComparison}
-              disabled={comparisonList.length === 0}
-              className={`p-2 rounded-lg bg-surface border border-border transition-all duration-200 shadow-sm ${comparisonList.length === 0 ? 'opacity-50 cursor-not-allowed' : 'text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30'}`}
-              title="Clear Comparison"
-              aria-label="Clear Comparison"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
+        {/* Action buttons */}
+        <div className="mb-4 flex items-center justify-end space-x-2">
+          <button
+            onClick={() => { if (comparisonList.length > 0) onGoToComparison() }}
+            disabled={comparisonList.length === 0}
+            className={`p-2 rounded-lg bg-surface border border-border transition-all duration-200 shadow-sm ${comparisonList.length === 0 ? 'opacity-50 cursor-not-allowed text-muted' : 'text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 hover:shadow-md'}`}
+            title={comparisonList.length === 0 ? 'Select Pokémon to enable comparison' : 'Go to Comparison'}
+            aria-label="Go to Comparison"
+            aria-disabled={comparisonList.length === 0}
+          >
+            <ArrowRight className="h-4 w-4" />
+          </button>
+          <button
+            onClick={onClearComparison}
+            disabled={comparisonList.length === 0}
+            className={`p-2 rounded-lg bg-surface border border-border transition-all duration-200 shadow-sm ${comparisonList.length === 0 ? 'opacity-50 cursor-not-allowed' : 'text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30'}`}
+            title="Clear Comparison"
+            aria-label="Clear Comparison"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
         
         {comparisonList.length === 0 ? (
