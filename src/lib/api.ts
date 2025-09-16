@@ -168,12 +168,16 @@ export async function getPokemonTotalCount(): Promise<number> {
     
     const count = response.count || 0;
     console.log('Total Pokémon count from API:', count);
-    setCache(cacheKey, count, CACHE_TTL.POKEMON_LIST);
-    return count;
+    
+    // Ensure we have a reasonable count - PokeAPI should have 1000+ Pokémon
+    const actualCount = count > 1000 ? count : 1302; // Fallback to known total if API returns low count
+    
+    setCache(cacheKey, actualCount, CACHE_TTL.POKEMON_LIST);
+    return actualCount;
   } catch (error) {
     console.error('Error fetching Pokémon total count:', error);
     // Fallback to a reasonable estimate if API fails
-    return 1025; // Approximate count as of Gen 9
+    return 1302; // Updated count as of Gen 9
   }
 }
 
@@ -456,8 +460,14 @@ export async function searchPokemonByName(searchTerm: string): Promise<Pokemon[]
     }
 
     // Filter by search term (case-insensitive, supports partials)
-    const termLc = searchTerm.toLowerCase();
-    const matchingPokemon = (allNames || []).filter(p => p.name.toLowerCase().includes(termLc));
+    // Handle both hyphen and space variations (e.g., "ho-oh" vs "ho oh")
+    const termLc = searchTerm.toLowerCase().trim();
+    const normalizedTerm = termLc.replace(/[- ]/g, '');
+    const matchingPokemon = (allNames || []).filter(p => {
+      const nameLc = p.name.toLowerCase();
+      const normalizedName = nameLc.replace(/[- ]/g, '');
+      return nameLc.includes(termLc) || normalizedName.includes(normalizedTerm);
+    });
 
     // Limit results to first 20 to avoid too many API calls
     const limitedResults = matchingPokemon.slice(0, 20);

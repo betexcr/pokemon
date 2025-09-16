@@ -42,6 +42,7 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart, room
     maxAttempts: number;
     nextRetryIn: number;
   }>({ isRetrying: false, attempt: 0, maxAttempts: 0, nextRetryIn: 0 });
+  const [timeoutReached, setTimeoutReached] = useState(false);
   const [progressSteps, setProgressSteps] = useState<{
     roomCheck: boolean;
     playersReady: boolean;
@@ -147,19 +148,41 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart, room
     // Only start the battle sequence if not already starting
     if (!isStarting) {
       setIsStarting(true);
+      setTimeoutReached(false);
       // Immediately start readiness polling – no artificial delay
       checkReadiness(true);
+      
+      // Set a timeout to prevent infinite waiting
+      const timeout = setTimeout(() => {
+        console.warn('⚠️ Battle start dialog timeout reached');
+        setTimeoutReached(true);
+        setReadinessStatus(prev => ({
+          ...prev,
+          isReady: false,
+          errors: ['Battle start timed out. Please try again.']
+        }));
+      }, 30000); // 30 second timeout
+      
+      return () => clearTimeout(timeout);
     }
     
-    // Poll readiness every 500ms and start as soon as it’s ready
+    // Poll readiness every 500ms and start as soon as it's ready
     const readinessInterval = setInterval(async () => {
       if (__BATTLE_START_STARTED__) return;
       const ready = await checkReadiness(true);
+      console.log('🔍 Battle readiness check result:', { ready, readinessStatus });
       if (ready && !__BATTLE_START_STARTED__) {
+        console.log('✅ Battle is ready, starting battle...');
         __BATTLE_START_STARTED__ = true;
         clearInterval(readinessInterval);
-        onBattleStart();
-        onClose();
+        try {
+          await onBattleStart();
+          onClose();
+        } catch (error) {
+          console.error('❌ Failed to start battle:', error);
+          // Reset the flag so user can try again
+          __BATTLE_START_STARTED__ = false;
+        }
       }
     }, 500);
 
@@ -371,7 +394,10 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart, room
                     </span>
                     {readinessStatus.errors.length > 0 && (
                       <div className="mt-1 text-xs text-red-500">
-                        {readinessStatus.errors[0]}
+                        <div className="font-semibold">Issues found:</div>
+                        {readinessStatus.errors.map((error, index) => (
+                          <div key={index} className="ml-2">• {error}</div>
+                        ))}
                       </div>
                     )}
                   </div>
@@ -541,8 +567,32 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart, room
             >
               {readinessStatus.isReady
                 ? "Entering the battle arena..."
-                : "Get ready to choose your first Pokemon!"}
+                : timeoutReached
+                  ? "Battle start timed out. Please try again."
+                  : "Get ready to choose your first Pokemon!"}
             </p>
+            
+            {/* Manual retry button when there are errors */}
+            {!readinessStatus.isReady && (readinessStatus.errors.length > 0 || timeoutReached) && (
+              <div className="mt-4">
+                <button
+                  onClick={() => {
+                    console.log('🔄 Manual retry triggered');
+                    setTimeoutReached(false);
+                    setReadinessStatus({ isReady: true, errors: [], lastCheck: null });
+                    checkReadiness(true);
+                  }}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors"
+                  style={{ 
+                    fontFamily: 'Pocket Monk, monospace',
+                    textShadow: '1px 1px 0px #000',
+                    letterSpacing: '0.5px'
+                  }}
+                >
+                  🔄 RETRY BATTLE START
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

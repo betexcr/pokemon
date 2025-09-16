@@ -31,9 +31,10 @@ export default function ModernPokemonCard({
   const [imageError, setImageError] = useState(false);
   const router = useRouter();
 
-  // Use animated sprite URLs with fallbacks
-  const primaryImageUrl = `https://play.pokemonshowdown.com/sprites/ani/${pokemon.id}.gif`;
+  // Use reliable sprite URLs with fallbacks
+  const primaryImageUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.id}.png`;
   const fallbackImageUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`;
+  const animatedUrl = `https://play.pokemonshowdown.com/sprites/ani/${pokemon.id}.gif`;
   const placeholderImageUrl = "/placeholder-pokemon.png";
 
   const handleClick = (e: React.MouseEvent) => {
@@ -89,7 +90,7 @@ export default function ModernPokemonCard({
         // List layout - clean horizontal list item
         <div className="flex items-center w-full">
           {/* Pokémon Image */}
-          <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg flex items-center justify-center overflow-hidden mr-4 w-12 h-12 flex-shrink-0">
+          <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg flex items-center justify-center overflow-hidden mr-3 sm:mr-4 w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
             {!imageLoaded && !imageError && (
               <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse rounded-lg" />
             )}
@@ -101,6 +102,9 @@ export default function ModernPokemonCard({
               className={`w-full h-full object-contain transition-opacity duration-300 ${
                 imageLoaded ? "opacity-100" : "opacity-0"
               }`}
+              style={{
+                viewTransitionName: `pokemon-sprite-${pokemon.id}`
+              }}
               onLoad={() => setImageLoaded(true)}
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
@@ -108,6 +112,9 @@ export default function ModernPokemonCard({
                   // Try fallback URL
                   target.src = fallbackImageUrl;
                 } else if (target.src === fallbackImageUrl) {
+                  // Try animated URL
+                  target.src = animatedUrl;
+                } else if (target.src === animatedUrl) {
                   // Try placeholder
                   target.src = placeholderImageUrl;
                   setImageError(true);
@@ -135,7 +142,7 @@ export default function ModernPokemonCard({
           <div className="flex-1 min-w-0 flex items-center justify-between">
             <div className="flex items-center space-x-3 min-w-0">
               <span className="text-xs font-mono text-gray-500 font-medium flex-shrink-0">
-                #{String(pokemon.id).padStart(3, "0")}
+                {pokemon.id !== 0 && `#${String(pokemon.id).padStart(3, "0")}`}
               </span>
               <h3 className="font-semibold text-gray-800 group-hover:text-poke-blue transition-colors truncate">
                 {formatPokemonName(pokemon.name)}
@@ -182,23 +189,20 @@ export default function ModernPokemonCard({
       ) : (
         // Grid layout for 3cols, 6cols, and 9cols
         <div
-          className={`${
-            density === "3cols" ? "p-6" : density === "6cols" ? "p-4" : "p-3"
-          } h-full flex flex-col`}
+          className="h-full flex flex-col relative"
         >
-          {/* Header: ID and Comparison */}
+          {/* Header: ID and Comparison - Absolutely positioned at top */}
           <div
-            className="absolute inset-x-0 top-0 h-9 z-10
-                  flex items-center justify-between px-2
-                  bg-white/70 backdrop-blur-sm"
+            className="absolute top-1 left-1 right-1 z-20 flex items-center justify-between
+                  bg-white/90 backdrop-blur-sm rounded-lg px-2 py-1 shadow-sm"
           >
-            <span className="text-slate-800 font-semibold">
-              #{String(pokemon.id).padStart(3, "0")}
+            <span className="text-slate-800 font-semibold text-xs sm:text-sm">
+              {pokemon.id !== 0 && `#${String(pokemon.id).padStart(3, "0")}`}
             </span>
             <button
               onClick={handleComparisonClick}
               className={`
-                p-1.5 rounded-full transition-all duration-200 border
+                p-1 sm:p-1.5 rounded-full transition-all duration-200 border
                 ${
                   isInComparison
                     ? "bg-blue-500 text-white border-blue-500 shadow-md"
@@ -212,22 +216,18 @@ export default function ModernPokemonCard({
               }
             >
               <Scale
-                className={`h-4 w-4 ${isInComparison ? "fill-current" : ""}`}
+                className={`h-3 w-3 sm:h-4 sm:w-4 ${isInComparison ? "fill-current" : ""}`}
               />
             </button>
           </div>
 
-          {/* Pokémon Image */}
+          {/* Pokémon Image - Large but fully visible */}
           <div
-            className={`relative bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg flex items-center justify-center overflow-hidden mb-3 card-art ${
-              density === "3cols"
-                ? "aspect-square max-h-48"
-                : density === "6cols"
-                ? "aspect-square max-h-40"
-                : "aspect-square max-h-24"
-            }`}
+            className="relative bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg flex items-center justify-center overflow-visible flex-1 card-art"
             style={{
               width: "100%",
+              minHeight: density === "3cols" ? "60%" : density === "6cols" ? "55%" : "50%",
+              padding: density === "3cols" ? "20px" : density === "6cols" ? "16px" : "12px",
             }}
           >
             {!imageLoaded && !imageError && (
@@ -238,9 +238,14 @@ export default function ModernPokemonCard({
               src={primaryImageUrl}
               alt={formatPokemonName(pokemon.name)}
               className={`
-                w-full h-full object-contain transition-opacity duration-300
+                max-w-full max-h-full w-auto h-auto object-contain transition-opacity duration-300
                 ${imageLoaded ? "opacity-100" : "opacity-0"}
               `}
+              style={{
+                viewTransitionName: `pokemon-sprite-${pokemon.id}`,
+                maxHeight: density === "3cols" ? "calc(100% - 40px)" : density === "6cols" ? "calc(100% - 32px)" : "calc(100% - 24px)",
+                maxWidth: density === "3cols" ? "calc(100% - 40px)" : density === "6cols" ? "calc(100% - 32px)" : "calc(100% - 24px)",
+              }}
               onLoad={() => setImageLoaded(true)}
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
@@ -248,6 +253,9 @@ export default function ModernPokemonCard({
                   // Try fallback URL
                   target.src = fallbackImageUrl;
                 } else if (target.src === fallbackImageUrl) {
+                  // Try animated URL
+                  target.src = animatedUrl;
+                } else if (target.src === animatedUrl) {
                   // Try placeholder
                   target.src = placeholderImageUrl;
                   setImageError(true);
@@ -271,16 +279,16 @@ export default function ModernPokemonCard({
             )}
           </div>
 
-          {/* Pokémon Info */}
-          <div className="space-y-3 flex-1 flex flex-col justify-end card-info">
+          {/* Pokémon Info - Absolutely positioned at bottom */}
+          <div className="absolute bottom-1 left-1 right-1 z-20 bg-white/90 backdrop-blur-sm rounded-lg p-2 shadow-sm">
             {/* Name */}
             <h3
-              className={`font-semibold text-center group-hover:text-poke-blue transition-colors card-name ${
+              className={`font-semibold text-center group-hover:text-poke-blue transition-colors card-name mb-1 ${
                 density === "9cols"
-                  ? "text-xs"
+                  ? "text-xs sm:text-xs"
                   : density === "6cols"
-                  ? "text-sm"
-                  : "text-base"
+                  ? "text-xs sm:text-sm"
+                  : "text-sm sm:text-base"
               }`}
               style={{
                 color: "#1f2937",

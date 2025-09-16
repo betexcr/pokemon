@@ -874,15 +874,15 @@ section { padding-top: 1rem; padding-bottom: 1rem; }
 .animate-ball-arc-in-right { animation: ball-arc-in-right .6s cubic-bezier(.2,.7,.2,1) forwards; }
 
 @keyframes ball-arc-in-left {
-  0%   { transform: translate(-18px,-16px) scale(.9) rotate(-25deg); opacity: 0; }
-  35%  { transform: translate(-10px,-12px) scale(1.05) rotate(-12deg); opacity: .9; }
-  75%  { transform: translate(-3px,-4px) scale(1) rotate(0deg); opacity: 1; }
+  0%   { transform: translate(-32px,-24px) scale(.9) rotate(-25deg); opacity: 0; }
+  35%  { transform: translate(-18px,-20px) scale(1.05) rotate(-12deg); opacity: .9; }
+  75%  { transform: translate(-6px,-8px) scale(1) rotate(0deg); opacity: 1; }
   100% { transform: translate(0,0) scale(1); opacity: 1; }
 }
 @keyframes ball-arc-in-right {
-  0%   { transform: translate(18px,-16px) scale(.9) rotate(25deg); opacity: 0; }
-  35%  { transform: translate(10px,-12px) scale(1.05) rotate(12deg); opacity: .9; }
-  75%  { transform: translate(3px,-4px) scale(1) rotate(0deg); opacity: 1; }
+  0%   { transform: translate(32px,-24px) scale(.9) rotate(25deg); opacity: 0; }
+  35%  { transform: translate(18px,-20px) scale(1.05) rotate(12deg); opacity: .9; }
+  75%  { transform: translate(6px,-8px) scale(1) rotate(0deg); opacity: 1; }
   100% { transform: translate(0,0) scale(1); opacity: 1; }
 }
 
@@ -958,12 +958,12 @@ section { padding-top: 1rem; padding-bottom: 1rem; }
 /* Pokéball Release Animation - Enhanced version for Pokémon sprites */
 .party { 
   display: flex; 
-  gap: 14px; 
+  gap: 8px; 
   align-items: center; 
 }
 
 .ball {
-  --size: 10px;              /* 50% of original 20px size */
+  --size: 32px;              /* Even larger size for better visibility */
   position: relative;
   list-style: none;
 }
@@ -1021,6 +1021,86 @@ section { padding-top: 1rem; padding-bottom: 1rem; }
 .ball:nth-child(1) { --delay: 0s;    }
 .ball:nth-child(2) { --delay: .12s;  }
 .ball:nth-child(3) { --delay: .24s;  }
+
+/* View Transitions API - Pokédex card to detail expansion */
+::view-transition-old(pokemon-sprite) {
+  animation: pokemon-shrink 0.4s ease-in-out;
+}
+
+::view-transition-new(pokemon-sprite) {
+  animation: pokemon-expand 0.4s ease-in-out;
+}
+
+@keyframes pokemon-expand {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes pokemon-shrink {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+}
+
+/* Pokéball throw animation for team builder */
+@keyframes pokeball-throw {
+  0% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-20px) rotate(180deg);
+  }
+  100% {
+    transform: translateY(0) rotate(360deg);
+  }
+}
+
+.pokeball-throw {
+  animation: pokeball-throw 0.6s ease-out;
+}
+
+/* Type-colored scanline effect for filtering */
+@keyframes scanline-wipe {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+.scanline-wipe {
+  position: relative;
+  overflow: hidden;
+}
+
+.scanline-wipe::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--type-color, #3b82f6), transparent);
+  animation: scanline-wipe 0.8s ease-out;
+  z-index: 10;
+}
 .ball:nth-child(4) { --delay: .36s;  }
 .ball:nth-child(5) { --delay: .48s;  }
 .ball:nth-child(6) { --delay: .60s;  }
@@ -1467,6 +1547,464 @@ div.user-dropdown-container button.user-dropdown-button img.user-dropdown-image 
 .control-keep.rounded-full {
   border-radius: 9999px !important;
   padding: 8px 8px !important;
+}
+
+/* ===========================================
+   VIEW TRANSITIONS API - POKÉMON STYLE
+   =========================================== */
+
+/* Base view transition setup */
+::view-transition {
+  pointer-events: none;
+}
+
+/* Root transition container */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.4s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===========================================
+   POKÉBALL FLIP/SPIN TRANSITION
+   =========================================== */
+@keyframes pokeball-flip-out {
+  0% {
+    transform: scale(1) rotateY(0deg);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.8) rotateY(90deg);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(0.6) rotateY(180deg);
+    opacity: 0;
+  }
+}
+
+@keyframes pokeball-flip-in {
+  0% {
+    transform: scale(0.6) rotateY(180deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(0.8) rotateY(90deg);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1) rotateY(0deg);
+    opacity: 1;
+  }
+}
+
+/* Pokéball flip transition classes */
+.pokeball-transition::view-transition-old(root) {
+  animation-name: pokeball-flip-out;
+}
+
+.pokeball-transition::view-transition-new(root) {
+  animation-name: pokeball-flip-in;
+}
+
+/* ===========================================
+   BATTLE FLASH TRANSITION
+   =========================================== */
+@keyframes battle-flash-out {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+    filter: brightness(1);
+  }
+  30% {
+    transform: scale(1.05);
+    opacity: 1;
+    filter: brightness(2);
+  }
+  60% {
+    transform: scale(1.1);
+    opacity: 0.8;
+    filter: brightness(3);
+  }
+  100% {
+    transform: scale(1.2);
+    opacity: 0;
+    filter: brightness(5);
+  }
+}
+
+@keyframes battle-flash-in {
+  0% {
+    transform: scale(1.2);
+    opacity: 0;
+    filter: brightness(5);
+  }
+  40% {
+    transform: scale(1.1);
+    opacity: 0.8;
+    filter: brightness(3);
+  }
+  70% {
+    transform: scale(1.05);
+    opacity: 1;
+    filter: brightness(2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+    filter: brightness(1);
+  }
+}
+
+/* Battle flash transition classes */
+.battle-flash-transition::view-transition-old(root) {
+  animation-name: battle-flash-out;
+  animation-duration: 0.3s;
+}
+
+.battle-flash-transition::view-transition-new(root) {
+  animation-name: battle-flash-in;
+  animation-duration: 0.3s;
+}
+
+/* ===========================================
+   POKÉDEX SCAN SWIPE TRANSITION
+   =========================================== */
+@keyframes pokedex-swipe-out {
+  0% {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+    filter: blur(0px);
+  }
+  50% {
+    transform: translateX(-50%) scale(0.95);
+    opacity: 0.7;
+    filter: blur(1px);
+  }
+  100% {
+    transform: translateX(-100%) scale(0.9);
+    opacity: 0;
+    filter: blur(2px);
+  }
+}
+
+@keyframes pokedex-swipe-in {
+  0% {
+    transform: translateX(100%) scale(0.9);
+    opacity: 0;
+    filter: blur(2px);
+  }
+  50% {
+    transform: translateX(50%) scale(0.95);
+    opacity: 0.7;
+    filter: blur(1px);
+  }
+  100% {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+    filter: blur(0px);
+  }
+}
+
+/* Pokédex scan transition classes */
+.pokedex-swipe-transition::view-transition-old(root) {
+  animation-name: pokedex-swipe-out;
+}
+
+.pokedex-swipe-transition::view-transition-new(root) {
+  animation-name: pokedex-swipe-in;
+}
+
+/* ===========================================
+   TILE FLIP TRANSITION (Game Boy Style)
+   =========================================== */
+@keyframes tile-flip-out {
+  0% {
+    transform: scale(1) rotateX(0deg);
+    opacity: 1;
+  }
+  25% {
+    transform: scale(0.95) rotateX(45deg);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(0.9) rotateX(90deg);
+    opacity: 0.6;
+  }
+  75% {
+    transform: scale(0.85) rotateX(135deg);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(0.8) rotateX(180deg);
+    opacity: 0;
+  }
+}
+
+@keyframes tile-flip-in {
+  0% {
+    transform: scale(0.8) rotateX(180deg);
+    opacity: 0;
+  }
+  25% {
+    transform: scale(0.85) rotateX(135deg);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scale(0.9) rotateX(90deg);
+    opacity: 0.6;
+  }
+  75% {
+    transform: scale(0.95) rotateX(45deg);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1) rotateX(0deg);
+    opacity: 1;
+  }
+}
+
+/* Tile flip transition classes */
+.tile-flip-transition::view-transition-old(root) {
+  animation-name: tile-flip-out;
+  animation-duration: 0.5s;
+}
+
+.tile-flip-transition::view-transition-new(root) {
+  animation-name: tile-flip-in;
+  animation-duration: 0.5s;
+}
+
+/* ===========================================
+   ENERGY AURA FADE TRANSITION
+   =========================================== */
+@keyframes energy-aura-out {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+    filter: brightness(1) saturate(1);
+  }
+  25% {
+    transform: scale(1.02);
+    opacity: 0.9;
+    filter: brightness(1.2) saturate(1.3);
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.7;
+    filter: brightness(1.5) saturate(1.6);
+  }
+  75% {
+    transform: scale(1.08);
+    opacity: 0.4;
+    filter: brightness(2) saturate(2);
+  }
+  100% {
+    transform: scale(1.1);
+    opacity: 0;
+    filter: brightness(3) saturate(3);
+  }
+}
+
+@keyframes energy-aura-in {
+  0% {
+    transform: scale(1.1);
+    opacity: 0;
+    filter: brightness(3) saturate(3);
+  }
+  25% {
+    transform: scale(1.08);
+    opacity: 0.4;
+    filter: brightness(2) saturate(2);
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.7;
+    filter: brightness(1.5) saturate(1.6);
+  }
+  75% {
+    transform: scale(1.02);
+    opacity: 0.9;
+    filter: brightness(1.2) saturate(1.3);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+    filter: brightness(1) saturate(1);
+  }
+}
+
+/* Energy aura transition classes */
+.energy-aura-transition::view-transition-old(root) {
+  animation-name: energy-aura-out;
+  animation-duration: 0.6s;
+}
+
+.energy-aura-transition::view-transition-new(root) {
+  animation-name: energy-aura-in;
+  animation-duration: 0.6s;
+}
+
+/* ===========================================
+   TRAINER CARD FLIP TRANSITION
+   =========================================== */
+@keyframes trainer-card-flip-out {
+  0% {
+    transform: perspective(1000px) rotateY(0deg) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: perspective(1000px) rotateY(90deg) scale(0.95);
+    opacity: 0.5;
+  }
+  100% {
+    transform: perspective(1000px) rotateY(180deg) scale(0.9);
+    opacity: 0;
+  }
+}
+
+@keyframes trainer-card-flip-in {
+  0% {
+    transform: perspective(1000px) rotateY(180deg) scale(0.9);
+    opacity: 0;
+  }
+  50% {
+    transform: perspective(1000px) rotateY(90deg) scale(0.95);
+    opacity: 0.5;
+  }
+  100% {
+    transform: perspective(1000px) rotateY(0deg) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Trainer card flip transition classes */
+.trainer-card-transition::view-transition-old(root) {
+  animation-name: trainer-card-flip-out;
+  animation-duration: 0.5s;
+}
+
+.trainer-card-transition::view-transition-new(root) {
+  animation-name: trainer-card-flip-in;
+  animation-duration: 0.5s;
+}
+
+/* ===========================================
+   TYPE-THEMED TRANSITIONS
+   =========================================== */
+
+/* Electric type - zap flicker */
+.electric-transition::view-transition-old(root) {
+  animation-name: battle-flash-out;
+  animation-duration: 0.2s;
+  animation-timing-function: steps(4);
+}
+
+.electric-transition::view-transition-new(root) {
+  animation-name: battle-flash-in;
+  animation-duration: 0.2s;
+  animation-timing-function: steps(4);
+}
+
+/* Water type - ripple effect */
+@keyframes water-ripple-out {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+    filter: blur(0px) brightness(1);
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+    filter: blur(2px) brightness(1.3);
+  }
+  100% {
+    transform: scale(1.2);
+    opacity: 0;
+    filter: blur(4px) brightness(1.6);
+  }
+}
+
+@keyframes water-ripple-in {
+  0% {
+    transform: scale(1.2);
+    opacity: 0;
+    filter: blur(4px) brightness(1.6);
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+    filter: blur(2px) brightness(1.3);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+    filter: blur(0px) brightness(1);
+  }
+}
+
+.water-transition::view-transition-old(root) {
+  animation-name: water-ripple-out;
+  animation-duration: 0.4s;
+}
+
+.water-transition::view-transition-new(root) {
+  animation-name: water-ripple-in;
+  animation-duration: 0.4s;
+}
+
+/* ===========================================
+   SHARED ELEMENT TRANSITIONS
+   =========================================== */
+
+/* Shared element for Pokémon sprites */
+::view-transition-old(pokemon-sprite),
+::view-transition-new(pokemon-sprite) {
+  animation-duration: 0.5s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Shared element for navigation elements */
+::view-transition-old(nav-element),
+::view-transition-new(nav-element) {
+  animation-duration: 0.3s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===========================================
+   RESPONSIVE TRANSITION ADJUSTMENTS
+   =========================================== */
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.1s;
+    animation-timing-function: ease;
+  }
+  
+  .pokeball-transition,
+  .battle-flash-transition,
+  .pokedex-swipe-transition,
+  .tile-flip-transition,
+  .energy-aura-transition,
+  .trainer-card-transition,
+  .electric-transition,
+  .water-transition {
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+      animation-duration: 0.1s;
+      animation-timing-function: ease;
+    }
+  }
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.3s;
+  }
 }
 
 

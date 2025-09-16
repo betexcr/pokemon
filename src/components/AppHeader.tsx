@@ -7,6 +7,7 @@ import ThemeToggle from '@/components/ThemeToggle'
 import HeaderIcons from '@/components/HeaderIcons'
 import UserDropdown from '@/components/UserDropdown'
 import { getHeaderIcon, getPageIconKey } from '@/lib/headerIcons'
+import { triggerViewTransition } from '@/components/ViewTransitions'
 
 interface AppHeaderProps {
   title?: string
@@ -46,7 +47,25 @@ export default function AppHeader({
   const IconComponent = iconConfig.icon
 
   const handleBack = () => {
-    if (backLink) router.push(backLink)
+    if (backLink) {
+      // Use reverse transition for back navigation
+      const currentPage = pathname
+      const isFromPokemonPage = currentPage.startsWith('/pokemon/')
+      const isFromBattlePage = currentPage.startsWith('/battle')
+      const isFromComparePage = currentPage.startsWith('/compare')
+      const isFromTeamPage = currentPage.startsWith('/team')
+      
+      let transitionType: 'pokeball' | 'battle-flash' | 'pokedex-swipe' | 'tile-flip' | 'default' = 'default'
+      
+      if (isFromPokemonPage) transitionType = 'pokeball'
+      else if (isFromBattlePage) transitionType = 'battle-flash'
+      else if (isFromComparePage) transitionType = 'pokedex-swipe'
+      else if (isFromTeamPage) transitionType = 'tile-flip'
+      
+      triggerViewTransition(transitionType, () => {
+        router.push(backLink)
+      })
+    }
   }
 
 

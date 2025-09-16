@@ -377,7 +377,7 @@ export default function PokemonSearch({
                     <span className="font-medium capitalize text-text">
                       {formatPokemonName(pokemon.name)}
                     </span>
-                    <span className="text-sm text-muted">#{pokemon.id}</span>
+                    {pokemon.id !== 0 && <span className="text-sm text-muted">#{pokemon.id}</span>}
                   </div>
                   
                   {showTypes && pokemon.types.length > 0 && (

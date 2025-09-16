@@ -273,6 +273,87 @@ export function processResidualDamage(state: BattleState): void {
       state.opponent.faintedCount = state.opponent.pokemon.filter(p => p.currentHp <= 0).length;
     }
   }
+  
+  // Binding damage
+  const playerBinding = (playerPokemon.volatile as any).binding as { turnsLeft: number; fraction: number; kind: string } | undefined;
+  if (playerBinding) {
+    console.log(`🔗 Applying binding damage to ${playerPokemon.pokemon.name}:`, {
+      binding: playerBinding,
+      currentHp: playerPokemon.currentHp,
+      maxHp: playerPokemon.maxHp,
+      fraction: playerBinding.fraction
+    });
+    
+    const damage = Math.max(1, Math.floor(playerPokemon.maxHp * playerBinding.fraction));
+    const oldHp = playerPokemon.currentHp;
+    playerPokemon.currentHp = Math.max(0, playerPokemon.currentHp - damage);
+    playerBinding.turnsLeft -= 1;
+    
+    console.log(`🔗 Binding damage applied: ${damage} damage (${oldHp} -> ${playerPokemon.currentHp}), turns left: ${playerBinding.turnsLeft}`);
+    
+    if (playerBinding.turnsLeft <= 0) {
+      (playerPokemon.volatile as any).binding = undefined;
+      state.battleLog.push({
+        type: 'status_effect',
+        message: `${playerPokemon.pokemon.name} was freed from ${playerBinding.kind}!`,
+        pokemon: playerPokemon.pokemon.name
+      });
+    } else {
+      const percent = Math.round((damage / playerPokemon.maxHp) * 100);
+      const remain = Math.round((playerPokemon.currentHp / playerPokemon.maxHp) * 100);
+      state.battleLog.push({
+        type: 'status_damage',
+        message: `${playerPokemon.pokemon.name} is hurt by ${playerBinding.kind}! (${remain}% HP left)`,
+        pokemon: playerPokemon.pokemon.name,
+        damage: percent
+      });
+    }
+    
+    // Update fainted count if Pokemon fainted
+    if (oldHp > 0 && playerPokemon.currentHp <= 0) {
+      state.player.faintedCount = state.player.pokemon.filter(p => p.currentHp <= 0).length;
+    }
+  }
+  
+  const opponentBinding = (opponentPokemon.volatile as any).binding as { turnsLeft: number; fraction: number; kind: string } | undefined;
+  if (opponentBinding) {
+    console.log(`🔗 Applying binding damage to ${opponentPokemon.pokemon.name}:`, {
+      binding: opponentBinding,
+      currentHp: opponentPokemon.currentHp,
+      maxHp: opponentPokemon.maxHp,
+      fraction: opponentBinding.fraction
+    });
+    
+    const damage = Math.max(1, Math.floor(opponentPokemon.maxHp * opponentBinding.fraction));
+    const oldHp = opponentPokemon.currentHp;
+    opponentPokemon.currentHp = Math.max(0, opponentPokemon.currentHp - damage);
+    opponentBinding.turnsLeft -= 1;
+    
+    console.log(`🔗 Binding damage applied: ${damage} damage (${oldHp} -> ${opponentPokemon.currentHp}), turns left: ${opponentBinding.turnsLeft}`);
+    
+    if (opponentBinding.turnsLeft <= 0) {
+      (opponentPokemon.volatile as any).binding = undefined;
+      state.battleLog.push({
+        type: 'status_effect',
+        message: `${opponentPokemon.pokemon.name} was freed from ${opponentBinding.kind}!`,
+        pokemon: opponentPokemon.pokemon.name
+      });
+    } else {
+      const percent = Math.round((damage / opponentPokemon.maxHp) * 100);
+      const remain = Math.round((opponentPokemon.currentHp / opponentPokemon.maxHp) * 100);
+      state.battleLog.push({
+        type: 'status_damage',
+        message: `${opponentPokemon.pokemon.name} is hurt by ${opponentBinding.kind}! (${remain}% HP left)`,
+        pokemon: opponentPokemon.pokemon.name,
+        damage: percent
+      });
+    }
+    
+    // Update fainted count if Pokemon fainted
+    if (oldHp > 0 && opponentPokemon.currentHp <= 0) {
+      state.opponent.faintedCount = state.opponent.pokemon.filter(p => p.currentHp <= 0).length;
+    }
+  }
 }
 
 // Process item residuals

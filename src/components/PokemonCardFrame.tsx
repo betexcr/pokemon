@@ -45,11 +45,11 @@ export default function PokemonCardFrame({
       ${className}
     `
 
-    // Layout and styling based on density with aspect ratio constraints
+    // Layout and styling based on density with flexible aspect ratio
     const densityClasses = {
-      '3cols': 'rounded-xl hover:scale-[1.02] aspect-square max-h-[360px] shadow-md hover:shadow-lg', // Square aspect ratio
-      '6cols': 'rounded-lg hover:scale-[1.02] aspect-square max-h-[280px] shadow-sm hover:shadow-md', // Square aspect ratio
-      '9cols': 'rounded-md hover:scale-[1.01] aspect-square max-h-[200px] shadow-sm hover:shadow-md', // Square aspect ratio
+      '3cols': 'rounded-xl hover:scale-[1.02] min-h-[400px] max-h-[600px] shadow-md hover:shadow-lg', // Flexible height
+      '6cols': 'rounded-lg hover:scale-[1.02] min-h-[320px] max-h-[480px] shadow-sm hover:shadow-md', // Flexible height
+      '9cols': 'rounded-md hover:scale-[1.01] min-h-[240px] max-h-[360px] shadow-sm hover:shadow-md', // Flexible height
       list: 'rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center h-[60px] px-4 py-3 border-l-4 border-l-transparent hover:border-l-poke-blue transition-all duration-200'
     }
 

@@ -1,13 +1,13 @@
 "use client";
 
 import React from 'react';
-import { BattleScene, UIEvent } from './BattleScene';
+import BattleScene from './BattleScene';
 import { useBattleFeed } from '@/hooks/useBattleFeed';
 
 interface BattleSceneExampleProps {
   battleId: string;
   useSelfSubscribing?: boolean;
-  events?: UIEvent[];
+  events?: any[];
 }
 
 export const BattleSceneExample: React.FC<BattleSceneExampleProps> = ({ 
@@ -18,25 +18,9 @@ export const BattleSceneExample: React.FC<BattleSceneExampleProps> = ({
   // Optional: Use the self-subscribing hook
   const { pub, logs, meta } = useBattleFeed(useSelfSubscribing ? battleId : undefined);
 
-  if (useSelfSubscribing) {
-    return (
-      <div className="h-screen">
-        <BattleScene 
-          battleId={battleId} 
-          state={pub} 
-          logs={logs} 
-          events={events}
-        />
-      </div>
-    );
-  }
-
   return (
     <div className="h-screen">
-      <BattleScene 
-        battleId={battleId} 
-        events={events}
-      />
+      <BattleScene />
     </div>
   );
 };

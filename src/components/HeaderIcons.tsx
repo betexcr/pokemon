@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import { triggerViewTransition } from './ViewTransitions'
 
 interface HeaderIconsProps {
   comparisonList?: number[]
@@ -21,16 +22,22 @@ export default function HeaderIcons({
   const router = useRouter()
 
   const handleTeamClick = () => {
-    router.push('/team')
+    triggerViewTransition('tile-flip', () => {
+      router.push('/team')
+    })
   }
 
   const handleBattleClick = () => {
-    router.push('/battle')
+    triggerViewTransition('battle-flash', () => {
+      router.push('/battle')
+    })
   }
 
   const handleCompareClick = () => {
     if (comparisonList.length > 0) {
-      router.push('/compare')
+      triggerViewTransition('pokedex-swipe', () => {
+        router.push('/compare')
+      })
     }
   }
 

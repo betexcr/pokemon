@@ -7,6 +7,8 @@ import TypeBadge from "./TypeBadge";
 import { getPokemonMainPageImage } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import { Scale } from "lucide-react";
+import { PokeballLink } from "./TransitionLink";
+import LinkWithTransition from "./LinkWithTransition";
 
 /**
  * Polished Pokédex card
@@ -40,7 +42,7 @@ export default function PokemonCard({
   isInComparison?: boolean;
   onToggleComparison?: (id: number) => void;
 }) {
-  const title = `${formatPokemonName(pokemon.name)} #${String(pokemon.id).padStart(4, "0")}`;
+  const title = `${formatPokemonName(pokemon.name)}${pokemon.id === 0 ? '' : ` #${String(pokemon.id).padStart(4, "0")}`}`;
   const img = getPokemonMainPageImage(pokemon.id);
   const types = pokemon.types.map(t => t.type.name);
 
@@ -79,23 +81,21 @@ export default function PokemonCard({
   };
 
   return (
-    <Link
-      href={`/pokemon/${pokemon.id}`}
-      aria-label={title}
-      onClick={handleClick}
-      className={clsx(
-        "group relative rounded-2xl border border-border bg-surface shadow-card transition no-underline text-text",
-        "hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-poke-blue focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
-        mode === "grid"
-          ? "overflow-hidden flex flex-col"
-          : "grid grid-cols-[minmax(140px,200px)_1fr] gap-4 overflow-hidden",
-        isSelected && "ring-2 ring-poke-blue ring-offset-2"
-      )}
-      style={{
-        ...gradient,
-        viewTransitionName: onSelect ? undefined : `pokemon-${pokemon.id}`
-      }}
-    >
+    <LinkWithTransition href={`/pokemon/${pokemon.id}`} transitionType="shared-element">
+      <div
+        aria-label={title}
+        className={clsx(
+          "group relative rounded-2xl border border-border bg-surface shadow-card transition cursor-pointer text-text",
+          "hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-poke-blue focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
+          mode === "grid"
+            ? "overflow-hidden flex flex-col"
+            : "grid grid-cols-[minmax(140px,200px)_1fr] gap-4 overflow-hidden",
+          isSelected && "ring-2 ring-poke-blue ring-offset-2"
+        )}
+        style={{
+          ...gradient
+        }}
+      >
       {/* Type accent bar (top) */}
       <div
         className="h-1.5 w-full rounded-t-2xl"
@@ -104,11 +104,13 @@ export default function PokemonCard({
       />
 
       {/* First row - absolutely positioned */}
-      <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between">
+      <div className="absolute top-1 left-1 right-1 z-20 flex items-center justify-between">
         {/* Pokemon number - avoid backdrop blur on very small views to not obscure sprite */}
-        <span className="text-xs text-muted font-mono bg-white/90 dark:bg-black/40 px-2 py-1 rounded sm:backdrop-blur">
-          #{String(pokemon.id).padStart(4, "0")}
-        </span>
+        {pokemon.id !== 0 && (
+          <span className="text-xs text-muted font-mono bg-white/90 dark:bg-black/40 px-2 py-1 rounded sm:backdrop-blur shadow-sm">
+            #{String(pokemon.id).padStart(4, "0")}
+          </span>
+        )}
         
         {/* Comparison button */}
         {onToggleComparison && (
@@ -136,7 +138,7 @@ export default function PokemonCard({
         }}
         aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
         className={clsx(
-          "absolute right-3 top-3 z-10 rounded-full bg-white/90 dark:bg-black/40 p-2 shadow sm:backdrop-blur",
+          "absolute right-1 top-1 z-10 rounded-full bg-white/90 dark:bg-black/40 p-2 shadow sm:backdrop-blur",
           "transition transform hover:scale-110",
           isFavorite && "ring-2 ring-poke-red"
         )}
@@ -144,12 +146,16 @@ export default function PokemonCard({
         {isFavorite ? "❤️" : "♡"}
       </button>
 
-      {/* Artwork - now stretches to fill available space */}
+      {/* Artwork - large but fully visible */}
       <div
         className={clsx(
-          "bg-white/60 dark:bg-white/5 flex items-center justify-center rounded-t-2xl flex-1 min-h-0",
+          "bg-white/60 dark:bg-white/5 flex items-center justify-center rounded-t-2xl flex-1 min-h-0 overflow-visible",
           mode === "grid" ? "w-full" : "w-full"
         )}
+        style={{
+          minHeight: mode === "grid" ? "55%" : "auto",
+          padding: mode === "grid" ? "16px" : "12px"
+        }}
       >
         <img
           src={img}
@@ -158,37 +164,44 @@ export default function PokemonCard({
           width={512}
           height={512}
           className={clsx(
-            "mx-auto h-full w-full max-h-full max-w-full object-contain transition-transform duration-300",
-            "group-hover:scale-[1.04]",
-            cardSize === 'cozy' ? "p-4" : cardSize === 'compact' ? "p-3.5" : "p-3"
+            "mx-auto max-h-full max-w-full w-auto h-auto object-contain transition-transform duration-300",
+            "group-hover:scale-[1.04]"
           )}
+          style={{
+            maxHeight: "calc(100% - 32px)",
+            maxWidth: "calc(100% - 32px)",
+            viewTransitionName: `pokemon-sprite-${pokemon.id}`
+          }}
           onError={(e) => {
             e.currentTarget.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`
           }}
         />
       </div>
 
-      {/* Info */}
+      {/* Info - Absolutely positioned at bottom */}
       <div className={clsx(
-        "p-3 flex-shrink-0",
-        mode === "list" && "pr-5"
+        "absolute bottom-1 left-1 right-1 bg-white/90 backdrop-blur-sm rounded-lg p-2 shadow-sm flex-shrink-0",
+        mode === "list" && "pr-3 sm:pr-5"
       )}>
         <div className="flex items-baseline justify-between gap-2">
           <h3 className={clsx(
-            "capitalize font-semibold tracking-tight text-text",
-            cardSize === 'cozy' ? "text-base sm:text-lg" : cardSize === 'compact' ? "text-sm sm:text-base" : "text-sm"
+            "capitalize font-semibold tracking-tight text-text text-center w-full",
+            cardSize === 'cozy' ? "text-sm sm:text-base lg:text-lg" : 
+            cardSize === 'compact' ? "text-xs sm:text-sm lg:text-base" : 
+            "text-xs sm:text-sm"
           )}>
             {formatPokemonName(pokemon.name)}
           </h3>
         </div>
 
-        <div className="mt-1.5 flex flex-wrap gap-1.5">
+        <div className="mt-1 sm:mt-1.5 flex flex-wrap gap-1 sm:gap-1.5 justify-center">
           {types.map((type) => (
             <TypeBadge key={type} type={type} />
           ))}
         </div>
       </div>
-    </Link>
+      </div>
+    </LinkWithTransition>
   );
 }
 

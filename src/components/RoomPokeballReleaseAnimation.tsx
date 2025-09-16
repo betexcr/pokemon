@@ -30,6 +30,7 @@ export default function RoomPokeballReleaseAnimation({
 
   const POKEBALL_ICON = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png'
   const getPixelSprite = (id: number) => `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`
+  const getPokemonGif = (id: number) => `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated/${id}.gif`
 
   const handleBallClick = (index: number) => {
     const slot = slots[index]
@@ -75,7 +76,7 @@ export default function RoomPokeballReleaseAnimation({
   })
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-3">
       {pokeballSlots.map((slot, index) => {
         // Combine local and remote animation states
         const isAnimating = localAnimatingBalls.has(index) || remoteAnimatingBalls.has(index)
@@ -86,7 +87,7 @@ export default function RoomPokeballReleaseAnimation({
         return (
           <div 
             key={index} 
-            className={`w-2.5 h-2.5 relative ${slot.filled ? '' : 'opacity-30'}`}
+            className={`w-8 h-8 relative ${slot.filled ? '' : 'opacity-30'}`}
           >
             {slot.filled ? (
               <>
@@ -100,8 +101,8 @@ export default function RoomPokeballReleaseAnimation({
                     <Image 
                       src={POKEBALL_ICON} 
                       alt="Poké Ball" 
-                      width={10} 
-                      height={10}
+                      width={32} 
+                      height={32}
                       className="w-full h-full"
                     />
                   </div>
@@ -115,13 +116,20 @@ export default function RoomPokeballReleaseAnimation({
                     style={{ cursor: canClick ? 'pointer' : 'default', animationDelay: isCatching ? '0.15s' : undefined }}
                   >
                     <Image
-                      src={getPixelSprite(slot.id!)}
+                      src={getPokemonGif(slot.id!)}
                       alt={`Pokemon ${slot.id}`}
-                      width={10}
-                      height={10}
+                      width={32}
+                      height={32}
                       className="w-full h-full object-contain block"
-                      onLoad={() => console.log(`${playerType} Pokémon ${slot.id} sprite loaded`)}
-                      onError={() => console.error(`${playerType} Failed to load Pokémon ${slot.id} sprite`)}
+                      onLoad={() => console.log(`${playerType} Pokémon ${slot.id} gif loaded`)}
+                      onError={() => {
+                        console.error(`${playerType} Failed to load Pokémon ${slot.id} gif, falling back to sprite`);
+                        // Fallback to static sprite if GIF fails
+                        const img = document.querySelector(`img[alt="Pokemon ${slot.id}"]`) as HTMLImageElement;
+                        if (img) {
+                          img.src = getPixelSprite(slot.id!);
+                        }
+                      }}
                     />
                   </div>
                 )}
@@ -131,8 +139,8 @@ export default function RoomPokeballReleaseAnimation({
                       <Image 
                         src={POKEBALL_ICON}
                         alt="Poké Ball"
-                        width={10}
-                        height={10}
+                        width={32}
+                        height={32}
                         className="w-full h-full"
                       />
                     </div>
@@ -144,8 +152,8 @@ export default function RoomPokeballReleaseAnimation({
               <Image 
                 src={POKEBALL_ICON} 
                 alt="Poké Ball" 
-                width={10} 
-                height={10}
+                width={32} 
+                height={32}
                 className="w-full h-full opacity-30"
               />
             )}

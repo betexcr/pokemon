@@ -951,7 +951,7 @@ export default function TeamBuilderPage() {
                                   {formatPokemonName(lastPokemon.name)} (Last Selected)
                                 </div>
                                 <div className="text-[10px] text-muted leading-none">
-                                  #{String(lastPokemon.id).padStart(4, '0')}
+                                  {lastPokemon.id !== 0 && `#${String(lastPokemon.id).padStart(4, '0')}`}
                                 </div>
                               </div>
                               <div className="flex gap-1 items-center">
@@ -1011,7 +1011,7 @@ export default function TeamBuilderPage() {
                             {formatPokemonName(pokemon.name)}
                           </div>
                           <div className="text-[10px] text-muted leading-none">
-                            #{String(pokemon.id).padStart(4, '0')}
+                            {pokemon.id !== 0 && `#${String(pokemon.id).padStart(4, '0')}`}
                           </div>
                         </div>
                         <div className="flex gap-1 items-center">

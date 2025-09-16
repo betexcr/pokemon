@@ -7,10 +7,13 @@ import { Swords } from 'lucide-react';
 import AppHeader from '@/components/AppHeader';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { roomService, type RoomData } from '@/lib/roomService';
+import LinkWithTransition from '@/components/LinkWithTransition';
+import { useLobbyTransition } from '@/hooks/useLobbyTransition';
 
 function LobbyPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const lobbyTransition = useLobbyTransition();
   const [rooms, setRooms] = useState<RoomData[]>([]);
   const [loading, setLoading] = useState(true);
   const [creatingRoom, setCreatingRoom] = useState(false);
@@ -46,8 +49,8 @@ function LobbyPage() {
       // setRoomCode(roomId);
       console.log('Created room with ID:', roomId);
       
-      // Redirect to the room
-      router.push(`/lobby/${roomId}`);
+      // Redirect to the room with lobby transition
+      lobbyTransition(roomId);
     } catch (error) {
       console.error('Failed to create room:', error);
       alert('Failed to create room. Please try again.');
@@ -58,7 +61,7 @@ function LobbyPage() {
 
   const joinRoom = (roomId: string) => {
     if (!user) return;
-    router.push(`/lobby/${roomId}`);
+    lobbyTransition(roomId);
   };
 
   const formatTimeAgo = (date: Date) => {

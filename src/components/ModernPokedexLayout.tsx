@@ -695,7 +695,7 @@ export default function ModernPokedexLayout({
     setIsLoadingMore(true);
     
     try {
-      const pageSize = 75;
+      const pageSize = 100;
       let newPokemon: Pokemon[] = [];
       
       // Handle different loading strategies based on current filter state
@@ -715,6 +715,8 @@ export default function ModernPokedexLayout({
       if (newPokemon.length === 0) {
         // Handle empty batch with retry logic
         const total = totalPokemonCount ?? 0;
+        console.log(`⚠️ Empty batch received: currentOffset=${currentOffset}, total=${total}, retryCount=${emptyBatchCountRef.current}`);
+        
         if (total && currentOffset < total && emptyBatchCountRef.current < 3) {
           emptyBatchCountRef.current += 1;
           setCurrentOffset(prev => prev + pageSize);
@@ -723,6 +725,23 @@ export default function ModernPokedexLayout({
           setTimeout(() => loadMorePokemon(), Math.pow(2, emptyBatchCountRef.current) * 100);
           return;
         }
+        
+        // If we've tried multiple times and still get empty batches, but we're not at the expected limit,
+        // try loading a larger batch to see if there are more Pokémon
+        if (emptyBatchCountRef.current >= 3 && currentOffset < 1000) {
+          console.log('🔄 Trying larger batch size to find more Pokémon...');
+          emptyBatchCountRef.current = 0; // Reset retry count
+          const largerBatch = await getPokemonWithPagination(150, currentOffset); // Try larger batch
+          if (largerBatch.length > 0) {
+            console.log(`✅ Found ${largerBatch.length} Pokémon with larger batch`);
+            setAllGenerationsPokemon(prev => [...prev, ...largerBatch]);
+            setCurrentOffset(prev => prev + 150);
+            setIsLoadingMore(false);
+            return;
+          }
+        }
+        
+        console.log('🛑 No more Pokémon available, stopping infinite scroll');
         setHasMorePokemon(false);
       } else {
         emptyBatchCountRef.current = 0;
@@ -745,11 +764,13 @@ export default function ModernPokedexLayout({
         // Check if we've reached the limit
         // Use a more reasonable limit based on actual Pokemon count
         const maxPokemonCount = totalPokemonCount || 1302; // Fallback to known total
+        console.log(`📊 Checking limit: newOffset=${newOffset}, maxPokemonCount=${maxPokemonCount}, hasMorePokemon=${hasMorePokemon}`);
+        
         if (newOffset >= maxPokemonCount) {
-          
+          console.log('🛑 Reached Pokémon limit, stopping infinite scroll');
           setHasMorePokemon(false);
         } else {
-          
+          console.log('✅ More Pokémon available, continuing infinite scroll');
         }
       }
     } catch (error) {
@@ -784,17 +805,23 @@ export default function ModernPokedexLayout({
         (entries) => {
           const [entry] = entries;
           
-          
+          console.log('🔍 Intersection observer triggered:', {
+            isIntersecting: entry.isIntersecting,
+            isLoadingMore,
+            hasMorePokemon,
+            currentOffset,
+            totalPokemonCount
+          });
           
           if (entry.isIntersecting && !isLoadingMore && hasMorePokemon) {
-            
+            console.log('🚀 Loading more Pokémon...');
             loadMorePokemon();
           }
         },
         {
           root: null, // Use viewport as root for better reliability
-          rootMargin: '100px', // Reduced margin to be less aggressive
-          threshold: 0.1 // Higher threshold for less sensitive detection
+          rootMargin: '200px', // Increased margin for better detection
+          threshold: 0.01 // Lower threshold for more sensitive detection
         }
       );
 
@@ -811,6 +838,7 @@ export default function ModernPokedexLayout({
       
       return sentinel;
     };
+
 
     let sentinel = findSentinel();
     if (!sentinel) {
@@ -835,7 +863,7 @@ export default function ModernPokedexLayout({
     const mainContentArea = document.querySelector('.flex-1.min-h-0.overflow-y-auto');
     let scrollTimeout: NodeJS.Timeout;
     
-    const handleScroll = () => {
+    const handleScrollBackup = () => {
       if (!mainContentArea || isLoadingMore || !hasMorePokemon) return;
       
       clearTimeout(scrollTimeout);
@@ -852,7 +880,7 @@ export default function ModernPokedexLayout({
     };
 
     if (mainContentArea) {
-      mainContentArea.addEventListener('scroll', handleScroll, { passive: true });
+      mainContentArea.addEventListener('scroll', handleScrollBackup, { passive: true });
     }
 
     const cleanup = setupObserver(sentinel);
@@ -860,7 +888,7 @@ export default function ModernPokedexLayout({
     return () => {
       cleanup?.();
       if (mainContentArea) {
-      mainContentArea.removeEventListener('scroll', handleScroll);
+      mainContentArea.removeEventListener('scroll', handleScrollBackup);
       }
       clearTimeout(scrollTimeout);
     };
