@@ -42,14 +42,14 @@ export default function VirtualizedPokemonGrid({
     // Theme provider not available, use default
   }
 
-  // Calculate layout based on density - fixed column counts
+  // Calculate layout based on density - fixed column counts with proper aspect ratios
   const getLayoutClasses = () => {
     switch (density) {
-      case '3cols': return 'grid grid-cols-3 gap-4 items-stretch content-stretch' // Always 3 columns
-      case '6cols': return 'grid grid-cols-6 gap-3 items-stretch content-stretch' // Always 6 columns  
-      case '9cols': return 'grid grid-cols-9 gap-2 items-stretch content-stretch' // Always 9 columns
+      case '3cols': return 'grid grid-cols-3 gap-4 items-start' // Always 3 columns, items start aligned
+      case '6cols': return 'grid grid-cols-6 gap-3 items-start' // Always 6 columns, items start aligned
+      case '9cols': return 'grid grid-cols-9 gap-2 items-start' // Always 9 columns, items start aligned
       case 'list': return 'flex flex-col gap-1' // List view with tighter spacing
-      default: return 'grid grid-cols-6 gap-3 items-stretch content-stretch' // Default to 6 columns
+      default: return 'grid grid-cols-6 gap-3 items-start' // Default to 6 columns, items start aligned
     }
   }
 
@@ -87,14 +87,14 @@ export default function VirtualizedPokemonGrid({
     }
   }
 
-  // Calculate grid dimensions for virtualization - Flexible heights
+  // Calculate grid dimensions for virtualization - Square dimensions
   const getGridDimensions = useMemo(() => {
     switch (density) {
-      case '3cols': return { cols: 3, itemHeight: 500, gap: 16 } // Flexible height
-      case '6cols': return { cols: 6, itemHeight: 400, gap: 12 } // Flexible height
-      case '9cols': return { cols: 9, itemHeight: 300, gap: 8 }  // Flexible height
+      case '3cols': return { cols: 3, itemHeight: 180, gap: 16 } // Balanced height - not too stretched
+      case '6cols': return { cols: 6, itemHeight: 140, gap: 12 } // Balanced height - not too stretched
+      case '9cols': return { cols: 9, itemHeight: 100, gap: 8 }  // Balanced height - not too stretched
       case 'list': return { cols: 1, itemHeight: 60, gap: 4 }
-      default: return { cols: 6, itemHeight: 400, gap: 12 }
+      default: return { cols: 6, itemHeight: 140, gap: 12 }
     }
   }, [density])
 
@@ -181,8 +181,8 @@ export default function VirtualizedPokemonGrid({
           key={rowIndex}
           className={`${getLayoutClasses()} w-full max-w-full`}
           style={{
-            height: getGridDimensions.itemHeight,
             gap: getGridDimensions.gap,
+            height: getGridDimensions.itemHeight,
           }}
         >
           {rowPokemon.map((pokemon) => {
@@ -258,8 +258,8 @@ export default function VirtualizedPokemonGrid({
         key={`special-forms-${rowIndex}`}
         className={`${getLayoutClasses()} w-full max-w-full`}
         style={{
-          height: getGridDimensions.itemHeight,
           gap: getGridDimensions.gap,
+          height: getGridDimensions.itemHeight,
         }}
       >
         {rowPokemon.map((pokemon) => {

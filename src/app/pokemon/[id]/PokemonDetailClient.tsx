@@ -12,6 +12,7 @@ import StatsSection from '@/components/pokemon/StatsSection'
 import MovesSection from '@/components/pokemon/MovesSection'
 import EvolutionSection from '@/components/pokemon/EvolutionSection'
 import { getPokemon, getPokemonSpecies, getEvolutionChain, getAbility, getMove } from '@/lib/api'
+import { PokemonSpecies } from '@/types/pokemon'
 import MatchupsSection from '@/components/pokemon/MatchupsSection'
 import { calculateTypeEffectiveness } from '@/lib/api'
 import PokemonHero from '@/components/PokemonHero'
@@ -28,6 +29,34 @@ export default function PokemonDetailClient({ pokemon, error }: PokemonDetailCli
   const [matchups, setMatchups] = useState<Array<{ title: string; types: string[]; tone: 'danger'|'ok'|'immune' }>>([])
   const [abilitiesWithDescriptions, setAbilitiesWithDescriptions] = useState<Array<{ name: string; is_hidden?: boolean; description?: string | null }>>([])
   const [movesWithEffects, setMovesWithEffects] = useState<Array<{ name: string; type: string; damage_class: 'physical' | 'special' | 'status'; power: number | null; accuracy: number | null; pp: number | null; level_learned_at: number | null; short_effect: string | null }>>([])
+  const [speciesData, setSpeciesData] = useState<PokemonSpecies | null>(null)
+
+  // Helper functions to extract flavor text and genus
+  const getFlavorText = (species: PokemonSpecies | null): string => {
+    if (!species?.flavor_text_entries) return "A mysterious Pokémon with unique abilities and characteristics."
+    
+    // Find English flavor text from the latest version (usually Sword/Shield or Scarlet/Violet)
+    const englishEntries = species.flavor_text_entries.filter(entry => 
+      entry.language.name === 'en'
+    )
+    
+    if (englishEntries.length === 0) return "A mysterious Pokémon with unique abilities and characteristics."
+    
+    // Sort by version and take the most recent one
+    const latestEntry = englishEntries[englishEntries.length - 1]
+    return latestEntry.flavor_text.replace(/\f/g, ' ') // Replace form feed characters with spaces
+  }
+
+  const getGenus = (species: PokemonSpecies | null): string => {
+    if (!species?.genera) return "Unknown Pokémon"
+    
+    // Find English genus
+    const englishGenus = species.genera.find(genus => 
+      genus.language.name === 'en'
+    )
+    
+    return englishGenus?.genus || "Unknown Pokémon"
+  }
 
   let theme = 'light'
   try {
@@ -36,6 +65,25 @@ export default function PokemonDetailClient({ pokemon, error }: PokemonDetailCli
   } catch {
     // Theme provider not available, use default
   }
+
+  // Load species data once on mount
+  useEffect(() => {
+    let isMounted = true
+    const loadSpecies = async () => {
+      try {
+        if (!pokemon) return
+        const species = await getPokemonSpecies(pokemon.id)
+        if (isMounted) {
+          setSpeciesData(species)
+        }
+      } catch (error) {
+        console.error('Failed to load species data:', error)
+      }
+    }
+
+    loadSpecies()
+    return () => { isMounted = false }
+  }, [pokemon])
 
   // Load evolution chain once on mount
   useEffect(() => {
@@ -255,8 +303,8 @@ export default function PokemonDetailClient({ pokemon, error }: PokemonDetailCli
         <PokemonHero 
           pokemon={pokemon} 
           abilities={abilitiesWithDescriptions.length > 0 ? abilitiesWithDescriptions : pokemon.abilities.map(a => ({ name: a.ability.name, is_hidden: a.is_hidden }))}
-          flavorText="A mysterious Pokémon with unique abilities and characteristics."
-          genus="Seed Pokémon"
+          flavorText={getFlavorText(speciesData)}
+          genus={getGenus(speciesData)}
         />
 
         {/* Tabs */}

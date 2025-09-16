@@ -88,7 +88,7 @@ export default function PokemonCard({
           "group relative rounded-2xl border border-border bg-surface shadow-card transition cursor-pointer text-text",
           "hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-poke-blue focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
           mode === "grid"
-            ? "overflow-hidden flex flex-col"
+            ? "overflow-hidden flex flex-col aspect-square"
             : "grid grid-cols-[minmax(140px,200px)_1fr] gap-4 overflow-hidden",
           isSelected && "ring-2 ring-poke-blue ring-offset-2"
         )}
@@ -146,15 +146,16 @@ export default function PokemonCard({
         {isFavorite ? "❤️" : "♡"}
       </button>
 
-      {/* Artwork - large but fully visible */}
+      {/* Artwork - square aspect ratio with minimal white space */}
       <div
         className={clsx(
-          "bg-white/60 dark:bg-white/5 flex items-center justify-center rounded-t-2xl flex-1 min-h-0 overflow-visible",
+          "flex items-center justify-center overflow-hidden flex-1",
           mode === "grid" ? "w-full" : "w-full"
         )}
         style={{
-          minHeight: mode === "grid" ? "55%" : "auto",
-          padding: mode === "grid" ? "16px" : "12px"
+          padding: "8px", // Small padding to prevent edge clipping
+          backgroundColor: "transparent",
+          minHeight: 0 // Allow flex to work properly
         }}
       >
         <img
@@ -168,9 +169,10 @@ export default function PokemonCard({
             "group-hover:scale-[1.04]"
           )}
           style={{
-            maxHeight: "calc(100% - 32px)",
-            maxWidth: "calc(100% - 32px)",
-            viewTransitionName: `pokemon-sprite-${pokemon.id}`
+            viewTransitionName: `pokemon-sprite-${pokemon.id}`,
+            maxWidth: "100%",
+            maxHeight: "100%",
+            margin: "auto" // Center the image
           }}
           onError={(e) => {
             e.currentTarget.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`
@@ -178,9 +180,9 @@ export default function PokemonCard({
         />
       </div>
 
-      {/* Info - Absolutely positioned at bottom */}
+      {/* Info - Positioned at bottom with minimal spacing */}
       <div className={clsx(
-        "absolute bottom-1 left-1 right-1 bg-white/90 backdrop-blur-sm rounded-lg p-2 shadow-sm flex-shrink-0",
+        "bg-white/90 backdrop-blur-sm rounded-lg p-2 shadow-sm flex-shrink-0",
         mode === "list" && "pr-3 sm:pr-5"
       )}>
         <div className="flex items-baseline justify-between gap-2">

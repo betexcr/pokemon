@@ -90,9 +90,9 @@ export default function ModernPokemonCard({
         // List layout - clean horizontal list item
         <div className="flex items-center w-full">
           {/* Pokémon Image */}
-          <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg flex items-center justify-center overflow-hidden mr-3 sm:mr-4 w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
+          <div className="relative rounded-lg flex items-center justify-center overflow-hidden mr-3 sm:mr-4 w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0" style={{ padding: 0, backgroundColor: "transparent" }}>
             {!imageLoaded && !imageError && (
-              <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse rounded-lg" />
+              <div className="absolute inset-0 bg-transparent animate-pulse rounded-lg" />
             )}
 
             {/* Pokémon Image */}
@@ -103,7 +103,11 @@ export default function ModernPokemonCard({
                 imageLoaded ? "opacity-100" : "opacity-0"
               }`}
               style={{
-                viewTransitionName: `pokemon-sprite-${pokemon.id}`
+                viewTransitionName: `pokemon-sprite-${pokemon.id}`,
+                margin: 0,
+                padding: 0,
+                maxWidth: "100%",
+                maxHeight: "100%"
               }}
               onLoad={() => setImageLoaded(true)}
               onError={(e) => {
@@ -189,12 +193,17 @@ export default function ModernPokemonCard({
       ) : (
         // Grid layout for 3cols, 6cols, and 9cols
         <div
-          className="h-full flex flex-col relative"
+          className="flex flex-col relative"
+          style={{ 
+            height: density === "3cols" ? "180px" : density === "6cols" ? "140px" : "100px", // Balanced height - not too stretched
+            minHeight: 'fit-content',
+            aspectRatio: "1 / 1", // Make cards square
+          }}
         >
           {/* Header: ID and Comparison - Absolutely positioned at top */}
           <div
             className="absolute top-1 left-1 right-1 z-20 flex items-center justify-between
-                  bg-white/90 backdrop-blur-sm rounded-lg px-2 py-1 shadow-sm"
+                  bg-white/90 backdrop-blur-sm rounded-lg px-1.5 py-0.5 shadow-sm"
           >
             <span className="text-slate-800 font-semibold text-xs sm:text-sm">
               {pokemon.id !== 0 && `#${String(pokemon.id).padStart(3, "0")}`}
@@ -221,30 +230,40 @@ export default function ModernPokemonCard({
             </button>
           </div>
 
-          {/* Pokémon Image - Large but fully visible */}
+          {/* Pokémon Image - Centered container that fills available space */}
           <div
-            className="relative bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg flex items-center justify-center overflow-visible flex-1 card-art"
+            className="relative flex items-center justify-center overflow-hidden card-art flex-1"
             style={{
               width: "100%",
-              minHeight: density === "3cols" ? "60%" : density === "6cols" ? "55%" : "50%",
-              padding: density === "3cols" ? "20px" : density === "6cols" ? "16px" : "12px",
+              padding: 0, // Remove all padding
+              marginTop: density === "3cols" ? "20px" : density === "6cols" ? "16px" : "12px", // Space for header
+              marginBottom: density === "3cols" ? "20px" : density === "6cols" ? "16px" : "12px", // Space for footer
+              borderRadius: "0.5rem", // Apply border radius to container
+              backgroundColor: "transparent", // Remove background color
+              minHeight: 0, // Allow flex shrinking
             }}
           >
             {!imageLoaded && !imageError && (
-              <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse" />
+              <div className="absolute inset-0 bg-transparent animate-pulse" />
             )}
 
             <img
               src={primaryImageUrl}
               alt={formatPokemonName(pokemon.name)}
               className={`
-                max-w-full max-h-full w-auto h-auto object-contain transition-opacity duration-300
+                object-contain transition-opacity duration-300
                 ${imageLoaded ? "opacity-100" : "opacity-0"}
               `}
               style={{
                 viewTransitionName: `pokemon-sprite-${pokemon.id}`,
-                maxHeight: density === "3cols" ? "calc(100% - 40px)" : density === "6cols" ? "calc(100% - 32px)" : "calc(100% - 24px)",
-                maxWidth: density === "3cols" ? "calc(100% - 40px)" : density === "6cols" ? "calc(100% - 32px)" : "calc(100% - 24px)",
+                maxHeight: "100%", // Fill the entire container height
+                maxWidth: "100%", // Fill the entire container width
+                width: "auto", // Let width adjust to maintain aspect ratio
+                height: "auto", // Let height adjust to maintain aspect ratio
+                objectFit: "contain",
+                display: "block",
+                margin: "auto", // Center the image
+                padding: 0, // Remove all padding
               }}
               onLoad={() => setImageLoaded(true)}
               onError={(e) => {
@@ -280,15 +299,15 @@ export default function ModernPokemonCard({
           </div>
 
           {/* Pokémon Info - Absolutely positioned at bottom */}
-          <div className="absolute bottom-1 left-1 right-1 z-20 bg-white/90 backdrop-blur-sm rounded-lg p-2 shadow-sm">
+          <div className="absolute bottom-0.5 left-0.5 right-0.5 z-20 bg-white/90 backdrop-blur-sm rounded-lg p-0.5 shadow-sm">
             {/* Name */}
             <h3
-              className={`font-semibold text-center group-hover:text-poke-blue transition-colors card-name mb-1 ${
+              className={`font-semibold text-center group-hover:text-poke-blue transition-colors card-name mb-0 ${
                 density === "9cols"
-                  ? "text-xs sm:text-xs"
+                  ? "text-xs"
                   : density === "6cols"
-                  ? "text-xs sm:text-sm"
-                  : "text-sm sm:text-base"
+                  ? "text-xs"
+                  : "text-xs sm:text-sm"
               }`}
               style={{
                 color: "#1f2937",
@@ -301,7 +320,7 @@ export default function ModernPokemonCard({
             </h3>
 
             {/* Type badges */}
-            <div className="flex flex-wrap gap-1 justify-center card-badges">
+            <div className="flex flex-wrap gap-0.5 justify-center card-badges">
               {pokemon.types && pokemon.types.length > 0 ? (
                 pokemon.types.map((type) => (
                   <TypeBadge
