@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect, forwardRef, useImperativeHandle, useState } from 'react';
-import { getPokemonIdFromSpecies, getPokemonBattleImageWithFallback, formatPokemonName, getShowdownAnimatedSprite } from '@/lib/utils';
+import { getPokemonIdFromSpecies, getPokemonBattleImageWithFallback, getPokemonImageWithFallbacks, formatPokemonName, getShowdownAnimatedSprite } from '@/lib/utils';
 
 export interface BattleSpriteRef {
   play: (animName: string) => Promise<void>;
@@ -54,10 +54,17 @@ export const BattleSprite = forwardRef<BattleSpriteRef, BattleSpriteProps>(({
   const variant = side === 'player' ? 'back' : 'front';
   // Decide sprite source based on mode
   const useAnimated = spriteMode === 'animated';
-  const animatedUrl = getShowdownAnimatedSprite(species, variant);
-  const { primary: staticPrimary, fallback: staticFallback } = pokemonId ? getPokemonBattleImageWithFallback(pokemonId, variant) : { primary: '', fallback: '' };
-  const primary = useAnimated ? animatedUrl : staticPrimary;
-  const fallback = useAnimated ? (staticPrimary || staticFallback) : staticFallback;
+  
+  // Use comprehensive fallback system
+  const { primary, fallbacks } = pokemonId ? getPokemonImageWithFallbacks(pokemonId, species, variant) : { primary: '', fallbacks: [] };
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  // Reset image state when species changes
+  useEffect(() => {
+    setImageLoaded(false);
+    setImageError(false);
+    setCurrentImageIndex(0);
+  }, [species, variant]);
 
   // Animation system
   useImperativeHandle(ref, () => ({
@@ -140,7 +147,7 @@ export const BattleSprite = forwardRef<BattleSpriteRef, BattleSpriteProps>(({
         )}
         
         <img
-          src={primary}
+          src={currentImageIndex === 0 ? primary : fallbacks[currentImageIndex - 1]}
           alt={`${formatPokemonName(species)} ${variant}`}
           className={`w-full h-full object-contain transition-opacity duration-300 ${
             imageLoaded ? 'opacity-100' : 'opacity-0'
@@ -148,9 +155,15 @@ export const BattleSprite = forwardRef<BattleSpriteRef, BattleSpriteProps>(({
           onLoad={() => setImageLoaded(true)}
           onError={(e) => {
             const target = e.target as HTMLImageElement;
-            if (target.src === primary) {
-              target.src = fallback;
+            const nextIndex = currentImageIndex + 1;
+            
+            if (nextIndex <= fallbacks.length) {
+              // Try next fallback
+              setCurrentImageIndex(nextIndex);
+              setImageLoaded(false);
+              setImageError(false);
             } else {
+              // All fallbacks failed
               setImageError(true);
             }
           }}

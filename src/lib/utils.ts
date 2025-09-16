@@ -324,6 +324,28 @@ export function getPokemonBattleImageWithFallback(pokemonId: number, variant: 'f
   };
 }
 
+// Get Pokemon image with comprehensive fallback chain
+export function getPokemonImageWithFallbacks(pokemonId: number, species: string, variant: 'front' | 'back' = 'front', shiny: boolean = false): {
+  primary: string;
+  fallbacks: string[];
+} {
+  // Try animated sprite first
+  const animatedUrl = getShowdownAnimatedSprite(species, variant, shiny);
+  
+  // Fallback chain: animated -> static battle sprite -> official artwork -> basic sprite
+  const fallbacks = [
+    getPokemonBattleSpriteUrl(pokemonId, variant, shiny), // Static battle sprite
+    getPokemonBattleSpriteUrl(pokemonId, variant, false), // Non-shiny static battle sprite
+    `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemonId}.png`, // Official artwork
+    `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemonId}.png` // Basic sprite
+  ];
+  
+  return {
+    primary: animatedUrl,
+    fallbacks
+  };
+}
+
 // Pokemon Showdown animated sprites by species name
 export function getShowdownAnimatedSprite(species: string, variant: 'front' | 'back' = 'front', shiny: boolean = false): string {
   // Normalize species name to Showdown sprite filename with special-case fixes
@@ -334,7 +356,20 @@ export function getShowdownAnimatedSprite(species: string, variant: 'front' | 'b
     // Mime Jr. drops hyphen and dot
     'mime-jr': 'mimejr',
     // Mr. Rime (Galar) uses a dot
-    'mr-rime': 'mr.rime'
+    'mr-rime': 'mr.rime',
+    // Ho-Oh uses "hooh" in Showdown
+    'ho-oh': 'hooh',
+    // Type: Null variations
+    'type-null': 'typenull',
+    // Jangmo-o family
+    'jangmo-o': 'jangmoo',
+    'hakamo-o': 'hakamo-o',
+    'kommo-o': 'kommoo',
+    // Porygon-Z
+    'porygon-z': 'porygonz',
+    // Nidoran variations
+    'nidoran-f': 'nidoranf',
+    'nidoran-m': 'nidoranm'
   };
   const hyphenated = base.replace(/\s+/g, '-');
   const mapped = exceptions[hyphenated] || hyphenated;
