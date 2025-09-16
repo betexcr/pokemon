@@ -42,7 +42,7 @@ export default function PokemonSelector({
         setLoading(true)
         const pokemonList = await getPokemonList(50, 0)
         
-        // Create basic Pokemon objects
+        // Create basic Pokemon objects with minimal data
         const basicPokemon = pokemonList.results.map((pokemonRef) => {
           const pokemonId = pokemonRef.url.split('/').slice(-2)[0]
           const id = parseInt(pokemonId)
@@ -80,7 +80,7 @@ export default function PokemonSelector({
               }
             },
             stats: [],
-            types: [],
+            types: [], // Will be populated when needed
             species: { name: pokemonRef.name, url: '' }
           } as Pokemon
         })

@@ -76,7 +76,7 @@ export default function HeaderIcons({
           alt="Advanced Filters" 
           width={48}
           height={48}
-          className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 lg:w-12 lg:h-12 object-contain"
+          className="w-10 h-10 sm:w-10 sm:h-10 md:w-10 md:h-10 lg:w-12 lg:h-12 object-contain"
         />
       </button>
       
@@ -109,7 +109,7 @@ export default function HeaderIcons({
           alt="Team Builder" 
           width={48}
           height={48}
-          className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 lg:w-12 lg:h-12 object-contain"
+          className="w-10 h-10 sm:w-10 sm:h-10 md:w-10 md:h-10 lg:w-12 lg:h-12 object-contain"
         />
       </button>
       
@@ -142,7 +142,7 @@ export default function HeaderIcons({
           alt="Battles" 
           width={48}
           height={48}
-          className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 lg:w-12 lg:h-12 object-contain"
+          className="w-10 h-10 sm:w-10 sm:h-10 md:w-10 md:h-10 lg:w-12 lg:h-12 object-contain"
         />
       </button>
       
@@ -175,7 +175,7 @@ export default function HeaderIcons({
           alt="Compare" 
           width={48}
           height={48}
-          className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 lg:w-12 lg:h-12 object-contain"
+          className="w-10 h-10 sm:w-10 sm:h-10 md:w-10 md:h-10 lg:w-12 lg:h-12 object-contain"
         />
       </button>
     </>

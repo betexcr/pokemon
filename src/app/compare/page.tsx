@@ -14,10 +14,10 @@ import PokeballReleaseAnimation from '@/components/PokeballReleaseAnimation'
 import AppHeader from '@/components/AppHeader'
 import PokemonSelector from '@/components/PokemonSelector'
 
+// Static export for Next.js 15 compatibility
+export const dynamic = 'force-dynamic'
 
 export default function ComparePage() {
-  
-  
   const [pokemons, setPokemons] = useState<Pokemon[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -135,8 +135,7 @@ export default function ComparePage() {
       // Update localStorage
       const newComparisonIds = newPokemons.map(p => p.id)
       localStorage.setItem('pokemon-comparison', JSON.stringify(newComparisonIds))
-      // Keep released list in sync with current selection
-      setReleasedPokemon(newPokemons)
+      // Don't automatically add to released list - only when user clicks release
     }
   }
 
@@ -184,26 +183,6 @@ export default function ComparePage() {
                 className="inline-flex items-center space-x-2"
               >
                 <span>Release Pokémon</span>
-              </Button>
-            )}
-            {pokemons.length === 0 && (
-              <Button
-                variant="primary"
-                onClick={() => {
-                  const testPokemon = [
-                    { id: 1, name: 'bulbasaur' },
-                    { id: 4, name: 'charmander' },
-                    { id: 7, name: 'squirtle' },
-                    { id: 25, name: 'pikachu' },
-                    { id: 39, name: 'jigglypuff' },
-                    { id: 150, name: 'mewtwo' }
-                  ]
-                  localStorage.setItem('pokemon-comparison', JSON.stringify(testPokemon.map(p => p.id)))
-                  window.location.reload()
-                }}
-                className="inline-flex items-center space-x-2"
-              >
-                <span>Load Test Pokémon</span>
               </Button>
             )}
             <Button
@@ -615,16 +594,18 @@ export default function ComparePage() {
             </div>
 
             {/* Radar Chart */}
-            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-border/60 p-4 sm:p-6 mb-8">
-              <h2 className="text-xl sm:text-2xl font-bold text-text mb-4 sm:mb-6 text-center tracking-tight">
-                Stats Comparison
-              </h2>
-              <div className="w-full">
-                <div className="w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl mx-auto aspect-square">
-                  <MultiPokemonRadarChart pokemons={pokemons} highlightedPokemonId={highlightedPokemonId} />
+            {pokemons.length > 0 && (
+              <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-border/60 p-4 sm:p-6 mb-8">
+                <h2 className="text-xl sm:text-2xl font-bold text-text mb-4 sm:mb-6 text-center tracking-tight">
+                  Stats Comparison
+                </h2>
+                <div className="w-full">
+                  <div className="w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl mx-auto aspect-square">
+                    <MultiPokemonRadarChart pokemons={pokemons} highlightedPokemonId={highlightedPokemonId} />
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Right side - Released Pokémon */}
@@ -641,10 +622,6 @@ export default function ComparePage() {
                           alt={formatPokemonName(pokemon.name)}
                           className={`w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 object-contain mx-auto cursor-pointer transition-transform ${highlightedPokemonId === pokemon.id ? 'scale-110 drop-shadow-[0_0_6px_rgba(59,130,246,0.8)]' : 'hover:scale-110'}`}
                           onMouseEnter={() => setHighlightedPokemonId(pokemon.id)}
-                          onError={(e) => {
-                            const target = e.currentTarget as HTMLImageElement
-                            target.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`
-                          }}
                           onMouseLeave={() => setHighlightedPokemonId(null)}
                           onFocus={() => setHighlightedPokemonId(pokemon.id)}
                           onBlur={() => setHighlightedPokemonId(null)}
