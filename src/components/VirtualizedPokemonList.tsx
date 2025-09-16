@@ -115,7 +115,7 @@ export default function VirtualizedPokemonList({
                   {/* Pokémon Info */}
                   <div className="flex-1 min-w-0">
                     <div className={`text-sm font-medium ${getTextStyle()}`}>
-                      {String(pokemon.id).padStart(3, '0')} {formatPokemonName(pokemon.name)}
+                      {pokemon.id !== 0 && `${String(pokemon.id).padStart(3, '0')} `}{formatPokemonName(pokemon.name)}
                     </div>
                     <div className="flex space-x-1 mt-1">
                       {pokemon.types.map((type) => (

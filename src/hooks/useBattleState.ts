@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { onValue, ref as dbRef, serverTimestamp, set } from "firebase/database";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { rtdb, auth } from "@/lib/firebase";
+import { doc, updateDoc, getDoc, serverTimestamp as firestoreServerTimestamp } from "firebase/firestore";
+import { rtdb, auth, db } from "@/lib/firebase";
 
 type IdMap<T> = Record<string, T>;
 
@@ -326,8 +327,55 @@ export function useBattleState(battleId: string): UseBattleState {
   const writeChoice = useCallback(async (choice: ChoicePayload) => {
     if (!meUid || !meta) throw new Error("No auth or meta");
     if (!isChoosing(meta)) throw new Error("Not in choosing phase");
-    const path = `/battles/${battleId}/turns/${meta.turn}/choices/${meUid}`;
-    await set(dbRef(rtdb, path), { ...choice, committedAt: serverTimestamp() });
+    
+    // Enhanced permission check: Verify user is a participant in this battle
+    const isParticipant = meta.players?.p1?.uid === meUid || meta.players?.p2?.uid === meUid;
+    if (!isParticipant) {
+      throw new Error("You are not a participant in this battle");
+    }
+    
+    // Use Firestore instead of RTDB for move submissions
+    const battleRef = doc(db, 'battles', battleId);
+    
+    // Create the action object for Firestore
+    const action = {
+      playerId: meUid,
+      playerName: 'Player', // This should be passed from the component
+      type: choice.action === 'move' ? 'move' : choice.action === 'switch' ? 'switch' : 'forfeit',
+      moveId: choice.action === 'move' ? choice.payload.moveId : undefined,
+      switchIndex: choice.action === 'switch' ? choice.payload.switchToIndex : undefined,
+      turnNumber: meta.turn,
+      timestamp: Date.now()
+    };
+    
+    // Get current battle data to append the action
+    const battleSnap = await getDoc(battleRef);
+    if (!battleSnap.exists()) {
+      throw new Error("Battle not found");
+    }
+    
+    const battleData = battleSnap.data();
+    const currentActions = battleData.actions || [];
+    
+    // Check if this player has already made an action for the current turn
+    const existingActionForTurn = currentActions.find((existingAction: any) => 
+      existingAction.playerId === meUid && existingAction.turnNumber === meta.turn
+    );
+    
+    if (existingActionForTurn) {
+      console.log('Player has already made an action for this turn, skipping duplicate');
+      return;
+    }
+    
+    // Add the new action to the actions array
+    const updatedActions = [...currentActions, action];
+    
+    // Update the battle document with the new action
+    await updateDoc(battleRef, {
+      actions: updatedActions,
+      lastActionAt: firestoreServerTimestamp(),
+      updatedAt: firestoreServerTimestamp()
+    });
   }, [battleId, meUid, meta]);
 
   const chooseMove = useCallback(async (moveId: string, target: "p1" | "p2" = "p2") => {

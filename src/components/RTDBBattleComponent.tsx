@@ -5,10 +5,16 @@ import Tooltip from '@/components/Tooltip';
 import { getMove } from '@/lib/moveCache';
 import { getAbility } from '@/lib/api';
 import { getPokemonIdFromSpecies, getPokemonBattleImageWithFallback, formatPokemonName } from '@/lib/utils';
+import HitShake from '@/components/battle/HitShake';
+import HPBar from '@/components/battle/HPBar';
+import StatusPopups, { StatusEvent } from '@/components/battle/StatusPopups';
+import AttackAnimator from '@/components/battle/AttackAnimator';
+import { FxKind } from '@/components/battle/fx/MoveFX.types';
 
 interface RTDBBattleComponentProps {
   battleId: string;
   onBattleComplete?: (winner: string) => void;
+  viewMode?: 'animated' | 'classic';
 }
 
 // Pokemon Image Component for Battle View
@@ -81,7 +87,8 @@ function PokemonBattleImage({ species, variant, className = '', size = 'medium' 
 
 export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
   battleId,
-  onBattleComplete
+  onBattleComplete,
+  viewMode = 'classic'
 }) => {
   const {
     loading,
@@ -103,6 +110,12 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
 
   const [moveInfo, setMoveInfo] = useState<Record<string, { type: string; damage_class?: 'physical'|'special'|'status'; short_effect?: string }>>({});
   const [myAbilityInfo, setMyAbilityInfo] = useState<{ name: string; short_effect?: string } | null>(null);
+  
+  // Transition effects state
+  const [playerShakeKey, setPlayerShakeKey] = useState(0);
+  const [opponentShakeKey, setOpponentShakeKey] = useState(0);
+  const [statusEvents, setStatusEvents] = useState<StatusEvent[]>([]);
+  const [activeMoveFX, setActiveMoveFX] = useState<{ kind: FxKind; key: number } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -154,6 +167,34 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
     try {
       // Classic view: give immediate feedback on action
       playAnim(playerAnimRef, 'animate-bounce');
+      
+      // Animated view: trigger transition effects
+      if (viewMode === 'animated') {
+        const move = moveInfo[moveId];
+        if (move) {
+          // Map move type to FX kind
+          const fxKind: FxKind = (move.type as FxKind) || 'electric';
+          
+          // Trigger move FX
+          setActiveMoveFX({ kind: fxKind, key: Date.now() });
+          
+          // Trigger shake on target (simplified - in real battle this would be determined by the move)
+          if (target === 'p2') {
+            setOpponentShakeKey(Date.now());
+          } else {
+            setPlayerShakeKey(Date.now());
+          }
+          
+          // Add status effects based on move type (simplified)
+          const statusEffects: StatusEvent[] = [];
+          if (move.type === 'electric') statusEffects.push({ code: 'PAR', side: target === 'p2' ? 'foe' : 'ally' });
+          if (move.type === 'fire') statusEffects.push({ code: 'BRN', side: target === 'p2' ? 'foe' : 'ally' });
+          if (move.type === 'poison') statusEffects.push({ code: 'PSN', side: target === 'p2' ? 'foe' : 'ally' });
+          
+          setStatusEvents(prev => [...prev, ...statusEffects]);
+        }
+      }
+      
       await chooseMove(moveId, target);
     } catch (err) {
       console.error('Failed to submit move:', err);
@@ -299,12 +340,23 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
             <div className="pokemon-card p-4 mb-4 rounded-lg border-2 border-blue-500 bg-blue-50 shadow-lg">
               <div className="flex items-start gap-4" ref={playerAnimRef}>
                 {/* Pokemon Image (Back view for player) */}
-                <PokemonBattleImage 
-                  species={myActive.species} 
-                  variant="back" 
-                  size="large"
-                  className="flex-shrink-0"
-                />
+                {viewMode === 'animated' ? (
+                  <HitShake playKey={playerShakeKey}>
+                    <PokemonBattleImage 
+                      species={myActive.species} 
+                      variant="back" 
+                      size="large"
+                      className="flex-shrink-0"
+                    />
+                  </HitShake>
+                ) : (
+                  <PokemonBattleImage 
+                    species={myActive.species} 
+                    variant="back" 
+                    size="large"
+                    className="flex-shrink-0"
+                  />
+                )}
                 
                 {/* Pokemon Info */}
                 <div className="flex-1 min-w-0">
@@ -312,15 +364,23 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
                     {formatPokemonName(myActive.species)}
                   </div>
                   <div className="space-y-1 text-sm">
-                    <div className="pokemon-hp">
-                      <span className="font-medium">HP:</span> {myActive.hp.cur}/{myActive.hp.max}
-                      <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-                        <div 
-                          className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${(myActive.hp.cur / myActive.hp.max) * 100}%` }}
-                        ></div>
+                    {viewMode === 'animated' ? (
+                      <HPBar 
+                        max={myActive.hp.max} 
+                        value={myActive.hp.cur} 
+                        showText={true}
+                      />
+                    ) : (
+                      <div className="pokemon-hp">
+                        <span className="font-medium">HP:</span> {myActive.hp.cur}/{myActive.hp.max}
+                        <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+                          <div 
+                            className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${(myActive.hp.cur / myActive.hp.max) * 100}%` }}
+                          ></div>
+                        </div>
                       </div>
-                    </div>
+                    )}
                     <div className="pokemon-level">
                       <span className="font-medium">Level:</span> {myActive.level}
                     </div>
@@ -395,12 +455,23 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
             <div className="pokemon-card p-4 mb-4 rounded-lg border-2 border-red-500 bg-red-50 shadow-lg">
               <div className="flex items-start gap-4" ref={oppAnimRef}>
                 {/* Pokemon Image (Front view for opponent) */}
-                <PokemonBattleImage 
-                  species={oppActive.species} 
-                  variant="front" 
-                  size="large"
-                  className="flex-shrink-0"
-                />
+                {viewMode === 'animated' ? (
+                  <HitShake playKey={opponentShakeKey}>
+                    <PokemonBattleImage 
+                      species={oppActive.species} 
+                      variant="front" 
+                      size="large"
+                      className="flex-shrink-0"
+                    />
+                  </HitShake>
+                ) : (
+                  <PokemonBattleImage 
+                    species={oppActive.species} 
+                    variant="front" 
+                    size="large"
+                    className="flex-shrink-0"
+                  />
+                )}
                 
                 {/* Pokemon Info */}
                 <div className="flex-1 min-w-0">
@@ -408,15 +479,23 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
                     {formatPokemonName(oppActive.species)}
                   </div>
                   <div className="space-y-1 text-sm">
-                    <div className="pokemon-hp">
-                      <span className="font-medium">HP:</span> {oppActive.hp.cur}/{oppActive.hp.max}
-                      <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-                        <div 
-                          className="bg-red-500 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${(oppActive.hp.cur / oppActive.hp.max) * 100}%` }}
-                        ></div>
+                    {viewMode === 'animated' ? (
+                      <HPBar 
+                        max={oppActive.hp.max} 
+                        value={oppActive.hp.cur} 
+                        showText={true}
+                      />
+                    ) : (
+                      <div className="pokemon-hp">
+                        <span className="font-medium">HP:</span> {oppActive.hp.cur}/{oppActive.hp.max}
+                        <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+                          <div 
+                            className="bg-red-500 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${(oppActive.hp.cur / oppActive.hp.max) * 100}%` }}
+                          ></div>
+                        </div>
                       </div>
-                    </div>
+                    )}
                     <div className="pokemon-level">
                       <span className="font-medium">Level:</span> {oppActive.level}
                     </div>
@@ -558,6 +637,30 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
       </div>
 
       {/* Battle Complete */}
+      {/* Transition Effects for Animated View */}
+      {viewMode === 'animated' && (
+        <>
+          {/* Status Popups */}
+          <StatusPopups
+            anchorAlly={{ x: 0.20, y: 0.58 }}
+            anchorFoe={{ x: 0.80, y: 0.18 }}
+            events={statusEvents}
+          />
+          
+          {/* Move FX */}
+          {activeMoveFX && myActive && oppActive && (
+            <AttackAnimator
+              kind={activeMoveFX.kind}
+              from={{ x: 0.2, y: 0.6 }} // Player position
+              to={{ x: 0.8, y: 0.4 }}   // Opponent position
+              playKey={activeMoveFX.key}
+              power={1}
+              onDone={() => setActiveMoveFX(null)}
+            />
+          )}
+        </>
+      )}
+
       {meta.phase === 'ended' && (
         <div className="battle-complete mt-6 text-center">
           <h2 className="text-2xl font-bold mb-2">

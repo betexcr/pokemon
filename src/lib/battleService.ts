@@ -79,7 +79,7 @@ class BattleService {
       console.error('❌ Auth object exists:', !!this.auth);
       console.error('❌ Current user exists:', !!this.auth?.currentUser);
       console.error('❌ Current user UID exists:', !!this.auth?.currentUser?.uid);
-      throw new Error('User not authenticated');
+      throw new Error('User not authenticated. Please sign in to access battle features.');
     }
     
     // Check if the user's token is still valid
@@ -88,6 +88,7 @@ class BattleService {
         console.log('🔑 User token is valid, length:', token.length);
       }).catch(error => {
         console.error('❌ User token validation failed:', error);
+        throw new Error('Authentication token expired. Please sign in again.');
       });
     }
   }

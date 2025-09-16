@@ -6,6 +6,7 @@ import ModernPokemonCard from './ModernPokemonCard'
 import PokemonCard from './PokemonCard'
 import { useTheme } from './ThemeProvider'
 import { useVirtualizer } from '@tanstack/react-virtual'
+import { motion, AnimatePresence } from 'framer-motion'
 
 interface VirtualizedPokemonGridProps {
   pokemonList: Pokemon[]
@@ -52,14 +53,48 @@ export default function VirtualizedPokemonGrid({
     }
   }
 
-  // Calculate grid dimensions for virtualization - Aspect ratio aware heights
+  // Staggered animation delay calculation
+  const getStaggerDelay = (index: number) => {
+    const baseDelay = 50 // Base delay in ms
+    const maxDelay = 300 // Maximum delay in ms
+    const delay = Math.min(index * baseDelay, maxDelay)
+    return delay
+  }
+
+  // Animation variants for staggered cards
+  const cardVariants = {
+    hidden: { 
+      opacity: 0, 
+      scale: 0.8,
+      y: 20
+    },
+    visible: (index: number) => ({
+      opacity: 1,
+      scale: 1,
+      y: 0,
+      transition: {
+        duration: 0.4,
+        delay: getStaggerDelay(index) / 1000
+      }
+    }),
+    exit: {
+      opacity: 0,
+      scale: 0.8,
+      y: -20,
+      transition: {
+        duration: 0.3
+      }
+    }
+  }
+
+  // Calculate grid dimensions for virtualization - Flexible heights
   const getGridDimensions = useMemo(() => {
     switch (density) {
-      case '3cols': return { cols: 3, itemHeight: 360, gap: 16 } // Max height with aspect ratio constraint
-      case '6cols': return { cols: 6, itemHeight: 280, gap: 12 } // Max height with aspect ratio constraint
-      case '9cols': return { cols: 9, itemHeight: 200, gap: 8 }  // Max height with aspect ratio constraint
+      case '3cols': return { cols: 3, itemHeight: 500, gap: 16 } // Flexible height
+      case '6cols': return { cols: 6, itemHeight: 400, gap: 12 } // Flexible height
+      case '9cols': return { cols: 9, itemHeight: 300, gap: 8 }  // Flexible height
       case 'list': return { cols: 1, itemHeight: 60, gap: 4 }
-      default: return { cols: 6, itemHeight: 280, gap: 12 }
+      default: return { cols: 6, itemHeight: 400, gap: 12 }
     }
   }, [density])
 
@@ -316,7 +351,7 @@ export default function VirtualizedPokemonGrid({
                   top: virtualizer.getTotalSize(),
                   left: 0,
                   width: '100%',
-                  height: '1px',
+                  height: '20px', // Increased height for better detection
                   backgroundColor: 'transparent',
                   zIndex: 1,
                 }}
@@ -347,19 +382,45 @@ export default function VirtualizedPokemonGrid({
     <div className={`w-full max-w-full overflow-x-hidden ${className}`}>
       {/* Regular Pokemon */}
       {uniqueRegularPokemon.length > 0 && (
-        <div className={`${getLayoutClasses()} w-full max-w-full ${density === 'list' ? 'pl-0 pr-0' : 'pl-0 pr-0'}`} data-pokemon-grid>
-          {uniqueRegularPokemon.map((pokemon) => (
-            <ModernPokemonCard
-              key={pokemon.id}
-              pokemon={pokemon}
-              isInComparison={comparisonList.includes(pokemon.id)}
-              onToggleComparison={onToggleComparison}
-              onSelect={undefined}
-              isSelected={selectedPokemon?.id === pokemon.id}
-              density={density}
-            />
-          ))}
-        </div>
+        <motion.div 
+          className={`${getLayoutClasses()} w-full max-w-full ${density === 'list' ? 'pl-0 pr-0' : 'pl-0 pr-0'}`} 
+          data-pokemon-grid
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: { opacity: 0 },
+            visible: {
+              opacity: 1,
+              transition: {
+                staggerChildren: 0.05,
+                delayChildren: 0.1
+              }
+            }
+          }}
+        >
+          <AnimatePresence mode="wait">
+            {uniqueRegularPokemon.map((pokemon, index) => (
+              <motion.div
+                key={pokemon.id}
+                variants={cardVariants}
+                custom={index}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                layout
+              >
+                <ModernPokemonCard
+                  pokemon={pokemon}
+                  isInComparison={comparisonList.includes(pokemon.id)}
+                  onToggleComparison={onToggleComparison}
+                  onSelect={undefined}
+                  isSelected={selectedPokemon?.id === pokemon.id}
+                  density={density}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </motion.div>
       )}
 
       {/* Special Forms Header */}
@@ -377,26 +438,52 @@ export default function VirtualizedPokemonGrid({
 
       {/* Special Forms Pokemon */}
       {specialFormsPokemon.length > 0 && (
-        <div className={`${getLayoutClasses()} w-full max-w-full ${density === 'list' ? 'pl-0 pr-0' : 'pl-0 pr-0'}`} data-pokemon-grid>
-          {specialFormsPokemon.map((pokemon) => (
-            <ModernPokemonCard
-              key={pokemon.id}
-              pokemon={pokemon}
-              isInComparison={comparisonList.includes(pokemon.id)}
-              onToggleComparison={onToggleComparison}
-              onSelect={undefined}
-              isSelected={selectedPokemon?.id === pokemon.id}
-              density={density}
-            />
-          ))}
-        </div>
+        <motion.div 
+          className={`${getLayoutClasses()} w-full max-w-full ${density === 'list' ? 'pl-0 pr-0' : 'pl-0 pr-0'}`} 
+          data-pokemon-grid
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: { opacity: 0 },
+            visible: {
+              opacity: 1,
+              transition: {
+                staggerChildren: 0.05,
+                delayChildren: 0.2
+              }
+            }
+          }}
+        >
+          <AnimatePresence mode="wait">
+            {specialFormsPokemon.map((pokemon, index) => (
+              <motion.div
+                key={pokemon.id}
+                variants={cardVariants}
+                custom={index}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                layout
+              >
+                <ModernPokemonCard
+                  pokemon={pokemon}
+                  isInComparison={comparisonList.includes(pokemon.id)}
+                  onToggleComparison={onToggleComparison}
+                  onSelect={undefined}
+                  isSelected={selectedPokemon?.id === pokemon.id}
+                  density={density}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </motion.div>
       )}
 
       {/* Infinite scroll sentinel for non-virtualized content */}
       <div
         style={{
           width: '100%',
-          height: '1px',
+          height: '20px', // Increased height for better detection
           backgroundColor: 'transparent',
         }}
         data-infinite-scroll-sentinel="true"

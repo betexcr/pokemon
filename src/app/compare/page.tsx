@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { ArrowLeft, Scale, X } from 'lucide-react'
 import Link from 'next/link'
+import LinkWithTransition from '@/components/LinkWithTransition'
 import { getPokemon } from '@/lib/api'
 import { formatPokemonName, getShowdownAnimatedSprite } from '@/lib/utils'
 import { Pokemon } from '@/types/pokemon'
@@ -263,13 +264,13 @@ export default function ComparePage() {
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                   {releasedPokemon.map((pokemon) => (
                     <div key={pokemon.id} className="text-center">
-                      <Link href={`/pokemon/${pokemon.id}`}>
+                      <LinkWithTransition href={`/pokemon/${pokemon.id}`} transitionType="shared-element">
                         <img
                           src={getShowdownAnimatedSprite(pokemon.name)}
                           alt={formatPokemonName(pokemon.name)}
                           className="w-14 h-14 sm:w-16 sm:h-16 object-contain mx-auto"
                         />
-                      </Link>
+                      </LinkWithTransition>
                       <p className="text-[11px] sm:text-xs text-muted dark:text-slate-300 mt-1 capitalize truncate">
                         {formatPokemonName(pokemon.name)}
                       </p>
@@ -427,13 +428,13 @@ export default function ComparePage() {
                     >
                       <td className="py-3 px-4">
                         <div className="flex items-center space-x-3">
-                          <Link href={`/pokemon/${pokemon.id}`}>
+                          <LinkWithTransition href={`/pokemon/${pokemon.id}`} transitionType="shared-element">
                             <img
                               src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`}
                               alt={formatPokemonName(pokemon.name)}
                               className="w-8 h-8 object-contain cursor-pointer hover:scale-110 transition-transform"
                             />
-                          </Link>
+                          </LinkWithTransition>
                           <div>
                             <div className="font-medium text-text capitalize">
                               {formatPokemonName(pokemon.name)}
@@ -504,7 +505,7 @@ export default function ComparePage() {
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-2 gap-3">
                   {releasedPokemon.map((pokemon) => (
                     <div key={pokemon.id} className="text-center">
-                      <Link href={`/pokemon/${pokemon.id}`}>
+                      <LinkWithTransition href={`/pokemon/${pokemon.id}`} transitionType="shared-element">
                         <img
                           src={getShowdownAnimatedSprite(pokemon.name)}
                           alt={formatPokemonName(pokemon.name)}
@@ -519,7 +520,7 @@ export default function ComparePage() {
                             target.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`
                           }}
                         />
-                      </Link>
+                      </LinkWithTransition>
                       <p className="text-[11px] sm:text-xs text-muted mt-1 capitalize truncate">
                         {formatPokemonName(pokemon.name)}
                       </p>

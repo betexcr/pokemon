@@ -1406,6 +1406,7 @@ async function executeMoveAction(
       }
       // Start binding if present
       if (turnResult.binding) {
+        console.log(`🔗 Applying binding effect to ${defender.pokemon.name}:`, turnResult.binding);
         defender.volatile.binding = {
           kind: turnResult.binding.kind,
           turnsLeft: turnResult.binding.turns,
@@ -1416,6 +1417,7 @@ async function executeMoveAction(
           message: `${defender.pokemon.name} was trapped by ${turnResult.binding.kind}!`,
           pokemon: String(defender.pokemon.name)
         });
+        console.log(`🔗 Binding effect applied. Volatile state:`, defender.volatile.binding);
       }
       // Log flinch secondary
       if (turnResult.flinchedTarget) {
@@ -1626,33 +1628,7 @@ async function endTurn(state: BattleState): Promise<BattleState> {
     });
   }
 
-  // Binding residuals and decrement
-  function applyBindingResidual(p: BattlePokemon, side: 'player'|'opponent') {
-    const bind = (p.volatile as any).binding as { turnsLeft: number; fraction: number; kind: string } | undefined;
-    if (!bind) return 0;
-    const dmg = Math.max(1, Math.floor(p.maxHp * bind.fraction));
-    p.currentHp = Math.max(0, p.currentHp - dmg);
-    bind.turnsLeft -= 1;
-    if (bind.turnsLeft <= 0) {
-      (p.volatile as any).binding = undefined;
-      newState.battleLog.push({
-        type: 'status_effect',
-        message: `${p.pokemon.name} was freed from ${bind.kind}!`,
-        pokemon: String(p.pokemon.name)
-      });
-    } else {
-      const percent = calculateDamagePercentage(dmg, p.maxHp);
-      const remain = Math.round((p.currentHp / p.maxHp) * 100);
-      newState.battleLog.push({
-        type: 'status_damage',
-        message: `${p.pokemon.name} is hurt by ${bind.kind}! (${remain}% HP left)`,
-        pokemon: String(p.pokemon.name),
-        damage: percent
-      });
-    }
-  }
-  applyBindingResidual(newState.player.pokemon[newState.player.currentIndex], 'player');
-  applyBindingResidual(newState.opponent.pokemon[newState.opponent.currentIndex], 'opponent');
+  // Binding damage is now processed in processResidualDamage function
   
   // Start next turn
   newState.turn++;

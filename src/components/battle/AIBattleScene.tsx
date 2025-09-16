@@ -338,75 +338,104 @@ export const AIBattleScene: React.FC<AIBattleSceneProps> = ({
     }
   }, [battleState, isAnimating])
 
-  // Handle Pokemon switch
+  // Handle Pokemon switch using proper battle engine
   const handlePokemonSwitch = useCallback(async (pokemonIndex: number) => {
-    if (!battleState || isAnimating || battleState.phase !== 'choosing') return
+    if (!battleState || !engineState || isAnimating || battleState.phase !== 'choosing') return
 
     setIsAnimating(true)
     setBattleState(prev => (prev ? { ...prev, phase: 'resolving' } : prev))
     
     try {
-      const newActive = battleState.playerTeam[pokemonIndex]
-      if (!newActive || newActive.fainted) return
+      // Use the proper battle engine to handle the switch
+      const playerAction: EngineAction = { type: 'switch', switchIndex: pokemonIndex }
+      
+      // Generate AI move (random selection)
+      const aiMoveIndex = Math.floor(Math.random() * (battleState.opponentActive?.moves.length || 1))
+      const aiMove = battleState.opponentActive?.moves[aiMoveIndex]
+      const aiMoveName = aiMove?.name || 'Tackle'
+      const opponentAction: EngineAction = { type: 'move', moveId: aiMoveName }
 
-      // Get opponent's move (random selection)
-      const opponentMove = battleState.opponentActive?.moves[Math.floor(Math.random() * battleState.opponentActive.moves.length)]
-      const opponentMoveName = opponentMove?.name || 'Tackle'
-      const opponentDamage = Math.floor(Math.random() * 25) + 10 // 10-35 damage
-      
-      // Calculate damage to the switched Pokemon
-      const newPlayerHp = Math.max(0, newActive.currentHp - opponentDamage)
-      
-      // Create battle log entries
-      const newBattleLog = [
-        ...battleState.battleLog,
-        `Turn ${battleState.turn}:`,
-        `You switched to ${formatPokemonName(newActive.name)}!`,
-        `${formatPokemonName(battleState.opponentActive?.name || '')} used ${opponentMoveName}!`,
-        `It dealt ${opponentDamage} damage!`
-      ]
+      console.log('🔄 Switching to Pokemon at index:', pokemonIndex)
+      console.log('🤖 AI will use move:', aiMoveName)
+
+      // Process the turn using the battle engine
+      const newEngineState = await processBattleTurn(engineState, playerAction, opponentAction)
+      setEngineState(newEngineState)
+
+      // Update the UI state based on the engine state
+      const newPlayerActive = newEngineState.player.pokemon[newEngineState.player.currentIndex]
+      const newOpponentActive = newEngineState.opponent.pokemon[newEngineState.opponent.currentIndex]
 
       setBattleState(prev => {
         if (!prev) return prev
-        const getNextAliveIndex = (team: Pokemon[], excludeIndex: number): number | null => {
-          for (let i = 0; i < team.length; i++) {
-            if (i === excludeIndex) continue
-            if (team[i] && !team[i].fainted && team[i].currentHp > 0) return i
-          }
-          return null
-        }
-        const updatedNewActive = {
-          ...newActive,
-          currentHp: newPlayerHp,
-          fainted: newPlayerHp === 0
-        }
 
-        const newState: BattleState = {
+        // Convert engine state to UI state
+        const newPlayerTeam = newEngineState.player.pokemon.map(p => ({
+          id: p.pokemon.id,
+          name: p.pokemon.name,
+          level: p.level,
+          currentHp: p.currentHp,
+          maxHp: p.maxHp,
+          fainted: p.currentHp <= 0,
+          moves: p.moves.map(m => ({ 
+            id: m.id, 
+            name: m.id, 
+            type: 'normal', 
+            power: 50, 
+            accuracy: 100, 
+            pp: m.pp 
+          })),
+          species: p.pokemon.name,
+          types: p.pokemon.types?.map(t => t.type.name) || [],
+          stats: {
+            hp: p.maxHp,
+            atk: 100, // Default values for AI battle
+            def: 100,
+            spa: 100,
+            spd: 100,
+            spe: 100
+          }
+        }))
+
+        const newOpponentTeam = newEngineState.opponent.pokemon.map(p => ({
+          id: p.pokemon.id,
+          name: p.pokemon.name,
+          level: p.level,
+          currentHp: p.currentHp,
+          maxHp: p.maxHp,
+          fainted: p.currentHp <= 0,
+          moves: p.moves.map(m => ({ 
+            id: m.id, 
+            name: m.id, 
+            type: 'normal', 
+            power: 50, 
+            accuracy: 100, 
+            pp: m.pp 
+          })),
+          species: p.pokemon.name,
+          types: p.pokemon.types?.map(t => t.type.name) || [],
+          stats: {
+            hp: p.maxHp,
+            atk: 100, // Default values for AI battle
+            def: 100,
+            spa: 100,
+            spd: 100,
+            spe: 100
+          }
+        }))
+
+        return {
           ...prev,
-          phase: 'choosing',
-          turn: prev.turn + 1,
-          battleLog: newBattleLog,
-          playerActive: updatedNewActive,
-          playerTeam: prev.playerTeam.map((p, i) => i === pokemonIndex ? updatedNewActive : p)
+          phase: newEngineState.phase === 'choice' ? 'choosing' : 'resolving',
+          turn: newEngineState.turn,
+          battleLog: newEngineState.battleLog.map(entry => entry.message),
+          playerActive: newPlayerTeam[newEngineState.player.currentIndex],
+          playerTeam: newPlayerTeam,
+          opponentActive: newOpponentTeam[newEngineState.opponent.currentIndex],
+          opponentTeam: newOpponentTeam,
+          winner: newEngineState.winner || null,
+          isComplete: newEngineState.isComplete
         }
-
-        // If the switched-in Pokémon fainted immediately, try next; else end when no more
-        if (newPlayerHp === 0) {
-          const idx = prev.playerTeam.findIndex(p => p.id === newActive.id)
-          const nextIdx = getNextAliveIndex(prev.playerTeam, idx)
-          if (nextIdx !== null) {
-            const next = prev.playerTeam[nextIdx]
-            newState.playerActive = { ...next }
-            newState.playerTeam = prev.playerTeam.map((p, i) => i === idx ? { ...p, fainted: true, currentHp: 0 } : p)
-            newState.battleLog = [...newState.battleLog, `${formatPokemonName(newActive.name)} fainted!`, `You sent out ${formatPokemonName(next.name)}!`]
-          } else {
-            newState.winner = 'opponent'
-            newState.phase = 'ended'
-            newState.battleLog = [...newState.battleLog, `${formatPokemonName(newActive.name)} fainted!`, 'You lost the battle!']
-          }
-        }
-
-        return newState
       })
 
       // Animation delay for turn resolution
@@ -417,7 +446,7 @@ export const AIBattleScene: React.FC<AIBattleSceneProps> = ({
     } finally {
       setIsAnimating(false)
     }
-  }, [battleState, isAnimating])
+  }, [battleState, engineState, isAnimating])
 
   // Handle forfeit
   const handleForfeit = useCallback(() => {

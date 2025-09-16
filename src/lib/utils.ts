@@ -44,6 +44,8 @@ export function formatPokemonName(name: string): string {
 
 // Format Pokémon number
 export function formatPokemonNumber(id: number): string {
+  // Don't display numbers for Pokemon with ID 0 (placeholder/unknown Pokemon)
+  if (id === 0) return '';
   return `#${id.toString().padStart(3, '0')}`;
 }
 

@@ -128,7 +128,7 @@ export default function ComparisonOverlay({
                       {formatPokemonName(pokemon.name)}
                     </p>
                     <p className="text-xs text-muted">
-                      #{String(pokemon.id).padStart(3, '0')}
+                      {pokemon.id !== 0 && `#${String(pokemon.id).padStart(3, '0')}`}
                     </p>
                   </div>
                   <button

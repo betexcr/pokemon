@@ -332,7 +332,7 @@ export default function PokemonComparison({ pokemonList, className = '' }: Pokem
                           loading="lazy"
                         />
                         <div className="flex-1 min-w-0">
-                          <div className="font-medium truncate capitalize">{p.name}#{p.id}</div>
+                          <div className="font-medium truncate capitalize">{p.name}{p.id !== 0 ? `#${p.id}` : ''}</div>
                         </div>
                       </button>
                     ))}

@@ -83,7 +83,7 @@ export default function PokedexListView({
                 {/* Text */}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted">#{pokemon.id.toString().padStart(3, '0')}</span>
+                    {pokemon.id !== 0 && <span className="text-xs text-muted">#{pokemon.id.toString().padStart(3, '0')}</span>}
                     <h3 className="font-bold truncate text-text">{formatPokemonName(pokemon.name)}</h3>
                   </div>
                   <div className="mt-1 flex flex-wrap gap-1">

@@ -14,6 +14,7 @@ import EvolutionSection from '@/components/pokemon/EvolutionSection'
 import { getPokemon, getPokemonSpecies, getEvolutionChain, getAbility, getMove } from '@/lib/api'
 import MatchupsSection from '@/components/pokemon/MatchupsSection'
 import { calculateTypeEffectiveness } from '@/lib/api'
+import PokemonHero from '@/components/PokemonHero'
 
 interface PokemonDetailClientProps {
   pokemon: Pokemon | null
@@ -250,26 +251,8 @@ export default function PokemonDetailClient({ pokemon, error }: PokemonDetailCli
 
       {/* Main Content */}
       <main className="mx-auto max-w-6xl px-4 md:px-6 lg:px-8 py-8">
-        {/* Pokemon Header */}
-        <div className="text-center mb-8">
-          <div className="relative inline-block">
-            <img
-              src={pokemon.sprites.other?.['official-artwork']?.front_default || pokemon.sprites.front_default || '/placeholder-pokemon.png'}
-              alt={formatPokemonName(pokemon.name)}
-              className="w-32 h-32 mx-auto object-contain"
-            />
-          </div>
-          <h1 className={`text-4xl font-bold mt-4 ${
-            theme === 'gold' ? 'font-retro text-gold-accent'
-            : theme === 'green' ? 'font-gameboy text-green-accent'
-            : theme === 'red' ? 'font-retro text-red-accent'
-            : theme === 'ruby' ? 'font-retro text-ruby-accent'
-            : 'text-text'
-          }`}>
-            {formatPokemonName(pokemon.name)}
-          </h1>
-          <p className="text-muted text-xl">#{pokemon.id.toString().padStart(3, '0')}</p>
-        </div>
+        {/* Pokemon Hero with View Transition */}
+        <PokemonHero pokemon={pokemon} />
 
         {/* Tabs */}
         <Tabs activeTab={activeTab} onTabChange={setActiveTab} />
@@ -284,6 +267,7 @@ export default function PokemonDetailClient({ pokemon, error }: PokemonDetailCli
               heightM={pokemon.height / 10}
               weightKg={pokemon.weight / 10}
               baseExp={pokemon.base_experience}
+              stats={pokemon.stats.map(stat => ({ name: stat.stat.name, value: stat.base_stat }))}
             />
           )}
           {activeTab === 'stats' && (

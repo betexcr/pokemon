@@ -219,6 +219,16 @@ class RoomService {
   async joinRoom(roomId: string, guestId: string, guestName: string, guestPhotoURL?: string | null, guestTeam?: unknown): Promise<boolean> {
     if (!db) throw new Error('Firebase not initialized');
     
+    // Enhanced authentication check
+    const { auth } = await import('@/lib/firebase');
+    if (!auth || !auth.currentUser || !auth.currentUser.uid) {
+      throw new Error('User not authenticated. Please sign in to join rooms.');
+    }
+    
+    if (auth.currentUser.uid !== guestId) {
+      throw new Error('User ID mismatch. Cannot join room with different user ID.');
+    }
+    
     console.log('RoomService.joinRoom called with:', { roomId, guestId, guestName, guestTeam });
     
     try {

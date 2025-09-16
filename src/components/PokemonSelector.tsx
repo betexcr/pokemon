@@ -197,7 +197,7 @@ export default function PokemonSelector({
     const handle = setTimeout(async () => {
       try {
         const results = await searchPokemonByName(term)
-        if (!cancelled) setSearchResults(results)
+        if (!cancelled) setSearchResults(Array.isArray(results) ? results : [])
       } catch (e) {
         if (!cancelled) setSearchResults([])
       } finally {
@@ -211,8 +211,8 @@ export default function PokemonSelector({
   // Filter Pokemon based on search term
   const filteredPokemon = useMemo(() => {
     const term = searchTerm.trim()
-    if (term) return searchResults ?? []
-    return allPokemon
+    if (term) return Array.isArray(searchResults) ? searchResults : []
+    return Array.isArray(allPokemon) ? allPokemon : []
   }, [allPokemon, searchResults, searchTerm])
 
   // Fetch Pokemon types when needed
@@ -229,14 +229,17 @@ export default function PokemonSelector({
     }
   }, [])
 
-  // Prefetch types for visible Pokemon (no cap so it works with infinite list)
+  // Prefetch types for visible Pokemon
   useEffect(() => {
+    // Skip prefetching while actively searching to avoid UI jank
     if (!showDropdown) return
-    const visible = searchTerm.trim() ? filteredPokemon : allPokemon
-    visible.forEach(p => { 
+    if (searchTerm.trim() || searchLoading) return
+    const visible = allPokemon
+    const list = Array.isArray(visible) ? visible.slice(0, 50) : []
+    list.forEach(p => { 
       if ((p.types?.length || 0) === 0) fetchPokemonTypes(p.id) 
     })
-  }, [showDropdown, searchTerm, filteredPokemon, allPokemon, fetchPokemonTypes])
+  }, [showDropdown, searchLoading, searchTerm, allPokemon, fetchPokemonTypes])
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -267,9 +270,11 @@ export default function PokemonSelector({
   useEffect(() => {
     const handleScroll = (event: Event) => {
       const target = event.target as Element
-      if (!target || typeof target.closest !== 'function' || !target.closest('.pokemon-dropdown-list')) return
+      if (!target || typeof target.closest !== 'function') return
+      const container = target.closest('.pokemon-dropdown-list') as HTMLElement | null
+      if (!container) return
       
-      const element = target as HTMLElement
+      const element = container
       const { scrollTop, scrollHeight, clientHeight } = element
       
       if (scrollHeight - scrollTop <= clientHeight + 100) {
@@ -366,10 +371,12 @@ export default function PokemonSelector({
             <div className="p-4 text-sm text-gray-600">Searching…</div>
           ) : filteredPokemon.length > 0 ? (
             <div className="divide-y divide-gray-200">
-              {filteredPokemon.map((pokemon, idx) => (
+              {(searchTerm.trim() ? filteredPokemon.slice(0, 20) : filteredPokemon).map((pokemon, idx) => (
                 <button
                   key={`${pokemon.id}-${idx}`}
-                  onClick={() => handlePokemonClick(pokemon)}
+                  type="button"
+                  tabIndex={-1}
+                  onMouseDown={(e) => { e.preventDefault(); handlePokemonClick(pokemon); }}
                   disabled={!canSelect && !isSelected(pokemon)}
                   className={`w-full text-left hover:bg-gray-50 flex items-center gap-3 transition-colors h-12 py-2 px-3 ${
                     isSelected(pokemon) 
@@ -381,10 +388,11 @@ export default function PokemonSelector({
                 >
                   <div className="relative w-8 h-8 flex-shrink-0 bg-gray-100 rounded overflow-hidden">
                     <img
-                      src={getShowdownAnimatedSprite(pokemon.name, pokemon.id)}
+                      src={searchTerm.trim() ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png` : getShowdownAnimatedSprite(pokemon.name, pokemon.id)}
                       alt={pokemon.name}
                       width={32}
                       height={32}
+                      loading="lazy"
                       className="w-full h-full object-contain"
                       onError={(e) => {
                         const target = e.currentTarget as HTMLImageElement
@@ -397,7 +405,7 @@ export default function PokemonSelector({
                       {formatPokemonName(pokemon.name)}
                     </div>
                     <div className="text-xs text-gray-500">
-                      #{String(pokemon.id).padStart(4, '0')}
+                      {pokemon.id !== 0 && `#${String(pokemon.id).padStart(4, '0')}`}
                     </div>
                   </div>
                   <div className="flex gap-1 items-center">

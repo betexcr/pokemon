@@ -13,7 +13,9 @@ const firebaseConfig = {
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
   // Add RTDB URL
-  databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL
+  databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
+  // Add measurement ID for Firebase Analytics
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
 // Initialize Firebase

@@ -12,6 +12,7 @@ import RoomPokeballReleaseAnimation from '@/components/RoomPokeballReleaseAnimat
 import BattleStartDialog from '@/components/BattleStartDialog';
 import FirebaseErrorDebugger from '@/components/FirebaseErrorDebugger';
 import ForfeitDialog from '@/components/ForfeitDialog';
+import LobbyTransition from '@/components/battle/LobbyTransition';
 import { Users, Copy, MessageCircle, Bug, Check, Swords } from 'lucide-react';
 import type { SavedTeam } from '@/lib/userTeams';
 import Image from 'next/image';
@@ -49,6 +50,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
   const [selectedTeam, setSelectedTeam] = useState<SavedTeam | LocalTeam | null>(null);
   const [showChat, setShowChat] = useState(true);
   const [showChatOverlay, setShowChatOverlay] = useState(false);
+  const [lobbyTransitionKey, setLobbyTransitionKey] = useState(0);
   const [releasedTeams, setReleasedTeams] = useState<{
     host?: { name: string; sprites: string[] };
     guest?: { name: string; sprites: string[] };
@@ -74,6 +76,11 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
       console.log('RoomPageClient unmounting with roomId:', roomId);
     };
   }, [roomId]);
+
+  // Trigger lobby transition on mount
+  useEffect(() => {
+    setLobbyTransitionKey(Date.now());
+  }, []);
 
   // Handle browser back/close for host cleanup
   useEffect(() => {
@@ -611,19 +618,29 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
   };
 
   const handleBattleStart = async () => {
-    if (!user || !room) return;
+    if (!user || !room) {
+      console.error('❌ Missing user or room data');
+      throw new Error('Missing user or room data');
+    }
     
     const isHost = Boolean(user?.uid && room?.hostId && user.uid === room.hostId);
     const role = isHost ? 'host' : 'guest';
+    
+    console.log('🚀 Starting battle with:', { isHost, role, roomId });
     
     // Get team data from the room
     const hostTeam = room.hostTeam as SavedTeam | LocalTeam | null;
     const guestTeam = room.guestTeam as SavedTeam | LocalTeam | null;
     
     if (!hostTeam || !guestTeam) {
-      alert('Both players must select their teams before starting the battle!');
-      return;
+      console.error('❌ Missing team data:', { hostTeam: !!hostTeam, guestTeam: !!guestTeam });
+      throw new Error('Both players must select their teams before starting the battle!');
     }
+    
+    console.log('📋 Team data:', { 
+      hostTeamSlots: hostTeam.slots?.length, 
+      guestTeamSlots: guestTeam.slots?.length 
+    });
     
     try {
       // Import the Cloud Function
@@ -650,13 +667,23 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
           }));
       };
       
+      const p1Team = convertTeamToPokemon(hostTeam);
+      const p2Team = convertTeamToPokemon(guestTeam);
+      
+      console.log('🎮 Converted teams:', { 
+        p1TeamLength: p1Team.length, 
+        p2TeamLength: p2Team.length,
+        p1Team: p1Team.map(p => p.species),
+        p2Team: p2Team.map(p => p.species)
+      });
+      
       const createBattle = httpsCallable(functions, "createBattleWithTeams");
       const res: any = await createBattle({
         roomId: roomId,
         p1Uid: room.hostId,
         p2Uid: room.guestId,
-        p1Team: convertTeamToPokemon(hostTeam),
-        p2Team: convertTeamToPokemon(guestTeam)
+        p1Team: p1Team,
+        p2Team: p2Team
       });
       
       const battleId: string = res.data.battleId;
@@ -676,10 +703,13 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
         userName: user.displayName || 'Anonymous'
       });
       
-      router.push(`/battle/runtime?${params.toString()}`);
+      const battleUrl = `/battle/runtime?${params.toString()}`;
+      console.log('🔗 Navigating to battle:', battleUrl);
+      
+      router.push(battleUrl);
     } catch (error) {
-      console.error('Failed to start battle:', error);
-      alert('Failed to start battle. Please try again.');
+      console.error('❌ Failed to start battle:', error);
+      throw new Error(`Failed to start battle: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -960,10 +990,10 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
     
     const arr = Array.from({ length: 6 }, (_, i) => Boolean(slots?.[i]?.id));
     return (
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-3">
         {arr.map((filled, idx) => (
-          <div key={idx} className={`w-2.5 h-2.5 ${filled ? '' : 'opacity-30'}`}>
-            <Image src={POKEBALL_ICON} alt="Poké Ball" width={10} height={10} />
+          <div key={idx} className={`w-8 h-8 ${filled ? '' : 'opacity-30'}`}>
+            <Image src={POKEBALL_ICON} alt="Poké Ball" width={32} height={32} />
           </div>
         ))}
       </div>
@@ -1041,7 +1071,8 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100" style={{ minHeight: '100vh', backgroundSize: 'cover', backgroundRepeat: 'no-repeat', backgroundAttachment: 'scroll' }} data-testid="lobby-page">
+    <LobbyTransition playKey={lobbyTransitionKey}>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100" style={{ minHeight: '100vh', backgroundSize: 'cover', backgroundRepeat: 'no-repeat', backgroundAttachment: 'scroll' }} data-testid="lobby-page">
       <AppHeader
         title="Battle Room"
         backLink="/lobby"
@@ -1137,10 +1168,10 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
                       {releasedTeams.host.sprites.map((sprite, idx) => (
                         <div 
                           key={idx} 
-                          className="w-2.5 h-2.5 animate-scale-in"
+                          className="w-8 h-8 animate-scale-in"
                           style={{ animationDelay: `${idx * 0.1}s` }}
                         >
-                          <Image src={sprite} alt="Released Pokemon" width={10} height={10} />
+                          <Image src={sprite} alt="Released Pokemon" width={32} height={32} />
                         </div>
                       ))}
                     </div>
@@ -1219,79 +1250,42 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
                     </div>
                   )}
 
-                  {/* Show Guest's own Poké Balls summary */}
-                  {isGuest && (
-                    <div className="mt-2 flex items-center gap-3">
-                      <div className="relative">
-                        {/* @ts-ignore */}
-                        {renderPokeballRow((selectedTeam as SavedTeam | LocalTeam)?.slots, 'guest')}
-                        {/* Animated released sprites overlay */}
-                        {releasedTeams.guest && (
-                          <div className="absolute inset-0 flex items-center gap-1 animate-fade-in">
-                            {releasedTeams.guest.sprites.map((sprite, idx) => (
+                  {/* Show Guest's Poké Balls - visible to both host and guest */}
+                  <div className="mt-2 flex items-center gap-3">
+                    <div className="relative">
+                      {/* @ts-ignore */}
+                      {renderPokeballRow(
+                        isGuest 
+                          ? (selectedTeam as SavedTeam | LocalTeam)?.slots
+                          : ((room.guestTeam as unknown as { slots?: Array<{ id?: number | null }> })?.slots) as Array<{ id?: number | null }>,
+                        'guest'
+                      )}
+                      {/* Animated released sprites overlay */}
+                      {releasedTeams.guest && (
+                        <div className="absolute inset-0 flex items-center gap-1 animate-fade-in">
+                          {releasedTeams.guest.sprites.map((sprite, idx) => (
                               <div 
                                 key={idx} 
-                                className="w-2.5 h-2.5 animate-scale-in"
+                                className="w-8 h-8 animate-scale-in"
                                 style={{ animationDelay: `${idx * 0.1}s` }}
                               >
                                 <Image
                                   src={sprite}
                                   alt={`Released Pokemon ${idx + 1}`}
-                                  width={10}
-                                  height={10}
+                                  width={32}
+                                  height={32}
                                   style={{ imageRendering: 'pixelated' }}
                                   className="object-contain"
                                 />
                               </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
                   
                   {/* Ready toggle handled by icon next to name for Guest */}
                   
-                  {/* Display Guest Team - only for host */}
-                  {room.guestTeam && !isGuest && (
-                    <div className="mt-3 p-3 bg-green-50 rounded-lg">
-                      <div className="text-sm">
-                        <div className="font-medium text-green-900 mb-2">{(room.guestTeam as { name?: string })?.name || 'Guest Team'}</div>
-                        
-                        {/* Pokemon Roster Images */}
-                        <div className="flex -space-x-1 mb-2">
-                          {(room.guestTeam as { slots?: Array<{ id?: number }> })?.slots?.slice(0, 6).map((slot: { id?: number }, index: number) => (
-                            <div
-                              key={index}
-                              className="relative w-8 h-8 rounded-full border-2 border-white bg-gray-100 overflow-hidden"
-                            >
-                              {slot.id ? (
-                                <Image
-                                  src={getPokemonImageUrl(slot.id)}
-                                  alt={`Pokemon ${slot.id}`}
-                                  fill
-                                  className="object-cover"
-                                  onError={(e) => {
-                                    const target = e.target as HTMLImageElement;
-                                    target.src = '/placeholder-pokemon.png';
-                                  }}
-                                />
-                              ) : (
-                                <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                                  <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                        
-                        <div className="text-green-700 flex items-center">
-                          {/* @ts-ignore */}
-                          {renderPokeballRow((room.guestTeam as { slots?: Array<{ id?: number | null }> })?.slots, 'guest')}
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </>
               ) : (
                 <div className="text-sm text-gray-500">
@@ -1492,6 +1486,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
         isRoomFinished={opponentForfeit?.isRoomFinished || room?.status === 'finished'}
         onClose={() => setOpponentForfeit(null)}
       />
-    </div>
+      </div>
+    </LobbyTransition>
   );
 }

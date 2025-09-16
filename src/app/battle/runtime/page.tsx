@@ -5,8 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, MessageCircle, Swords } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { ToastContainer, useToast } from "@/components/Toast";
-import RTDBBattleComponent from '@/components/RTDBBattleComponent';
-import { BattleScene } from '@/components/battle/BattleScene';
+import FirestoreBattleComponent from '@/components/FirestoreBattleComponent';
 import { AIBattleScene } from '@/components/battle/AIBattleScene';
 import { GYM_CHAMPIONS } from '@/lib/gym_champions';
 
@@ -39,6 +38,7 @@ function BattleRuntimePage() {
   const [playerTeam, setPlayerTeam] = useState<Array<{ id: number; level: number; moves?: string[] }>>([]);
   const [opponentChampionId, setOpponentChampionId] = useState<string>('');
   const [isAIBattle, setIsAIBattle] = useState(false);
+  const [battleTypeDetermined, setBattleTypeDetermined] = useState(false);
 
   // Load AI battle data from URL parameters
   useEffect(() => {
@@ -49,6 +49,7 @@ function BattleRuntimePage() {
     if (opponentKind === "champion" && opponentId) {
       setIsAIBattle(true);
       setOpponentChampionId(opponentId);
+      setBattleTypeDetermined(true);
       
       // Load player team from localStorage
       if (playerTeamId) {
@@ -90,6 +91,9 @@ function BattleRuntimePage() {
           console.error('Failed to load player team:', error);
         }
       }
+    } else {
+      // Not an AI battle, set as determined
+      setBattleTypeDetermined(true);
     }
   }, [searchParams]);
 
@@ -105,7 +109,7 @@ function BattleRuntimePage() {
   }, [router, urlBattleId, searchParams, isAIBattle]);
 
   // Show loading state
-  if (authLoading) {
+  if (authLoading || !battleTypeDetermined) {
     return (
       <div className="min-h-screen bg-bg text-text flex items-center justify-center">
         <div className="text-center">
@@ -201,19 +205,14 @@ function BattleRuntimePage() {
           />
         ) : (
           /* Regular Battle */
-          useNewBattleView ? (
-            <BattleScene 
-              battleId={urlBattleId}
-            />
-          ) : (
-            <RTDBBattleComponent 
-              battleId={urlBattleId}
-              onBattleComplete={(winner) => {
-                console.log('Battle completed, winner:', winner);
-                setShowBattleResults(true);
-              }}
-            />
-          )
+          <FirestoreBattleComponent 
+            battleId={urlBattleId}
+            onBattleComplete={(winner) => {
+              console.log('Battle completed, winner:', winner);
+              setShowBattleResults(true);
+            }}
+            viewMode={useNewBattleView ? 'animated' : 'classic'}
+          />
         )}
       </main>
 

@@ -8,6 +8,7 @@ import { generateBattleId } from "@/lib/utils";
 import AppHeader from "@/components/AppHeader";
 import TrainerRoster from "@/components/battle/TrainerRoster";
 import TeamSelector from "@/components/TeamSelector";
+import BattleStartFlash from "@/components/battle/BattleStartFlash";
 
 // Saved teams storage key reused from team builder
 // const STORAGE_KEY = "pokemon-team-builder";
@@ -25,6 +26,7 @@ function BattlePage() {
   const [isMobile, setIsMobile] = useState(false);
   const [showTooltip, setShowTooltip] = useState<string | null>(null);
   const [lastTapTime, setLastTapTime] = useState<number>(0);
+  const [introDone, setIntroDone] = useState(false);
 
   // Check if mobile on mount and resize
   useEffect(() => {
@@ -148,7 +150,10 @@ function BattlePage() {
   };
 
   return (
-    <div className="h-screen bg-bg text-text flex flex-col overflow-hidden">
+    <div className="h-screen bg-bg text-text flex flex-col overflow-hidden relative">
+      {/* Battle Start Flash */}
+      {!introDone && <BattleStartFlash onDone={() => setIntroDone(true)} />}
+      
       <AppHeader
         title="AI Battle"
         backLink="/"

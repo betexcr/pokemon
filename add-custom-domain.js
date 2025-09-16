@@ -1,99 +1,39 @@
 #!/usr/bin/env node
 
-const { execSync } = require('child_process');
-const https = require('https');
+/**
+ * Script to add custom domain to Firebase Authentication authorized domains
+ * This script provides instructions for adding pokemon.ultharcr.com to Firebase
+ */
 
-// Configuration
-const PROJECT_ID = 'pokemon-battles-86a0d';
-const CUSTOM_DOMAIN = 'pokemon.ultharcr.com';
+const { initializeApp } = require('firebase/app');
+const { getAuth } = require('firebase/auth');
 
-async function getAccessToken() {
-  try {
-    // Get the access token from Firebase CLI
-    const token = execSync('firebase login:ci --no-localhost', { encoding: 'utf8' }).trim();
-    return token;
-  } catch (error) {
-    console.error('Error getting Firebase token:', error.message);
-    console.log('Please run: firebase login:ci --no-localhost');
-    process.exit(1);
-  }
-}
+console.log('🔧 Firebase Custom Domain Setup');
+console.log('================================\n');
 
-async function addAuthorizedDomain(accessToken) {
-  const url = `https://identitytoolkit.googleapis.com/v2/projects/${PROJECT_ID}/config`;
-  
-  const data = JSON.stringify({
-    authorizedDomains: [
-      'localhost',
-      'pokemon-battles-86a0d.web.app',
-      CUSTOM_DOMAIN
-    ]
-  });
+console.log('Your custom domain: pokemon.ultharcr.com');
+console.log('Firebase Project: pokemon-battles-86a0d\n');
 
-  const options = {
-    method: 'PATCH',
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-    }
-  };
+console.log('📋 Manual Steps Required:');
+console.log('1. Go to Firebase Console: https://console.firebase.google.com/project/pokemon-battles-86a0d');
+console.log('2. Navigate to Authentication > Settings');
+console.log('3. Scroll down to "Authorized domains" section');
+console.log('4. Click "Add domain"');
+console.log('5. Enter: pokemon.ultharcr.com');
+console.log('6. Click "Add"\n');
 
-  return new Promise((resolve, reject) => {
-    const req = https.request(url, options, (res) => {
-      let responseData = '';
-      
-      res.on('data', (chunk) => {
-        responseData += chunk;
-      });
-      
-      res.on('end', () => {
-        if (res.statusCode >= 200 && res.statusCode < 300) {
-          console.log('✅ Successfully added custom domain to authorized domains!');
-          console.log('📋 Authorized domains now include:');
-          console.log('   - localhost');
-          console.log('   - pokemon-battles-86a0d.web.app');
-          console.log(`   - ${CUSTOM_DOMAIN}`);
-          resolve(JSON.parse(responseData));
-        } else {
-          console.error('❌ Error adding custom domain:', responseData);
-          reject(new Error(`HTTP ${res.statusCode}: ${responseData}`));
-        }
-      });
-    });
+console.log('✅ After adding the domain, your authentication should work on pokemon.ultharcr.com');
+console.log('\n🔗 Direct link to Authentication settings:');
+console.log('https://console.firebase.google.com/project/pokemon-battles-86a0d/authentication/settings');
 
-    req.on('error', (error) => {
-      console.error('❌ Request error:', error);
-      reject(error);
-    });
+console.log('\n📝 Current authorized domains should include:');
+console.log('- localhost (for development)');
+console.log('- pokemon-battles-86a0d.web.app (default Firebase hosting)');
+console.log('- pokemon-battles-86a0d.firebaseapp.com (default Firebase hosting)');
+console.log('- pokemon.ultharcr.com (your custom domain - needs to be added)');
 
-    req.write(data);
-    req.end();
-  });
-}
-
-async function main() {
-  console.log('🔧 Adding custom domain to Firebase Auth authorized domains...');
-  console.log(`📝 Project: ${PROJECT_ID}`);
-  console.log(`🌐 Domain: ${CUSTOM_DOMAIN}`);
-  console.log('');
-
-  try {
-    // Get access token
-    console.log('🔑 Getting Firebase access token...');
-    const accessToken = await getAccessToken();
-    
-    // Add the custom domain
-    console.log('➕ Adding custom domain to authorized domains...');
-    await addAuthorizedDomain(accessToken);
-    
-    console.log('');
-    console.log('🎉 Custom domain successfully added!');
-    console.log(`🔗 Your app can now authenticate users from: https://${CUSTOM_DOMAIN}`);
-    
-  } catch (error) {
-    console.error('❌ Failed to add custom domain:', error.message);
-    process.exit(1);
-  }
-}
-
-main();
+console.log('\n⚠️  Important Notes:');
+console.log('- The domain must be added to the same Firebase project (pokemon-battles-86a0d)');
+console.log('- It may take a few minutes for the changes to propagate');
+console.log('- Make sure your custom domain is properly configured in your DNS/hosting provider');
+console.log('- The domain should point to your Firebase hosting');
