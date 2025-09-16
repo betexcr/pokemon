@@ -3,12 +3,12 @@ import { cn } from "@/lib/utils";
 import { useState } from "react";
 
 interface TabsProps {
-  activeTab: 'overview' | 'stats' | 'moves' | 'evolution' | 'matchups';
-  onTabChange: (tab: 'overview' | 'stats' | 'moves' | 'evolution' | 'matchups') => void;
+  activeTab: 'stats' | 'moves' | 'evolution' | 'matchups';
+  onTabChange: (tab: 'stats' | 'moves' | 'evolution' | 'matchups') => void;
 }
 
 export default function Tabs({ activeTab, onTabChange }: TabsProps) {
-  const items = ["overview","stats","moves","evolution","matchups"] as const;
+  const items = ["stats","moves","evolution","matchups"] as const;
   const [hovered, setHovered] = useState<typeof items[number] | null>(null);
 
   return (

@@ -23,7 +23,7 @@ interface PokemonDetailClientProps {
 
 export default function PokemonDetailClient({ pokemon, error }: PokemonDetailClientProps) {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<'overview' | 'stats' | 'moves' | 'evolution' | 'matchups'>('overview')
+  const [activeTab, setActiveTab] = useState<'stats' | 'moves' | 'evolution' | 'matchups'>('stats')
   const [evolutionChain, setEvolutionChain] = useState<Array<{ id: number; name: string; types: string[]; condition?: string }>>([])
   const [matchups, setMatchups] = useState<Array<{ title: string; types: string[]; tone: 'danger'|'ok'|'immune' }>>([])
   const [abilitiesWithDescriptions, setAbilitiesWithDescriptions] = useState<Array<{ name: string; is_hidden?: boolean; description?: string | null }>>([])
@@ -252,24 +252,18 @@ export default function PokemonDetailClient({ pokemon, error }: PokemonDetailCli
       {/* Main Content */}
       <main className="mx-auto max-w-6xl px-4 md:px-6 lg:px-8 py-8">
         {/* Pokemon Hero with View Transition */}
-        <PokemonHero pokemon={pokemon} />
+        <PokemonHero 
+          pokemon={pokemon} 
+          abilities={abilitiesWithDescriptions.length > 0 ? abilitiesWithDescriptions : pokemon.abilities.map(a => ({ name: a.ability.name, is_hidden: a.is_hidden }))}
+          flavorText="A mysterious Pokémon with unique abilities and characteristics."
+          genus="Seed Pokémon"
+        />
 
         {/* Tabs */}
         <Tabs activeTab={activeTab} onTabChange={setActiveTab} />
 
         {/* Tab Content */}
         <div className="bg-surface rounded-2xl border border-border">
-          {activeTab === 'overview' && (
-            <OverviewSection
-              types={pokemon.types.map(t => t.type.name)}
-              abilities={abilitiesWithDescriptions.length > 0 ? abilitiesWithDescriptions : pokemon.abilities.map(a => ({ name: a.ability.name, is_hidden: a.is_hidden }))}
-              flavorText="A mysterious Pokémon with unique abilities and characteristics."
-              heightM={pokemon.height / 10}
-              weightKg={pokemon.weight / 10}
-              baseExp={pokemon.base_experience}
-              stats={pokemon.stats.map(stat => ({ name: stat.stat.name, value: stat.base_stat }))}
-            />
-          )}
           {activeTab === 'stats' && (
             <StatsSection
               name={pokemon.name}

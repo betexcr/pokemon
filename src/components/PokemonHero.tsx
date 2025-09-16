@@ -4,19 +4,48 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { Pokemon } from "@/types/pokemon";
 import TypeBadge from "@/components/TypeBadge";
+import AbilityBadge from "@/components/AbilityBadge";
 import { useReducedMotionPref } from "@/hooks/useReducedMotionPref";
 
 interface PokemonHeroProps {
   pokemon: Pokemon;
+  abilities?: { name: string; is_hidden?: boolean; description?: string | null }[];
+  flavorText?: string;
+  genus?: string;
 }
 
-export default function PokemonHero({ pokemon }: PokemonHeroProps) {
+export default function PokemonHero({ pokemon, abilities, flavorText, genus }: PokemonHeroProps) {
   const vtName = `pokemon-sprite-${pokemon.id}`;
   const reduce = useReducedMotionPref();
   const [showAura, setShowAura] = useState(false);
 
   // Get primary type for background color
   const primaryType = pokemon.types[0]?.type.name || 'normal';
+
+  // Helper functions for stat display
+  const getStatLabel = (statName: string): string => {
+    switch (statName.toLowerCase()) {
+      case 'hp': return 'HP';
+      case 'attack': return 'ATK';
+      case 'defense': return 'DEF';
+      case 'special-attack': return 'SPA';
+      case 'special-defense': return 'SPD';
+      case 'speed': return 'SPE';
+      default: return statName.toUpperCase();
+    }
+  };
+
+  const getStatIcon = (statName: string): string => {
+    switch (statName.toLowerCase()) {
+      case 'hp': return '❤️';
+      case 'attack': return '⚔️';
+      case 'defense': return '🛡️';
+      case 'special-attack': return '✨';
+      case 'special-defense': return '🔮';
+      case 'speed': return '💨';
+      default: return '📊';
+    }
+  };
 
   // Trigger aura pulse on mount
   useEffect(() => {
@@ -29,7 +58,7 @@ export default function PokemonHero({ pokemon }: PokemonHeroProps) {
   
   return (
     <header 
-      className="relative mb-6 rounded-2xl border border-border bg-surface p-4 overflow-hidden"
+      className="relative mb-6 rounded-2xl border border-border bg-surface p-6 overflow-hidden"
       style={{ 
         '--type-color': `var(--type-${primaryType}-color, #60a5fa)` 
       } as React.CSSProperties}
@@ -46,63 +75,104 @@ export default function PokemonHero({ pokemon }: PokemonHeroProps) {
         transition={{ duration: 0.2, ease: "easeOut" }}
       />
       
-      <div className="relative flex items-center gap-4">
-        <div
-          style={{ viewTransitionName: vtName } as React.CSSProperties}
-          className="rounded-xl bg-white/70 dark:bg-zinc-800/70 p-3"
-        >
-          <Image 
-            src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.id}.png`}
-            alt={pokemon.name}
-            width={140} 
-            height={140} 
-            className="h-36 w-36 object-contain" 
-            priority 
-            onError={(e) => {
-              const target = e.currentTarget as HTMLImageElement;
-              target.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`;
-            }}
-          />
-        </div>
-        
-        <div className="min-w-0 flex-1">
-          <h1 className="text-2xl font-bold leading-tight capitalize text-text">
-            {pokemon.name}
-          </h1>
-          {pokemon.id !== 0 && <p className="text-muted">#{String(pokemon.id).padStart(4, "0")}</p>}
+      <div className="relative space-y-6">
+        {/* Pokemon Header */}
+        <div className="flex items-center gap-6">
+          <div
+            style={{ viewTransitionName: vtName } as React.CSSProperties}
+            className="rounded-xl bg-white/70 dark:bg-zinc-800/70 p-3 flex-shrink-0"
+          >
+            <Image 
+              src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.id}.png`}
+              alt={pokemon.name}
+              width={140} 
+              height={140} 
+              className="h-36 w-36 object-contain" 
+              priority 
+              onError={(e) => {
+                const target = e.currentTarget as HTMLImageElement;
+                target.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`;
+              }}
+            />
+          </div>
           
-          <div className="mt-2 flex gap-2 flex-wrap">
-            {pokemon.types.map((typeObj) => (
-              <TypeBadge 
-                key={typeObj.type.name} 
-                type={typeObj.type.name} 
+          <div className="min-w-0 flex-1">
+            <h1 className="text-3xl font-bold leading-tight capitalize text-text">
+              {pokemon.name}
+            </h1>
+            {pokemon.id !== 0 && <p className="text-muted text-lg">#{String(pokemon.id).padStart(4, "0")}</p>}
+            
+            <div className="mt-3 flex gap-2 flex-wrap">
+              {pokemon.types.map((typeObj) => (
+                <TypeBadge 
+                  key={typeObj.type.name} 
+                  type={typeObj.type.name} 
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Stats Row */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-muted">
+          <Stat label="Height" value={`${(pokemon.height / 10).toFixed(1)} m`} icon="📏" />
+          <Stat label="Weight" value={`${(pokemon.weight / 10).toFixed(1)} kg`} icon="🏋️" />
+          <Stat label="Base Exp" value={pokemon.base_experience} icon="⚡" />
+          <Stat label="Types" value={<div className="flex flex-wrap justify-center gap-1">{pokemon.types.map((t, index) => <TypeBadge key={`${t.type.name}-${index}`} type={t.type.name}/>)}</div>} icon="🧪" />
+        </div>
+
+        {/* Battle Stats */}
+        <div className="space-y-3">
+          <h3 className="text-lg font-semibold text-center">Battle Stats</h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {pokemon.stats.map(stat => (
+              <Stat 
+                key={stat.stat.name}
+                label={getStatLabel(stat.stat.name)} 
+                value={stat.base_stat} 
+                icon={getStatIcon(stat.stat.name)}
               />
             ))}
           </div>
-          
-          {/* Stats summary */}
-          <div className="mt-3 grid grid-cols-3 gap-2 text-sm">
-            <div className="text-center">
-              <div className="font-semibold text-text">HP</div>
-              <div className="text-muted">
-                {pokemon.stats.find(s => s.stat.name === 'hp')?.base_stat || 0}
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="font-semibold text-text">ATK</div>
-              <div className="text-muted">
-                {pokemon.stats.find(s => s.stat.name === 'attack')?.base_stat || 0}
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="font-semibold text-text">DEF</div>
-              <div className="text-muted">
-                {pokemon.stats.find(s => s.stat.name === 'defense')?.base_stat || 0}
-              </div>
+        </div>
+
+        {/* Abilities */}
+        {abilities && abilities.length > 0 && (
+          <div className="space-y-2 text-center">
+            <h3 className="text-lg font-semibold">Abilities</h3>
+            <div className="flex flex-wrap gap-3 justify-center">
+              {abilities.map((ability, index) => (
+                <AbilityBadge 
+                  key={`${ability.name}-${index}`}
+                  ability={ability}
+                />
+              ))}
             </div>
           </div>
-        </div>
+        )}
+
+        {/* Description */}
+        {flavorText && (
+          <div className="space-y-2 text-center">
+            <h3 className="text-lg font-semibold">Description</h3>
+            <p className="leading-7 text-muted">{flavorText}</p>
+            {genus && (
+              <span className="inline-block rounded-full px-4 py-2 text-sm bg-gray-100 dark:bg-gray-700">
+                {genus}
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </header>
+  );
+}
+
+function Stat({label, value, icon}:{label:string; value:React.ReactNode; icon:string}) {
+  return (
+    <div className="rounded-xl bg-white/50 dark:bg-zinc-800/50 p-3 text-center">
+      <div className="text-xs text-muted">{icon} {label}</div>
+      <div className="mt-1 font-semibold">{value}</div>
+    </div>
   );
 }
