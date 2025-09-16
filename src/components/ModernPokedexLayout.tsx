@@ -968,7 +968,7 @@ export default function ModernPokedexLayout({
       {/* Unified App Header (desktop style across breakpoints) */}
       <AppHeader
         title="PokéDex"
-        subtitle={`${pokemonList.length} Pokémon discovered`}
+        subtitle="Created by Alberto Muñoz"
         comparisonList={comparisonList}
         showSidebar={showSidebar}
         onToggleSidebar={() => setShowSidebar(!showSidebar)}
