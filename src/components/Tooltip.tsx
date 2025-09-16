@@ -67,8 +67,12 @@ export default function Tooltip({
   }, [isOpen, isLatched])
 
   // Opacity behavior for hover and open state
-  const hoverOpacityClass = variant === 'stat' ? 'group-hover:opacity-80' : 'group-hover:opacity-100'
+  // When containing to viewport with fixed positioning, avoid hover-driven opacity to prevent
+  // a one-frame flash at the viewport corner before coordinates are computed.
+  const hoverOpacityClass = containViewport ? '' : (variant === 'stat' ? 'group-hover:opacity-80' : 'group-hover:opacity-100')
   const openOpacityClass = isOpen ? (variant === 'stat' ? 'opacity-80' : 'opacity-100') : 'opacity-0'
+  // Hide the tooltip until fixed coordinates are ready to ensure it's never shown in the corner
+  const visibilityClass = containViewport && isOpen && !fixedCoords ? 'invisible' : ''
 
   // Type-based background styling
   const getTypeBackground = () => {
@@ -214,9 +218,16 @@ export default function Tooltip({
     <div 
       className={`relative group ${className}`}
       ref={anchorRef}
-      onMouseEnter={() => setIsOpen(true)}
+      onMouseEnter={() => { setFixedCoords(null); setIsOpen(true) }}
       onMouseLeave={() => { if (!isLatched) setIsOpen(false) }}
-      onClick={() => { setIsOpen(prev => !prev); setIsLatched(prev => !prev ? true : false) }}
+      onClick={() => { 
+        setIsOpen(prev => {
+          const next = !prev
+          if (next) setFixedCoords(null)
+          return next
+        })
+        setIsLatched(prev => !prev ? true : false) 
+      }}
       onTouchStart={(e) => {
         isTouchingRef.current = true
         longPressActiveRef.current = false
@@ -224,6 +235,7 @@ export default function Tooltip({
         longPressTimerRef.current = window.setTimeout(() => {
           if (isTouchingRef.current) {
             longPressActiveRef.current = true
+            setFixedCoords(null)
             setIsOpen(true)
             setIsLatched(false) // temporary while holding
           }
@@ -237,22 +249,29 @@ export default function Tooltip({
           setIsOpen(false)
           setIsLatched(false)
         } else {
-          setIsOpen(prev => !prev)
-          setIsLatched(prev => !prev ? true : false)
+          // Single tap on mobile - show tooltip and latch it
+          setFixedCoords(null)
+          setIsOpen(true)
+          setIsLatched(true)
         }
       }}
     >
       {children}
       <div 
         ref={tipRef}
-        className={`pointer-events-auto overflow-auto ${containViewport ? 'fixed' : 'absolute'} z-[9999] ${!containViewport ? positionClasses[position] : ''} ${maxWidth} rounded-2xl p-5 text-sm leading-relaxed shadow-2xl ring-1 ring-gray-200/20 ${openOpacityClass} ${hoverOpacityClass} transition-opacity duration-200 ease-in-out ${getTypeBackground()} ${getTypeAccent()} ${getTextColor()} ${!containViewport && variant==='move' ? 'left-1/2 -translate-x-1/2' : ''}`}
+        className={`pointer-events-auto overflow-auto ${containViewport ? 'fixed' : 'absolute'} z-[9999] ${!containViewport ? positionClasses[position] : ''} ${maxWidth} rounded-2xl p-5 text-sm leading-relaxed shadow-2xl ring-1 ring-gray-200/20 ${openOpacityClass} ${hoverOpacityClass} ${visibilityClass} transition-opacity duration-200 ease-in-out ${getTypeBackground()} ${getTypeAccent()} ${getTextColor()} ${!containViewport && variant==='move' ? 'left-1/2 -translate-x-1/2' : ''}`}
         style={containViewport && fixedCoords ? { 
           ...getTypeOverlay(), 
           top: fixedCoords.top, 
           left: fixedCoords.left, 
           maxHeight: `calc(100vh - ${marginPx * 2}px)`, 
           maxWidth: `calc(100vw - ${marginPx * 2}px)`
-        } : getTypeOverlay()}
+        } : { 
+          ...getTypeOverlay(), 
+          // Park offscreen while waiting for measurement to avoid top-left flashes
+          top: containViewport ? -9999 : undefined as unknown as number, 
+          left: containViewport ? -9999 : undefined as unknown as number 
+        }}
       >
         <div className="space-y-3">
           {variant !== 'default' && (

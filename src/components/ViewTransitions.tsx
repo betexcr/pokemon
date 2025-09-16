@@ -7,6 +7,7 @@ export type TransitionType =
   | 'pokeball' 
   | 'battle-flash' 
   | 'pokedex-swipe' 
+  | 'pokedex-swipe-inverted'
   | 'tile-flip' 
   | 'energy-aura' 
   | 'trainer-card'
@@ -143,6 +144,7 @@ function getTransitionDuration(transitionType: TransitionType): number {
       return 300
     case 'pokeball':
     case 'pokedex-swipe':
+    case 'pokedex-swipe-inverted':
     case 'water':
       return 400
     case 'tile-flip':

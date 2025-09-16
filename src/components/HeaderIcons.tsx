@@ -22,23 +22,21 @@ export default function HeaderIcons({
   const router = useRouter()
 
   const handleTeamClick = () => {
-    triggerViewTransition('tile-flip', () => {
+    triggerViewTransition('pokedex-swipe', () => {
       router.push('/team')
     })
   }
 
   const handleBattleClick = () => {
-    triggerViewTransition('battle-flash', () => {
+    triggerViewTransition('pokedex-swipe', () => {
       router.push('/battle')
     })
   }
 
   const handleCompareClick = () => {
-    if (comparisonList.length > 0) {
-      triggerViewTransition('pokedex-swipe', () => {
-        router.push('/compare')
-      })
-    }
+    triggerViewTransition('pokedex-swipe', () => {
+      router.push('/compare')
+    })
   }
 
   const handleFiltersClick = () => {
@@ -78,7 +76,7 @@ export default function HeaderIcons({
           alt="Advanced Filters" 
           width={48}
           height={48}
-          className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 object-contain"
+          className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 lg:w-12 lg:h-12 object-contain"
         />
       </button>
       
@@ -111,7 +109,7 @@ export default function HeaderIcons({
           alt="Team Builder" 
           width={48}
           height={48}
-          className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 object-contain"
+          className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 lg:w-12 lg:h-12 object-contain"
         />
       </button>
       
@@ -144,12 +142,12 @@ export default function HeaderIcons({
           alt="Battles" 
           width={48}
           height={48}
-          className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 object-contain"
+          className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 lg:w-12 lg:h-12 object-contain"
         />
       </button>
       
       <button 
-        className={`w-16 h-16 rounded-full border-2 transition-all duration-200 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 ${comparisonList.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+        className={`w-16 h-16 rounded-full border-2 transition-all duration-200 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500`}
         style={{
           borderColor: 'var(--color-border)',
           backgroundColor: 'var(--color-surface)',
@@ -162,26 +160,22 @@ export default function HeaderIcons({
           maxHeight: '40px',
         }}
         onMouseEnter={(e) => {
-          if (comparisonList.length > 0) {
-            e.currentTarget.style.borderColor = 'var(--color-muted)';
-            e.currentTarget.style.backgroundColor = 'var(--color-bg)';
-          }
+          e.currentTarget.style.borderColor = 'var(--color-muted)';
+          e.currentTarget.style.backgroundColor = 'var(--color-bg)';
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.borderColor = 'var(--color-border)';
           e.currentTarget.style.backgroundColor = 'var(--color-surface)';
         }}
         onClick={handleCompareClick}
-        disabled={comparisonList.length === 0}
-        title={comparisonList.length === 0 ? 'Select Pokémon to enable comparison' : 'Compare'}
-        aria-disabled={comparisonList.length === 0}
+        title={'Compare'}
       >
         <Image 
           src="/header-icons/compare.png" 
           alt="Compare" 
           width={48}
           height={48}
-          className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 object-contain"
+          className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 lg:w-12 lg:h-12 object-contain"
         />
       </button>
     </>

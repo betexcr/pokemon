@@ -8,7 +8,7 @@ export default function EvolutionSection({ chain, selectedSprite = 'default' }: 
   if (!chain.length) return null;
   return (
     <section id="evolution" className="mx-auto w-full px-4 py-4 space-y-4 text-center">
-      <div className="flex flex-nowrap justify-center gap-4 overflow-x-auto pb-4">
+      <div className="flex flex-wrap sm:flex-nowrap justify-center gap-4 overflow-x-auto pb-4 -mx-4 px-4">
         {chain.map((n, i) => {
           const primaryType = n.types[0] || 'normal';
           const secondaryType = n.types[1] || null;
@@ -38,7 +38,7 @@ export default function EvolutionSection({ chain, selectedSprite = 'default' }: 
                   />
                   
                   <div className="flex justify-center items-center p-3">
-                    <div className="relative w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 flex items-center justify-center flex-shrink-0">
+                    <div className="relative w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 flex items-center justify-center flex-shrink-0">
                       <Image
                         src={imageUrl}
                         alt={n.name}
@@ -62,7 +62,7 @@ export default function EvolutionSection({ chain, selectedSprite = 'default' }: 
                 </div>
               </Link>
               {i < chain.length - 1 && (
-                <div className="flex items-center gap-1 text-xs text-muted flex-shrink-0">
+                <div className="hidden sm:flex items-center gap-1 text-xs text-muted flex-shrink-0">
                   <span className="hidden sm:inline text-xs">{chain[i+1].condition ?? "—"}</span>
                   <span className="text-lg">→</span>
                 </div>

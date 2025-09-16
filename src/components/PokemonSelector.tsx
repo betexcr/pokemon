@@ -33,6 +33,7 @@ export default function PokemonSelector({
   const [offset, setOffset] = useState(0)
   const [searchResults, setSearchResults] = useState<Pokemon[] | null>(null)
   const [searchLoading, setSearchLoading] = useState(false)
+  const [sentinelRef, setSentinelRef] = useState<HTMLDivElement | null>(null)
 
   // Load initial Pokemon data
   useEffect(() => {
@@ -277,18 +278,65 @@ export default function PokemonSelector({
       const element = container
       const { scrollTop, scrollHeight, clientHeight } = element
       
-      if (scrollHeight - scrollTop <= clientHeight + 100) {
+      // Trigger load more when user scrolls to within 150px of the bottom
+      // Increased threshold for better mobile experience
+      if (scrollHeight - scrollTop <= clientHeight + 150) {
+        loadMorePokemon()
+      }
+    }
+
+    // Also handle touch events for mobile
+    const handleTouchEnd = (event: TouchEvent) => {
+      const target = event.target as Element
+      if (!target || typeof target.closest !== 'function') return
+      const container = target.closest('.pokemon-dropdown-list') as HTMLElement | null
+      if (!container) return
+      
+      const element = container
+      const { scrollTop, scrollHeight, clientHeight } = element
+      
+      // Check if user has scrolled near the bottom
+      if (scrollHeight - scrollTop <= clientHeight + 200) {
         loadMorePokemon()
       }
     }
 
     if (showDropdown && !searchTerm.trim()) {
+      // Add both scroll and touch event listeners for better mobile support
       document.addEventListener('scroll', handleScroll, true)
+      document.addEventListener('touchend', handleTouchEnd, { passive: true })
+      
       return () => {
         document.removeEventListener('scroll', handleScroll, true)
+        document.removeEventListener('touchend', handleTouchEnd)
       }
     }
   }, [showDropdown, searchTerm, loadMorePokemon])
+
+  // Intersection Observer for better mobile scroll detection
+  useEffect(() => {
+    if (!sentinelRef || !showDropdown || searchTerm.trim()) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries
+        if (entry.isIntersecting && hasMore && !loadingMore) {
+          loadMorePokemon()
+        }
+      },
+      {
+        root: null,
+        rootMargin: '100px',
+        threshold: 0.1
+      }
+    )
+
+    observer.observe(sentinelRef)
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [sentinelRef, showDropdown, searchTerm, hasMore, loadingMore, loadMorePokemon])
 
   const handlePokemonClick = async (pokemon: Pokemon) => {
     if (selectedPokemon.some(p => p.id === pokemon.id)) {
@@ -366,7 +414,7 @@ export default function PokemonSelector({
 
       {/* Dropdown */}
       {showDropdown && (
-        <div className="absolute top-full left-0 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-2xl z-50 max-h-96 overflow-y-auto pokemon-dropdown-list">
+        <div className="absolute top-full left-0 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-2xl z-50 max-h-96 overflow-y-auto pokemon-dropdown-list" style={{ WebkitOverflowScrolling: 'touch' }}>
           {searchLoading ? (
             <div className="p-4 text-sm text-gray-600">Searching…</div>
           ) : filteredPokemon.length > 0 ? (
@@ -432,6 +480,11 @@ export default function PokemonSelector({
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto mb-2"></div>
                   <p className="text-sm">Loading more Pokemon...</p>
                 </div>
+              )}
+              
+              {/* Intersection Observer sentinel for mobile scroll detection */}
+              {!searchTerm.trim() && hasMore && !loadingMore && (
+                <div ref={setSentinelRef} className="h-4 w-full" />
               )}
               
               {/* End of list indicator */}

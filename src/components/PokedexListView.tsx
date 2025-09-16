@@ -141,7 +141,7 @@ export default function PokedexListView({
       {/* Infinite scroll loading indicator */}
       {isLoadingMore && (
         <div className="text-center py-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-poke-blue mx-auto mb-2"></div>
+          <img src="/loading.gif" alt="Loading more Pokémon" width={50} height={50} className="mx-auto mb-2" />
           <p className="text-muted text-sm">Loading more Pokémon...</p>
         </div>
       )}

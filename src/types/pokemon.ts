@@ -346,7 +346,7 @@ export interface FilterState {
   search: string;
   types: string[];
   generation: string;
-  sortBy: 'id' | 'name' | 'height' | 'weight';
+  sortBy: 'id' | 'name' | 'stats' | 'hp' | 'attack' | 'defense' | 'special-attack' | 'special-defense' | 'speed' | 'height' | 'weight';
   sortOrder: 'asc' | 'desc';
 }
 

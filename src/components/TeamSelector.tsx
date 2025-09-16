@@ -221,10 +221,51 @@ export default function TeamSelector({
           className="w-full border border-gray-300 rounded-lg p-3 bg-white text-left focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed flex items-center justify-between"
         >
           <div className="flex items-center space-x-3">
-            <Users className="h-4 w-4 text-gray-400" />
-            <span className={selectedTeam ? "text-black dark:text-text" : "text-gray-800 dark:text-muted"}>
-              {selectedTeam ? selectedTeam.name : "Choose a team..."}
-            </span>
+            {selectedTeam ? (
+              <>
+                {/* Selected team preview thumbnails */}
+                <div className="flex -space-x-1">
+                  {selectedTeam.slots.slice(0, 6).map((slot, index) => (
+                    <div
+                      key={index}
+                      className="relative w-5 h-5 rounded-full border border-white bg-gray-100 overflow-hidden"
+                    >
+                      {slot.id ? (
+                        <>
+                          <Image
+                            src={getPokemonImageUrl(slot.id)}
+                            alt={`Pokemon ${slot.id}`}
+                            fill
+                            className="object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = '/placeholder-pokemon.png';
+                              const loader = (target.parentElement?.querySelector('[data-img-loader]') as HTMLElement | null);
+                              if (loader) loader.style.display = 'none';
+                            }}
+                            onLoadingComplete={(img) => {
+                              const loader = (img as any).parentElement?.querySelector('[data-img-loader]') as HTMLElement | null;
+                              if (loader) loader.style.display = 'none';
+                            }}
+                          />
+                          <img src="/loading.gif" alt="Loading" className="absolute inset-0 m-auto w-2.5 h-2.5 opacity-80" data-img-loader />
+                        </>
+                      ) : (
+                        <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                          <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <span className="text-black dark:text-text">{selectedTeam.name}</span>
+              </>
+            ) : (
+              <>
+                <Users className="h-4 w-4 text-gray-400" />
+                <span className="text-gray-800 dark:text-muted">Choose a team...</span>
+              </>
+            )}
           </div>
           <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
         </button>
