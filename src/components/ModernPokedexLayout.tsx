@@ -1543,7 +1543,7 @@ export default function ModernPokedexLayout({
 
         {/* Main Content Area */}
         <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scroll-stable scrollbar-hide">
-          <div className={`${showSidebar ? 'pl-0 pr-0' : 'pl-0 pr-4 sm:pl-0 sm:pr-6 lg:pl-0 lg:pr-8'} min-h-full w-full max-w-full`}>
+          <div className={`${showSidebar ? 'pl-0 pr-0' : 'pl-0 pr-4 sm:pl-0 sm:pr-6 lg:pl-0 lg:pr-8'} min-h-full w-full max-w-full pt-4`}>
             {/* Pokémon Grid */}
             
             {isFiltering ? (

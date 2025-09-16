@@ -76,18 +76,19 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus }: P
       />
       
       <div className="relative space-y-6">
-        {/* Pokemon Header */}
-        <div className="flex items-center gap-6">
+        {/* Pokemon Header - Responsive Layout */}
+        <div className="flex flex-col lg:flex-row items-center lg:items-start gap-6">
+          {/* Pokemon Image */}
           <div
             style={{ viewTransitionName: vtName } as React.CSSProperties}
-            className="rounded-xl bg-white/70 dark:bg-zinc-800/70 p-3 flex-shrink-0"
+            className="rounded-xl bg-white/70 dark:bg-zinc-800/70 p-3 flex-shrink-0 order-1 lg:order-1"
           >
             <Image 
               src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.id}.png`}
               alt={pokemon.name}
               width={140} 
               height={140} 
-              className="h-36 w-36 object-contain" 
+              className="h-32 w-32 sm:h-36 sm:w-36 lg:h-40 lg:w-40 object-contain" 
               priority 
               onError={(e) => {
                 const target = e.currentTarget as HTMLImageElement;
@@ -96,25 +97,31 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus }: P
             />
           </div>
           
-          <div className="min-w-0 flex-1">
-            <h1 className="text-3xl font-bold leading-tight capitalize text-text">
+          {/* Pokemon Info - Side Layout on Desktop, Below on Mobile */}
+          <div className="min-w-0 flex-1 order-2 lg:order-2 text-center lg:text-left">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight capitalize text-text">
               {pokemon.name}
             </h1>
-            {pokemon.id !== 0 && <p className="text-muted text-lg">#{String(pokemon.id).padStart(4, "0")}</p>}
+            {pokemon.id !== 0 && (
+              <p className="text-muted text-base sm:text-lg lg:text-xl mt-1">
+                #{String(pokemon.id).padStart(4, "0")}
+              </p>
+            )}
             
-            <div className="mt-3 flex gap-2 flex-wrap">
+            <div className="mt-3 flex gap-2 flex-wrap justify-center lg:justify-start">
               {pokemon.types.map((typeObj) => (
                 <TypeBadge 
                   key={typeObj.type.name} 
                   type={typeObj.type.name} 
+                  className="text-sm sm:text-base"
                 />
               ))}
             </div>
           </div>
         </div>
 
-        {/* Quick Stats Row */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-muted">
+        {/* Quick Stats Row - Responsive Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-muted">
           <Stat label="Height" value={`${(pokemon.height / 10).toFixed(1)} m`} icon="📏" />
           <Stat label="Weight" value={`${(pokemon.weight / 10).toFixed(1)} kg`} icon="🏋️" />
           <Stat label="Base Exp" value={pokemon.base_experience} icon="⚡" />
@@ -124,7 +131,7 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus }: P
         {/* Battle Stats */}
         <div className="space-y-3">
           <h3 className="text-lg font-semibold text-center">Battle Stats</h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 sm:gap-4">
             {pokemon.stats.map(stat => (
               <Stat 
                 key={stat.stat.name}
@@ -140,7 +147,7 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus }: P
         {abilities && abilities.length > 0 && (
           <div className="space-y-2 text-center">
             <h3 className="text-lg font-semibold">Abilities</h3>
-            <div className="flex flex-wrap gap-3 justify-center">
+            <div className="flex flex-wrap gap-2 sm:gap-3 justify-center">
               {abilities.map((ability, index) => (
                 <AbilityBadge 
                   key={`${ability.name}-${index}`}
