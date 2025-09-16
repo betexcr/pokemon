@@ -216,16 +216,35 @@ export default function TeamBuilderPage() {
       const element = target as HTMLElement
       const { scrollTop, scrollHeight, clientHeight } = element
       
-      // Load more when user scrolls to within 100px of the bottom
-      if (scrollHeight - scrollTop <= clientHeight + 100) {
+      // Load more when user scrolls to within 150px of the bottom (increased for mobile)
+      if (scrollHeight - scrollTop <= clientHeight + 150) {
+        loadMorePokemon()
+      }
+    }
+
+    // Also handle touch events for mobile
+    const handleTouchEnd = (event: TouchEvent) => {
+      const target = event.target as Element
+      if (!target || typeof target.closest !== 'function') return
+      const container = target.closest('.pokemon-dropdown-list') as HTMLElement | null
+      if (!container) return
+      
+      const element = container
+      const { scrollTop, scrollHeight, clientHeight } = element
+      
+      // Check if user has scrolled near the bottom
+      if (scrollHeight - scrollTop <= clientHeight + 200) {
         loadMorePokemon()
       }
     }
 
     if (showDropdown && !searchTerm.trim()) {
+      // Add both scroll and touch event listeners for better mobile support
       document.addEventListener('scroll', handleScroll, true)
+      document.addEventListener('touchend', handleTouchEnd, { passive: true })
       return () => {
         document.removeEventListener('scroll', handleScroll, true)
+        document.removeEventListener('touchend', handleTouchEnd)
       }
     }
   }, [showDropdown, searchTerm, loadMorePokemon])
@@ -944,6 +963,10 @@ export default function TeamBuilderPage() {
                                   height={24}
                                   className="w-full h-full object-contain"
                                   unoptimized
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement
+                                    target.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${lastPokemon.id}.png`
+                                  }}
                                 />
                               </div>
                               <div className="flex-1 min-w-0 leading-none">
@@ -1004,6 +1027,10 @@ export default function TeamBuilderPage() {
                             height={24}
                             className="w-full h-full object-contain"
                             unoptimized
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement
+                              target.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`
+                            }}
                           />
                         </div>
                         <div className="flex-1 min-w-0 leading-none">
@@ -1033,7 +1060,7 @@ export default function TeamBuilderPage() {
                     {/* Loading indicator for virtualized scrolling */}
                     {!searchTerm.trim() && loadingMorePokemon && (
                       <div className="p-4 text-center text-muted">
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-poke-blue mx-auto mb-2"></div>
+                        <img src="/loading.gif" alt="Loading more Pokémon" width={40} height={40} className="mx-auto mb-2" />
                         <p className="text-sm">Loading more Pokémon...</p>
                       </div>
                     )}
@@ -1060,47 +1087,63 @@ export default function TeamBuilderPage() {
 
         {/* Team slots */}
         <section className="border border-border rounded-xl bg-surface p-4 overflow-x-hidden">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-text">Your Team</h2>
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-4">
+            <div className="flex items-center justify-between sm:justify-start gap-4">
+              <h2 className="text-lg font-semibold text-text">Your Team</h2>
               <div className="text-sm text-muted">
                 {teamSlots.filter(s => s.id != null).length} / 6 Pokémon
               </div>
+            </div>
+            
+            {/* Mobile-first responsive controls */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+              {/* Team name input - full width on mobile */}
               <input
                 value={teamName}
                 onChange={(e) => setTeamName(e.target.value)}
                 placeholder="Team name"
-                className="px-3 py-2 border border-border rounded-lg bg-surface text-text"
+                className="px-3 py-2 border border-border rounded-lg bg-surface text-text flex-1 sm:min-w-[200px]"
               />
-              <button 
-                onClick={saveTeam} 
-                disabled={saving || !isTeamComplete}
-                className="px-3 py-2 rounded-lg bg-poke-blue text-white hover:bg-poke-blue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-              >
-                {saving ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4" />
-                    Save Team
-                  </>
-                )}
-              </button>
-              {!isTeamComplete && (
-                <div className="text-xs text-red-600" title="Each Pokémon must have 4 moves to save">
-                  Complete moves to save. Your current selections are auto-saved locally and will persist on refresh.
-                </div>
-              )}
-              <button onClick={clearTeam} className="px-3 py-2 rounded-lg border border-border text-text hover:bg-white/50 transition-colors">Clear</button>
+              
+              {/* Action buttons - stack on mobile, row on desktop */}
+              <div className="flex flex-col sm:flex-row gap-2">
+                <button 
+                  onClick={saveTeam} 
+                  disabled={saving || !isTeamComplete}
+                  className="px-4 py-2 rounded-lg bg-poke-blue text-white hover:bg-poke-blue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm font-medium"
+                >
+                  {saving ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4" />
+                      Save Team
+                    </>
+                  )}
+                </button>
+                <button 
+                  onClick={clearTeam} 
+                  className="px-4 py-2 rounded-lg border border-border text-text hover:bg-white/50 transition-colors text-sm font-medium"
+                >
+                  Clear
+                </button>
+              </div>
             </div>
           </div>
+          
+          {/* Error message - full width below controls */}
+          {!isTeamComplete && (
+            <div className="text-xs text-red-600 mb-2" title="Each Pokémon must have 4 moves to save">
+              Complete moves to save. Your current selections are auto-saved locally and will persist on refresh.
+            </div>
+          )}
           {saveError && (
             <div className="-mt-2 mb-2 text-xs text-red-600">{saveError}</div>
           )}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 w-full">
             {teamSlots.map((slot, idx) => {
               const poke = allPokemon.find(p => p.id === slot.id) || null
               return (
@@ -1379,17 +1422,19 @@ export default function TeamBuilderPage() {
 
         {/* Saved teams */}
         <section className="border border-border rounded-xl bg-surface p-4 overflow-x-hidden">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
             <h2 className="text-lg font-semibold text-text">Saved Teams</h2>
             {user ? (
               <div className="flex items-center gap-1 text-sm text-green-600">
                 <Cloud className="h-4 w-4" />
-                <span>Synced to Cloud</span>
+                <span className="hidden sm:inline">Synced to Cloud</span>
+                <span className="sm:hidden">Cloud</span>
               </div>
             ) : (
               <div className="flex items-center gap-1 text-sm text-orange-600">
                 <CloudOff className="h-4 w-4" />
-                <span>Local Storage Only</span>
+                <span className="hidden sm:inline">Local Storage Only</span>
+                <span className="sm:hidden">Local</span>
               </div>
             )}
           </div>
@@ -1415,31 +1460,39 @@ export default function TeamBuilderPage() {
               ) : null}
             </div>
           ) : (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {savedTeams.map(team => (
                 <div key={team.id} className="border border-border rounded-lg p-3 bg-white/50">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{team.name}</span>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2 gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="font-medium truncate">{team.name}</span>
                       {team.id.startsWith('local_') ? (
                         <div title="Local only">
-                          <CloudOff className="h-3 w-3 text-orange-500" />
+                          <CloudOff className="h-3 w-3 text-orange-500 flex-shrink-0" />
                         </div>
                       ) : (
                         <div title="Synced to cloud">
-                          <Cloud className="h-3 w-3 text-green-500" />
+                          <Cloud className="h-3 w-3 text-green-500 flex-shrink-0" />
                         </div>
                       )}
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-shrink-0">
                       <button 
-                        className="text-xs text-blue-600 hover:text-blue-800 px-2 py-1 rounded border border-blue-200 hover:bg-blue-50" 
+                        className="text-xs text-blue-600 hover:text-blue-800 px-2 py-1 rounded border border-blue-200 hover:bg-blue-50 whitespace-nowrap" 
                         onClick={() => loadTeam(team)}
                       >
                         Load
                       </button>
                       <button 
-                        className="text-xs text-red-600 hover:text-red-800 px-2 py-1 rounded border border-red-200 hover:bg-red-50" 
+                        className="text-xs text-green-600 hover:text-green-800 px-2 py-1 rounded border border-green-200 hover:bg-green-50 whitespace-nowrap" 
+                        onClick={() => overwriteTeam(team)}
+                        disabled={saving || !isTeamComplete}
+                        title={!isTeamComplete ? 'Complete your team (4 moves per Pokémon) to save' : 'Replace this team with current team'}
+                      >
+                        {saving ? 'Saving...' : 'Save'}
+                      </button>
+                      <button 
+                        className="text-xs text-red-600 hover:text-red-800 px-2 py-1 rounded border border-red-200 hover:bg-red-50 whitespace-nowrap" 
                         onClick={() => deleteTeam(team.id)}
                       >
                         Remove
@@ -1467,6 +1520,10 @@ export default function TeamBuilderPage() {
                               width={32}
                               height={32}
                               className="w-full h-full object-contain"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement
+                                target.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${poke.id}.png`
+                              }}
                             />
                           </div>
                         ) : null

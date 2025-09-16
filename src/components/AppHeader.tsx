@@ -55,12 +55,12 @@ export default function AppHeader({
       const isFromComparePage = currentPage.startsWith('/compare')
       const isFromTeamPage = currentPage.startsWith('/team')
       
-      let transitionType: 'pokeball' | 'battle-flash' | 'pokedex-swipe' | 'tile-flip' | 'default' = 'default'
+      let transitionType: 'pokeball' | 'battle-flash' | 'pokedex-swipe' | 'pokedex-swipe-inverted' | 'tile-flip' | 'default' = 'default'
       
       if (isFromPokemonPage) transitionType = 'pokeball'
-      else if (isFromBattlePage) transitionType = 'battle-flash'
-      else if (isFromComparePage) transitionType = 'pokedex-swipe'
-      else if (isFromTeamPage) transitionType = 'tile-flip'
+      else if (isFromBattlePage) transitionType = 'pokedex-swipe-inverted'
+      else if (isFromComparePage) transitionType = 'pokedex-swipe-inverted'
+      else if (isFromTeamPage) transitionType = 'pokedex-swipe-inverted'
       
       triggerViewTransition(transitionType, () => {
         router.push(backLink)

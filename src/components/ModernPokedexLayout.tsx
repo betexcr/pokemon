@@ -571,17 +571,26 @@ export default function ModernPokedexLayout({
     const statKeys = new Set(['hp','attack','defense','special-attack','special-defense','speed','stats'])
     if (!statKeys.has(sortBy)) return
     const source = filteredPokemon.length ? filteredPokemon : pokemonList
-    const missing = source
+    let missing = source
       .filter(p => (p.stats?.length || 0) === 0 && !detailsCache.has(p.id))
       .map(p => p.id)
       .filter(id => !(fetchingRef.current as Set<number>).has(id))
     if (missing.length === 0) return
+
+    // Fetch in small batches to avoid overwhelming the network/main thread
+    const BATCH_SIZE = 40
+    missing = missing.slice(0, BATCH_SIZE)
+
     missing.forEach(id => (fetchingRef.current as Set<number>).add(id))
-    Promise.all(missing.map(id => getPokemon(id).catch(() => null)))
+    Promise.allSettled(missing.map(id => getPokemon(id)))
       .then(results => {
         setDetailsCache(prev => {
           const next = new Map(prev)
-          results.forEach(p => { if (p) next.set(p.id, p) })
+          results.forEach(r => {
+            if (r.status === 'fulfilled' && r.value) {
+              next.set(r.value.id, r.value)
+            }
+          })
           return next
         })
       })
@@ -634,45 +643,54 @@ export default function ModernPokedexLayout({
     fetchComparisonPokemon()
   }, [comparisonList, filteredPokemon, pokemonList])
 
-  // Sort filtered results (uses cached details when needed)
+  // Sort filtered results efficiently (compute sort key once per item)
   const sortedPokemon = useMemo(() => {
+    if (!filteredPokemon || filteredPokemon.length === 0) return [] as Pokemon[]
+
     const withSource = (p: Pokemon) => (p.stats?.length ? p : (detailsCache.get(p.id) || p))
-    return [...filteredPokemon].sort((a, b) => {
-      let comparison = 0
-      
-      switch (sortBy) {
-        case 'name':
-          comparison = a.name.localeCompare(b.name)
-          break
-        case 'stats':
-          const aStats = (withSource(a).stats || []).reduce((sum, stat) => sum + stat.base_stat, 0)
-          const bStats = (withSource(b).stats || []).reduce((sum, stat) => sum + stat.base_stat, 0)
-          comparison = aStats - bStats
-          break
-        case 'hp':
-          comparison = ((withSource(a).stats || []).find(s => s.stat.name === 'hp')?.base_stat || 0) - ((withSource(b).stats || []).find(s => s.stat.name === 'hp')?.base_stat || 0)
-          break
-        case 'attack':
-          comparison = ((withSource(a).stats || []).find(s => s.stat.name === 'attack')?.base_stat || 0) - ((withSource(b).stats || []).find(s => s.stat.name === 'attack')?.base_stat || 0)
-          break
-        case 'defense':
-          comparison = ((withSource(a).stats || []).find(s => s.stat.name === 'defense')?.base_stat || 0) - ((withSource(b).stats || []).find(s => s.stat.name === 'defense')?.base_stat || 0)
-          break
-        case 'special-attack':
-          comparison = ((withSource(a).stats || []).find(s => s.stat.name === 'special-attack')?.base_stat || 0) - ((withSource(b).stats || []).find(s => s.stat.name === 'special-attack')?.base_stat || 0)
-          break
-        case 'special-defense':
-          comparison = ((withSource(a).stats || []).find(s => s.stat.name === 'special-defense')?.base_stat || 0) - ((withSource(b).stats || []).find(s => s.stat.name === 'special-defense')?.base_stat || 0)
-          break
-        case 'speed':
-          comparison = ((withSource(a).stats || []).find(s => s.stat.name === 'speed')?.base_stat || 0) - ((withSource(b).stats || []).find(s => s.stat.name === 'speed')?.base_stat || 0)
-          break
-        default:
-          comparison = a.id - b.id
+
+    // Build array with precomputed keys to avoid expensive work inside comparator
+    const itemsWithKey = filteredPokemon.map(p => {
+      let keyNumber = 0
+      let keyString = ''
+      if (sortBy === 'name') {
+        keyString = p.name
+      } else if (sortBy === 'id') {
+        keyNumber = p.id
+      } else if (sortBy === 'stats') {
+        const src = withSource(p)
+        keyNumber = (src.stats || []).reduce((sum, s) => sum + s.base_stat, 0)
+      } else if (
+        sortBy === 'hp' ||
+        sortBy === 'attack' ||
+        sortBy === 'defense' ||
+        sortBy === 'special-attack' ||
+        sortBy === 'special-defense' ||
+        sortBy === 'speed'
+      ) {
+        const src = withSource(p)
+        keyNumber = (src.stats || []).find(s => s.stat.name === sortBy)?.base_stat || 0
+      } else {
+        keyNumber = p.id
       }
-      
+      return { p, keyNumber, keyString }
+    })
+
+    itemsWithKey.sort((a, b) => {
+      let comparison = 0
+      if (sortBy === 'name') {
+        comparison = a.keyString.localeCompare(b.keyString)
+      } else {
+        comparison = a.keyNumber - b.keyNumber
+      }
+      if (comparison === 0) {
+        // Stable tie-breaker by id to keep deterministic order
+        comparison = a.p.id - b.p.id
+      }
       return sortOrder === 'desc' ? -comparison : comparison
     })
+
+    return itemsWithKey.map(item => item.p)
   }, [filteredPokemon, sortBy, sortOrder, detailsCache])
 
   // Load more Pokémon for infinite scrolling with improved error handling
@@ -841,6 +859,8 @@ export default function ModernPokedexLayout({
 
 
     let sentinel = findSentinel();
+    let observerCleanup: (() => void) | undefined;
+    
     if (!sentinel) {
       
       // Retry finding sentinel after a short delay
@@ -848,7 +868,7 @@ export default function ModernPokedexLayout({
         sentinel = findSentinel();
         if (sentinel) {
           
-          setupObserver(sentinel);
+          observerCleanup = setupObserver(sentinel);
         } else {
           
         }
@@ -857,6 +877,8 @@ export default function ModernPokedexLayout({
       return () => clearTimeout(retryTimeout);
     } else {
       
+      // Set up observer for the found sentinel
+      observerCleanup = setupObserver(sentinel);
     }
 
     // Set up scroll-based backup detection (less aggressive)
@@ -883,12 +905,10 @@ export default function ModernPokedexLayout({
       mainContentArea.addEventListener('scroll', handleScrollBackup, { passive: true });
     }
 
-    const cleanup = setupObserver(sentinel);
-
     return () => {
-      cleanup?.();
+      observerCleanup?.();
       if (mainContentArea) {
-      mainContentArea.removeEventListener('scroll', handleScrollBackup);
+        mainContentArea.removeEventListener('scroll', handleScrollBackup);
       }
       clearTimeout(scrollTimeout);
     };
@@ -997,7 +1017,7 @@ export default function ModernPokedexLayout({
                   />
                   {searchLoading && (
                     <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
-                      <div className="animate-spin rounded-full h-5 w-5 border-2 border-poke-blue border-t-transparent"></div>
+                      <img src="/loading.gif" alt="Loading" width={20} height={20} className="opacity-80" />
                     </div>
                   )}
                   {searchTerm && (
@@ -1365,7 +1385,7 @@ export default function ModernPokedexLayout({
             />
             {searchLoading && (
               <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                <div className="animate-spin rounded-full h-5 w-5 border-2 border-poke-blue border-t-transparent"></div>
+                <img src="/loading.gif" alt="Loading" width={20} height={20} className="opacity-80" />
               </div>
             )}
             {searchTerm && (
@@ -1548,7 +1568,7 @@ export default function ModernPokedexLayout({
             
             {isFiltering ? (
               <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-poke-blue mx-auto mb-4"></div>
+                <img src="/loading.gif" alt="Loading Pokémon" width={100} height={100} className="mx-auto mb-4" />
                 <p className="text-muted">Loading Pokémon...</p>
               </div>
             ) : sortedPokemon.length > 0 ? (

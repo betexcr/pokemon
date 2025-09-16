@@ -1715,6 +1715,15 @@ div.user-dropdown-container button.user-dropdown-button img.user-dropdown-image 
   animation-name: pokedex-swipe-in;
 }
 
+/* Inverted Pokédex scan transition for back navigation */
+.pokedex-swipe-inverted-transition::view-transition-old(root) {
+  animation-name: pokedex-swipe-in;
+}
+
+.pokedex-swipe-inverted-transition::view-transition-new(root) {
+  animation-name: pokedex-swipe-out;
+}
+
 /* ===========================================
    TILE FLIP TRANSITION (Game Boy Style)
    =========================================== */

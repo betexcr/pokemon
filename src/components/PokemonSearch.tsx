@@ -405,7 +405,7 @@ export default function PokemonSearch({
         {loadingMore && (
           <div className="py-3 px-3 text-center">
             <div className="inline-flex items-center gap-2 text-muted">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-poke-blue"></div>
+              <img src="/loading.gif" alt="Loading more" width={16} height={16} className="opacity-80" />
               <span className="text-sm">Loading more...</span>
             </div>
           </div>

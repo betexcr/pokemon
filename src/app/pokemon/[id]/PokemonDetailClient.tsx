@@ -72,7 +72,17 @@ export default function PokemonDetailClient({ pokemon, error }: PokemonDetailCli
     const loadSpecies = async () => {
       try {
         if (!pokemon) return
-        const species = await getPokemonSpecies(pokemon.id)
+        // Some Pokémon ids (forms) don't match species ids. Use species.name or id from species.url.
+        const speciesIdentifier = (() => {
+          const url = (pokemon as any).species?.url as string | undefined
+          if (url) {
+            const last = url.split('/').filter(Boolean).pop()
+            const maybeId = last ? parseInt(last) : NaN
+            if (!Number.isNaN(maybeId)) return maybeId
+          }
+          return (pokemon as any).species?.name ?? pokemon.id
+        })()
+        const species = await getPokemonSpecies(speciesIdentifier)
         if (isMounted) {
           setSpeciesData(species)
         }
@@ -92,7 +102,16 @@ export default function PokemonDetailClient({ pokemon, error }: PokemonDetailCli
       try {
         if (!pokemon) return
         // Get species to find chain url
-        const species = await getPokemonSpecies(pokemon.id)
+        const speciesIdentifier = (() => {
+          const url = (pokemon as any).species?.url as string | undefined
+          if (url) {
+            const last = url.split('/').filter(Boolean).pop()
+            const maybeId = last ? parseInt(last) : NaN
+            if (!Number.isNaN(maybeId)) return maybeId
+          }
+          return (pokemon as any).species?.name ?? pokemon.id
+        })()
+        const species = await getPokemonSpecies(speciesIdentifier)
         const chainUrl = species.evolution_chain?.url
         if (!chainUrl) return
         const chainId = parseInt(chainUrl.split('/').filter(Boolean).pop() || '0')

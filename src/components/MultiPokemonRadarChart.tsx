@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { formatPokemonName } from '@/lib/utils'
 import { Pokemon } from '@/types/pokemon'
 
@@ -25,14 +25,40 @@ export default function MultiPokemonRadarChart({ pokemons, highlightedPokemonId 
   const [hoveredPokemon, setHoveredPokemon] = useState<RadarPokemon | null>(null)
   const [hoveredStatIndex, setHoveredStatIndex] = useState<number | null>(null)
   const [cursorPos, setCursorPos] = useState<{x:number;y:number}>({x:0,y:0})
+  const [containerSize, setContainerSize] = useState({ width: 360, height: 360 })
+  const containerRef = useRef<HTMLDivElement>(null)
 
   if (pokemons.length === 0) return null
 
   const stats = ['hp', 'attack', 'defense', 'special-attack', 'special-defense', 'speed']
   const maxStat = 255
-  const radius = 144
-  const centerX = 180
-  const centerY = 180
+  
+  // Dynamic sizing based on container
+  const size = Math.min(containerSize.width, containerSize.height, 360)
+  const radius = (size * 0.4) // 40% of container size
+  const centerX = size / 2
+  const centerY = size / 2
+
+  // Resize observer to handle container size changes
+  useEffect(() => {
+    const updateSize = () => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect()
+        setContainerSize({ width: rect.width, height: rect.height })
+      }
+    }
+
+    updateSize()
+    
+    const resizeObserver = new ResizeObserver(updateSize)
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current)
+    }
+
+    return () => {
+      resizeObserver.disconnect()
+    }
+  }, [])
 
   // Generate colors for each Pokémon
   const colors = [
@@ -104,6 +130,7 @@ export default function MultiPokemonRadarChart({ pokemons, highlightedPokemonId 
   // Generate grid circles
   const gridCircles = Array.from({ length: 5 }, (_, i) => {
     const r = (radius * (i + 1)) / 5
+    const strokeWidth = Math.max(0.5, size * 0.003)
     return (
       <circle
         key={i}
@@ -112,7 +139,7 @@ export default function MultiPokemonRadarChart({ pokemons, highlightedPokemonId 
         r={r}
         fill="none"
         stroke="currentColor"
-        strokeWidth="1"
+        strokeWidth={strokeWidth}
         opacity="0.2"
         className="text-gray-400 dark:text-gray-600"
       />
@@ -124,6 +151,7 @@ export default function MultiPokemonRadarChart({ pokemons, highlightedPokemonId 
     const angle = (index * 2 * Math.PI) / stats.length - Math.PI / 2
     const endX = centerX + radius * Math.cos(angle)
     const endY = centerY + radius * Math.sin(angle)
+    const strokeWidth = Math.max(0.5, size * 0.003)
     
     return (
       <line
@@ -133,7 +161,7 @@ export default function MultiPokemonRadarChart({ pokemons, highlightedPokemonId 
         x2={endX}
         y2={endY}
         stroke="currentColor"
-        strokeWidth="1"
+        strokeWidth={strokeWidth}
         opacity="0.2"
         className="text-gray-400 dark:text-gray-600"
       />
@@ -156,9 +184,12 @@ export default function MultiPokemonRadarChart({ pokemons, highlightedPokemonId 
   // Generate stat labels
   const statLabels = stats.map((stat, index) => {
     const angle = (index * 2 * Math.PI) / stats.length - Math.PI / 2
-    const labelRadius = radius + 20
+    const labelRadius = radius + (size * 0.06) // Responsive label distance
     const x = centerX + labelRadius * Math.cos(angle)
     const y = centerY + labelRadius * Math.sin(angle)
+    
+    // Responsive font size based on container size
+    const fontSize = Math.max(10, size * 0.04)
     
     return (
       <text
@@ -167,7 +198,8 @@ export default function MultiPokemonRadarChart({ pokemons, highlightedPokemonId 
         y={y}
         textAnchor="middle"
         dominantBaseline="middle"
-        className="text-xs font-medium fill-gray-600 dark:fill-gray-300"
+        className="font-medium fill-gray-600 dark:fill-gray-300"
+        style={{ fontSize: `${fontSize}px` }}
       >
         {getStatAbbreviation(stat)}
       </text>
@@ -182,6 +214,10 @@ export default function MultiPokemonRadarChart({ pokemons, highlightedPokemonId 
     const isActive = isExternallyHighlighted || (highlightedPokemonId === null && isHovered)
     const dimOthers = highlightedPokemonId !== null
     
+    // Responsive stroke width
+    const baseStrokeWidth = Math.max(1, size * 0.008)
+    const activeStrokeWidth = Math.max(2, size * 0.012)
+    
     return (
       <g key={pokemon.id}>
         <polygon
@@ -189,7 +225,7 @@ export default function MultiPokemonRadarChart({ pokemons, highlightedPokemonId 
           fill={color}
           fillOpacity={isActive ? 0.35 : dimOthers ? 0.08 : 0.2}
           stroke={color}
-          strokeWidth={isActive ? 3 : 2}
+          strokeWidth={isActive ? activeStrokeWidth : baseStrokeWidth}
           onMouseEnter={() => {
             setHoveredPokemon(pokemon)
           }}
@@ -199,36 +235,44 @@ export default function MultiPokemonRadarChart({ pokemons, highlightedPokemonId 
           style={{ cursor: 'pointer' }}
           pointerEvents="all"
         />
-        {points.map((point, pointIndex) => (
-          <circle
-            key={pointIndex}
-            cx={point.x}
-            cy={point.y}
-            r="4"
-            fill={color}
-            stroke="white"
-            strokeWidth="2"
-            onMouseEnter={() => {
-              setHoveredPokemon(pokemon)
-            }}
-            onMouseLeave={() => {
-              setHoveredPokemon(null)
-            }}
-            style={{ cursor: 'pointer' }}
-            pointerEvents="all"
-            opacity={isActive ? 1 : dimOthers ? 0.4 : 0.8}
-          />
-        ))}
+        {points.map((point, pointIndex) => {
+          // Responsive circle radius based on container size
+          const circleRadius = Math.max(3, size * 0.012)
+          const strokeWidth = Math.max(1, size * 0.006)
+          
+          return (
+            <circle
+              key={pointIndex}
+              cx={point.x}
+              cy={point.y}
+              r={circleRadius}
+              fill={color}
+              stroke="white"
+              strokeWidth={strokeWidth}
+              onMouseEnter={() => {
+                setHoveredPokemon(pokemon)
+              }}
+              onMouseLeave={() => {
+                setHoveredPokemon(null)
+              }}
+              style={{ cursor: 'pointer' }}
+              pointerEvents="all"
+              opacity={isActive ? 1 : dimOthers ? 0.4 : 0.8}
+            />
+          )
+        })}
       </g>
     )
   })
 
   return (
-    <div className="relative">
+    <div ref={containerRef} className="relative w-full h-full min-h-[240px] sm:min-h-[280px] md:min-h-[320px] lg:min-h-[360px]">
       <svg
-        width="360"
-        height="360"
-        className="mx-auto"
+        width={size}
+        height={size}
+        className="mx-auto block"
+        viewBox={`0 0 ${size} ${size}`}
+        style={{ maxWidth: '100%', height: 'auto' }}
         onMouseMove={(e) => {
           const rect = (e.target as SVGElement).closest('svg')!.getBoundingClientRect()
           const x = e.clientX - rect.left

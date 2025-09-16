@@ -113,7 +113,7 @@ function BattleRuntimePage() {
     return (
       <div className="min-h-screen bg-bg text-text flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-poke-blue mx-auto mb-4"></div>
+          <img src="/loading.gif" alt="Loading battle" width={128} height={128} className="mx-auto mb-4" />
           <p className="text-muted">Loading battle...</p>
         </div>
       </div>

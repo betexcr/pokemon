@@ -25,12 +25,10 @@ export default function ComparisonSection({
         {/* Action buttons */}
         <div className="mb-4 flex items-center justify-end space-x-2">
           <button
-            onClick={() => { if (comparisonList.length > 0) onGoToComparison() }}
-            disabled={comparisonList.length === 0}
-            className={`p-2 rounded-lg bg-surface border border-border transition-all duration-200 shadow-sm ${comparisonList.length === 0 ? 'opacity-50 cursor-not-allowed text-muted' : 'text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 hover:shadow-md'}`}
-            title={comparisonList.length === 0 ? 'Select Pokémon to enable comparison' : 'Go to Comparison'}
+            onClick={onGoToComparison}
+            className={`p-2 rounded-lg bg-surface border border-border transition-all duration-200 shadow-sm text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 hover:shadow-md`}
+            title={'Go to Comparison'}
             aria-label="Go to Comparison"
-            aria-disabled={comparisonList.length === 0}
           >
             <ArrowRight className="h-4 w-4" />
           </button>
