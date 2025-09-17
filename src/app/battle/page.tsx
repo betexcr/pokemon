@@ -39,12 +39,6 @@ function BattlePage() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Reset function to allow selecting a different team
-  const resetSelection = () => {
-    setSelectedPlayerTeam(null);
-    setOpponentChampionId("");
-    setShowTooltip(null);
-  };
 
   // useEffect(() => {
   //   try {
@@ -103,6 +97,18 @@ function BattlePage() {
     const opponent = champion.team;
     
     if (!playerTeam || !opponent) return;
+
+    // Store the selected team in localStorage as current team for battle runtime
+    try {
+      const currentTeamData = playerTeam.slots.map(slot => ({
+        id: slot.id,
+        level: slot.level,
+        moves: Array.isArray((slot as any).moves) ? (slot as any).moves : []
+      }));
+      localStorage.setItem('pokemon-current-team', JSON.stringify(currentTeamData));
+    } catch (error) {
+      console.error('Failed to store current team:', error);
+    }
 
     // Generate a battle ID for AI battles
     const battleId = generateBattleId();
@@ -181,14 +187,6 @@ function BattlePage() {
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-bold text-text">Your Team</h2>
             <div className="flex gap-2">
-              {selectedPlayerTeam && (
-                <button
-                  onClick={resetSelection}
-                  className="text-sm text-orange-600 hover:text-orange-700 hover:underline transition-colors"
-                >
-                  Select Different Team
-                </button>
-              )}
               <button
                 onClick={() => router.push("/team")}
                 className="text-sm text-poke-blue hover:text-poke-blue/80 hover:underline transition-colors"

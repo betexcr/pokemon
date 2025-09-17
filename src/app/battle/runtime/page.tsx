@@ -34,7 +34,6 @@ function BattleRuntimePage() {
   
   const [showChat, setShowChat] = useState(false);
   const [showBattleResults, setShowBattleResults] = useState(false);
-  const [useNewBattleView, setUseNewBattleView] = useState(true); // Toggle for new battle view
   const [playerTeam, setPlayerTeam] = useState<Array<{ id: number; level: number; moves?: string[] }>>([]);
   const [opponentChampionId, setOpponentChampionId] = useState<string>('');
   const [isAIBattle, setIsAIBattle] = useState(false);
@@ -58,6 +57,8 @@ function BattleRuntimePage() {
           const currentTeam = localStorage.getItem('pokemon-current-team');
           if (currentTeam) {
             const team = JSON.parse(currentTeam);
+            console.log('Loading current team from localStorage:', team);
+            // Current team is stored as an array of slots directly, not as an object with slots property
             const teamData = team
               .filter((slot: any) => slot.id !== null)
               .map((slot: any) => ({ 
@@ -65,6 +66,7 @@ function BattleRuntimePage() {
                 level: slot.level,
                 moves: Array.isArray(slot.moves) ? slot.moves.slice(0,4).map((m: any) => m?.name).filter(Boolean) : undefined
               }));
+            console.log('Processed team data:', teamData);
             if (teamData.length > 0) {
               setPlayerTeam(teamData);
               return;
@@ -75,8 +77,11 @@ function BattleRuntimePage() {
           const savedTeams = localStorage.getItem('pokemon-team-builder');
           if (savedTeams) {
             const teams = JSON.parse(savedTeams);
+            console.log('Loading from saved teams, looking for team ID:', playerTeamId);
+            console.log('Available teams:', teams.map((t: any) => ({ id: t.id, name: t.name })));
             const team = teams.find((t: any) => t.id === playerTeamId);
-            if (team) {
+            if (team && team.slots) {
+              console.log('Found team:', team);
               const teamData = team.slots
                 .filter((slot: any) => slot.id !== null)
                 .map((slot: any) => ({ 
@@ -84,7 +89,11 @@ function BattleRuntimePage() {
                   level: slot.level,
                   moves: Array.isArray(slot.moves) ? slot.moves.slice(0,4).map((m: any) => m?.name).filter(Boolean) : undefined
                 }));
-              setPlayerTeam(teamData);
+              console.log('Processed team data from saved teams:', teamData);
+              if (teamData.length > 0) {
+                setPlayerTeam(teamData);
+                return;
+              }
             }
           }
         } catch (error) {
@@ -109,7 +118,7 @@ function BattleRuntimePage() {
   }, [router, urlBattleId, searchParams, isAIBattle]);
 
   // Show loading state
-  if (authLoading || !battleTypeDetermined) {
+  if (authLoading || !battleTypeDetermined || (isAIBattle && playerTeam.length === 0)) {
     return (
       <div className="min-h-screen bg-bg text-text flex items-center justify-center">
         <div className="text-center">
@@ -177,12 +186,6 @@ function BattleRuntimePage() {
             </div>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setUseNewBattleView(!useNewBattleView)}
-                className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-              >
-                {useNewBattleView ? 'Classic View' : 'Animated View'}
-              </button>
-              <button
                 onClick={() => setShowChat(!showChat)}
                 className="flex items-center gap-2 text-muted hover:text-text transition-colors"
               >
@@ -201,7 +204,7 @@ function BattleRuntimePage() {
           <AIBattleScene
             playerTeam={playerTeam}
             opponentChampionId={opponentChampionId}
-            viewMode={useNewBattleView ? 'animated' : 'classic'}
+            viewMode="animated"
           />
         ) : (
           /* Regular Battle */
@@ -211,7 +214,7 @@ function BattleRuntimePage() {
               console.log('Battle completed, winner:', winner);
               setShowBattleResults(true);
             }}
-            viewMode={useNewBattleView ? 'animated' : 'classic'}
+            viewMode="animated"
           />
         )}
       </main>

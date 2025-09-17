@@ -28,12 +28,15 @@ export default function AttackAnimator({
   const reduceMotion = typeof window !== "undefined" && 
     window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
-  if (reduceMotion) {
-    // Bypass animation and call onDone immediately
-    useEffect(() => {
+  // Bypass animation and call onDone immediately for reduced motion
+  useEffect(() => {
+    if (reduceMotion) {
       const timer = setTimeout(() => onDone?.(), 100);
       return () => clearTimeout(timer);
-    }, [onDone]);
+    }
+  }, [reduceMotion, onDone]);
+
+  if (reduceMotion) {
     return null;
   }
 
