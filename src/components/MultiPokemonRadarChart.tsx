@@ -25,23 +25,11 @@ interface Point {
 }
 
 export default function MultiPokemonRadarChart({ pokemons, highlightedPokemonId = null }: MultiPokemonRadarChartProps) {
-  // Early return before any hooks to avoid hooks order issues
-  if (pokemons.length === 0) return null
-
   const [hoveredPokemon, setHoveredPokemon] = useState<RadarPokemon | null>(null)
   const [hoveredStatIndex, setHoveredStatIndex] = useState<number | null>(null)
   const [cursorPos, setCursorPos] = useState<{x:number;y:number}>({x:0,y:0})
   const [containerSize, setContainerSize] = useState({ width: 360, height: 360 })
   const containerRef = useRef<HTMLDivElement>(null)
-
-  const stats = ['hp', 'attack', 'defense', 'special-attack', 'special-defense', 'speed']
-  const maxStat = 255
-  
-  // Dynamic sizing based on container
-  const size = Math.min(containerSize.width, containerSize.height, 360)
-  const radius = (size * 0.4) // 40% of container size
-  const centerX = size / 2
-  const centerY = size / 2
 
   // Resize observer to handle container size changes
   useEffect(() => {
@@ -63,6 +51,18 @@ export default function MultiPokemonRadarChart({ pokemons, highlightedPokemonId 
       resizeObserver.disconnect()
     }
   }, [])
+
+  // Early return after all hooks to avoid hooks order issues
+  if (pokemons.length === 0) return null
+
+  const stats = ['hp', 'attack', 'defense', 'special-attack', 'special-defense', 'speed']
+  const maxStat = 255
+  
+  // Dynamic sizing based on container
+  const size = Math.min(containerSize.width, containerSize.height, 360)
+  const radius = (size * 0.4) // 40% of container size
+  const centerX = size / 2
+  const centerY = size / 2
 
   // Generate colors for each Pokémon
   const colors = [

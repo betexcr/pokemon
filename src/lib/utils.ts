@@ -295,11 +295,26 @@ const POKEMON_SPECIES_TO_ID: Record<string, number> = {
 // Convert Pokemon species name to ID
 export function getPokemonIdFromSpecies(species: string): number | null {
   const normalizedSpecies = species.toLowerCase().replace(/\s+/g, '-');
-  return POKEMON_SPECIES_TO_ID[normalizedSpecies] || null;
+  
+  // First check our hardcoded mapping for Gen 1
+  if (POKEMON_SPECIES_TO_ID[normalizedSpecies]) {
+    return POKEMON_SPECIES_TO_ID[normalizedSpecies];
+  }
+  
+  // For Pokemon not in our mapping, try to extract ID from the species name
+  // This is a fallback for Pokemon from later generations
+  // We'll use a simple approach: if it's not in our mapping, return null
+  // and let the image loading system handle it with fallbacks
+  return null;
 }
 
 // Pokemon image utilities for battle context
-export function getPokemonBattleImageUrl(pokemonId: number, variant: 'front' | 'back' = 'front', shiny: boolean = false): string {
+export function getPokemonBattleImageUrl(pokemonId: number | null, variant: 'front' | 'back' = 'front', shiny: boolean = false): string {
+  if (!pokemonId) {
+    // Return a placeholder if no pokemonId
+    return '/placeholder-pokemon.png';
+  }
+  
   // PokeAPI PNG battle sprites for reliable fallback
   const baseUrl = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon';
   const shinyPrefix = shiny ? 'shiny/' : '';
@@ -308,13 +323,13 @@ export function getPokemonBattleImageUrl(pokemonId: number, variant: 'front' | '
   return `${parts.join('/')}/${pokemonId}.png`;
 }
 
-export function getPokemonBattleSpriteUrl(pokemonId: number, variant: 'front' | 'back' = 'front', shiny: boolean = false): string {
+export function getPokemonBattleSpriteUrl(pokemonId: number | null, variant: 'front' | 'back' = 'front', shiny: boolean = false): string {
   // For battle view, use the regular sprites which are smaller and more appropriate
   return getPokemonBattleImageUrl(pokemonId, variant, shiny);
 }
 
 // Get Pokemon image with fallback for battle context
-export function getPokemonBattleImageWithFallback(pokemonId: number, variant: 'front' | 'back' = 'front', shiny: boolean = false): {
+export function getPokemonBattleImageWithFallback(pokemonId: number | null, variant: 'front' | 'back' = 'front', shiny: boolean = false): {
   primary: string;
   fallback: string;
 } {
@@ -325,20 +340,35 @@ export function getPokemonBattleImageWithFallback(pokemonId: number, variant: 'f
 }
 
 // Get Pokemon image with comprehensive fallback chain
-export function getPokemonImageWithFallbacks(pokemonId: number, species: string, variant: 'front' | 'back' = 'front', shiny: boolean = false): {
+export function getPokemonImageWithFallbacks(pokemonId: number | null, species: string, variant: 'front' | 'back' = 'front', shiny: boolean = false): {
   primary: string;
   fallbacks: string[];
 } {
   // Try animated sprite first
   const animatedUrl = getShowdownAnimatedSprite(species, variant, shiny);
   
-  // Fallback chain: animated -> static battle sprite -> official artwork -> basic sprite
-  const fallbacks = [
-    getPokemonBattleSpriteUrl(pokemonId, variant, shiny), // Static battle sprite
-    getPokemonBattleSpriteUrl(pokemonId, variant, false), // Non-shiny static battle sprite
-    `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemonId}.png`, // Official artwork
-    `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemonId}.png` // Basic sprite
-  ];
+  // Build fallback chain based on whether we have a pokemonId
+  const fallbacks: string[] = [];
+  
+  if (pokemonId) {
+    // If we have a pokemonId, use the full fallback chain
+    fallbacks.push(
+      getPokemonBattleSpriteUrl(pokemonId, variant, shiny), // Static battle sprite
+      getPokemonBattleSpriteUrl(pokemonId, variant, false), // Non-shiny static battle sprite
+      `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemonId}.png`, // Official artwork
+      `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemonId}.png` // Basic sprite
+    );
+  } else {
+    // If no pokemonId, try to use species name for Showdown sprites and generic fallbacks
+    const normalizedSpecies = species.toLowerCase().replace(/\s+/g, '-');
+    fallbacks.push(
+      // Try different Showdown sprite variations
+      `https://play.pokemonshowdown.com/sprites/${variant === 'back' ? 'ani-back' : 'ani'}/${normalizedSpecies}.gif`,
+      `https://play.pokemonshowdown.com/sprites/${variant === 'back' ? 'ani-back' : 'ani'}/${normalizedSpecies.replace(/-/g, '')}.gif`,
+      // Generic placeholder as last resort
+      '/placeholder-pokemon.png'
+    );
+  }
   
   return {
     primary: animatedUrl,

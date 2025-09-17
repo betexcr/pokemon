@@ -92,6 +92,10 @@ export const AIBattleScene: React.FC<AIBattleSceneProps> = ({
           throw new Error('Opponent champion not found')
         }
 
+        if (!playerTeam || playerTeam.length === 0) {
+          throw new Error('No player team selected')
+        }
+
         // Load player team data
         const playerTeamData: Pokemon[] = []
         for (const slot of playerTeam) {
