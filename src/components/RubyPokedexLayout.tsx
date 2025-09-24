@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation';
 import { Pokemon, FilterState } from '@/types/pokemon';
 import { formatPokemonName, getPokemonDescription } from '@/lib/utils';
 import { searchPokemonByName, getPokemon } from '@/lib/api';
-import ThemeToggle from './ThemeToggle';
 import PokemonComparison from './PokemonComparison';
 import RadarChart from './RadarChart';
 import VirtualizedPokemonList from './VirtualizedPokemonList';
@@ -77,10 +76,7 @@ export default function RubyPokedexLayout({
 
   return (
     <div className="min-h-screen pokemon-ruby-bg font-gba text-white">
-      {/* Theme Toggle - Hidden on mobile */}
-      <div className="hidden md:block absolute top-4 right-4 z-50">
-        <ThemeToggle />
-      </div>
+      {/* Theme Toggle moved into UserDropdown */}
       
       {/* Top Menu Bar */}
       <div className="bg-surface border-b-4 border-border p-3 flex flex-wrap items-center justify-between gap-2 relative">

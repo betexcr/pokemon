@@ -171,45 +171,25 @@ export default function ComparePage() {
         title="Pokémon Comparison"
         backLink="/"
         backLabel="Back to PokéDex"
-        showToolbar={false}
+        showToolbar={true}
         iconKey="compare"
         showIcon={true}
-        rightContent={(
-          <div className="flex items-center space-x-3">
-            {pokemons.length > 0 && (
-              <Button
-                variant="primary"
-                onClick={handleReleasePokemon}
-                className="inline-flex items-center space-x-2"
-              >
-                <span>Release Pokémon</span>
-              </Button>
-            )}
-            <Button
-              variant="secondary"
-              onClick={clearAll}
-              className="inline-flex items-center space-x-2"
-            >
-              <X className="h-4 w-4" />
-              <span>Clear All</span>
-            </Button>
-          </div>
-        )}
+        rightContent={null}
       />
 
       <main className="flex-1 min-h-0 overflow-y-auto scroll-stable mx-auto max-w-6xl px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">
         {/* Released overlay - appears over table when active */}
         {releasedPokemon.length > 0 && showReleasedOverlay && (
-          <div className="fixed inset-0 z-50 flex items-start md:items-center justify-center p-4 bg-black/50">
-            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-border/60 w-full max-w-xl">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-border/60">
-                <h3 className="text-lg font-semibold text-text dark:text-slate-100">Released Pokémon</h3>
+          <div className="fixed inset-0 z-50 flex items-start md:items-center justify-center p-4 bg-black/50 dark:bg-black/70 backdrop-blur-sm">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl dark:shadow-3xl border border-border/60 dark:border-gray-700 w-full max-w-xl">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-border/60 dark:border-gray-700">
+                <h3 className="text-lg font-semibold text-text dark:text-gray-100">Released Pokémon</h3>
                 <button
                   onClick={() => setShowReleasedOverlay(false)}
-                  className="p-2 rounded hover:bg-gray-100 transition-colors"
+                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                   aria-label="Close released pokemon overlay"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-4 w-4 text-gray-600 dark:text-gray-300" />
                 </button>
               </div>
               <div className="p-4">
@@ -227,7 +207,7 @@ export default function ComparePage() {
                           }}
                         />
                       </LinkWithTransition>
-                      <p className="text-[11px] sm:text-xs text-muted dark:text-slate-300 mt-1 capitalize truncate">
+                      <p className="text-[11px] sm:text-xs text-muted dark:text-gray-400 mt-1 capitalize truncate">
                         {formatPokemonName(pokemon.name)}
                       </p>
                     </div>
@@ -236,7 +216,7 @@ export default function ComparePage() {
                 <div className="mt-4 flex justify-end">
                   <button
                     onClick={() => setShowReleasedOverlay(false)}
-                    className="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
+                    className="px-4 py-2 rounded-lg bg-blue-600 dark:bg-blue-700 text-white font-medium hover:bg-blue-700 dark:hover:bg-blue-800 transition-colors"
                   >
                     Done
                   </button>
@@ -265,7 +245,26 @@ export default function ComparePage() {
           {/* Left side - Pokémon Stats Table */}
           <div className="flex-1">
             <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-border/60 p-4 sm:p-6 mb-8">
-              <h3 className="text-lg font-semibold text-text dark:text-slate-100 mb-4">Pokémon Stats Comparison</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-text dark:text-slate-100">Pokémon Stats Comparison</h3>
+                <div className="flex items-center gap-3">
+                  {pokemons.length > 0 && (
+                    <button
+                      onClick={handleReleasePokemon}
+                      className="bg-poke-red text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-poke-red/90 transition-colors"
+                    >
+                      Release Pokémon
+                    </button>
+                  )}
+                  <button
+                    onClick={clearAll}
+                    className="bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-2"
+                  >
+                    <X className="h-4 w-4" />
+                    Clear All
+                  </button>
+                </div>
+              </div>
               
               {/* Desktop Table View */}
               <div className="hidden md:block overflow-x-auto">
@@ -393,7 +392,7 @@ export default function ComparePage() {
                                 <img
                                   src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`}
                                   alt={formatPokemonName(pokemon.name)}
-                                  className="w-8 h-8 object-contain cursor-pointer hover:scale-110 transition-transform"
+                                  className="w-16 h-16 object-contain cursor-pointer hover:scale-110 transition-transform"
                                 />
                               </LinkWithTransition>
                               <div>
@@ -473,7 +472,7 @@ export default function ComparePage() {
                             <img
                               src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`}
                               alt={formatPokemonName(pokemon.name)}
-                              className="w-12 h-12 object-contain cursor-pointer hover:scale-110 transition-transform"
+                              className="w-20 h-20 object-contain cursor-pointer hover:scale-110 transition-transform"
                             />
                           </LinkWithTransition>
                           <div>

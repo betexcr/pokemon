@@ -4,8 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Pokemon } from '@/types/pokemon'
 import { formatPokemonName } from '@/lib/utils'
-import { ArrowLeft, Zap } from 'lucide-react'
-import { useTheme } from '@/components/ThemeProvider'
+import AppHeader from '@/components/AppHeader'
 import Tabs from '@/components/pokemon/Tabs'
 import OverviewSection from '@/components/pokemon/OverviewSection'
 import StatsSection from '@/components/pokemon/StatsSection'
@@ -58,13 +57,7 @@ export default function PokemonDetailClient({ pokemon, error }: PokemonDetailCli
     return englishGenus?.genus || "Unknown Pokémon"
   }
 
-  let theme = 'light'
-  try {
-    const themeContext = useTheme()
-    theme = themeContext.theme
-  } catch {
-    // Theme provider not available, use default
-  }
+  // Theme not required here; shared AppHeader handles styling
 
   // Load species data once on mount
   useEffect(() => {
@@ -154,7 +147,7 @@ export default function PokemonDetailClient({ pokemon, error }: PokemonDetailCli
     const resistances: string[] = []
     const immunities: string[] = []
     allTypes.forEach(attacking => {
-      const mult = calculateTypeEffectiveness(attacking, defending)
+      const mult = calculateTypeEffectiveness([attacking], defending)
       if (mult === 0) immunities.push(attacking)
       else if (mult > 1) weaknesses.push(attacking)
       else if (mult < 1) resistances.push(attacking)
@@ -176,7 +169,7 @@ export default function PokemonDetailClient({ pokemon, error }: PokemonDetailCli
           pokemon.abilities.map(async (abilityRef) => {
             try {
               const ability = await getAbility(abilityRef.ability.name)
-              const englishEffect = ability.effect_entries.find(entry => entry.language.name === 'en')
+              const englishEffect = ability.effect_entries.find((entry: any) => entry.language.name === 'en')
               return {
                 name: ability.name,
                 is_hidden: abilityRef.is_hidden,
@@ -221,7 +214,7 @@ export default function PokemonDetailClient({ pokemon, error }: PokemonDetailCli
           movesToLoad.map(async (moveRef) => {
             try {
               const move = await getMove(moveRef.move.name)
-              const englishEffect = move.effect_entries.find(entry => entry.language.name === 'en')
+              const englishEffect = move.effect_entries.find((entry: any) => entry.language.name === 'en')
               return {
                 name: move.name,
                 type: move.type.name,
@@ -280,41 +273,12 @@ export default function PokemonDetailClient({ pokemon, error }: PokemonDetailCli
 
   return (
     <div className="min-h-screen bg-bg">
-      {/* Header */}
-      <header className={`sticky top-0 z-50 border-b border-border bg-surface`}>
-        <div className="mx-auto max-w-6xl px-4 md:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => router.push('/')}
-                className="flex items-center space-x-2 text-muted hover:text-text transition-colors"
-              >
-                <ArrowLeft className="h-5 w-5" />
-                <span>Back to Pokédex</span>
-              </button>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Zap className={`h-8 w-8 ${
-                theme === 'gold' ? 'text-gold-accent' 
-                : theme === 'green' ? 'text-green-accent'
-                : theme === 'red' ? 'text-red-accent'
-                : theme === 'ruby' ? 'text-ruby-accent'
-                : 'text-poke-yellow'
-              }`} />
-              <h1 className={`text-2xl font-bold ${
-                theme === 'gold' ? 'font-retro text-gold-accent'
-                : theme === 'green' ? 'font-gameboy text-green-accent'
-                : theme === 'red' ? 'font-retro text-red-accent'
-                : theme === 'ruby' ? 'font-retro text-ruby-accent'
-                : 'text-poke-blue'
-              }`} style={{ fontFamily: 'Pokemon Solid, sans-serif', color: 'var(--color-poke-blue) !important' }}>
-                PokéDex
-              </h1>
-            </div>
-          </div>
-        </div>
-      </header>
+      <AppHeader 
+        backLink="/" 
+        backLabel="Pokédex" 
+        title="PokéDex"
+        subtitle={`${formatPokemonName(pokemon.name)} #${String(pokemon.id).padStart(4, '0')}`}
+      />
 
       {/* Main Content */}
       <main className="mx-auto max-w-6xl px-4 md:px-6 lg:px-8 py-8">
@@ -324,6 +288,7 @@ export default function PokemonDetailClient({ pokemon, error }: PokemonDetailCli
           abilities={abilitiesWithDescriptions.length > 0 ? abilitiesWithDescriptions : pokemon.abilities.map(a => ({ name: a.ability.name, is_hidden: a.is_hidden }))}
           flavorText={getFlavorText(speciesData)}
           genus={getGenus(speciesData)}
+          hasGenderDifferences={!!speciesData?.has_gender_differences}
         />
 
         {/* Tabs */}
@@ -349,6 +314,7 @@ export default function PokemonDetailClient({ pokemon, error }: PokemonDetailCli
                 level_learned_at: pokemonMove.version_group_details[0]?.level_learned_at || null,
                 short_effect: null
               }))}
+              pokemonTypes={pokemon.types.map(t => t.type.name)}
             />
           )}
           {activeTab === 'evolution' && (

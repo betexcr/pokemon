@@ -4,50 +4,42 @@ import type { Champion } from '@/lib/gym_champions'
 
 const TRAINER_SPRITES_BASE_PATH = '/trainer-sprites'
 
-// Explicit filename mappings for common champions/leaders we support first.
-// Extend this map over time when we need additional trainers.
+// Explicit filename mappings for special-cased names or known PS aliases.
+// Keep this list minimal to avoid forcing non-existent files; prefer candidates below.
 const explicitFilenameMap: Record<string, string> = {
-  // Gen 1
+  // Common Kanto leaders
   brock: 'brock.png',
   misty: 'misty.png',
-  'lt-surge': 'lt-surge.png',
   erika: 'erika.png',
   koga: 'koga.png',
   sabrina: 'sabrina.png',
   blaine: 'blaine.png',
   giovanni: 'giovanni.png',
-  lorelei: 'lorelei.png',
   bruno: 'bruno.png',
-  agatha: 'agatha.png',
   lance: 'lance.png',
   blue: 'blue.png',
 
-  // Gen 2
-  falkner: 'falkner.png',
-  bugsy: 'bugsy.png',
-  whitney: 'whitney.png',
-  morty: 'morty.png',
-  chuck: 'chuck.png',
-  jasmine: 'jasmine.png',
-  pryce: 'pryce.png',
-  clair: 'clair.png',
-  will: 'will.png',
-  karen: 'karen.png',
-
-  // Gen 3
+  // Hoenn / others
   roxanne: 'roxanne.png',
   brawly: 'brawly.png',
   wattson: 'wattson.png',
   flannery: 'flannery.png',
   norman: 'norman.png',
   winona: 'winona.png',
-  'tate-liza': 'tate-liza-hoenn.png', // PS uses a hoenn suffix for some sprites
   wallace: 'wallace.png',
   sidney: 'sidney.png',
   phoebe: 'phoebe.png',
   glacia: 'glacia.png',
   drake: 'drake.png',
   steven: 'steven.png',
+
+  // Showdown alias specials
+  // Prefer newest via candidates; keep alias only when name differs entirely
+  // e.g., Lt. Surge -> ltsurge handled by hyphenless; do not force a gen
+  wake: 'crasherwake.png', // PS uses crasherwake
+  tateliza: 'tateandliza-gen6.png', // PS uses tateandliza, prefer newest gen6
+  // Also add fallback mapping for gen3 folder
+  'tateandliza': 'tateandliza-gen3.png', // For gen3 fallback
 }
 
 function normalizeNameToKey(raw: string): string {
@@ -56,6 +48,34 @@ function normalizeNameToKey(raw: string): string {
     .replace(/&/g, 'and')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
+}
+
+// Some IDs include regions or titles (e.g., 'lt-surge-kanto', 'kalos-elite-malva').
+// Strip known region/title tokens from both ends, preserving the trainer name in the middle.
+function deriveTrainerKeyFromId(id: string, fallbackName?: string): string {
+  const tokens = id.toLowerCase().split('-').filter(Boolean)
+  const suffixBlacklist = new Set([
+    'kanto','johto','hoenn','sinnoh','unova','kalos','alola','galar','paldea',
+    'elite','champion','champ','leader','kahuna','top','four','b2w2','usum'
+  ])
+
+  let start = 0
+  let end = tokens.length - 1
+
+  // Drop leading region words like 'kalos'
+  while (start <= end && suffixBlacklist.has(tokens[start])) start++
+  // Drop trailing region/title words
+  while (end >= start && suffixBlacklist.has(tokens[end])) end--
+
+  const pruned = tokens.slice(start, end + 1)
+  if (pruned.length > 0) return pruned.join('-')
+
+  // Fallback to name without parentheses
+  if (fallbackName) {
+    const nameOnly = fallbackName.replace(/\([^)]*\)/g, '').trim()
+    return normalizeNameToKey(nameOnly)
+  }
+  return normalizeNameToKey(id)
 }
 
 export function getTrainerSpriteUrlByKey(trainerKey: string, opts?: { gen?: number; region?: string }): string {
@@ -70,17 +90,21 @@ export function getTrainerSpriteUrlByKey(trainerKey: string, opts?: { gen?: numb
   const gen = opts?.gen
   const region = opts?.region
 
-  const candidates = [
-    `${key}.png`,
-    gen === 1 ? `${key}-gen1.png` : '',
-    gen === 2 ? `${key}-gen2.png` : '',
-    gen === 3 ? `${key}-gen3.png` : '',
-    `${key}-gen4.png`,
-    `${key}-gen5.png`,
-    `${key}-gen6.png`,
-    `${key}-gen7.png`,
-    `${key}-gen8.png`,
-    `${key}-gen9.png`,
+  const hyphenless = key.replace(/-/g, '')
+
+  // Prefer newest available variants first
+  const baseVariants = [
+    // Prefer "right-most" on Showdown listings: often plain, then LGPE/newest
+    'lgpe','gen9','gen8','gen7','gen6xy','gen6','gen5bw2','gen5','gen4dp','gen4','gen3rs','gen3jp','gen3','gen2jp','gen2','gen1rb','gen1'
+  ]
+
+  const withForms = (k: string) => [
+    // Try plain first (often the newest/right-most), then LGPE/newer gens
+    `${k}.png`,
+    ...baseVariants.map(v => `${k}-${v}.png`),
+  ]
+
+  const regionVariants = [
     region === 'kanto' ? `${key}-kanto.png` : '',
     region === 'johto' ? `${key}-johto.png` : '',
     region === 'hoenn' ? `${key}-hoenn.png` : '',
@@ -90,16 +114,42 @@ export function getTrainerSpriteUrlByKey(trainerKey: string, opts?: { gen?: numb
     `${key}-alola.png`,
     `${key}-galar.png`,
     `${key}-paldea.png`,
+  ]
+
+  const candidates = [
+    // Try hyphenless first (e.g., ltsurge), then hyphenated
+    ...withForms(hyphenless),
+    ...withForms(key),
+    ...regionVariants,
   ].filter(Boolean)
 
-  // We cannot check file existence on the client; we optimistically pick the first.
-  // If it 404s, our <img onError> handler should fall back.
-  return `${TRAINER_SPRITES_BASE_PATH}/${candidates[0]}`
+  // Always prefer PS trainer-sprites path first (newest variants)
+  const primary = `${TRAINER_SPRITES_BASE_PATH}/${candidates[0]}`
+
+  // For gens 1-3, provide a fallback to local gen folders
+  // The component's onError handler will use this fallback
+  const generation = opts?.gen
+  if (generation && generation >= 1 && generation <= 3) {
+    const genFolder = `/gen${generation}`
+    // Handle special cases where the filename differs from the key
+    const specialFallbacks: Record<string, string> = {
+      'tateliza': 'tateandliza',
+    }
+    const fallbackKey = specialFallbacks[hyphenless] || hyphenless
+    const genCandidates = [
+      `${genFolder}/${fallbackKey}.png`,
+      `${genFolder}/${key}.png`,
+    ]
+    // Store the fallback path in a data attribute or return both paths
+    // For now, return the primary PS path and let component handle fallback
+  }
+
+  return primary
 }
 
 export function getTrainerSpriteUrl(champion: Champion): string {
-  // Prefer id prefix (e.g., 'brock-kanto' -> 'brock') then name
-  const idPrefix = champion.id.split('-')[0]
+  // Prefer derived key from id (handles regions/titles) then name
+  const idPrefix = deriveTrainerKeyFromId(champion.id, champion.name)
   const genName = (champion.generation || '').toLowerCase()
   const gen = genName.includes('iii') || genName.includes('3') ? 3
     : genName.includes('ii') || genName.includes('2') ? 2
@@ -110,6 +160,36 @@ export function getTrainerSpriteUrl(champion: Champion): string {
   const byId = getTrainerSpriteUrlByKey(idPrefix, { gen, region })
   if (byId) return byId
   return getTrainerSpriteUrlByKey(champion.name, { gen, region })
+}
+
+export function getTrainerSpriteUrls(champion: Champion): { primary: string; fallback?: string } {
+  // Prefer derived key from id (handles regions/titles) then name
+  const idPrefix = deriveTrainerKeyFromId(champion.id, champion.name)
+  const genName = (champion.generation || '').toLowerCase()
+  const gen = genName.includes('iii') || genName.includes('3') ? 3
+    : genName.includes('ii') || genName.includes('2') ? 2
+    : genName.includes('i') || genName.includes('1') ? 1
+    : undefined
+  const region = gen === 1 ? 'kanto' : gen === 2 ? 'johto' : gen === 3 ? 'hoenn' : undefined
+
+  const primary = getTrainerSpriteUrl(champion)
+  
+  // Generate fallback path for gens 1-3
+  let fallback: string | undefined
+  if (gen && gen >= 1 && gen <= 3) {
+    const key = normalizeNameToKey(idPrefix || champion.name)
+    const hyphenless = key.replace(/-/g, '')
+    
+    // Handle special cases where the filename differs from the key
+    const specialFallbacks: Record<string, string> = {
+      'tateliza': 'tateandliza',
+    }
+    const fallbackKey = specialFallbacks[hyphenless] || hyphenless
+    // Files are in main directory with gen suffix, not in gen folders
+    fallback = `${TRAINER_SPRITES_BASE_PATH}/${fallbackKey}-gen${gen}.png`
+  }
+
+  return { primary, fallback }
 }
 
 

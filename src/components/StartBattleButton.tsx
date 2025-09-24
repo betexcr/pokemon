@@ -14,16 +14,28 @@ type Props = {
 export default function StartBattleButton({ opponentUid, myTeam, opponentTeam, onStarted }: Props) {
   const [loading, setLoading] = useState(false);
   const [battleError, setBattleError] = useState<string | null>(null);
+  const firebaseReady = Boolean(auth && functions && rtdb);
 
   const disabled = useMemo(() => {
-    return loading || !auth.currentUser || !myTeam?.length || !opponentUid || !opponentTeam?.length;
-  }, [loading, myTeam, opponentUid, opponentTeam]);
+    if (!firebaseReady) {
+      return true;
+    }
+    return loading || !auth?.currentUser || !myTeam?.length || !opponentUid || !opponentTeam?.length;
+  }, [loading, firebaseReady, myTeam, opponentUid, opponentTeam]);
 
   async function startBattle() {
     setBattleError(null);
     setLoading(true);
     try {
-      const user = auth.currentUser!;
+      if (!firebaseReady || !auth || !functions || !rtdb) {
+        throw new Error("Battle services are unavailable. Firebase configuration is missing.");
+      }
+
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error("You must be signed in to start a battle.");
+      }
+
       const createBattle = httpsCallable(functions, "createBattleWithTeams");
       const res: any = await createBattle({
         p1Uid: user.uid,
@@ -65,6 +77,9 @@ export default function StartBattleButton({ opponentUid, myTeam, opponentTeam, o
         {loading ? "Starting…" : "Start Battle"}
       </button>
       {battleError && <span className="text-red-600 text-sm">{battleError}</span>}
+      {!battleError && !firebaseReady && (
+        <span className="text-sm text-muted-foreground">Battle services unavailable.</span>
+      )}
     </div>
   );
 }

@@ -8,9 +8,10 @@ import { getPokemon, getMove } from '@/lib/api'
 import { initializeTeamBattle, processBattleTurn, type BattleState as EngineState, type BattleAction as EngineAction } from '@/lib/team-battle-engine'
 import Tooltip from '@/components/Tooltip'
 import { formatPokemonName } from '@/lib/utils'
+// Removed LoadingSprite in favor of static /loading.gif
 
 interface AIBattleSceneProps {
-  playerTeam: Array<{ id: number; level: number }>
+  playerTeam: Array<{ id: number; level: number; nature?: string }>
   opponentChampionId: string
   className?: string
   viewMode?: 'animated' | 'classic'
@@ -198,12 +199,16 @@ export const AIBattleScene: React.FC<AIBattleSceneProps> = ({
             sprites: { front_default: '' } as any
           },
           level: p.level,
+          // Nature can be threaded through later if engine supports it
           moves: p.moves.map(m => ({ name: m.id })) as any
         }))
 
         const eng = initializeTeamBattle(
-          toEngineTeam(playerTeamData) as any,
-          toEngineTeam(opponentTeamData) as any,
+          (toEngineTeam(playerTeamData) as any).map((p: any, idx: any) => ({
+            ...p,
+            nature: (playerTeam[idx] as any)?.nature
+          })),
+          (toEngineTeam(opponentTeamData) as any),
           'Player', 'Opponent'
         )
         setEngineState(eng)
@@ -469,8 +474,8 @@ export const AIBattleScene: React.FC<AIBattleSceneProps> = ({
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading battle...</p>
+          <img src="/loading.gif" alt="Loading battle" width={128} height={128} className="mx-auto mb-2" />
+          <p className="text-gray-600 mt-2">Loading battle...</p>
         </div>
       </div>
     )
@@ -501,14 +506,18 @@ export const AIBattleScene: React.FC<AIBattleSceneProps> = ({
   }
 
   return (
-    <div className={`h-screen bg-gradient-to-b from-blue-100 to-green-100 ${className}`}>
+    <div className={`min-h-screen bg-bg text-text ${className}`}>
       {/* Battle Header */}
-      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 p-4">
+      <div className="sticky top-0 z-40 border-b border-border bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/80 p-4">
         <div className="flex items-center justify-between">
-          <div className="text-lg font-bold">
-            Turn {battleState.turn} | Phase: {battleState.phase}
+          <div className="flex items-center gap-3">
+            <span className="inline-flex items-center rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-muted shadow-sm">
+              <span className="mr-2 inline-block h-2 w-2 rounded-full bg-primary/80" />
+              {battleState.phase}
+            </span>
+            <span className="text-xs text-muted">Turn {battleState.turn}</span>
           </div>
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-muted">
             vs {opponentChampion?.name || 'Unknown Trainer'}
           </div>
         </div>
@@ -520,7 +529,7 @@ export const AIBattleScene: React.FC<AIBattleSceneProps> = ({
           {/* Player Side */}
           <div className="flex flex-col justify-center items-center">
             <div className="text-center mb-4">
-              <h2 className="text-xl font-bold text-blue-600">Your Pokemon</h2>
+              <h2 className="text-xl font-bold">Your Pokemon</h2>
             </div>
             {battleState.playerActive && (
               <BattleSprite
@@ -550,7 +559,7 @@ export const AIBattleScene: React.FC<AIBattleSceneProps> = ({
           {/* Opponent Side */}
           <div className="flex flex-col justify-center items-center">
             <div className="text-center mb-4">
-              <h2 className="text-xl font-bold text-red-600">Opponent</h2>
+              <h2 className="text-xl font-bold">Opponent</h2>
             </div>
             {battleState.opponentActive && (
               <BattleSprite
@@ -581,9 +590,9 @@ export const AIBattleScene: React.FC<AIBattleSceneProps> = ({
 
       {/* Resolving Phase Indicator */}
       {battleState.phase === 'resolving' && (
-        <div className="bg-yellow-500/90 backdrop-blur-sm border-t border-yellow-400 p-4">
+        <div className="border-t border-border bg-surface/90 backdrop-blur p-4">
           <div className="max-w-4xl mx-auto text-center">
-            <div className="animate-pulse text-white font-semibold">
+            <div className="animate-pulse text-muted font-semibold">
               Resolving moves...
             </div>
           </div>
@@ -592,7 +601,7 @@ export const AIBattleScene: React.FC<AIBattleSceneProps> = ({
 
       {/* Action Panel */}
       {battleState.phase === 'choosing' && (
-        <div className="bg-white/90 backdrop-blur-sm border-t border-gray-200 p-4">
+        <div className="border-t border-border bg-surface/90 backdrop-blur p-4">
           <div className="max-w-4xl mx-auto">
             <h3 className="text-lg font-semibold mb-4">Choose Your Action</h3>
             
@@ -605,7 +614,7 @@ export const AIBattleScene: React.FC<AIBattleSceneProps> = ({
                     key={index}
                     onClick={() => handleMoveSelection(move.id)}
                     disabled={isAnimating}
-                    className="p-3 rounded-lg border-2 border-blue-500 bg-blue-50 hover:bg-blue-100 hover:border-blue-600 hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="p-3 rounded-lg border border-border bg-surface text-text hover:border-primary/50 hover:bg-primary/5 hover:shadow transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
                   >
                     <div className="font-medium capitalize">
                       <Tooltip 
@@ -619,7 +628,7 @@ export const AIBattleScene: React.FC<AIBattleSceneProps> = ({
                         <span className="cursor-help">{move.name}</span>
                       </Tooltip>
                     </div>
-                    <div className="text-sm text-gray-600">PP: {move.pp}</div>
+                    <div className="text-sm text-muted">PP: {move.pp}</div>
                   </button>
                 ))}
               </div>
@@ -634,20 +643,20 @@ export const AIBattleScene: React.FC<AIBattleSceneProps> = ({
                     key={index}
                     onClick={() => handlePokemonSwitch(index)}
                     disabled={pokemon.fainted || isAnimating}
-                    className={`p-2 rounded-lg border transition-all duration-200 ${
+                    className={`p-2 rounded-lg border transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-bg ${
                       pokemon.fainted || isAnimating
-                        ? 'border-gray-300 bg-gray-100 cursor-not-allowed opacity-60'
-                        : 'border-green-500 bg-green-50 hover:bg-green-100 hover:border-green-600'
+                        ? 'border-border bg-surface cursor-not-allowed opacity-60'
+                        : 'border-border bg-surface hover:border-primary/50 hover:bg-primary/5'
                     }`}
                   >
                     <div className="text-sm font-medium capitalize truncate">
                       {formatPokemonName(pokemon.name)}
                     </div>
-                    <div className="text-xs text-gray-600">
+                    <div className="text-xs text-muted">
                       HP: {pokemon.currentHp}/{pokemon.maxHp}
                     </div>
                     {pokemon.fainted && (
-                      <div className="text-xs text-red-600">Fainted</div>
+                      <div className="text-xs text-red-500">Fainted</div>
                     )}
                   </button>
                 ))}
@@ -659,7 +668,7 @@ export const AIBattleScene: React.FC<AIBattleSceneProps> = ({
               <button
                 onClick={handleForfeit}
                 disabled={isAnimating}
-                className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center justify-center rounded-md border border-red-600/60 bg-red-600/10 px-4 py-2 text-sm font-semibold text-red-400 hover:bg-red-600/15 hover:text-red-300 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
               >
                 Forfeit Battle
               </button>
@@ -670,17 +679,10 @@ export const AIBattleScene: React.FC<AIBattleSceneProps> = ({
 
       {/* Battle Log */}
       {battleState.battleLog.length > 0 && (
-        <div className="bg-black/80 text-white p-4 text-sm font-mono max-h-32 overflow-y-auto">
+        <div className="border-t border-border bg-surface p-4 text-sm font-mono max-h-32 overflow-y-auto">
           <div className="max-w-4xl mx-auto">
             {[...battleState.battleLog].slice().reverse().map((log, index) => (
-              <div key={index} className={`${
-                log.includes('Turn') ? 'text-yellow-400 font-bold' : 
-                log.includes('used') ? 'text-blue-400' :
-                log.includes('dealt') ? 'text-red-400' :
-                log.includes('fainted') ? 'text-red-500 font-bold' :
-                log.includes('won') || log.includes('lost') ? 'text-green-400 font-bold' :
-                'text-green-400'
-              }`}>
+              <div key={index} className={`text-muted`}>
                 {log}
               </div>
             ))}
@@ -691,7 +693,7 @@ export const AIBattleScene: React.FC<AIBattleSceneProps> = ({
       {/* Battle Complete */}
       {battleState.phase === 'ended' && (
         <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-          <div className="bg-white rounded-lg p-8 text-center max-w-2xl w-full">
+          <div className="bg-surface border border-border rounded-lg p-8 text-center max-w-2xl w-full text-text">
             <h2 className="text-3xl font-bold mb-4">
               {battleState.winner === 'player' ? 'Victory!' : 'Defeat!'}
             </h2>
@@ -704,7 +706,7 @@ export const AIBattleScene: React.FC<AIBattleSceneProps> = ({
             {battleState.battleLog.length > 0 && (
               <div className="text-left mb-6">
                 <h3 className="text-base font-semibold mb-2">Battle Log</h3>
-                <div className="bg-gray-100 border border-gray-200 rounded p-3 max-h-60 overflow-y-auto font-mono text-xs">
+                <div className="bg-surface border border-border rounded p-3 max-h-60 overflow-y-auto font-mono text-xs text-muted">
                   {[...battleState.battleLog].slice().reverse().map((log, idx) => (
                     <div key={idx} className="mb-0.5">
                       {log}
@@ -716,13 +718,13 @@ export const AIBattleScene: React.FC<AIBattleSceneProps> = ({
             <div className="space-y-2">
               <button
                 onClick={() => router.push('/battle')}
-                className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                className="w-full px-4 py-2 rounded-md border border-border bg-surface hover:bg-primary/5 hover:border-primary/50 text-text"
               >
                 Battle Again
               </button>
               <button
                 onClick={() => router.push('/')}
-                className="w-full px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+                className="w-full px-4 py-2 rounded-md border border-border bg-surface hover:bg-primary/5 hover:border-primary/50 text-text"
               >
                 Back to PokéDex
               </button>

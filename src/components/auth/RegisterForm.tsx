@@ -54,7 +54,7 @@ export default function RegisterForm({ onToggleMode, onSuccess }: RegisterFormPr
   return (
     <div className="w-full">
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-[18px] mb-4">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-[18px] mb-4 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700">
           {error}
         </div>
       )}
@@ -63,13 +63,14 @@ export default function RegisterForm({ onToggleMode, onSuccess }: RegisterFormPr
       <form onSubmit={handleSubmit} className="mx-auto w-full">
         {/* Name */}
         <label className="block mb-3">
-          <span className="block text-base sm:text-lg font-semibold text-[#2b2f38] mb-2">Name</span>
+          <span className="block text-base sm:text-lg font-semibold text-text mb-2">Name</span>
           <input
             type="text"
             id="displayName"
+            data-testid="register-name"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
-            className="w-full h-12 sm:h-[52px] rounded-2xl sm:rounded-[18px] border border-black/10 px-3 sm:px-4 text-base sm:text-lg font-medium outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-500"
+            className="w-full h-12 sm:h-[52px] rounded-2xl sm:rounded-[18px] border border-border px-3 sm:px-4 text-base sm:text-lg font-medium outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-500"
             style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
             placeholder="Ash K."
             required
@@ -78,13 +79,14 @@ export default function RegisterForm({ onToggleMode, onSuccess }: RegisterFormPr
 
         {/* Email */}
         <label className="block mb-3">
-          <span className="block text-base sm:text-lg font-semibold text-[#2b2f38] mb-2">Email</span>
+          <span className="block text-base sm:text-lg font-semibold text-text mb-2">Email</span>
           <input
             type="email"
             id="email"
+            data-testid="register-email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full h-12 sm:h-[52px] rounded-2xl sm:rounded-[18px] border border-black/10 px-3 sm:px-4 text-base sm:text-lg font-medium outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-500"
+            className="w-full h-12 sm:h-[52px] rounded-2xl sm:rounded-[18px] border border-border px-3 sm:px-4 text-base sm:text-lg font-medium outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-500"
             style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
             placeholder="Email"
             required
@@ -93,14 +95,15 @@ export default function RegisterForm({ onToggleMode, onSuccess }: RegisterFormPr
 
         {/* Password */}
         <label className="block mb-3">
-          <span className="block text-base sm:text-lg font-semibold text-[#2b2f38] mb-2">Password</span>
+          <span className="block text-base sm:text-lg font-semibold text-text mb-2">Password</span>
           <div className="relative">
             <input
               type={passwordVisible ? "text" : "password"}
               id="password"
+              data-testid="register-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full h-12 sm:h-[52px] rounded-2xl sm:rounded-[18px] border border-black/10 px-3 sm:px-4 text-base sm:text-lg font-medium outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-500"
+              className="w-full h-12 sm:h-[52px] rounded-2xl sm:rounded-[18px] border border-border px-3 sm:px-4 text-base sm:text-lg font-medium outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-500"
               style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
               placeholder="Password"
               required
@@ -108,7 +111,7 @@ export default function RegisterForm({ onToggleMode, onSuccess }: RegisterFormPr
             <button
               type="button"
               onClick={() => setPasswordVisible((s) => !s)}
-              className="absolute inset-y-0 right-3 sm:right-4 text-sm sm:text-[15px] text-gray-500"
+              className="absolute inset-y-0 right-3 sm:right-4 text-sm sm:text-[15px] text-muted"
               aria-pressed={passwordVisible}
             >
               {passwordVisible ? "Hide" : "Show"}
@@ -118,16 +121,17 @@ export default function RegisterForm({ onToggleMode, onSuccess }: RegisterFormPr
 
         {/* Confirm Password */}
         <label className="block mb-4">
-          <span className="block text-base sm:text-lg font-semibold text-[#2b2f38] mb-2">
+          <span className="block text-base sm:text-lg font-semibold text-text mb-2">
             Confirm Password
           </span>
           <div className="relative">
             <input
               type={confirmPasswordVisible ? "text" : "password"}
               id="confirmPassword"
+              data-testid="register-confirm"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full h-12 sm:h-[52px] rounded-2xl sm:rounded-[18px] border border-black/10 px-3 sm:px-4 text-base sm:text-lg font-medium outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-500"
+              className="w-full h-12 sm:h-[52px] rounded-2xl sm:rounded-[18px] border border-border px-3 sm:px-4 text-base sm:text-lg font-medium outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-500"
               style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
               placeholder="Confirm password"
               required
@@ -135,7 +139,7 @@ export default function RegisterForm({ onToggleMode, onSuccess }: RegisterFormPr
             <button
               type="button"
               onClick={() => setConfirmPasswordVisible((s) => !s)}
-              className="absolute inset-y-0 right-3 sm:right-4 text-sm sm:text-[15px] text-gray-500"
+              className="absolute inset-y-0 right-3 sm:right-4 text-sm sm:text-[15px] text-muted"
               aria-pressed={confirmPasswordVisible}
             >
               {confirmPasswordVisible ? "Hide" : "Show"}
@@ -146,6 +150,7 @@ export default function RegisterForm({ onToggleMode, onSuccess }: RegisterFormPr
         {/* Submit */}
         <button
           type="submit"
+          data-testid="register-submit"
           disabled={loading}
           className="w-full h-12 sm:h-14 rounded-2xl sm:rounded-[18px] bg-[#ffcf3a] text-[#0f172a] font-extrabold text-lg sm:text-xl lg:text-[24px] shadow-[0_6px_18px_rgba(255,207,58,.35)] transition active:translate-y-px hover:brightness-105 disabled:opacity-50 disabled:cursor-not-allowed"
         >
@@ -157,9 +162,9 @@ export default function RegisterForm({ onToggleMode, onSuccess }: RegisterFormPr
       {/* Footer */}
       <button
         onClick={onToggleMode}
-        className="w-full h-12 sm:h-14 rounded-2xl sm:rounded-[18px] border border-google-border bg-signup-bg flex items-center justify-center gap-2 sm:gap-3 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 mt-4"
+        className="w-full h-12 sm:h-14 rounded-2xl sm:rounded-[18px] border border-border bg-surface flex items-center justify-center gap-2 sm:gap-3 shadow-sm hover:bg-surface/80 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 mt-4"
       >
-        <span className="font-extrabold text-base sm:text-lg lg:text-[24px]">
+        <span className="font-extrabold text-base sm:text-lg lg:text-[24px] text-text">
           Already have an account?{" "}
           <span className="text-signup-text hover:text-signup-hover">
             Sign in

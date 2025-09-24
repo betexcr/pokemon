@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import TypeBadge from "@/components/TypeBadge";
+import TypeBadgeWithTooltip from "@/components/TypeBadgeWithTooltip";
 import Tooltip from "@/components/Tooltip";
 
 type Move = {
@@ -17,7 +17,8 @@ type Move = {
 
 const categories = ["physical","special","status"] as const;
 
-export default function MovesSection({ moves }: { moves: Move[] }) {
+
+export default function MovesSection({ moves, pokemonTypes = [] }: { moves: Move[]; pokemonTypes?: string[] }) {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<null | Move["damage_class"]>(null);
   const [type, setType] = useState<string>("");
@@ -71,7 +72,7 @@ export default function MovesSection({ moves }: { moves: Move[] }) {
               <tr key={`${m.name}-${index}`} className="[&>td]:px-3 [&>td]:py-2">
                 <td className="font-medium capitalize">
                   {m.short_effect ? (
-                    <Tooltip content={m.short_effect} maxWidth="w-[22rem]" variant="move" type={m.type}>
+                    <Tooltip content={m.short_effect} maxWidth="w-[22rem]" variant="move" type={m.type} damageClass={m.damage_class}>
                       <span className="cursor-help">
                         {m.name}
                       </span>
@@ -80,7 +81,7 @@ export default function MovesSection({ moves }: { moves: Move[] }) {
                     <span>{m.name}</span>
                   )}
                 </td>
-                <td><TypeBadge type={m.type} /></td>
+                <td><TypeBadgeWithTooltip type={m.type} /></td>
                 <td className="capitalize">{m.damage_class}</td>
                 <td>{m.power ?? "—"}</td>
                 <td>{m.accuracy ?? "—"}</td>

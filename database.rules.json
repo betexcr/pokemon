@@ -10,16 +10,22 @@
       }
     },
 
-    "battles": {
-      "$bid": {
-        "meta": {
-          ".read": "auth != null",
-          ".write": false
-        },
-        "public": {
-          ".read": "auth != null",
-          ".write": false
-        },
+  "battles": {
+    "$bid": {
+      "meta": {
+        ".read": "auth != null && (
+          root.child('battles/'+$bid+'/meta/players/p1/uid').val() == auth.uid ||
+          root.child('battles/'+$bid+'/meta/players/p2/uid').val() == auth.uid
+        )",
+        ".write": false
+      },
+      "public": {
+        ".read": "auth != null && (
+          root.child('battles/'+$bid+'/meta/players/p1/uid').val() == auth.uid ||
+          root.child('battles/'+$bid+'/meta/players/p2/uid').val() == auth.uid
+        )",
+        ".write": false
+      },
         "private": {
           "$uid": {
             ".read": "auth != null && auth.uid == $uid",
@@ -38,8 +44,8 @@
                   !data.exists() &&
                   newData.hasChildren(['action','payload','clientVersion','committedAt']) &&
                   (newData.child('action').val() == 'move' || newData.child('action').val() == 'switch' || newData.child('action').val() == 'forfeit') &&
-                  (newData.child('action').val() == 'move' ? newData.child('payload').hasChildren(['moveId','target']) : true) &&
-                  (newData.child('action').val() == 'switch' ? newData.child('payload').hasChildren(['switchToIndex']) : true) &&
+                  (newData.child('action').val() == 'move' ? newData.child('payload').hasChild('moveId') : true) &&
+                  (newData.child('action').val() == 'switch' ? newData.child('payload').hasChild('switchToIndex') : true) &&
                   newData.child('clientVersion').val() == root.child('battles/'+$bid+'/meta/version').val()
                 "
               }

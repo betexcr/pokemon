@@ -1,204 +1,48 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper functions
-    function isAuthenticated() {
-      return request.auth != null;
+    function signedIn() { return request.auth != null; }
+
+    // Per-user dex storage
+    match /users/{userId}/dex/{docId} {
+      allow read, write: if signedIn() && request.auth.uid == userId;
     }
-    
-    function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
+
+    // Public shares
+    match /shares/{shareId} {
+      allow read: if true;           // public read
+      allow write: if signedIn();    // create/update by signed users
     }
-    
-    
-    // User teams collection
+
+    // User teams: owner read/write; allow reads of public teams
     match /userTeams/{teamId} {
-      // Users can read their own teams
-      allow read: if isAuthenticated() && 
-                     (resource.data.userId == request.auth.uid || 
-                      resource.data.isPublic == true);
-      
-      // Users can create teams with their own userId
-      allow create: if isAuthenticated() && 
-                       request.resource.data.userId == request.auth.uid &&
-                       request.resource.data.name is string &&
-                       request.resource.data.name.size() > 0 &&
-                       request.resource.data.name.size() <= 50 &&
-                       request.resource.data.slots is list &&
-                       request.resource.data.slots.size() <= 6;
-      
-      // Users can update their own teams
-      allow update: if isAuthenticated() && 
-                       resource.data.userId == request.auth.uid &&
-                       request.resource.data.userId == request.auth.uid;
-      
-      // Users can delete their own teams
-      allow delete: if isAuthenticated() && 
-                       resource.data.userId == request.auth.uid;
+      allow read: if resource.data.isPublic == true || (signedIn() && request.auth.uid == resource.data.userId);
+      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if signedIn() && request.auth.uid == resource.data.userId;
     }
-    
-    // Battle rooms collection
+
+    // Battle rooms: only participants can read/write
     match /battle_rooms/{roomId} {
-      // Allow anyone to read rooms (for lobby listing and guest access)
-      allow read: if true;
-      
-      // Users can create rooms with their own hostId
-      allow create: if isAuthenticated() && 
-                       request.resource.data.hostId == request.auth.uid &&
-                       request.resource.data.hostName is string &&
-                       request.resource.data.status == 'waiting' &&
-                       request.resource.data.maxPlayers == 2 &&
-                       request.resource.data.currentPlayers == 1 &&
-                       request.resource.data.createdAt is timestamp &&
-                       request.resource.data.activeUsers is list &&
-                       request.auth.uid in request.resource.data.activeUsers;
-      
-      // Users can update rooms they're participating in or joining
-      allow update: if isAuthenticated() && 
-                       (request.auth.uid == resource.data.hostId || 
-                        request.auth.uid == resource.data.guestId ||
-                        // Allow joining (setting guestId to current user)
-                        (request.resource.data.guestId == request.auth.uid && 
-                         resource.data.guestId == null) ||
-                        // Allow updates for room participants (host/guest)
-                        (request.auth.uid in resource.data.activeUsers) ||
-                        // Allow adding self to activeUsers if not present yet
-                        (
-                          request.resource.data.activeUsers != null &&
-                          request.auth.uid in request.resource.data.activeUsers &&
-                          (resource.data.activeUsers == null || !(request.auth.uid in resource.data.activeUsers))
-                        )
-                       ) &&
-                       // Additional validation: ensure user can only update their own data
-                       (request.resource.data.hostId == resource.data.hostId || 
-                        request.resource.data.hostId == null) &&
-                       (request.resource.data.guestId == resource.data.guestId || 
-                        request.resource.data.guestId == null || 
-                        request.resource.data.guestId == request.auth.uid);
-      
-      // Users can delete rooms they created
-      allow delete: if isAuthenticated() && 
-                       request.auth.uid == resource.data.hostId;
-    }
-    
-    // Battles collection
-    match /battles/{battleId} {
-      // Allow anyone to read battles (for guest access)
-      allow read: if true;
-
-      // Host can create a battle; guestId may be null initially
-      allow create: if isAuthenticated() &&
-        request.resource.data.hostId == request.auth.uid &&
-        request.resource.data.roomId is string &&
-        request.resource.data.hostName is string &&
-        (request.resource.data.guestId == null || request.resource.data.guestId is string) &&
-        (request.resource.data.guestName == null || request.resource.data.guestName is string) &&
-        request.resource.data.status in ['waiting','active','completed'] &&
-        request.resource.data.createdAt is timestamp &&
-        request.resource.data.updatedAt is timestamp &&
-        request.resource.data.actions is list &&
-        request.resource.data.turnNumber is int &&
-        request.resource.data.phase in ['choice', 'resolution', 'end_of_turn', 'replacement'];
-
-      // Allow battle participants to update battles
-      allow update: if isAuthenticated() && (
-        // Direct participants (host or guest) - with null checks
-        (resource.data.hostId != null && request.auth.uid == resource.data.hostId) ||
-        (resource.data.guestId != null && request.auth.uid == resource.data.guestId) ||
-        // Allow guest to claim spot by setting guestId when currently null
-        (resource.data.guestId == null &&
-         request.resource.data.guestId == request.auth.uid)
-      ) && (
-        // Additional validation for action updates
-        request.resource.data.keys().hasAny(['actions', 'battleData', 'phase', 'turn', 'currentTurn', 'winner', 'status', 'lastActionAt', 'updatedAt', 'turnNumber']) ||
-        // Allow setting guestId when joining
-        (request.resource.data.guestId == request.auth.uid && resource.data.guestId == null)
+      allow read, write: if signedIn() && (
+        request.auth.uid in (resource.data.activeUsers || []) ||
+        request.auth.uid == resource.data.hostId ||
+        request.auth.uid == resource.data.guestId
       );
+    }
 
-      // Allow battle host to delete battles
-      allow delete: if isAuthenticated() && 
-        resource.data.hostId != null &&
-        request.auth.uid == resource.data.hostId;
+    // Battles: only host/guest can read/write
+    match /battles/{battleId} {
+      allow read, write: if signedIn() && (
+        request.auth.uid == resource.data.hostId ||
+        request.auth.uid == resource.data.guestId
+      );
     }
-    
-    // Battle moves/history subcollection
-    match /battles/{battleId}/moves/{moveId} {
-      // Players can read moves from battles they're participating in
-      allow read: if isAuthenticated() && 
-                     (request.auth.uid == get(/databases/$(database)/documents/battles/$(battleId)).data.hostId || 
-                      request.auth.uid == get(/databases/$(database)/documents/battles/$(battleId)).data.guestId);
-      
-      // Players can add moves to battles they're participating in
-      allow create: if isAuthenticated() && 
-                       (request.auth.uid == get(/databases/$(database)/documents/battles/$(battleId)).data.hostId || 
-                        request.auth.uid == get(/databases/$(database)/documents/battles/$(battleId)).data.guestId) &&
-                       request.resource.data.playerId == request.auth.uid &&
-                       request.resource.data.timestamp is timestamp;
-    }
-    
-    // User profiles collection (for future use)
-    match /userProfiles/{userId} {
-      // Users can only access their own profile
-      allow read, write: if isOwner(userId);
-      allow create: if isAuthenticated() && 
-                       request.resource.data.userId == request.auth.uid &&
-                       request.resource.data.createdAt is timestamp;
-    }
-    
-    // Battle statistics collection (for future use)
-    match /battleStats/{userId} {
-      // Users can only access their own stats
-      allow read, write: if isOwner(userId);
-      allow create: if isAuthenticated() && 
-                       request.resource.data.userId == request.auth.uid;
-    }
-    
-    // Global leaderboard (read-only for all authenticated users)
-    match /leaderboard/{document=**} {
-      allow read: if isAuthenticated();
-      // Only allow updates from Cloud Functions (server-side)
-      allow write: if false;
-    }
-    
-    // Matchmaking queue (for future use)
-    match /matchmaking/{userId} {
-      // Users can only manage their own matchmaking status
-      allow read, write: if isOwner(userId);
-      allow create: if isAuthenticated() && 
-                       request.resource.data.userId == request.auth.uid &&
-                       request.resource.data.status in ['waiting', 'matched', 'cancelled'];
-    }
-    
-    // Chat messages collection
-    match /chat_messages/{messageId} {
-      // Allow anyone to read messages (for guest access to room chat)
-      allow read: if true;
-      
-      // Users can create messages with their own userId
-      allow create: if isAuthenticated() && 
-                       request.resource.data.userId == request.auth.uid &&
-                       request.resource.data.userName is string &&
-                       request.resource.data.message is string &&
-                       request.resource.data.message.size() > 0 &&
-                       request.resource.data.message.size() <= 200 &&
-                       request.resource.data.roomId is string &&
-                       request.resource.data.type in ['user', 'system'] &&
-                       request.resource.data.timestamp is timestamp;
-      
-      // Users can update their own messages (for editing)
-      allow update: if isAuthenticated() && 
-                       resource.data.userId == request.auth.uid &&
-                       request.resource.data.userId == request.auth.uid;
-      
-      // Users can delete their own messages
-      allow delete: if isAuthenticated() && 
-                       resource.data.userId == request.auth.uid;
-    }
-    
-    // Deny all other access
-    match /{document=**} {
-      allow read, write: if false;
+
+    // Usage Meta: public read, server-only write
+    match /usage_monthly/{docId} {
+      allow read: if true;  // public read access
+      allow write: if false; // server-only writes (via service account)
     }
   }
 }
+

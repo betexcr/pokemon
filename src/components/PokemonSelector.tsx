@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Pokemon } from '@/types/pokemon'
-import { getPokemonList, getPokemon, searchPokemonByName } from '@/lib/api'
+import { getPokemon, searchPokemonByName } from '@/lib/api'
 import { formatPokemonName, getShowdownAnimatedSprite } from '@/lib/utils'
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll'
+import { fetchPokemonForSelector } from '@/lib/infiniteScrollFetchers'
 import TypeBadge from '@/components/TypeBadge'
 import Image from 'next/image'
 
@@ -24,165 +26,33 @@ export default function PokemonSelector({
   placeholder = "Search Pokémon by name or # (e.g., 'Lugia', '249', 'char')",
   className = ''
 }: PokemonSelectorProps) {
-  const [allPokemon, setAllPokemon] = useState<Pokemon[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [showDropdown, setShowDropdown] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [loadingMore, setLoadingMore] = useState(false)
-  const [hasMore, setHasMore] = useState(true)
-  const [offset, setOffset] = useState(0)
   const [searchResults, setSearchResults] = useState<Pokemon[] | null>(null)
   const [searchLoading, setSearchLoading] = useState(false)
-  const [sentinelRef, setSentinelRef] = useState<HTMLDivElement | null>(null)
-
-  // Load initial Pokemon data
-  useEffect(() => {
-    const loadInitialPokemon = async () => {
-      try {
-        setLoading(true)
-        const pokemonList = await getPokemonList(50, 0)
-        
-        // Create basic Pokemon objects with minimal data
-        const basicPokemon = pokemonList.results.map((pokemonRef) => {
-          const pokemonId = pokemonRef.url.split('/').slice(-2)[0]
-          const id = parseInt(pokemonId)
-          
-          return {
-            id,
-            name: pokemonRef.name,
-            base_experience: 0,
-            height: 0,
-            weight: 0,
-            is_default: true,
-            order: id,
-            abilities: [],
-            forms: [],
-            game_indices: [],
-            held_items: [],
-            location_area_encounters: '',
-            moves: [],
-            sprites: {
-              front_default: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemonId}.png`,
-              front_shiny: null,
-              front_female: null,
-              front_shiny_female: null,
-              back_default: null,
-              back_shiny: null,
-              back_female: null,
-              back_shiny_female: null,
-              other: {
-                dream_world: { front_default: null, front_female: null },
-                home: { front_default: null, front_female: null, front_shiny: null, front_shiny_female: null },
-                'official-artwork': {
-                  front_default: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemonId}.png`,
-                  front_shiny: null
-                }
-              }
-            },
-            stats: [],
-            types: [], // Will be populated when needed
-            species: { name: pokemonRef.name, url: '' }
-          } as Pokemon
-        })
-
-        setAllPokemon(basicPokemon)
-        setOffset(50)
-        setHasMore(pokemonList.results.length === 50)
-      } catch (error) {
-        console.error('Error loading Pokemon:', error)
-      } finally {
-        setLoading(false)
-      }
+  
+  // Use secure infinite scroll hook for PokemonSelector
+  const {
+    data: allPokemon,
+    loading,
+    hasMore,
+    error,
+    loadMore,
+    reset: resetPokemonList,
+    sentinelRef
+  } = useInfiniteScroll<Pokemon>(
+    fetchPokemonForSelector,
+    {
+      fetchSize: 30, // 30 items per fetch for selector
+      initialLoad: true,
+      enabled: true,
+      retryAttempts: 3,
+      retryDelay: 1000,
+      scrollThreshold: 200,
+      rootMargin: '200px',
+      threshold: 0.1
     }
-
-    loadInitialPokemon()
-  }, [])
-
-  // Load more Pokemon for infinite scroll
-  const loadMorePokemon = useCallback(async () => {
-    if (loadingMore || !hasMore || searchTerm.trim()) return
-    
-    setLoadingMore(true)
-    try {
-      // Use the current offset as the next starting point; then advance it after successful fetch
-      const newOffset = offset
-      const pokemonList = await getPokemonList(30, newOffset)
-      
-      if (pokemonList.results.length === 0) {
-        setHasMore(false)
-        return
-      }
-      
-      const newPokemon = pokemonList.results.map((pokemonRef) => {
-        const pokemonId = pokemonRef.url.split('/').slice(-2)[0]
-        const id = parseInt(pokemonId)
-        
-        return {
-          id,
-          name: pokemonRef.name,
-          base_experience: 0,
-          height: 0,
-          weight: 0,
-          is_default: true,
-          order: id,
-          abilities: [],
-          forms: [],
-          game_indices: [],
-          held_items: [],
-          location_area_encounters: '',
-          moves: [],
-          sprites: {
-            front_default: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemonId}.png`,
-            front_shiny: null,
-            front_female: null,
-            front_shiny_female: null,
-            back_default: null,
-            back_shiny: null,
-            back_female: null,
-            back_shiny_female: null,
-            other: {
-              dream_world: { front_default: null, front_female: null },
-              home: { front_default: null, front_female: null, front_shiny: null, front_shiny_female: null },
-              'official-artwork': {
-                front_default: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemonId}.png`,
-                front_shiny: null
-              }
-            }
-          },
-          stats: [],
-          types: [],
-          species: { name: pokemonRef.name, url: '' }
-        } as Pokemon
-      })
-
-      setAllPokemon(prev => [...prev, ...newPokemon])
-      // Asynchronously fetch types for the newly added range so badges show
-      ;(async () => {
-        try {
-          const fulls = await Promise.allSettled(newPokemon.map(p => getPokemon(p.id)))
-          const updates: Record<number, any> = {}
-          fulls.forEach(res => {
-            if (res.status === 'fulfilled') {
-              const fp = res.value as Pokemon
-              updates[fp.id] = fp.types
-            }
-          })
-          if (Object.keys(updates).length > 0) {
-            setAllPokemon(prev => prev.map(p => updates[p.id] ? { ...p, types: updates[p.id] } : p))
-          }
-        } catch {}
-      })()
-      setOffset(offset + 30)
-      
-      if (pokemonList.results.length < 30) {
-        setHasMore(false)
-      }
-    } catch (error) {
-      console.error('Error loading more Pokemon:', error)
-    } finally {
-      setLoadingMore(false)
-    }
-  }, [offset, hasMore, loadingMore, searchTerm])
+  )
 
   // Debounced remote search for names/ids beyond the locally loaded window
   useEffect(() => {
@@ -212,7 +82,9 @@ export default function PokemonSelector({
   // Filter Pokemon based on search term
   const filteredPokemon = useMemo(() => {
     const term = searchTerm.trim()
-    if (term) return Array.isArray(searchResults) ? searchResults : []
+    if (term) {
+      return Array.isArray(searchResults) ? searchResults : []
+    }
     return Array.isArray(allPokemon) ? allPokemon : []
   }, [allPokemon, searchResults, searchTerm])
 
@@ -220,13 +92,11 @@ export default function PokemonSelector({
   const fetchPokemonTypes = useCallback(async (pokemonId: number) => {
     try {
       const pokemonData = await getPokemon(pokemonId)
-      setAllPokemon(prev => prev.map(p => 
-        p.id === pokemonId 
-          ? { ...p, types: pokemonData.types }
-          : p
-      ))
+      // Note: This will be handled by the infinite scroll hook
+      // We can't directly update allPokemon here since it's managed by the hook
+      console.log(`Fetched types for Pokémon ${pokemonId}:`, pokemonData.types)
     } catch (error) {
-      console.error(`Failed to fetch types for Pokemon ${pokemonId}:`, error)
+      console.error(`Failed to fetch types for Pokémon ${pokemonId}:`, error)
     }
   }, [])
 
@@ -267,81 +137,8 @@ export default function PokemonSelector({
     }
   }, [showDropdown])
 
-  // Handle scroll for infinite loading
-  useEffect(() => {
-    const handleScroll = (event: Event) => {
-      const target = event.target as Element
-      if (!target || typeof target.closest !== 'function') return
-      const container = target.closest('.pokemon-dropdown-list') as HTMLElement | null
-      if (!container) return
-      
-      const element = container
-      const { scrollTop, scrollHeight, clientHeight } = element
-      
-      // Trigger load more when user scrolls to within 150px of the bottom
-      // Increased threshold for better mobile experience
-      if (scrollHeight - scrollTop <= clientHeight + 150) {
-        loadMorePokemon()
-      }
-    }
-
-    // Also handle touch events for mobile
-    const handleTouchEnd = (event: TouchEvent) => {
-      const target = event.target as Element
-      if (!target || typeof target.closest !== 'function') return
-      const container = target.closest('.pokemon-dropdown-list') as HTMLElement | null
-      if (!container) return
-      
-      const element = container
-      const { scrollTop, scrollHeight, clientHeight } = element
-      
-      // Check if user has scrolled near the bottom
-      if (scrollHeight - scrollTop <= clientHeight + 200) {
-        loadMorePokemon()
-      }
-    }
-
-    if (showDropdown && !searchTerm.trim()) {
-      // Add both scroll and touch event listeners for better mobile support
-      document.addEventListener('scroll', handleScroll, true)
-      document.addEventListener('touchend', handleTouchEnd, { passive: true })
-      
-      return () => {
-        document.removeEventListener('scroll', handleScroll, true)
-        document.removeEventListener('touchend', handleTouchEnd)
-      }
-    }
-  }, [showDropdown, searchTerm, loadMorePokemon])
-
-  // Intersection Observer for better mobile scroll detection
-  useEffect(() => {
-    if (!sentinelRef || !showDropdown || searchTerm.trim()) return
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const [entry] = entries
-        if (entry.isIntersecting && hasMore && !loadingMore) {
-          loadMorePokemon()
-        }
-      },
-      {
-        root: null,
-        rootMargin: '100px',
-        threshold: 0.1
-      }
-    )
-
-    observer.observe(sentinelRef)
-
-    return () => {
-      observer.disconnect()
-    }
-  }, [sentinelRef, showDropdown, searchTerm, hasMore, loadingMore, loadMorePokemon])
-
   const handlePokemonClick = async (pokemon: Pokemon) => {
-    if (selectedPokemon.some(p => p.id === pokemon.id)) {
-      onPokemonRemove(pokemon.id)
-    } else if (selectedPokemon.length < maxSelections) {
+    if (selectedPokemon.length < maxSelections) {
       // Fetch full Pokemon data if we don't have complete details
       if (pokemon.types.length === 0 || (pokemon.stats?.length || 0) === 0) {
         try {
@@ -355,11 +152,13 @@ export default function PokemonSelector({
         onPokemonSelect(pokemon)
       }
     }
-    setShowDropdown(false)
-    setSearchTerm('')
+    // Keep dropdown open for multiple selections - don't close it or clear search term
+    // setShowDropdown(false)
+    // setSearchTerm('')
   }
 
-  const isSelected = (pokemon: Pokemon) => selectedPokemon.some(p => p.id === pokemon.id)
+  // Allow duplicates: do not treat same id as already selected
+  const isSelected = (_pokemon: Pokemon) => false
   const canSelect = selectedPokemon.length < maxSelections
 
   const getShowdownAnimatedSprite = (name: string, id: number) => {
@@ -380,10 +179,58 @@ export default function PokemonSelector({
     return `https://play.pokemonshowdown.com/sprites/ani/${mapped}.gif`
   }
 
+  // Ensure type badges for selected Pokemon by fetching missing types
+  const [selectedTypes, setSelectedTypes] = useState<Record<number, string[]>>({})
+  useEffect(() => {
+    let cancelled = false
+    const ensureTypes = async () => {
+      const updates: Record<number, string[]> = {}
+      for (const p of selectedPokemon) {
+        const existing = (p.types || []) as any
+        if (Array.isArray(existing) && existing.length > 0) {
+          const names = existing.map((t: any) => (typeof t === 'string' ? t : t.type?.name)).filter(Boolean)
+          updates[p.id] = names
+          continue
+        }
+        try {
+          const full = await getPokemon(p.id)
+          const names = (full.types || []).map((t: any) => (typeof t === 'string' ? t : t.type?.name)).filter(Boolean)
+          updates[p.id] = names
+        } catch {}
+      }
+      if (!cancelled) setSelectedTypes(prev => ({ ...prev, ...updates }))
+    }
+    if (selectedPokemon.length > 0) ensureTypes()
+    return () => { cancelled = true }
+  }, [selectedPokemon])
+
   if (loading) {
     return (
       <div className={`pokemon-selector-container ${className}`}>
         <div className="animate-pulse bg-gray-200 rounded-lg h-12 w-full"></div>
+      </div>
+    )
+  }
+
+  const hasError = !!error
+
+  if (error && (allPokemon?.length || 0) === 0) {
+    return (
+      <div className={`pokemon-selector-container ${className}`}>
+        <div className="text-red-600 text-sm p-4 border border-red-300 rounded-lg">
+          <div className="mb-2">
+            <strong>Error loading Pokémon:</strong> {error}
+          </div>
+          <div className="mb-3 text-xs text-gray-600">
+            This might be due to network connectivity or API issues. Please try again.
+          </div>
+          <button 
+            onClick={resetPokemonList}
+            className="px-3 py-1 bg-red-100 text-red-700 rounded text-xs hover:bg-red-200 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
       </div>
     )
   }
@@ -398,8 +245,12 @@ export default function PokemonSelector({
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           onFocus={() => setShowDropdown(true)}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
+          onClick={() => setShowDropdown(true)}
+          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          style={{ 
+            backgroundColor: 'var(--color-input-bg)', 
+            color: 'var(--color-input-text)'
+          } as React.CSSProperties}
         />
         
         {/* Selected Pokemon Count */}
@@ -414,11 +265,24 @@ export default function PokemonSelector({
 
       {/* Dropdown */}
       {showDropdown && (
-        <div className="absolute top-full left-0 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-2xl z-50 max-h-96 overflow-y-auto pokemon-dropdown-list" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <div className="absolute top-full left-0 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-2xl z-50 max-h-96 overflow-y-auto pokemon-dropdown-list" style={{ WebkitOverflowScrolling: 'touch' }}>
+          {/* Show warning when using fallback data */}
+          {hasError && (
+            <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border-b border-yellow-200 dark:border-yellow-700">
+              <div className="text-xs text-yellow-800 dark:text-yellow-200">
+                <strong>Limited data:</strong> Showing fallback Pokemon due to API connectivity issues. Some features may be unavailable.
+              </div>
+            </div>
+          )}
           {searchLoading ? (
-            <div className="p-4 text-sm text-gray-600">Searching…</div>
+            <div className="p-4 text-sm text-gray-600 dark:text-gray-400">Searching…</div>
+          ) : loading && !searchTerm.trim() && !hasError ? (
+            <div className="p-4 text-center text-gray-500 dark:text-gray-400">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto mb-2"></div>
+              <p className="text-sm">Loading Pokemon...</p>
+            </div>
           ) : filteredPokemon.length > 0 ? (
-            <div className="divide-y divide-gray-200">
+            <div className="divide-y divide-gray-200 dark:divide-gray-700">
               {(searchTerm.trim() ? filteredPokemon.slice(0, 20) : filteredPokemon).map((pokemon, idx) => (
                 <button
                   key={`${pokemon.id}-${idx}`}
@@ -426,9 +290,9 @@ export default function PokemonSelector({
                   tabIndex={-1}
                   onMouseDown={(e) => { e.preventDefault(); handlePokemonClick(pokemon); }}
                   disabled={!canSelect && !isSelected(pokemon)}
-                  className={`w-full text-left hover:bg-gray-50 flex items-center gap-3 transition-colors h-12 py-2 px-3 ${
+                  className={`w-full text-left hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors h-12 py-2 px-3 ${
                     isSelected(pokemon) 
-                      ? 'bg-blue-50 border-l-4 border-blue-500' 
+                      ? 'bg-blue-50 dark:bg-blue-900/30 border-l-4 border-blue-500' 
                       : !canSelect 
                         ? 'opacity-50 cursor-not-allowed' 
                         : 'cursor-pointer'
@@ -449,10 +313,10 @@ export default function PokemonSelector({
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium capitalize text-sm">
+                    <div className="font-medium capitalize text-sm text-gray-900 dark:text-gray-100">
                       {formatPokemonName(pokemon.name)}
                     </div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
                       {pokemon.id !== 0 && `#${String(pokemon.id).padStart(4, '0')}`}
                     </div>
                   </div>
@@ -468,38 +332,38 @@ export default function PokemonSelector({
                       <span className="text-xs text-gray-400">…</span>
                     )}
                   </div>
-                  {isSelected(pokemon) && (
-                    <div className="text-blue-500 text-sm">✓</div>
-                  )}
+                  {/* duplicates allowed: no selection checkmark */}
                 </button>
               ))}
               
               {/* Loading indicator */}
-              {!searchTerm.trim() && loadingMore && (
-                <div className="p-4 text-center text-gray-500">
+              {!searchTerm.trim() && loading && (
+                <div className="p-4 text-center text-gray-500 dark:text-gray-400">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto mb-2"></div>
                   <p className="text-sm">Loading more Pokemon...</p>
                 </div>
               )}
               
               {/* Intersection Observer sentinel for mobile scroll detection */}
-              {!searchTerm.trim() && hasMore && !loadingMore && (
-                <div ref={setSentinelRef} className="h-4 w-full" />
+              {!searchTerm.trim() && hasMore && !loading && (
+                <div ref={sentinelRef} className="h-4 w-full" />
               )}
               
               {/* End of list indicator */}
               {!searchTerm.trim() && !hasMore && allPokemon.length > 0 && (
-                <div className="p-4 text-center text-gray-500 text-sm">
+                <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
                   All Pokemon loaded
                 </div>
               )}
             </div>
           ) : searchTerm.trim() ? (
-            <div className="p-4 text-center text-gray-500">
+            <div className="p-4 text-center text-gray-500 dark:text-gray-400">
               No Pokemon found matching &quot;{searchTerm}&quot;
             </div>
           ) : (
-            <div className="p-4 text-center text-gray-500">No Pokemon available</div>
+            <div className="p-4 text-center text-gray-500 dark:text-gray-400">
+              <p className="text-sm">Start typing to search Pokemon or wait for the list to load...</p>
+            </div>
           )}
         </div>
       )}
@@ -507,26 +371,35 @@ export default function PokemonSelector({
       {/* Selected Pokemon Display */}
       {selectedPokemon.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-2">
-          {selectedPokemon.map((pokemon) => (
+          {selectedPokemon.map((pokemon, idx) => (
             <div
-              key={pokemon.id}
-              className="flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
+              key={`${pokemon.id}-${idx}`}
+              className="flex items-center gap-2 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 px-3 py-2 rounded-xl text-sm"
             >
               <img
                 src={getShowdownAnimatedSprite(pokemon.name, pokemon.id)}
                 alt={pokemon.name}
-                width={20}
-                height={20}
-                className="w-5 h-5 object-contain"
+                width={24}
+                height={24}
+                className="w-6 h-6 object-contain"
                 onError={(e) => {
                   const target = e.currentTarget as HTMLImageElement
                   target.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`
                 }}
               />
-              <span className="capitalize">{formatPokemonName(pokemon.name)}</span>
+              <div className="flex flex-col">
+                <span className="capitalize leading-4">{formatPokemonName(pokemon.name)}</span>
+                <div className="flex gap-1 mt-1">
+                  {(selectedTypes[pokemon.id] || (pokemon.types || []).map((t: any) => (typeof t === 'string' ? t : t.type?.name)).filter(Boolean)).map((typeName: string) => (
+                    <TypeBadge key={`${pokemon.id}-sel-${typeName}`} type={typeName} variant="span" className="px-1 py-0.5 text-[10px]" />
+                  ))}
+                </div>
+              </div>
               <button
                 onClick={() => onPokemonRemove(pokemon.id)}
-                className="text-blue-600 hover:text-blue-800 ml-1"
+                className="text-blue-600 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-100 ml-1"
+                aria-label={`Remove ${formatPokemonName(pokemon.name)}`}
+                title={`Remove ${formatPokemonName(pokemon.name)}`}
               >
                 ×
               </button>

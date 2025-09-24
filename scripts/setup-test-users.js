@@ -79,8 +79,10 @@ async function setupTestUsersWithClientSDK() {
   console.log('🔄 Using Firebase Client SDK for test user setup...');
   
   const { initializeApp: initClientApp, getApps } = require('firebase/app');
-  const { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, deleteUser } = require('firebase/auth');
-  const { getFirestore, collection, doc, setDoc, getDocs, deleteDoc } = require('firebase/firestore');
+  // Use dynamic import to ensure proper ESM interop in Node
+  const authMod = await import('firebase/auth');
+  const { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, deleteUser, updateProfile } = authMod;
+  const { getFirestore, collection, doc, setDoc } = require('firebase/firestore');
   
   // Firebase client configuration
   const clientConfig = {
@@ -188,10 +190,8 @@ async function createTestUsersClient(auth) {
         userData.password
       );
       
-      // Update display name
-      await userCredential.user.updateProfile({
-        displayName: userData.displayName
-      });
+      // Update display name (modular API)
+      await updateProfile(userCredential.user, { displayName: userData.displayName });
       
       testUsers[key] = {
         uid: userCredential.user.uid,
@@ -468,6 +468,10 @@ async function cleanupTestData(db) {
 
 async function cleanupTestDataClient(db) {
   console.log('🗑️ Cleaning up test data...');
+  const authMod = await import('firebase/auth');
+  const { getAuth, signInWithEmailAndPassword } = authMod;
+  const { getFirestore, collection, query, where, getDocs, deleteDoc } = require('firebase/firestore');
+  const auth = getAuth();
   
   // Get all test users
   const testUserEmails = Object.values(TEST_USERS).map(user => user.email);
@@ -475,7 +479,8 @@ async function cleanupTestDataClient(db) {
   
   for (const email of testUserEmails) {
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, TEST_USERS[Object.keys(TEST_USERS).find(key => TEST_USERS[key].email === email)].password);
+      const matchKey = Object.keys(TEST_USERS).find(key => TEST_USERS[key].email === email);
+      const userCredential = await signInWithEmailAndPassword(auth, email, TEST_USERS[matchKey].password);
       testUsers.push(userCredential.user.uid);
     } catch (error) {
       // User doesn't exist, skip

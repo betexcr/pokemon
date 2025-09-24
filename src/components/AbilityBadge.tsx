@@ -140,11 +140,6 @@ export default function AbilityBadge({ ability, className = '' }: AbilityBadgePr
           {formatAbilityName(ability.name)}
         </button>
       )}
-      {ability.is_hidden && (
-        <span className="px-2 py-1 text-xs rounded-full bg-gray-500 text-white">
-          Hidden
-        </span>
-      )}
     </div>
   );
 }

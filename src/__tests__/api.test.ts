@@ -1,4 +1,4 @@
-import { getPokemonMainPageImage } from '@/lib/api'
+import { getPokemonMainPageImage, searchPokemonByName } from '@/lib/api'
 
 describe('API Functions', () => {
   describe('getPokemonMainPageImage', () => {
@@ -16,5 +16,13 @@ describe('API Functions', () => {
       expect(getPokemonMainPageImage(0)).toBe('https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/0.png')
       expect(getPokemonMainPageImage(1000)).toBe('https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/1000.png')
     })
+  })
+
+  describe('searchPokemonByName', () => {
+    it('includes calyrex-shadow when searching for calyrex', async () => {
+      const results = await searchPokemonByName('calyrex')
+      const names = results.map(r => r.name)
+      expect(names).toEqual(expect.arrayContaining(['calyrex-shadow']))
+    }, 30000)
   })
 })

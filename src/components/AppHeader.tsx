@@ -3,11 +3,11 @@
 import { ReactNode } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
-import ThemeToggle from '@/components/ThemeToggle'
 import HeaderIcons from '@/components/HeaderIcons'
 import UserDropdown from '@/components/UserDropdown'
 import { getHeaderIcon, getPageIconKey } from '@/lib/headerIcons'
 import { triggerViewTransition } from '@/components/ViewTransitions'
+import Tooltip from '@/components/Tooltip'
 
 interface AppHeaderProps {
   title?: string
@@ -22,6 +22,7 @@ interface AppHeaderProps {
   showThemeToggle?: boolean
   iconKey?: string
   showIcon?: boolean
+  onBackClick?: () => void
 }
 
 export default function AppHeader({
@@ -36,7 +37,8 @@ export default function AppHeader({
   showToolbar = true,
   showThemeToggle = true,
   iconKey,
-  showIcon = true
+  showIcon = true,
+  onBackClick
 }: AppHeaderProps) {
   const router = useRouter()
   const pathname = usePathname()
@@ -46,8 +48,22 @@ export default function AppHeader({
   const iconConfig = getHeaderIcon(effectiveIconKey)
   const IconComponent = iconConfig.icon
 
-  const handleBack = () => {
-    if (backLink) {
+  const handleBack = (event?: React.MouseEvent) => {
+    // Handle middle click (button 1) or Ctrl+click for new tab
+    if (event && (event.button === 1 || event.ctrlKey || event.metaKey)) {
+      // Let the browser handle the middle click or Ctrl+click to open in new tab
+      return
+    }
+
+    // Prevent default for left click to handle transition
+    if (event) {
+      event.preventDefault()
+    }
+
+    if (onBackClick) {
+      // Use custom back handler if provided
+      onBackClick()
+    } else if (backLink) {
       // Use reverse transition for back navigation
       const currentPage = pathname
       const isFromPokemonPage = currentPage.startsWith('/pokemon/')
@@ -74,30 +90,42 @@ export default function AppHeader({
   return (
     <header className="sticky top-0 z-50 bg-gradient-to-r from-surface via-surface to-surface border-b border-border shadow-lg">
       <div className="w-full max-w-full px-2 sm:px-4 md:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 sm:h-18 md:h-20 lg:h-24 py-2 sm:py-3 list-none min-w-0">
-          <div className="flex items-center space-x-2 sm:space-x-3 lg:space-x-6 min-w-0">
+        <div className="flex items-center justify-between h-14 sm:h-16 md:h-16 lg:h-18 xl:h-20 py-1 sm:py-2 md:py-3 list-none min-w-0">
+          <div className="flex items-center space-x-2 sm:space-x-3 lg:space-x-4 min-w-0 flex-1">
             {backLink && (
-              <button
-                onClick={handleBack}
-                className="flex items-center text-muted hover:text-text transition-colors"
-                title={backLabel}
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </button>
+              <Tooltip content={`Go back to ${backLabel}`} position="bottom">
+                <a
+                  href={backLink}
+                  onClick={handleBack}
+                  onMouseDown={(e) => {
+                    // Handle middle click
+                    if (e.button === 1) {
+                      e.preventDefault()
+                      window.open(backLink, '_blank')
+                    }
+                  }}
+                  className="flex items-center text-muted hover:text-text transition-colors flex-shrink-0 cursor-pointer"
+                  title={backLabel}
+                >
+                  <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+                </a>
+              </Tooltip>
             )}
-            <div className="flex items-center space-x-2 lg:space-x-3 mx-auto">
+            <div className="flex items-center space-x-2 lg:space-x-3 min-w-0 flex-1">
               {showIcon && (
-                <div className={`p-2 rounded-lg ${iconConfig.bgColor} ${iconConfig.color}`}>
-                  {/* Icon is purely decorative */}
-                  <IconComponent className="h-5 w-5 sm:h-6 sm:w-6" />
-                </div>
+                <Tooltip content={`Current page: ${title}`} position="bottom">
+                  <div className={`p-1 sm:p-2 rounded-lg flex-shrink-0 ${iconConfig.bgColor} ${iconConfig.color} dark:${iconConfig.darkBgColor} dark:${iconConfig.darkColor}`}>
+                    {/* Icon is purely decorative */}
+                    <IconComponent className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" />
+                  </div>
+                </Tooltip>
               )}
-              <div className="flex flex-col">
-                <h2 className="text-base sm:text-lg lg:text-xl font-bold text-poke-blue dark:bg-gradient-to-r dark:from-poke-blue dark:via-poke-red dark:to-poke-blue dark:bg-clip-text dark:text-transparent" style={{ fontFamily: 'Pokemon Solid, sans-serif' }} suppressHydrationWarning>
+              <div className="flex flex-col min-w-0 flex-1">
+                <h2 className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-poke-blue dark:bg-gradient-to-r dark:from-poke-blue dark:via-poke-red dark:to-poke-blue dark:bg-clip-text dark:text-transparent truncate" style={{ fontFamily: 'Pokemon Solid, sans-serif' }} suppressHydrationWarning>
                   {title}
                 </h2>
                 {subtitle ? (
-                  <span className="text-xs text-muted font-medium hidden sm:block truncate">
+                  <span className="text-xs text-muted font-medium hidden sm:block truncate dark:text-gray-300">
                     {subtitle}
                   </span>
                 ) : null}
@@ -105,17 +133,16 @@ export default function AppHeader({
             </div>
           </div>
 
-          <div className="flex items-center space-x-2 sm:space-x-4 md:space-x-6 min-w-0 flex-shrink-0">
-            {showThemeToggle && (
-              <ThemeToggle />
-            )}
-            {showToolbar && (
-              <div className="flex items-center space-x-1 sm:space-x-2">
-                <HeaderIcons 
-                  comparisonList={comparisonList}
-                  showSidebar={showSidebar}
-                  onFiltersClick={onToggleSidebar}
-                />
+          <div className="flex items-center space-x-1 sm:space-x-2 md:space-x-3 min-w-0 flex-shrink-0">
+            {(showToolbar) && (
+              <div className="flex items-center space-x-0.5 sm:space-x-1">
+                {showToolbar && (
+                  <HeaderIcons 
+                    comparisonList={comparisonList}
+                    showSidebar={showSidebar}
+                    onFiltersClick={onToggleSidebar}
+                  />
+                )}
               </div>
             )}
             {rightContent}

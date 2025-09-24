@@ -23,12 +23,14 @@ function mapCategory(s: string): MoveCategory {
   throw new Error(`Unknown damage_class: ${s}`);
 }
 
-function extractShortEffect(effect_entries: unknown[]): string | undefined {
+function extractShortEffect(effect_entries: unknown[], effect_chance?: number): string | undefined {
   const en = effect_entries.find((e: unknown) => (e as { language?: { name?: string } }).language?.name === "en");
   if (!en) return undefined;
-  // Replace placeholders like $effect_chance
-  const effect = en as { short_effect?: string; effect_chance?: number };
-  return effect.short_effect?.replace("$effect_chance", (effect.effect_chance ?? "").toString());
+  // Replace placeholders like $effect_chance using the move-level effect_chance when provided
+  const effect = en as { short_effect?: string };
+  const txt = effect.short_effect || undefined;
+  if (!txt) return undefined;
+  return txt.replace("$effect_chance", (effect_chance ?? "").toString());
 }
 
 function critStageFromMeta(meta: unknown): number {
@@ -175,7 +177,7 @@ export async function loadMoveFromPokeAPI(idOrName: number | string): Promise<Co
     hits: parseHits(mv),
     makesContact: !!(mv.meta as { makes_contact?: boolean })?.makes_contact,
     bypassAccuracyCheck: mv.accuracy === null, // per PokeAPI: null -> no accuracy check
-    shortEffect: extractShortEffect(mv.effect_entries),
+    shortEffect: extractShortEffect(mv.effect_entries, mv.effect_chance),
     ...parseSecondary(mv.meta),
     statChanges: parseTopLevelStatChanges(mv)
   };

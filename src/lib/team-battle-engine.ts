@@ -18,6 +18,7 @@ import {
 export type BattlePokemon = {
   pokemon: Pokemon;
   level: number;
+  nature?: import('@/data/natures').NatureName;
   currentHp: number;
   maxHp: number;
   moves: Array<{
@@ -170,7 +171,16 @@ export function getMovePriority(moveId: string): number {
 // Calculate effective speed for move ordering
 export function getEffectiveSpeed(pokemon: BattlePokemon): number {
   const baseSpeed = pokemon.pokemon.stats.find(stat => stat.stat.name === 'speed')?.base_stat || 50;
-  const calculatedSpeed = calculateStat(baseSpeed, pokemon.level);
+  let calculatedSpeed = calculateStat(baseSpeed, pokemon.level);
+  // Apply nature: +10% to increased stat, -10% to decreased stat
+  try {
+    if (pokemon.nature) {
+      const { getNature } = require('@/data/natures') as typeof import('@/data/natures');
+      const n = getNature(pokemon.nature);
+      if (n.increasedStat === 'speed') calculatedSpeed = Math.floor(calculatedSpeed * 1.1);
+      if (n.decreasedStat === 'speed') calculatedSpeed = Math.floor(calculatedSpeed * 0.9);
+    }
+  } catch {}
   return applyStatModifier(calculatedSpeed, pokemon.statModifiers.speed);
 }
 
@@ -729,6 +739,37 @@ export async function calculateDamageDetailed(
     ? calculateStat(defenderDefenseStat, level)
     : calculateStat(defenderSpecialDefenseStat, level);
 
+  // Apply nature to attacking and defending stats
+  let attackWithNature = attackStat;
+  let defenseWithNature = defenseStat;
+  try {
+    const natureModule = require('@/data/natures') as typeof import('@/data/natures');
+    const attackerNature = (attacker as BattlePokemon).nature ? natureModule.getNature((attacker as BattlePokemon).nature!) : null;
+    const defenderNature = (defender as BattlePokemon).nature ? natureModule.getNature((defender as BattlePokemon).nature!) : null;
+    if (attackerNature) {
+      const inc = attackerNature.increasedStat;
+      const dec = attackerNature.decreasedStat;
+      if (isPhysical) {
+        if (inc === 'attack') attackWithNature = Math.floor(attackWithNature * 1.1);
+        if (dec === 'attack') attackWithNature = Math.floor(attackWithNature * 0.9);
+      } else {
+        if (inc === 'special-attack') attackWithNature = Math.floor(attackWithNature * 1.1);
+        if (dec === 'special-attack') attackWithNature = Math.floor(attackWithNature * 0.9);
+      }
+    }
+    if (defenderNature) {
+      const inc = defenderNature.increasedStat;
+      const dec = defenderNature.decreasedStat;
+      if (isPhysical) {
+        if (inc === 'defense') defenseWithNature = Math.floor(defenseWithNature * 1.1);
+        if (dec === 'defense') defenseWithNature = Math.floor(defenseWithNature * 0.9);
+      } else {
+        if (inc === 'special-defense') defenseWithNature = Math.floor(defenseWithNature * 1.1);
+        if (dec === 'special-defense') defenseWithNature = Math.floor(defenseWithNature * 0.9);
+      }
+    }
+  } catch {}
+
   // Get types
   const attackerTypes = attacker.pokemon.types.map(type => 
     (typeof type === 'string' ? type : type.type?.name || 'normal') as TypeName
@@ -766,8 +807,8 @@ export async function calculateDamageDetailed(
     moveType,
     attackerTypes,
     defenderTypes,
-    attackStat,
-    defenseStat,
+    attackStat: attackWithNature,
+    defenseStat: defenseWithNature,
     attackStatStages: attacker.statModifiers.attack,
     defenseStatStages: defender.statModifiers.defense,
     isPhysical,
@@ -968,8 +1009,21 @@ export function handleAutomaticSwitching(state: BattleState): BattleState {
     
     const playerSpeedStat = newPlayerCurrent.pokemon.stats.find(stat => stat.stat.name === 'speed')?.base_stat || 50;
     const opponentSpeedStat = newOpponentCurrent.pokemon.stats.find(stat => stat.stat.name === 'speed')?.base_stat || 50;
-    const playerSpeed = calculateStat(playerSpeedStat, newPlayerCurrent.level);
-    const opponentSpeed = calculateStat(opponentSpeedStat, newOpponentCurrent.level);
+  let playerSpeed = calculateStat(playerSpeedStat, newPlayerCurrent.level);
+  let opponentSpeed = calculateStat(opponentSpeedStat, newOpponentCurrent.level);
+  try {
+    const { getNature } = require('@/data/natures') as typeof import('@/data/natures');
+    if (newPlayerCurrent.nature) {
+      const n = getNature(newPlayerCurrent.nature);
+      if (n.increasedStat === 'speed') playerSpeed = Math.floor(playerSpeed * 1.1);
+      if (n.decreasedStat === 'speed') playerSpeed = Math.floor(playerSpeed * 0.9);
+    }
+    if (newOpponentCurrent.nature) {
+      const n = getNature(newOpponentCurrent.nature);
+      if (n.increasedStat === 'speed') opponentSpeed = Math.floor(opponentSpeed * 1.1);
+      if (n.decreasedStat === 'speed') opponentSpeed = Math.floor(opponentSpeed * 0.9);
+    }
+  } catch {}
     
     console.log('Speed comparison:', {
       playerName: newPlayerCurrent.pokemon.name,
@@ -1099,15 +1153,24 @@ export function switchToSelectedPokemon(state: BattleState, pokemonIndex: number
   const playerCurrent = getCurrentPokemon(newState.player);
   const opponentCurrent = getCurrentPokemon(newState.opponent);
   
-  const playerSpeed = applyStatModifier(
-    calculateStat(playerCurrent.pokemon.stats.find(s => s.stat.name === 'speed')?.base_stat || 0, playerCurrent.level),
-    playerCurrent.statModifiers.speed
-  );
+  let playerSpeed = calculateStat(playerCurrent.pokemon.stats.find(s => s.stat.name === 'speed')?.base_stat || 0, playerCurrent.level);
+  let opponentSpeed = calculateStat(opponentCurrent.pokemon.stats.find(s => s.stat.name === 'speed')?.base_stat || 0, opponentCurrent.level);
+  try {
+    const { getNature } = require('@/data/natures') as typeof import('@/data/natures');
+    if (playerCurrent.nature) {
+      const n = getNature(playerCurrent.nature);
+      if (n.increasedStat === 'speed') playerSpeed = Math.floor(playerSpeed * 1.1);
+      if (n.decreasedStat === 'speed') playerSpeed = Math.floor(playerSpeed * 0.9);
+    }
+    if (opponentCurrent.nature) {
+      const n = getNature(opponentCurrent.nature);
+      if (n.increasedStat === 'speed') opponentSpeed = Math.floor(opponentSpeed * 1.1);
+      if (n.decreasedStat === 'speed') opponentSpeed = Math.floor(opponentSpeed * 0.9);
+    }
+  } catch {}
   
-  const opponentSpeed = applyStatModifier(
-    calculateStat(opponentCurrent.pokemon.stats.find(s => s.stat.name === 'speed')?.base_stat || 0, opponentCurrent.level),
-    opponentCurrent.statModifiers.speed
-  );
+  const playerSpeedMod = applyStatModifier(playerSpeed, playerCurrent.statModifiers.speed);
+  const opponentSpeedMod = applyStatModifier(opponentSpeed, opponentCurrent.statModifiers.speed);
   
   console.log('Speed comparison:', {
     playerName: playerCurrent.pokemon.name,
@@ -1118,9 +1181,9 @@ export function switchToSelectedPokemon(state: BattleState, pokemonIndex: number
   
   // Determine new turn order based on Speed
   // Note: In the new system, turn order is determined by the action queue
-  if (playerSpeed > opponentSpeed) {
+  if (playerSpeedMod > opponentSpeedMod) {
     console.log('Player goes first (faster)');
-  } else if (opponentSpeed > playerSpeed) {
+  } else if (opponentSpeedMod > playerSpeedMod) {
     console.log('Opponent goes first (faster)');
   } else {
     // Speed tie - randomize (50/50 chance)

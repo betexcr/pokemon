@@ -30,6 +30,28 @@ function BattleRuntimePage() {
     }
   }, [router, urlBattleId, searchParams]);
 
+  // Get back URL for href attribute
+  const getBackUrl = useCallback(() => {
+    if (urlBattleId) {
+      return `/lobby/${searchParams.get("roomId") || ""}`;
+    } else {
+      return "/battle";
+    }
+  }, [urlBattleId, searchParams]);
+
+  // Handle click events for back button
+  const handleBackClick = useCallback((event: React.MouseEvent) => {
+    // Handle middle click (button 1) or Ctrl+click for new tab
+    if (event.button === 1 || event.ctrlKey || event.metaKey) {
+      // Let the browser handle the middle click or Ctrl+click to open in new tab
+      return;
+    }
+
+    // Prevent default for left click to handle programmatic navigation
+    event.preventDefault();
+    handleBackFromBattle();
+  }, [handleBackFromBattle]);
+
   // Show loading state
   if (authLoading) {
     return (
@@ -127,13 +149,21 @@ function BattleRuntimePage() {
       <header className="sticky top-0 z-50 border-b border-border bg-surface">
         <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <button
-              onClick={handleBackFromBattle}
-              className="flex items-center space-x-2 text-muted hover:text-text transition-colors"
+            <a
+              href={getBackUrl()}
+              onClick={handleBackClick}
+              onMouseDown={(e) => {
+                // Handle middle click
+                if (e.button === 1) {
+                  e.preventDefault()
+                  window.open(getBackUrl(), '_blank')
+                }
+              }}
+              className="flex items-center space-x-2 text-muted hover:text-text transition-colors cursor-pointer"
             >
               <ArrowLeft className="h-5 w-5" />
               <span className="font-medium">Back to Lobby</span>
-            </button>
+            </a>
             <div className="flex items-center gap-2">
               <div className="text-sm text-muted">
                 Turn {rtdbBattleState.meta.turn}

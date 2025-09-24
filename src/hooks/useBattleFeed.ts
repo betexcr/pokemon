@@ -8,10 +8,13 @@ export function useBattleFeed(battleId?: string) {
   const [meta, setMeta] = useState<any>(null);
 
   useEffect(() => {
-    if (!battleId) return;
+    const database = rtdb;
+    if (!battleId || !database) {
+      return;
+    }
 
-    const pubRef = ref(rtdb, `/battles/${battleId}/public`);
-    const metaRef = ref(rtdb, `/battles/${battleId}/meta`);
+    const pubRef = ref(database, `/battles/${battleId}/public`);
+    const metaRef = ref(database, `/battles/${battleId}/meta`);
     
     const unsub1 = onValue(pubRef, snap => setPub(snap.val()));
     const unsub2 = onValue(metaRef, snap => setMeta(snap.val()));
@@ -21,7 +24,7 @@ export function useBattleFeed(battleId?: string) {
       const metaData = snap.val();
       if (!metaData?.turn) return;
       
-      const resRef = ref(rtdb, `/battles/${battleId}/turns/${metaData.turn}/resolution/logs`);
+      const resRef = ref(database, `/battles/${battleId}/turns/${metaData.turn}/resolution/logs`);
       const unsub4 = onValue(resRef, s => setLogs(s.val() || []));
       
       return () => unsub4();

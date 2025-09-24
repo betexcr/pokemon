@@ -4,7 +4,16 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
+    "dev:safe": "./dev-safe.sh",
+    "dev:no-turbo": "./dev-no-turbopack.sh",
+    "dev:fix": "./fix-nextjs-build.sh && ./dev-safe.sh",
+    "dev:clean": "rm -rf .next out && next dev --turbopack",
+    "dev:isolated": "NODE_ENV=development next dev --turbopack --port 3001",
+    "dev:with-build": "node dev-with-build.js",
+    "fix:build": "./fix-nextjs-build.sh",
     "build": "next build",
+    "build:prod": "NODE_ENV=production next build",
+    "build:background": "NODE_ENV=production next build > build.log 2>&1 &",
     "start": "next start",
     "lint": "next lint",
     "test": "vitest",
@@ -25,9 +34,14 @@
     "test:rtdb:unit": "node src/lib/__tests__/rtdb-test-scripts.ts test:unit",
     "test:rtdb:all": "node src/lib/__tests__/rtdb-test-scripts.ts test:all",
     "test:rtdb:report": "node src/lib/__tests__/rtdb-test-scripts.ts report",
-    "test:rtdb:clean": "node src/lib/__tests__/rtdb-test-scripts.ts clean"
+    "test:rtdb:clean": "node src/lib/__tests__/rtdb-test-scripts.ts clean",
+    "assets:pmd:top50": "node scripts/download-pmd-top50.js",
+    "ingest": "node scripts/ingest.js",
+    "seed-usage": "node scripts/seed-usage-data.js",
+    "test-real-data": "node scripts/test-real-data.js"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.0.0",
     "@tanstack/react-virtual": "^3.13.12",
     "@types/uuid": "^10.0.0",
     "class-variance-authority": "^0.7.1",
@@ -41,6 +55,7 @@
     "next": "15.5.2",
     "react": "^18",
     "react-dom": "^18",
+    "recharts": "^2.8.0",
     "tailwind-merge": "^3.3.1",
     "uuid": "^13.0.0"
   },
@@ -63,6 +78,7 @@
     "playwright": "^1.40.0",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
+    "ts-node": "^10.9.2",
     "typescript": "^5",
     "vitest": "^1.0.0"
   }

@@ -1,7 +1,7 @@
 // Pokémon API Types based on PokeAPI v2
 export interface NamedAPIResource {
   name: string;
-  url: string;
+  url?: string;
 }
 
 export interface APIResource {

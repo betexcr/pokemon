@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { usePathname } from 'next/navigation'
 import { Pokemon, FilterState } from '@/types/pokemon'
-import { getPokemonWithPagination } from '@/lib/api'
+import { getPokemonTotalCount, generateAllPokemonSkeletons } from '@/lib/api'
 // import { } from '@/lib/utils' // Empty import removed
 import { useTheme } from '@/components/ThemeProvider'
 import RedPokedexLayout from '@/components/RedPokedexLayout'
@@ -46,13 +46,6 @@ export default function Home() {
       }
     }
   }, [])
-  const [pokemonList, setPokemonList] = useState<Pokemon[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  // const [density, setDensity] = useState<'cozy' | 'compact' | 'ultra' | 'list'>('compact')
-  // Removed window-based infinite scroll state; Modern layout owns scrolling
-
-
   const [comparisonList, setComparisonList] = useState<number[]>([])
   const [selectedPokemon, setSelectedPokemon] = useState<Pokemon | null>(null)
 
@@ -66,21 +59,56 @@ export default function Home() {
 
   const { theme } = useTheme()
 
-  // Load initial data with caching
-  const loadInitialData = useCallback(async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const initialPokemon = await getPokemonWithPagination(30, 0)
-      setPokemonList(initialPokemon)
-      // Pagination state removed; internal scrolling handles further loads
-    } catch (err) {
-      setError('Failed to load Pokémon data')
-      console.error(err)
-    } finally {
-      setLoading(false)
+  // Use optimized infinite scroll hook for main dex
+  // State for all Pokemon data
+  const [pokemonList, setPokemonList] = useState<Pokemon[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // Load Pokemon skeletons in batches for better performance
+  useEffect(() => {
+    const loadPokemonSkeletons = async () => {
+      try {
+        setLoading(true)
+        // Load a smaller initial batch for faster initial render
+        const initialCount = 300 // Load first 300 Pokemon initially
+        console.log('Loading initial Pokemon skeletons for', initialCount, 'Pokemon')
+        const skeletons = generateAllPokemonSkeletons(initialCount)
+        console.log('Generated', skeletons.length, 'skeleton Pokemon')
+        setPokemonList(skeletons)
+        setError(null)
+        
+        // Load remaining Pokemon in background
+        setTimeout(() => {
+          const totalCount = 1302
+          const remainingCount = totalCount - initialCount
+          console.log('Loading remaining', remainingCount, 'Pokemon skeletons')
+          const remainingSkeletons = generateAllPokemonSkeletons(remainingCount)
+          setPokemonList(prev => [...prev, ...remainingSkeletons])
+        }, 100)
+      } catch (err) {
+        console.error('Error loading Pokemon skeletons:', err)
+        // Fallback to a reasonable count if generation fails
+        const fallbackCount = 300
+        const skeletons = generateAllPokemonSkeletons(fallbackCount)
+        setPokemonList(skeletons)
+        setError(null)
+      } finally {
+        setLoading(false)
+      }
     }
+
+    loadPokemonSkeletons()
   }, [])
+
+  // Pokemon data is now handled by the layout components internally
+  const pokemonWithData = pokemonList
+
+  // No more infinite scroll - all Pokemon are rendered upfront
+  const hasMorePokemon = false
+  const loadMorePokemon = () => {}
+  const resetPokemonList = () => {}
+  const sentinelRef = () => {}
 
   // Load comparison list from localStorage
   useEffect(() => {
@@ -90,25 +118,14 @@ export default function Home() {
     }
   }, [])
 
-  // Removed refs/effects for window-based infinite scroll
-
-  // Removed window-based load more handler
-
-  // Load initial data
-  useEffect(() => {
-    loadInitialData()
-  }, []) // No dependencies to prevent infinite loading
-
-  // No window-based infinite scroll; Modern layout uses internal scroll container
-
   // Memoize filtered Pokémon to prevent unnecessary re-renders and improve performance
   const memoizedFilteredPokemon = useMemo(() => {
     return pokemonList
   }, [pokemonList])
 
 
-  // Sort Pokémon using memoized filtered Pokémon for better performance
-  const sortedPokemon = [...memoizedFilteredPokemon].sort((a, b) => {
+  // Sort Pokémon using pokemonList for better performance
+  const sortedPokemon = [...pokemonList].sort((a, b) => {
     let comparison = 0
     switch (filters.sortBy) {
       case 'name':
@@ -128,13 +145,19 @@ export default function Home() {
 
 
 
-  const toggleComparison = (id: number) => {
-    const newComparison = comparisonList.includes(id)
-      ? comparisonList.filter(compId => compId !== id)
-      : [...comparisonList, id]
+  const toggleComparison = (id: number, setShowSidebar?: (show: boolean) => void) => {
+    const isAdding = !comparisonList.includes(id)
+    const newComparison = isAdding
+      ? [...comparisonList, id]
+      : comparisonList.filter(compId => compId !== id)
     
     setComparisonList(newComparison)
     localStorage.setItem('pokemon-comparison', JSON.stringify(newComparison))
+    
+    // If adding a team for comparison and advanced filters is closed, open it
+    if (isAdding && setShowSidebar) {
+      setShowSidebar(true)
+    }
   }
 
 
@@ -144,7 +167,7 @@ export default function Home() {
         <div className="text-center">
           <p className="text-red-600 mb-4">{error}</p>
           <button 
-            onClick={loadInitialData}
+            onClick={resetPokemonList}
             className="px-4 py-2 bg-poke-blue text-white rounded-lg hover:bg-poke-blue/90"
           >
             Try Again
@@ -184,7 +207,7 @@ export default function Home() {
   if (isModernTheme) {
     return (
       <ModernPokedexLayout
-        pokemonList={sortedPokemon}
+        pokemonList={pokemonList}
         selectedPokemon={selectedPokemon}
         onSelectPokemon={setSelectedPokemon}
         onToggleComparison={toggleComparison}
@@ -213,7 +236,7 @@ export default function Home() {
     }
     return (
       <RedPokedexLayout
-        pokemonList={sortedPokemon}
+        pokemonList={pokemonList}
         selectedPokemon={selectedPokemon}
         onSelectPokemon={setSelectedPokemon}
         onToggleComparison={toggleComparison}
@@ -237,7 +260,7 @@ export default function Home() {
     }
     return (
       <GoldPokedexLayout
-        pokemonList={sortedPokemon}
+        pokemonList={pokemonList}
         selectedPokemon={selectedPokemon}
         onSelectPokemon={setSelectedPokemon}
         onToggleComparison={toggleComparison}
@@ -261,7 +284,7 @@ export default function Home() {
     }
     return (
       <RubyPokedexLayout
-        pokemonList={sortedPokemon}
+        pokemonList={pokemonList}
         selectedPokemon={selectedPokemon}
         onSelectPokemon={setSelectedPokemon}
         onToggleComparison={toggleComparison}
@@ -272,20 +295,6 @@ export default function Home() {
     );
   }
 
-  // Default case: Use ModernPokedexLayout for any theme that's not explicitly handled
-  return (
-    <ModernPokedexLayout
-      pokemonList={sortedPokemon}
-      selectedPokemon={selectedPokemon}
-      onSelectPokemon={setSelectedPokemon}
-      onToggleComparison={toggleComparison}
-      onClearComparison={() => {
-        setComparisonList([])
-        localStorage.removeItem('pokemon-comparison')
-      }}
-      comparisonList={comparisonList}
-      filters={filters}
-      setFilters={setFilters}
-    />
-  )
+  // This should never be reached since all themes are explicitly handled above
+  return null
 }

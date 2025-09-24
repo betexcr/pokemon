@@ -14,6 +14,7 @@ import {
   type QueryDocumentSnapshot,
   type Timestamp
 } from 'firebase/firestore';
+import { DEFAULT_NATURE, NatureName } from '@/data/natures';
 import { db } from './firebase';
 
 export interface MoveData {
@@ -31,7 +32,10 @@ export interface TeamSlot {
   id: number | null;
   level: number;
   moves: MoveData[];
+  nature: NatureName;
 }
+
+export type StoredTeamSlot = Omit<TeamSlot, 'nature'> & { nature?: NatureName };
 
 export interface SavedTeam {
   id: string;
@@ -46,12 +50,22 @@ export interface SavedTeam {
 
 export interface TeamDocument {
   name: string;
-  slots: TeamSlot[];
+  slots: StoredTeamSlot[];
   userId: string;
   createdAt: Timestamp | Date; // Firestore timestamp
   updatedAt: Timestamp | Date; // Firestore timestamp
   isPublic?: boolean;
   description?: string;
+}
+
+function normalizeSlot(slot: StoredTeamSlot | null | undefined): TeamSlot {
+  const normalized = slot || { id: null, level: 50, moves: [] };
+  return {
+    id: normalized.id ?? null,
+    level: normalized.level ?? 50,
+    moves: Array.isArray(normalized.moves) ? normalized.moves : [],
+    nature: normalized.nature ?? DEFAULT_NATURE,
+  };
 }
 
 // Convert Firestore document to SavedTeam
@@ -60,7 +74,7 @@ function docToSavedTeam(doc: QueryDocumentSnapshot<DocumentData>): SavedTeam {
   return {
     id: doc.id,
     name: data.name,
-    slots: data.slots,
+    slots: Array.isArray(data.slots) ? data.slots.map(normalizeSlot) : [],
     userId: data.userId,
     createdAt: data.createdAt instanceof Date ? data.createdAt : (data.createdAt as Timestamp)?.toDate() || new Date(),
     updatedAt: data.updatedAt instanceof Date ? data.updatedAt : (data.updatedAt as Timestamp)?.toDate() || new Date(),
@@ -81,7 +95,7 @@ export async function saveTeamToFirebase(
   try {
     const teamData: Omit<TeamDocument, 'createdAt' | 'updatedAt'> = {
       name: team.name,
-      slots: team.slots,
+      slots: team.slots.map(normalizeSlot),
       userId,
       isPublic: team.isPublic || false,
       description: team.description || '',
@@ -126,6 +140,7 @@ export async function updateTeamInFirebase(
 
     await updateDoc(teamRef, {
       ...updates,
+      ...(updates.slots ? { slots: updates.slots.map(normalizeSlot) } : {}),
       updatedAt: serverTimestamp(),
     });
   } catch (error) {

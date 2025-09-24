@@ -49,7 +49,9 @@ export default function PokemonSearch({
         
         // Fetch full Pokémon data for the first 50
         const pokemonPromises = pokemonList.results.map(async (pokemonRef) => {
-          const pokemonId = pokemonRef.url.split('/').slice(-2)[0]
+          const url = (pokemonRef as { url?: string }).url || ''
+          if (!url) return null
+          const pokemonId = url.split('/').slice(-2)[0]
           const id = parseInt(pokemonId)
           
           try {
@@ -132,7 +134,7 @@ export default function PokemonSearch({
           }
         })
 
-        const loadedPokemon = await Promise.all(pokemonPromises)
+        const loadedPokemon = (await Promise.all(pokemonPromises)).filter(Boolean) as Pokemon[]
         setAllPokemon(loadedPokemon)
       } catch (err) {
         console.error('Failed to load initial Pokémon:', err)
@@ -159,7 +161,9 @@ export default function PokemonSearch({
 
       // Fetch full Pokémon data for the next batch
       const pokemonPromises = pokemonList.results.map(async (pokemonRef) => {
-        const pokemonId = pokemonRef.url.split('/').slice(-2)[0]
+        const url = (pokemonRef as { url?: string }).url || ''
+        if (!url) return null
+        const pokemonId = url.split('/').slice(-2)[0]
         const id = parseInt(pokemonId)
         
         try {
@@ -242,7 +246,7 @@ export default function PokemonSearch({
         }
       })
 
-      const newPokemon = await Promise.all(pokemonPromises)
+      const newPokemon = (await Promise.all(pokemonPromises)).filter(Boolean) as Pokemon[]
       setAllPokemon(prev => [...prev, ...newPokemon])
       setCurrentOffset(prev => prev + LOAD_MORE_COUNT)
     } catch (err) {
@@ -303,13 +307,7 @@ export default function PokemonSearch({
     return (
       <div className={`flex items-center justify-center p-8 ${className}`}>
         <div className="text-center">
-          <img 
-            src="/loading.gif" 
-            alt="Loading Pokémon" 
-            width={100} 
-            height={100} 
-            className="mx-auto mb-4"
-          />
+          <img src="/loading.gif" alt="Loading Pokémon" width={100} height={100} className="mx-auto mb-4" />
           <p className="text-muted">Loading Pokémon...</p>
         </div>
       </div>

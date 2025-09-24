@@ -13,6 +13,10 @@
   --color-muted: #6B7280;
   --color-primary: #3B4CCA;
   
+  /* Chart label colors for light mode */
+  --chart-text: #374151;
+  --chart-bg: #ffffff;
+  
   /* Input Colors */
   --color-input-bg: #E0E0E0;
   --color-input-text: #212121;
@@ -55,18 +59,22 @@
   --color-muted: #A1A7B3;
   --color-primary: #3B4CCA;
   
-  /* Input Colors - same for dark mode */
-  --color-input-bg: #E0E0E0;
-  --color-input-text: #212121;
-  --color-input-placeholder: #757575;
+  /* Chart label colors for dark mode */
+  --chart-text: #D1D5DB;
+  --chart-bg: #1F2937;
   
-  /* Button Colors - same for dark mode */
-  --color-google-bg: #F5F5F5;
-  --color-google-border: #E0E0E0;
-  --color-google-text: #212121;
-  --color-signup-bg: #F5F5F5;
-  --color-signup-text: #1565C0;
-  --color-signup-hover: #0D47A1;
+  /* Input Colors - improved for dark mode */
+  --color-input-bg: #1F2937;
+  --color-input-text: #F9FAFB;
+  --color-input-placeholder: #9CA3AF;
+  
+  /* Button Colors - improved for dark mode */
+  --color-google-bg: #374151;
+  --color-google-border: #4B5563;
+  --color-google-text: #F9FAFB;
+  --color-signup-bg: #374151;
+  --color-signup-text: #60A5FA;
+  --color-signup-hover: #3B82F6;
 }
 
 /* Pokémon Gold Theme - Authentic Game Boy Color Style */
@@ -187,8 +195,31 @@
   font-display: swap;
 }
 
+/* Pokemon X and Y Font - loaded from local Font Book install */
+@font-face {
+  font-family: 'Pokemon X and Y';
+  src: local('Pokemon X and Y');
+  font-display: swap;
+}
+
 :root { 
   color-scheme: light dark; 
+}
+
+/* Removed custom button styles - using Tailwind classes directly */
+
+/* Removed custom Tailwind component composites. Use inline classes instead. */
+
+/* Subtle site-wide gradient overlay */
+.site-gradient::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(800px 400px at 10% -10%, rgba(59,130,246,0.10), transparent 60%),
+              radial-gradient(700px 340px at 90% 110%, rgba(244,63,94,0.08), transparent 60%),
+              radial-gradient(600px 300px at -10% 110%, rgba(217,70,239,0.08), transparent 60%);
+  z-index: -1;
 }
 
 html, body { 
@@ -237,6 +268,144 @@ html, body {
 body {
   color: var(--color-text) !important;
 }
+
+/* Improved dark mode text contrast */
+.dark .text-muted {
+  color: #D1D5DB !important; /* Better contrast for muted text */
+}
+
+.dark .text-gray-500 {
+  color: #9CA3AF !important; /* Better contrast for gray-500 text */
+}
+
+.dark .text-gray-400 {
+  color: #A1A7B3 !important; /* Better contrast for gray-400 text */
+}
+
+/* Improved input styling for dark mode */
+.dark input[type="text"],
+.dark input[type="search"],
+.dark input[type="email"],
+.dark input[type="password"],
+.dark input[type="number"],
+.dark select {
+  background-color: var(--color-input-bg) !important;
+  color: var(--color-input-text) !important;
+  border-color: var(--color-border) !important;
+}
+
+.dark input::placeholder {
+  color: var(--color-input-placeholder) !important;
+}
+
+/* Improved checkbox styling for dark mode */
+.dark input[type="checkbox"] {
+  background-color: var(--color-input-bg) !important;
+  border-color: var(--color-border) !important;
+}
+
+.dark input[type="checkbox"]:checked {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+
+/* Improved select styling for dark mode */
+.dark select {
+  background-color: var(--color-input-bg) !important;
+  color: var(--color-input-text) !important;
+  border-color: var(--color-border) !important;
+}
+
+/* Improved range slider styling for dark mode */
+.dark input[type="range"] {
+  accent-color: var(--color-primary) !important;
+}
+
+/* Improved card styling for dark mode */
+.dark .bg-white\/90 {
+  background-color: rgba(31, 41, 55, 0.9) !important;
+}
+
+/* Improved backdrop blur for dark mode */
+.dark .backdrop-blur-sm {
+  backdrop-filter: blur(4px) !important;
+}
+
+/* Improved text contrast for dark mode labels */
+.dark label {
+  color: #E5E7EB !important;
+}
+
+/* Improved button hover states for dark mode */
+.dark button:hover {
+  background-color: rgba(59, 130, 246, 0.1) !important;
+}
+
+/* Improved focus states for dark mode */
+.dark *:focus-visible {
+  outline: 2px solid var(--color-primary) !important;
+  outline-offset: 2px !important;
+}
+
+/* Enhanced card hover effects for dark mode */
+.dark .group:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Improved type filter button contrast in dark mode */
+.dark .type-filter-button {
+  border: 2px solid transparent !important;
+  transition: all 0.3s ease !important;
+}
+
+.dark .type-filter-button:hover {
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  transform: scale(1.05) !important;
+}
+
+/* Improved status indicators for dark mode */
+.dark .status-indicator {
+  background-color: #10B981 !important;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.3) !important;
+}
+
+.dark .status-indicator.filtering {
+  background-color: #F59E0B !important;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.3) !important;
+}
+
+/* Enhanced scrollbar styling for dark mode */
+.dark ::-webkit-scrollbar {
+  width: 8px !important;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #1F2937 !important;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #4B5563 !important;
+  border-radius: 4px !important;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #6B7280 !important;
+}
+
+/* Improved mobile menu styling for dark mode */
+.dark .mobile-menu {
+  background-color: var(--color-surface) !important;
+  border-color: var(--color-border) !important;
+}
+
+/* Enhanced loading states for dark mode */
+.dark .loading-spinner {
+  border-color: var(--color-primary) !important;
+  border-top-color: transparent !important;
+}
+
+/* Removed custom badge styling - using Tailwind classes directly */
 
 /* Primary color utility classes */
 .bg-primary {
@@ -429,27 +598,7 @@ body.pokedex-main-page .h-screen .flex-shrink-0 .overflow-y-auto {
   overflow-y: auto !important;
 }
 
-/* Ensure header buttons are perfectly round */
-header button[class*="w-16"][class*="h-16"] {
-  border-radius: 50% !important;
-  width: 64px !important;
-  height: 64px !important;
-  min-width: 64px !important;
-  min-height: 64px !important;
-  max-width: 64px !important;
-  max-height: 64px !important;
-}
-
-/* Ensure smaller profile buttons are perfectly round */
-header button[class*="w-8"][class*="h-8"] {
-  border-radius: 50% !important;
-  width: 32px !important;
-  height: 32px !important;
-  min-width: 32px !important;
-  min-height: 32px !important;
-  max-width: 32px !important;
-  max-height: 32px !important;
-}
+/* Removed fixed sizing overrides to allow Tailwind responsive classes */
 
 @media (min-width: 1024px) {
   body.pokedex-main-page .flex-1.min-h-0.overflow-y-auto {
@@ -564,6 +713,43 @@ section { padding-top: 1rem; padding-bottom: 1rem; }
   transition-duration: 150ms;
 }
 
+/* Enhanced responsive header icon transitions */
+header button {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition-property: width, height, min-width, min-height, max-width, max-height, transform, box-shadow !important;
+}
+
+/* Ensure header icons resize smoothly on viewport changes */
+@media (max-width: 640px) {
+  header button[class*="w-8"] {
+    transition: all 0.3s ease-in-out !important;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 768px) {
+  header button[class*="sm:w-12"] {
+    transition: all 0.3s ease-in-out !important;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  header button[class*="md:w-14"] {
+    transition: all 0.3s ease-in-out !important;
+  }
+}
+
+@media (min-width: 1025px) and (max-width: 1280px) {
+  header button[class*="lg:w-16"] {
+    transition: all 0.3s ease-in-out !important;
+  }
+}
+
+@media (min-width: 1281px) {
+  header button[class*="xl:w-20"] {
+    transition: all 0.3s ease-in-out !important;
+  }
+}
+
 /* Retro pixelated image rendering for gold theme */
 .image-render-pixel {
   image-rendering: pixelated;
@@ -672,10 +858,7 @@ section { padding-top: 1rem; padding-bottom: 1rem; }
   container-type: inline-size; 
 }
 
-/* Hide only the name when card width < 175px */
-@container (max-width: 175px) {
-  .cq-card .card-name { display: none; }
-}
+/* Removed CSS rule that was hiding names in 9-column view */
 
 @container (max-width: 105px) {
   /* Keep header so number can show; hide controls inside */
@@ -696,7 +879,6 @@ section { padding-top: 1rem; padding-bottom: 1rem; }
   .cq-card .card-name { display: none; }
   .cq-card .card-badges { display: none; }
   .cq-card .card-art { 
-    aspect-ratio: 1 / 1 !important; 
     max-height: none; 
     margin-bottom: 0; 
   }
@@ -1162,10 +1344,8 @@ section { padding-top: 1rem; padding-bottom: 1rem; }
   flex-wrap: nowrap;
 }
 
-/* Container button */
+/* Container button - removed fixed sizing to allow Tailwind responsive classes */
 .pk-btn {
-  width: 72px;                /* adjust size as needed */
-  height: 72px;
   background: radial-gradient(circle at 30% 30%, #ffffff 0%, #e6e6e6 100%);
   border: 1px solid #222;
   border-radius: 50%;         /* circular container */
@@ -1177,10 +1357,8 @@ section { padding-top: 1rem; padding-bottom: 1rem; }
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-/* Profile button - same characteristics as pk-btn but without container */
+/* Profile button - removed fixed sizing to allow Tailwind responsive classes */
 .pk-btn-profile {
-  width: 72px;                /* same size as other buttons */
-  height: 72px;
   background: radial-gradient(circle at 30% 30%, #ffffff 0%, #e6e6e6 100%);
   border: 1.5px solid #222;
   border-radius: 50%;         /* circular button */
@@ -1215,77 +1393,11 @@ section { padding-top: 1rem; padding-bottom: 1rem; }
   box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
-/* Icon inside container */
-.pk-btn img {
-  width: 75%;                /* increased from 65% for better containment */
-  height: auto;
-  pointer-events: none;       /* prevent image from catching clicks */
-  border-radius: 50%;         /* ensure icons are properly rounded */
-  object-fit: contain;        /* maintain aspect ratio */
-  transform: scale(1.1);      /* add slight zoom for better visibility */
-  transition: transform 0.2s ease; /* smooth transition for hover effects */
-}
+/* Removed fixed image sizing to allow Tailwind responsive classes */
 
-/* Specific styling for hamburger menu icon to ensure consistency */
-.pk-btn img[src*="hamburger-menu"] {
-  border-radius: 50%;         /* force circular shape */
-  background: transparent;    /* ensure no background interference */
-  width: 75% !important;      /* increased from 65% for consistency */
-  height: 75% !important;     /* maintain consistent height */
-  object-fit: contain;        /* maintain aspect ratio */
-  transform: scale(1.1);      /* add slight zoom for better visibility */
-  transition: transform 0.2s ease; /* smooth transition for hover effects */
-}
+/* Removed desktop icon scaling overrides to allow Tailwind responsive sizing */
 
-/* Desktop viewport: double visible size of header icon images */
-@media (min-width: 1024px) {
-  .pk-btn img {
-    width: 100%;
-    height: auto;
-    transform: scale(1.6); /* ~2x vs previous 75% * 1.1 */
-  }
-  .pk-btn img[src*="hamburger-menu"] {
-    width: 100% !important;
-    height: 100% !important;
-    transform: scale(1.6);
-  }
-}
-
-/* Tablet viewport: match desktop icon size */
-@media (min-width: 768px) and (max-width: 1023px) {
-  .pk-btn img {
-    width: 100%;
-    height: auto;
-    transform: scale(1.6);
-  }
-  .pk-btn img[src*="hamburger-menu"] {
-    width: 100% !important;
-    height: 100% !important;
-    transform: scale(1.6);
-  }
-}
-
-/* Profile picture styling within pk-btn */
-.pk-btn img.rounded-full {
-  width: 70% !important;      /* match other icons */
-  height: 70% !important;     /* maintain circular shape */
-  object-fit: cover;          /* ensure proper image fitting */
-  border-radius: 50%;         /* ensure circular shape */
-  aspect-ratio: 1;            /* ensure perfect circle */
-}
-
-.pk-btn > div.rounded-full {
-  width: 70% !important;      /* slightly larger for better fit */
-  height: 70% !important;     /* maintain circular shape */
-  font-size: 0.875rem;        /* slightly larger text for better visibility */
-  border-radius: 50%;         /* ensure circular shape */
-  display: flex;              /* ensure proper centering */
-  align-items: center;        /* center vertically */
-  justify-content: center;    /* center horizontally */
-  min-width: 0;               /* prevent width issues */
-  min-height: 0;              /* prevent height issues */
-  aspect-ratio: 1;            /* ensure perfect circle */
-}
+/* Removed profile picture sizing overrides to allow Tailwind responsive sizing */
 
 /* Dark mode variant for toolbar buttons */
 html.dark .pk-btn {
@@ -1316,7 +1428,7 @@ html.dark .pk-btn-profile:active {
   box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
 
-/* Responsive adjustments for mobile */
+/* Responsive adjustments for mobile - removed fixed sizing to allow Tailwind classes */
 @media (max-width: 768px) {
   .pk-toolbar {
     gap: 0.5rem;
@@ -1327,197 +1439,16 @@ html.dark .pk-btn-profile:active {
     align-items: center;
     width: 100%;
   }
-  
-  .pk-btn {
-    width: 48px;
-    height: 48px;
-    flex-shrink: 0;
-  }
-  
-  .pk-btn-profile {
-    width: 48px;
-    height: 48px;
-    flex-shrink: 0;
-  }
 }
 
-@media (max-width: 480px) {
-  .pk-toolbar {
-    gap: 0.375rem;
-    padding: 0.125rem;
-    justify-content: space-between;
-    flex-direction: row;
-    flex-wrap: nowrap;
-  }
-  
-  .pk-btn {
-    width: 44px;
-    height: 44px;
-  }
-  
-  .pk-btn-profile {
-    width: 44px;
-    height: 44px;
-  }
-}
-
-/* Ensure mobile header buttons are properly sized and visible */
-@media (max-width: 768px) {
-  .pk-btn {
-    min-width: 44px;
-    min-height: 44px;
-    max-width: 48px;
-    max-height: 48px;
-  }
-  
-  .pk-btn-profile {
-    min-width: 44px;
-    min-height: 44px;
-    max-width: 48px;
-    max-height: 48px;
-  }
-  
-  /* Mobile-specific profile button improvements */
-  .pk-btn > div.rounded-full {
-    font-size: 0.75rem;        /* slightly smaller text on mobile */
-  }
-  
-  .pk-btn img.rounded-full {
-    width: 80% !important;     /* slightly larger on mobile for better visibility */
-    height: 80% !important;
-    transform: scale(1.1);      /* add slight zoom for better visibility */
-    transition: transform 0.2s ease; /* smooth transition for hover effects */
-  }
-
-  /* Double the visible size of header icon images on mobile */
-  .pk-btn img {
-    width: 100%;
-    height: auto;
-    transform: scale(1.6);
-  }
-  .pk-btn img[src*="hamburger-menu"] {
-    width: 100% !important;
-    height: 100% !important;
-    transform: scale(1.6);
-  }
-}
-
-/* UserDropdown specific overrides - higher specificity */
-.user-dropdown-container .user-dropdown-button {
-  width: 64px !important;
-  height: 64px !important;
-  border-radius: 50% !important;
-  aspect-ratio: 1 / 1 !important;
-  min-width: 64px !important;
-  min-height: 64px !important;
-  max-width: 64px !important;
-  max-height: 64px !important;
-}
-
-/* Override any pk-btn constraints on UserDropdown */
-.user-dropdown-container .user-dropdown-button.pk-btn,
-.user-dropdown-container .user-dropdown-button[class*="pk-btn"] {
-  width: 64px !important;
-  height: 64px !important;
-  min-width: 64px !important;
-  min-height: 64px !important;
-  max-width: 64px !important;
-  max-height: 64px !important;
-}
-
+/* UserDropdown styling - removed fixed sizing to allow Tailwind responsive classes */
 .user-dropdown-container .user-dropdown-image {
-  width: 100% !important;
-  height: 100% !important;
   border-radius: 50% !important;
   aspect-ratio: 1 / 1 !important;
   object-fit: cover !important;
   min-width: 0 !important;
   min-height: 0 !important;
   transform: none !important;
-}
-
-/* Override any pk-btn rules for UserDropdown */
-.user-dropdown-container .user-dropdown-button img.rounded-full {
-  width: 100% !important;
-  height: 100% !important;
-  border-radius: 50% !important;
-  aspect-ratio: 1 / 1 !important;
-  object-fit: cover !important;
-  transform: none !important;
-}
-
-/* Mobile-specific overrides for UserDropdown */
-@media (max-width: 768px) {
-  .user-dropdown-container .user-dropdown-button {
-    width: 64px !important;
-    height: 64px !important;
-    min-width: 64px !important;
-    min-height: 64px !important;
-    max-width: 64px !important;
-    max-height: 64px !important;
-  }
-  
-  .user-dropdown-container .user-dropdown-image {
-    width: 100% !important;
-    height: 100% !important;
-    border-radius: 50% !important;
-    aspect-ratio: 1 / 1 !important;
-    object-fit: cover !important;
-    transform: none !important;
-  }
-}
-
-@media (max-width: 480px) {
-  .user-dropdown-container .user-dropdown-button {
-    width: 64px !important;
-    height: 64px !important;
-    min-width: 64px !important;
-    min-height: 64px !important;
-    max-width: 64px !important;
-    max-height: 64px !important;
-  }
-  
-  .user-dropdown-container .user-dropdown-image {
-    width: 100% !important;
-    height: 100% !important;
-    border-radius: 50% !important;
-    aspect-ratio: 1 / 1 !important;
-    object-fit: cover !important;
-    transform: none !important;
-  }
-}
-
-/* Nuclear option - highest specificity override */
-div.user-dropdown-container button.user-dropdown-button {
-  width: 64px !important;
-  height: 64px !important;
-  min-width: 64px !important;
-  min-height: 64px !important;
-  max-width: 64px !important;
-  max-height: 64px !important;
-  border-radius: 50% !important;
-  aspect-ratio: 1 / 1 !important;
-}
-
-div.user-dropdown-container button.user-dropdown-button img.user-dropdown-image {
-  width: 100% !important;
-  height: 100% !important;
-  border-radius: 50% !important;
-  aspect-ratio: 1 / 1 !important;
-  object-fit: cover !important;
-  transform: none !important;
-  min-width: 0 !important;
-  min-height: 0 !important;
-}
-
-/* Ultimate override using CSS custom properties */
-.user-dropdown-container[style*="--user-dropdown-size"] .user-dropdown-button {
-  width: var(--user-dropdown-size, 64px) !important;
-  height: var(--user-dropdown-size, 64px) !important;
-  min-width: var(--user-dropdown-size, 64px) !important;
-  min-height: var(--user-dropdown-size, 64px) !important;
-  max-width: var(--user-dropdown-size, 64px) !important;
-  max-height: var(--user-dropdown-size, 64px) !important;
 }
 
 /* Ensure consistent control height across inputs and selects */
@@ -2015,5 +1946,3 @@ div.user-dropdown-container button.user-dropdown-button img.user-dropdown-image 
     animation-duration: 0.3s;
   }
 }
-
-

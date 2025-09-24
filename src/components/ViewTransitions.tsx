@@ -136,24 +136,24 @@ export default function ViewTransitions({ children }: ViewTransitionsProps) {
   return <>{children}</>
 }
 
-// Get transition duration based on type
+// Get transition duration based on type - optimized for faster navigation
 function getTransitionDuration(transitionType: TransitionType): number {
   switch (transitionType) {
     case 'battle-flash':
     case 'electric':
-      return 300
+      return 200 // Reduced from 300
     case 'pokeball':
     case 'pokedex-swipe':
     case 'pokedex-swipe-inverted':
     case 'water':
-      return 400
+      return 250 // Reduced from 400
     case 'tile-flip':
     case 'trainer-card':
-      return 500
+      return 300 // Reduced from 500
     case 'energy-aura':
-      return 600
+      return 350 // Reduced from 600
     default:
-      return 400
+      return 250 // Reduced from 400
   }
 }
 

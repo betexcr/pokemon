@@ -45,6 +45,7 @@ export const BattleSprite = forwardRef<BattleSpriteRef, BattleSpriteProps>(({
   onAnimationComplete,
   spriteMode = 'static'
 }, ref) => {
+  console.log('🎨 BattleSprite render:', { species, side, spriteMode });
   const spriteRef = useRef<HTMLDivElement>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -58,6 +59,14 @@ export const BattleSprite = forwardRef<BattleSpriteRef, BattleSpriteProps>(({
   // Use comprehensive fallback system
   const { primary, fallbacks } = pokemonId ? getPokemonImageWithFallbacks(pokemonId, species, variant) : { primary: '', fallbacks: [] };
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  
+  console.log('🎨 BattleSprite image URLs:', { 
+    species, 
+    variant, 
+    spriteMode, 
+    primary, 
+    currentImage: currentImageIndex === 0 ? primary : fallbacks[currentImageIndex - 1]
+  });
 
   // Reset image state when species changes
   useEffect(() => {
@@ -183,7 +192,7 @@ export const BattleSprite = forwardRef<BattleSpriteRef, BattleSpriteProps>(({
         )}
 
         {/* Field Auras */}
-        {volatiles?.subHp && volatiles.subHp > 0 && (
+        {(volatiles?.subHp ?? 0) > 0 && (
           <div className="absolute -top-2 -right-2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold animate-pulse">
             S
           </div>
@@ -196,19 +205,19 @@ export const BattleSprite = forwardRef<BattleSpriteRef, BattleSpriteProps>(({
         )}
 
         {/* Field Effects */}
-        {field?.safeguardTurns && field.safeguardTurns > 0 && (
+        {(field?.safeguardTurns ?? 0) > 0 && (
           <div className="absolute -bottom-2 -right-2 w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
             SG
           </div>
         )}
         
-        {field?.reflectTurns && field.reflectTurns > 0 && (
+        {(field?.reflectTurns ?? 0) > 0 && (
           <div className="absolute -bottom-2 -left-2 w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
             R
           </div>
         )}
         
-        {field?.lightScreenTurns && field.lightScreenTurns > 0 && (
+        {(field?.lightScreenTurns ?? 0) > 0 && (
           <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-6 h-6 bg-cyan-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
             LS
           </div>
@@ -217,12 +226,14 @@ export const BattleSprite = forwardRef<BattleSpriteRef, BattleSpriteProps>(({
 
       {/* Pokemon Info */}
       <div className="text-center space-y-1">
-        {/* Name and Level */}
+        {/* Name (hide zero-level display to avoid showing 000) */}
         <div className="flex items-center justify-center gap-2">
           <h3 className="font-bold text-lg capitalize">
             {formatPokemonName(species)}
           </h3>
-          <span className="text-sm text-gray-600">Lv.{level}</span>
+          {level > 0 && (
+            <span className="text-sm text-gray-600">Lv.{level}</span>
+          )}
         </div>
 
         {/* Types */}

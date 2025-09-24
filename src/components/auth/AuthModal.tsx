@@ -84,14 +84,14 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
         width: '100vw',
         height: '100vh'
       }}
+      data-testid="auth-modal"
       onClick={onClose}
     >
       {/* Modal Content */}
       <div 
-        className="relative bg-white shadow-2xl overflow-hidden w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl"
+        className="relative bg-surface text-text border border-border shadow-2xl overflow-hidden w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl"
         style={{
           borderRadius: '1.5rem',
-          backgroundColor: 'white',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05)',
           maxHeight: '90vh',
           overflowY: 'auto'
@@ -101,10 +101,10 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 sm:top-4 sm:right-4 bg-white/90 hover:bg-white rounded-full p-2 shadow-lg border border-gray-200 cursor-pointer flex items-center justify-center hover:scale-105 transition-all duration-200 z-10 backdrop-blur-sm"
+          className="absolute top-3 right-3 sm:top-4 sm:right-4 bg-surface/90 hover:bg-surface rounded-full p-2 shadow-lg border border-border cursor-pointer flex items-center justify-center hover:scale-105 transition-all duration-200 z-10 backdrop-blur-sm"
           aria-label="Close modal"
         >
-          <X className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
+          <X className="h-4 w-4 sm:h-5 sm:w-5 text-muted" />
         </button>
         
         {/* Hero Image */}

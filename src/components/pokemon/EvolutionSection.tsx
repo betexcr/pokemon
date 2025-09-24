@@ -1,6 +1,7 @@
 import Link from "next/link";
 import TypeBadge from "@/components/TypeBadge";
 import Image from "next/image";
+import { formatPokemonName } from "@/lib/utils";
 
 type Node = { id:number; name:string; types:string[]; condition?:string };
 
@@ -41,11 +42,12 @@ export default function EvolutionSection({ chain, selectedSprite = 'default' }: 
                     <div className="relative w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 flex items-center justify-center flex-shrink-0">
                       <Image
                         src={imageUrl}
-                        alt={n.name}
+                        alt={formatPokemonName(n.name)}
                         width={192}
                         height={192}
                         className="object-contain w-full h-full"
                         sizes="(max-width: 640px) 128px, (max-width: 768px) 160px, 192px"
+                        loading="lazy"
                         onError={(e) => {
                           e.currentTarget.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${n.id}.png`
                         }}
@@ -54,7 +56,7 @@ export default function EvolutionSection({ chain, selectedSprite = 'default' }: 
                   </div>
                   
                   <div className="p-3 text-center">
-                    <div className="capitalize font-semibold text-sm sm:text-base">{n.name}</div>
+                    <div className="font-semibold text-sm sm:text-base">{formatPokemonName(n.name)}</div>
                     <div className="mt-1 flex justify-center gap-1">
                       {n.types.map((t, index) => <TypeBadge key={`${t}-${index}`} type={t} className="text-xs"/>)}
                     </div>

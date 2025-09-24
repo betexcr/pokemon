@@ -23,11 +23,46 @@ import { updateTeamInFirebase } from '@/lib/userTeams'
 import AuthModal from '@/components/auth/AuthModal'
 import AppHeader from '@/components/AppHeader'
 import PokemonSelector from '@/components/PokemonSelector'
+import { DEFAULT_NATURE, NATURES, type NatureName, type NatureStat } from '@/data/natures'
+import { analyzeTeam, type TeamAnalysis } from '@/lib/team/engine'
+import { convertTeamSlotsToSimple } from '@/lib/team/converter'
+import TypeRadar from '@/components/team/TypeRadar'
+import WeaknessMatrix from '@/components/team/WeaknessMatrix'
+import OffenseMatrix from '@/components/team/OffenseMatrix'
+import Suggestions from '@/components/team/Suggestions'
 
 // Types are now imported from userTeams.ts
 
+const NATURE_STAT_LABEL: Record<NatureStat, string> = {
+  attack: 'Atk',
+  defense: 'Def',
+  'special-attack': 'SpA',
+  'special-defense': 'SpD',
+  speed: 'Spe'
+}
+
+const createEmptySlot = (): TeamSlot => ({ id: null, level: 50, moves: [] as MoveData[], nature: DEFAULT_NATURE })
+
+const normalizeTeamSlots = (slots?: Array<Partial<TeamSlot>> | null): TeamSlot[] => {
+  const source = Array.isArray(slots) ? slots : []
+  return Array.from({ length: 6 }, (_, index) => {
+    const slot = source[index]
+    if (!slot) return createEmptySlot()
+    const baseLevel = typeof slot.level === 'number' ? Math.round(slot.level) : 50
+    const clampedLevel = Math.min(100, Math.max(1, baseLevel || 50))
+    const moves = Array.isArray(slot.moves) ? [...slot.moves] as MoveData[] : []
+    return {
+      id: typeof slot.id === 'number' ? slot.id : null,
+      level: clampedLevel,
+      moves,
+      nature: slot.nature ?? DEFAULT_NATURE
+    }
+  })
+}
+
 const STORAGE_KEY = 'pokemon-team-builder'
 const CURRENT_TEAM_KEY = 'pokemon-current-team'
+const DISPLAY_POKEMON_KEY = 'pokemon-display-cache'
 
 export default function TeamBuilderPage() {
   const router = useRouter()
@@ -36,10 +71,12 @@ export default function TeamBuilderPage() {
   const [allPokemon, setAllPokemon] = useState<Pokemon[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  // Local cache for Pokémon not yet present in the infinite list so they render on reload
+  const [displayPokemonById, setDisplayPokemonById] = useState<Record<number, Pokemon>>({})
+  // Force re-analysis when Pokemon data is loaded
+  const [analysisTrigger, setAnalysisTrigger] = useState(0)
   const [availableMoves, setAvailableMoves] = useState<Record<number, Array<{ name: string; type: string; damage_class: "physical" | "special" | "status"; power: number | null; accuracy: number | null; pp: number | null; level_learned_at: number | null; learn_method: string; short_effect?: string | null }>>>({})
-  const [teamSlots, setTeamSlots] = useState<TeamSlot[]>(
-    Array.from({ length: 6 }, () => ({ id: null, level: 50, moves: [] as MoveData[] }))
-  )
+  const [teamSlots, setTeamSlots] = useState<TeamSlot[]>(() => normalizeTeamSlots())
   const [lastSelectedPokemon, setLastSelectedPokemon] = useState<number | null>(null)
   const [savedTeams, setSavedTeams] = useState<FirebaseSavedTeam[]>([])
   const [teamName, setTeamName] = useState('')
@@ -105,7 +142,8 @@ export default function TeamBuilderPage() {
       
       // Create basic Pokémon objects with minimal data
       const newPokemon = pokemonList.results.map((pokemonRef) => {
-        const pokemonId = pokemonRef.url.split('/').slice(-2)[0]
+        const pokemonId = pokemonRef.url?.split('/').slice(-2)[0]
+        if (!pokemonId) return null
         const id = parseInt(pokemonId)
         
         return {
@@ -144,7 +182,7 @@ export default function TeamBuilderPage() {
           types: [], // Will be populated when Pokémon is selected
           species: { name: pokemonRef.name, url: '' }
         } as Pokemon
-      })
+      }).filter(Boolean) as Pokemon[]
 
       setAllPokemon(prev => [...prev, ...newPokemon])
       setPokemonOffset(newOffset)
@@ -273,7 +311,23 @@ export default function TeamBuilderPage() {
     } catch (error) {
       console.error('Failed to load current team:', error)
     }
-    return Array.from({ length: 6 }, () => ({ id: null, level: 50, moves: [] as MoveData[] }))
+    return Array.from({ length: 6 }, () => createEmptySlot())
+  }, [])
+
+  // Load display Pokemon cache from localStorage
+  const loadDisplayPokemon = useCallback(() => {
+    try {
+      const saved = localStorage.getItem(DISPLAY_POKEMON_KEY)
+      if (saved) {
+        const parsed = JSON.parse(saved) as Record<number, Pokemon>
+        if (parsed && typeof parsed === 'object') {
+          return parsed
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load display Pokemon cache:', error)
+    }
+    return {}
   }, [])
 
   // Persist current team state to localStorage
@@ -282,6 +336,15 @@ export default function TeamBuilderPage() {
       localStorage.setItem(CURRENT_TEAM_KEY, JSON.stringify(slots))
     } catch (error) {
       console.error('Failed to persist current team:', error)
+    }
+  }, [])
+
+  // Persist display Pokemon cache to localStorage
+  const persistDisplayPokemon = useCallback((pokemonCache: Record<number, Pokemon>) => {
+    try {
+      localStorage.setItem(DISPLAY_POKEMON_KEY, JSON.stringify(pokemonCache))
+    } catch (error) {
+      console.error('Failed to persist display Pokemon cache:', error)
     }
   }, [])
 
@@ -294,6 +357,10 @@ export default function TeamBuilderPage() {
         // Load current team state first
         const currentTeam = loadCurrentTeam()
         setTeamSlots(currentTeam)
+        
+        // Load display Pokemon cache
+        const displayCache = loadDisplayPokemon()
+        setDisplayPokemonById(displayCache)
         
         // Set collapsed state based on which slots have Pokémon
         const newCollapsedSlots = new Set<number>()
@@ -314,7 +381,8 @@ export default function TeamBuilderPage() {
         
         // Create basic Pokémon objects with minimal data for search
         const basicPokemon = pokemonList.results.map((pokemonRef) => {
-          const pokemonId = pokemonRef.url.split('/').slice(-2)[0]
+          const pokemonId = pokemonRef.url?.split('/').slice(-2)[0]
+          if (!pokemonId) return null
           const id = parseInt(pokemonId)
           
           return {
@@ -353,11 +421,36 @@ export default function TeamBuilderPage() {
             types: [], // Will be populated when Pokémon is selected
             species: { name: pokemonRef.name, url: '' }
           } as Pokemon
-        })
+        }).filter(Boolean) as Pokemon[]
 
         setAllPokemon(basicPokemon)
         setPokemonOffset(50)
         setHasMorePokemon(totalCount > 50)
+
+        // Auto-load Pokemon data if team is already loaded
+        const teamPokemon = currentTeam.filter(slot => slot.id !== null)
+        if (teamPokemon.length > 0) {
+          console.log('Auto-loading Pokemon data for existing team...')
+          const pokemonPromises = teamPokemon.map(async (slot) => {
+            try {
+              const fullPokemon = await getPokemon(slot.id!)
+              setDisplayPokemonById(prev => {
+                const updated = { ...prev, [fullPokemon.id]: fullPokemon }
+                persistDisplayPokemon(updated)
+                return updated
+              })
+              console.log(`Auto-loaded Pokemon ${fullPokemon.name}:`, { types: fullPokemon.types, stats: fullPokemon.stats.length })
+              return fullPokemon
+            } catch (error) {
+              console.error(`Failed to auto-load Pokemon ${slot.id}:`, error)
+              return null
+            }
+          })
+          await Promise.all(pokemonPromises)
+          
+          // Trigger analysis after auto-loading
+          setAnalysisTrigger(prev => prev + 1)
+        }
       } catch (e) {
         console.error('Error loading Pokémon:', e)
         setError('Failed to load Pokémon list')
@@ -366,7 +459,7 @@ export default function TeamBuilderPage() {
       }
     }
     load()
-  }, [loadCurrentTeam])
+  }, [loadCurrentTeam, loadDisplayPokemon])
 
   // Load saved teams from Firebase or localStorage
   useEffect(() => {
@@ -377,6 +470,7 @@ export default function TeamBuilderPage() {
           setSyncing(true)
           const firebaseTeams = await getUserTeams(user.uid)
           setSavedTeams(firebaseTeams)
+          console.log('Loaded teams from Firebase:', firebaseTeams.length)
           
           // Also sync any local teams to Firebase
           try {
@@ -429,6 +523,19 @@ export default function TeamBuilderPage() {
     return withPokemon.every(s => (s.moves?.length || 0) === 4)
   }, [teamSlots])
 
+  // Team analysis for the analysis panels
+  const teamAnalysis = useMemo(() => {
+    const simpleTeam = convertTeamSlotsToSimple(teamSlots, allPokemon, displayPokemonById)
+    console.log('Team analysis data:', { 
+      teamSlots: teamSlots.filter(s => s.id !== null).length, 
+      allPokemon: allPokemon.length, 
+      displayPokemonById: Object.keys(displayPokemonById).length, 
+      simpleTeam: simpleTeam.map(p => ({ name: p.name, types: p.types })),
+      analysisTrigger 
+    })
+    return analyzeTeam(simpleTeam)
+  }, [teamSlots, allPokemon, displayPokemonById, analysisTrigger])
+
   const setSlot = async (idx: number, patch: Partial<TeamSlot>) => {
     if (patch.id && typeof patch.id === 'number') {
       // Track the last selected Pokémon for dropdown memory
@@ -441,10 +548,12 @@ export default function TeamBuilderPage() {
           // Not in local list yet (e.g., added via search beyond initial page) → fetch and insert
           const fullPokemon = await getPokemon(patch.id as number)
           setAllPokemon(prev => [...prev, fullPokemon])
+          setDisplayPokemonById(prev => ({ ...prev, [fullPokemon.id]: fullPokemon }))
         } else if (existingPokemon.types.length === 0 || existingPokemon.stats.length === 0) {
           // Present but partial → upgrade to full data
           const fullPokemon = await getPokemon(patch.id as number)
           setAllPokemon(prev => prev.map(p => p.id === patch.id ? fullPokemon : p))
+          setDisplayPokemonById(prev => ({ ...prev, [fullPokemon.id]: fullPokemon }))
         }
       } catch (error) {
         console.error('Failed to fetch Pokémon details:', error)
@@ -477,6 +586,11 @@ export default function TeamBuilderPage() {
     })
     setTeamSlots(newTeamSlots)
     
+    // If the removed Pokémon was the last selected, clear it so it doesn't stick in UI
+    if (patch.id === null && lastSelectedPokemon !== null && teamSlots[idx].id === lastSelectedPokemon) {
+      setLastSelectedPokemon(null)
+    }
+    
     // Persist the updated team state
     persistCurrentTeam(newTeamSlots)
     
@@ -497,7 +611,7 @@ export default function TeamBuilderPage() {
   }
 
   const clearTeam = () => {
-    const emptySlots = Array.from({ length: 6 }, () => ({ id: null, level: 50, moves: [] as MoveData[] }))
+    const emptySlots = Array.from({ length: 6 }, () => createEmptySlot())
     setTeamSlots(emptySlots)
     setCollapsedSlots(new Set([0, 1, 2, 3, 4, 5])) // Collapse all slots when clearing team
     persistCurrentTeam(emptySlots) // Clear persisted state
@@ -601,6 +715,7 @@ export default function TeamBuilderPage() {
   }
 
   const loadTeam = async (team: FirebaseSavedTeam) => {
+    console.log('Loading team:', team.name, 'with slots:', team.slots.map(s => ({ id: s.id, level: s.level })));
     setTeamSlots(team.slots)
     setTeamName(team.name)
     
@@ -615,6 +730,31 @@ export default function TeamBuilderPage() {
       }
     })
     setCollapsedSlots(newCollapsedSlots)
+    
+    // Fetch and cache Pokemon data for team analysis
+    const pokemonPromises = team.slots
+      .filter(slot => slot.id !== null)
+      .map(async (slot) => {
+        try {
+          // Always fetch full Pokemon data for team analysis
+          const fullPokemon = await getPokemon(slot.id!)
+          setDisplayPokemonById(prev => {
+            const updated = { ...prev, [fullPokemon.id]: fullPokemon }
+            persistDisplayPokemon(updated)
+            return updated
+          })
+          console.log(`Loaded Pokemon ${fullPokemon.name}:`, { types: fullPokemon.types, stats: fullPokemon.stats.length })
+          return fullPokemon
+        } catch (error) {
+          console.error(`Failed to fetch Pokemon ${slot.id}:`, error)
+          return null
+        }
+      })
+    
+    await Promise.all(pokemonPromises)
+    
+    // Trigger re-analysis after Pokemon data is loaded
+    setAnalysisTrigger(prev => prev + 1)
     
     // Load available moves for each Pokemon in the team
     const movePromises = team.slots.map(async (slot, idx) => {
@@ -878,13 +1018,15 @@ export default function TeamBuilderPage() {
         title="Team Builder"
         backLink="/"
         backLabel="Back to PokéDex"
-        showToolbar={false}
-        showThemeToggle={false}
+        showToolbar={true}
+        showThemeToggle={true}
         iconKey="team-builder"
         showIcon={true}
       />
 
       <main className="max-w-7xl mx-auto px-4 py-6 space-y-6 overflow-x-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6">
+          <div className="space-y-6">
         {/* Add Pokémon Search */}
         <section className="border border-border rounded-xl bg-surface p-4 overflow-visible">
           <h2 className="text-lg font-semibold mb-4 text-text">Add Pokémon</h2>
@@ -892,8 +1034,15 @@ export default function TeamBuilderPage() {
           {/* Quick Add Pokemon Selector */}
           <div className="mb-4">
             <PokemonSelector
-              selectedPokemon={teamSlots.filter(slot => slot.id !== null).map(slot => allPokemon.find(p => p.id === slot.id)).filter(Boolean) as Pokemon[]}
+              selectedPokemon={teamSlots.filter(slot => slot.id !== null).map(slot => allPokemon.find(p => p.id === slot.id) || displayPokemonById[slot.id!]).filter(Boolean) as Pokemon[]}
               onPokemonSelect={async (pokemon) => {
+                // Cache full Pokémon data for immediate display even if not yet in the infinite list
+                setDisplayPokemonById(prev => {
+                  const updated = { ...prev, [pokemon.id]: pokemon }
+                  persistDisplayPokemon(updated)
+                  return updated
+                })
+                
                 const isVisiblyEmpty = (i: number) => {
                   const slot = teamSlots[i]
                   if (!slot) return false
@@ -911,12 +1060,16 @@ export default function TeamBuilderPage() {
                     return newSet
                   })
                   setActiveSlotIndex(preferred)
+                  // Trigger re-analysis after Pokemon is added
+                  setAnalysisTrigger(prev => prev + 1)
                 }
               }}
               onPokemonRemove={(pokemonId) => {
                 const slotIndex = teamSlots.findIndex(s => s.id === pokemonId)
                 if (slotIndex !== -1) {
                   setSlot(slotIndex, { id: null })
+                  // Trigger re-analysis after Pokemon is removed
+                  setAnalysisTrigger(prev => prev + 1)
                 }
               }}
               maxSelections={6}
@@ -982,7 +1135,11 @@ export default function TeamBuilderPage() {
                                   lastPokemon.types.map((typeObj) => {
                                     const typeName = typeof typeObj === 'string' ? typeObj : typeObj.type?.name
                                     return typeName ? (
-                                      <TypeBadge key={`${lastPokemon.id}-${typeName}`} type={typeName} variant="span" />
+                                      <Tooltip content={`Type: ${typeName}`} position="top">
+                                        <span>
+                                          <TypeBadge key={`${lastPokemon.id}-${typeName}`} type={typeName} variant="span" />
+                                        </span>
+                                      </Tooltip>
                                     ) : null
                                   })
                                 ) : (
@@ -1047,7 +1204,11 @@ export default function TeamBuilderPage() {
                               // Handle both object format { type: { name: "fire" } } and string format "fire"
                               const typeName = typeof typeObj === 'string' ? typeObj : typeObj.type?.name
                               return typeName ? (
-                                <TypeBadge key={`${pokemon.id}-${typeName}`} type={typeName} variant="span" />
+                                <Tooltip content={`Type: ${typeName}`} position="top">
+                                  <span>
+                                    <TypeBadge key={`${pokemon.id}-${typeName}`} type={typeName} variant="span" />
+                                  </span>
+                                </Tooltip>
                               ) : null
                             })
                           ) : (
@@ -1145,7 +1306,7 @@ export default function TeamBuilderPage() {
           )}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 w-full">
             {teamSlots.map((slot, idx) => {
-              const poke = allPokemon.find(p => p.id === slot.id) || null
+              const poke = (slot.id ? (displayPokemonById[slot.id] || allPokemon.find(p => p.id === slot.id)) : null) || null
               return (
                 <div key={idx} className="border border-border rounded-lg bg-white/50 w-full min-w-0">
                   {/* Collapsible Header */}
@@ -1210,14 +1371,37 @@ export default function TeamBuilderPage() {
                         <div className="text-sm font-medium text-text">#{poke.id} {formatPokemonName(poke.name)}</div>
                         <div className="flex flex-wrap gap-1 mt-1">
                           {poke.types?.length > 0 ? poke.types.map(t => (
-                            <TypeBadge key={t.type.name} type={t.type.name} variant="span" />
+                            <Tooltip key={t.type.name} content={`Type: ${t.type.name}`} position="top">
+                              <span>
+                                <TypeBadge type={t.type.name} variant="span" />
+                              </span>
+                            </Tooltip>
                           )) : null}
                         </div>
                       </div>
                     </div>
                   ) : (
                     <div className="text-sm mb-3 h-16 flex items-center justify-center text-muted border-2 border-dashed border-border rounded">
-                      Empty Slot
+                      {/* Auto-hydrate missing Pokémon details if we only have an ID */}
+                      {slot.id ? (
+                        <button
+                          className="text-blue-600 hover:text-blue-800"
+                          onClick={async () => {
+                            try {
+                              const full = await getPokemon(slot.id!)
+                              setDisplayPokemonById(prev => {
+                                const updated = { ...prev, [full.id]: full }
+                                persistDisplayPokemon(updated)
+                                return updated
+                              })
+                            } catch {}
+                          }}
+                        >
+                          Load Pokémon
+                        </button>
+                      ) : (
+                        <>Empty Slot</>
+                      )}
                     </div>
                   )}
                   
@@ -1511,7 +1695,7 @@ export default function TeamBuilderPage() {
                   <div className="flex flex-wrap gap-1">
                     {team.slots.map((slot, idx) => {
                       if (slot.id) {
-                        const poke = allPokemon.find(p => p.id === slot.id)
+                        const poke = displayPokemonById[slot.id] || allPokemon.find(p => p.id === slot.id)
                         return poke ? (
                           <div key={idx} className="relative w-8 h-8" title={`${formatPokemonName(poke.name)} Lv.${slot.level}`}>
                             <Image
@@ -1540,6 +1724,18 @@ export default function TeamBuilderPage() {
             </div>
           )}
         </section>
+          </div>
+          
+          {/* Analysis Panels */}
+          {teamSlots.some(s => s.id !== null) && (
+          <div className="space-y-6">
+            <TypeRadar analysis={teamAnalysis} />
+            <WeaknessMatrix analysis={teamAnalysis} />
+            <OffenseMatrix team={convertTeamSlotsToSimple(teamSlots, allPokemon, displayPokemonById)} />
+            <Suggestions analysis={teamAnalysis} />
+          </div>
+          )}
+        </div>
       </main>
       
       {/* Auth Modal */}

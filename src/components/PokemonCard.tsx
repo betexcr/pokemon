@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 import clsx from "clsx";
 import TypeBadge from "./TypeBadge";
+import LazyImage from "./LazyImage";
 import { getPokemonMainPageImage } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import { Scale } from "lucide-react";
@@ -153,30 +154,32 @@ export default function PokemonCard({
           mode === "grid" ? "w-full" : "w-full"
         )}
         style={{
-          padding: "8px", // Small padding to prevent edge clipping
+          padding: 0,
           backgroundColor: "transparent",
           minHeight: 0 // Allow flex to work properly
         }}
       >
-        <img
-          src={img}
+        <LazyImage
+          srcList={[
+            img,
+            `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`,
+            "/placeholder-pokemon.png"
+          ]}
           alt={formatPokemonName(pokemon.name)}
-          loading="lazy"
           width={512}
           height={512}
-          className={clsx(
+          imgClassName={clsx(
             "mx-auto max-h-full max-w-full w-auto h-auto object-contain transition-transform duration-300",
             "group-hover:scale-[1.04]"
           )}
-          style={{
+          imgStyle={{
             viewTransitionName: `pokemon-sprite-${pokemon.id}`,
             maxWidth: "100%",
             maxHeight: "100%",
-            margin: "auto" // Center the image
+            margin: "auto"
           }}
-          onError={(e) => {
-            e.currentTarget.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`
-          }}
+          rootMargin="250px"
+          threshold={0.01}
         />
       </div>
 
@@ -215,20 +218,64 @@ function formatPokemonName(name: string): string {
 // Skeleton loading component
 export function PokemonCardSkeleton({ density = 'comfy' }: { density?: 'comfy' | 'compact' }) {
   return (
-    <div className="animate-pulse rounded-2xl border border-border bg-surface">
-      <div className="h-1.5 w-full rounded-t-2xl bg-border/40" />
-      <div className="aspect-square bg-border/40" />
-      <div className={clsx(
-        "p-4 space-y-3",
-        density === 'compact' ? "p-3" : "p-4"
-      )}>
-        <div className="flex items-baseline justify-between">
-          <div className="h-5 w-2/3 bg-border/60 rounded" />
-          <div className="h-3 w-1/4 bg-border/50 rounded" />
+    <div className="relative overflow-hidden rounded-2xl border border-border bg-slate-100/80 shadow-sm animate-pulse dark:bg-slate-900/40">
+      <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-white/10 to-transparent dark:from-white/10 dark:via-white/5 pointer-events-none" />
+      <div className="relative">
+        <div className="h-1.5 w-full rounded-t-2xl bg-slate-300/80 dark:bg-slate-700/70" />
+        <div className="aspect-square bg-slate-200/70 dark:bg-slate-800/60" />
+        <div className={clsx(
+          "space-y-3",
+          density === 'compact' ? 'p-3' : 'p-4'
+        )}>
+          <div className="flex items-baseline justify-between">
+            <div className="h-5 w-2/3 rounded bg-slate-300/80 dark:bg-slate-700/70" />
+            <div className="h-3 w-1/4 rounded bg-slate-200/80 dark:bg-slate-800/60" />
+          </div>
+          <div className="flex gap-1.5">
+            <div className="h-6 w-16 rounded-full bg-slate-200/80 dark:bg-slate-800/60" />
+            <div className="h-6 w-12 rounded-full bg-slate-200/80 dark:bg-slate-800/60" />
+          </div>
         </div>
-        <div className="flex gap-1.5">
-          <div className="h-6 w-16 bg-border/50 rounded-full" />
-          <div className="h-6 w-12 bg-border/50 rounded-full" />
+      </div>
+    </div>
+  )
+}
+
+// Enhanced skeleton component that shows name and number while types load
+export function PokemonCardSkeletonWithData({ 
+  pokemon, 
+  density = 'comfy' 
+}: { 
+  pokemon: { id: number; name: string }; 
+  density?: 'comfy' | 'compact' 
+}) {
+  return (
+    <div className="relative overflow-hidden rounded-2xl border border-border bg-slate-100/80 shadow-sm dark:bg-slate-900/40">
+      <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-white/10 to-transparent dark:from-white/10 dark:via-white/5 pointer-events-none" />
+      <div className="relative">
+        <div className="h-1.5 w-full rounded-t-2xl bg-slate-300/80 dark:bg-slate-700/70" />
+        <div className="aspect-square bg-slate-200/70 dark:bg-slate-800/60 flex items-center justify-center">
+          <div className="w-16 h-16 bg-slate-300/60 dark:bg-slate-700/60 rounded-full animate-pulse" />
+        </div>
+        <div className={clsx(
+          "space-y-3",
+          density === 'compact' ? 'p-3' : 'p-4'
+        )}>
+          <div className="flex items-baseline justify-between">
+            <h3 className={clsx(
+              "font-semibold text-gray-800 dark:text-gray-200",
+              density === 'compact' ? 'text-sm' : 'text-base'
+            )}>
+              {formatPokemonName(pokemon.name)}
+            </h3>
+            <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">
+              #{String(pokemon.id).padStart(3, "0")}
+            </span>
+          </div>
+          <div className="flex gap-1.5 justify-center">
+            <div className="h-6 w-16 rounded-full bg-slate-200/80 dark:bg-slate-800/60 animate-pulse" />
+            <div className="h-6 w-12 rounded-full bg-slate-200/80 dark:bg-slate-800/60 animate-pulse" />
+          </div>
         </div>
       </div>
     </div>

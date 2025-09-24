@@ -1,9 +1,10 @@
 'use client'
 
-import React, { useMemo } from 'react'
+import React, { useMemo, useCallback, useRef, useEffect } from 'react'
 import { Pokemon } from '@/types/pokemon'
 import ModernPokemonCard from './ModernPokemonCard'
 import PokemonCard from './PokemonCard'
+import { PokemonCardSkeleton } from './PokemonCard'
 import { useTheme } from './ThemeProvider'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -19,6 +20,13 @@ interface VirtualizedPokemonGridProps {
   isLoading?: boolean
   enableVirtualization?: boolean
   showSpecialForms?: boolean // New prop to control special forms display
+  sortBy?: string // Add sort information for optimization
+  isSorting?: boolean // Add sorting state
+  // Infinite scroll props
+  hasMorePokemon?: boolean
+  isLoadingMore?: boolean
+  onLoadMore?: () => void
+  sentinelRef?: (node: HTMLDivElement | null) => void
 }
 
 export default function VirtualizedPokemonGrid({
@@ -31,7 +39,14 @@ export default function VirtualizedPokemonGrid({
   className = '',
   isLoading = false,
   enableVirtualization = false,
-  showSpecialForms = true // Default to true for backward compatibility
+  showSpecialForms = true, // Default to true for backward compatibility
+  sortBy = 'id',
+  isSorting = false,
+  // Infinite scroll props
+  hasMorePokemon = true,
+  isLoadingMore = false,
+  onLoadMore,
+  sentinelRef
 }: VirtualizedPokemonGridProps) {
 
   let theme = 'light'
@@ -87,28 +102,118 @@ export default function VirtualizedPokemonGrid({
     }
   }
 
-  // Calculate grid dimensions for virtualization - Square dimensions
+  // Calculate grid dimensions for virtualization - Natural dimensions
   const getGridDimensions = useMemo(() => {
     switch (density) {
-      case '3cols': return { cols: 3, itemHeight: 180, gap: 16 } // Balanced height - not too stretched
-      case '6cols': return { cols: 6, itemHeight: 140, gap: 12 } // Balanced height - not too stretched
-      case '9cols': return { cols: 9, itemHeight: 100, gap: 8 }  // Balanced height - not too stretched
+      case '3cols': return { cols: 3, itemHeight: 'auto', gap: 16 } // Natural height
+      case '6cols': return { cols: 6, itemHeight: 'auto', gap: 12 } // Natural height
+      case '9cols': return { cols: 9, itemHeight: 'auto', gap: 8 }  // Natural height
       case 'list': return { cols: 1, itemHeight: 60, gap: 4 }
       default: return { cols: 6, itemHeight: 140, gap: 12 }
     }
   }, [density])
 
-  // Find the transition point from regular Pokemon to special forms (only if showSpecialForms is true)
-  const specialFormsStartIndex = showSpecialForms ? pokemonList.findIndex(pokemon => pokemon.id >= 10001) : -1
-  
-  // Split the Pokemon list into regular and special forms
-  const regularPokemon = showSpecialForms && specialFormsStartIndex >= 0 ? pokemonList.slice(0, specialFormsStartIndex) : pokemonList
-  const specialFormsPokemon = showSpecialForms && specialFormsStartIndex >= 0 ? pokemonList.slice(specialFormsStartIndex) : []
+  const gridCols = getGridDimensions.cols
 
-  // Calculate total rows for virtualization (including special forms section)
-  const regularRows = Math.ceil(regularPokemon.length / getGridDimensions.cols)
-  const specialFormsRows = specialFormsPokemon.length > 0 ? Math.ceil(specialFormsPokemon.length / getGridDimensions.cols) + 1 : 0 // +1 for header
-  const totalRows = regularRows + specialFormsRows
+  const getSkeletonCount = (rows = 2) => {
+    if (density === 'list') {
+      return Math.max(4, rows * gridCols)
+    }
+    return rows * gridCols
+  }
+
+  const renderSkeletonGrid = (rows = 2) => {
+    const skeletonCount = getSkeletonCount(rows)
+    const skeletonDensity: 'comfy' | 'compact' = density === 'list' ? 'compact' : 'comfy'
+
+    return (
+      <div className={`${getLayoutClasses()} w-full max-w-full`} data-testid="pokemon-skeleton-grid">
+        {Array.from({ length: skeletonCount }).map((_, index) => (
+          <PokemonCardSkeleton key={`pokedex-skeleton-${index}`} density={skeletonDensity} />
+        ))}
+      </div>
+    )
+  }
+
+  if ((isLoading || isSorting) && pokemonList.length === 0) {
+    return (
+      <div className={`w-full max-w-full ${className}`}>
+        {renderSkeletonGrid(3)}
+      </div>
+    )
+  }
+
+  const shouldShowInitialSkeletons = (isLoading || isSorting) && pokemonList.length === 0
+
+  if (shouldShowInitialSkeletons) {
+    return (
+      <div className={`w-full max-w-full ${className}`}>
+        {renderSkeletonGrid(3)}
+      </div>
+    )
+  }
+
+  // Helper: derive a lightweight version key that changes when types data fills in
+  const computeTypesVersion = useCallback(() => {
+    try {
+      let totalTypesCount = 0
+      for (const p of pokemonList) {
+        totalTypesCount += (p.types?.length || 0)
+      }
+      return String(totalTypesCount)
+    } catch {
+      return '0'
+    }
+  }, [pokemonList])
+
+  // Memoize Pokemon list processing to avoid recalculation on every render
+  const processedPokemonData = useMemo(() => {
+    // Find the transition point from regular Pokemon to special forms (only if showSpecialForms is true)
+    const specialFormsStartIndex = showSpecialForms ? pokemonList.findIndex(pokemon => pokemon.id >= 10001) : -1
+    
+    // Split the Pokemon list into regular and special forms
+    // Always use the full pokemonList to ensure all Pokemon are rendered
+    const regularPokemon = pokemonList
+    const specialFormsPokemon = showSpecialForms && specialFormsStartIndex >= 0 ? pokemonList.slice(specialFormsStartIndex) : []
+
+    // Calculate total rows for virtualization (including special forms section)
+    const regularRows = Math.ceil(regularPokemon.length / getGridDimensions.cols)
+    const specialFormsRows = specialFormsPokemon.length > 0 ? Math.ceil(specialFormsPokemon.length / getGridDimensions.cols) + 1 : 0 // +1 for header
+    const totalRows = regularRows + specialFormsRows
+
+    return {
+      regularPokemon,
+      specialFormsPokemon,
+      regularRows,
+      specialFormsRows,
+      totalRows
+    }
+  // Include a derived version so that when nested objects (e.g., types) are populated in-place,
+  // this memo still refreshes and rows re-render with badges.
+  }, [pokemonList, showSpecialForms, getGridDimensions.cols, computeTypesVersion()])
+
+  // Cache for rendered rows to avoid re-rendering when data hasn't changed
+  const renderedRowsCache = useRef<Map<string, React.ReactNode>>(new Map())
+  const lastRenderData = useRef<string>('')
+
+  // Create cache key for current render state
+  const getCacheKey = useCallback(() => {
+    // Add a content-derived key so cache invalidates when type data loads asynchronously
+    const typesVersion = computeTypesVersion()
+    return `${pokemonList.length}-${density}-${sortBy}-${comparisonList.length}-${selectedPokemon?.id || 'none'}-${typesVersion}`
+  }, [pokemonList.length, density, sortBy, comparisonList.length, selectedPokemon?.id, computeTypesVersion])
+
+  // Clear cache when data changes significantly
+  useEffect(() => {
+    const currentCacheKey = getCacheKey()
+    if (lastRenderData.current !== currentCacheKey) {
+      renderedRowsCache.current.clear()
+      lastRenderData.current = currentCacheKey
+    }
+  }, [getCacheKey])
+
+  // Use processed data
+  const { regularPokemon, specialFormsPokemon, regularRows, specialFormsRows, totalRows } = processedPokemonData
 
   // Create virtualizer for virtualization
   const parentRef = React.useRef<HTMLDivElement>(null)
@@ -118,15 +223,24 @@ export default function VirtualizedPokemonGrid({
       // Use the main scroll container instead of creating our own
       return document.querySelector('.flex-1.min-h-0.overflow-y-auto') || parentRef.current
     },
-    estimateSize: () => getGridDimensions.itemHeight + getGridDimensions.gap,
+    estimateSize: () => (typeof getGridDimensions.itemHeight === 'number' ? getGridDimensions.itemHeight : 140) + getGridDimensions.gap,
     overscan: 5, // Render 5 extra rows for smooth scrolling
   })
 
-  // Render a row of pokemon cards or special forms header
-  const renderRow = (rowIndex: number) => {
+  // Optimized render function with caching
+  const renderRow = useCallback((rowIndex: number) => {
+    const cacheKey = `${getCacheKey()}-${rowIndex}`
+    
+    // Check cache first
+    if (renderedRowsCache.current.has(cacheKey)) {
+      return renderedRowsCache.current.get(cacheKey)
+    }
+    let rowContent: React.ReactNode = null
+    let shouldCache = true
+
     // Check if this is the special forms header row
     if (specialFormsPokemon.length > 0 && rowIndex === regularRows) {
-      return (
+      rowContent = (
         <div
           key={`special-forms-header-${rowIndex}`}
           className="w-full py-4"
@@ -150,13 +264,14 @@ export default function VirtualizedPokemonGrid({
         const pokemon = regularPokemon[rowIndex]
         if (!pokemon) return null
 
-        return (
+        if ((pokemon.types?.length || 0) === 0) {
+          shouldCache = false
+        }
+
+        rowContent = (
           <div
             key={pokemon.id}
             className="w-full"
-            style={{
-              height: getGridDimensions.itemHeight,
-            }}
           >
             <ModernPokemonCard
               key={pokemon.id}
@@ -172,113 +287,81 @@ export default function VirtualizedPokemonGrid({
       }
 
       // For grid views, use the original logic
-      const startIndex = rowIndex * getGridDimensions.cols
-      const endIndex = Math.min(startIndex + getGridDimensions.cols, regularPokemon.length)
-      const rowPokemon = regularPokemon.slice(startIndex, endIndex)
+      if (!rowContent) {
+        const startIndex = rowIndex * getGridDimensions.cols
+        const endIndex = Math.min(startIndex + getGridDimensions.cols, regularPokemon.length)
+        const rowPokemon = regularPokemon.slice(startIndex, endIndex)
 
-      return (
-        <div
-          key={rowIndex}
-          className={`${getLayoutClasses()} w-full max-w-full`}
-          style={{
-            gap: getGridDimensions.gap,
-            height: getGridDimensions.itemHeight,
-          }}
-        >
-          {rowPokemon.map((pokemon) => {
-            // Use PokemonCard for the smallest density (9cols) to show comparison button
-            if (density === '9cols') {
+        if (rowPokemon.some(p => (p.types?.length || 0) === 0)) {
+          shouldCache = false
+        }
+
+        rowContent = (
+          <div
+            key={rowIndex}
+            className={`${getLayoutClasses()} w-full max-w-full`}
+            style={{
+              gap: getGridDimensions.gap,
+            }}
+          >
+            {rowPokemon.map((pokemon) => {
+              const key = pokemon.id
+              const hasTypes = (pokemon.types?.length || 0) > 0
+
+              if (!hasTypes) {
+                shouldCache = false
+              }
+
+              if (density === '9cols') {
+                return (
+                  <PokemonCard
+                    key={key}
+                    pokemon={pokemon}
+                    isFavorite={false}
+                    onToggleFavorite={() => {}}
+                    isInComparison={comparisonList.includes(pokemon.id)}
+                    onToggleComparison={onToggleComparison}
+                    cardSize="compact"
+                    mode="grid"
+                  />
+                )
+              }
+
               return (
-                <PokemonCard
-                  key={pokemon.id}
+                <ModernPokemonCard
+                  key={key}
                   pokemon={pokemon}
-                  isFavorite={false} // You might want to implement favorites
-                  onToggleFavorite={() => {}} // You might want to implement favorites
                   isInComparison={comparisonList.includes(pokemon.id)}
                   onToggleComparison={onToggleComparison}
-                  cardSize="compact"
-                  mode="grid"
+                  onSelect={undefined}
+                  isSelected={selectedPokemon?.id === pokemon.id}
+                  density={density}
                 />
               )
-            }
-            
-            // Use ModernPokemonCard for other densities
-            return (
-              <ModernPokemonCard
-                key={pokemon.id}
-                pokemon={pokemon}
-                isInComparison={comparisonList.includes(pokemon.id)}
-                onToggleComparison={onToggleComparison}
-                onSelect={undefined}
-                isSelected={selectedPokemon?.id === pokemon.id}
-                density={density}
-              />
-            )
-          })}
-        </div>
-      )
+            })}
+          </div>
+        )
+      }
     }
 
     // Handle special forms Pokemon rows
-    const specialFormsRowIndex = rowIndex - regularRows - 1 // -1 for header
-    
-    // For list view, each row contains only one Pokemon
-    if (density === 'list') {
-      const pokemon = specialFormsPokemon[specialFormsRowIndex]
-      if (!pokemon) return null
+    if (rowIndex > regularRows) {
+      const specialFormsRowIndex = rowIndex - regularRows - 1 // -1 for header
+      
+      // For list view, each row contains only one Pokemon
+      if (density === 'list') {
+        const pokemon = specialFormsPokemon[specialFormsRowIndex]
+        if (!pokemon) return null
 
-      return (
-        <div
-          key={pokemon.id}
-          className="w-full"
-          style={{
-            height: getGridDimensions.itemHeight,
-          }}
-        >
-          <ModernPokemonCard
+        if ((pokemon.types?.length || 0) === 0) {
+          shouldCache = false
+        }
+
+        rowContent = (
+          <div
             key={pokemon.id}
-            pokemon={pokemon}
-            isInComparison={comparisonList.includes(pokemon.id)}
-            onToggleComparison={onToggleComparison}
-            onSelect={undefined}
-            isSelected={selectedPokemon?.id === pokemon.id}
-            density={density}
-          />
-        </div>
-      )
-    }
-
-    // For grid views, use the original logic
-    const startIndex = specialFormsRowIndex * getGridDimensions.cols
-    const endIndex = Math.min(startIndex + getGridDimensions.cols, specialFormsPokemon.length)
-    const rowPokemon = specialFormsPokemon.slice(startIndex, endIndex)
-
-    return (
-      <div
-        key={`special-forms-${rowIndex}`}
-        className={`${getLayoutClasses()} w-full max-w-full`}
-        style={{
-          gap: getGridDimensions.gap,
-          height: getGridDimensions.itemHeight,
-        }}
-      >
-        {rowPokemon.map((pokemon) => {
-          if (density === '9cols') {
-            return (
-              <PokemonCard
-                key={pokemon.id}
-                pokemon={pokemon}
-                isFavorite={false}
-                onToggleFavorite={() => {}}
-                isInComparison={comparisonList.includes(pokemon.id)}
-                onToggleComparison={onToggleComparison}
-                cardSize="ultra"
-                mode="grid"
-              />
-            )
-          }
-          
-          return (
+            className="w-full"
+          >
             <ModernPokemonCard
               key={pokemon.id}
               pokemon={pokemon}
@@ -288,11 +371,77 @@ export default function VirtualizedPokemonGrid({
               isSelected={selectedPokemon?.id === pokemon.id}
               density={density}
             />
-          )
-        })}
-      </div>
-    )
-  }
+          </div>
+        )
+      }
+
+      // For grid views, use the original logic
+      if (!rowContent) {
+        const startIndex = specialFormsRowIndex * getGridDimensions.cols
+        const endIndex = Math.min(startIndex + getGridDimensions.cols, specialFormsPokemon.length)
+        const rowPokemon = specialFormsPokemon.slice(startIndex, endIndex)
+
+        if (rowPokemon.some(p => (p.types?.length || 0) === 0)) {
+          shouldCache = false
+        }
+
+        rowContent = (
+          <div
+            key={`special-forms-${rowIndex}`}
+            className={`${getLayoutClasses()} w-full max-w-full`}
+            style={{
+              gap: getGridDimensions.gap,
+            }}
+          >
+            {rowPokemon.map((pokemon) => {
+              const key = pokemon.id
+              const hasTypes = (pokemon.types?.length || 0) > 0
+
+              if (!hasTypes) {
+                shouldCache = false
+              }
+
+              if (density === '9cols') {
+                return (
+                  <PokemonCard
+                    key={key}
+                    pokemon={pokemon}
+                    isFavorite={false}
+                    onToggleFavorite={() => {}}
+                    isInComparison={comparisonList.includes(pokemon.id)}
+                    onToggleComparison={onToggleComparison}
+                    cardSize="ultra"
+                    mode="grid"
+                  />
+                )
+              }
+
+              return (
+                <ModernPokemonCard
+                  key={key}
+                  pokemon={pokemon}
+                  isInComparison={comparisonList.includes(pokemon.id)}
+                  onToggleComparison={onToggleComparison}
+                  onSelect={undefined}
+                  isSelected={selectedPokemon?.id === pokemon.id}
+                  density={density}
+                />
+              )
+            })}
+          </div>
+        )
+      }
+    }
+
+    // Cache the result and return
+    if (rowContent) {
+      if (shouldCache) {
+        renderedRowsCache.current.set(cacheKey, rowContent)
+      }
+    }
+
+    return rowContent
+  }, [getCacheKey, regularPokemon, specialFormsPokemon, regularRows, density, getGridDimensions, comparisonList, selectedPokemon, onToggleComparison, getLayoutClasses])
 
   // Deduplicate Pokemon to ensure unique keys
   const uniqueRegularPokemon = useMemo(() => {
@@ -346,6 +495,7 @@ export default function VirtualizedPokemonGrid({
               ))}
               {/* Infinite scroll sentinel for virtualized content */}
               <div
+                ref={sentinelRef}
                 style={{
                   position: 'absolute',
                   top: virtualizer.getTotalSize(),
@@ -363,7 +513,7 @@ export default function VirtualizedPokemonGrid({
 
 
         {/* Loading indicator */}
-        {isLoading && (
+        {(isLoading || isLoadingMore) && (
           <div className="flex justify-center py-4">
             <div className={`animate-spin rounded-full h-6 w-6 border-b-2 ${
               theme === 'gold' ? 'border-gold-accent'
@@ -371,6 +521,12 @@ export default function VirtualizedPokemonGrid({
               : theme === 'ruby' ? 'border-ruby-accent'
               : 'border-poke-blue'
             }`} />
+          </div>
+        )}
+
+        {isLoadingMore && uniqueRegularPokemon.length > 0 && (
+          <div className="mt-4">
+            {renderSkeletonGrid(1)}
           </div>
         )}
       </div>
@@ -398,7 +554,7 @@ export default function VirtualizedPokemonGrid({
             }
           }}
         >
-          <AnimatePresence mode="wait">
+          <AnimatePresence initial={false}>
             {uniqueRegularPokemon.map((pokemon, index) => (
               <motion.div
                 key={pokemon.id}
@@ -454,7 +610,7 @@ export default function VirtualizedPokemonGrid({
             }
           }}
         >
-          <AnimatePresence mode="wait">
+          <AnimatePresence initial={false}>
             {specialFormsPokemon.map((pokemon, index) => (
               <motion.div
                 key={pokemon.id}
@@ -481,6 +637,7 @@ export default function VirtualizedPokemonGrid({
 
       {/* Infinite scroll sentinel for non-virtualized content */}
       <div
+        ref={sentinelRef}
         style={{
           width: '100%',
           height: '20px', // Increased height for better detection
@@ -490,7 +647,7 @@ export default function VirtualizedPokemonGrid({
       />
 
       {/* Loading indicator */}
-      {isLoading && (
+      {(isLoading || isLoadingMore) && (
         <div className="flex justify-center py-4">
           <div className={`animate-spin rounded-full h-6 w-6 border-b-2 ${
             theme === 'gold' ? 'border-gold-accent'
@@ -498,6 +655,12 @@ export default function VirtualizedPokemonGrid({
             : theme === 'ruby' ? 'border-ruby-accent'
             : 'border-poke-blue'
           }`} />
+        </div>
+      )}
+
+      {isLoadingMore && uniqueRegularPokemon.length > 0 && (
+        <div className="mt-4">
+          {renderSkeletonGrid(1)}
         </div>
       )}
     </div>

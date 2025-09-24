@@ -44,28 +44,34 @@ function ToastComponent({ toast, onRemove }: ToastProps) {
   };
 
   const getToastStyles = () => {
+    // Base uses design tokens for dark/light modes
+    const base = 'bg-surface border border-border text-text';
+    return base;
+  };
+
+  const getAccentBg = () => {
     switch (toast.type) {
       case 'success':
-        return 'bg-white border-green-500 text-green-900';
+        return 'bg-emerald-500';
       case 'warning':
-        return 'bg-white border-yellow-500 text-yellow-900';
+        return 'bg-amber-500';
       case 'error':
-        return 'bg-white border-red-500 text-red-900';
+        return 'bg-rose-500';
       default:
-        return 'bg-white border-blue-600 text-blue-900';
+        return 'bg-primary/80';
     }
   };
 
-  const getAccentClass = () => {
+  const getAccentText = () => {
     switch (toast.type) {
       case 'success':
-        return 'bg-green-500';
+        return 'text-emerald-400';
       case 'warning':
-        return 'bg-yellow-500';
+        return 'text-amber-400';
       case 'error':
-        return 'bg-red-500';
+        return 'text-rose-400';
       default:
-        return 'bg-blue-600';
+        return 'text-primary';
     }
   };
 
@@ -87,14 +93,14 @@ function ToastComponent({ toast, onRemove }: ToastProps) {
       className={`
         relative transform transition-all duration-300 ease-in-out
         ${isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}
-        w-[320px] bg-white border-2 rounded-xl shadow-xl pointer-events-auto
+        w-[320px] rounded-xl shadow-xl pointer-events-auto
         ${getToastStyles()}
       `}
     >
-      <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-xl ${getAccentClass()}`} />
+      <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-xl ${getAccentBg()}`} />
       <div className="p-4 pl-5">
         <div className="flex items-start gap-3">
-          <div className={`flex-shrink-0 text-xl ${getAccentClass().replace('bg','text')}`}>
+          <div className={`flex-shrink-0 text-xl ${getAccentText()}`}>
             {typeof getIcon() === 'string' ? (
               <span className="leading-none">{getIcon()}</span>
             ) : (
@@ -102,15 +108,15 @@ function ToastComponent({ toast, onRemove }: ToastProps) {
             )}
           </div>
           <div className="ml-3 w-0 flex-1">
-            <p className="text-base font-semibold leading-5 tracking-tight">{toast.title}</p>
+            <p className="text-base font-semibold leading-5 tracking-tight text-text">{toast.title}</p>
             {toast.message && (
-              <p className="mt-1 text-sm leading-5 opacity-90">{toast.message}</p>
+              <p className="mt-1 text-sm leading-5 text-muted">{toast.message}</p>
             )}
             {toast.action && (
               <div className="mt-2">
                 <button
                   onClick={toast.action.onClick}
-                  className="text-sm font-medium underline hover:no-underline"
+                  className={`text-sm font-medium underline hover:no-underline ${getAccentText()}`}
                 >
                   {toast.action.label}
                 </button>
@@ -120,7 +126,7 @@ function ToastComponent({ toast, onRemove }: ToastProps) {
           <div className="ml-4 flex-shrink-0 flex">
             <button
               onClick={handleRemove}
-              className="inline-flex text-gray-400 hover:text-gray-600 focus:outline-none"
+              className="inline-flex text-muted hover:text-text focus:outline-none"
             >
               <X className="h-4 w-4" />
             </button>

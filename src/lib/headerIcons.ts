@@ -38,6 +38,8 @@ export interface HeaderIconConfig {
   icon: React.ComponentType<{ className?: string }>
   color: string
   bgColor: string
+  darkColor?: string
+  darkBgColor?: string
 }
 
 export const HEADER_ICONS: Record<string, HeaderIconConfig> = {
@@ -45,192 +47,275 @@ export const HEADER_ICONS: Record<string, HeaderIconConfig> = {
   'pokedex': {
     icon: BookOpen,
     color: 'text-blue-600',
-    bgColor: 'bg-blue-100'
+    bgColor: 'bg-blue-100',
+    darkColor: 'text-blue-400',
+    darkBgColor: 'bg-blue-900/30'
   },
   'battle': {
     icon: Swords,
     color: 'text-red-600',
-    bgColor: 'bg-red-100'
+    bgColor: 'bg-red-100',
+    darkColor: 'text-red-400',
+    darkBgColor: 'bg-red-900/30'
   },
   'team-builder': {
     icon: Users,
     color: 'text-green-600',
-    bgColor: 'bg-green-100'
+    bgColor: 'bg-green-100',
+    darkColor: 'text-green-400',
+    darkBgColor: 'bg-green-900/30'
   },
   'compare': {
     icon: Scale,
     color: 'text-purple-600',
-    bgColor: 'bg-purple-100'
+    bgColor: 'bg-purple-100',
+    darkColor: 'text-purple-400',
+    darkBgColor: 'bg-purple-900/30'
+  },
+  'top50': {
+    icon: Sparkles,
+    color: 'text-amber-600',
+    bgColor: 'bg-amber-100',
+    darkColor: 'text-amber-300',
+    darkBgColor: 'bg-amber-900/30'
   },
   'lobby': {
     icon: Swords,
     color: 'text-red-600',
-    bgColor: 'bg-red-100'
+    bgColor: 'bg-red-100',
+    darkColor: 'text-red-400',
+    darkBgColor: 'bg-red-900/30'
   },
   'room': {
     icon: Swords,
     color: 'text-red-600',
-    bgColor: 'bg-red-100'
+    bgColor: 'bg-red-100',
+    darkColor: 'text-red-400',
+    darkBgColor: 'bg-red-900/30'
   },
   'home': {
     icon: Home,
     color: 'text-gray-600',
-    bgColor: 'bg-gray-100'
+    bgColor: 'bg-gray-100',
+    darkColor: 'text-gray-400',
+    darkBgColor: 'bg-gray-800/30'
   },
   'settings': {
     icon: Settings,
     color: 'text-gray-600',
-    bgColor: 'bg-gray-100'
+    bgColor: 'bg-gray-100',
+    darkColor: 'text-gray-400',
+    darkBgColor: 'bg-gray-800/30'
   },
   'search': {
     icon: Search,
     color: 'text-blue-600',
-    bgColor: 'bg-blue-100'
+    bgColor: 'bg-blue-100',
+    darkColor: 'text-blue-400',
+    darkBgColor: 'bg-blue-900/30'
   },
   'profile': {
     icon: Heart,
     color: 'text-pink-600',
-    bgColor: 'bg-pink-100'
+    bgColor: 'bg-pink-100',
+    darkColor: 'text-pink-400',
+    darkBgColor: 'bg-pink-900/30'
   },
   'leaderboard': {
     icon: Trophy,
     color: 'text-yellow-600',
-    bgColor: 'bg-yellow-100'
+    bgColor: 'bg-yellow-100',
+    darkColor: 'text-yellow-400',
+    darkBgColor: 'bg-yellow-900/30'
   },
   'achievements': {
     icon: Star,
     color: 'text-yellow-500',
-    bgColor: 'bg-yellow-100'
+    bgColor: 'bg-yellow-100',
+    darkColor: 'text-yellow-400',
+    darkBgColor: 'bg-yellow-900/30'
   },
   'rankings': {
     icon: Crown,
     color: 'text-purple-600',
-    bgColor: 'bg-purple-100'
+    bgColor: 'bg-purple-100',
+    darkColor: 'text-purple-400',
+    darkBgColor: 'bg-purple-900/30'
   },
   'games': {
     icon: Gamepad2,
     color: 'text-green-600',
-    bgColor: 'bg-green-100'
+    bgColor: 'bg-green-100',
+    darkColor: 'text-green-400',
+    darkBgColor: 'bg-green-900/30'
   },
   'data': {
     icon: Database,
     color: 'text-blue-600',
-    bgColor: 'bg-blue-100'
+    bgColor: 'bg-blue-100',
+    darkColor: 'text-blue-400',
+    darkBgColor: 'bg-blue-900/30'
   },
   'analytics': {
     icon: BarChart3,
     color: 'text-indigo-600',
-    bgColor: 'bg-indigo-100'
+    bgColor: 'bg-indigo-100',
+    darkColor: 'text-indigo-400',
+    darkBgColor: 'bg-indigo-900/30'
   },
   'target': {
     icon: Target,
     color: 'text-red-600',
-    bgColor: 'bg-red-100'
+    bgColor: 'bg-red-100',
+    darkColor: 'text-red-400',
+    darkBgColor: 'bg-red-900/30'
   },
   'magic': {
     icon: Sparkles,
     color: 'text-purple-600',
-    bgColor: 'bg-purple-100'
+    bgColor: 'bg-purple-100',
+    darkColor: 'text-purple-400',
+    darkBgColor: 'bg-purple-900/30'
   },
   'combat': {
     icon: Sword,
     color: 'text-red-600',
-    bgColor: 'bg-red-100'
+    bgColor: 'bg-red-100',
+    darkColor: 'text-red-400',
+    darkBgColor: 'bg-red-900/30'
   },
   'defense': {
     icon: Shield,
     color: 'text-blue-600',
-    bgColor: 'bg-blue-100'
+    bgColor: 'bg-blue-100',
+    darkColor: 'text-blue-400',
+    darkBgColor: 'bg-blue-900/30'
   },
   'fire': {
     icon: Flame,
     color: 'text-red-500',
-    bgColor: 'bg-red-100'
+    bgColor: 'bg-red-100',
+    darkColor: 'text-red-400',
+    darkBgColor: 'bg-red-900/30'
   },
   'water': {
     icon: Droplets,
     color: 'text-blue-500',
-    bgColor: 'bg-blue-100'
+    bgColor: 'bg-blue-100',
+    darkColor: 'text-blue-400',
+    darkBgColor: 'bg-blue-900/30'
   },
   'grass': {
     icon: Leaf,
     color: 'text-green-500',
-    bgColor: 'bg-green-100'
+    bgColor: 'bg-green-100',
+    darkColor: 'text-green-400',
+    darkBgColor: 'bg-green-900/30'
   },
   'ground': {
     icon: Mountain,
     color: 'text-yellow-600',
-    bgColor: 'bg-yellow-100'
+    bgColor: 'bg-yellow-100',
+    darkColor: 'text-yellow-400',
+    darkBgColor: 'bg-yellow-900/30'
   },
   'flying': {
     icon: Wind,
     color: 'text-sky-500',
-    bgColor: 'bg-sky-100'
+    bgColor: 'bg-sky-100',
+    darkColor: 'text-sky-400',
+    darkBgColor: 'bg-sky-900/30'
   },
   'bug': {
     icon: Bug,
     color: 'text-green-600',
-    bgColor: 'bg-green-100'
+    bgColor: 'bg-green-100',
+    darkColor: 'text-green-400',
+    darkBgColor: 'bg-green-900/30'
   },
   'ghost': {
     icon: Ghost,
     color: 'text-purple-600',
-    bgColor: 'bg-purple-100'
+    bgColor: 'bg-purple-100',
+    darkColor: 'text-purple-400',
+    darkBgColor: 'bg-purple-900/30'
   },
   'dragon': {
     icon: Circle,
     color: 'text-indigo-600',
-    bgColor: 'bg-indigo-100'
+    bgColor: 'bg-indigo-100',
+    darkColor: 'text-indigo-400',
+    darkBgColor: 'bg-indigo-900/30'
   },
   'ice': {
     icon: Snowflake,
     color: 'text-cyan-500',
-    bgColor: 'bg-cyan-100'
+    bgColor: 'bg-cyan-100',
+    darkColor: 'text-cyan-400',
+    darkBgColor: 'bg-cyan-900/30'
   },
   'fighting': {
     icon: Hand,
     color: 'text-orange-600',
-    bgColor: 'bg-orange-100'
+    bgColor: 'bg-orange-100',
+    darkColor: 'text-orange-400',
+    darkBgColor: 'bg-orange-900/30'
   },
   'poison': {
     icon: Skull,
     color: 'text-purple-600',
-    bgColor: 'bg-purple-100'
+    bgColor: 'bg-purple-100',
+    darkColor: 'text-purple-400',
+    darkBgColor: 'bg-purple-900/30'
   },
   'psychic': {
     icon: Brain,
     color: 'text-pink-600',
-    bgColor: 'bg-pink-100'
+    bgColor: 'bg-pink-100',
+    darkColor: 'text-pink-400',
+    darkBgColor: 'bg-pink-900/30'
   },
   'rock': {
     icon: Mountain,
     color: 'text-yellow-700',
-    bgColor: 'bg-yellow-100'
+    bgColor: 'bg-yellow-100',
+    darkColor: 'text-yellow-400',
+    darkBgColor: 'bg-yellow-900/30'
   },
   'steel': {
     icon: Wrench,
     color: 'text-gray-600',
-    bgColor: 'bg-gray-100'
+    bgColor: 'bg-gray-100',
+    darkColor: 'text-gray-400',
+    darkBgColor: 'bg-gray-800/30'
   },
   'fairy': {
     icon: Sparkles,
     color: 'text-pink-500',
-    bgColor: 'bg-pink-100'
+    bgColor: 'bg-pink-100',
+    darkColor: 'text-pink-400',
+    darkBgColor: 'bg-pink-900/30'
   },
   'dark': {
     icon: Moon,
     color: 'text-gray-800',
-    bgColor: 'bg-gray-100'
+    bgColor: 'bg-gray-100',
+    darkColor: 'text-gray-300',
+    darkBgColor: 'bg-gray-800/30'
   },
   'electric': {
     icon: Zap,
     color: 'text-yellow-500',
-    bgColor: 'bg-yellow-100'
+    bgColor: 'bg-yellow-100',
+    darkColor: 'text-yellow-400',
+    darkBgColor: 'bg-yellow-900/30'
   },
   'normal': {
     icon: Circle,
     color: 'text-gray-500',
-    bgColor: 'bg-gray-100'
+    bgColor: 'bg-gray-100',
+    darkColor: 'text-gray-400',
+    darkBgColor: 'bg-gray-800/30'
   }
 }
 
@@ -243,6 +328,7 @@ export function getPageIconKey(pathname: string): string {
   if (pathname.startsWith('/battle')) return 'battle'
   if (pathname.startsWith('/team')) return 'team-builder'
   if (pathname.startsWith('/compare')) return 'compare'
+  if (pathname.startsWith('/top50')) return 'top50'
   if (pathname.startsWith('/lobby')) return 'lobby'
   if (pathname.startsWith('/room')) return 'room'
   if (pathname.startsWith('/settings')) return 'settings'

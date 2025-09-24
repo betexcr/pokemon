@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, MessageCircle, Swords } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { ToastContainer, useToast } from "@/components/Toast";
-import FirestoreBattleComponent from '@/components/FirestoreBattleComponent';
+import RTDBBattleComponent from '@/components/RTDBBattleComponent';
 import { AIBattleScene } from '@/components/battle/AIBattleScene';
 import { GYM_CHAMPIONS } from '@/lib/gym_champions';
 
@@ -34,7 +34,7 @@ function BattleRuntimePage() {
   
   const [showChat, setShowChat] = useState(false);
   const [showBattleResults, setShowBattleResults] = useState(false);
-  const [playerTeam, setPlayerTeam] = useState<Array<{ id: number; level: number; moves?: string[] }>>([]);
+  const [playerTeam, setPlayerTeam] = useState<Array<{ id: number; level: number; moves?: string[]; nature?: string }>>([]);
   const [opponentChampionId, setOpponentChampionId] = useState<string>('');
   const [isAIBattle, setIsAIBattle] = useState(false);
   const [battleTypeDetermined, setBattleTypeDetermined] = useState(false);
@@ -64,7 +64,8 @@ function BattleRuntimePage() {
               .map((slot: any) => ({ 
                 id: slot.id, 
                 level: slot.level,
-                moves: Array.isArray(slot.moves) ? slot.moves.slice(0,4).map((m: any) => m?.name).filter(Boolean) : undefined
+                moves: Array.isArray(slot.moves) ? slot.moves.slice(0,4).map((m: any) => m?.name).filter(Boolean) : undefined,
+                nature: slot.nature
               }));
             console.log('Processed team data:', teamData);
             if (teamData.length > 0) {
@@ -87,7 +88,8 @@ function BattleRuntimePage() {
                 .map((slot: any) => ({ 
                   id: slot.id, 
                   level: slot.level,
-                  moves: Array.isArray(slot.moves) ? slot.moves.slice(0,4).map((m: any) => m?.name).filter(Boolean) : undefined
+                  moves: Array.isArray(slot.moves) ? slot.moves.slice(0,4).map((m: any) => m?.name).filter(Boolean) : undefined,
+                  nature: slot.nature
                 }));
               console.log('Processed team data from saved teams:', teamData);
               if (teamData.length > 0) {
@@ -116,6 +118,30 @@ function BattleRuntimePage() {
       router.push("/battle");
     }
   }, [router, urlBattleId, searchParams, isAIBattle]);
+
+  // Get back URL for href attribute
+  const getBackUrl = useCallback(() => {
+    if (isAIBattle) {
+      return "/battle";
+    } else if (urlBattleId) {
+      return `/lobby/${searchParams.get("roomId") || ""}`;
+    } else {
+      return "/battle";
+    }
+  }, [urlBattleId, searchParams, isAIBattle]);
+
+  // Handle click events for back button
+  const handleBackClick = useCallback((event: React.MouseEvent) => {
+    // Handle middle click (button 1) or Ctrl+click for new tab
+    if (event.button === 1 || event.ctrlKey || event.metaKey) {
+      // Let the browser handle the middle click or Ctrl+click to open in new tab
+      return;
+    }
+
+    // Prevent default for left click to handle programmatic navigation
+    event.preventDefault();
+    handleBackFromBattle();
+  }, [handleBackFromBattle]);
 
   // Show loading state
   if (authLoading || !battleTypeDetermined || (isAIBattle && playerTeam.length === 0)) {
@@ -170,13 +196,21 @@ function BattleRuntimePage() {
         <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-4">
-              <button
-                onClick={handleBackFromBattle}
-                className="flex items-center space-x-2 text-muted hover:text-text transition-colors"
+              <a
+                href={getBackUrl()}
+                onClick={handleBackClick}
+                onMouseDown={(e) => {
+                  // Handle middle click
+                  if (e.button === 1) {
+                    e.preventDefault()
+                    window.open(getBackUrl(), '_blank')
+                  }
+                }}
+                className="flex items-center space-x-2 text-muted hover:text-text transition-colors cursor-pointer"
               >
                 <ArrowLeft className="h-5 w-5" />
                 <span className="font-medium">Back to Lobby</span>
-              </button>
+              </a>
               <div className="flex items-center gap-2">
                 <div className="p-2 rounded-lg bg-red-100 text-red-600">
                   <Swords className="h-5 w-5" />
@@ -207,8 +241,8 @@ function BattleRuntimePage() {
             viewMode="animated"
           />
         ) : (
-          /* Regular Battle */
-          <FirestoreBattleComponent 
+          /* Regular Battle (Multiplayer over RTDB) */
+          <RTDBBattleComponent 
             battleId={urlBattleId}
             onBattleComplete={(winner) => {
               console.log('Battle completed, winner:', winner);

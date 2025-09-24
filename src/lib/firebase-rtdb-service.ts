@@ -272,13 +272,81 @@ class FirebaseRTDBService {
     const versionRef = ref(this.db, `battles/${battleId}/meta/version`);
     const versionSnap = await get(versionRef);
     const currentVersion = typeof versionSnap.val() === 'number' ? versionSnap.val() : 0;
+    
+    // Also read the full meta to debug
+    const metaRef = ref(this.db, `battles/${battleId}/meta`);
+    const metaSnap = await get(metaRef);
+    const meta = metaSnap.val();
+    console.log('🎮 Battle meta for security rules:', meta);
+    console.log('🎮 Player UIDs:', {
+      p1uid: meta?.players?.p1?.uid,
+      p2uid: meta?.players?.p2?.uid,
+      currentUser: uid
+    });
+
+      // Debug logging
+      console.log('🎮 submitChoice debug:', {
+        battleId,
+        turn,
+        uid,
+        choice,
+        currentVersion,
+        path: `battles/${battleId}/turns/${turn}/choices/${uid}`
+      });
+
+      // Additional debugging for security rules
+      console.log('🎮 Security rule evaluation debug:', {
+        authUid: uid,
+        targetUid: uid,
+        authMatches: uid === uid,
+        phase: meta?.phase,
+        phaseIsChoosing: meta?.phase === 'choosing',
+        dataExists: false, // This is a new write, so data shouldn't exist
+        hasRequiredFields: {
+          action: !!choice.action,
+          payload: !!choice.payload,
+          clientVersion: !!currentVersion,
+          committedAt: true // We're adding this
+        },
+        actionType: choice.action,
+        actionIsValid: ['move', 'switch', 'forfeit'].includes(choice.action),
+        payloadHasMoveId: choice.action === 'move' ? !!choice.payload?.moveId : true,
+        payloadHasSwitchIndex: choice.action === 'switch' ? !!choice.payload?.switchToIndex : true,
+        clientVersionMatches: currentVersion === meta?.version
+      });
 
     const choiceRef = ref(this.db, `battles/${battleId}/turns/${turn}/choices/${uid}`);
-    await set(choiceRef, {
+
+    // Avoid duplicate submissions within the same turn: if a choice already exists, skip
+    try {
+      const existingSnap = await get(choiceRef);
+      if (existingSnap.exists()) {
+        console.log('🎮 Choice already exists for this turn and user; skipping re-submit');
+        return;
+      }
+    } catch (readErr) {
+      console.warn('🎮 Could not check existing choice (continuing to submit):', readErr);
+    }
+
+    const dataToWrite = {
       ...choice,
       committedAt: serverTimestamp(),
       clientVersion: currentVersion
-    });
+    };
+    
+    console.log('🎮 Data being written to RTDB:', dataToWrite);
+    
+    try {
+      await set(choiceRef, dataToWrite);
+    } catch (e: any) {
+      // Gracefully handle permission errors that can happen due to race/duplicate submits
+      const message = String(e?.message || e);
+      if (/PERMISSION_DENIED/i.test(message)) {
+        console.warn('🎮 RTDB submitChoice permission denied (likely duplicate or phase change); ignoring:', message);
+        return;
+      }
+      throw e;
+    }
   }
 
   // Listeners

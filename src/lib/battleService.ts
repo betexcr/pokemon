@@ -412,8 +412,9 @@ class BattleService {
     
     console.log('📝 Adding new action:', newAction);
     
-    // Add the action to the actions array
-    const updatedActions = [...(battleData.actions || []), newAction];
+    // Add the action to the actions array (sanitize to avoid undefined in nested fields)
+    const updatedActionsRaw = [...(battleData.actions || []), newAction];
+    const updatedActions = this.sanitizeForFirestore(updatedActionsRaw);
     
     console.log('📊 Updated actions array length:', updatedActions.length);
     
@@ -422,12 +423,15 @@ class BattleService {
       actions: updatedActions,
       lastActionAt: serverTimestamp(),
       updatedAt: serverTimestamp()
-    };
+    } as const;
+
+    // Final defensive sanitation of the whole payload
+    const cleanedUpdateData = this.sanitizeForFirestore(updateData as unknown as Record<string, unknown>);
     
     console.log('📤 Final addAction update data:', updateData);
     
     try {
-      await updateDoc(battleRef, updateData);
+      await updateDoc(battleRef, cleanedUpdateData as any);
       console.log('✅ Action added successfully');
     } catch (error) {
       console.error('❌ Failed to add action:', error);

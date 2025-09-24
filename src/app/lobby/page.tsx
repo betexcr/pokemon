@@ -76,22 +76,22 @@ function LobbyPage() {
 
   const getStatusColor = (status: RoomData['status']) => {
     switch (status) {
-      case 'waiting': return 'text-yellow-600 bg-yellow-100';
-      case 'ready': return 'text-green-600 bg-green-100';
-      case 'battling': return 'text-red-600 bg-red-100';
-      case 'finished': return 'text-gray-600 bg-gray-100';
-      default: return 'text-gray-600 bg-gray-100';
+      case 'waiting': return 'bg-yellow-700/25 text-yellow-100 border-yellow-600';
+      case 'ready': return 'bg-green-700/25 text-green-100 border-green-600';
+      case 'battling': return 'bg-red-700/25 text-red-100 border-red-600';
+      case 'finished': return 'bg-gray-700/40 text-gray-200 border-gray-600';
+      default: return 'bg-surface text-muted border-border';
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100" style={{ minHeight: '100vh', backgroundSize: 'cover', backgroundRepeat: 'no-repeat' }}>
+      <div className="min-h-screen bg-bg text-text" style={{ minHeight: '100vh', backgroundSize: 'cover', backgroundRepeat: 'no-repeat' }}>
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading battle lobbies...</p>
+              <p className="text-muted">Loading battle lobbies...</p>
             </div>
           </div>
         </div>
@@ -100,12 +100,12 @@ function LobbyPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100" style={{ minHeight: '100vh', backgroundSize: 'cover', backgroundRepeat: 'no-repeat' }}>
+    <div className="min-h-screen bg-bg text-text" style={{ minHeight: '100vh', backgroundSize: 'cover', backgroundRepeat: 'no-repeat' }}>
       <AppHeader
         title="Battle Lobby"
         backLink="/"
         backLabel="Back to PokéDex"
-        showToolbar={false}
+        showToolbar={true}
         showThemeToggle={false}
         iconKey="battle"
         showIcon={true}
@@ -113,15 +113,16 @@ function LobbyPage() {
 
       <div className="container mx-auto px-4 py-8 pb-16">
         {/* Create Room Section */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+        <div className="bg-surface rounded-xl shadow-lg p-6 mb-8 border border-border">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">Create Battle Room</h2>
-              <p className="text-gray-600">Start a new battle and invite friends to join</p>
+              <h2 className="text-xl font-semibold text-text mb-2">Create Battle Room</h2>
+              <p className="text-muted">Start a new battle and invite friends to join</p>
             </div>
             <button
               onClick={createRoom}
               disabled={creatingRoom}
+              data-testid="create-room-button"
               className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center space-x-2"
             >
               {creatingRoom ? (
@@ -140,30 +141,50 @@ function LobbyPage() {
         </div>
 
         {/* Available Rooms */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">Available Battle Rooms</h2>
+        <div className="bg-surface rounded-xl shadow-lg p-6 border border-border">
+          <h2 className="text-xl font-semibold text-text mb-6">Available Battle Rooms</h2>
           
           {rooms.length === 0 ? (
             <div className="text-center py-12">
-              <div className="text-gray-400 text-6xl mb-4">⚔️</div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No rooms available</h3>
-              <p className="text-gray-600">Be the first to create a battle room!</p>
+              <div className="text-muted text-6xl mb-4">⚔️</div>
+              <h3 className="text-lg font-medium text-text mb-2">No rooms available</h3>
+              <p className="text-muted">Be the first to create a battle room!</p>
             </div>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {rooms.map((room) => (
                 <div
                   key={room.id}
-                  className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                  className="border border-border rounded-lg p-4 hover:shadow-md transition-shadow bg-surface"
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-medium text-gray-900">{room.hostName}&apos;s Room</h3>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(room.status)}`}>
-                      {room.status}
-                    </span>
+                    <h3 className="font-medium text-text">{room.hostName}&apos;s Room</h3>
+                    <div className="flex items-center gap-2">
+                      {user?.uid === room.hostId && (
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            if (!confirm('Delete this room?')) return;
+                            try {
+                              await roomService.deleteRoom(room.id);
+                            } catch (err) {
+                              console.error('Failed to delete room', err);
+                              alert('Failed to delete room');
+                            }
+                          }}
+                          className="px-2 py-1 rounded-md text-[10px] font-semibold bg-red-600/90 hover:bg-red-700 text-white border border-red-700"
+                          aria-label="Delete room"
+                        >
+                          Delete
+                        </button>
+                      )}
+                      <span className={`px-2 py-1 rounded-full text-[10px] sm:text-xs font-semibold tracking-wide uppercase border ${getStatusColor(room.status)}`}>
+                        {room.status}
+                      </span>
+                    </div>
                   </div>
                   
-                  <div className="space-y-2 text-sm text-gray-600 mb-4">
+                  <div className="space-y-2 text-sm text-muted mb-4">
                     <div className="flex justify-between">
                       <span>Players:</span>
                       <span>{room.currentPlayers}/{room.maxPlayers}</span>
@@ -177,7 +198,11 @@ function LobbyPage() {
                   <button
                     onClick={() => joinRoom(room.id)}
                     disabled={room.status !== 'waiting' || room.currentPlayers >= room.maxPlayers}
-                    className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-2 px-4 rounded-lg font-medium transition-colors"
+                    className={`w-full py-2 px-4 rounded-lg font-medium transition-colors border
+                      ${room.status === 'waiting' && room.currentPlayers < room.maxPlayers
+                        ? 'bg-green-600 hover:bg-green-700 text-white border-green-700'
+                        : 'bg-gray-600/40 text-gray-300 border-gray-600 cursor-not-allowed'}
+                    `}
                   >
                     {room.status === 'waiting' && room.currentPlayers < room.maxPlayers
                       ? 'Join Battle'

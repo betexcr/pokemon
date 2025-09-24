@@ -20,6 +20,7 @@ interface TeamSelectorProps {
   disabled?: boolean;
   label?: string;
   showStorageIndicator?: boolean;
+  onReady?: (ready: boolean) => void;
 }
 
 const STORAGE_KEY = 'pokemon-team-builder';
@@ -36,7 +37,8 @@ export default function TeamSelector({
   onTeamSelect, 
   disabled = false,
   label = "Select Team",
-  showStorageIndicator = true
+  showStorageIndicator = true,
+  onReady
 }: TeamSelectorProps) {
   const { user, loading: authLoading } = useAuth();
   const [teams, setTeams] = useState<(SavedTeam | LocalTeam)[]>([]);
@@ -138,6 +140,11 @@ export default function TeamSelector({
     return () => window.removeEventListener('storage', onStorage);
   }, [user, authLoading, selectedTeamId]);
 
+  // Notify parent when loading completes to avoid flicker
+  useEffect(() => {
+    onReady?.(!loading)
+  }, [loading, onReady])
+
   const handleTeamSelect = (team: SavedTeam | LocalTeam) => {
     setSelectedTeam(team);
     onTeamSelect(team);
@@ -153,12 +160,12 @@ export default function TeamSelector({
   if (loading) {
     return (
       <div className="w-full">
-        <label className="block text-sm font-medium text-black dark:text-text mb-2">
+        <label className="block text-sm font-medium text-black dark:text-gray-100 mb-2">
           {label}
         </label>
-        <div className="border border-gray-300 rounded-lg p-3 bg-gray-50 flex items-center gap-3">
+        <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-3 bg-gray-50 dark:bg-gray-800 flex items-center gap-3">
           <img src="/loading.gif" alt="Loading teams" className="w-5 h-5" />
-          <span className="text-sm text-gray-700">Loading teams…</span>
+          <span className="text-sm text-gray-700 dark:text-gray-300">Loading teams…</span>
         </div>
       </div>
     );
@@ -167,11 +174,11 @@ export default function TeamSelector({
   if (!user && teams.length === 0) {
     return (
       <div className="w-full">
-        <label className="block text-sm font-medium text-black dark:text-text mb-2">
+        <label className="block text-sm font-medium text-black dark:text-gray-100 mb-2">
           {label}
         </label>
-        <div className="border border-gray-300 rounded-lg p-3 bg-gray-50 text-gray-800 dark:text-muted text-sm">
-          No teams saved. <a href="/team" className="text-blue-600 hover:underline">Create a team</a> or <button onClick={() => setShowAuthModal(true)} className="text-blue-600 hover:underline bg-transparent border-none cursor-pointer">sign in</button> to access cloud teams.
+        <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-3 bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-300 text-sm">
+          No teams saved. <a href="/team" className="text-blue-600 dark:text-blue-400 hover:underline">Create a team</a> or <button onClick={() => setShowAuthModal(true)} className="text-blue-600 dark:text-blue-400 hover:underline bg-transparent border-none cursor-pointer p-0 m-0 font-inherit text-inherit">sign in</button> to access cloud teams.
         </div>
       </div>
     );
@@ -180,11 +187,11 @@ export default function TeamSelector({
   if (teams.length === 0) {
     return (
       <div className="w-full">
-        <label className="block text-sm font-medium text-black dark:text-text mb-2">
+        <label className="block text-sm font-medium text-black dark:text-gray-100 mb-2">
           {label}
         </label>
-        <div className="border border-gray-300 rounded-lg p-3 bg-gray-50 text-gray-800 dark:text-muted text-sm">
-          No teams saved. <a href="/team" className="text-blue-600 hover:underline">Create a team</a>
+        <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-3 bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-300 text-sm">
+          No teams saved. <a href="/team" className="text-blue-600 dark:text-blue-400 hover:underline">Create a team</a>
         </div>
       </div>
     );
@@ -193,20 +200,20 @@ export default function TeamSelector({
   return (
     <div className="w-full">
       <div className="flex items-center justify-between mb-2">
-        <label className="block text-sm font-medium text-black dark:text-text">
+        <label className="block text-sm font-medium text-black dark:text-gray-100">
           {label}
         </label>
         {showStorageIndicator && (
           <div className="flex items-center space-x-1 text-xs">
             {isUsingLocalStorage ? (
               <>
-                <CloudOff className="h-3 w-3 text-orange-500" />
-                <span className="text-orange-600">Local</span>
+                <CloudOff className="h-3 w-3 text-orange-500 dark:text-orange-400" />
+                <span className="text-orange-600 dark:text-orange-400">Local</span>
               </>
             ) : (
               <>
-                <Cloud className="h-3 w-3 text-blue-500" />
-                <span className="text-blue-600">Cloud</span>
+                <Cloud className="h-3 w-3 text-blue-500 dark:text-blue-400" />
+                <span className="text-blue-600 dark:text-blue-400">Cloud</span>
               </>
             )}
           </div>
@@ -218,7 +225,7 @@ export default function TeamSelector({
           type="button"
           onClick={() => !disabled && setIsOpen(!isOpen)}
           disabled={disabled}
-          className="w-full border border-gray-300 rounded-lg p-3 bg-white text-left focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed flex items-center justify-between"
+          className="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 bg-white dark:bg-gray-800 text-left focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 dark:disabled:bg-gray-700 disabled:cursor-not-allowed flex items-center justify-between"
         >
           <div className="flex items-center space-x-3">
             {selectedTeam ? (
@@ -258,24 +265,24 @@ export default function TeamSelector({
                     </div>
                   ))}
                 </div>
-                <span className="text-black dark:text-text">{selectedTeam.name}</span>
+                <span className="text-black dark:text-gray-100">{selectedTeam.name}</span>
               </>
             ) : (
               <>
-                <Users className="h-4 w-4 text-gray-400" />
-                <span className="text-gray-800 dark:text-muted">Choose a team...</span>
+                <Users className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                <span className="text-gray-800 dark:text-gray-300">Choose a team...</span>
               </>
             )}
           </div>
-          <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          <ChevronDown className={`h-4 w-4 text-gray-400 dark:text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
         </button>
 
         {isOpen && (
-          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
+          <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg dark:shadow-2xl max-h-60 overflow-auto">
             <div className="p-2">
               <button
                 onClick={handleClearSelection}
-                className="w-full text-left px-3 py-2 text-sm text-gray-800 dark:text-muted hover:bg-gray-100 rounded flex items-center space-x-2"
+                className="w-full text-left px-3 py-2 text-sm text-gray-800 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center space-x-2"
               >
                 <span>No team selected</span>
               </button>
@@ -285,7 +292,7 @@ export default function TeamSelector({
               <div key={team.id} className="p-2">
                 <button
                   onClick={() => handleTeamSelect(team)}
-                  className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded flex items-center justify-between"
+                  className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center justify-between"
                 >
                   <div className="flex items-center space-x-3">
                     {/* Pokemon Roster Images */}
@@ -324,14 +331,14 @@ export default function TeamSelector({
                       ))}
                     </div>
                     <div>
-                      <div className="font-medium text-black dark:text-text">{team.name}</div>
-                      <div className="text-xs text-gray-800 dark:text-muted">
+                      <div className="font-medium text-black dark:text-gray-100">{team.name}</div>
+                      <div className="text-xs text-gray-800 dark:text-gray-400">
                         {team.slots.filter(slot => slot.id).length}/6 Pokémon
                       </div>
                     </div>
                   </div>
                   {selectedTeam?.id === team.id && (
-                    <Check className="h-4 w-4 text-blue-600" />
+                    <Check className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   )}
                 </button>
               </div>
@@ -339,13 +346,13 @@ export default function TeamSelector({
             
             {/* Go Online Option - only show when not authenticated */}
             {!user && (
-              <div className="border-t border-gray-200 pt-2 mt-2">
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-2 mt-2">
                 <button
                   onClick={() => {
                     setShowAuthModal(true);
                     setIsOpen(false);
                   }}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-md transition-colors"
                 >
                   <Wifi className="h-4 w-4" />
                   <span>Go online to save your teams!</span>

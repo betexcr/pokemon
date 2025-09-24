@@ -327,9 +327,8 @@ export default function MultiPokemonRadarChart({ pokemons, highlightedPokemonId 
         <div
           className="absolute z-10 text-gray-800 px-3 py-2 rounded-lg text-sm shadow-lg pointer-events-none border border-gray-200"
           style={{
-            left: cursorPos.x,
-            top: cursorPos.y,
-            transform: 'translate(-50%, -120%)',
+            left: cursorPos.x + 12,
+            top: cursorPos.y + 12,
             // White base with stat-colored overlay - 30% more transparent
             background: `linear-gradient(180deg, ${getStatBaseColor(stats[hoveredStatIndex])}15 0%, transparent 60%), rgba(255, 255, 255, 0.7)`
           }}
@@ -365,9 +364,8 @@ export default function MultiPokemonRadarChart({ pokemons, highlightedPokemonId 
         <div
           className="absolute z-10 text-gray-800 px-3 py-2 rounded-lg text-sm shadow-lg pointer-events-none border border-gray-200"
           style={{
-            left: cursorPos.x,
-            top: cursorPos.y,
-            transform: 'translate(12px, -12px)',
+            left: cursorPos.x + 12,
+            top: cursorPos.y + 12,
             background: `linear-gradient(180deg, ${colors[pokemons.findIndex(p => p.id === hoveredPokemon.id) % colors.length]}15 0%, transparent 60%), rgba(255, 255, 255, 0.9)`
           }}
         >

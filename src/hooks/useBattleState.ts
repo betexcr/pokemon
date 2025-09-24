@@ -82,6 +82,7 @@ type UseBattleState = {
   legalMoves: Array<Move & { disabled?: boolean; reason?: string }>;
   legalSwitchIndexes: number[];
 
+  writeChoice: (choice: ChoicePayload) => Promise<void>;
   chooseMove: (moveId: string, target?: "p1" | "p2") => Promise<void>;
   chooseSwitch: (idx: number) => Promise<void>;
   forfeit: () => Promise<void>;
@@ -116,9 +117,16 @@ export function useBattleState(battleId: string): UseBattleState {
 
   // Listen to authentication state changes
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      console.log('useBattleState: Auth state changed:', user ? 'authenticated' : 'not authenticated');
-      setUser(user);
+    if (!auth) {
+      console.warn('useBattleState: Firebase auth unavailable; skipping auth listener.');
+      setAuthLoading(false);
+      setError(prev => prev ?? 'Authentication service unavailable.');
+      return;
+    }
+
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      console.log('useBattleState: Auth state changed:', currentUser ? 'authenticated' : 'not authenticated');
+      setUser(currentUser);
       setAuthLoading(false);
     });
 
@@ -136,14 +144,31 @@ export function useBattleState(battleId: string): UseBattleState {
       console.log('useBattleState: Authentication still loading...');
       return;
     }
-    
+
     if (!meUid) {
       console.log('useBattleState: No authenticated user, waiting...');
       setError('User not authenticated');
       return;
     }
+
+    const database = rtdb;
+    if (!database) {
+      console.warn('useBattleState: Realtime Database unavailable; cannot subscribe to battle.');
+      setLoading(false);
+      setError('Realtime battle service unavailable.');
+      return;
+    }
     
     console.log('useBattleState: Setting up listeners for battle:', battleId, 'user:', meUid);
+    console.log('useBattleState: Auth state details:', {
+      hasUser: !!user,
+      uid: user?.uid,
+      email: user?.email,
+      isAnonymous: user?.isAnonymous,
+      authLoading,
+      meUid
+    });
+    
     setLoading(true);
     setError(null);
 
@@ -151,19 +176,31 @@ export function useBattleState(battleId: string): UseBattleState {
     
     // Add error handling for each listener
     unsubs.push(onValue(
-      dbRef(rtdb, `/battles/${battleId}/meta`), 
+      dbRef(database, `/battles/${battleId}/meta`), 
       s => {
         console.log('useBattleState: Meta data received:', s.val());
         setMeta(s.val() ?? null);
       }, 
       e => {
         console.error('useBattleState: Meta listener error:', e);
+        console.error('useBattleState: Meta listener error details:', {
+          code: (e as any).code,
+          message: e.message,
+          battleId,
+          userUid: meUid,
+          authState: {
+            hasUser: !!user,
+            uid: user?.uid,
+            email: user?.email,
+            isAnonymous: user?.isAnonymous
+          }
+        });
         setError(e.message);
       }
     ));
     
     unsubs.push(onValue(
-      dbRef(rtdb, `/battles/${battleId}/public`), 
+      dbRef(database, `/battles/${battleId}/public`), 
       s => {
         console.log('useBattleState: Public data received:', s.val());
         setPub(s.val() ?? null);
@@ -177,7 +214,7 @@ export function useBattleState(battleId: string): UseBattleState {
     // IMPORTANT: Do not subscribe to private path yet; it requires correct uid membership.
     
     unsubs.push(onValue(
-      dbRef(rtdb, "/.info/serverTimeOffset"), 
+      dbRef(database, "/.info/serverTimeOffset"), 
       s => setServerOffsetMs(s.val() ?? 0),
       e => console.error('useBattleState: Server offset error:', e)
     ));
@@ -195,6 +232,12 @@ export function useBattleState(battleId: string): UseBattleState {
     if (!meUid) return; // wait for auth
     if (!meta) return;  // wait for meta so we can verify membership
 
+    const database = rtdb;
+    if (!database) {
+      console.warn('useBattleState: Realtime Database unavailable for private subscription.');
+      return;
+    }
+
     const isParticipant = meta.players?.p1?.uid === meUid || meta.players?.p2?.uid === meUid;
     if (!isParticipant) {
       console.warn('useBattleState: current user is not a participant of this battle; skipping private subscription');
@@ -205,7 +248,7 @@ export function useBattleState(battleId: string): UseBattleState {
 
     console.log('useBattleState: Subscribing to private state for user:', meUid);
     const unsub = onValue(
-      dbRef(rtdb, `/battles/${battleId}/private/${meUid}`),
+      dbRef(database, `/battles/${battleId}/private/${meUid}`),
       s => {
         console.log('useBattleState: Private data received:', s.val());
         setMe(s.val() ?? null);
@@ -327,56 +370,39 @@ export function useBattleState(battleId: string): UseBattleState {
   const writeChoice = useCallback(async (choice: ChoicePayload) => {
     if (!meUid || !meta) throw new Error("No auth or meta");
     if (!isChoosing(meta)) throw new Error("Not in choosing phase");
-    
+
     // Enhanced permission check: Verify user is a participant in this battle
     const isParticipant = meta.players?.p1?.uid === meUid || meta.players?.p2?.uid === meUid;
     if (!isParticipant) {
       throw new Error("You are not a participant in this battle");
     }
-    
-    // Use Firestore instead of RTDB for move submissions
-    const battleRef = doc(db, 'battles', battleId);
-    
-    // Create the action object for Firestore
-    const action = {
-      playerId: meUid,
-      playerName: 'Player', // This should be passed from the component
-      type: choice.action === 'move' ? 'move' : choice.action === 'switch' ? 'switch' : 'forfeit',
-      moveId: choice.action === 'move' ? choice.payload.moveId : undefined,
-      switchIndex: choice.action === 'switch' ? choice.payload.switchToIndex : undefined,
-      turnNumber: meta.turn,
-      timestamp: Date.now()
+
+    // Submit choice directly to RTDB so server can resolve the turn
+    const { rtdbService } = await import('@/lib/firebase-rtdb-service');
+    const cleanedPayload: any = {
+      action: choice.action,
+      payload: {
+        moveId: choice.action === 'move' ? choice.payload.moveId : undefined,
+        target: choice.action === 'move' ? choice.payload.target : undefined,
+        switchToIndex: choice.action === 'switch' ? choice.payload.switchToIndex : undefined
+      }
     };
-    
-    // Get current battle data to append the action
-    const battleSnap = await getDoc(battleRef);
-    if (!battleSnap.exists()) {
-      throw new Error("Battle not found");
-    }
-    
-    const battleData = battleSnap.data();
-    const currentActions = battleData.actions || [];
-    
-    // Check if this player has already made an action for the current turn
-    const existingActionForTurn = currentActions.find((existingAction: any) => 
-      existingAction.playerId === meUid && existingAction.turnNumber === meta.turn
-    );
-    
-    if (existingActionForTurn) {
-      console.log('Player has already made an action for this turn, skipping duplicate');
-      return;
-    }
-    
-    // Add the new action to the actions array
-    const updatedActions = [...currentActions, action];
-    
-    // Update the battle document with the new action
-    await updateDoc(battleRef, {
-      actions: updatedActions,
-      lastActionAt: firestoreServerTimestamp(),
-      updatedAt: firestoreServerTimestamp()
-    });
+    cleanedPayload.payload = Object.fromEntries(Object.entries(cleanedPayload.payload).filter(([, v]) => v !== undefined));
+    await rtdbService.submitChoice(battleId, meta.turn, meUid, cleanedPayload);
   }, [battleId, meUid, meta]);
+
+  // Expose writeChoice to global scope for E2E testing
+  useEffect(() => {
+    if (process.env.NEXT_PUBLIC_E2E === 'true') {
+      (window as any).writeChoice = writeChoice;
+      console.log('🎮 Exposed writeChoice to global scope from useBattleState hook');
+    }
+    return () => {
+      if (process.env.NEXT_PUBLIC_E2E === 'true') {
+        delete (window as any).writeChoice;
+      }
+    };
+  }, [writeChoice]);
 
   const chooseMove = useCallback(async (moveId: string, target: "p1" | "p2" = "p2") => {
     if (!meta) throw new Error("No meta");
@@ -399,6 +425,7 @@ export function useBattleState(battleId: string): UseBattleState {
     timeLeftSec,
     legalMoves,
     legalSwitchIndexes,
+    writeChoice,
     chooseMove,
     chooseSwitch,
     forfeit

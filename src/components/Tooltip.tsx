@@ -1,8 +1,11 @@
+"use client";
+
 import { ReactNode, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 interface TooltipProps {
   children: ReactNode
-  content: string
+  content: ReactNode | string
   className?: string
   position?: 'top' | 'bottom' | 'left' | 'right'
   maxWidth?: string
@@ -10,6 +13,9 @@ interface TooltipProps {
   variant?: 'default' | 'ability' | 'move' | 'stat'
   containViewport?: boolean
   damageClass?: 'physical' | 'special' | 'status'
+  followCursor?: boolean
+  cursorOffset?: { x?: number; y?: number }
+  title?: string
 }
 
 export default function Tooltip({ 
@@ -17,11 +23,14 @@ export default function Tooltip({
   content, 
   className = '', 
   position = 'bottom',
-  maxWidth = 'w-96',
+  maxWidth = 'max-w-96',
   type = 'normal',
   variant = 'default',
   containViewport = true,
-  damageClass
+  damageClass,
+  followCursor = false,
+  cursorOffset,
+  title
 }: TooltipProps) {
   const positionClasses = {
     top: 'bottom-full mb-2 left-1/2 transform -translate-x-1/2',
@@ -36,14 +45,31 @@ export default function Tooltip({
   const isTouchingRef = useRef(false)
   const longPressTimerRef = useRef<number | null>(null)
   const longPressActiveRef = useRef(false)
+  const hoverTimerRef = useRef<number | null>(null)
+  const wasDismissedByClickRef = useRef(false)
+  const lastMousePositionRef = useRef<{ x: number; y: number } | null>(null)
 
   // Runtime-resolved position and fixed coordinates for viewport containment
   const [resolvedPosition, setResolvedPosition] = useState<typeof position>(position)
   const [fixedCoords, setFixedCoords] = useState<{ top: number; left: number } | null>(null)
   const [anchorCenter, setAnchorCenter] = useState<number | null>(null)
+  const [isDarkMode, setIsDarkMode] = useState(false)
 
-  const anchorRef = useRef<HTMLDivElement | null>(null)
+  const anchorRef = useRef<HTMLElement | null>(null)
   const tipRef = useRef<HTMLDivElement | null>(null)
+  // Mount flag to avoid SSR/CSR markup mismatches. We only render the portal after mount.
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+  // Track dark mode from documentElement class list
+  useEffect(() => {
+    const el = document.documentElement
+    const update = () => setIsDarkMode(el.classList.contains('dark'))
+    update()
+    const observer = new MutationObserver(update)
+    observer.observe(el, { attributes: true, attributeFilter: ['class'] })
+    return () => observer.disconnect()
+  }, [])
+
 
   // Close on outside click when latched
   useEffect(() => {
@@ -56,6 +82,8 @@ export default function Tooltip({
       if (!a.contains(target) && !t.contains(target)) {
         setIsOpen(false)
         setIsLatched(false)
+        // Tooltip was dismissed by clicking outside
+        wasDismissedByClickRef.current = true
       }
     }
     document.addEventListener('mousedown', handleOutside, true)
@@ -65,6 +93,15 @@ export default function Tooltip({
       document.removeEventListener('touchstart', handleOutside, true)
     }
   }, [isOpen, isLatched])
+
+  // Cleanup hover timer on unmount
+  useEffect(() => {
+    return () => {
+      if (hoverTimerRef.current) {
+        clearTimeout(hoverTimerRef.current)
+      }
+    }
+  }, [])
 
   // Opacity behavior for hover and open state
   // When containing to viewport with fixed positioning, avoid hover-driven opacity to prevent
@@ -76,34 +113,47 @@ export default function Tooltip({
 
   // Type-based background styling
   const getTypeBackground = () => {
-    if (variant === 'default') return 'bg-gray-900/95 backdrop-blur-sm'
-    
-    // White base with type color overlay gradient
+    if (variant === 'default') {
+      return isDarkMode ? 'bg-gray-900/95 backdrop-blur-sm' : 'bg-white/95 backdrop-blur-sm'
+    }
+    if (isDarkMode) return 'bg-gray-900/95 border border-gray-700 backdrop-blur-sm'
     return 'bg-white border border-gray-200/50'
   }
 
   const getTypeAccent = () => {
-    if (variant === 'default') return 'border-gray-700'
-    return 'border-gray-200/50'
+    if (variant === 'default') {
+      return isDarkMode ? 'border-gray-700' : 'border-gray-200/50'
+    }
+    return isDarkMode ? 'border-gray-700' : 'border-gray-200/50'
   }
 
   const getTextColor = () => {
-    if (variant === 'default') return 'text-white'
-    return 'text-gray-800'
+    if (variant === 'default') {
+      return isDarkMode ? 'text-white' : 'text-gray-900'
+    }
+    return isDarkMode ? 'text-gray-100' : 'text-gray-800'
+  }
+
+  const getRingColor = () => {
+    if (variant === 'default') {
+      return isDarkMode ? 'ring-white/10' : 'ring-gray-200/50'
+    }
+    return isDarkMode ? 'ring-white/10' : 'ring-gray-200/50'
   }
 
   // Get type color for overlay
   const getTypeOverlay = () => {
     if (variant === 'default' || !type) return {}
-    
-    // White base background with type color gradient overlay
+    const t = String(type).toLowerCase()
+    const base = isDarkMode ? 'rgba(17,24,39,0.95)' : 'white'
     return {
-      background: `linear-gradient(180deg, color-mix(in oklab, var(--type-${type}) 14%, transparent) 0%, transparent 60%), white`
+      background: `linear-gradient(180deg, color-mix(in oklab, var(--type-${t}) 14%, transparent) 0%, transparent 60%), ${base}`
     }
   }
 
   // Format content for better readability
-  const formatContent = (text: string) => {
+  const formatContent = (text: ReactNode | string) => {
+    if (typeof text !== 'string') return text
     if (variant === 'move' || variant === 'ability') {
       // Split by periods and add line breaks for better readability
       return text.split('. ').map((sentence, index) => (
@@ -122,7 +172,7 @@ export default function Tooltip({
 
   // Compute fixed coordinates to keep tooltip inside viewport
   useEffect(() => {
-    if (!containViewport) {
+    if (!containViewport || followCursor) {
       setFixedCoords(null)
       setResolvedPosition(position)
       return
@@ -214,52 +264,10 @@ export default function Tooltip({
 
   const marginPx = 12
 
-  return (
-    <div 
-      className={`relative group ${className}`}
-      ref={anchorRef}
-      onMouseEnter={() => { setFixedCoords(null); setIsOpen(true) }}
-      onMouseLeave={() => { if (!isLatched) setIsOpen(false) }}
-      onClick={() => { 
-        setIsOpen(prev => {
-          const next = !prev
-          if (next) setFixedCoords(null)
-          return next
-        })
-        setIsLatched(prev => !prev ? true : false) 
-      }}
-      onTouchStart={(e) => {
-        isTouchingRef.current = true
-        longPressActiveRef.current = false
-        if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current)
-        longPressTimerRef.current = window.setTimeout(() => {
-          if (isTouchingRef.current) {
-            longPressActiveRef.current = true
-            setFixedCoords(null)
-            setIsOpen(true)
-            setIsLatched(false) // temporary while holding
-          }
-        }, 350)
-      }}
-      onTouchEnd={() => {
-        isTouchingRef.current = false
-        if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current)
-        if (longPressActiveRef.current) {
-          longPressActiveRef.current = false
-          setIsOpen(false)
-          setIsLatched(false)
-        } else {
-          // Single tap on mobile - show tooltip and latch it
-          setFixedCoords(null)
-          setIsOpen(true)
-          setIsLatched(true)
-        }
-      }}
-    >
-      {children}
+  const tipElement = (
       <div 
         ref={tipRef}
-        className={`pointer-events-auto overflow-auto ${containViewport ? 'fixed' : 'absolute'} z-[9999] ${!containViewport ? positionClasses[position] : ''} ${maxWidth} rounded-2xl p-5 text-sm leading-relaxed shadow-2xl ring-1 ring-gray-200/20 ${openOpacityClass} ${hoverOpacityClass} ${visibilityClass} transition-opacity duration-200 ease-in-out ${getTypeBackground()} ${getTypeAccent()} ${getTextColor()} ${!containViewport && variant==='move' ? 'left-1/2 -translate-x-1/2' : ''}`}
+        className={`pointer-events-auto ${containViewport ? 'fixed' : 'absolute'} z-[2147483647] ${!containViewport ? positionClasses[resolvedPosition] : ''} ${maxWidth} rounded-2xl p-5 text-sm leading-relaxed shadow-2xl ring-1 ${getRingColor()} ${openOpacityClass} ${hoverOpacityClass} ${visibilityClass} transition-opacity duration-200 ease-in-out ${getTypeBackground()} ${getTypeAccent()} ${getTextColor()} ${!containViewport && variant==='move' ? 'left-1/2 -translate-x-1/2' : ''}`}
         style={containViewport && fixedCoords ? { 
           ...getTypeOverlay(), 
           top: fixedCoords.top, 
@@ -268,44 +276,239 @@ export default function Tooltip({
           maxWidth: `calc(100vw - ${marginPx * 2}px)`
         } : { 
           ...getTypeOverlay(), 
-          // Park offscreen while waiting for measurement to avoid top-left flashes
           top: containViewport ? -9999 : undefined as unknown as number, 
           left: containViewport ? -9999 : undefined as unknown as number 
         }}
       >
         <div className="space-y-3">
           {variant !== 'default' && (
-            <div className="flex items-center gap-3 pb-2 border-b border-gray-100">
+            <div className={`flex items-center gap-3 pb-2 border-b border-gray-100`}
+            >
               {type && (
                 <div 
                   className="w-4 h-4 rounded-lg shadow-sm"
-                  style={{ backgroundColor: `var(--type-${type})` }}
+                  style={{ backgroundColor: `var(--type-${String(type).toLowerCase()})` }}
                 />
               )}
-              <span className="text-sm font-semibold text-gray-700 capitalize">
-                {variant === 'ability' ? 'Ability' : variant === 'move' ? (type ? type : 'Move') : variant === 'stat' ? 'Stat' : ''}
+              <span className={`text-sm font-semibold capitalize text-gray-700`}>
+                {title || (variant === 'ability' ? 'Ability' : variant === 'move' ? (type ? type : 'Move') : variant === 'stat' ? 'Stat' : '')}
               </span>
               {variant === 'move' && (
-                <span className="ml-auto text-xs font-medium px-2 py-0.5 rounded-full border bg-gray-50 capitalize">
+                <span className={`ml-auto text-xs font-medium px-2 py-0.5 rounded-full border capitalize ${
+                  isDarkMode ? 'bg-gray-800 border-gray-700 text-gray-200' : 'bg-gray-100 border-gray-200 text-gray-700'
+                }`}>
                   {damageClass || 'status'}
                 </span>
               )}
             </div>
           )}
-          <div className="text-sm leading-relaxed text-gray-800">
+          <div className={`text-sm leading-relaxed ${variant === 'default' ? (isDarkMode ? 'text-gray-100' : 'text-gray-900') : 'text-gray-800'}`}>
             {formatContent(content)}
           </div>
         </div>
-        
-        {/* Modern Arrow */}
         <div className={`absolute ${resolvedPosition === 'top' ? 'top-full left-1/2 -translate-x-1/2' : 
                            resolvedPosition === 'bottom' ? 'bottom-full left-1/2 transform -translate-x-1/2' :
                            resolvedPosition === 'left' ? 'left-full top-1/2 transform -translate-y-1/2' :
                            'right-full top-1/2 transform -translate-y-1/2'} 
                     w-3 h-3 rotate-45 ${
-                      variant === 'default' ? 'bg-gray-900' : 'bg-white'
+                      variant === 'default' ? (isDarkMode ? 'bg-gray-900' : 'bg-white') : (isDarkMode ? 'bg-gray-900' : 'bg-white')
                     } shadow-lg`} />
       </div>
-    </div>
+  )
+
+  // Check if children contain SVG elements
+  const isSVGElement = (element: ReactNode): boolean => {
+    if (typeof element === 'object' && element !== null && 'type' in element) {
+      const elementType = (element as any).type
+      return typeof elementType === 'string' && (
+        elementType === 'g' || 
+        elementType === 'circle' || 
+        elementType === 'rect' || 
+        elementType === 'path' || 
+        elementType === 'svg' ||
+        elementType === 'text' ||
+        elementType === 'line' ||
+        elementType === 'polygon' ||
+        elementType === 'ellipse'
+      )
+    }
+    return false
+  }
+
+  const isSVG = isSVGElement(children)
+
+  // Helper functions for hover with delay
+  const handleMouseEnter = (e: React.MouseEvent) => {
+    // Check if mouse has moved since last dismissal
+    const currentX = e.clientX
+    const currentY = e.clientY
+    const hasMouseMoved = !lastMousePositionRef.current || 
+      Math.abs(currentX - lastMousePositionRef.current.x) > 5 || 
+      Math.abs(currentY - lastMousePositionRef.current.y) > 5
+
+    // Don't show tooltip if it was dismissed by click and mouse hasn't moved
+    if (wasDismissedByClickRef.current && !hasMouseMoved) {
+      return
+    }
+
+    // Reset dismissal state if mouse has moved
+    if (hasMouseMoved) {
+      wasDismissedByClickRef.current = false
+    }
+
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current)
+    }
+    hoverTimerRef.current = window.setTimeout(() => {
+      setFixedCoords(null)
+      setIsOpen(true)
+    }, 500) // 500ms delay
+  }
+
+  const handleMouseLeave = () => {
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current)
+      hoverTimerRef.current = null
+    }
+    if (!isLatched) setIsOpen(false)
+  }
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    // Update mouse position
+    lastMousePositionRef.current = { x: e.clientX, y: e.clientY }
+  }
+
+  const WrapperComponent = isSVG ? 'g' : 'span'
+  const wrapperProps: any = isSVG ? {
+    className: `group ${className}`,
+    ref: anchorRef as unknown as React.RefObject<SVGGElement>,
+    onMouseMove: (e: React.MouseEvent<SVGGElement>) => {
+      if (!followCursor || !containViewport) return
+      const margin = 12
+      const tip = tipRef.current
+      let width = 220, height = 60
+      if (tip) {
+        const prevVis = tip.style.visibility
+        const prevPos = tip.style.position
+        tip.style.visibility = 'hidden'
+        tip.style.position = 'fixed'
+        tip.style.top = '0px'
+        tip.style.left = '0px'
+        const r = tip.getBoundingClientRect()
+        width = r.width
+        height = r.height
+        tip.style.visibility = prevVis
+        tip.style.position = prevPos
+      }
+      const vw = window.innerWidth
+      const vh = window.innerHeight
+      const offX = cursorOffset?.x ?? 12
+      const offY = cursorOffset?.y ?? 12
+      let left = e.clientX + offX
+      let top = e.clientY + offY
+      left = Math.max(margin, Math.min(left, vw - width - margin))
+      top = Math.max(margin, Math.min(top, vh - height - margin))
+      setFixedCoords({ top, left })
+      if (!isOpen) setIsOpen(true)
+    },
+    onMouseEnter: handleMouseEnter,
+    onMouseLeave: handleMouseLeave,
+    onClick: () => { 
+      setIsOpen(prev => {
+        const next = !prev
+        if (next) {
+          setFixedCoords(null)
+        } else {
+          // Tooltip was dismissed by clicking
+          wasDismissedByClickRef.current = true
+        }
+        return next
+      })
+      setIsLatched(prev => !prev ? true : false) 
+    }
+  } : {
+    className: `relative inline-block align-baseline group ${className}`,
+    ref: anchorRef as unknown as React.RefObject<HTMLSpanElement>,
+    onMouseMove: (e: React.MouseEvent<HTMLSpanElement>) => {
+      if (!followCursor || !containViewport) return
+      const margin = 12
+      const tip = tipRef.current
+      let width = 220, height = 60
+      if (tip) {
+        const prevVis = tip.style.visibility
+        const prevPos = tip.style.position
+        tip.style.visibility = 'hidden'
+        tip.style.position = 'fixed'
+        tip.style.top = '0px'
+        tip.style.left = '0px'
+        const r = tip.getBoundingClientRect()
+        width = r.width
+        height = r.height
+        tip.style.visibility = prevVis
+        tip.style.position = prevPos
+      }
+      const vw = window.innerWidth
+      const vh = window.innerHeight
+      const offX = cursorOffset?.x ?? 12
+      const offY = cursorOffset?.y ?? 12
+      let left = e.clientX + offX
+      let top = e.clientY + offY
+      left = Math.max(margin, Math.min(left, vw - width - margin))
+      top = Math.max(margin, Math.min(top, vh - height - margin))
+      setFixedCoords({ top, left })
+      if (!isOpen) setIsOpen(true)
+    },
+    onMouseEnter: handleMouseEnter,
+    onMouseLeave: handleMouseLeave,
+    onClick: () => { 
+      setIsOpen(prev => {
+        const next = !prev
+        if (next) {
+          setFixedCoords(null)
+        } else {
+          // Tooltip was dismissed by clicking
+          wasDismissedByClickRef.current = true
+        }
+        return next
+      })
+      setIsLatched(prev => !prev ? true : false) 
+    },
+    onTouchStart: (e: React.TouchEvent<HTMLSpanElement>) => {
+      isTouchingRef.current = true
+      longPressActiveRef.current = false
+      if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current)
+      longPressTimerRef.current = window.setTimeout(() => {
+        if (isTouchingRef.current) {
+          longPressActiveRef.current = true
+          setFixedCoords(null)
+          setIsOpen(true)
+          setIsLatched(false) // temporary while holding
+        }
+      }, 350)
+    },
+    onTouchEnd: () => {
+      isTouchingRef.current = false
+      if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current)
+      if (longPressActiveRef.current) {
+        longPressActiveRef.current = false
+        setIsOpen(false)
+        setIsLatched(false)
+      } else {
+        // Single tap on mobile - show tooltip and latch it
+        setFixedCoords(null)
+        setIsOpen(true)
+        setIsLatched(true)
+      }
+    }
+  }
+
+  return (
+    <WrapperComponent {...wrapperProps}>
+      {children}
+      {/* Avoid SSR hydration mismatches: render tooltip only after mount, and only when needed */}
+      {mounted && (isOpen || followCursor) && (
+        containViewport ? createPortal(tipElement, document.body) : tipElement
+      )}
+    </WrapperComponent>
   )
 }

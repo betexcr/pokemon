@@ -6,7 +6,6 @@ import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { Pokemon, FilterState } from '@/types/pokemon';
 import { formatPokemonName, getPokemonDescription } from '@/lib/utils';
-import ThemeToggle from './ThemeToggle';
 import PokemonComparison from './PokemonComparison';
 import RadarChart from './RadarChart';
 import VirtualizedPokemonList from './VirtualizedPokemonList';
@@ -40,10 +39,7 @@ export default function GoldPokedexLayout({
 
   return (
     <div className="min-h-screen pokemon-gold-bg font-gbc text-white">
-      {/* Theme Toggle - Hidden on mobile */}
-      <div className="hidden md:block absolute top-4 right-4 z-50">
-        <ThemeToggle />
-      </div>
+      {/* Theme Toggle moved into UserDropdown */}
       
       {/* Authentic GBC PokéDex Header */}
       <div className="bg-yellow-200 border-b-4 border-yellow-600 p-2 relative">

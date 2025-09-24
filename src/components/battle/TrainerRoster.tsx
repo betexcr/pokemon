@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Champion } from '@/lib/gym_champions';
 import Tooltip from '@/components/Tooltip';
-import { getTrainerSpriteUrl } from '@/lib/trainerSprites';
+import { getTrainerSpriteUrl, getTrainerSpriteUrls } from '@/lib/trainerSprites';
 
 // Custom Trainer Tooltip Component
 interface TrainerTooltipProps {
@@ -108,12 +108,14 @@ const TrainerTooltip: React.FC<TrainerTooltipProps> = ({
         }
         setIsOpen(false);
       }}
-      onClick={() => {
+      onClick={(e) => {
+        e.stopPropagation();
         if (isMobile) {
           setIsOpen(prev => !prev);
         }
       }}
-      onTouchStart={() => {
+      onTouchStart={(e) => {
+        e.stopPropagation();
         if (isMobile) {
           setIsOpen(prev => !prev);
         }
@@ -121,25 +123,25 @@ const TrainerTooltip: React.FC<TrainerTooltipProps> = ({
     >
       {children}
       <div 
-        className={`pointer-events-none absolute z-50 ${positionClasses[position]} rounded-2xl p-4 md:p-6 text-sm leading-relaxed shadow-2xl ring-1 ring-gray-200/20 bg-white border border-gray-200 transition-all duration-300 ease-out ${
+        className={`pointer-events-none absolute z-50 ${positionClasses[position]} rounded-2xl p-4 md:p-6 text-sm leading-relaxed shadow-2xl dark:shadow-3xl ring-1 ring-gray-200/20 dark:ring-gray-700/30 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-all duration-300 ease-out ${
           shouldShowTooltip ? 'opacity-100' : 'opacity-0'
         } max-w-[92vw] md:w-[500px]`}
       >
         <div className="space-y-3">
           {/* Team Name as Title */}
-          <div className="text-center pb-2 border-b border-gray-200">
-            <h3 className="text-lg font-bold text-gray-800">{champion.team.name}</h3>
-            <p className="text-sm text-gray-600">{champion.generation}</p>
+          <div className="text-center pb-2 border-b border-gray-200 dark:border-gray-700">
+            <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">{champion.team.name}</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">{champion.generation}</p>
           </div>
           
           {/* Trainer Description */}
-          <div className="text-sm text-gray-700 leading-relaxed">
+          <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
             {getTrainerDescription(champion)}
           </div>
           
           {/* Pokemon Team Images */}
-          <div className="pt-2 border-t border-gray-200">
-            <p className="text-xs font-semibold text-gray-600 mb-3">Team:</p>
+          <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+            <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-3">Team:</p>
             <div className="flex flex-wrap gap-3 justify-center">
               {champion.team.slots.map((slot, index) => (
                 <div key={index} className="flex flex-col items-center space-y-1">
@@ -154,7 +156,7 @@ const TrainerTooltip: React.FC<TrainerTooltipProps> = ({
                       target.src = '/placeholder-pokemon.png';
                     }}
                   />
-                  <div className="text-xs text-gray-600 font-medium">
+                  <div className="text-xs text-gray-600 dark:text-gray-400 font-medium">
                     Lv.{slot.level}
                   </div>
                 </div>
@@ -169,7 +171,7 @@ const TrainerTooltip: React.FC<TrainerTooltipProps> = ({
           position === 'bottom' ? 'bottom-full left-1/2 transform -translate-x-1/2' :
           position === 'left' ? 'left-full top-1/2 transform -translate-y-1/2' :
           'right-full top-1/2 transform -translate-y-1/2'
-        } w-3 h-3 rotate-45 bg-white shadow-lg`} />
+        } w-3 h-3 rotate-45 bg-white dark:bg-gray-800 shadow-lg`} />
       </div>
     </div>
   );
@@ -220,8 +222,8 @@ export default function TrainerRoster({
     : champions;
 
 
-  // Resolve trainer image path from downloaded sprites
-  const getTrainerImagePath = (champion: Champion): string => getTrainerSpriteUrl(champion);
+  // Resolve trainer image paths from downloaded sprites
+  const getTrainerImagePaths = (champion: Champion) => getTrainerSpriteUrls(champion);
 
 
 
@@ -229,9 +231,9 @@ export default function TrainerRoster({
     <div className="space-y-4">
       {/* Generation Filter */}
       <div>
-        <label className="block text-sm font-bold mb-2 text-black dark:text-text">Generation Filter</label>
+        <label className="block text-sm font-bold mb-2 text-black dark:text-gray-100">Generation Filter</label>
         <select
-          className="w-full px-3 py-2 border border-border rounded-lg bg-white text-black dark:text-text font-medium"
+          className="w-full px-3 py-2 border border-border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-black dark:text-gray-100 font-medium"
           value={generationFilter}
           onChange={(e) => onGenerationFilterChange(e.target.value)}
         >
@@ -244,13 +246,13 @@ export default function TrainerRoster({
 
       {/* Street Fighter Style Roster */}
       <div className="space-y-3">
-        <h3 className="text-lg font-bold text-black dark:text-text">Select Your Opponent</h3>
+        <h3 className="text-lg font-bold text-black dark:text-gray-100">Select Your Opponent</h3>
         
         {/* Responsive roster grid */}
         <div className="grid gap-3 grid-cols-3 xs:grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10">
           {filteredChampions.map((champion) => {
             const isSelected = selectedChampionId === champion.id;
-            const imagePath = getTrainerImagePath(champion);
+            const { primary: imagePath, fallback } = getTrainerImagePaths(champion);
             
             return (
               <TrainerTooltip
@@ -270,7 +272,11 @@ export default function TrainerRoster({
                       : 'hover:scale-105 hover:ring-2 hover:ring-poke-blue/50 hover:ring-offset-1 hover:ring-offset-bg'
                     }
                   `}
-                  onClick={() => onChampionSelect(champion.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    console.log('Trainer clicked:', champion.name, champion.id);
+                    onChampionSelect(champion.id);
+                  }}
                   role="button"
                   aria-pressed={isSelected}
                   aria-label={`Select ${champion.name}`}
@@ -296,21 +302,26 @@ export default function TrainerRoster({
                         decoding="async"
                         className="w-full h-full object-cover rounded-lg border border-white/20 shadow-lg"
                         onError={(e) => {
-                          // Fallback to placeholder if image fails to load
                           const target = e.target as HTMLImageElement;
-                          target.src = '/profile-placeholder.png';
-                          target.className = 'w-full h-full object-contain rounded-lg bg-gray-200 border border-white/20 shadow-lg';
+                          // Prevent infinite loops by checking if we've already tried the fallback
+                          if (fallback && !target.src.includes('/gen') && !target.src.includes('profile-placeholder')) {
+                            target.src = fallback;
+                          } else {
+                            // Fallback to placeholder if no fallback path or fallback also fails
+                            target.src = '/profile-placeholder.png';
+                            target.className = 'w-full h-full object-contain rounded-lg bg-gray-200 border border-white/20 shadow-lg';
+                          }
                         }}
                       />
                     </div>
 
                     {/* Trainer Name */}
-                    <div className="text-[11px] sm:text-xs font-semibold text-black dark:text-text truncate">
+                    <div className="text-[11px] sm:text-xs font-semibold text-black dark:text-gray-100 truncate">
                       {champion.name.split(' ')[0]}
                     </div>
                     
                     {/* Generation Badge */}
-                    <div className="text-[10px] sm:text-xs font-medium text-gray-800 dark:text-muted mt-0.5">
+                    <div className="text-[10px] sm:text-xs font-medium text-gray-800 dark:text-gray-400 mt-0.5">
                       {champion.generation.split(' ')[0]}
                     </div>
                   </div>
@@ -327,39 +338,6 @@ export default function TrainerRoster({
           })}
         </div>
 
-        {/* Selected Champion Info */}
-        {selectedChampionId && (
-          <div className="mt-4 p-4 bg-surface border border-border rounded-lg">
-            {(() => {
-              const selectedChampion = champions.find(c => c.id === selectedChampionId);
-              if (!selectedChampion) return null;
-              
-              return (
-                <div className="flex items-center space-x-4">
-                  <div className="w-16 h-16 flex items-center justify-center">
-                    <img
-                      src={getTrainerImagePath(selectedChampion)}
-                      alt={selectedChampion.name}
-                      width={64}
-                      height={64}
-                      className="w-full h-full object-cover rounded-lg border-2 border-white/20 shadow-lg"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = '/placeholder-pokemon.png';
-                        target.className = 'w-full h-full object-contain rounded-lg bg-gray-200 border-2 border-white/20 shadow-lg';
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-black dark:text-text">{selectedChampion.name}</h4>
-                    <p className="text-sm font-medium text-gray-800 dark:text-muted">{selectedChampion.team.name}</p>
-                    <p className="text-xs font-medium text-gray-800 dark:text-muted">{selectedChampion.generation}</p>
-                  </div>
-                </div>
-              );
-            })()}
-          </div>
-        )}
       </div>
     </div>
   );

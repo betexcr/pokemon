@@ -1,15 +1,17 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useBattleState } from '@/hooks/useBattleState';
 import Tooltip from '@/components/Tooltip';
-// duplicate import removed
 import { getMove } from '@/lib/moveCache';
 import { getAbility } from '@/lib/api';
-import { getPokemonIdFromSpecies, getPokemonBattleImageWithFallback, getPokemonImageWithFallbacks, formatPokemonName } from '@/lib/utils';
+import { getPokemonIdFromSpecies, getPokemonBattleImageWithFallback, getPokemonImageWithFallbacks, formatPokemonName, getShowdownAnimatedSprite } from '@/lib/utils';
 import HitShake from '@/components/battle/HitShake';
 import HPBar from '@/components/battle/HPBar';
 import StatusPopups, { StatusEvent } from '@/components/battle/StatusPopups';
 import AttackAnimator from '@/components/battle/AttackAnimator';
 import { FxKind } from '@/components/battle/fx/MoveFX.types';
+import { BattleSprite, BattleSpriteRef } from '@/components/battle/BattleSprite';
+import { rtdbService } from '@/lib/firebase-rtdb-service';
+import Image from 'next/image';
 
 interface RTDBBattleComponentProps {
   battleId: string;
@@ -17,93 +19,13 @@ interface RTDBBattleComponentProps {
   viewMode?: 'animated' | 'classic';
 }
 
-// Pokemon Image Component for Battle View
-interface PokemonBattleImageProps {
-  species: string;
-  variant: 'front' | 'back';
-  className?: string;
-  size?: 'small' | 'medium' | 'large';
-}
-
-function PokemonBattleImage({ species, variant, className = '', size = 'medium' }: PokemonBattleImageProps) {
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [imageError, setImageError] = useState(false);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  
-  const pokemonId = getPokemonIdFromSpecies(species);
-  const { primary, fallbacks } = pokemonId ? getPokemonImageWithFallbacks(pokemonId, species, variant) : { primary: '', fallbacks: [] };
-  
-  // Reset image state when species changes
-  useEffect(() => {
-    setImageLoaded(false);
-    setImageError(false);
-    setCurrentImageIndex(0);
-  }, [species, variant]);
-  
-  const sizeClasses = {
-    small: 'w-16 h-16',
-    medium: 'w-24 h-24',
-    large: 'w-32 h-32'
-  };
-
-  if (!pokemonId) {
-    return (
-      <div className={`${sizeClasses[size]} ${className} bg-gray-200 rounded-lg flex items-center justify-center`}>
-        <span className="text-gray-500 text-xs">?</span>
-      </div>
-    );
-  }
-
-  return (
-    <div className={`${sizeClasses[size]} ${className} relative bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg flex items-center justify-center overflow-hidden`}>
-      {!imageLoaded && !imageError && (
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse" />
-      )}
-      
-      <img
-        src={currentImageIndex === 0 ? primary : fallbacks[currentImageIndex - 1]}
-        alt={`${formatPokemonName(species)} ${variant}`}
-        className={`w-full h-full object-contain transition-opacity duration-300 ${
-          imageLoaded ? 'opacity-100' : 'opacity-0'
-        }`}
-        onLoad={() => setImageLoaded(true)}
-        onError={(e) => {
-          const target = e.target as HTMLImageElement;
-          const nextIndex = currentImageIndex + 1;
-          
-          if (nextIndex <= fallbacks.length) {
-            // Try next fallback
-            setCurrentImageIndex(nextIndex);
-            setImageLoaded(false);
-            setImageError(false);
-          } else {
-            // All fallbacks failed
-            setImageError(true);
-          }
-        }}
-        loading="lazy"
-      />
-      
-      {!imageLoaded && !imageError && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
-        </div>
-      )}
-      
-      {imageError && (
-        <div className="absolute inset-0 flex items-center justify-center text-gray-500">
-          <span className="text-lg">?</span>
-        </div>
-      )}
-    </div>
-  );
-}
 
 export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
   battleId,
   onBattleComplete,
   viewMode = 'classic'
 }) => {
+  console.log('🎮 RTDBBattleComponent viewMode:', viewMode);
   const {
     loading,
     error,
@@ -119,6 +41,7 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
     chooseSwitch,
     forfeit
   } = useBattleState(battleId);
+
 
   // duplicate state/effects removed (using direct imports below)
 
@@ -178,6 +101,7 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
   }, [meta?.phase, meta?.winnerUid, onBattleComplete]);
 
   const handleMoveSelection = async (moveId: string, target?: 'p1' | 'p2') => {
+  console.log('🎮 handleMoveSelection called:', { moveId, target, hasPub: !!pub, hasMyActive: !!(meUid && (pub as any)?.[meUid]?.active) });
     try {
       // Classic view: give immediate feedback on action
       playAnim(playerAnimRef, 'animate-bounce');
@@ -215,6 +139,25 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
     }
   };
 
+  // Listen for custom move events from E2E testing
+  useEffect(() => {
+    if (process.env.NEXT_PUBLIC_E2E === 'true') {
+      const handleCustomMoveEvent = (event: CustomEvent) => {
+        console.log('🎮 Received custom move event:', event.detail);
+        if (event.detail && event.detail.moveId) {
+          handleMoveSelection(event.detail.moveId);
+        }
+      };
+      
+      document.addEventListener('move-selected', handleCustomMoveEvent as EventListener);
+      console.log('🎮 Added custom move event listener for E2E testing');
+      
+      return () => {
+        document.removeEventListener('move-selected', handleCustomMoveEvent as EventListener);
+      };
+    }
+  }, [handleMoveSelection]);
+
   const handlePokemonSwitch = async (pokemonIndex: number) => {
     try {
       await chooseSwitch(pokemonIndex);
@@ -226,6 +169,9 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
   // Lightweight CSS animations for classic view
   const playerAnimRef = useRef<HTMLDivElement>(null);
   const oppAnimRef = useRef<HTMLDivElement>(null);
+  // Sprite refs for animations (must be declared before any conditional returns to preserve hook order)
+  const playerSpriteRef = useRef<BattleSpriteRef>(null);
+  const opponentSpriteRef = useRef<BattleSpriteRef>(null);
   const playAnim = (ref: React.RefObject<HTMLDivElement>, cls: string) => {
     const el = ref.current;
     if (!el) return;
@@ -328,329 +274,282 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
     );
   }
 
-  // Get current active Pokemon
-  const myActive = meUid ? pub[meUid]?.active : null;
-  const oppActive = oppUid ? pub[oppUid]?.active : null;
+  // Get current active Pokemon using RTDB p1/p2 mapping
+  const mySide: 'p1' | 'p2' | null = meUid && meta?.players
+    ? (meta.players.p1.uid === meUid ? 'p1' : meta.players.p2.uid === meUid ? 'p2' : null)
+    : null;
+  const oppSide: 'p1' | 'p2' | null = mySide === 'p1' ? 'p2' : mySide === 'p2' ? 'p1' : null;
+  const myActive = mySide && (pub as any)?.[mySide]?.active ? (pub as any)[mySide].active : null;
+  const oppActive = oppSide && (pub as any)?.[oppSide]?.active ? (pub as any)[oppSide].active : null;
   const myTeam = me?.team || [];
 
+  // (refs declared above)
+
   return (
-    <div className="battle-container">
+    <div className="min-h-screen bg-bg text-text">
       {/* Battle Header */}
-      <div className="battle-header mb-4">
-        <h2 className="text-2xl font-bold text-center">
-          Battle Phase: {meta.phase}
-        </h2>
-        <div className="text-center text-sm text-gray-600">
-          Turn: {meta.turn} | Time Left: {timeLeftSec}s
+      <div className="sticky top-0 z-40 border-b border-border bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/80 p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="inline-flex items-center rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-muted shadow-sm">
+              <span className="mr-2 inline-block h-2 w-2 rounded-full bg-primary/80" />
+              {meta.phase}
+            </span>
+            <span className="text-xs text-muted">Turn {meta.turn}</span>
+            <span className="text-xs text-muted">{timeLeftSec}s</span>
+          </div>
+          <div className="text-sm text-muted">
+            vs Opponent
+          </div>
         </div>
       </div>
+
+      {/* Active Pokemon Overview (mirrors offline battle top panels) */}
+      {(myActive || oppActive) && (
+        <div className="border-b border-border bg-surface/80">
+          <div className="max-w-6xl mx-auto px-4 py-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Your Active */}
+            {myActive && (
+              <div className="flex items-center gap-3 rounded-lg border border-border bg-surface p-3">
+                <div className="flex-shrink-0">
+                  <Image
+                    src={getPokemonImageWithFallbacks(getPokemonIdFromSpecies(myActive.species) || 1, myActive.species, 'front').primary}
+                    alt={formatPokemonName(myActive.species)}
+                    width={48}
+                    height={48}
+                    className="w-12 h-12 object-contain"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <div className="font-semibold capitalize truncate">{formatPokemonName(myActive.species)}</div>
+                    <div className="text-xs text-muted">Lv {myActive.level}</div>
+                  </div>
+                  <div className="mt-1">
+                    <HPBar value={myActive.hp.cur} max={myActive.hp.max} />
+                  </div>
+                  {myActive.status && (
+                    <div className="mt-1 text-xs uppercase tracking-wide text-yellow-500">{myActive.status}</div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Opponent Active */}
+            {oppActive && (
+              <div className="flex items-center gap-3 rounded-lg border border-border bg-surface p-3 sm:justify-self-end">
+                <div className="flex-shrink-0">
+                  <Image
+                    src={getPokemonImageWithFallbacks(getPokemonIdFromSpecies(oppActive.species) || 1, oppActive.species, 'front').primary}
+                    alt={formatPokemonName(oppActive.species)}
+                    width={48}
+                    height={48}
+                    className="w-12 h-12 object-contain"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <div className="font-semibold capitalize truncate">{formatPokemonName(oppActive.species)}</div>
+                    <div className="text-xs text-muted">Lv {oppActive.level}</div>
+                  </div>
+                  <div className="mt-1">
+                    <HPBar value={oppActive.hp.cur} max={oppActive.hp.max} />
+                  </div>
+                  {oppActive.status && (
+                    <div className="mt-1 text-xs uppercase tracking-wide text-yellow-500">{oppActive.status}</div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Battle Field */}
-      <div className="battle-field grid grid-cols-2 gap-6 mb-6">
-        {/* Player Side */}
-        <div className="player-side">
-          <h3 className="text-lg font-semibold mb-4">Your Pokemon</h3>
-          {myActive && (
-            <div className="pokemon-card p-4 mb-4 rounded-lg border-2 border-blue-500 bg-blue-50 shadow-lg">
-              <div className="flex items-start gap-4" ref={playerAnimRef}>
-                {/* Pokemon Image (Back view for player) */}
-                {viewMode === 'animated' ? (
-                  <HitShake playKey={playerShakeKey}>
-                    <PokemonBattleImage 
-                      species={myActive.species} 
-                      variant="back" 
-                      size="large"
-                      className="flex-shrink-0"
-                    />
-                  </HitShake>
-                ) : (
-                  <PokemonBattleImage 
-                    species={myActive.species} 
-                    variant="back" 
-                    size="large"
-                    className="flex-shrink-0"
-                  />
-                )}
-                
-                {/* Pokemon Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="pokemon-name font-bold text-lg capitalize mb-2">
-                    {formatPokemonName(myActive.species)}
-                  </div>
-                  <div className="space-y-1 text-sm">
-                    {viewMode === 'animated' ? (
-                      <HPBar 
-                        max={myActive.hp.max} 
-                        value={myActive.hp.cur} 
-                        showText={true}
-                      />
-                    ) : (
-                      <div className="pokemon-hp">
-                        <span className="font-medium">HP:</span> {myActive.hp.cur}/{myActive.hp.max}
-                        <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-                          <div 
-                            className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${(myActive.hp.cur / myActive.hp.max) * 100}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                    )}
-                    <div className="pokemon-level">
-                      <span className="font-medium">Level:</span> {myActive.level}
-                    </div>
-                    {myActive.status && (
-                      <div className="pokemon-status text-red-600 font-medium">
-                        Status: {myActive.status}
-                      </div>
-                    )}
-                    {myActive.volatiles && (
-                      <div className="volatiles text-purple-600 space-y-1">
-                        {myActive.volatiles.taunt && (
-                          <div className="text-xs">Taunt ({myActive.volatiles.taunt.turnsLeft} turns)</div>
-                        )}
-                        {myActive.volatiles.encore && (
-                          <div className="text-xs">Encore ({myActive.volatiles.encore.turnsLeft} turns)</div>
-                        )}
-                        {myActive.volatiles.recharge && (
-                          <div className="text-xs">Recharge</div>
-                        )}
-                        {myActive.volatiles.subHp && (
-                          <div className="text-xs">Substitute ({myActive.volatiles.subHp} HP)</div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
+      <div className="flex-1 p-6">
+        <div className="grid grid-cols-2 gap-8 h-full">
+          {/* Player Side */}
+          <div className="flex flex-col justify-center items-center">
+            <div className="text-center mb-4">
+              <h2 className="text-xl font-bold">Your Pokemon</h2>
             </div>
-          )}
-          
-          {/* Bench Pokemon */}
-          <div className="bench-pokemon">
-            <h4 className="font-semibold mb-3 text-gray-700">Bench</h4>
-            <div className="grid grid-cols-2 gap-2">
-              {myTeam.slice(1).map((pokemon, index) => (
-                <div
-                  key={index}
-                  className={`pokemon-card p-3 rounded-lg border text-sm transition-all duration-200 ${
-                    pokemon.fainted 
-                      ? 'opacity-50 border-gray-300 bg-gray-100' 
-                      : 'border-gray-300 bg-white hover:border-blue-300 hover:shadow-md'
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <PokemonBattleImage 
-                      species={pokemon.species} 
-                      variant="back" 
-                      size="small"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="pokemon-name font-medium capitalize truncate">
-                        {formatPokemonName(pokemon.species)}
-                      </div>
-                      <div className="pokemon-hp text-xs text-gray-600">
-                        HP: {pokemon.stats.hp}
-                      </div>
-                      {pokemon.fainted && (
-                        <div className="text-xs text-red-600 font-medium">Fainted</div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            {myActive && (
+              <BattleSprite
+                ref={playerSpriteRef}
+                species={myActive.species}
+                level={myActive.level}
+                hp={{ 
+                  cur: myActive.hp.cur, 
+                  max: myActive.hp.max 
+                }}
+                status={myActive.status}
+                volatiles={myActive.volatiles}
+                types={myActive.types || []}
+                side="player"
+                field={{
+                  safeguardTurns: 0,
+                  mistTurns: 0,
+                  reflectTurns: 0,
+                  lightScreenTurns: 0
+                }}
+                className="transform scale-110"
+                spriteMode={viewMode === 'animated' ? 'animated' : 'static'}
+              />
+            )}
           </div>
-        </div>
 
-        {/* Opponent Side */}
-        <div className="opponent-side">
-          <h3 className="text-lg font-semibold mb-4">Opponent Pokemon</h3>
-          {oppActive && (
-            <div className="pokemon-card p-4 mb-4 rounded-lg border-2 border-red-500 bg-red-50 shadow-lg">
-              <div className="flex items-start gap-4" ref={oppAnimRef}>
-                {/* Pokemon Image (Front view for opponent) */}
-                {viewMode === 'animated' ? (
-                  <HitShake playKey={opponentShakeKey}>
-                    <PokemonBattleImage 
-                      species={oppActive.species} 
-                      variant="front" 
-                      size="large"
-                      className="flex-shrink-0"
-                    />
-                  </HitShake>
-                ) : (
-                  <PokemonBattleImage 
-                    species={oppActive.species} 
-                    variant="front" 
-                    size="large"
-                    className="flex-shrink-0"
-                  />
-                )}
-                
-                {/* Pokemon Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="pokemon-name font-bold text-lg capitalize mb-2">
-                    {formatPokemonName(oppActive.species)}
-                  </div>
-                  <div className="space-y-1 text-sm">
-                    {viewMode === 'animated' ? (
-                      <HPBar 
-                        max={oppActive.hp.max} 
-                        value={oppActive.hp.cur} 
-                        showText={true}
-                      />
-                    ) : (
-                      <div className="pokemon-hp">
-                        <span className="font-medium">HP:</span> {oppActive.hp.cur}/{oppActive.hp.max}
-                        <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-                          <div 
-                            className="bg-red-500 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${(oppActive.hp.cur / oppActive.hp.max) * 100}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                    )}
-                    <div className="pokemon-level">
-                      <span className="font-medium">Level:</span> {oppActive.level}
-                    </div>
-                    {oppActive.status && (
-                      <div className="pokemon-status text-red-600 font-medium">
-                        Status: {oppActive.status}
-                      </div>
-                    )}
-                    {oppActive.volatiles && (
-                      <div className="volatiles text-purple-600 space-y-1">
-                        {oppActive.volatiles.taunt && (
-                          <div className="text-xs">Taunt ({oppActive.volatiles.taunt.turnsLeft} turns)</div>
-                        )}
-                        {oppActive.volatiles.encore && (
-                          <div className="text-xs">Encore ({oppActive.volatiles.encore.turnsLeft} turns)</div>
-                        )}
-                        {oppActive.volatiles.recharge && (
-                          <div className="text-xs">Recharge</div>
-                        )}
-                        {oppActive.volatiles.subHp && (
-                          <div className="text-xs">Substitute ({oppActive.volatiles.subHp} HP)</div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
+          {/* Opponent Side */}
+          <div className="flex flex-col justify-center items-center">
+            <div className="text-center mb-4">
+              <h2 className="text-xl font-bold">Opponent</h2>
             </div>
-          )}
+            {oppActive && (
+              <BattleSprite
+                ref={opponentSpriteRef}
+                species={oppActive.species}
+                level={oppActive.level}
+                hp={{ 
+                  cur: oppActive.hp.cur, 
+                  max: oppActive.hp.max 
+                }}
+                status={oppActive.status}
+                volatiles={oppActive.volatiles}
+                types={oppActive.types || []}
+                side="opponent"
+                field={{
+                  safeguardTurns: 0,
+                  mistTurns: 0,
+                  reflectTurns: 0,
+                  lightScreenTurns: 0
+                }}
+                className="transform scale-110"
+                spriteMode={viewMode === 'animated' ? 'animated' : 'static'}
+              />
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Action Selection */}
-      {meta.phase === 'choosing' && (
-        <div className="action-selection">
-          <h3 className="text-lg font-semibold mb-4">Choose Your Action</h3>
-          
-          {/* Move Selection */}
-          <div className="moves-section mb-4">
-            <h4 className="font-medium mb-2">Moves</h4>
-            <div className="grid grid-cols-2 gap-2">
-              {legalMoves.map((move, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleMoveSelection(move.id)}
-                  className={`move-button p-2 rounded text-white hover:opacity-90 disabled:opacity-50 ${
-                    move.disabled ? 'bg-gray-400' : 'bg-blue-500 hover:bg-blue-600'
-                  }`}
-                  disabled={move.disabled}
-                  title={move.reason}
-                >
-                  <div className="font-medium capitalize">
-                    <Tooltip
-                      content={moveInfo[move.id]?.short_effect || ''}
-                      type={(moveInfo[move.id]?.type as any) || 'normal'}
-                      damageClass={moveInfo[move.id]?.damage_class}
-                      variant="move"
-                      position="top"
-                      containViewport
-                      maxWidth="w-80"
-                    >
-                      <span className="cursor-help">{move.id}</span>
-                    </Tooltip>
-                  </div>
-                  <div className="text-xs">PP: {move.pp}</div>
-                  {move.reason && (
-                    <div className="text-xs text-red-200">{move.reason}</div>
-                  )}
-                </button>
-              ))}
+      {/* Resolving Phase Indicator */}
+      {meta.phase === 'resolving' && (
+        <div className="border-t border-border bg-surface/90 backdrop-blur p-4">
+          <div className="max-w-4xl mx-auto text-center">
+            <div className="animate-pulse text-muted font-semibold">
+              Resolving moves...
             </div>
           </div>
+        </div>
+      )}
 
-          {/* Pokemon Switch */}
-          <div className="switch-section">
-            <h4 className="font-medium mb-3">Switch Pokemon</h4>
-            <div className="grid grid-cols-2 gap-3">
-              {myTeam.map((pokemon, index) => (
-                <button
-                  key={index}
-                  onClick={() => handlePokemonSwitch(index)}
-                  className={`switch-button p-3 rounded-lg border-2 transition-all duration-200 ${
-                    index === 0
-                      ? 'border-gray-400 bg-gray-100 cursor-not-allowed opacity-60'
-                      : legalSwitchIndexes.includes(index)
-                      ? 'border-green-500 bg-green-50 hover:bg-green-100 hover:border-green-600 hover:shadow-md'
-                      : 'border-gray-300 bg-gray-100 cursor-not-allowed opacity-60'
-                  }`}
-                  disabled={index === 0 || !legalSwitchIndexes.includes(index)}
-                >
-                  <div className="flex items-center gap-3">
-                    <PokemonBattleImage 
-                      species={pokemon.species} 
-                      variant="back" 
-                      size="small"
-                    />
-                    <div className="flex-1 min-w-0 text-left">
-                      <div className="font-medium capitalize truncate">
+      {/* Action Panel */}
+      {meta.phase === 'choosing' && (
+        <div className="border-t border-border bg-surface/90 backdrop-blur p-4">
+          <div className="max-w-4xl mx-auto">
+            <h3 className="text-lg font-semibold mb-4">Choose Your Action</h3>
+            
+            {/* Move Selection */}
+            <div className="mb-6">
+              <h4 className="font-medium mb-3">Moves</h4>
+              <div className="grid grid-cols-2 gap-3">
+                {legalMoves.map((move, index) => {
+                  console.log('🎮 Rendering move button:', { moveId: move.id, disabled: move.disabled, index });
+                  return (
+                  <button
+                    key={index}
+                    onClick={() => handleMoveSelection(move.id)}
+                    disabled={move.disabled}
+                    className="p-3 rounded-lg border border-border bg-surface text-text hover:border-primary/50 hover:bg-primary/5 hover:shadow transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+                    data-testid={`move-${move.id}`}
+                  >
+                    <div className="font-medium capitalize">
+                      <Tooltip 
+                        content={moveInfo[move.id]?.short_effect || ''} 
+                        type={(moveInfo[move.id]?.type as any) || 'normal'} 
+                        variant="move" 
+                        position="top"
+                        containViewport={false}
+                        maxWidth="w-64"
+                      >
+                        <span className="cursor-help">{move.id}</span>
+                      </Tooltip>
+                    </div>
+                    <div className="text-sm text-muted">PP: {move.pp}</div>
+                    {move.reason && (
+                      <div className="text-xs text-red-500/80">{move.reason}</div>
+                    )}
+                  </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Pokemon Switch */}
+            <div className="mb-4">
+              <h4 className="font-medium mb-3">Switch Pokemon</h4>
+              <div className="grid grid-cols-3 gap-2">
+                {myTeam.map((pokemon, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handlePokemonSwitch(index)}
+                    disabled={pokemon.fainted || index === 0 || !legalSwitchIndexes.includes(index)}
+                    className={`p-2 rounded-lg border transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-bg ${
+                      pokemon.fainted || index === 0 || !legalSwitchIndexes.includes(index)
+                        ? 'border-border bg-surface cursor-not-allowed opacity-60'
+                        : 'border-border bg-surface hover:border-primary/50 hover:bg-primary/5'
+                    }`}
+                    data-testid={`switch-${pokemon.species}-${index}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Image
+                        src={getPokemonImageWithFallbacks(getPokemonIdFromSpecies(pokemon.species) || 1, pokemon.species, 'front').primary}
+                        alt={formatPokemonName(pokemon.species)}
+                        width={32}
+                        height={32}
+                        className="object-contain"
+                      />
+                      <div className="text-sm font-medium capitalize truncate">
                         {formatPokemonName(pokemon.species)}
                       </div>
-                      <div className="text-xs text-gray-600">
-                        HP: {pokemon.stats.hp}
-                      </div>
-                      {pokemon.fainted && (
-                        <div className="text-xs text-red-600 font-medium">Fainted</div>
-                      )}
-                      {index === 0 && (
-                        <div className="text-xs text-gray-500">Active</div>
-                      )}
                     </div>
-                  </div>
-                </button>
-              ))}
+                    <div className="text-xs text-muted">
+                      HP: {pokemon.stats.hp}
+                    </div>
+                    {pokemon.fainted && (
+                      <div className="text-xs text-red-500">Fainted</div>
+                    )}
+                    {index === 0 && (
+                      <div className="text-xs text-muted">Active</div>
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
 
-          {/* Forfeit Button */}
-          <div className="forfeit-section mt-4">
-            <button
-              onClick={forfeit}
-              className="forfeit-button p-2 bg-red-500 text-white rounded hover:bg-red-600"
-            >
-              Forfeit Battle
-            </button>
+            {/* Forfeit Button */}
+            <div className="text-center">
+              <button
+                onClick={forfeit}
+                className="inline-flex items-center justify-center rounded-md border border-red-600/60 bg-red-600/10 px-4 py-2 text-sm font-semibold text-red-400 hover:bg-red-600/15 hover:text-red-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+                data-testid="forfeit-button"
+              >
+                Forfeit Battle
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {/* Battle Log */}
-      <div className="battle-log mt-6">
-        <h3 className="text-lg font-semibold mb-2">Battle Log</h3>
-        <div className="log-container max-h-40 overflow-y-auto bg-gray-100 p-3 rounded">
-          {pub.lastResultSummary && (
-            <div className="log-entry text-sm mb-1">
+      {pub.lastResultSummary && (
+        <div className="border-t border-border bg-surface p-4 text-sm font-mono max-h-32 overflow-y-auto">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-muted">
               {pub.lastResultSummary}
             </div>
-          )}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Battle Complete */}
       {/* Transition Effects for Animated View */}
       {viewMode === 'animated' && (
         <>
@@ -675,21 +574,38 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
         </>
       )}
 
+      {/* Battle Complete */}
       {meta.phase === 'ended' && (
-        <div className="battle-complete mt-6 text-center">
-          <h2 className="text-2xl font-bold mb-2">
-            {meta.winnerUid === meUid ? 'Victory!' : 'Defeat!'}
-          </h2>
-          <p className="text-lg">
-            {meta.winnerUid === meUid
-              ? 'You won the battle!'
-              : 'You lost the battle!'}
-          </p>
-          {meta.endedReason && (
-            <p className="text-sm text-gray-600 mt-2">
-              Reason: {meta.endedReason}
+        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+          <div className="bg-surface border border-border rounded-lg p-8 text-center max-w-2xl w-full text-text">
+            <h2 className="text-3xl font-bold mb-4">
+              {meta.winnerUid === meUid ? 'Victory!' : 'Defeat!'}
+            </h2>
+            <p className="text-lg mb-4">
+              {meta.winnerUid === meUid
+                ? 'You won the battle!'
+                : 'You lost the battle!'}
             </p>
-          )}
+            {meta.endedReason && (
+              <p className="text-sm text-muted mt-2">
+                Reason: {meta.endedReason}
+              </p>
+            )}
+            <div className="space-y-2">
+              <button
+                onClick={() => window.location.href = '/battle'}
+                className="w-full px-4 py-2 rounded-md border border-border bg-surface hover:bg-primary/5 hover:border-primary/50 text-text"
+              >
+                Battle Again
+              </button>
+              <button
+                onClick={() => window.location.href = '/'}
+                className="w-full px-4 py-2 rounded-md border border-border bg-surface hover:bg-primary/5 hover:border-primary/50 text-text"
+              >
+                Back to PokéDex
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

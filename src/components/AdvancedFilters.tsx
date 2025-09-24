@@ -3,7 +3,7 @@
 import { X, ChevronDown, ChevronUp } from 'lucide-react';
 import { Pokemon } from '@/types/pokemon';
 import ComparisonSection from './ComparisonSection';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface AdvancedFilters {
   types: string[]
@@ -39,8 +39,73 @@ export default function AdvancedFilters({
   onGoToComparison
 }: AdvancedFiltersProps) {
   // State for collapsible sections
-  const [isFiltersExpanded, setIsFiltersExpanded] = useState(true);
-  const [isComparisonExpanded, setIsComparisonExpanded] = useState(true);
+  // Important: use deterministic defaults for SSR; hydrate from localStorage after mount
+  const [isFiltersExpanded, setIsFiltersExpanded] = useState<boolean>(true);
+  const [isComparisonExpanded, setIsComparisonExpanded] = useState<boolean>(true);
+
+  // Hydrate collapsed/expanded state after mount to avoid hydration mismatch
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const savedFilters = localStorage.getItem('pokedex.filtersExpanded');
+        const savedComparison = localStorage.getItem('pokedex.comparisonExpanded');
+        if (savedFilters !== null) setIsFiltersExpanded(savedFilters === 'true');
+        if (savedComparison !== null) setIsComparisonExpanded(savedComparison === 'true');
+      }
+    } catch {}
+  }, [])
+
+  // Effect to handle sidebar opening via comparison toggle
+  useEffect(() => {
+    if (showSidebar) {
+      // When sidebar is opened by adding a team for comparison,
+      // minimize filters and expand comparisons to show the added team
+      try {
+        if (typeof window !== 'undefined') {
+          // Check if this was triggered by adding a comparison (comparison list has items)
+          const hasComparisons = comparisonList.length > 0;
+          
+          if (hasComparisons) {
+            // Open with filters minimized and comparisons expanded
+            setIsFiltersExpanded(false);
+            setIsComparisonExpanded(true);
+            
+            // Save these states to localStorage
+            localStorage.setItem('pokedex.filtersExpanded', 'false');
+            localStorage.setItem('pokedex.comparisonExpanded', 'true');
+          } else {
+            // Normal behavior - restore from localStorage
+            const shouldExpandComparison = localStorage.getItem('pokedex.comparisonExpanded');
+            const shouldCollapseFilters = localStorage.getItem('pokedex.filtersExpanded');
+            
+            if (shouldExpandComparison === 'true') {
+              setIsComparisonExpanded(true);
+            }
+            if (shouldCollapseFilters === 'false') {
+              setIsFiltersExpanded(false);
+            }
+          }
+        }
+      } catch {}
+    }
+  }, [showSidebar, comparisonList.length]);
+
+  // Persist collapsed states when they change
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('pokedex.filtersExpanded', String(isFiltersExpanded))
+      }
+    } catch {}
+  }, [isFiltersExpanded])
+
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('pokedex.comparisonExpanded', String(isComparisonExpanded))
+      }
+    } catch {}
+  }, [isComparisonExpanded])
 
   return (
     <>
@@ -100,7 +165,7 @@ export default function AdvancedFilters({
                             generation: e.target.value 
                           }))
                         }}
-                        className="w-full px-3 py-2 border border-border rounded-lg"
+                        className="w-full px-3 py-2 border border-border rounded-lg dark:bg-gray-700 dark:border-gray-500 dark:text-white"
                         style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
                       >
                         <option value="all">All Generations</option>
@@ -134,7 +199,7 @@ export default function AdvancedFilters({
                               heightRange: [parseFloat(e.target.value), prev.heightRange[1]] as [number, number]
                             }))
                           }}
-                          className="w-full"
+                          className="w-full dark:accent-poke-blue"
                           style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
                         />
                         <input
@@ -149,7 +214,7 @@ export default function AdvancedFilters({
                               heightRange: [prev.heightRange[0], parseFloat(e.target.value)] as [number, number]
                             }))
                           }}
-                          className="w-full"
+                          className="w-full dark:accent-poke-blue"
                           style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
                         />
                       </div>
@@ -173,7 +238,7 @@ export default function AdvancedFilters({
                               weightRange: [parseInt(e.target.value), prev.weightRange[1]] as [number, number]
                             }))
                           }}
-                          className="w-full"
+                          className="w-full dark:accent-poke-blue"
                           style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
                         />
                         <input
@@ -188,7 +253,7 @@ export default function AdvancedFilters({
                               weightRange: [prev.weightRange[0], parseInt(e.target.value)] as [number, number]
                             }))
                           }}
-                          className="w-full"
+                          className="w-full dark:accent-poke-blue"
                           style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
                         />
                       </div>
@@ -208,10 +273,10 @@ export default function AdvancedFilters({
                                 legendary: e.target.checked
                               }))
                             }}
-                            className="w-4 h-4 text-poke-blue border-border rounded focus:ring-poke-blue focus:ring-2"
+                            className="w-4 h-4 text-poke-blue border-border rounded focus:ring-poke-blue focus:ring-2 dark:bg-gray-700 dark:border-gray-500 dark:checked:bg-poke-blue dark:checked:border-poke-blue"
                             style={{ backgroundColor: 'var(--color-input-bg)' }}
                           />
-                          <span className="text-sm text-text">Legendary Pokémon</span>
+                          <span className="text-sm text-text dark:text-gray-200">Legendary Pokémon</span>
                         </label>
                         <label className="flex items-center space-x-2">
                           <input
@@ -223,10 +288,10 @@ export default function AdvancedFilters({
                                 mythical: e.target.checked
                               }))
                             }}
-                            className="w-4 h-4 text-poke-blue border-border rounded focus:ring-poke-blue focus:ring-2"
+                            className="w-4 h-4 text-poke-blue border-border rounded focus:ring-poke-blue focus:ring-2 dark:bg-gray-700 dark:border-gray-500 dark:checked:bg-poke-blue dark:checked:border-poke-blue"
                             style={{ backgroundColor: 'var(--color-input-bg)' }}
                           />
-                          <span className="text-sm text-text">Mythical Pokémon</span>
+                          <span className="text-sm text-text dark:text-gray-200">Mythical Pokémon</span>
                         </label>
                       </div>
                     </div>

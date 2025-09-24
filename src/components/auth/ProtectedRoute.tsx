@@ -39,15 +39,18 @@ export default function ProtectedRoute({ children, fallback }: ProtectedRoutePro
           <button
             onClick={() => setShowAuthModal(true)}
             className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors"
+            data-testid="open-auth-modal"
           >
             Sign In / Sign Up
           </button>
         </div>
         
-        <AuthModal
-          isOpen={showAuthModal}
-          onClose={() => setShowAuthModal(false)}
-        />
+        <div data-testid="auth-modal-root">
+          <AuthModal
+            isOpen={showAuthModal}
+            onClose={() => setShowAuthModal(false)}
+          />
+        </div>
       </div>
     );
   }

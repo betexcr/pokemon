@@ -3,11 +3,11 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Zap, Users, Menu, X, LogIn } from 'lucide-react'
-import ThemeToggle from '@/components/ThemeToggle'
 import { useAuth } from '@/contexts/AuthContext'
 import Image from 'next/image'
 import HeaderIcons, { HamburgerMenu } from '@/components/HeaderIcons'
 import AuthModal from './auth/AuthModal'
+import Tooltip from '@/components/Tooltip'
 
 interface MobileHeaderProps {
   theme: string
@@ -47,6 +47,11 @@ export default function MobileHeader({
     setIsMenuOpen(false)
   }
 
+  const handleTop50Click = () => {
+    router.push('/top50')
+    setIsMenuOpen(false)
+  }
+
   const closeMenu = () => {
     setIsMenuOpen(false)
   }
@@ -60,39 +65,41 @@ export default function MobileHeader({
     if (!user) {
       // Show profile placeholder when logged off with sign in functionality
       return (
-        <button 
-          onClick={() => {
-            console.log('Mobile profile picture clicked, opening AuthModal');
-            setShowAuthModal(true);
-          }}
-          className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-full overflow-hidden border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-400 touch-manipulation" 
-          style={{
-            borderColor: 'var(--color-border)',
-            borderRadius: '50%',
-            width: '40px',
-            height: '40px',
-            minWidth: '40px',
-            minHeight: '40px',
-            maxWidth: '40px',
-            maxHeight: '40px',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = 'var(--color-muted)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = 'var(--color-border)';
-          }}
-          title="Sign In / Sign Up"
-        >
-          <Image 
-            src="/profile-placeholder.png" 
-            alt="Profile Placeholder" 
-            width={64} 
-            height={64} 
-            className="w-full h-full rounded-full object-cover" 
-            style={{ borderRadius: '50%' }}
-          />
-        </button>
+        <Tooltip content="Sign in to save your progress, sync across devices, and access premium features" position="bottom">
+          <button 
+            onClick={() => {
+              console.log('Mobile profile picture clicked, opening AuthModal');
+              setShowAuthModal(true);
+            }}
+            className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-full overflow-hidden border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-400 touch-manipulation" 
+            style={{
+              borderColor: 'var(--color-border)',
+              borderRadius: '50%',
+              width: '40px',
+              height: '40px',
+              minWidth: '40px',
+              minHeight: '40px',
+              maxWidth: '40px',
+              maxHeight: '40px',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = 'var(--color-muted)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = 'var(--color-border)';
+            }}
+            title="Sign In / Sign Up"
+          >
+            <Image 
+              src="/profile-placeholder.png" 
+              alt="Profile Placeholder" 
+              width={64} 
+              height={64} 
+              className="w-full h-full rounded-full object-cover" 
+              style={{ borderRadius: '50%' }}
+            />
+          </button>
+        </Tooltip>
       );
     }
 
@@ -101,17 +108,56 @@ export default function MobileHeader({
     
     if (src && !imageError) {
       return (
+        <Tooltip content={`Signed in as ${name} - Click to access account settings`} position="bottom">
+          <button 
+            className="w-16 h-16 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 touch-manipulation" 
+            style={{
+              borderColor: 'var(--color-border)',
+              borderRadius: '50%',
+              width: '40px',
+              height: '40px',
+              minWidth: '40px',
+              minHeight: '40px',
+              maxWidth: '40px',
+              maxHeight: '40px',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = 'var(--color-muted)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = 'var(--color-border)';
+            }}
+            title={name}
+          >
+            <Image 
+              src={src} 
+              alt={name} 
+              width={64} 
+              height={64} 
+              className="w-full h-full rounded-full object-cover" 
+              style={{ borderRadius: '50%' }}
+              onError={() => setImageError(true)}
+              referrerPolicy="no-referrer"
+            />
+          </button>
+        </Tooltip>
+      );
+    }
+    
+    const initial = name.trim().charAt(0).toUpperCase();
+    return (
+      <Tooltip content={`Signed in as ${name} - Click to access account settings`} position="bottom">
         <button 
           className="w-16 h-16 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 touch-manipulation" 
           style={{
             borderColor: 'var(--color-border)',
             borderRadius: '50%',
-            width: '40px',
-            height: '40px',
-            minWidth: '40px',
-            minHeight: '40px',
-            maxWidth: '40px',
-            maxHeight: '40px',
+            width: '72px',
+            height: '72px',
+            minWidth: '72px',
+            minHeight: '72px',
+            maxWidth: '72px',
+            maxHeight: '72px',
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.borderColor = 'var(--color-muted)';
@@ -121,46 +167,11 @@ export default function MobileHeader({
           }}
           title={name}
         >
-          <Image 
-            src={src} 
-            alt={name} 
-            width={64} 
-            height={64} 
-            className="w-full h-full rounded-full object-cover" 
-            style={{ borderRadius: '50%' }}
-            onError={() => setImageError(true)}
-            referrerPolicy="no-referrer"
-          />
+          <div className="w-full h-full rounded-full bg-gradient-to-br from-poke-blue to-poke-red flex items-center justify-center text-white font-semibold">
+            {initial}
+          </div>
         </button>
-      );
-    }
-    
-    const initial = name.trim().charAt(0).toUpperCase();
-    return (
-      <button 
-        className="w-16 h-16 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 touch-manipulation" 
-        style={{
-          borderColor: 'var(--color-border)',
-          borderRadius: '50%',
-          width: '72px',
-          height: '72px',
-          minWidth: '72px',
-          minHeight: '72px',
-          maxWidth: '72px',
-          maxHeight: '72px',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.borderColor = 'var(--color-muted)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.borderColor = 'var(--color-border)';
-        }}
-        title={name}
-      >
-        <div className="w-full h-full rounded-full bg-gradient-to-br from-poke-blue to-poke-red flex items-center justify-center text-white font-semibold">
-          {initial}
-        </div>
-      </button>
+      </Tooltip>
     );
   }
 
@@ -171,56 +182,68 @@ export default function MobileHeader({
         <div className="max-w-7xl mx-auto px-2 sm:px-4 md:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14 sm:h-16">
             {/* Logo and Title */}
-            <div className="flex items-center space-x-2">
-              <Zap className={`h-6 w-6 sm:h-8 sm:w-8 ${
-                theme === 'gold' ? 'text-gold-accent' 
-                : theme === 'green' ? 'text-green-accent'
-                : theme === 'red' ? 'text-red-accent'
-                : theme === 'ruby' ? 'text-ruby-accent'
-                : 'text-poke-yellow'
-              }`} />
-              <h1 className={`text-lg sm:text-xl md:text-2xl font-bold ${
-                theme === 'gold' ? 'font-retro text-gold-accent'
-                : theme === 'green' ? 'font-gameboy text-green-accent'
-                : theme === 'red' ? 'font-retro text-red-accent'
-                : theme === 'ruby' ? 'font-retro text-ruby-accent'
-                : 'text-text'
-              }`}>
-                PokéDex
-              </h1>
-            </div>
+            <Tooltip content="Modern PokéDex - Your comprehensive Pokémon database and battle companion" position="bottom">
+              <div className="flex items-center space-x-2">
+                <Zap className={`h-6 w-6 sm:h-8 sm:w-8 ${
+                  theme === 'gold' ? 'text-gold-accent' 
+                  : theme === 'green' ? 'text-green-accent'
+                  : theme === 'red' ? 'text-red-accent'
+                  : theme === 'ruby' ? 'text-ruby-accent'
+                  : 'text-poke-yellow'
+                }`} />
+                <h1 className={`text-lg sm:text-xl md:text-2xl font-bold ${
+                  theme === 'gold' ? 'font-retro text-gold-accent'
+                  : theme === 'green' ? 'font-gameboy text-green-accent'
+                  : theme === 'red' ? 'font-retro text-red-accent'
+                  : theme === 'ruby' ? 'font-retro text-ruby-accent'
+                  : 'text-text'
+                }`}>
+                  PokéDex
+                </h1>
+              </div>
+            </Tooltip>
 
             {/* Desktop Navigation - Hidden on mobile */}
             <div className="hidden md:flex items-center space-x-4">
-              <span className="text-sm text-muted">
-                {pokemonCount} Pokémon discovered
-              </span>
+              <Tooltip content={`You have discovered ${pokemonCount} Pokémon in your PokéDex collection`} position="bottom">
+                <span className="text-sm text-muted">
+                  {pokemonCount} Pokémon discovered
+                </span>
+              </Tooltip>
               
               {/* Density Controls */}
               <div className="flex items-center space-x-2">
-                <span className="text-sm text-muted">Density:</span>
+                <Tooltip content="Adjust the display density of Pokémon cards" position="bottom">
+                  <span className="text-sm text-muted">Density:</span>
+                </Tooltip>
                 <div className="flex bg-surface rounded-lg p-1">
                   {(['cozy', 'compact', 'ultra'] as const).map((d) => (
-                    <button
+                    <Tooltip 
                       key={d}
-                      onClick={() => onDensityChange(d)}
-                      className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
-                        density === d
-                          ? 'bg-poke-blue text-white'
-                          : 'text-muted hover:text-text hover:bg-white/50'
-                      }`}
+                      content={
+                        d === 'cozy' ? 'Larger cards with more spacing for better readability' :
+                        d === 'compact' ? 'Medium cards with balanced spacing' :
+                        'Small cards with minimal spacing for maximum content'
+                      } 
+                      position="bottom"
                     >
-                      {d.charAt(0).toUpperCase() + d.slice(1)}
-                    </button>
+                      <button
+                        onClick={() => onDensityChange(d)}
+                        className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                          density === d
+                            ? 'bg-poke-blue text-white'
+                            : 'text-muted hover:text-text hover:bg-white/50'
+                        }`}
+                      >
+                        {d.charAt(0).toUpperCase() + d.slice(1)}
+                      </button>
+                    </Tooltip>
                   ))}
                 </div>
               </div>
 
               {/* PokéDex Toolbar */}
               <HeaderIcons onFiltersClick={handleFiltersClick} />
-
-              {/* Theme Toggle */}
-              <ThemeToggle />
             </div>
 
             {/* Mobile Menu Button and Profile Picture - Only visible on mobile */}
@@ -296,14 +319,14 @@ export default function MobileHeader({
               {/* Navigation Links */}
               <div className="mb-6">
                 <h3 className="text-sm font-medium text-text mb-3">Navigation</h3>
-                <div className="space-y-2">
+              <div className="space-y-2">
                   <button
                     onClick={handleTeamClick}
                     className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg bg-white/50 text-text hover:bg-white/70 transition-colors"
                   >
                     <Image 
                       src="/header-icons/team_builder.png" 
-                      alt="Team Builder" 
+                      alt="" 
                       width={20} 
                       height={20} 
                       className="h-5 w-5"
@@ -311,12 +334,25 @@ export default function MobileHeader({
                     <span className="font-medium">Team Builder</span>
                   </button>
                   <button
+                    onClick={handleTop50Click}
+                    className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg bg-white/50 text-text hover:bg-white/70 transition-colors"
+                  >
+                    <Image 
+                      src="/header-icons/top50.png" 
+                      alt="" 
+                      width={20} 
+                      height={20} 
+                      className="h-5 w-5"
+                    />
+                    <span className="font-medium">Top 50 Pokémon</span>
+                  </button>
+                  <button
                     onClick={handleBattleClick}
                     className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg bg-white/50 text-text hover:bg-white/70 transition-colors"
                   >
                     <Image 
                       src="/header-icons/battle.png" 
-                      alt="Battles" 
+                      alt="" 
                       width={20} 
                       height={20} 
                       className="h-5 w-5"
@@ -329,39 +365,18 @@ export default function MobileHeader({
                   >
                     <Image 
                       src="/header-icons/compare.png" 
-                      alt="Compare" 
+                      alt="" 
                       width={20} 
                       height={20} 
                       className="h-5 w-5"
                     />
                     <span className="font-medium">Compare</span>
                   </button>
-                  <button
-                    onClick={handleFiltersClick}
-                    className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg bg-white/50 text-text hover:bg-white/70 transition-colors"
-                  >
-                    <Image 
-                      src="/header-icons/advanced_filters.png" 
-                      alt="Advanced Filters" 
-                      width={20} 
-                      height={20} 
-                      className="h-5 w-5"
-                    />
-                    <span className="font-medium">Advanced Filters</span>
-                  </button>
+              {/* Advanced Filters button removed from mobile menu */}
                 </div>
               </div>
 
-              {/* Theme Controls */}
-              <div className="mb-6">
-                <h3 className="text-sm font-medium text-text mb-3">Appearance</h3>
-                <div className="p-4 bg-white/50 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-text">Theme</span>
-                    <ThemeToggle />
-                  </div>
-                </div>
-              </div>
+              {/* Theme Controls moved to UserDropdown */}
 
               {/* Footer */}
               <div className="pt-4 border-t border-border">

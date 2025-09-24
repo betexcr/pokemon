@@ -148,7 +148,16 @@ export const FirestoreBattleComponent: React.FC<FirestoreBattleComponentProps> =
         setError(null);
 
         // Enhanced permission check using utility functions
-        const battleData = await battleService.getBattle(battleId);
+        // Retry fetching the battle for a few seconds to allow Firestore mirror to appear
+        let battleData: MultiplayerBattleState | null = null;
+        const start = Date.now();
+        const deadlineMs = 8000; // up to 8s
+        const stepMs = 250;
+        do {
+          battleData = await battleService.getBattle(battleId).catch(() => null);
+          if (battleData) break;
+          await new Promise(r => setTimeout(r, stepMs));
+        } while (Date.now() - start < deadlineMs);
         if (!battleData) {
           throw new Error('Battle not found');
         }
@@ -288,7 +297,7 @@ export const FirestoreBattleComponent: React.FC<FirestoreBattleComponentProps> =
     const load = async () => {
       if (!battleState?.player.pokemon[battleState.player.currentIndex]) return;
       
-      const abilityId = battleState.player.pokemon[battleState.player.currentIndex].pokemon.abilities?.[0]?.ability?.name;
+      const abilityId = battleState?.player.pokemon[battleState.player.currentIndex]?.pokemon.abilities?.[0]?.ability?.name;
       if (!abilityId) { setMyAbilityInfo(null); return; }
       
       try {
@@ -367,7 +376,7 @@ export const FirestoreBattleComponent: React.FC<FirestoreBattleComponentProps> =
   // Handle battle completion
   useEffect(() => {
     if (battleState?.isComplete && onBattleComplete) {
-      const winner = battleState.player.faintedCount >= battleState.player.pokemon.length ? 'opponent' : 'player';
+      const winner = battleState?.player.faintedCount >= battleState?.player.pokemon.length ? 'opponent' : 'player';
       onBattleComplete(winner);
     }
   }, [battleState?.isComplete, onBattleComplete]);
@@ -388,18 +397,36 @@ export const FirestoreBattleComponent: React.FC<FirestoreBattleComponentProps> =
     );
   }
 
-  if (!battle || !battleState) {
+  // If battle exists but state hasn't streamed yet, render a lightweight connected fallback
+  if (battle && !battleState) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <div className="text-lg">Waiting for battle data...</div>
+      <div className="battle-container">
+        <div className="battle-header mb-4">
+          <h2 className="text-2xl font-bold text-center">Battle Phase: connecting…</h2>
+          <div className="text-center text-sm text-gray-600">Turn: {turnNumber} | Syncing…</div>
+        </div>
+        <div className="battle-field grid grid-cols-2 gap-6 mb-6">
+          <div className="player-side">
+            <h3 className="text-lg font-semibold mb-4">Your Pokemon</h3>
+            <div className="p-4 rounded-lg border-2 border-blue-200 bg-blue-50">
+              <div className="h-24 animate-pulse bg-gradient-to-br from-gray-100 to-gray-200 rounded" />
+            </div>
+          </div>
+          <div className="opponent-side">
+            <h3 className="text-lg font-semibold mb-4">Opponent Pokemon</h3>
+            <div className="p-4 rounded-lg border-2 border-red-200 bg-red-50">
+              <div className="h-24 animate-pulse bg-gradient-to-br from-gray-100 to-gray-200 rounded" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
   // Get current active Pokemon
-  const myActive = battleState.player.pokemon[battleState.player.currentIndex];
-  const oppActive = battleState.opponent.pokemon[battleState.opponent.currentIndex];
-  const myTeam = battleState.player.pokemon;
+  const myActive = battleState?.player.pokemon[battleState.player.currentIndex];
+  const oppActive = battleState?.opponent.pokemon[battleState.opponent.currentIndex];
+  const myTeam = battleState?.player.pokemon || [];
 
   return (
     <div className="battle-container">
@@ -590,13 +617,13 @@ export const FirestoreBattleComponent: React.FC<FirestoreBattleComponentProps> =
                   key={index}
                   onClick={() => handlePokemonSwitch(index)}
                   className={`switch-button p-3 rounded-lg border-2 transition-all duration-200 ${
-                    index === battleState.player.currentIndex
+                    index === battleState?.player.currentIndex
                       ? 'border-gray-400 bg-gray-100 cursor-not-allowed opacity-60'
                       : legalSwitchIndexes.includes(index)
                       ? 'border-green-500 bg-green-50 hover:bg-green-100 hover:border-green-600 hover:shadow-md'
                       : 'border-gray-300 bg-gray-100 cursor-not-allowed opacity-60'
                   }`}
-                  disabled={index === battleState.player.currentIndex || !legalSwitchIndexes.includes(index)}
+                  disabled={index === battleState?.player.currentIndex || !legalSwitchIndexes.includes(index)}
                 >
                   <div className="flex items-center gap-3">
                     <PokemonBattleImage 
@@ -614,7 +641,7 @@ export const FirestoreBattleComponent: React.FC<FirestoreBattleComponentProps> =
                       {pokemon.currentHp <= 0 && (
                         <div className="text-xs text-red-600 font-medium">Fainted</div>
                       )}
-                      {index === battleState.player.currentIndex && (
+                      {index === battleState?.player.currentIndex && (
                         <div className="text-xs text-gray-500">Active</div>
                       )}
                     </div>
@@ -630,7 +657,7 @@ export const FirestoreBattleComponent: React.FC<FirestoreBattleComponentProps> =
       <div className="battle-log mt-6">
         <h3 className="text-lg font-semibold mb-2">Battle Log</h3>
         <div className="log-container max-h-40 overflow-y-auto bg-gray-100 p-3 rounded">
-          {battleState.battleLog && battleState.battleLog.length > 0 && (
+          {battleState?.battleLog && battleState.battleLog.length > 0 && (
             <div className="log-entry text-sm mb-1">
               {battleState.battleLog[battleState.battleLog.length - 1]?.message}
             </div>
@@ -639,13 +666,13 @@ export const FirestoreBattleComponent: React.FC<FirestoreBattleComponentProps> =
       </div>
 
       {/* Battle Complete */}
-      {battleState.isComplete && (
+      {battleState?.isComplete && (
         <div className="battle-complete mt-6 text-center">
           <h2 className="text-2xl font-bold mb-2">
-            {battleState.player.faintedCount >= battleState.player.pokemon.length ? 'Defeat!' : 'Victory!'}
+            {battleState?.player.faintedCount >= battleState?.player.pokemon.length ? 'Defeat!' : 'Victory!'}
           </h2>
           <p className="text-lg">
-            {battleState.player.faintedCount >= battleState.player.pokemon.length
+            {battleState?.player.faintedCount >= battleState?.player.pokemon.length
               ? 'You lost the battle!'
               : 'You won the battle!'}
           </p>

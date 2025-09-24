@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { Pokemon, FilterState } from '@/types/pokemon';
 import { formatPokemonName, getPokemonDescription } from '@/lib/utils';
 import { searchPokemonByName } from '@/lib/api';
-import ThemeToggle from './ThemeToggle';
 import PokemonComparison from './PokemonComparison';
 import RadarChart from './RadarChart';
 import VirtualizedPokemonList from './VirtualizedPokemonList';
@@ -50,10 +49,7 @@ export default function RedPokedexLayout({
 
   return (
     <div className="min-h-screen pokemon-red-bg font-gbc text-black">
-      {/* Theme Toggle - Hidden on mobile */}
-      <div className="hidden md:block absolute top-4 right-4 z-50">
-        <ThemeToggle />
-      </div>
+      {/* Theme Toggle moved into UserDropdown */}
       
       {/* Authentic GBC PokéDex Header */}
       <div className="bg-red-100 border-b-4 border-red-600 p-4 relative">

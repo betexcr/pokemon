@@ -69,6 +69,13 @@ export interface RoomUpdate {
 class RoomService {
   private roomsCollection = 'battle_rooms';
 
+  // Delete a room (host only)
+  async deleteRoom(roomId: string): Promise<void> {
+    if (!db) throw new Error('Firebase not initialized');
+    const roomRef = doc(db, this.roomsCollection, roomId);
+    await deleteDoc(roomRef);
+  }
+
   // Close all existing rooms for a user
   async closeExistingRoomsForUser(userId: string): Promise<void> {
     if (!db) throw new Error('Firebase not initialized');
@@ -294,53 +301,52 @@ class RoomService {
       currentPlayers: roomData.currentPlayers,
       maxPlayers: roomData.maxPlayers,
       isWaiting: roomData.status === 'waiting',
-      hasSpace: roomData.currentPlayers < roomData.maxPlayers
+      hasSpace: roomData.currentPlayers < roomData.maxPlayers,
+      hasGuest: !!roomData.guestId
     });
     
-    // Temporarily allow joining even if room is not in waiting status for debugging
-    if (roomData.currentPlayers >= roomData.maxPlayers) {
+    // Check if room already has a guest (but allow if it's the same user)
+    if (roomData.guestId && roomData.guestId !== guestId) {
+      throw new Error(`Room already has a guest. Current guest: ${roomData.guestId}`);
+    }
+    
+    // Check room capacity - only if there's no guest yet
+    if (!roomData.guestId && roomData.currentPlayers >= roomData.maxPlayers) {
       throw new Error(`Room is full. Players: ${roomData.currentPlayers}/${roomData.maxPlayers}`);
     }
     
-    // Allow joining if room is waiting or ready (for debugging)
+    // Allow joining if room is waiting or ready
     if (roomData.status !== 'waiting' && roomData.status !== 'ready') {
       throw new Error(`Room is not available. Status: ${roomData.status}`);
     }
     
-    // Update room with guest information
-    const activeUsers = roomData.activeUsers || [roomData.hostId];
-    if (!activeUsers.includes(guestId)) {
-      activeUsers.push(guestId);
+    // Attempt a single ATOMIC claim + presence update to satisfy rules in one write
+    const atomicActiveUsers = (roomData.activeUsers || [roomData.hostId]).slice();
+    if (!atomicActiveUsers.includes(guestId)) {
+      atomicActiveUsers.push(guestId);
     }
-    
-    const updateData: Record<string, unknown> = {
+    const atomicData: Record<string, unknown> = {
       guestId,
       guestName,
       guestPhotoURL: guestPhotoURL || null,
       guestReady: false,
-      guestAnimatingBalls: [],
-      guestReleasedBalls: [],
-      currentPlayers: activeUsers.length,
-      activeUsers,
-      status: 'ready' // Both players are now in the room
+      status: 'ready',
+      activeUsers: atomicActiveUsers,
+      currentPlayers: atomicActiveUsers.length
     };
-    
-    // Ensure maxPlayers is set for older rooms
-    if (!roomData.maxPlayers) {
-      updateData.maxPlayers = 2;
-    }
-
-    // Only include guestTeam if it's provided and not undefined
     if (guestTeam !== undefined) {
-      updateData.guestTeam = guestTeam;
+      atomicData.guestTeam = guestTeam;
+    }
+    if (!roomData.maxPlayers) {
+      atomicData.maxPlayers = 2;
     }
 
-    console.log('Updating room with data:', updateData);
+    console.log('JoinRoom ATOMIC claim+presence:', atomicData);
     try {
-      await updateDoc(roomRef, updateData);
-      console.log('Room updated successfully');
+      await updateDoc(roomRef, atomicData);
+      console.log('JoinRoom ATOMIC completed');
     } catch (updateError) {
-      console.error('Failed to update room:', updateError);
+      console.error('JoinRoom ATOMIC failed, no partial writes performed:', updateError);
       
       // Log detailed error information
       firebaseErrorLogger.logError(
@@ -354,7 +360,7 @@ class RoomService {
           hasGuestTeam: !!guestTeam,
           collection: this.roomsCollection,
           operation: 'updateDoc',
-          updateData
+        updateData: atomicData
         }
       );
 
@@ -378,7 +384,7 @@ class RoomService {
         });
       }
       
-      throw new Error(`Failed to update room: ${updateError instanceof Error ? updateError.message : 'Unknown error'}`);
+      throw new Error(`Failed to join room atomically: ${updateError instanceof Error ? updateError.message : 'Unknown error'}`);
     }
     
     return true;
@@ -593,14 +599,38 @@ class RoomService {
     // Ensure animation fields are initialized
     await this.initializeAnimationFields(roomId);
     
-    const updates: RoomUpdate = {};
+    // Read current values to avoid no-op writes
+    const roomRef = doc(db, this.roomsCollection, roomId);
+    const roomDoc = await getDoc(roomRef);
+    if (!roomDoc.exists()) {
+      throw new Error('Room not found');
+    }
+    const current = roomDoc.data();
     
+    const desiredHostAnimating = playerType === 'host' ? Array.from(animatingBalls) : current.hostAnimatingBalls || [];
+    const desiredHostReleased = playerType === 'host' ? Array.from(releasedBalls) : current.hostReleasedBalls || [];
+    const desiredGuestAnimating = playerType === 'guest' ? Array.from(animatingBalls) : current.guestAnimatingBalls || [];
+    const desiredGuestReleased = playerType === 'guest' ? Array.from(releasedBalls) : current.guestReleasedBalls || [];
+    
+    const arraysEqual = (a: number[] = [], b: number[] = []) => a.length === b.length && a.every((v, i) => v === b[i]);
+    const noChange =
+      arraysEqual(desiredHostAnimating, current.hostAnimatingBalls || []) &&
+      arraysEqual(desiredHostReleased, current.hostReleasedBalls || []) &&
+      arraysEqual(desiredGuestAnimating, current.guestAnimatingBalls || []) &&
+      arraysEqual(desiredGuestReleased, current.guestReleasedBalls || []);
+    
+    if (noChange) {
+      console.log('roomService.updateBallAnimation skipped (no changes)');
+      return;
+    }
+    
+    const updates: RoomUpdate = {};
     if (playerType === 'host') {
-      updates.hostAnimatingBalls = Array.from(animatingBalls);
-      updates.hostReleasedBalls = Array.from(releasedBalls);
+      updates.hostAnimatingBalls = desiredHostAnimating;
+      updates.hostReleasedBalls = desiredHostReleased;
     } else {
-      updates.guestAnimatingBalls = Array.from(animatingBalls);
-      updates.guestReleasedBalls = Array.from(releasedBalls);
+      updates.guestAnimatingBalls = desiredGuestAnimating;
+      updates.guestReleasedBalls = desiredGuestReleased;
     }
     
     await this.updateRoom(roomId, updates);
@@ -638,8 +668,7 @@ class RoomService {
       updates.status = 'ready';
       console.log('Room status updated to ready:', { roomId, userId, newHostReady, newGuestReady, currentStatus: roomData.status });
       
-      // Secure team and player data by creating battle document early
-      await this.secureBattleData(roomId, roomData);
+      // Do not pre-create battles here; host will create RTDB battle on start to avoid ID races
     } else if (roomData.guestId && (!newHostReady || !newGuestReady) && roomData.status === 'ready') {
       // If one player is not ready, set status back to 'waiting'
       updates.status = 'waiting';
@@ -846,6 +875,21 @@ class RoomService {
       }
     }
     
+    // Compute reliable player count with fallbacks (ignore zero/stale values)
+    const candidateCounts: number[] = [];
+    if (typeof roomData.currentPlayers === 'number') {
+      candidateCounts.push(roomData.currentPlayers);
+    }
+    if (Array.isArray(roomData.activeUsers)) {
+      candidateCounts.push(roomData.activeUsers.length);
+    }
+    // Infer from host/guest assignment
+    const inferredFromAssignments = roomData.hostId && roomData.guestId ? 2 : (roomData.hostId ? 1 : 0);
+    candidateCounts.push(inferredFromAssignments);
+
+    const sanitizedCounts = candidateCounts.filter((n) => Number.isFinite(n) && n > 0);
+    const currentPlayers: number = sanitizedCounts.length > 0 ? Math.max(...sanitizedCounts) : 0;
+
     // Check room status - conditionally allow 'battling' and 'unresolved' status
     const allowedStatuses = ['ready', 'waiting'];
     if (allowBattlingStatus) {
@@ -853,17 +897,17 @@ class RoomService {
     }
     
     // Allow 'unresolved' status for single player scenarios (when guest leaves)
-    if (roomData.status === 'unresolved' && roomData.currentPlayers === 1) {
+    if (roomData.status === 'unresolved' && currentPlayers === 1) {
       console.log('⚠️ Room is in unresolved status with single player - allowing battle to proceed');
     } else if (!allowedStatuses.includes(roomData.status)) {
       validationErrors.push(`Room status must be ${allowedStatuses.join(' or ')}, got '${roomData.status}'`);
     }
     
     // Check player count - allow single player for unresolved status
-    if (roomData.status === 'unresolved' && roomData.currentPlayers === 1) {
+    if (roomData.status === 'unresolved' && currentPlayers === 1) {
       console.log('⚠️ Single player in unresolved room - allowing battle to proceed');
-    } else if (roomData.currentPlayers !== 2) {
-      validationErrors.push(`Room must have exactly 2 players, got ${roomData.currentPlayers}`);
+    } else if (currentPlayers !== 2) {
+      validationErrors.push(`Room must have exactly 2 players, got ${currentPlayers}`);
     }
     
     return {
@@ -1077,8 +1121,9 @@ class RoomService {
       activeUsers = activeUsers.filter((id: string) => id !== userId);
     }
     
-    // Update current players count based on active users
-    const currentPlayers = activeUsers.length;
+    // Update current players count based on active users, clamped by assigned participants
+    const assignedCount = (roomData.hostId ? 1 : 0) + (roomData.guestId ? 1 : 0);
+    const currentPlayers = Math.max(activeUsers.length, assignedCount);
     
     const updates: Record<string, unknown> = {
       activeUsers,
@@ -1101,6 +1146,18 @@ class RoomService {
           updates.status = 'finished';
         }
       }
+    }
+
+    // Skip no-op writes
+    const arraysEqual = (a: string[] = [], b: string[] = []) => a.length === b.length && a.every((v, i) => v === b[i]);
+    const onlyPresenceChanged =
+      arraysEqual(activeUsers, roomData.activeUsers || []) &&
+      currentPlayers === (roomData.currentPlayers || 0) &&
+      updates.status === undefined &&
+      updates.lastSeenHostAt === undefined;
+    if (onlyPresenceChanged) {
+      console.log('trackUserPresence skipped (no changes)');
+      return;
     }
 
     await updateDoc(roomRef, updates);

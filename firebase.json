@@ -10,48 +10,13 @@
   "database": {
     "rules": "database.rules.json"
   },
-  "hosting": {
-    "public": "out",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
-    "rewrites": [
-      {
-        "source": "/lobby/**",
-        "destination": "/index.html"
-      },
-      {
-        "source": "/battle/**",
-        "destination": "/index.html"
-      },
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
-    ],
-    "headers": [
-      {
-        "source": "**/*.@(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "public, max-age=31536000, immutable"
-          }
-        ]
-      },
-      {
-        "source": "**/*.@(html|json)",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "public, max-age=3600"
-          }
-        ]
-      }
-    ]
-  },
+  "hosting": [
+    {
+      "site": "pokemon-battles-86a0d",
+      "source": ".",
+      "frameworksBackend": {}
+    }
+  ],
   "emulators": {
     "auth": {
       "port": 9099

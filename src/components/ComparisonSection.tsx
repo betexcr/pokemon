@@ -56,7 +56,7 @@ export default function ComparisonSection({
             <div data-testid="comparison-scroll" className="flex-1 min-h-0 overflow-y-auto scrollbar-hide bg-gray-800 rounded-lg border border-gray-700 scroll-pb-24 pb-4 pr-1 overscroll-contain">
               {comparisonPokemon.map((pokemon, index) => (
                 <div
-                  key={pokemon.id}
+                  key={`${pokemon.id}-${index}`}
                   className={`flex items-center px-3 py-2 ${
                     index < comparisonPokemon.length - 1 
                       ? 'border-b border-gray-700' 

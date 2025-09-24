@@ -3,6 +3,10 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import ThemeProvider from '@/components/ThemeProvider'
 import { AuthProvider } from '@/contexts/AuthContext'
+import HelpAssistant from '@/components/HelpAssistant'
+import RoutePreloader from '@/components/RoutePreloader'
+import PerformanceMonitor from '@/components/PerformanceMonitor'
+import { ToastProvider } from '@/components/ToastProvider'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -78,13 +82,53 @@ export default function RootLayout({
         
         {/* PWA Manifest */}
         <link rel="manifest" href="/manifest.json" />
+
+        {/* Structured Data: Organization */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'Organization',
+              name: 'PokéDex',
+              url: 'https://pokemon.ultharcr.com',
+              logo: 'https://pokemon.ultharcr.com/pokedex.jpg',
+              sameAs: [
+                'https://twitter.com/pokemondex'
+              ]
+            })
+          }}
+        />
+
+        {/* Structured Data: WebSite with potentialAction */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'WebSite',
+              name: 'PokéDex',
+              url: 'https://pokemon.ultharcr.com',
+              potentialAction: {
+                '@type': 'SearchAction',
+                target: 'https://pokemon.ultharcr.com/?q={search_term_string}',
+                'query-input': 'required name=search_term_string'
+              }
+            })
+          }}
+        />
       </head>
-      <body suppressHydrationWarning className={`${inter.className} min-h-screen bg-bg text-text pokeball-bg`}>
+      <body suppressHydrationWarning className={`${inter.className} min-h-screen bg-bg text-text pokeball-bg site-gradient`}>
         <AuthProvider>
           <ThemeProvider>
-            <div className="min-h-screen">
-              {children}
-            </div>
+            <ToastProvider>
+              <RoutePreloader />
+              <PerformanceMonitor />
+              <div className="min-h-screen">
+                {children}
+                <HelpAssistant />
+              </div>
+            </ToastProvider>
           </ThemeProvider>
         </AuthProvider>
       </body>

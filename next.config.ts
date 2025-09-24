@@ -1,19 +1,22 @@
 import type { NextConfig } from "next";
 
 const isProd = process.env.NODE_ENV === 'production';
+const isDev = process.env.NODE_ENV === 'development';
 
 const nextConfig: NextConfig = {
-  ...(isProd ? { output: 'export', trailingSlash: true } : {}),
+  // Use SSR (no static export) so API routes and dynamic features work on Firebase
+  // output: undefined,
   eslint: {
     // Warning: This allows production builds to successfully complete even if
     // your project has ESLint errors.
-    ignoreDuringBuilds: false,
+    ignoreDuringBuilds: true,
   },
   typescript: {
     // Warning: This allows production builds to successfully complete even if
     // your project has type errors.
     ignoreBuildErrors: false,
   },
+  ...(isDev ? { distDir: '.next' } : {}),
   images: {
     unoptimized: true,
     remotePatterns: [
@@ -27,7 +30,7 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'raw.githubusercontent.com',
         port: '',
-        pathname: '/PokeAPI/sprites/**',
+        pathname: '/**',
       },
       {
         protocol: 'https',
@@ -44,6 +47,12 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'firebasestorage.googleapis.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'sprites.pmdcollab.org',
         port: '',
         pathname: '/**',
       }
