@@ -75,3 +75,9 @@ Thumbs.db
 *.tmp
 *.temp
 .cache/
+
+# Large assets that should not be tracked
+public/trainer-sprites/
+public/pokemon-sprites/
+public/sprites/
+*.sprite
