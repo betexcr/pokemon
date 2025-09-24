@@ -1,0 +1,48 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+
+    // Per-user dex storage
+    match /users/{userId}/dex/{docId} {
+      allow read, write: if signedIn() && request.auth.uid == userId;
+    }
+
+    // Public shares
+    match /shares/{shareId} {
+      allow read: if true;           // public read
+      allow write: if signedIn();    // create/update by signed users
+    }
+
+    // User teams: owner read/write; allow reads of public teams
+    match /userTeams/{teamId} {
+      allow read: if resource.data.isPublic == true || (signedIn() && request.auth.uid == resource.data.userId);
+      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if signedIn() && request.auth.uid == resource.data.userId;
+    }
+
+    // Battle rooms: only participants can read/write
+    match /battle_rooms/{roomId} {
+      allow read, write: if signedIn() && (
+        request.auth.uid in (resource.data.activeUsers || []) ||
+        request.auth.uid == resource.data.hostId ||
+        request.auth.uid == resource.data.guestId
+      );
+    }
+
+    // Battles: only host/guest can read/write
+    match /battles/{battleId} {
+      allow read, write: if signedIn() && (
+        request.auth.uid == resource.data.hostId ||
+        request.auth.uid == resource.data.guestId
+      );
+    }
+
+    // Usage Meta: public read, server-only write
+    match /usage_monthly/{docId} {
+      allow read: if true;  // public read access
+      allow write: if false; // server-only writes (via service account)
+    }
+  }
+}
+

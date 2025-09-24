@@ -1,0 +1,77 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+/playwright-report/
+/test-results/
+/.playwright-mcp/
+
+# next.js
+/.next/
+/out/
+/.swc/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+firebase-debug.log*
+firestore-debug.log*
+server.log
+
+# env files (can opt-in for committing if needed)
+.env*
+!env.test.example
+
+# vercel
+.vercel
+
+# firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+auth-export.json
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# IDE
+.vscode/settings.json
+.vscode/launch.json
+.vscode/extensions.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test artifacts
+*.png
+*.jpg
+*.jpeg
+!public/**/*.png
+!public/**/*.jpg
+!public/**/*.jpeg
+
+# Temporary files
+*.tmp
+*.temp
+.cache/

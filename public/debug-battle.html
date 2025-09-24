@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Battle</title>
+</head>
+<body>
+    <h1>Battle Debug Information</h1>
+    <div id="debug-info"></div>
+    
+    <script>
+        function debugInfo() {
+            const debugDiv = document.getElementById('debug-info');
+            let html = '<h2>LocalStorage Contents:</h2>';
+            
+            // Check localStorage
+            const teams = localStorage.getItem('pokemon-team-builder');
+            if (teams) {
+                try {
+                    const parsedTeams = JSON.parse(teams);
+                    html += '<pre>' + JSON.stringify(parsedTeams, null, 2) + '</pre>';
+                } catch (e) {
+                    html += '<p>Error parsing teams: ' + e.message + '</p>';
+                }
+            } else {
+                html += '<p>No teams found in localStorage</p>';
+            }
+            
+            // Check URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            html += '<h2>URL Parameters:</h2>';
+            html += '<ul>';
+            for (const [key, value] of urlParams) {
+                html += `<li>${key}: ${value}</li>`;
+            }
+            html += '</ul>';
+            
+            // Test API calls
+            html += '<h2>API Test:</h2>';
+            testAPI().then(result => {
+                html += '<p>' + result + '</p>';
+                debugDiv.innerHTML = html;
+            });
+            
+            debugDiv.innerHTML = html;
+        }
+        
+        async function testAPI() {
+            try {
+                const response = await fetch('https://pokeapi.co/api/v2/pokemon/25');
+                if (!response.ok) {
+                    return 'API Error: ' + response.status;
+                }
+                const data = await response.json();
+                return 'API Working: ' + data.name + ' (ID: ' + data.id + ')';
+            } catch (error) {
+                return 'API Error: ' + error.message;
+            }
+        }
+        
+        // Run debug when page loads
+        window.onload = debugInfo;
+    </script>
+</body>
+</html>

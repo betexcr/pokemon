@@ -1,0 +1,1817 @@
+'use client'
+//TODO: https://pokemondb.net/mechanics/natures to add natures to the team builder and the battle simulator, we will have a selctor for them besides the level selector for natures
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Pokemon } from '@/types/pokemon'
+import { getPokemonList, getPokemon, getMove, getPokemonTotalCount } from '@/lib/api'
+import { formatPokemonName, getShowdownAnimatedSprite } from '@/lib/utils'
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll'
+import { fetchPokemonForTeamCompare } from '@/lib/infiniteScrollFetchers'
+import Image from 'next/image'
+import TypeBadge from '@/components/TypeBadge'
+import Tooltip from '@/components/Tooltip'
+import { useRouter } from 'next/navigation'
+import { ArrowLeft, ChevronDown, ChevronRight, Cloud, CloudOff, Save, Loader2, Wifi } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
+import { 
+  saveTeamToFirebase, 
+  deleteTeamFromFirebase, 
+  getUserTeams, 
+  syncTeamsWithFirebase,
+  type SavedTeam as FirebaseSavedTeam,
+  type TeamSlot,
+  type MoveData
+} from '@/lib/userTeams'
+import { updateTeamInFirebase } from '@/lib/userTeams'
+import AuthModal from '@/components/auth/AuthModal'
+import AppHeader from '@/components/AppHeader'
+// Removed PMD portraits and LoadingSprite in favor of static /loading.gif
+import PokemonSelector from '@/components/PokemonSelector'
+import { DEFAULT_NATURE, NATURES, type NatureName, type NatureStat } from '@/data/natures'
+import { analyzeTeam, type TeamAnalysis } from '@/lib/team/engine'
+import { convertTeamSlotsToSimple } from '@/lib/team/converter'
+import TypeRadar from '@/components/team/TypeRadar'
+import WeaknessMatrix from '@/components/team/WeaknessMatrix'
+import OffenseMatrix from '@/components/team/OffenseMatrix'
+import Suggestions from '@/components/team/Suggestions'
+
+const NATURE_STAT_LABEL: Record<NatureStat, string> = {
+  attack: 'Atk',
+  defense: 'Def',
+  'special-attack': 'SpA',
+  'special-defense': 'SpD',
+  speed: 'Spe'
+}
+
+const createEmptySlot = (): TeamSlot => ({ id: null, level: 50, moves: [] as MoveData[], nature: DEFAULT_NATURE })
+
+const normalizeTeamSlots = (slots?: Array<Partial<TeamSlot>> | null): TeamSlot[] => {
+  const source = Array.isArray(slots) ? slots : []
+  return Array.from({ length: 6 }, (_, index) => {
+    const slot = source[index]
+    if (!slot) return createEmptySlot()
+    const baseLevel = typeof slot.level === 'number' ? Math.round(slot.level) : 50
+    const clampedLevel = Math.min(100, Math.max(1, baseLevel || 50))
+    const moves = Array.isArray(slot.moves) ? [...slot.moves] as MoveData[] : []
+    return {
+      id: typeof slot.id === 'number' ? slot.id : null,
+      level: clampedLevel,
+      moves,
+      nature: slot.nature ?? DEFAULT_NATURE
+    }
+  })
+}
+
+// Types are now imported from userTeams.ts
+
+const STORAGE_KEY = 'pokemon-team-builder'
+const CURRENT_TEAM_KEY = 'pokemon-current-team'
+
+export default function TeamBuilderPage({ searchParams }: { searchParams?: Promise<{ [k: string]: string | string[] | undefined }> }) {
+  const router = useRouter()
+  const { user, loading: authLoading } = useAuth()
+  
+  const [availableMoves, setAvailableMoves] = useState<Record<number, Array<{ name: string; type: string; damage_class: "physical" | "special" | "status"; power: number | null; accuracy: number | null; pp: number | null; level_learned_at: number | null; learn_method: string; short_effect?: string | null }>>>({})
+  // Local cache for Pokémon not yet present in the infinite list so they render on reload
+  const [displayPokemonById, setDisplayPokemonById] = useState<Record<number, Pokemon>>({})
+  const [teamSlots, setTeamSlots] = useState<TeamSlot[]>(() => normalizeTeamSlots())
+  const [lastSelectedPokemon, setLastSelectedPokemon] = useState<number | null>(null)
+  const [savedTeams, setSavedTeams] = useState<FirebaseSavedTeam[]>([])
+  const [teamName, setTeamName] = useState('')
+  const [searchTerm, setSearchTerm] = useState('')
+  const [showDropdown, setShowDropdown] = useState(false)
+  const [collapsedSlots, setCollapsedSlots] = useState<Set<number>>(new Set([0, 1, 2, 3, 4, 5]))
+  const [activeSlotIndex, setActiveSlotIndex] = useState<number | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [syncing, setSyncing] = useState(false)
+  const [showAuthModal, setShowAuthModal] = useState(false)
+  const [levelMovesOnly, setLevelMovesOnly] = useState(true)
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const [recentTeams, setRecentTeams] = useState<{ name: string; team: string[] }[]>([])
+
+  const normalizeSavedTeams = useCallback((teams: FirebaseSavedTeam[]) => {
+    return teams.map(team => ({
+      ...team,
+      slots: normalizeTeamSlots(team.slots)
+    }))
+  }, [])
+  
+  // Use secure infinite scroll hook for team view
+  const {
+    data: allPokemon,
+    loading,
+    hasMore: hasMorePokemon,
+    error,
+    loadMore: loadMorePokemon,
+    reset: resetPokemonList,
+    sentinelRef
+  } = useInfiniteScroll<Pokemon>(
+    fetchPokemonForTeamCompare,
+    {
+      fetchSize: 50, // 50 items per fetch for team view
+      initialLoad: true,
+      enabled: true,
+      retryAttempts: 3,
+      retryDelay: 1000,
+      scrollThreshold: 200,
+      rootMargin: '200px',
+      threshold: 0.1
+    }
+  )
+
+  // First-click suggestions: original 151
+  const firstGenSuggestions = useMemo(() => {
+    return allPokemon
+      .filter(p => p.id >= 1 && p.id <= 151)
+      .sort((a, b) => a.id - b.id)
+      .slice(0, 151)
+  }, [allPokemon])
+
+  // Prefetch types for visible suggestions so badges are shown immediately
+  // (hook positioned after dependencies are defined below)
+
+  // Filter Pokémon based on search term (for search mode)
+  const filteredPokemon = useMemo(() => {
+    if (!searchTerm.trim()) return []
+    
+    const term = searchTerm.toLowerCase().trim()
+    return allPokemon.filter(pokemon => {
+      const name = pokemon.name.toLowerCase()
+      const id = pokemon.id.toString()
+      
+      // Handle both hyphen and space variations (e.g., "ho-oh" vs "ho oh")
+      const normalizedName = name.replace(/[- ]/g, '')
+      const normalizedTerm = term.replace(/[- ]/g, '')
+      
+      return name.includes(term) || 
+             id.includes(term) || 
+             normalizedName.includes(normalizedTerm)
+    })
+  }, [allPokemon, searchTerm])
+
+
+  // Function to fetch type data for a Pokémon
+  const fetchPokemonTypes = useCallback(async (pokemonId: number) => {
+    try {
+      const pokemonData = await getPokemon(pokemonId)
+      // Note: This will be handled by the infinite scroll hook
+      // We can't directly update allPokemon here since it's managed by the hook
+      console.log(`Fetched types for Pokémon ${pokemonId}:`, pokemonData.types)
+    } catch (error) {
+      console.error(`Failed to fetch types for Pokémon ${pokemonId}:`, error)
+    }
+  }, [])
+
+  // Prefetch types for visible suggestions so badges are shown immediately
+  useEffect(() => {
+    if (!showDropdown) return
+    const visible = (searchTerm.trim() ? filteredPokemon.slice(0, 50) : firstGenSuggestions)
+    visible.forEach(p => { if ((p.types?.length || 0) === 0) fetchPokemonTypes(p.id) })
+  }, [showDropdown, searchTerm, /* filteredPokemon causes init order issue */ firstGenSuggestions, fetchPokemonTypes])
+
+  // Close dropdown when clicking outside or pressing Escape
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element
+      // Check if target has closest method and if it's within the dropdown container
+      if (!target || typeof target.closest !== 'function' || !target.closest('.search-dropdown-container')) {
+        setShowDropdown(false)
+      }
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setShowDropdown(false)
+      }
+    }
+
+    if (showDropdown) {
+      document.addEventListener('mousedown', handleClickOutside)
+      document.addEventListener('keydown', handleKeyDown)
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside)
+        document.removeEventListener('keydown', handleKeyDown)
+      }
+    }
+  }, [showDropdown])
+
+  // Handle scroll for virtualized loading in dropdown
+  useEffect(() => {
+    const handleScroll = (event: Event) => {
+      const target = event.target as Element
+      // Check if target has closest method and if it's within the dropdown list
+      if (!target || typeof target.closest !== 'function' || !target.closest('.pokemon-dropdown-list')) return
+      
+      const element = target as HTMLElement
+      const { scrollTop, scrollHeight, clientHeight } = element
+      
+      // Load more when user scrolls to within 150px of the bottom (increased for mobile)
+      if (scrollHeight - scrollTop <= clientHeight + 150) {
+        loadMorePokemon()
+      }
+    }
+
+    // Also handle touch events for mobile
+    const handleTouchEnd = (event: TouchEvent) => {
+      const target = event.target as Element
+      if (!target || typeof target.closest !== 'function') return
+      const container = target.closest('.pokemon-dropdown-list') as HTMLElement | null
+      if (!container) return
+      
+      const element = container
+      const { scrollTop, scrollHeight, clientHeight } = element
+      
+      // Check if user has scrolled near the bottom
+      if (scrollHeight - scrollTop <= clientHeight + 200) {
+        loadMorePokemon()
+      }
+    }
+
+    if (showDropdown && !searchTerm.trim()) {
+      // Add both scroll and touch event listeners for better mobile support
+      document.addEventListener('scroll', handleScroll, true)
+      document.addEventListener('touchend', handleTouchEnd, { passive: true })
+      return () => {
+        document.removeEventListener('scroll', handleScroll, true)
+        document.removeEventListener('touchend', handleTouchEnd)
+      }
+    }
+  }, [showDropdown, searchTerm, loadMorePokemon])
+
+  // Fetch type data for displayed Pokémon
+  useEffect(() => {
+    if (filteredPokemon.length > 0) {
+      filteredPokemon.forEach(pokemon => {
+        if (pokemon.types.length === 0) {
+          fetchPokemonTypes(pokemon.id)
+        }
+      })
+    }
+  }, [filteredPokemon, fetchPokemonTypes])
+
+  // Load current team state from localStorage
+  const loadCurrentTeam = useCallback((): TeamSlot[] => {
+    try {
+      const saved = localStorage.getItem(CURRENT_TEAM_KEY)
+      if (saved) {
+        const parsed = JSON.parse(saved) as Array<Partial<TeamSlot>>
+        if (Array.isArray(parsed) && parsed.length === 6) {
+          return normalizeTeamSlots(parsed)
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load current team:', error)
+    }
+    return normalizeTeamSlots()
+  }, [])
+
+  // Persist current team state to localStorage
+  const persistCurrentTeam = useCallback((slots: TeamSlot[]) => {
+    try {
+      localStorage.setItem(CURRENT_TEAM_KEY, JSON.stringify(slots))
+    } catch (error) {
+      console.error('Failed to persist current team:', error)
+    }
+  }, [])
+
+  // Load initial data
+  useEffect(() => {
+    const load = async () => {
+      try {
+        // Check for URL parameters first
+        const sp = await searchParams
+        const initialNames = typeof sp?.team === 'string' ? (sp.team as string).split(',').filter(Boolean) : []
+        
+        if (initialNames.length > 0) {
+          // Load team from URL parameters
+          const urlTeamSlots = normalizeTeamSlots()
+          for (let i = 0; i < Math.min(initialNames.length, 6); i++) {
+            const pokemonName = initialNames[i]
+            // Find Pokemon by name in allPokemon or fetch it
+            let pokemon = allPokemon.find(p => p.name.toLowerCase() === pokemonName.toLowerCase())
+            if (!pokemon) {
+              try {
+                // Try to fetch by name if not in current list
+                const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${pokemonName.toLowerCase()}`)
+                if (response.ok) {
+                  pokemon = await response.json()
+                  setDisplayPokemonById(prev => ({ ...prev, [pokemon.id]: pokemon }))
+                }
+              } catch (error) {
+                console.error(`Failed to fetch Pokemon ${pokemonName}:`, error)
+              }
+            }
+            if (pokemon) {
+              urlTeamSlots[i] = { ...urlTeamSlots[i], id: pokemon.id }
+            }
+          }
+          setTeamSlots(urlTeamSlots)
+          persistCurrentTeam(urlTeamSlots)
+        } else {
+          // Load current team state from localStorage
+          const currentTeam = loadCurrentTeam()
+          setTeamSlots(currentTeam)
+        }
+        
+        // Set collapsed state based on which slots have Pokémon
+        const finalTeam = initialNames.length > 0 ? urlTeamSlots : loadCurrentTeam()
+        const newCollapsedSlots = new Set<number>()
+        finalTeam.forEach((slot, idx) => {
+          if (slot.id === null) {
+            newCollapsedSlots.add(idx)
+          }
+        })
+        setCollapsedSlots(newCollapsedSlots)
+
+        // Ensure any Pokémon in the current team are fetched for display and moves
+        const missingIds = finalTeam
+          .map(s => s.id)
+          .filter((id): id is number => typeof id === 'number')
+          .filter(id => !allPokemon.some(p => p.id === id))
+
+        if (missingIds.length > 0) {
+          try {
+            const fetched = await Promise.all(missingIds.map(async (id) => {
+              try {
+                const p = await getPokemon(id)
+                return p
+              } catch {
+                return null
+              }
+            }))
+            const map: Record<number, Pokemon> = {}
+            fetched.forEach(p => { if (p) map[p.id] = p })
+            if (Object.keys(map).length > 0) {
+              setDisplayPokemonById(prev => ({ ...prev, ...map }))
+            }
+          } catch {}
+        }
+
+        // Preload available moves for any filled slots
+        try {
+          const movePromises = finalTeam.map(async (slot, idx) => {
+            if (slot.id && slot.level) {
+              try {
+                const moves = await getAvailableMoves(slot.id, slot.level)
+                return { idx, moves }
+              } catch {
+                return { idx, moves: [] as any[] }
+              }
+            }
+            return { idx, moves: [] as any[] }
+          })
+          const moveResults = await Promise.all(movePromises)
+          setAvailableMoves(prev => {
+            const next = { ...prev }
+            moveResults.forEach(({ idx, moves }) => { if (moves.length > 0) next[idx] = moves as any })
+            return next
+          })
+        } catch {}
+      } catch (e) {
+        console.error('Error loading team state:', e)
+      }
+    }
+    load()
+  }, [loadCurrentTeam])
+
+  // Load saved teams from Firebase or localStorage
+  useEffect(() => {
+    const loadTeams = async () => {
+      if (user) {
+        // User is authenticated, load from Firebase
+        try {
+          setSyncing(true)
+          const firebaseTeams = await getUserTeams(user.uid)
+          setSavedTeams(normalizeSavedTeams(firebaseTeams))
+          
+          // Also sync any local teams to Firebase
+          try {
+            const localTeamsRaw = localStorage.getItem(STORAGE_KEY)
+            if (localTeamsRaw) {
+              const localTeams = JSON.parse(localTeamsRaw) as FirebaseSavedTeam[]
+              await syncTeamsWithFirebase(user.uid, localTeams)
+              // Clear local storage after sync
+              localStorage.removeItem(STORAGE_KEY)
+            }
+          } catch (error) {
+            console.error('Error syncing local teams:', error)
+          }
+        } catch (error) {
+          console.error('Error loading teams from Firebase:', error)
+          // Fallback to localStorage
+          try {
+            const raw = localStorage.getItem(STORAGE_KEY)
+            if (raw) {
+              const parsed = JSON.parse(raw) as FirebaseSavedTeam[]
+              if (Array.isArray(parsed)) setSavedTeams(normalizeSavedTeams(parsed))
+            }
+          } catch {}
+        } finally {
+          setSyncing(false)
+        }
+      } else {
+        // User not authenticated, load from localStorage
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY)
+          if (raw) {
+            const parsed = JSON.parse(raw) as FirebaseSavedTeam[]
+            if (Array.isArray(parsed)) setSavedTeams(normalizeSavedTeams(parsed))
+          }
+        } catch {}
+      }
+    }
+
+    loadTeams()
+  }, [user])
+
+  // Load recent teams
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('team-builder:recent')
+      if (raw) {
+        const parsed = JSON.parse(raw) as { name: string; team: string[] }[]
+        if (Array.isArray(parsed)) setRecentTeams(parsed)
+      }
+    } catch {}
+  }, [])
+
+  const persistTeams = useCallback((teams: FirebaseSavedTeam[]) => {
+    setSavedTeams(teams)
+    if (user) {
+      // User is authenticated, save to Firebase
+      // Note: This is a local state update, actual saving happens in saveTeam function
+    } else {
+      // User not authenticated, save to localStorage
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(teams)) } catch {}
+    }
+  }, [user])
+
+  const isTeamComplete = useMemo(() => {
+    const withPokemon = teamSlots
+      .map((slot, idx) => ({ slot, idx }))
+      .filter(({ slot }) => slot.id != null)
+    if (withPokemon.length === 0) return false
+
+    return withPokemon.every(({ slot, idx }) => {
+      const movesChosen = slot.moves?.length || 0
+      const eligibleMoves = (availableMoves[idx] || []).filter((m) => {
+        if (levelMovesOnly) {
+          return m.learn_method === 'level-up' && m.level_learned_at && m.level_learned_at <= slot.level
+        }
+        return true
+      })
+      const required = Math.min(4, eligibleMoves.length)
+      return movesChosen === required
+    })
+  }, [teamSlots, availableMoves, levelMovesOnly])
+
+  // Team analysis for the analysis panels
+  const teamAnalysis = useMemo(() => {
+    const simpleTeam = convertTeamSlotsToSimple(teamSlots, allPokemon, displayPokemonById)
+    return analyzeTeam(simpleTeam)
+  }, [teamSlots, allPokemon, displayPokemonById])
+
+  // Export functions
+  const exportJSON = () => {
+    const simpleTeam = convertTeamSlotsToSimple(teamSlots, allPokemon, displayPokemonById)
+    const json = JSON.stringify(simpleTeam.map(p => ({ name: p.name, types: p.types })), null, 2)
+    const blob = new Blob([json], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'team.json'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const exportCSV = () => {
+    const simpleTeam = convertTeamSlotsToSimple(teamSlots, allPokemon, displayPokemonById)
+    const rows = simpleTeam.map(p => ({ name: p.name, types: p.types.join('/') }))
+    const header = 'Name,Types\n'
+    const body = rows.map(r => `${r.name},${r.types}`).join('\n')
+    const blob = new Blob([header + body], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'team.csv'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const exportRadarPNG = async () => {
+    const svg = document.getElementById('team-radar') as SVGSVGElement | null
+    if (!svg) return
+    const svgData = new XMLSerializer().serializeToString(svg)
+    const img = new Image()
+    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' })
+    const url = URL.createObjectURL(svgBlob)
+    await new Promise<void>((res) => {
+      img.onload = () => res()
+      img.src = url
+    })
+    const canvas = document.createElement('canvas')
+    canvas.width = svg.clientWidth || 360
+    canvas.height = svg.clientHeight || 360
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    ctx.drawImage(img, 0, 0)
+    URL.revokeObjectURL(url)
+    canvas.toBlob((blob) => {
+      if (!blob) return
+      const dl = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = dl
+      a.download = 'team-radar.png'
+      a.click()
+      URL.revokeObjectURL(dl)
+    })
+  }
+
+  const copyShare = async () => {
+    const simpleTeam = convertTeamSlotsToSimple(teamSlots, allPokemon, displayPokemonById)
+    const names = simpleTeam.map(p => p.name)
+    const url = `${location.origin}/team?team=${names.join(',')}`
+    await navigator.clipboard.writeText(url)
+    alert('Share link copied to clipboard')
+  }
+
+  // Recent teams functions
+  const saveRecentTeam = () => {
+    const simpleTeam = convertTeamSlotsToSimple(teamSlots, allPokemon, displayPokemonById)
+    const currentNames = simpleTeam.map(p => p.name)
+    const name = prompt('Save team as:')
+    if (!name) return
+    const entry = { name, team: currentNames }
+    const next = [entry, ...recentTeams.filter(e => e.name !== name)].slice(0, 10)
+    setRecentTeams(next)
+    try { localStorage.setItem('team-builder:recent', JSON.stringify(next)) } catch {}
+  }
+
+  const loadRecentTeam = (names: string[]) => {
+    const newTeamSlots = normalizeTeamSlots()
+    names.slice(0, 6).forEach(async (name, i) => {
+      let pokemon = allPokemon.find(p => p.name.toLowerCase() === name.toLowerCase())
+      if (!pokemon) {
+        try {
+          const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${name.toLowerCase()}`)
+          if (response.ok) {
+            pokemon = await response.json()
+            setDisplayPokemonById(prev => ({ ...prev, [pokemon.id]: pokemon }))
+          }
+        } catch (error) {
+          console.error(`Failed to fetch Pokemon ${name}:`, error)
+        }
+      }
+      if (pokemon) {
+        newTeamSlots[i] = { ...newTeamSlots[i], id: pokemon.id }
+      }
+    })
+    setTeamSlots(newTeamSlots)
+    persistCurrentTeam(newTeamSlots)
+  }
+
+  const setSlot = async (idx: number, patch: Partial<TeamSlot>) => {
+    if (patch.id && typeof patch.id === 'number') {
+      // Track the last selected Pokémon for dropdown memory
+      setLastSelectedPokemon(patch.id)
+      
+      // Note: Full Pokémon details are now managed by the useInfiniteScroll hook
+    }
+    
+    // Update available moves if level or Pokémon changes
+    if (patch.level || patch.id) {
+      const updatedSlot = { ...teamSlots[idx], ...patch }
+      if (updatedSlot.id && updatedSlot.level) {
+        const moves = await getAvailableMoves(updatedSlot.id, updatedSlot.level)
+        setAvailableMoves(prev => ({ ...prev, [idx]: moves }))
+      }
+    }
+    
+    // If changing Pokémon in the slot, clear any existing moves to avoid leakage
+    const isPokemonChange = patch.id !== undefined && patch.id !== teamSlots[idx].id
+    const newTeamSlots = teamSlots.map((s, i) => {
+      if (i !== idx) return s
+      const merged: TeamSlot = {
+        ...s,
+        ...patch,
+        nature: (patch.nature ?? s.nature) ?? DEFAULT_NATURE,
+        moves: patch.moves ? [...patch.moves] : s.moves
+      }
+      if (isPokemonChange) {
+        merged.moves = [] as MoveData[]
+      }
+      // If removing Pokémon, normalize level and clear moves
+      if (patch.id === null) {
+        merged.level = 50
+        merged.moves = [] as MoveData[]
+        merged.nature = DEFAULT_NATURE
+      }
+      return merged
+    })
+    setTeamSlots(newTeamSlots)
+    
+    // Persist the updated team state
+    persistCurrentTeam(newTeamSlots)
+    
+    // Auto-expand/collapse based on Pokémon assignment
+    if (patch.id !== undefined) {
+      setCollapsedSlots(prev => {
+        const newSet = new Set(prev)
+        if (patch.id === null) {
+          // Collapse when Pokémon is removed
+          newSet.add(idx)
+        } else {
+          // Expand when Pokémon is added
+          newSet.delete(idx)
+        }
+        return newSet
+      })
+    }
+  }
+
+  const clearTeam = () => {
+    const emptySlots = normalizeTeamSlots()
+    setTeamSlots(emptySlots)
+    setCollapsedSlots(new Set([0, 1, 2, 3, 4, 5])) // Collapse all slots when clearing team
+    persistCurrentTeam(emptySlots) // Clear persisted state
+    setLastSelectedPokemon(null) // Clear last selected Pokémon
+    // Also clear any locally cached Pokémon details to avoid stale previews
+    setDisplayPokemonById({})
+  }
+
+  const saveTeam = async () => {
+    setSaveError(null)
+    if (!isTeamComplete) {
+      setSaveError('Each Pokémon must have 4 moves before saving.')
+      return
+    }
+    if (!user) {
+      // User not authenticated, save to localStorage
+      const name = teamName.trim() || `Team ${new Date().toLocaleString()}`
+      const id = `local_${Date.now()}`
+      const team: FirebaseSavedTeam = { 
+        id, 
+        name, 
+        slots: teamSlots,
+        userId: 'anonymous',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+      persistTeams([team, ...savedTeams])
+      setTeamName('')
+      return
+    }
+
+    // User is authenticated, save to Firebase
+    setSaving(true)
+    try {
+      const name = teamName.trim() || `Team ${new Date().toLocaleString()}`
+      const teamData = {
+        name,
+        slots: teamSlots,
+        isPublic: false,
+        description: ''
+      }
+
+      const teamId = await saveTeamToFirebase(user.uid, teamData)
+      const newTeam: FirebaseSavedTeam = {
+        id: teamId,
+        name,
+        slots: teamSlots,
+        userId: user.uid,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        isPublic: false,
+        description: ''
+      }
+
+      setSavedTeams([newTeam, ...savedTeams])
+      setTeamName('')
+    } catch (error) {
+      console.error('Error saving team:', error)
+      setSaveError('Failed to save team. Please try again.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const overwriteTeam = async (team: FirebaseSavedTeam) => {
+    setSaveError(null)
+    if (!isTeamComplete) {
+      setSaveError('Each Pokémon must have 4 moves before saving.')
+      return
+    }
+
+    if (!user) {
+      // Local override
+      const updated: FirebaseSavedTeam = {
+        ...team,
+        name: teamName.trim() || team.name,
+        slots: teamSlots,
+        updatedAt: new Date()
+      }
+      const next = savedTeams.map(t => t.id === team.id ? updated : t)
+      persistTeams(next)
+      return
+    }
+
+    // Firebase override
+    try {
+      setSaving(true)
+      await updateTeamInFirebase(team.id, user.uid, {
+        name: teamName.trim() || team.name,
+        slots: teamSlots,
+        isPublic: team.isPublic,
+        description: team.description
+      })
+      // Reflect locally
+      const next = savedTeams.map(t => t.id === team.id ? { ...t, name: teamName.trim() || team.name, slots: teamSlots, updatedAt: new Date() } : t)
+      setSavedTeams(next)
+    } catch (error) {
+      console.error('Error overwriting team:', error)
+      setSaveError('Failed to overwrite team. Please try again.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const loadTeam = async (team: FirebaseSavedTeam) => {
+    setTeamSlots(team.slots)
+    setTeamName(team.name)
+    
+    // Persist the loaded team as current team
+    persistCurrentTeam(team.slots)
+    
+    // Set collapsed state based on which slots have Pokémon
+    const newCollapsedSlots = new Set<number>()
+    team.slots.forEach((slot, idx) => {
+      if (slot.id === null) {
+        newCollapsedSlots.add(idx)
+      }
+    })
+    setCollapsedSlots(newCollapsedSlots)
+    
+    // Load available moves for each Pokemon in the team
+    const movePromises = team.slots.map(async (slot, idx) => {
+      if (slot.id && slot.level) {
+        try {
+          const moves = await getAvailableMoves(slot.id, slot.level)
+          return { idx, moves }
+        } catch (error) {
+          console.error(`Failed to load moves for Pokemon ${slot.id}:`, error)
+          return { idx, moves: [] }
+        }
+      }
+      return { idx, moves: [] }
+    })
+    
+    const moveResults = await Promise.all(movePromises)
+    const newAvailableMoves: Record<number, Array<{ name: string; type: string; damage_class: "physical" | "special" | "status"; power: number | null; accuracy: number | null; pp: number | null; level_learned_at: number | null; learn_method: string; short_effect?: string | null }>> = {}
+    
+    moveResults.forEach(({ idx, moves }) => {
+      if (moves.length > 0) {
+        newAvailableMoves[idx] = moves
+      }
+    })
+    
+    setAvailableMoves(newAvailableMoves)
+  }
+
+  const deleteTeam = async (id: string) => {
+    if (!user || !user.uid) {
+      // User not authenticated, delete from localStorage
+      persistTeams(savedTeams.filter(t => t.id !== id))
+      return
+    }
+
+    // Check if this is a local team (not synced to Firebase)
+    if (id.startsWith('local_')) {
+      // Local team, just remove from state
+      setSavedTeams(savedTeams.filter(t => t.id !== id))
+      return
+    }
+
+    // User is authenticated and team is in Firebase, delete from Firebase
+    try {
+      console.log('Deleting team from Firebase:', { teamId: id, userId: user.uid, userEmail: user.email })
+      await deleteTeamFromFirebase(id, user.uid)
+      setSavedTeams(savedTeams.filter(t => t.id !== id))
+    } catch (error) {
+      console.error('Error deleting team:', error)
+      setSaveError('Failed to delete team. Please try again.')
+    }
+  }
+
+  // Get available moves for a Pokémon at a specific level
+  const getAvailableMoves = useCallback(async (pokemonId: number, level: number): Promise<Array<{ name: string; type: string; damage_class: "physical" | "special" | "status"; power: number | null; accuracy: number | null; pp: number | null; level_learned_at: number | null; learn_method: string; short_effect?: string | null }>> => {
+    try {
+      const pokemon = allPokemon.find(p => p.id === pokemonId)
+      if (!pokemon || pokemon.moves.length === 0) {
+        // Fetch full Pokémon data if we don't have moves
+        const fullPokemon = await getPokemon(pokemonId)
+        const allMoves = fullPokemon.moves
+          .filter(move => move.version_group_details.some(detail => 
+            ['level-up', 'machine', 'egg', 'tutor'].includes(detail.move_learn_method.name)
+          ))
+          .map(move => {
+            // Prioritize level-up moves, then machine, egg, tutor
+            const levelUpDetail = move.version_group_details.find(detail => detail.move_learn_method.name === 'level-up');
+            const machineDetail = move.version_group_details.find(detail => detail.move_learn_method.name === 'machine');
+            const eggDetail = move.version_group_details.find(detail => detail.move_learn_method.name === 'egg');
+            const tutorDetail = move.version_group_details.find(detail => detail.move_learn_method.name === 'tutor');
+            
+            return {
+              moveName: move.move.name,
+              level_learned_at: levelUpDetail?.level_learned_at || null,
+              learn_method: levelUpDetail ? 'level-up' : 
+                           machineDetail ? 'machine' : 
+                           eggDetail ? 'egg' : 
+                           tutorDetail ? 'tutor' : 'unknown'
+            };
+          })
+          .filter((move, index, self) => 
+            index === self.findIndex(m => m.moveName === move.moveName)
+          );
+
+        // Fetch full move details for each move
+        const movePromises = allMoves.map(async ({ moveName, level_learned_at, learn_method }) => {
+          try {
+            const moveData = await getMove(moveName);
+            const englishEffect = (moveData.effect_entries || []).find((e: { language: { name: string }; short_effect?: string; effect?: string }) => e.language?.name === 'en');
+            return {
+              name: moveData.name,
+              type: moveData.type.name,
+              damage_class: moveData.damage_class.name as "physical" | "special" | "status",
+              power: moveData.power,
+              accuracy: moveData.accuracy,
+              pp: moveData.pp,
+              level_learned_at,
+              learn_method,
+              short_effect: englishEffect?.short_effect || englishEffect?.effect || null
+            };
+          } catch (error) {
+            console.error(`Failed to fetch move ${moveName}:`, error);
+            return {
+              name: moveName,
+              type: 'normal',
+              damage_class: 'physical' as const,
+              power: null,
+              accuracy: null,
+              pp: null,
+              level_learned_at,
+              learn_method
+            };
+          }
+        });
+
+        const moveResults = await Promise.all(movePromises);
+        return moveResults
+          .filter(move => {
+            // For level-up moves, only include if level_learned_at <= level
+            if (move.learn_method === 'level-up') {
+              return move.level_learned_at && move.level_learned_at <= level
+            }
+            // For other move types (machine, egg, tutor), include them all
+            return true
+          })
+      }
+
+      // If we have basic move data, fetch full details
+      const allMoves = pokemon.moves
+        .filter(move => move.version_group_details.some(detail => 
+          ['level-up', 'machine', 'egg', 'tutor'].includes(detail.move_learn_method.name)
+        ))
+        .map(move => {
+          // Prioritize level-up moves, then machine, egg, tutor
+          const levelUpDetail = move.version_group_details.find(detail => detail.move_learn_method.name === 'level-up');
+          const machineDetail = move.version_group_details.find(detail => detail.move_learn_method.name === 'machine');
+          const eggDetail = move.version_group_details.find(detail => detail.move_learn_method.name === 'egg');
+          const tutorDetail = move.version_group_details.find(detail => detail.move_learn_method.name === 'tutor');
+          
+          return {
+            moveName: move.move.name,
+            level_learned_at: levelUpDetail?.level_learned_at || null,
+            learn_method: levelUpDetail ? 'level-up' : 
+                         machineDetail ? 'machine' : 
+                         eggDetail ? 'egg' : 
+                         tutorDetail ? 'tutor' : 'unknown'
+          };
+        })
+        .filter((move, index, self) => 
+          index === self.findIndex(m => m.moveName === move.moveName)
+        );
+
+      // Fetch full move details for each move
+      const movePromises = allMoves.map(async ({ moveName, level_learned_at, learn_method }) => {
+        try {
+          const moveData = await getMove(moveName);
+          const englishEffect = (moveData.effect_entries || []).find((e: { language: { name: string }; short_effect?: string; effect?: string }) => e.language?.name === 'en');
+          return {
+            name: moveData.name,
+            type: moveData.type.name,
+            damage_class: moveData.damage_class.name as "physical" | "special" | "status",
+            power: moveData.power,
+            accuracy: moveData.accuracy,
+            pp: moveData.pp,
+            level_learned_at,
+            learn_method,
+            short_effect: englishEffect?.short_effect || englishEffect?.effect || null
+          };
+        } catch (error) {
+          console.error(`Failed to fetch move ${moveName}:`, error);
+          return {
+            name: moveName,
+            type: 'normal',
+            damage_class: 'physical' as const,
+            power: null,
+            accuracy: null,
+            pp: null,
+            level_learned_at,
+            learn_method
+          };
+        }
+      });
+
+      const moveResults = await Promise.all(movePromises);
+      return moveResults
+        .filter(move => {
+          // For level-up moves, only include if level_learned_at <= level
+          if (move.learn_method === 'level-up') {
+            return move.level_learned_at && move.level_learned_at <= level
+          }
+          // For other move types (machine, egg, tutor), include them all
+          return true
+        })
+    } catch (error) {
+      console.error('Error getting available moves:', error)
+      return []
+    }
+  }, [allPokemon, levelMovesOnly])
+
+  // Helper function to capitalize strings
+
+  // Toggle collapsed state for a team slot
+  const toggleSlotCollapse = (slotIndex: number) => {
+    setCollapsedSlots(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(slotIndex)) {
+        newSet.delete(slotIndex)
+        // mark as active when expanded
+        setActiveSlotIndex(slotIndex)
+      } else {
+        newSet.add(slotIndex)
+        if (activeSlotIndex === slotIndex) setActiveSlotIndex(null)
+      }
+      return newSet
+    })
+  }
+
+  // Handle move selection
+  const toggleMove = (slotIndex: number, move: MoveData) => {
+    setTeamSlots(prev => {
+      const next = prev.map((slot, i) => {
+        if (i !== slotIndex) return slot
+        const currentMoves = slot.moves
+        if (currentMoves.some(m => m.name === move.name)) {
+          // Remove move
+          return { ...slot, moves: currentMoves.filter(m => m.name !== move.name) }
+        }
+        if (currentMoves.length < 4) {
+          // Add move (max 4)
+          const newMoves = [...currentMoves, move]
+          return { ...slot, moves: newMoves }
+        }
+        return slot
+      })
+      // Persist after any move change
+      persistCurrentTeam(next)
+      return next
+    })
+  }
+
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center bg-bg text-text">
+      <div className="text-center">
+        <img src="/loading.gif" alt="Loading Team Builder" width={100} height={100} className="mx-auto mb-2" />
+        <p className="text-muted">Loading Team Builder...</p>
+      </div>
+    </div>
+  )
+  if (error) return (
+    <div className="min-h-screen flex items-center justify-center bg-bg text-red-600">{error}</div>
+  )
+
+  return (
+    <div className="min-h-screen bg-bg text-text overflow-x-hidden">
+      <AppHeader
+        title="Team Builder"
+        backLink="/"
+        backLabel="Back to PokéDex"
+        showToolbar={true}
+        showThemeToggle={false}
+        iconKey="team-builder"
+        showIcon={true}
+      />
+
+      <main className="max-w-7xl mx-auto px-4 py-6 space-y-6 overflow-x-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6">
+          <div className="space-y-6">
+        {/* Add Pokémon Search */}
+        <section className="border border-border rounded-xl bg-surface p-4 overflow-visible">
+          <h2 className="text-lg font-semibold mb-4 text-text">Add Pokémon</h2>
+          
+          {/* Quick Add Pokemon Selector */}
+          <div className="mb-4">
+            <PokemonSelector
+              selectedPokemon={teamSlots
+                .filter(slot => slot.id !== null)
+                .map(slot => {
+                  const id = slot.id as number
+                  return allPokemon.find(p => p.id === id) || displayPokemonById[id] || null
+                })
+                .filter(Boolean) as Pokemon[]}
+              onPokemonSelect={async (pokemon) => {
+                // Cache full Pokémon data for immediate display even if not yet in the infinite list
+                setDisplayPokemonById(prev => ({ ...prev, [pokemon.id]: pokemon }))
+                const isTrulyEmpty = (i: number) => {
+                  const slot = teamSlots[i]
+                  return !!slot && slot.id === null
+                }
+                const preferred = (activeSlotIndex != null && isTrulyEmpty(activeSlotIndex))
+                  ? activeSlotIndex
+                  : teamSlots.findIndex((s) => s.id === null)
+                if (preferred !== -1) {
+                  await setSlot(preferred, { id: pokemon.id })
+                  setCollapsedSlots(prev => {
+                    const newSet = new Set(prev)
+                    newSet.delete(preferred)
+                    return newSet
+                  })
+                  setActiveSlotIndex(preferred)
+                }
+              }}
+              onPokemonRemove={(pokemonId) => {
+                const slotIndex = teamSlots.findIndex(s => s.id === pokemonId)
+                if (slotIndex !== -1) {
+                  setSlot(slotIndex, { id: null })
+                }
+              }}
+              maxSelections={6}
+              placeholder="Quick add Pokémon to team (selects first empty slot)"
+              className="w-full"
+            />
+          </div>
+          
+          {/* Secondary inline search removed to avoid duplicate UI; PokemonSelector on top handles search */}
+          {false && (
+          <div className="relative search-dropdown-container max-w-full z-[10000]">
+            <input/>
+            {showDropdown && (
+              <div className="absolute top-full left-0 w-full max-w-full mt-1 bg-white border border-border rounded-lg shadow-2xl z-[10010] max-h-96 overflow-y-auto pokemon-dropdown-list">
+                {(searchTerm.trim() ? filteredPokemon : allPokemon).length > 0 ? (
+                  <div className="divide-y divide-border">
+                    {/* Show last selected Pokémon at the top if available and not in search mode */}
+                    {!searchTerm.trim() && lastSelectedPokemon && (
+                      (() => {
+                        const lastPokemon = allPokemon.find(p => p.id === lastSelectedPokemon)!
+                        return lastPokemon ? (
+                          <div key={`last-${lastPokemon.id}`} className="bg-blue-50 border-b-2 border-blue-200">
+                            <button
+                              onClick={async () => {
+                                const slot = teamSlots.findIndex(s => s.id === null)
+                                if (slot !== -1) {
+                                  await setSlot(slot, { id: lastPokemon.id })
+                                  setShowDropdown(false)
+                                  setSearchTerm('')
+                                  setCollapsedSlots(prev => {
+                                    const newSet = new Set(prev)
+                                    newSet.delete(slot)
+                                    return newSet
+                                  })
+                                }
+                              }}
+                              className="w-full text-left hover:bg-blue-100 flex items-center gap-1 transition-colors h-10 py-1 px-2"
+                            >
+                              <div className="relative w-6 h-6 flex-shrink-0 bg-blue-100 rounded">
+                                <Image
+                                  src={getShowdownAnimatedSprite(lastPokemon.name)}
+                                  alt={lastPokemon.name}
+                                  width={24}
+                                  height={24}
+                                  className="w-full h-full object-contain"
+                                  unoptimized
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement
+                                    target.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${lastPokemon.id}.png`
+                                  }}
+                                />
+                              </div>
+                              <div className="flex-1 min-w-0 leading-none">
+                                <div className="font-medium capitalize text-text text-xs leading-none">
+                                  {formatPokemonName(lastPokemon.name)} (Last Selected)
+                                </div>
+                                <div className="text-[10px] text-muted leading-none">
+                                  {lastPokemon.id !== 0 && `#${String(lastPokemon.id).padStart(4, '0')}`}
+                                </div>
+                              </div>
+                              <div className="flex gap-1 items-center">
+                                {lastPokemon.types.length > 0 ? (
+                                  lastPokemon.types.map((typeObj) => {
+                                    const typeName = typeof typeObj === 'string' ? typeObj : typeObj.type?.name
+                                    return typeName ? (
+                                      <TypeBadge key={`${lastPokemon.id}-${typeName}`} type={typeName} variant="span" />
+                                    ) : null
+                                  })
+                                ) : (
+                                  <span className="text-xs text-muted">…</span>
+                                )}
+                              </div>
+                            </button>
+                          </div>
+                        ) : null
+                      })()
+                    )}
+                    
+                    {(searchTerm.trim() ? filteredPokemon.slice(0, 50) : allPokemon).map((pokemon) => (
+                      <button
+                        key={pokemon.id}
+                        onClick={async () => {
+                          // Find the first empty slot
+                          const slot = teamSlots.findIndex(s => s.id === null)
+                          if (slot !== -1) {
+                            await setSlot(slot, { id: pokemon.id })
+                            // Close dropdown and clear search term
+                            setShowDropdown(false)
+                            setSearchTerm('')
+                            // Focus on the selected Pokemon slot by expanding it
+                            setCollapsedSlots(prev => {
+                              const newSet = new Set(prev)
+                              newSet.delete(slot)
+                              return newSet
+                            })
+                          } else {
+                            // All slots are full, show a message or replace the last selected slot
+                            console.log('All team slots are full')
+                          }
+                        }}
+                        className="w-full text-left hover:bg-gray-50 flex items-center gap-1 transition-colors h-10 py-1"
+                      >
+                        <div className="relative w-6 h-6 flex-shrink-0 bg-gray-100 rounded">
+                          <Image
+                            src={getShowdownAnimatedSprite(pokemon.name)}
+                            alt={pokemon.name}
+                            width={24}
+                            height={24}
+                            className="w-full h-full object-contain"
+                            unoptimized
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement
+                              target.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`
+                            }}
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0 leading-none">
+                          <div className="font-medium capitalize text-text text-xs leading-none">
+                            {formatPokemonName(pokemon.name)}
+                          </div>
+                          <div className="text-[10px] text-muted leading-none">
+                            {pokemon.id !== 0 && `#${String(pokemon.id).padStart(4, '0')}`}
+                          </div>
+                        </div>
+                        <div className="flex gap-1 items-center">
+                          {pokemon.types.length > 0 ? (
+                            pokemon.types.map((typeObj) => {
+                              // Handle both object format { type: { name: "fire" } } and string format "fire"
+                              const typeName = typeof typeObj === 'string' ? typeObj : typeObj.type?.name
+                              return typeName ? (
+                                <TypeBadge key={`${pokemon.id}-${typeName}`} type={typeName} variant="span" />
+                              ) : null
+                            })
+                          ) : (
+                            <span className="text-xs text-muted">…</span>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                    
+                    {/* Loading indicator for virtualized scrolling */}
+                    {!searchTerm.trim() && loading && (
+                      <div className="p-4 text-center text-muted">
+                        <img src="/loading.gif" alt="Loading more Pokémon" width={40} height={40} className="mx-auto mb-2" />
+                        <p className="text-sm">Loading more Pokémon...</p>
+                      </div>
+                    )}
+                    
+                    {/* End of list indicator */}
+                    {!searchTerm.trim() && !hasMorePokemon && allPokemon.length > 0 && (
+                      <div className="p-4 text-center text-muted text-sm">
+                        All {allPokemon.length} Pokémon loaded
+                      </div>
+                    )}
+                  </div>
+                ) : searchTerm.trim() ? (
+                  <div className="p-4 text-center text-muted">
+                    No Pokémon found matching &quot;{searchTerm}&quot;
+                  </div>
+                ) : (
+                  <div className="p-4 text-center text-muted">No suggestions available</div>
+                )}
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Team slots */}
+          <section className="border border-border rounded-xl bg-surface p-4 overflow-x-hidden">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-4">
+                <div className="flex items-center justify-between sm:justify-start gap-4">
+                  <h2 className="text-lg font-semibold text-text">Your Team</h2>
+                  <div className="text-sm text-muted">
+                    {teamSlots.filter(s => s.id != null).length} / 6 Pokémon
+                  </div>
+                </div>
+                
+                {/* Mobile-first responsive controls */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+                  {/* Team name input - full width on mobile */}
+                  <input
+                    value={teamName}
+                    onChange={(e) => setTeamName(e.target.value)}
+                    placeholder="Team name"
+                    className="px-3 py-2 border border-border rounded-lg bg-surface text-text flex-1 sm:min-w-[200px]"
+                  />
+                  
+                  {/* Action buttons - stack on mobile, row on desktop */}
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <button 
+                      onClick={saveTeam} 
+                      disabled={saving || !isTeamComplete}
+                      className="px-4 py-2 rounded-lg bg-poke-blue text-white hover:bg-poke-blue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm font-medium"
+                    >
+                      {saving ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4" />
+                          Save Team
+                        </>
+                      )}
+                    </button>
+                    <button 
+                      onClick={clearTeam} 
+                      className="px-4 py-2 rounded-lg border border-border text-text hover:bg-white/50 transition-colors text-sm font-medium"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Export buttons */}
+              <div className="flex flex-wrap gap-2 mt-4">
+                <button 
+                  onClick={exportJSON}
+                  className="px-3 py-2 rounded-lg border border-border text-text hover:bg-white/50 transition-colors text-sm font-medium flex items-center gap-2"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M6 7v10a2 2 0 0 0 2 2h8"/>
+                    <path d="M14 22l-7-7 7-7"/>
+                  </svg>
+                  JSON
+                </button>
+                <button 
+                  onClick={exportCSV}
+                  className="px-3 py-2 rounded-lg border border-border text-text hover:bg-white/50 transition-colors text-sm font-medium flex items-center gap-2"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M8 2v4"/>
+                    <path d="M16 2v4"/>
+                    <rect width="18" height="18" x="3" y="4" rx="2"/>
+                    <path d="M3 10h18"/>
+                  </svg>
+                  CSV
+                </button>
+                <button 
+                  onClick={exportRadarPNG}
+                  className="px-3 py-2 rounded-lg border border-border text-text hover:bg-white/50 transition-colors text-sm font-medium flex items-center gap-2"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect width="18" height="14" x="3" y="5" rx="2" ry="2"/>
+                    <circle cx="9" cy="10" r="2"/>
+                    <path d="M15 8h.01"/>
+                    <path d="M17 10h.01"/>
+                    <path d="M15 12h.01"/>
+                  </svg>
+                  Radar PNG
+                </button>
+                <button 
+                  onClick={copyShare}
+                  className="px-3 py-2 rounded-lg bg-poke-blue text-white hover:bg-poke-blue/90 transition-colors text-sm font-medium flex items-center gap-2"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 8a3 3 0 0 0-3-3"/>
+                    <path d="M6 11v-1a7 7 0 0 1 14 0v1"/>
+                    <rect width="20" height="8" x="2" y="11" rx="2"/>
+                  </svg>
+                  Share
+                </button>
+                </div>
+              </div>
+              
+              {/* Recent Teams */}
+              {recentTeams.length > 0 && (
+                <div className="mt-4">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button 
+                      onClick={saveRecentTeam}
+                      className="px-3 py-2 rounded-lg border border-border text-text hover:bg-white/50 transition-colors text-sm font-medium"
+                    >
+                      Save Team
+                    </button>
+                    <span className="text-xs text-muted">Recent:</span>
+                    {recentTeams.map((team) => (
+                      <button 
+                        key={team.name} 
+                        onClick={() => loadRecentTeam(team.team)}
+                        className="text-xs px-2 py-1 rounded border border-border text-text hover:bg-white/50 transition-colors"
+                      >
+                        {team.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Error message - full width below controls */}
+              {!isTeamComplete && (
+                <div className="text-xs text-red-600 mb-2" title="Each Pokémon must have 4 moves to save">
+                  Complete moves to save. Your current selections are auto-saved locally and will persist on refresh.
+                </div>
+              )}
+              {saveError && (
+                <div className="-mt-2 mb-2 text-xs text-red-600">{saveError}</div>
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 w-full">
+                {teamSlots.map((slot, idx) => {
+                  const poke = (slot.id ? (allPokemon.find(p => p.id === slot.id) || displayPokemonById[slot.id] || null) : null)
+                  return (
+                    <div key={idx} className="border border-border dark:border-gray-600 rounded-lg bg-white/50 dark:bg-gray-800/50 w-full min-w-0 shadow-sm dark:shadow-lg">
+                      {/* Collapsible Header */}
+                      <div 
+                        className="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                        onClick={() => toggleSlotCollapse(idx)}
+                      >
+                        <div className="flex items-center gap-2">
+                          {collapsedSlots.has(idx) ? (
+                            <ChevronRight className="h-4 w-4 text-muted" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4 text-muted" />
+                          )}
+                          <span className="text-sm font-medium text-text dark:text-gray-100">Slot {idx + 1}</span>
+                          {poke && (
+                            <span className="text-xs text-muted dark:text-gray-300">
+                              #{poke.id} {formatPokemonName(poke.name)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setSlot(idx, { id: null })
+                            }} 
+                            className="text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 px-1 py-0.5 rounded transition-colors"
+                            title="Remove Pokémon from slot"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {/* Collapsible Content */}
+                      {!collapsedSlots.has(idx) && (
+                        <div className="px-3 pb-3 w-full min-w-0">
+                      
+                      {poke ? (
+                        <div className="flex items-center gap-3 mb-3">
+                          <div
+                            key={`${poke.id}-${slot.level}`}
+                            className="relative w-16 h-16 flex-shrink-0 overflow-hidden bg-white dark:bg-gray-700 rounded-lg shadow-sm"
+                          >
+                            <img
+                              src={getShowdownAnimatedSprite(poke.name)}
+                              alt={poke.name}
+                              width={64}
+                              height={64}
+                              className="w-full h-full object-contain"
+                              onError={(e) => {
+                                const target = e.currentTarget as HTMLImageElement
+                                target.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${poke.id}.png`
+                                const loader = (target.parentElement?.querySelector('[data-img-loader]') as HTMLElement | null)
+                                if (loader) loader.style.display = 'none'
+                              }}
+                              onLoad={(e) => {
+                                const loader = (e.currentTarget.parentElement?.querySelector('[data-img-loader]') as HTMLElement | null)
+                                if (loader) loader.style.display = 'none'
+                              }}
+                            />
+                            <img src="/loading.gif" alt="Loading" className="absolute inset-0 m-auto w-5 h-5 opacity-80" data-img-loader />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium text-text dark:text-gray-100">#{poke.id} {formatPokemonName(poke.name)}</div>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {poke.types?.length > 0 ? poke.types.map(t => (
+                                <TypeBadge key={t.type.name} type={t.type.name} variant="span" />
+                              )) : null}
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-sm mb-3 h-16 flex items-center justify-center text-muted dark:text-gray-400 border-2 border-dashed border-border dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700/30">
+                          Empty Slot
+                        </div>
+                      )}
+                      
+  <div className="flex items-center gap-2 mb-3">
+    <label className="text-xs text-text dark:text-gray-200">Level</label>
+    <input 
+      type="number" 
+      min={1} 
+      max={100} 
+      value={slot.level} 
+      onChange={(e) => setSlot(idx, { level: Math.max(1, Math.min(100, Number(e.target.value) || 50)) })} 
+      className="w-20 px-2 py-1 border border-border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors" 
+      style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }} 
+    />
+    <label className="ml-3 text-xs text-text dark:text-gray-200">Nature</label>
+    <select
+      value={slot.nature}
+      onChange={(e) => setSlot(idx, { nature: e.target.value as NatureName })}
+      className="px-2 py-1 border border-border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-xs capitalize"
+      style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
+      title="Select Nature"
+    >
+      {NATURES.map((n) => (
+            <option key={n.value} value={n.value} className="capitalize">
+              {n.label}
+            </option>
+      ))}
+    </select>
+    {(() => {
+      const n = NATURES.find(n0 => n0.value === slot.nature)
+      if (!n || (!n.increasedStat && !n.decreasedStat)) return null
+      return (
+            <span className="ml-2 inline-flex items-center gap-1 text-[10px] text-muted">
+              {n.increasedStat && (
+                <span className="text-emerald-600 dark:text-emerald-400" title={`+${NATURE_STAT_LABEL[n.increasedStat]}`}>
+                  +{NATURE_STAT_LABEL[n.increasedStat]}
+                </span>
+              )}
+              {n.decreasedStat && (
+                <span className="text-red-600 dark:text-red-400" title={`-${NATURE_STAT_LABEL[n.decreasedStat]}`}>
+                  -{NATURE_STAT_LABEL[n.decreasedStat]}
+                </span>
+              )}
+            </span>
+      )
+    })()}
+  </div>
+                      
+                      {/* Moveset Selector */}
+                      {poke && (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <label className="text-sm font-medium text-text dark:text-gray-100">Moves ({slot.moves.length}/4)</label>
+                            {slot.moves.length > 0 && (
+                              <button 
+                                onClick={() => setSlot(idx, { moves: [] })} 
+                                className="text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 px-2 py-1 rounded-lg border border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                title="Clear all moves"
+                              >
+                                Clear All
+                              </button>
+                            )}
+                          </div>
+                          
+                          {/* Selected Moves Table */}
+                          {slot.moves.length > 0 && (
+                            <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-600 w-full bg-white dark:bg-gray-800">
+                              <table className="w-full text-xs min-w-max">
+                                <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+                                  <tr className="[&>th]:px-2 [&>th]:py-1 text-left text-muted dark:text-gray-300">
+                                    <th>Move</th><th>Type</th><th>Cat.</th><th>Power</th><th>Acc.</th><th>PP</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {slot.moves.map((move) => (
+                                    <tr key={move.name} className="[&>td]:px-2 [&>td]:py-1 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                                      <td className="font-medium capitalize text-text dark:text-gray-100">
+                                        <div className="flex items-center gap-2">
+                                          {move.short_effect ? (
+                                            <Tooltip content={move.short_effect} maxWidth="w-80" variant="move" type={move.type} damageClass={move.damage_class} position="top">
+                                              <span className="cursor-help">
+                                                {move.name}
+                                              </span>
+                                            </Tooltip>
+                                          ) : (
+                                            <span>{move.name}</span>
+                                          )}
+                                          <button 
+                                            onClick={() => toggleMove(idx, move)}
+                                            className="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 text-xs hover:bg-red-50 dark:hover:bg-red-900/20 px-1 py-0.5 rounded transition-colors"
+                                            title="Remove move"
+                                          >
+                                            ✕
+                                          </button>
+                                        </div>
+                                      </td>
+                                      <td><TypeBadge type={move.type} variant="span" /></td>
+                                      <td className="capitalize text-text dark:text-gray-200">{move.damage_class}</td>
+                                      <td className="text-text dark:text-gray-200">{move.power ?? '—'}</td>
+                                      <td className="text-text dark:text-gray-200">{move.accuracy ?? '—'}</td>
+                                      <td className="text-text dark:text-gray-200">{move.pp ?? '—'}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
+                          
+                          {/* Available Moves Table */}
+                          {availableMoves[idx] && availableMoves[idx].length > 0 && slot.moves.length < 4 && (
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <div className="text-xs text-muted dark:text-gray-400 font-medium">
+                                  Available moves ({availableMoves[idx].filter(move => !slot.moves.some(slotMove => slotMove.name === move.name)).filter(move => {
+                                    if (levelMovesOnly) {
+                                      return move.learn_method === 'level-up' && move.level_learned_at && move.level_learned_at <= slot.level
+                                    }
+                                    return true
+                                  }).length}):
+                                  {availableMoves[idx].filter(move => !slot.moves.some(slotMove => slotMove.name === move.name)).length > 20 && (
+                                    <span className="ml-2 text-blue-600 dark:text-blue-400">• Scroll to see all moves</span>
+                                  )}
+                                </div>
+                                <label className="flex items-center gap-2 text-xs text-muted dark:text-gray-400 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={levelMovesOnly}
+                                    onChange={(e) => setLevelMovesOnly(e.target.checked)}
+                                    className="rounded border-gray-300 dark:border-gray-600 dark:bg-gray-700"
+                                    style={{ backgroundColor: 'var(--color-input-bg)' }}
+                                  />
+                                  Level moves only
+                                </label>
+                              </div>
+                              <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-600 w-full max-h-80 overflow-y-auto bg-white dark:bg-gray-800">
+                                <table className="w-full text-xs min-w-max">
+                                  <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600 sticky top-0">
+                                    <tr className="[&>th]:px-2 [&>th]:py-1 text-left text-muted dark:text-gray-300">
+                                      <th>Move</th><th>Type</th><th>Cat.</th><th>Power</th><th>Acc.</th><th>PP</th><th>Lvl</th><th>Method</th><th></th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {availableMoves[idx]
+                                      .filter(move => !slot.moves.some(slotMove => slotMove.name === move.name))
+                                      .filter(move => {
+                                        if (levelMovesOnly) {
+                                          // Only show level-up moves that are actually available at this level
+                                          return move.learn_method === 'level-up' && move.level_learned_at && move.level_learned_at <= slot.level
+                                        }
+                                        // Show all moves when filter is off
+                                        return true
+                                      })
+                                      .sort((a, b) => {
+                                        // Sort by learning method priority: level-up, machine, egg, tutor
+                                        const methodPriority = { 'level-up': 1, 'machine': 2, 'egg': 3, 'tutor': 4, 'unknown': 5 }
+                                        const aMethodPriority = methodPriority[a.learn_method as keyof typeof methodPriority] || 5
+                                        const bMethodPriority = methodPriority[b.learn_method as keyof typeof methodPriority] || 5
+                                        
+                                        if (aMethodPriority !== bMethodPriority) {
+                                          return aMethodPriority - bMethodPriority
+                                        }
+                                        
+                                        // If same method, sort by level learned (ascending), with null values at the end
+                                        const aLevel = a.level_learned_at ?? 999
+                                        const bLevel = b.level_learned_at ?? 999
+                                        if (aLevel !== bLevel) {
+                                          return aLevel - bLevel
+                                        }
+                                        
+                                        // If same level, sort by power (higher power first)
+                                        const aPower = a.power ?? 0
+                                        const bPower = b.power ?? 0
+                                        return bPower - aPower
+                                      })
+                                      .map((move) => (
+                                        <tr 
+                                          key={move.name} 
+                                          className="[&>td]:px-2 [&>td]:py-1 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
+                                          onClick={() => toggleMove(idx, move)}
+                                          title={slot.moves.length >= 4 ? 'Maximum 4 moves reached' : 'Click to add move'}
+                                        >
+                                          <td className="font-medium capitalize text-text dark:text-gray-100">
+                                            {move.short_effect ? (
+                                              <Tooltip content={move.short_effect} maxWidth="w-80" variant="move" type={move.type} position="top">
+                                                <span className="cursor-help">
+                                                  {move.name}
+                                                </span>
+                                              </Tooltip>
+                                            ) : (
+                                              <span>{move.name}</span>
+                                            )}
+                                          </td>
+                                          <td><TypeBadge type={move.type} variant="span" /></td>
+                                          <td className="capitalize text-text dark:text-gray-200">{move.damage_class}</td>
+                                          <td className="text-text dark:text-gray-200">{move.power ?? '—'}</td>
+                                          <td className="text-text dark:text-gray-200">{move.accuracy ?? '—'}</td>
+                                          <td className="text-text dark:text-gray-200">{move.pp ?? '—'}</td>
+                                          <td className="text-text dark:text-gray-200">{move.level_learned_at ?? '—'}</td>
+                                          <td className="capitalize text-xs">
+                                            <span className={`px-1 py-0.5 rounded text-xs ${
+                                              move.learn_method === 'level-up' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300' :
+                                              move.learn_method === 'machine' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300' :
+                                              move.learn_method === 'egg' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' :
+                                              move.learn_method === 'tutor' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300' :
+                                              'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
+                                            }`}>
+                                              {move.learn_method}
+                                            </span>
+                                          </td>
+                                          <td>
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation()
+                                                toggleMove(idx, move)
+                                              }}
+                                              disabled={slot.moves.length >= 4}
+                                              className="px-2 py-1 text-xs bg-blue-500 dark:bg-blue-600 text-white rounded-lg hover:bg-blue-600 dark:hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                              title={slot.moves.length >= 4 ? 'Maximum 4 moves reached' : 'Add move'}
+                                            >
+                                              +
+                                            </button>
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    {/* Spacer row for better bottom spacing */}
+                                    <tr>
+                                      <td colSpan={9} className="h-4"></td>
+                                    </tr>
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </section>
+
+            {/* Saved teams */}
+            <section className="border border-border dark:border-gray-600 rounded-xl bg-surface dark:bg-gray-800/50 p-4 overflow-x-hidden shadow-sm dark:shadow-lg">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
+                <h2 className="text-lg font-semibold text-text dark:text-gray-100">Saved Teams</h2>
+                {user ? (
+                  <div className="flex items-center gap-1 text-sm text-green-600 dark:text-green-400">
+                    <Cloud className="h-4 w-4" />
+                    <span className="hidden sm:inline">Synced to Cloud</span>
+                    <span className="sm:hidden">Cloud</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1 text-sm text-orange-600 dark:text-orange-400">
+                    <CloudOff className="h-4 w-4" />
+                    <span className="hidden sm:inline">Local Storage Only</span>
+                    <span className="sm:hidden">Local</span>
+                  </div>
+                )}
+              </div>
+              {savedTeams.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-sm text-muted dark:text-gray-400 mb-2">No teams saved yet.</p>
+                  {!user ? (
+                    <div className="space-y-3">
+                      <p className="text-xs text-muted dark:text-gray-500">
+                        Sign in to sync your teams across devices
+                      </p>
+                      <button
+                        onClick={() => {
+                          console.log('Auth button clicked, setting showAuthModal to true');
+                          setShowAuthModal(true);
+                        }}
+                        className="inline-flex items-center gap-2 px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-lg border border-blue-200 dark:border-blue-700 transition-colors"
+                      >
+                        <Wifi className="h-4 w-4" />
+                        Go online to save your teams!
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {savedTeams.map(team => (
+                    <div key={team.id} className="border border-border dark:border-gray-600 rounded-lg p-3 bg-white/50 dark:bg-gray-800/50 shadow-sm dark:shadow-md hover:shadow-md dark:hover:shadow-lg transition-shadow">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2 gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="font-medium truncate text-gray-900 dark:text-gray-100">{team.name}</span>
+                          {team.id.startsWith('local_') ? (
+                            <div title="Local only">
+                              <CloudOff className="h-3 w-3 text-orange-500 dark:text-orange-400 flex-shrink-0" />
+                            </div>
+                          ) : (
+                            <div title="Synced to cloud">
+                              <Cloud className="h-3 w-3 text-green-500 dark:text-green-400 flex-shrink-0" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <button 
+                            className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 px-2 py-1 rounded-lg border border-blue-200 dark:border-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 whitespace-nowrap transition-colors" 
+                            onClick={() => loadTeam(team)}
+                          >
+                            Load
+                          </button>
+                          <button 
+                            className="text-xs text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 px-2 py-1 rounded-lg border border-green-200 dark:border-green-700 hover:bg-green-50 dark:hover:bg-green-900/30 whitespace-nowrap transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
+                            onClick={() => overwriteTeam(team)}
+                            disabled={saving || !isTeamComplete}
+                            title={!isTeamComplete ? 'Complete your team (4 moves per Pokémon) to save' : 'Replace this team with current team'}
+                          >
+                            {saving ? 'Saving...' : 'Save'}
+                          </button>
+                          <button 
+                            className="text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 px-2 py-1 rounded-lg border border-red-200 dark:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/30 whitespace-nowrap transition-colors" 
+                            onClick={() => deleteTeam(team.id)}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                      <div className="text-xs text-muted dark:text-gray-400 mb-2">
+                        {team.slots.filter(s => s.id != null).length} / 6 Pokémon
+                        {team.slots.some(s => s.moves && s.moves.length > 0) && (
+                          <span className="ml-2">• {team.slots.reduce((total, s) => total + (s.moves?.length || 0), 0)} moves</span>
+                        )}
+                        <div className="text-xs text-muted dark:text-gray-500 mt-1">
+                          {team.updatedAt.toLocaleDateString()}
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {team.slots.map((slot, idx) => {
+                          if (slot.id) {
+                            const poke = allPokemon.find(p => p.id === slot.id)
+                            return poke ? (
+                              <div key={idx} className="relative w-8 h-8" title={`${formatPokemonName(poke.name)} Lv.${slot.level}`}>
+                                <Image
+                                  src={getShowdownAnimatedSprite(poke.name)}
+                                  alt={poke.name}
+                                  width={32}
+                                  height={32}
+                                  className="w-full h-full object-contain"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement
+                                    target.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${poke.id}.png`
+                                  }}
+                                />
+                              </div>
+                            ) : null
+                          }
+                          return (
+                            <div key={idx} className="w-8 h-8 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center bg-gray-50 dark:bg-gray-700/30">
+                              <span className="text-xs text-gray-400 dark:text-gray-500">?</span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          </div>
+          
+          {/* Analysis Panels */}
+          <div className="space-y-6">
+            <TypeRadar analysis={teamAnalysis} />
+            <WeaknessMatrix analysis={teamAnalysis} />
+            <OffenseMatrix team={convertTeamSlotsToSimple(teamSlots, allPokemon, displayPokemonById)} />
+            <Suggestions analysis={teamAnalysis} />
+          </div>
+        </div>
+      </main>
+      
+      {/* Auth Modal */}
+      <AuthModal 
+        isOpen={showAuthModal} 
+        onClose={() => setShowAuthModal(false)}
+        initialMode="login"
+      />
+    </div>
+  )
+}
