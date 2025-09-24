@@ -800,6 +800,46 @@ header button {
   display: none;  /* Safari and Chrome */
 }
 
+/* Custom scrollbar for type filters - Override global scrollbar hiding */
+body.pokedex-main-page .type-filters-scroll {
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(156, 163, 175, 0.5) transparent !important;
+}
+
+body.pokedex-main-page .type-filters-scroll::-webkit-scrollbar {
+  height: 6px !important;
+  width: 6px !important;
+  display: block !important;
+}
+
+body.pokedex-main-page .type-filters-scroll::-webkit-scrollbar-track {
+  background: transparent !important;
+  border-radius: 3px !important;
+}
+
+body.pokedex-main-page .type-filters-scroll::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.5) !important;
+  border-radius: 3px !important;
+  transition: background-color 0.2s ease !important;
+}
+
+body.pokedex-main-page .type-filters-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.8) !important;
+}
+
+/* Dark mode scrollbar for type filters */
+body.pokedex-main-page .dark .type-filters-scroll {
+  scrollbar-color: rgba(107, 114, 128, 0.5) transparent !important;
+}
+
+body.pokedex-main-page .dark .type-filters-scroll::-webkit-scrollbar-thumb {
+  background: rgba(107, 114, 128, 0.5) !important;
+}
+
+body.pokedex-main-page .dark .type-filters-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 114, 128, 0.8) !important;
+}
+
 /* Card artwork height presets - Aspect ratio constraints to prevent height > width */
 .art-ultra-grid { 
   aspect-ratio: 1 / 1; 

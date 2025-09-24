@@ -1393,36 +1393,44 @@ export default function ModernPokedexLayout({
               <ThemeToggle />
 
               {/* Quick Type Filters - Desktop */}
-              <div className="hidden xl:flex items-center space-x-2">
-                <span className="text-xs font-medium text-muted uppercase tracking-wider">Types</span>
-                <div className="flex items-center space-x-1">
-                  {Object.keys(typeColors).slice(0, 6).map(type => (
-                    <button
-                      key={type}
-                      onClick={() => toggleTypeFilter(type)}
-                      className={`px-2 py-1 rounded-lg text-xs font-medium transition-all duration-200 ${
-                        advancedFilters.types.includes(type) 
-                          ? 'ring-2 ring-white shadow-lg scale-105' 
-                          : 'opacity-80 hover:opacity-100'
-                      }`}
-                      style={{
-                        backgroundColor: `var(--type-${type})`,
-                        color: typeColors[type].text === 'text-white' ? 'white' : 'black',
-                      }}
-                      title={`Filter by ${formatPokemonName(type)} type`}
-                    >
-                      {formatPokemonName(type)}
-                    </button>
-                  ))}
-                  {advancedFilters.types.length > 0 && (
-                    <button
-                      onClick={() => setAdvancedFilters(prev => ({ ...prev, types: [] }))}
-                      className="px-2 py-1 text-xs text-poke-blue hover:text-poke-blue/80 hover:underline font-medium"
-                      title="Clear type filters"
-                    >
-                      Clear
-                    </button>
-                  )}
+              <div className="hidden xl:flex items-center space-x-2 min-w-0">
+                <span className="text-xs font-medium text-muted uppercase tracking-wider flex-shrink-0">Types</span>
+                <div 
+                  className="flex items-center space-x-1 overflow-x-auto max-w-32 lg:max-w-48 xl:max-w-64 type-filters-scroll"
+                  style={{
+                    scrollbarWidth: 'thin',
+                    scrollbarColor: 'rgba(156, 163, 175, 0.5) transparent'
+                  }}
+                >
+                  <div className="flex items-center space-x-1 min-w-max">
+                    {Object.keys(typeColors).map(type => (
+                      <button
+                        key={type}
+                        onClick={() => toggleTypeFilter(type)}
+                        className={`px-2 py-1 rounded-lg text-xs font-medium transition-all duration-200 flex-shrink-0 ${
+                          advancedFilters.types.includes(type) 
+                            ? 'ring-2 ring-white shadow-lg scale-105' 
+                            : 'opacity-80 hover:opacity-100'
+                        }`}
+                        style={{
+                          backgroundColor: `var(--type-${type})`,
+                          color: typeColors[type].text === 'text-white' ? 'white' : 'black',
+                        }}
+                        title={`Filter by ${formatPokemonName(type)} type`}
+                      >
+                        {formatPokemonName(type)}
+                      </button>
+                    ))}
+                    {advancedFilters.types.length > 0 && (
+                      <button
+                        onClick={() => setAdvancedFilters(prev => ({ ...prev, types: [] }))}
+                        className="px-2 py-1 text-xs text-poke-blue hover:text-poke-blue/80 hover:underline font-medium flex-shrink-0"
+                        title="Clear type filters"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -1743,7 +1751,7 @@ export default function ModernPokedexLayout({
         <div className="w-full max-w-full pl-0 pr-4 sm:pl-0 sm:pr-6 lg:pl-0 lg:pr-8 py-4">
           <div className="flex items-center justify-between">
             {/* Type Filter Buttons */}
-            <div className="flex items-center space-x-3 overflow-x-auto scrollbar-hide pb-2">
+            <div className="flex items-center space-x-3 overflow-x-auto pb-2 type-filters-scroll">
               {Object.keys(typeColors).map(type => (
                 <button
                   key={type}
