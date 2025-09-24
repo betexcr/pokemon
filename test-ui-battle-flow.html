@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battle Flow UI Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            border: 1px solid #ccc;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔥 Firebase Battle Flow UI Test</h1>
+    <p>This test validates the complete battle flow with both host and guest users in the actual UI.</p>
+    
+    <div class="test-section info">
+        <h3>Test Instructions</h3>
+        <ol>
+            <li>Click "Start Host Session" to create a room as host</li>
+            <li>Click "Start Guest Session" to join the room as guest</li>
+            <li>Select teams for both users</li>
+            <li>Start the battle</li>
+            <li>Verify real-time synchronization works</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h3>Host Session</h3>
+        <button id="startHost" onclick="startHostSession()">Start Host Session</button>
+        <button id="createRoom" onclick="createRoom()" disabled>Create Room</button>
+        <button id="selectHostTeam" onclick="selectHostTeam()" disabled>Select Host Team</button>
+        <button id="startBattle" onclick="startBattle()" disabled>Start Battle</button>
+        <div id="hostStatus">Not started</div>
+        <div id="hostLog" class="log"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Guest Session</h3>
+        <button id="startGuest" onclick="startGuestSession()">Start Guest Session</button>
+        <button id="joinRoom" onclick="joinRoom()" disabled>Join Room</button>
+        <button id="selectGuestTeam" onclick="selectGuestTeam()" disabled>Select Guest Team</button>
+        <div id="guestStatus">Not started</div>
+        <div id="guestLog" class="log"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Battle Status</h3>
+        <div id="battleStatus">No battle active</div>
+        <div id="battleLog" class="log"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test Results</h3>
+        <div id="testResults"></div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, collection, doc, addDoc, getDoc, updateDoc, onSnapshot, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyASbdOWHRBH_QAqpjRrp9KyzPWheNuUZmY",
+            authDomain: "pokemon-battles-86a0d.firebaseapp.com",
+            databaseURL: "https://pokemon-battles-86a0d-default-rtdb.firebaseio.com",
+            projectId: "pokemon-battles-86a0d",
+            storageBucket: "pokemon-battles-86a0d.firebasestorage.app",
+            messagingSenderId: "665621845004",
+            appId: "1:665621845004:web:2c5505206389d807ed0a29"
+        };
+
+        // Initialize Firebase apps
+        const hostApp = initializeApp(firebaseConfig);
+        const hostAuth = getAuth(hostApp);
+        const hostDb = getFirestore(hostApp);
+        const hostFunctions = getFunctions(hostApp);
+
+        const guestApp = initializeApp(firebaseConfig, 'guest');
+        const guestAuth = getAuth(guestApp);
+        const guestDb = getFirestore(guestApp);
+        const guestFunctions = getFunctions(guestApp);
+
+        // Global state
+        let hostUser = null;
+        let guestUser = null;
+        let roomId = null;
+        let battleId = null;
+
+        // Utility functions
+        function log(elementId, message) {
+            const element = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            element.textContent += `[${timestamp}] ${message}\n`;
+            element.scrollTop = element.scrollHeight;
+        }
+
+        function updateStatus(elementId, status, className = '') {
+            const element = document.getElementById(elementId);
+            element.textContent = status;
+            element.className = className;
+        }
+
+        function updateButton(buttonId, enabled) {
+            document.getElementById(buttonId).disabled = !enabled;
+        }
+
+        // Host session functions
+        window.startHostSession = async function() {
+            try {
+                log('hostLog', 'Starting host session...');
+                await signInAnonymously(hostAuth);
+                
+                onAuthStateChanged(hostAuth, (user) => {
+                    if (user) {
+                        hostUser = user;
+                        log('hostLog', `Host authenticated: ${user.uid}`);
+                        updateStatus('hostStatus', 'Host authenticated', 'success');
+                        updateButton('createRoom', true);
+                    }
+                });
+            } catch (error) {
+                log('hostLog', `Host auth error: ${error.message}`);
+                updateStatus('hostStatus', 'Host auth failed', 'error');
+            }
+        };
+
+        window.createRoom = async function() {
+            try {
+                log('hostLog', 'Creating room...');
+                const roomData = {
+                    hostId: hostUser.uid,
+                    hostName: 'Test Host',
+                    hostPhotoURL: null,
+                    hostReady: false,
+                    hostTeam: null,
+                    guestId: null,
+                    guestName: null,
+                    guestPhotoURL: null,
+                    guestReady: false,
+                    guestTeam: null,
+                    status: 'waiting',
+                    maxPlayers: 2,
+                    currentPlayers: 1,
+                    activeUsers: [hostUser.uid],
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                };
+
+                const roomRef = await addDoc(collection(hostDb, 'battle_rooms'), roomData);
+                roomId = roomRef.id;
+                
+                log('hostLog', `Room created: ${roomId}`);
+                updateStatus('hostStatus', `Room created: ${roomId}`, 'success');
+                updateButton('selectHostTeam', true);
+                updateButton('joinRoom', true);
+            } catch (error) {
+                log('hostLog', `Room creation error: ${error.message}`);
+                updateStatus('hostStatus', 'Room creation failed', 'error');
+            }
+        };
+
+        window.selectHostTeam = async function() {
+            try {
+                log('hostLog', 'Selecting host team...');
+                const testTeam = {
+                    id: 'test-host-team',
+                    name: 'Test Host Team',
+                    slots: [
+                        { id: 25, level: 50, moves: [{ id: 'tackle', pp: 35 }] }
+                    ]
+                };
+
+                const roomRef = doc(hostDb, 'battle_rooms', roomId);
+                await updateDoc(roomRef, {
+                    hostTeam: testTeam,
+                    hostReady: true,
+                    updatedAt: serverTimestamp()
+                });
+
+                log('hostLog', 'Host team selected');
+                updateStatus('hostStatus', 'Host team ready', 'success');
+                updateButton('startBattle', true);
+            } catch (error) {
+                log('hostLog', `Host team selection error: ${error.message}`);
+                updateStatus('hostStatus', 'Host team selection failed', 'error');
+            }
+        };
+
+        // Guest session functions
+        window.startGuestSession = async function() {
+            try {
+                log('guestLog', 'Starting guest session...');
+                await signInAnonymously(guestAuth);
+                
+                onAuthStateChanged(guestAuth, (user) => {
+                    if (user) {
+                        guestUser = user;
+                        log('guestLog', `Guest authenticated: ${user.uid}`);
+                        updateStatus('guestStatus', 'Guest authenticated', 'success');
+                    }
+                });
+            } catch (error) {
+                log('guestLog', `Guest auth error: ${error.message}`);
+                updateStatus('guestStatus', 'Guest auth failed', 'error');
+            }
+        };
+
+        window.joinRoom = async function() {
+            if (!roomId) {
+                log('guestLog', 'No room ID available');
+                return;
+            }
+
+            try {
+                log('guestLog', `Joining room: ${roomId}`);
+                const roomRef = doc(guestDb, 'battle_rooms', roomId);
+                const roomSnap = await getDoc(roomRef);
+                
+                if (!roomSnap.exists()) {
+                    log('guestLog', 'Room not found');
+                    return;
+                }
+
+                const roomData = roomSnap.data();
+                const updateData = {
+                    guestId: guestUser.uid,
+                    guestName: 'Test Guest',
+                    guestPhotoURL: null,
+                    guestReady: false,
+                    currentPlayers: 2,
+                    activeUsers: [roomData.hostId, guestUser.uid],
+                    status: 'ready',
+                    updatedAt: serverTimestamp()
+                };
+
+                await updateDoc(roomRef, updateData);
+                log('guestLog', 'Guest joined room successfully');
+                updateStatus('guestStatus', 'Guest joined room', 'success');
+                updateButton('selectGuestTeam', true);
+            } catch (error) {
+                log('guestLog', `Guest join error: ${error.message}`);
+                updateStatus('guestStatus', 'Guest join failed', 'error');
+            }
+        };
+
+        window.selectGuestTeam = async function() {
+            try {
+                log('guestLog', 'Selecting guest team...');
+                const testTeam = {
+                    id: 'test-guest-team',
+                    name: 'Test Guest Team',
+                    slots: [
+                        { id: 1, level: 50, moves: [{ id: 'tackle', pp: 35 }] }
+                    ]
+                };
+
+                const roomRef = doc(guestDb, 'battle_rooms', roomId);
+                await updateDoc(roomRef, {
+                    guestTeam: testTeam,
+                    guestReady: true,
+                    updatedAt: serverTimestamp()
+                });
+
+                log('guestLog', 'Guest team selected');
+                updateStatus('guestStatus', 'Guest team ready', 'success');
+            } catch (error) {
+                log('guestLog', `Guest team selection error: ${error.message}`);
+                updateStatus('guestStatus', 'Guest team selection failed', 'error');
+            }
+        };
+
+        // Battle functions
+        window.startBattle = async function() {
+            try {
+                log('battleLog', 'Starting battle...');
+                const testTeam = [
+                    {
+                        id: 25,
+                        name: 'Pikachu',
+                        level: 50,
+                        hp: 100,
+                        maxHp: 100,
+                        moves: [{ id: 'tackle', pp: 35, maxPp: 35 }],
+                        status: null,
+                        fainted: false
+                    }
+                ];
+
+                const createBattle = httpsCallable(hostFunctions, 'createBattleWithTeams');
+                const result = await createBattle({
+                    roomId: roomId,
+                    p1Uid: hostUser.uid,
+                    p2Uid: guestUser.uid,
+                    p1Team: testTeam,
+                    p2Team: testTeam
+                });
+
+                if (result.data && result.data.battleId) {
+                    battleId = result.data.battleId;
+                    log('battleLog', `Battle created: ${battleId}`);
+                    updateStatus('battleStatus', `Battle active: ${battleId}`, 'success');
+                    
+                    // Set up real-time battle monitoring
+                    setupBattleMonitoring();
+                } else {
+                    log('battleLog', 'Battle creation failed: No battle ID returned');
+                    updateStatus('battleStatus', 'Battle creation failed', 'error');
+                }
+            } catch (error) {
+                log('battleLog', `Battle creation error: ${error.message}`);
+                updateStatus('battleStatus', 'Battle creation failed', 'error');
+            }
+        };
+
+        function setupBattleMonitoring() {
+            if (!battleId) return;
+
+            const battleRef = doc(hostDb, 'battles', battleId);
+            const unsubscribe = onSnapshot(battleRef, (doc) => {
+                if (doc.exists()) {
+                    const battleData = doc.data();
+                    log('battleLog', `Battle update: Phase=${battleData.phase}, Turn=${battleData.turnNumber}`);
+                    
+                    if (battleData.status === 'completed') {
+                        log('battleLog', `Battle completed! Winner: ${battleData.winner || 'Unknown'}`);
+                        updateStatus('battleStatus', 'Battle completed', 'success');
+                    }
+                }
+            });
+
+            // Clean up listener after 30 seconds
+            setTimeout(() => {
+                unsubscribe();
+                log('battleLog', 'Battle monitoring stopped');
+            }, 30000);
+        }
+
+        // Initialize
+        log('battleLog', 'Firebase Battle Flow UI Test initialized');
+        log('battleLog', 'Ready to test battle flow with host and guest users');
+    </script>
+</body>
+</html>

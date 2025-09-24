@@ -1,0 +1,10221 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3]:
+      - banner [ref=e4]:
+        - generic [ref=e6]:
+          - generic [ref=e8]:
+            - img [ref=e11]
+            - generic [ref=e14]:
+              - heading "PokéDex" [level=2] [ref=e15]
+              - link "Created by Alberto Muñoz" [ref=e17] [cursor=pointer]:
+                - /url: https://github.com/betexcr
+          - generic [ref=e18]:
+            - generic [ref=e19]:
+              - link "Open insights menu" [ref=e22] [cursor=pointer]:
+                - /url: /insights
+                - img [ref=e24] [cursor=pointer]
+              - link "Team Builder" [ref=e30] [cursor=pointer]:
+                - /url: /team
+              - link "Battles" [ref=e33] [cursor=pointer]:
+                - /url: /battle
+              - link "Top 50" [ref=e36] [cursor=pointer]:
+                - /url: /top50
+              - link "Compare" [ref=e39] [cursor=pointer]:
+                - /url: /compare
+            - generic [ref=e41]:
+              - button "Profile Placeholder" [ref=e42] [cursor=pointer]:
+                - img "Profile Placeholder" [ref=e43] [cursor=pointer]
+              - menu:
+                - generic: Not signed in
+                - generic: Sign in to access your profile and teams
+                - generic:
+                  - generic:
+                    - generic: Theme
+                    - switch:
+                      - generic: Switch to dark theme
+                - button:
+                  - img
+                  - text: Reset Poke-Tips
+                - button:
+                  - img
+                  - text: Sign In / Sign Up
+      - generic [ref=e47]:
+        - img
+        - textbox "Search Pokémon..." [ref=e48]
+      - generic [ref=e51]:
+        - generic [ref=e52]:
+          - button "Normal" [ref=e53] [cursor=pointer]
+          - button "Fire" [ref=e54] [cursor=pointer]
+          - button "Water" [ref=e55] [cursor=pointer]
+          - button "Electric" [ref=e56] [cursor=pointer]
+          - button "Grass" [ref=e57] [cursor=pointer]
+          - button "Ice" [ref=e58] [cursor=pointer]
+          - button "Fighting" [ref=e59] [cursor=pointer]
+          - button "Poison" [ref=e60] [cursor=pointer]
+          - button "Ground" [ref=e61] [cursor=pointer]
+          - button "Flying" [ref=e62] [cursor=pointer]
+          - button "Psychic" [ref=e63] [cursor=pointer]
+          - button "Bug" [ref=e64] [cursor=pointer]
+          - button "Rock" [ref=e65] [cursor=pointer]
+          - button "Ghost" [ref=e66] [cursor=pointer]
+          - button "Dragon" [ref=e67] [cursor=pointer]
+          - button "Dark" [ref=e68] [cursor=pointer]
+          - button "Steel" [ref=e69] [cursor=pointer]
+          - button "Fairy" [ref=e70] [cursor=pointer]
+        - button "Clear filters" [ref=e75] [cursor=pointer]
+      - generic [ref=e78]:
+        - generic [ref=e79]:
+          - button "Filters Filters" [pressed] [ref=e81] [cursor=pointer]:
+            - img "Filters" [ref=e82] [cursor=pointer]
+            - generic [ref=e83] [cursor=pointer]: Filters
+          - generic [ref=e84]:
+            - generic [ref=e85]: Size
+            - generic [ref=e86]:
+              - button "3 Cols" [ref=e87] [cursor=pointer]:
+                - img [ref=e89] [cursor=pointer]
+                - generic [ref=e94] [cursor=pointer]: 3 Cols
+              - button "6 Cols" [ref=e95] [cursor=pointer]:
+                - img [ref=e97] [cursor=pointer]
+                - generic [ref=e101] [cursor=pointer]: 6 Cols
+              - button "9 Cols" [ref=e102] [cursor=pointer]:
+                - img [ref=e104] [cursor=pointer]
+                - generic [ref=e110] [cursor=pointer]: 9 Cols
+              - button "List" [ref=e111] [cursor=pointer]:
+                - img [ref=e113] [cursor=pointer]
+                - generic [ref=e120] [cursor=pointer]: List
+        - generic [ref=e121]:
+          - generic [ref=e122]: Sort
+          - generic [ref=e123]:
+            - combobox [ref=e124]:
+              - option "Number" [selected]
+              - option "Name"
+              - option "Total Stats"
+              - option "HP"
+              - option "Attack"
+              - option "Defense"
+              - option "Sp. Attack"
+              - option "Sp. Defense"
+              - option "Speed"
+            - button "ASC" [ref=e125] [cursor=pointer]:
+              - img [ref=e127] [cursor=pointer]
+              - generic [ref=e129] [cursor=pointer]: ASC
+      - generic [ref=e130]:
+        - generic [ref=e132]:
+          - generic [ref=e134]:
+            - heading "Advanced Filters" [level=2] [ref=e135]
+            - button "Close advanced filters" [ref=e136] [cursor=pointer]:
+              - img [ref=e137] [cursor=pointer]
+          - generic [ref=e140]:
+            - button "Advanced Filters" [ref=e142] [cursor=pointer]:
+              - heading "Advanced Filters" [level=3] [ref=e143] [cursor=pointer]
+              - img [ref=e144] [cursor=pointer]
+            - generic [ref=e146]:
+              - button "⚖️ Comparison (1)" [ref=e147] [cursor=pointer]:
+                - heading "⚖️ Comparison (1)" [level=3] [ref=e148] [cursor=pointer]:
+                  - generic [ref=e149] [cursor=pointer]: ⚖️
+                  - text: Comparison (1)
+                - img [ref=e150] [cursor=pointer]
+              - generic [ref=e154]:
+                - generic [ref=e155]:
+                  - button "Go to Comparison" [ref=e156] [cursor=pointer]:
+                    - img [ref=e157] [cursor=pointer]
+                  - button "Clear Comparison" [ref=e160] [cursor=pointer]:
+                    - img [ref=e161] [cursor=pointer]
+                - generic [ref=e166]:
+                  - img "Pokemon 1" [ref=e168]
+                  - generic [ref=e169]: Pokemon 1
+                  - button "Remove Pokemon 1 from comparison" [ref=e170] [cursor=pointer]:
+                    - img [ref=e171] [cursor=pointer]
+        - generic [ref=e178]:
+          - button "View details for Bulbasaur" [ref=e180] [cursor=pointer]:
+            - generic [ref=e182] [cursor=pointer]:
+              - generic [ref=e183] [cursor=pointer]:
+                - generic [ref=e184] [cursor=pointer]: "#001"
+                - button "Remove from comparison" [active] [ref=e185] [cursor=pointer]:
+                  - img [ref=e186] [cursor=pointer]
+              - img "Bulbasaur" [ref=e195] [cursor=pointer]
+              - generic [ref=e196] [cursor=pointer]:
+                - heading "Bulbasaur" [level=3] [ref=e197] [cursor=pointer]
+                - generic [ref=e198] [cursor=pointer]:
+                  - button "Grass" [ref=e199] [cursor=pointer]
+                  - button "Poison" [ref=e200] [cursor=pointer]
+          - button "View details for Ivysaur" [ref=e202] [cursor=pointer]:
+            - generic [ref=e204] [cursor=pointer]:
+              - generic [ref=e205] [cursor=pointer]:
+                - generic [ref=e206] [cursor=pointer]: "#002"
+                - button "Add to comparison" [ref=e207] [cursor=pointer]:
+                  - img [ref=e208] [cursor=pointer]
+              - img "Ivysaur" [ref=e217] [cursor=pointer]
+              - generic [ref=e218] [cursor=pointer]:
+                - heading "Ivysaur" [level=3] [ref=e219] [cursor=pointer]
+                - generic [ref=e220] [cursor=pointer]:
+                  - button "Grass" [ref=e221] [cursor=pointer]
+                  - button "Poison" [ref=e222] [cursor=pointer]
+          - button "View details for Venusaur" [ref=e224] [cursor=pointer]:
+            - generic [ref=e226] [cursor=pointer]:
+              - generic [ref=e227] [cursor=pointer]:
+                - generic [ref=e228] [cursor=pointer]: "#003"
+                - button "Add to comparison" [ref=e229] [cursor=pointer]:
+                  - img [ref=e230] [cursor=pointer]
+              - img "Venusaur" [ref=e239] [cursor=pointer]
+              - generic [ref=e240] [cursor=pointer]:
+                - heading "Venusaur" [level=3] [ref=e241] [cursor=pointer]
+                - generic [ref=e242] [cursor=pointer]:
+                  - button "Grass" [ref=e243] [cursor=pointer]
+                  - button "Poison" [ref=e244] [cursor=pointer]
+          - button "View details for Charmander" [ref=e246] [cursor=pointer]:
+            - generic [ref=e248] [cursor=pointer]:
+              - generic [ref=e249] [cursor=pointer]:
+                - generic [ref=e250] [cursor=pointer]: "#004"
+                - button "Add to comparison" [ref=e251] [cursor=pointer]:
+                  - img [ref=e252] [cursor=pointer]
+              - img "Charmander" [ref=e261] [cursor=pointer]
+              - generic [ref=e262] [cursor=pointer]:
+                - heading "Charmander" [level=3] [ref=e263] [cursor=pointer]
+                - button "Fire" [ref=e265] [cursor=pointer]
+          - button "View details for Charmeleon" [ref=e267] [cursor=pointer]:
+            - generic [ref=e269] [cursor=pointer]:
+              - generic [ref=e270] [cursor=pointer]:
+                - generic [ref=e271] [cursor=pointer]: "#005"
+                - button "Add to comparison" [ref=e272] [cursor=pointer]:
+                  - img [ref=e273] [cursor=pointer]
+              - img "Charmeleon" [ref=e282] [cursor=pointer]
+              - generic [ref=e283] [cursor=pointer]:
+                - heading "Charmeleon" [level=3] [ref=e284] [cursor=pointer]
+                - button "Fire" [ref=e286] [cursor=pointer]
+          - button "View details for Charizard" [ref=e288] [cursor=pointer]:
+            - generic [ref=e290] [cursor=pointer]:
+              - generic [ref=e291] [cursor=pointer]:
+                - generic [ref=e292] [cursor=pointer]: "#006"
+                - button "Add to comparison" [ref=e293] [cursor=pointer]:
+                  - img [ref=e294] [cursor=pointer]
+              - img "Charizard" [ref=e303] [cursor=pointer]
+              - generic [ref=e304] [cursor=pointer]:
+                - heading "Charizard" [level=3] [ref=e305] [cursor=pointer]
+                - generic [ref=e306] [cursor=pointer]:
+                  - button "Fire" [ref=e307] [cursor=pointer]
+                  - button "Flying" [ref=e308] [cursor=pointer]
+          - button "View details for Squirtle" [ref=e310] [cursor=pointer]:
+            - generic [ref=e312] [cursor=pointer]:
+              - generic [ref=e313] [cursor=pointer]:
+                - generic [ref=e314] [cursor=pointer]: "#007"
+                - button "Add to comparison" [ref=e315] [cursor=pointer]:
+                  - img [ref=e316] [cursor=pointer]
+              - img "Squirtle" [ref=e325] [cursor=pointer]
+              - generic [ref=e326] [cursor=pointer]:
+                - heading "Squirtle" [level=3] [ref=e327] [cursor=pointer]
+                - button "Water" [ref=e329] [cursor=pointer]
+          - button "View details for Wartortle" [ref=e331] [cursor=pointer]:
+            - generic [ref=e333] [cursor=pointer]:
+              - generic [ref=e334] [cursor=pointer]:
+                - generic [ref=e335] [cursor=pointer]: "#008"
+                - button "Add to comparison" [ref=e336] [cursor=pointer]:
+                  - img [ref=e337] [cursor=pointer]
+              - img "Wartortle" [ref=e346] [cursor=pointer]
+              - generic [ref=e347] [cursor=pointer]:
+                - heading "Wartortle" [level=3] [ref=e348] [cursor=pointer]
+                - button "Water" [ref=e350] [cursor=pointer]
+          - button "View details for Blastoise" [ref=e352] [cursor=pointer]:
+            - generic [ref=e354] [cursor=pointer]:
+              - generic [ref=e355] [cursor=pointer]:
+                - generic [ref=e356] [cursor=pointer]: "#009"
+                - button "Add to comparison" [ref=e357] [cursor=pointer]:
+                  - img [ref=e358] [cursor=pointer]
+              - img "Blastoise" [ref=e367] [cursor=pointer]
+              - generic [ref=e368] [cursor=pointer]:
+                - heading "Blastoise" [level=3] [ref=e369] [cursor=pointer]
+                - button "Water" [ref=e371] [cursor=pointer]
+          - button "View details for Caterpie" [ref=e373] [cursor=pointer]:
+            - generic [ref=e375] [cursor=pointer]:
+              - generic [ref=e376] [cursor=pointer]:
+                - generic [ref=e377] [cursor=pointer]: "#010"
+                - button "Add to comparison" [ref=e378] [cursor=pointer]:
+                  - img [ref=e379] [cursor=pointer]
+              - img "Caterpie" [ref=e388] [cursor=pointer]
+              - generic [ref=e389] [cursor=pointer]:
+                - heading "Caterpie" [level=3] [ref=e390] [cursor=pointer]
+                - button "Bug" [ref=e392] [cursor=pointer]
+          - button "View details for Metapod" [ref=e394] [cursor=pointer]:
+            - generic [ref=e396] [cursor=pointer]:
+              - generic [ref=e397] [cursor=pointer]:
+                - generic [ref=e398] [cursor=pointer]: "#011"
+                - button "Add to comparison" [ref=e399] [cursor=pointer]:
+                  - img [ref=e400] [cursor=pointer]
+              - img "Metapod" [ref=e409] [cursor=pointer]
+              - generic [ref=e410] [cursor=pointer]:
+                - heading "Metapod" [level=3] [ref=e411] [cursor=pointer]
+                - button "Bug" [ref=e413] [cursor=pointer]
+          - button "View details for Butterfree" [ref=e415] [cursor=pointer]:
+            - generic [ref=e417] [cursor=pointer]:
+              - generic [ref=e418] [cursor=pointer]:
+                - generic [ref=e419] [cursor=pointer]: "#012"
+                - button "Add to comparison" [ref=e420] [cursor=pointer]:
+                  - img [ref=e421] [cursor=pointer]
+              - img "Butterfree" [ref=e430] [cursor=pointer]
+              - generic [ref=e431] [cursor=pointer]:
+                - heading "Butterfree" [level=3] [ref=e432] [cursor=pointer]
+                - generic [ref=e433] [cursor=pointer]:
+                  - button "Bug" [ref=e434] [cursor=pointer]
+                  - button "Flying" [ref=e435] [cursor=pointer]
+          - button "View details for Weedle" [ref=e437] [cursor=pointer]:
+            - generic [ref=e439] [cursor=pointer]:
+              - generic [ref=e440] [cursor=pointer]:
+                - generic [ref=e441] [cursor=pointer]: "#013"
+                - button "Add to comparison" [ref=e442] [cursor=pointer]:
+                  - img [ref=e443] [cursor=pointer]
+              - generic [ref=e450] [cursor=pointer]:
+                - generic [ref=e453] [cursor=pointer]: Loading Pokémon artwork
+                - img "Weedle" [ref=e455] [cursor=pointer]
+              - generic [ref=e456] [cursor=pointer]:
+                - heading "Weedle" [level=3] [ref=e457] [cursor=pointer]
+                - generic [ref=e458] [cursor=pointer]:
+                  - button "Bug" [ref=e459] [cursor=pointer]
+                  - button "Poison" [ref=e460] [cursor=pointer]
+          - button "View details for Kakuna" [ref=e462] [cursor=pointer]:
+            - generic [ref=e464] [cursor=pointer]:
+              - generic [ref=e465] [cursor=pointer]:
+                - generic [ref=e466] [cursor=pointer]: "#014"
+                - button "Add to comparison" [ref=e467] [cursor=pointer]:
+                  - img [ref=e468] [cursor=pointer]
+              - generic [ref=e475] [cursor=pointer]:
+                - generic [ref=e478] [cursor=pointer]: Loading Pokémon artwork
+                - img "Kakuna" [ref=e480] [cursor=pointer]
+              - generic [ref=e481] [cursor=pointer]:
+                - heading "Kakuna" [level=3] [ref=e482] [cursor=pointer]
+                - generic [ref=e483] [cursor=pointer]:
+                  - button "Bug" [ref=e484] [cursor=pointer]
+                  - button "Poison" [ref=e485] [cursor=pointer]
+          - button "View details for Beedrill" [ref=e487] [cursor=pointer]:
+            - generic [ref=e489] [cursor=pointer]:
+              - generic [ref=e490] [cursor=pointer]:
+                - generic [ref=e491] [cursor=pointer]: "#015"
+                - button "Add to comparison" [ref=e492] [cursor=pointer]:
+                  - img [ref=e493] [cursor=pointer]
+              - generic [ref=e500] [cursor=pointer]:
+                - generic [ref=e503] [cursor=pointer]: Loading Pokémon artwork
+                - img "Beedrill" [ref=e505] [cursor=pointer]
+              - generic [ref=e506] [cursor=pointer]:
+                - heading "Beedrill" [level=3] [ref=e507] [cursor=pointer]
+                - generic [ref=e508] [cursor=pointer]:
+                  - button "Bug" [ref=e509] [cursor=pointer]
+                  - button "Poison" [ref=e510] [cursor=pointer]
+          - button "View details for Pidgey" [ref=e512] [cursor=pointer]:
+            - generic [ref=e514] [cursor=pointer]:
+              - generic [ref=e515] [cursor=pointer]:
+                - generic [ref=e516] [cursor=pointer]: "#016"
+                - button "Add to comparison" [ref=e517] [cursor=pointer]:
+                  - img [ref=e518] [cursor=pointer]
+              - generic [ref=e525] [cursor=pointer]:
+                - generic [ref=e528] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pidgey" [ref=e530] [cursor=pointer]
+              - generic [ref=e531] [cursor=pointer]:
+                - heading "Pidgey" [level=3] [ref=e532] [cursor=pointer]
+                - generic [ref=e533] [cursor=pointer]:
+                  - button "Normal" [ref=e534] [cursor=pointer]
+                  - button "Flying" [ref=e535] [cursor=pointer]
+          - button "View details for Pidgeotto" [ref=e537] [cursor=pointer]:
+            - generic [ref=e539] [cursor=pointer]:
+              - generic [ref=e540] [cursor=pointer]:
+                - generic [ref=e541] [cursor=pointer]: "#017"
+                - button "Add to comparison" [ref=e542] [cursor=pointer]:
+                  - img [ref=e543] [cursor=pointer]
+              - generic [ref=e550] [cursor=pointer]:
+                - generic [ref=e553] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pidgeotto" [ref=e555] [cursor=pointer]
+              - generic [ref=e556] [cursor=pointer]:
+                - heading "Pidgeotto" [level=3] [ref=e557] [cursor=pointer]
+                - generic [ref=e558] [cursor=pointer]:
+                  - button "Normal" [ref=e559] [cursor=pointer]
+                  - button "Flying" [ref=e560] [cursor=pointer]
+          - button "View details for Pidgeot" [ref=e562] [cursor=pointer]:
+            - generic [ref=e564] [cursor=pointer]:
+              - generic [ref=e565] [cursor=pointer]:
+                - generic [ref=e566] [cursor=pointer]: "#018"
+                - button "Add to comparison" [ref=e567] [cursor=pointer]:
+                  - img [ref=e568] [cursor=pointer]
+              - generic [ref=e575] [cursor=pointer]:
+                - generic [ref=e578] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pidgeot" [ref=e580] [cursor=pointer]
+              - generic [ref=e581] [cursor=pointer]:
+                - heading "Pidgeot" [level=3] [ref=e582] [cursor=pointer]
+                - generic [ref=e583] [cursor=pointer]:
+                  - button "Normal" [ref=e584] [cursor=pointer]
+                  - button "Flying" [ref=e585] [cursor=pointer]
+          - button "View details for Rattata" [ref=e587] [cursor=pointer]:
+            - generic [ref=e589] [cursor=pointer]:
+              - generic [ref=e590] [cursor=pointer]:
+                - generic [ref=e591] [cursor=pointer]: "#019"
+                - button "Add to comparison" [ref=e592] [cursor=pointer]:
+                  - img [ref=e593] [cursor=pointer]
+              - generic [ref=e600] [cursor=pointer]:
+                - generic [ref=e603] [cursor=pointer]: Loading Pokémon artwork
+                - img "Rattata" [ref=e605] [cursor=pointer]
+              - generic [ref=e606] [cursor=pointer]:
+                - heading "Rattata" [level=3] [ref=e607] [cursor=pointer]
+                - button "Normal" [ref=e609] [cursor=pointer]
+          - button "View details for Raticate" [ref=e611] [cursor=pointer]:
+            - generic [ref=e613] [cursor=pointer]:
+              - generic [ref=e614] [cursor=pointer]:
+                - generic [ref=e615] [cursor=pointer]: "#020"
+                - button "Add to comparison" [ref=e616] [cursor=pointer]:
+                  - img [ref=e617] [cursor=pointer]
+              - generic [ref=e624] [cursor=pointer]:
+                - generic [ref=e627] [cursor=pointer]: Loading Pokémon artwork
+                - img "Raticate" [ref=e629] [cursor=pointer]
+              - generic [ref=e630] [cursor=pointer]:
+                - heading "Raticate" [level=3] [ref=e631] [cursor=pointer]
+                - button "Normal" [ref=e633] [cursor=pointer]
+          - button "View details for Spearow" [ref=e635] [cursor=pointer]:
+            - generic [ref=e637] [cursor=pointer]:
+              - generic [ref=e638] [cursor=pointer]:
+                - generic [ref=e639] [cursor=pointer]: "#021"
+                - button "Add to comparison" [ref=e640] [cursor=pointer]:
+                  - img [ref=e641] [cursor=pointer]
+              - generic [ref=e648] [cursor=pointer]:
+                - generic [ref=e651] [cursor=pointer]: Loading Pokémon artwork
+                - img "Spearow" [ref=e653] [cursor=pointer]
+              - generic [ref=e654] [cursor=pointer]:
+                - heading "Spearow" [level=3] [ref=e655] [cursor=pointer]
+                - generic [ref=e656] [cursor=pointer]:
+                  - button "Normal" [ref=e657] [cursor=pointer]
+                  - button "Flying" [ref=e658] [cursor=pointer]
+          - button "View details for Fearow" [ref=e660] [cursor=pointer]:
+            - generic [ref=e662] [cursor=pointer]:
+              - generic [ref=e663] [cursor=pointer]:
+                - generic [ref=e664] [cursor=pointer]: "#022"
+                - button "Add to comparison" [ref=e665] [cursor=pointer]:
+                  - img [ref=e666] [cursor=pointer]
+              - generic [ref=e673] [cursor=pointer]:
+                - generic [ref=e676] [cursor=pointer]: Loading Pokémon artwork
+                - img "Fearow" [ref=e678] [cursor=pointer]
+              - generic [ref=e679] [cursor=pointer]:
+                - heading "Fearow" [level=3] [ref=e680] [cursor=pointer]
+                - generic [ref=e681] [cursor=pointer]:
+                  - button "Normal" [ref=e682] [cursor=pointer]
+                  - button "Flying" [ref=e683] [cursor=pointer]
+          - button "View details for Ekans" [ref=e685] [cursor=pointer]:
+            - generic [ref=e687] [cursor=pointer]:
+              - generic [ref=e688] [cursor=pointer]:
+                - generic [ref=e689] [cursor=pointer]: "#023"
+                - button "Add to comparison" [ref=e690] [cursor=pointer]:
+                  - img [ref=e691] [cursor=pointer]
+              - generic [ref=e698] [cursor=pointer]:
+                - generic [ref=e701] [cursor=pointer]: Loading Pokémon artwork
+                - img "Ekans" [ref=e703] [cursor=pointer]
+              - generic [ref=e704] [cursor=pointer]:
+                - heading "Ekans" [level=3] [ref=e705] [cursor=pointer]
+                - button "Poison" [ref=e707] [cursor=pointer]
+          - button "View details for Arbok" [ref=e709] [cursor=pointer]:
+            - generic [ref=e711] [cursor=pointer]:
+              - generic [ref=e712] [cursor=pointer]:
+                - generic [ref=e713] [cursor=pointer]: "#024"
+                - button "Add to comparison" [ref=e714] [cursor=pointer]:
+                  - img [ref=e715] [cursor=pointer]
+              - generic [ref=e722] [cursor=pointer]:
+                - generic [ref=e725] [cursor=pointer]: Loading Pokémon artwork
+                - img "Arbok" [ref=e727] [cursor=pointer]
+              - generic [ref=e728] [cursor=pointer]:
+                - heading "Arbok" [level=3] [ref=e729] [cursor=pointer]
+                - button "Poison" [ref=e731] [cursor=pointer]
+          - button "View details for Pikachu" [ref=e733] [cursor=pointer]:
+            - generic [ref=e735] [cursor=pointer]:
+              - generic [ref=e736] [cursor=pointer]:
+                - generic [ref=e737] [cursor=pointer]: "#025"
+                - button "Add to comparison" [ref=e738] [cursor=pointer]:
+                  - img [ref=e739] [cursor=pointer]
+              - generic [ref=e746] [cursor=pointer]:
+                - generic [ref=e749] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pikachu" [ref=e751] [cursor=pointer]
+              - generic [ref=e752] [cursor=pointer]:
+                - heading "Pikachu" [level=3] [ref=e753] [cursor=pointer]
+                - button "Electric" [ref=e755] [cursor=pointer]
+          - button "View details for Raichu" [ref=e757] [cursor=pointer]:
+            - generic [ref=e759] [cursor=pointer]:
+              - generic [ref=e760] [cursor=pointer]:
+                - generic [ref=e761] [cursor=pointer]: "#026"
+                - button "Add to comparison" [ref=e762] [cursor=pointer]:
+                  - img [ref=e763] [cursor=pointer]
+              - generic [ref=e770] [cursor=pointer]:
+                - generic [ref=e773] [cursor=pointer]: Loading Pokémon artwork
+                - img "Raichu" [ref=e775] [cursor=pointer]
+              - generic [ref=e776] [cursor=pointer]:
+                - heading "Raichu" [level=3] [ref=e777] [cursor=pointer]
+                - button "Electric" [ref=e779] [cursor=pointer]
+          - button "View details for Sandshrew" [ref=e781] [cursor=pointer]:
+            - generic [ref=e783] [cursor=pointer]:
+              - generic [ref=e784] [cursor=pointer]:
+                - generic [ref=e785] [cursor=pointer]: "#027"
+                - button "Add to comparison" [ref=e786] [cursor=pointer]:
+                  - img [ref=e787] [cursor=pointer]
+              - generic [ref=e794] [cursor=pointer]:
+                - generic [ref=e797] [cursor=pointer]: Loading Pokémon artwork
+                - img "Sandshrew" [ref=e799] [cursor=pointer]
+              - generic [ref=e800] [cursor=pointer]:
+                - heading "Sandshrew" [level=3] [ref=e801] [cursor=pointer]
+                - button "Ground" [ref=e803] [cursor=pointer]
+          - button "View details for Sandslash" [ref=e805] [cursor=pointer]:
+            - generic [ref=e807] [cursor=pointer]:
+              - generic [ref=e808] [cursor=pointer]:
+                - generic [ref=e809] [cursor=pointer]: "#028"
+                - button "Add to comparison" [ref=e810] [cursor=pointer]:
+                  - img [ref=e811] [cursor=pointer]
+              - generic [ref=e818] [cursor=pointer]:
+                - generic [ref=e821] [cursor=pointer]: Loading Pokémon artwork
+                - img "Sandslash" [ref=e823] [cursor=pointer]
+              - generic [ref=e824] [cursor=pointer]:
+                - heading "Sandslash" [level=3] [ref=e825] [cursor=pointer]
+                - button "Ground" [ref=e827] [cursor=pointer]
+          - button "View details for Nidoran f" [ref=e829] [cursor=pointer]:
+            - generic [ref=e831] [cursor=pointer]:
+              - generic [ref=e832] [cursor=pointer]:
+                - generic [ref=e833] [cursor=pointer]: "#029"
+                - button "Add to comparison" [ref=e834] [cursor=pointer]:
+                  - img [ref=e835] [cursor=pointer]
+              - generic [ref=e842] [cursor=pointer]:
+                - generic [ref=e845] [cursor=pointer]: Loading Pokémon artwork
+                - img "Nidoran f" [ref=e847] [cursor=pointer]
+              - generic [ref=e848] [cursor=pointer]:
+                - heading "Nidoran f" [level=3] [ref=e849] [cursor=pointer]
+                - button "Poison" [ref=e851] [cursor=pointer]
+          - button "View details for Nidorina" [ref=e853] [cursor=pointer]:
+            - generic [ref=e855] [cursor=pointer]:
+              - generic [ref=e856] [cursor=pointer]:
+                - generic [ref=e857] [cursor=pointer]: "#030"
+                - button "Add to comparison" [ref=e858] [cursor=pointer]:
+                  - img [ref=e859] [cursor=pointer]
+              - generic [ref=e866] [cursor=pointer]:
+                - generic [ref=e869] [cursor=pointer]: Loading Pokémon artwork
+                - img "Nidorina" [ref=e871] [cursor=pointer]
+              - generic [ref=e872] [cursor=pointer]:
+                - heading "Nidorina" [level=3] [ref=e873] [cursor=pointer]
+                - button "Poison" [ref=e875] [cursor=pointer]
+          - button "View details for Pokemon 31" [ref=e877] [cursor=pointer]:
+            - generic [ref=e879] [cursor=pointer]:
+              - generic [ref=e880] [cursor=pointer]:
+                - generic [ref=e881] [cursor=pointer]: "#031"
+                - button "Add to comparison" [ref=e882] [cursor=pointer]:
+                  - img [ref=e883] [cursor=pointer]
+              - generic [ref=e890] [cursor=pointer]:
+                - generic [ref=e893] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 31" [ref=e895] [cursor=pointer]
+              - heading [level=3] [ref=e897] [cursor=pointer]
+          - button "View details for Pokemon 32" [ref=e904] [cursor=pointer]:
+            - generic [ref=e906] [cursor=pointer]:
+              - generic [ref=e907] [cursor=pointer]:
+                - generic [ref=e908] [cursor=pointer]: "#032"
+                - button "Add to comparison" [ref=e909] [cursor=pointer]:
+                  - img [ref=e910] [cursor=pointer]
+              - generic [ref=e917] [cursor=pointer]:
+                - generic [ref=e920] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 32" [ref=e922] [cursor=pointer]
+              - heading [level=3] [ref=e924] [cursor=pointer]
+          - button "View details for Pokemon 33" [ref=e931] [cursor=pointer]:
+            - generic [ref=e933] [cursor=pointer]:
+              - generic [ref=e934] [cursor=pointer]:
+                - generic [ref=e935] [cursor=pointer]: "#033"
+                - button "Add to comparison" [ref=e936] [cursor=pointer]:
+                  - img [ref=e937] [cursor=pointer]
+              - generic [ref=e944] [cursor=pointer]:
+                - generic [ref=e947] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 33" [ref=e949] [cursor=pointer]
+              - heading [level=3] [ref=e951] [cursor=pointer]
+          - button "View details for Pokemon 34" [ref=e958] [cursor=pointer]:
+            - generic [ref=e960] [cursor=pointer]:
+              - generic [ref=e961] [cursor=pointer]:
+                - generic [ref=e962] [cursor=pointer]: "#034"
+                - button "Add to comparison" [ref=e963] [cursor=pointer]:
+                  - img [ref=e964] [cursor=pointer]
+              - generic [ref=e971] [cursor=pointer]:
+                - generic [ref=e974] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 34" [ref=e976] [cursor=pointer]
+              - heading [level=3] [ref=e978] [cursor=pointer]
+          - button "View details for Pokemon 35" [ref=e985] [cursor=pointer]:
+            - generic [ref=e987] [cursor=pointer]:
+              - generic [ref=e988] [cursor=pointer]:
+                - generic [ref=e989] [cursor=pointer]: "#035"
+                - button "Add to comparison" [ref=e990] [cursor=pointer]:
+                  - img [ref=e991] [cursor=pointer]
+              - generic [ref=e998] [cursor=pointer]:
+                - generic [ref=e1001] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 35" [ref=e1003] [cursor=pointer]
+              - heading [level=3] [ref=e1005] [cursor=pointer]
+          - button "View details for Pokemon 36" [ref=e1012] [cursor=pointer]:
+            - generic [ref=e1014] [cursor=pointer]:
+              - generic [ref=e1015] [cursor=pointer]:
+                - generic [ref=e1016] [cursor=pointer]: "#036"
+                - button "Add to comparison" [ref=e1017] [cursor=pointer]:
+                  - img [ref=e1018] [cursor=pointer]
+              - generic [ref=e1025] [cursor=pointer]:
+                - generic [ref=e1028] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 36" [ref=e1030] [cursor=pointer]
+              - heading [level=3] [ref=e1032] [cursor=pointer]
+          - button "View details for Pokemon 37" [ref=e1039] [cursor=pointer]:
+            - generic [ref=e1041] [cursor=pointer]:
+              - generic [ref=e1042] [cursor=pointer]:
+                - generic [ref=e1043] [cursor=pointer]: "#037"
+                - button "Add to comparison" [ref=e1044] [cursor=pointer]:
+                  - img [ref=e1045] [cursor=pointer]
+              - generic [ref=e1052] [cursor=pointer]:
+                - generic [ref=e1055] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 37" [ref=e1057] [cursor=pointer]
+              - heading [level=3] [ref=e1059] [cursor=pointer]
+          - button "View details for Pokemon 38" [ref=e1066] [cursor=pointer]:
+            - generic [ref=e1068] [cursor=pointer]:
+              - generic [ref=e1069] [cursor=pointer]:
+                - generic [ref=e1070] [cursor=pointer]: "#038"
+                - button "Add to comparison" [ref=e1071] [cursor=pointer]:
+                  - img [ref=e1072] [cursor=pointer]
+              - generic [ref=e1079] [cursor=pointer]:
+                - generic [ref=e1082] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 38" [ref=e1084] [cursor=pointer]
+              - heading [level=3] [ref=e1086] [cursor=pointer]
+          - button "View details for Pokemon 39" [ref=e1093] [cursor=pointer]:
+            - generic [ref=e1095] [cursor=pointer]:
+              - generic [ref=e1096] [cursor=pointer]:
+                - generic [ref=e1097] [cursor=pointer]: "#039"
+                - button "Add to comparison" [ref=e1098] [cursor=pointer]:
+                  - img [ref=e1099] [cursor=pointer]
+              - generic [ref=e1106] [cursor=pointer]:
+                - generic [ref=e1109] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 39" [ref=e1111] [cursor=pointer]
+              - heading [level=3] [ref=e1113] [cursor=pointer]
+          - button "View details for Pokemon 40" [ref=e1120] [cursor=pointer]:
+            - generic [ref=e1122] [cursor=pointer]:
+              - generic [ref=e1123] [cursor=pointer]:
+                - generic [ref=e1124] [cursor=pointer]: "#040"
+                - button "Add to comparison" [ref=e1125] [cursor=pointer]:
+                  - img [ref=e1126] [cursor=pointer]
+              - generic [ref=e1133] [cursor=pointer]:
+                - generic [ref=e1136] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 40" [ref=e1138] [cursor=pointer]
+              - heading [level=3] [ref=e1140] [cursor=pointer]
+          - button "View details for Pokemon 41" [ref=e1147] [cursor=pointer]:
+            - generic [ref=e1149] [cursor=pointer]:
+              - generic [ref=e1150] [cursor=pointer]:
+                - generic [ref=e1151] [cursor=pointer]: "#041"
+                - button "Add to comparison" [ref=e1152] [cursor=pointer]:
+                  - img [ref=e1153] [cursor=pointer]
+              - generic [ref=e1160] [cursor=pointer]:
+                - generic [ref=e1163] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 41" [ref=e1165] [cursor=pointer]
+              - heading [level=3] [ref=e1167] [cursor=pointer]
+          - button "View details for Pokemon 42" [ref=e1174] [cursor=pointer]:
+            - generic [ref=e1176] [cursor=pointer]:
+              - generic [ref=e1177] [cursor=pointer]:
+                - generic [ref=e1178] [cursor=pointer]: "#042"
+                - button "Add to comparison" [ref=e1179] [cursor=pointer]:
+                  - img [ref=e1180] [cursor=pointer]
+              - generic [ref=e1187] [cursor=pointer]:
+                - generic [ref=e1190] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 42" [ref=e1192] [cursor=pointer]
+              - heading [level=3] [ref=e1194] [cursor=pointer]
+          - button "View details for Pokemon 43" [ref=e1201] [cursor=pointer]:
+            - generic [ref=e1203] [cursor=pointer]:
+              - generic [ref=e1204] [cursor=pointer]:
+                - generic [ref=e1205] [cursor=pointer]: "#043"
+                - button "Add to comparison" [ref=e1206] [cursor=pointer]:
+                  - img [ref=e1207] [cursor=pointer]
+              - generic [ref=e1214] [cursor=pointer]:
+                - generic [ref=e1217] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 43" [ref=e1219] [cursor=pointer]
+              - heading [level=3] [ref=e1221] [cursor=pointer]
+          - button "View details for Pokemon 44" [ref=e1228] [cursor=pointer]:
+            - generic [ref=e1230] [cursor=pointer]:
+              - generic [ref=e1231] [cursor=pointer]:
+                - generic [ref=e1232] [cursor=pointer]: "#044"
+                - button "Add to comparison" [ref=e1233] [cursor=pointer]:
+                  - img [ref=e1234] [cursor=pointer]
+              - generic [ref=e1241] [cursor=pointer]:
+                - generic [ref=e1244] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 44" [ref=e1246] [cursor=pointer]
+              - heading [level=3] [ref=e1248] [cursor=pointer]
+          - button "View details for Pokemon 45" [ref=e1255] [cursor=pointer]:
+            - generic [ref=e1257] [cursor=pointer]:
+              - generic [ref=e1258] [cursor=pointer]:
+                - generic [ref=e1259] [cursor=pointer]: "#045"
+                - button "Add to comparison" [ref=e1260] [cursor=pointer]:
+                  - img [ref=e1261] [cursor=pointer]
+              - generic [ref=e1268] [cursor=pointer]:
+                - generic [ref=e1271] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 45" [ref=e1273] [cursor=pointer]
+              - heading [level=3] [ref=e1275] [cursor=pointer]
+          - button "View details for Pokemon 46" [ref=e1282] [cursor=pointer]:
+            - generic [ref=e1284] [cursor=pointer]:
+              - generic [ref=e1285] [cursor=pointer]:
+                - generic [ref=e1286] [cursor=pointer]: "#046"
+                - button "Add to comparison" [ref=e1287] [cursor=pointer]:
+                  - img [ref=e1288] [cursor=pointer]
+              - generic [ref=e1295] [cursor=pointer]:
+                - generic [ref=e1298] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 46" [ref=e1300] [cursor=pointer]
+              - heading [level=3] [ref=e1302] [cursor=pointer]
+          - button "View details for Pokemon 47" [ref=e1309] [cursor=pointer]:
+            - generic [ref=e1311] [cursor=pointer]:
+              - generic [ref=e1312] [cursor=pointer]:
+                - generic [ref=e1313] [cursor=pointer]: "#047"
+                - button "Add to comparison" [ref=e1314] [cursor=pointer]:
+                  - img [ref=e1315] [cursor=pointer]
+              - generic [ref=e1322] [cursor=pointer]:
+                - generic [ref=e1325] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 47" [ref=e1327] [cursor=pointer]
+              - heading [level=3] [ref=e1329] [cursor=pointer]
+          - button "View details for Pokemon 48" [ref=e1336] [cursor=pointer]:
+            - generic [ref=e1338] [cursor=pointer]:
+              - generic [ref=e1339] [cursor=pointer]:
+                - generic [ref=e1340] [cursor=pointer]: "#048"
+                - button "Add to comparison" [ref=e1341] [cursor=pointer]:
+                  - img [ref=e1342] [cursor=pointer]
+              - generic [ref=e1349] [cursor=pointer]:
+                - generic [ref=e1352] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 48" [ref=e1354] [cursor=pointer]
+              - heading [level=3] [ref=e1356] [cursor=pointer]
+          - button "View details for Pokemon 49" [ref=e1363] [cursor=pointer]:
+            - generic [ref=e1365] [cursor=pointer]:
+              - generic [ref=e1366] [cursor=pointer]:
+                - generic [ref=e1367] [cursor=pointer]: "#049"
+                - button "Add to comparison" [ref=e1368] [cursor=pointer]:
+                  - img [ref=e1369] [cursor=pointer]
+              - generic [ref=e1376] [cursor=pointer]:
+                - generic [ref=e1379] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 49" [ref=e1381] [cursor=pointer]
+              - heading [level=3] [ref=e1383] [cursor=pointer]
+          - button "View details for Pokemon 50" [ref=e1390] [cursor=pointer]:
+            - generic [ref=e1392] [cursor=pointer]:
+              - generic [ref=e1393] [cursor=pointer]:
+                - generic [ref=e1394] [cursor=pointer]: "#050"
+                - button "Add to comparison" [ref=e1395] [cursor=pointer]:
+                  - img [ref=e1396] [cursor=pointer]
+              - generic [ref=e1403] [cursor=pointer]:
+                - generic [ref=e1406] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 50" [ref=e1408] [cursor=pointer]
+              - heading [level=3] [ref=e1410] [cursor=pointer]
+          - button "View details for Pokemon 51" [ref=e1417] [cursor=pointer]:
+            - generic [ref=e1419] [cursor=pointer]:
+              - generic [ref=e1420] [cursor=pointer]:
+                - generic [ref=e1421] [cursor=pointer]: "#051"
+                - button "Add to comparison" [ref=e1422] [cursor=pointer]:
+                  - img [ref=e1423] [cursor=pointer]
+              - generic [ref=e1430] [cursor=pointer]:
+                - generic [ref=e1433] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 51" [ref=e1435] [cursor=pointer]
+              - heading [level=3] [ref=e1437] [cursor=pointer]
+          - button "View details for Pokemon 52" [ref=e1444] [cursor=pointer]:
+            - generic [ref=e1446] [cursor=pointer]:
+              - generic [ref=e1447] [cursor=pointer]:
+                - generic [ref=e1448] [cursor=pointer]: "#052"
+                - button "Add to comparison" [ref=e1449] [cursor=pointer]:
+                  - img [ref=e1450] [cursor=pointer]
+              - generic [ref=e1457] [cursor=pointer]:
+                - generic [ref=e1460] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 52" [ref=e1462] [cursor=pointer]
+              - heading [level=3] [ref=e1464] [cursor=pointer]
+          - button "View details for Pokemon 53" [ref=e1471] [cursor=pointer]:
+            - generic [ref=e1473] [cursor=pointer]:
+              - generic [ref=e1474] [cursor=pointer]:
+                - generic [ref=e1475] [cursor=pointer]: "#053"
+                - button "Add to comparison" [ref=e1476] [cursor=pointer]:
+                  - img [ref=e1477] [cursor=pointer]
+              - generic [ref=e1484] [cursor=pointer]:
+                - generic [ref=e1487] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 53" [ref=e1489] [cursor=pointer]
+              - heading [level=3] [ref=e1491] [cursor=pointer]
+          - button "View details for Pokemon 54" [ref=e1498] [cursor=pointer]:
+            - generic [ref=e1500] [cursor=pointer]:
+              - generic [ref=e1501] [cursor=pointer]:
+                - generic [ref=e1502] [cursor=pointer]: "#054"
+                - button "Add to comparison" [ref=e1503] [cursor=pointer]:
+                  - img [ref=e1504] [cursor=pointer]
+              - generic [ref=e1511] [cursor=pointer]:
+                - generic [ref=e1514] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 54" [ref=e1516] [cursor=pointer]
+              - heading [level=3] [ref=e1518] [cursor=pointer]
+          - button "View details for Pokemon 55" [ref=e1525] [cursor=pointer]:
+            - generic [ref=e1527] [cursor=pointer]:
+              - generic [ref=e1528] [cursor=pointer]:
+                - generic [ref=e1529] [cursor=pointer]: "#055"
+                - button "Add to comparison" [ref=e1530] [cursor=pointer]:
+                  - img [ref=e1531] [cursor=pointer]
+              - generic [ref=e1538] [cursor=pointer]:
+                - generic [ref=e1541] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 55" [ref=e1543] [cursor=pointer]
+              - heading [level=3] [ref=e1545] [cursor=pointer]
+          - button "View details for Pokemon 56" [ref=e1552] [cursor=pointer]:
+            - generic [ref=e1554] [cursor=pointer]:
+              - generic [ref=e1555] [cursor=pointer]:
+                - generic [ref=e1556] [cursor=pointer]: "#056"
+                - button "Add to comparison" [ref=e1557] [cursor=pointer]:
+                  - img [ref=e1558] [cursor=pointer]
+              - generic [ref=e1565] [cursor=pointer]:
+                - generic [ref=e1568] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 56" [ref=e1570] [cursor=pointer]
+              - heading [level=3] [ref=e1572] [cursor=pointer]
+          - button "View details for Pokemon 57" [ref=e1579] [cursor=pointer]:
+            - generic [ref=e1581] [cursor=pointer]:
+              - generic [ref=e1582] [cursor=pointer]:
+                - generic [ref=e1583] [cursor=pointer]: "#057"
+                - button "Add to comparison" [ref=e1584] [cursor=pointer]:
+                  - img [ref=e1585] [cursor=pointer]
+              - generic [ref=e1592] [cursor=pointer]:
+                - generic [ref=e1595] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 57" [ref=e1597] [cursor=pointer]
+              - heading [level=3] [ref=e1599] [cursor=pointer]
+          - button "View details for Pokemon 58" [ref=e1606] [cursor=pointer]:
+            - generic [ref=e1608] [cursor=pointer]:
+              - generic [ref=e1609] [cursor=pointer]:
+                - generic [ref=e1610] [cursor=pointer]: "#058"
+                - button "Add to comparison" [ref=e1611] [cursor=pointer]:
+                  - img [ref=e1612] [cursor=pointer]
+              - generic [ref=e1619] [cursor=pointer]:
+                - generic [ref=e1622] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 58" [ref=e1624] [cursor=pointer]
+              - heading [level=3] [ref=e1626] [cursor=pointer]
+          - button "View details for Pokemon 59" [ref=e1633] [cursor=pointer]:
+            - generic [ref=e1635] [cursor=pointer]:
+              - generic [ref=e1636] [cursor=pointer]:
+                - generic [ref=e1637] [cursor=pointer]: "#059"
+                - button "Add to comparison" [ref=e1638] [cursor=pointer]:
+                  - img [ref=e1639] [cursor=pointer]
+              - generic [ref=e1646] [cursor=pointer]:
+                - generic [ref=e1649] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 59" [ref=e1651] [cursor=pointer]
+              - heading [level=3] [ref=e1653] [cursor=pointer]
+          - button "View details for Pokemon 60" [ref=e1660] [cursor=pointer]:
+            - generic [ref=e1662] [cursor=pointer]:
+              - generic [ref=e1663] [cursor=pointer]:
+                - generic [ref=e1664] [cursor=pointer]: "#060"
+                - button "Add to comparison" [ref=e1665] [cursor=pointer]:
+                  - img [ref=e1666] [cursor=pointer]
+              - generic [ref=e1673] [cursor=pointer]:
+                - generic [ref=e1676] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 60" [ref=e1678] [cursor=pointer]
+              - heading [level=3] [ref=e1680] [cursor=pointer]
+          - button "View details for Pokemon 61" [ref=e1687] [cursor=pointer]:
+            - generic [ref=e1689] [cursor=pointer]:
+              - generic [ref=e1690] [cursor=pointer]:
+                - generic [ref=e1691] [cursor=pointer]: "#061"
+                - button "Add to comparison" [ref=e1692] [cursor=pointer]:
+                  - img [ref=e1693] [cursor=pointer]
+              - generic [ref=e1700] [cursor=pointer]:
+                - generic [ref=e1703] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 61" [ref=e1705] [cursor=pointer]
+              - heading [level=3] [ref=e1707] [cursor=pointer]
+          - button "View details for Pokemon 62" [ref=e1714] [cursor=pointer]:
+            - generic [ref=e1716] [cursor=pointer]:
+              - generic [ref=e1717] [cursor=pointer]:
+                - generic [ref=e1718] [cursor=pointer]: "#062"
+                - button "Add to comparison" [ref=e1719] [cursor=pointer]:
+                  - img [ref=e1720] [cursor=pointer]
+              - generic [ref=e1727] [cursor=pointer]:
+                - generic [ref=e1730] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 62" [ref=e1732] [cursor=pointer]
+              - heading [level=3] [ref=e1734] [cursor=pointer]
+          - button "View details for Pokemon 63" [ref=e1741] [cursor=pointer]:
+            - generic [ref=e1743] [cursor=pointer]:
+              - generic [ref=e1744] [cursor=pointer]:
+                - generic [ref=e1745] [cursor=pointer]: "#063"
+                - button "Add to comparison" [ref=e1746] [cursor=pointer]:
+                  - img [ref=e1747] [cursor=pointer]
+              - generic [ref=e1754] [cursor=pointer]:
+                - generic [ref=e1757] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 63" [ref=e1759] [cursor=pointer]
+              - heading [level=3] [ref=e1761] [cursor=pointer]
+          - button "View details for Pokemon 64" [ref=e1768] [cursor=pointer]:
+            - generic [ref=e1770] [cursor=pointer]:
+              - generic [ref=e1771] [cursor=pointer]:
+                - generic [ref=e1772] [cursor=pointer]: "#064"
+                - button "Add to comparison" [ref=e1773] [cursor=pointer]:
+                  - img [ref=e1774] [cursor=pointer]
+              - generic [ref=e1781] [cursor=pointer]:
+                - generic [ref=e1784] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 64" [ref=e1786] [cursor=pointer]
+              - heading [level=3] [ref=e1788] [cursor=pointer]
+          - button "View details for Pokemon 65" [ref=e1795] [cursor=pointer]:
+            - generic [ref=e1797] [cursor=pointer]:
+              - generic [ref=e1798] [cursor=pointer]:
+                - generic [ref=e1799] [cursor=pointer]: "#065"
+                - button "Add to comparison" [ref=e1800] [cursor=pointer]:
+                  - img [ref=e1801] [cursor=pointer]
+              - generic [ref=e1808] [cursor=pointer]:
+                - generic [ref=e1811] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 65" [ref=e1813] [cursor=pointer]
+              - heading [level=3] [ref=e1815] [cursor=pointer]
+          - button "View details for Pokemon 66" [ref=e1822] [cursor=pointer]:
+            - generic [ref=e1824] [cursor=pointer]:
+              - generic [ref=e1825] [cursor=pointer]:
+                - generic [ref=e1826] [cursor=pointer]: "#066"
+                - button "Add to comparison" [ref=e1827] [cursor=pointer]:
+                  - img [ref=e1828] [cursor=pointer]
+              - generic [ref=e1835] [cursor=pointer]:
+                - generic [ref=e1838] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 66" [ref=e1840] [cursor=pointer]
+              - heading [level=3] [ref=e1842] [cursor=pointer]
+          - button "View details for Pokemon 67" [ref=e1849] [cursor=pointer]:
+            - generic [ref=e1851] [cursor=pointer]:
+              - generic [ref=e1852] [cursor=pointer]:
+                - generic [ref=e1853] [cursor=pointer]: "#067"
+                - button "Add to comparison" [ref=e1854] [cursor=pointer]:
+                  - img [ref=e1855] [cursor=pointer]
+              - generic [ref=e1862] [cursor=pointer]:
+                - generic [ref=e1865] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 67" [ref=e1867] [cursor=pointer]
+              - heading [level=3] [ref=e1869] [cursor=pointer]
+          - button "View details for Pokemon 68" [ref=e1876] [cursor=pointer]:
+            - generic [ref=e1878] [cursor=pointer]:
+              - generic [ref=e1879] [cursor=pointer]:
+                - generic [ref=e1880] [cursor=pointer]: "#068"
+                - button "Add to comparison" [ref=e1881] [cursor=pointer]:
+                  - img [ref=e1882] [cursor=pointer]
+              - generic [ref=e1889] [cursor=pointer]:
+                - generic [ref=e1892] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 68" [ref=e1894] [cursor=pointer]
+              - heading [level=3] [ref=e1896] [cursor=pointer]
+          - button "View details for Pokemon 69" [ref=e1903] [cursor=pointer]:
+            - generic [ref=e1905] [cursor=pointer]:
+              - generic [ref=e1906] [cursor=pointer]:
+                - generic [ref=e1907] [cursor=pointer]: "#069"
+                - button "Add to comparison" [ref=e1908] [cursor=pointer]:
+                  - img [ref=e1909] [cursor=pointer]
+              - generic [ref=e1916] [cursor=pointer]:
+                - generic [ref=e1919] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 69" [ref=e1921] [cursor=pointer]
+              - heading [level=3] [ref=e1923] [cursor=pointer]
+          - button "View details for Pokemon 70" [ref=e1930] [cursor=pointer]:
+            - generic [ref=e1932] [cursor=pointer]:
+              - generic [ref=e1933] [cursor=pointer]:
+                - generic [ref=e1934] [cursor=pointer]: "#070"
+                - button "Add to comparison" [ref=e1935] [cursor=pointer]:
+                  - img [ref=e1936] [cursor=pointer]
+              - generic [ref=e1943] [cursor=pointer]:
+                - generic [ref=e1946] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 70" [ref=e1948] [cursor=pointer]
+              - heading [level=3] [ref=e1950] [cursor=pointer]
+          - button "View details for Pokemon 71" [ref=e1957] [cursor=pointer]:
+            - generic [ref=e1959] [cursor=pointer]:
+              - generic [ref=e1960] [cursor=pointer]:
+                - generic [ref=e1961] [cursor=pointer]: "#071"
+                - button "Add to comparison" [ref=e1962] [cursor=pointer]:
+                  - img [ref=e1963] [cursor=pointer]
+              - generic [ref=e1970] [cursor=pointer]:
+                - generic [ref=e1973] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 71" [ref=e1975] [cursor=pointer]
+              - heading [level=3] [ref=e1977] [cursor=pointer]
+          - button "View details for Pokemon 72" [ref=e1984] [cursor=pointer]:
+            - generic [ref=e1986] [cursor=pointer]:
+              - generic [ref=e1987] [cursor=pointer]:
+                - generic [ref=e1988] [cursor=pointer]: "#072"
+                - button "Add to comparison" [ref=e1989] [cursor=pointer]:
+                  - img [ref=e1990] [cursor=pointer]
+              - generic [ref=e1997] [cursor=pointer]:
+                - generic [ref=e2000] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 72" [ref=e2002] [cursor=pointer]
+              - heading [level=3] [ref=e2004] [cursor=pointer]
+          - button "View details for Pokemon 73" [ref=e2011] [cursor=pointer]:
+            - generic [ref=e2013] [cursor=pointer]:
+              - generic [ref=e2014] [cursor=pointer]:
+                - generic [ref=e2015] [cursor=pointer]: "#073"
+                - button "Add to comparison" [ref=e2016] [cursor=pointer]:
+                  - img [ref=e2017] [cursor=pointer]
+              - generic [ref=e2024] [cursor=pointer]:
+                - generic [ref=e2027] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 73" [ref=e2029] [cursor=pointer]
+              - heading [level=3] [ref=e2031] [cursor=pointer]
+          - button "View details for Pokemon 74" [ref=e2038] [cursor=pointer]:
+            - generic [ref=e2040] [cursor=pointer]:
+              - generic [ref=e2041] [cursor=pointer]:
+                - generic [ref=e2042] [cursor=pointer]: "#074"
+                - button "Add to comparison" [ref=e2043] [cursor=pointer]:
+                  - img [ref=e2044] [cursor=pointer]
+              - generic [ref=e2051] [cursor=pointer]:
+                - generic [ref=e2054] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 74" [ref=e2056] [cursor=pointer]
+              - heading [level=3] [ref=e2058] [cursor=pointer]
+          - button "View details for Pokemon 75" [ref=e2065] [cursor=pointer]:
+            - generic [ref=e2067] [cursor=pointer]:
+              - generic [ref=e2068] [cursor=pointer]:
+                - generic [ref=e2069] [cursor=pointer]: "#075"
+                - button "Add to comparison" [ref=e2070] [cursor=pointer]:
+                  - img [ref=e2071] [cursor=pointer]
+              - generic [ref=e2078] [cursor=pointer]:
+                - generic [ref=e2081] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 75" [ref=e2083] [cursor=pointer]
+              - heading [level=3] [ref=e2085] [cursor=pointer]
+          - button "View details for Pokemon 76" [ref=e2092] [cursor=pointer]:
+            - generic [ref=e2094] [cursor=pointer]:
+              - generic [ref=e2095] [cursor=pointer]:
+                - generic [ref=e2096] [cursor=pointer]: "#076"
+                - button "Add to comparison" [ref=e2097] [cursor=pointer]:
+                  - img [ref=e2098] [cursor=pointer]
+              - generic [ref=e2105] [cursor=pointer]:
+                - generic [ref=e2108] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 76" [ref=e2110] [cursor=pointer]
+              - heading [level=3] [ref=e2112] [cursor=pointer]
+          - button "View details for Pokemon 77" [ref=e2119] [cursor=pointer]:
+            - generic [ref=e2121] [cursor=pointer]:
+              - generic [ref=e2122] [cursor=pointer]:
+                - generic [ref=e2123] [cursor=pointer]: "#077"
+                - button "Add to comparison" [ref=e2124] [cursor=pointer]:
+                  - img [ref=e2125] [cursor=pointer]
+              - generic [ref=e2132] [cursor=pointer]:
+                - generic [ref=e2135] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 77" [ref=e2137] [cursor=pointer]
+              - heading [level=3] [ref=e2139] [cursor=pointer]
+          - button "View details for Pokemon 78" [ref=e2146] [cursor=pointer]:
+            - generic [ref=e2148] [cursor=pointer]:
+              - generic [ref=e2149] [cursor=pointer]:
+                - generic [ref=e2150] [cursor=pointer]: "#078"
+                - button "Add to comparison" [ref=e2151] [cursor=pointer]:
+                  - img [ref=e2152] [cursor=pointer]
+              - generic [ref=e2159] [cursor=pointer]:
+                - generic [ref=e2162] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 78" [ref=e2164] [cursor=pointer]
+              - heading [level=3] [ref=e2166] [cursor=pointer]
+          - button "View details for Pokemon 79" [ref=e2173] [cursor=pointer]:
+            - generic [ref=e2175] [cursor=pointer]:
+              - generic [ref=e2176] [cursor=pointer]:
+                - generic [ref=e2177] [cursor=pointer]: "#079"
+                - button "Add to comparison" [ref=e2178] [cursor=pointer]:
+                  - img [ref=e2179] [cursor=pointer]
+              - generic [ref=e2186] [cursor=pointer]:
+                - generic [ref=e2189] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 79" [ref=e2191] [cursor=pointer]
+              - heading [level=3] [ref=e2193] [cursor=pointer]
+          - button "View details for Pokemon 80" [ref=e2200] [cursor=pointer]:
+            - generic [ref=e2202] [cursor=pointer]:
+              - generic [ref=e2203] [cursor=pointer]:
+                - generic [ref=e2204] [cursor=pointer]: "#080"
+                - button "Add to comparison" [ref=e2205] [cursor=pointer]:
+                  - img [ref=e2206] [cursor=pointer]
+              - generic [ref=e2213] [cursor=pointer]:
+                - generic [ref=e2216] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 80" [ref=e2218] [cursor=pointer]
+              - heading [level=3] [ref=e2220] [cursor=pointer]
+          - button "View details for Pokemon 81" [ref=e2227] [cursor=pointer]:
+            - generic [ref=e2229] [cursor=pointer]:
+              - generic [ref=e2230] [cursor=pointer]:
+                - generic [ref=e2231] [cursor=pointer]: "#081"
+                - button "Add to comparison" [ref=e2232] [cursor=pointer]:
+                  - img [ref=e2233] [cursor=pointer]
+              - generic [ref=e2240] [cursor=pointer]:
+                - generic [ref=e2243] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 81" [ref=e2245] [cursor=pointer]
+              - heading [level=3] [ref=e2247] [cursor=pointer]
+          - button "View details for Pokemon 82" [ref=e2254] [cursor=pointer]:
+            - generic [ref=e2256] [cursor=pointer]:
+              - generic [ref=e2257] [cursor=pointer]:
+                - generic [ref=e2258] [cursor=pointer]: "#082"
+                - button "Add to comparison" [ref=e2259] [cursor=pointer]:
+                  - img [ref=e2260] [cursor=pointer]
+              - generic [ref=e2267] [cursor=pointer]:
+                - generic [ref=e2270] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 82" [ref=e2272] [cursor=pointer]
+              - heading [level=3] [ref=e2274] [cursor=pointer]
+          - button "View details for Pokemon 83" [ref=e2281] [cursor=pointer]:
+            - generic [ref=e2283] [cursor=pointer]:
+              - generic [ref=e2284] [cursor=pointer]:
+                - generic [ref=e2285] [cursor=pointer]: "#083"
+                - button "Add to comparison" [ref=e2286] [cursor=pointer]:
+                  - img [ref=e2287] [cursor=pointer]
+              - generic [ref=e2294] [cursor=pointer]:
+                - generic [ref=e2297] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 83" [ref=e2299] [cursor=pointer]
+              - heading [level=3] [ref=e2301] [cursor=pointer]
+          - button "View details for Pokemon 84" [ref=e2308] [cursor=pointer]:
+            - generic [ref=e2310] [cursor=pointer]:
+              - generic [ref=e2311] [cursor=pointer]:
+                - generic [ref=e2312] [cursor=pointer]: "#084"
+                - button "Add to comparison" [ref=e2313] [cursor=pointer]:
+                  - img [ref=e2314] [cursor=pointer]
+              - generic [ref=e2321] [cursor=pointer]:
+                - generic [ref=e2324] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 84" [ref=e2326] [cursor=pointer]
+              - heading [level=3] [ref=e2328] [cursor=pointer]
+          - button "View details for Pokemon 85" [ref=e2335] [cursor=pointer]:
+            - generic [ref=e2337] [cursor=pointer]:
+              - generic [ref=e2338] [cursor=pointer]:
+                - generic [ref=e2339] [cursor=pointer]: "#085"
+                - button "Add to comparison" [ref=e2340] [cursor=pointer]:
+                  - img [ref=e2341] [cursor=pointer]
+              - generic [ref=e2348] [cursor=pointer]:
+                - generic [ref=e2351] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 85" [ref=e2353] [cursor=pointer]
+              - heading [level=3] [ref=e2355] [cursor=pointer]
+          - button "View details for Pokemon 86" [ref=e2362] [cursor=pointer]:
+            - generic [ref=e2364] [cursor=pointer]:
+              - generic [ref=e2365] [cursor=pointer]:
+                - generic [ref=e2366] [cursor=pointer]: "#086"
+                - button "Add to comparison" [ref=e2367] [cursor=pointer]:
+                  - img [ref=e2368] [cursor=pointer]
+              - generic [ref=e2375] [cursor=pointer]:
+                - generic [ref=e2378] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 86" [ref=e2380] [cursor=pointer]
+              - heading [level=3] [ref=e2382] [cursor=pointer]
+          - button "View details for Pokemon 87" [ref=e2389] [cursor=pointer]:
+            - generic [ref=e2391] [cursor=pointer]:
+              - generic [ref=e2392] [cursor=pointer]:
+                - generic [ref=e2393] [cursor=pointer]: "#087"
+                - button "Add to comparison" [ref=e2394] [cursor=pointer]:
+                  - img [ref=e2395] [cursor=pointer]
+              - generic [ref=e2402] [cursor=pointer]:
+                - generic [ref=e2405] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 87" [ref=e2407] [cursor=pointer]
+              - heading [level=3] [ref=e2409] [cursor=pointer]
+          - button "View details for Pokemon 88" [ref=e2416] [cursor=pointer]:
+            - generic [ref=e2418] [cursor=pointer]:
+              - generic [ref=e2419] [cursor=pointer]:
+                - generic [ref=e2420] [cursor=pointer]: "#088"
+                - button "Add to comparison" [ref=e2421] [cursor=pointer]:
+                  - img [ref=e2422] [cursor=pointer]
+              - generic [ref=e2429] [cursor=pointer]:
+                - generic [ref=e2432] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 88" [ref=e2434] [cursor=pointer]
+              - heading [level=3] [ref=e2436] [cursor=pointer]
+          - button "View details for Pokemon 89" [ref=e2443] [cursor=pointer]:
+            - generic [ref=e2445] [cursor=pointer]:
+              - generic [ref=e2446] [cursor=pointer]:
+                - generic [ref=e2447] [cursor=pointer]: "#089"
+                - button "Add to comparison" [ref=e2448] [cursor=pointer]:
+                  - img [ref=e2449] [cursor=pointer]
+              - generic [ref=e2456] [cursor=pointer]:
+                - generic [ref=e2459] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 89" [ref=e2461] [cursor=pointer]
+              - heading [level=3] [ref=e2463] [cursor=pointer]
+          - button "View details for Pokemon 90" [ref=e2470] [cursor=pointer]:
+            - generic [ref=e2472] [cursor=pointer]:
+              - generic [ref=e2473] [cursor=pointer]:
+                - generic [ref=e2474] [cursor=pointer]: "#090"
+                - button "Add to comparison" [ref=e2475] [cursor=pointer]:
+                  - img [ref=e2476] [cursor=pointer]
+              - generic [ref=e2483] [cursor=pointer]:
+                - generic [ref=e2486] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 90" [ref=e2488] [cursor=pointer]
+              - heading [level=3] [ref=e2490] [cursor=pointer]
+          - button "View details for Pokemon 91" [ref=e2497] [cursor=pointer]:
+            - generic [ref=e2499] [cursor=pointer]:
+              - generic [ref=e2500] [cursor=pointer]:
+                - generic [ref=e2501] [cursor=pointer]: "#091"
+                - button "Add to comparison" [ref=e2502] [cursor=pointer]:
+                  - img [ref=e2503] [cursor=pointer]
+              - generic [ref=e2510] [cursor=pointer]:
+                - generic [ref=e2513] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 91" [ref=e2515] [cursor=pointer]
+              - heading [level=3] [ref=e2517] [cursor=pointer]
+          - button "View details for Pokemon 92" [ref=e2524] [cursor=pointer]:
+            - generic [ref=e2526] [cursor=pointer]:
+              - generic [ref=e2527] [cursor=pointer]:
+                - generic [ref=e2528] [cursor=pointer]: "#092"
+                - button "Add to comparison" [ref=e2529] [cursor=pointer]:
+                  - img [ref=e2530] [cursor=pointer]
+              - generic [ref=e2537] [cursor=pointer]:
+                - generic [ref=e2540] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 92" [ref=e2542] [cursor=pointer]
+              - heading [level=3] [ref=e2544] [cursor=pointer]
+          - button "View details for Pokemon 93" [ref=e2551] [cursor=pointer]:
+            - generic [ref=e2553] [cursor=pointer]:
+              - generic [ref=e2554] [cursor=pointer]:
+                - generic [ref=e2555] [cursor=pointer]: "#093"
+                - button "Add to comparison" [ref=e2556] [cursor=pointer]:
+                  - img [ref=e2557] [cursor=pointer]
+              - generic [ref=e2564] [cursor=pointer]:
+                - generic [ref=e2567] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 93" [ref=e2569] [cursor=pointer]
+              - heading [level=3] [ref=e2571] [cursor=pointer]
+          - button "View details for Pokemon 94" [ref=e2578] [cursor=pointer]:
+            - generic [ref=e2580] [cursor=pointer]:
+              - generic [ref=e2581] [cursor=pointer]:
+                - generic [ref=e2582] [cursor=pointer]: "#094"
+                - button "Add to comparison" [ref=e2583] [cursor=pointer]:
+                  - img [ref=e2584] [cursor=pointer]
+              - generic [ref=e2591] [cursor=pointer]:
+                - generic [ref=e2594] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 94" [ref=e2596] [cursor=pointer]
+              - heading [level=3] [ref=e2598] [cursor=pointer]
+          - button "View details for Pokemon 95" [ref=e2605] [cursor=pointer]:
+            - generic [ref=e2607] [cursor=pointer]:
+              - generic [ref=e2608] [cursor=pointer]:
+                - generic [ref=e2609] [cursor=pointer]: "#095"
+                - button "Add to comparison" [ref=e2610] [cursor=pointer]:
+                  - img [ref=e2611] [cursor=pointer]
+              - generic [ref=e2618] [cursor=pointer]:
+                - generic [ref=e2621] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 95" [ref=e2623] [cursor=pointer]
+              - heading [level=3] [ref=e2625] [cursor=pointer]
+          - button "View details for Pokemon 96" [ref=e2632] [cursor=pointer]:
+            - generic [ref=e2634] [cursor=pointer]:
+              - generic [ref=e2635] [cursor=pointer]:
+                - generic [ref=e2636] [cursor=pointer]: "#096"
+                - button "Add to comparison" [ref=e2637] [cursor=pointer]:
+                  - img [ref=e2638] [cursor=pointer]
+              - generic [ref=e2645] [cursor=pointer]:
+                - generic [ref=e2648] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 96" [ref=e2650] [cursor=pointer]
+              - heading [level=3] [ref=e2652] [cursor=pointer]
+          - button "View details for Pokemon 97" [ref=e2659] [cursor=pointer]:
+            - generic [ref=e2661] [cursor=pointer]:
+              - generic [ref=e2662] [cursor=pointer]:
+                - generic [ref=e2663] [cursor=pointer]: "#097"
+                - button "Add to comparison" [ref=e2664] [cursor=pointer]:
+                  - img [ref=e2665] [cursor=pointer]
+              - generic [ref=e2672] [cursor=pointer]:
+                - generic [ref=e2675] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 97" [ref=e2677] [cursor=pointer]
+              - heading [level=3] [ref=e2679] [cursor=pointer]
+          - button "View details for Pokemon 98" [ref=e2686] [cursor=pointer]:
+            - generic [ref=e2688] [cursor=pointer]:
+              - generic [ref=e2689] [cursor=pointer]:
+                - generic [ref=e2690] [cursor=pointer]: "#098"
+                - button "Add to comparison" [ref=e2691] [cursor=pointer]:
+                  - img [ref=e2692] [cursor=pointer]
+              - generic [ref=e2699] [cursor=pointer]:
+                - generic [ref=e2702] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 98" [ref=e2704] [cursor=pointer]
+              - heading [level=3] [ref=e2706] [cursor=pointer]
+          - button "View details for Pokemon 99" [ref=e2713] [cursor=pointer]:
+            - generic [ref=e2715] [cursor=pointer]:
+              - generic [ref=e2716] [cursor=pointer]:
+                - generic [ref=e2717] [cursor=pointer]: "#099"
+                - button "Add to comparison" [ref=e2718] [cursor=pointer]:
+                  - img [ref=e2719] [cursor=pointer]
+              - generic [ref=e2726] [cursor=pointer]:
+                - generic [ref=e2729] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 99" [ref=e2731] [cursor=pointer]
+              - heading [level=3] [ref=e2733] [cursor=pointer]
+          - button "View details for Pokemon 100" [ref=e2740] [cursor=pointer]:
+            - generic [ref=e2742] [cursor=pointer]:
+              - generic [ref=e2743] [cursor=pointer]:
+                - generic [ref=e2744] [cursor=pointer]: "#100"
+                - button "Add to comparison" [ref=e2745] [cursor=pointer]:
+                  - img [ref=e2746] [cursor=pointer]
+              - generic [ref=e2753] [cursor=pointer]:
+                - generic [ref=e2756] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 100" [ref=e2758] [cursor=pointer]
+              - heading [level=3] [ref=e2760] [cursor=pointer]
+          - button "View details for Pokemon 101" [ref=e2767] [cursor=pointer]:
+            - generic [ref=e2769] [cursor=pointer]:
+              - generic [ref=e2770] [cursor=pointer]:
+                - generic [ref=e2771] [cursor=pointer]: "#101"
+                - button "Add to comparison" [ref=e2772] [cursor=pointer]:
+                  - img [ref=e2773] [cursor=pointer]
+              - generic [ref=e2780] [cursor=pointer]:
+                - generic [ref=e2783] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 101" [ref=e2785] [cursor=pointer]
+              - heading [level=3] [ref=e2787] [cursor=pointer]
+          - button "View details for Pokemon 102" [ref=e2794] [cursor=pointer]:
+            - generic [ref=e2796] [cursor=pointer]:
+              - generic [ref=e2797] [cursor=pointer]:
+                - generic [ref=e2798] [cursor=pointer]: "#102"
+                - button "Add to comparison" [ref=e2799] [cursor=pointer]:
+                  - img [ref=e2800] [cursor=pointer]
+              - generic [ref=e2807] [cursor=pointer]:
+                - generic [ref=e2810] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 102" [ref=e2812] [cursor=pointer]
+              - heading [level=3] [ref=e2814] [cursor=pointer]
+          - button "View details for Pokemon 103" [ref=e2821] [cursor=pointer]:
+            - generic [ref=e2823] [cursor=pointer]:
+              - generic [ref=e2824] [cursor=pointer]:
+                - generic [ref=e2825] [cursor=pointer]: "#103"
+                - button "Add to comparison" [ref=e2826] [cursor=pointer]:
+                  - img [ref=e2827] [cursor=pointer]
+              - generic [ref=e2834] [cursor=pointer]:
+                - generic [ref=e2837] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 103" [ref=e2839] [cursor=pointer]
+              - heading [level=3] [ref=e2841] [cursor=pointer]
+          - button "View details for Pokemon 104" [ref=e2848] [cursor=pointer]:
+            - generic [ref=e2850] [cursor=pointer]:
+              - generic [ref=e2851] [cursor=pointer]:
+                - generic [ref=e2852] [cursor=pointer]: "#104"
+                - button "Add to comparison" [ref=e2853] [cursor=pointer]:
+                  - img [ref=e2854] [cursor=pointer]
+              - generic [ref=e2861] [cursor=pointer]:
+                - generic [ref=e2864] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 104" [ref=e2866] [cursor=pointer]
+              - heading [level=3] [ref=e2868] [cursor=pointer]
+          - button "View details for Pokemon 105" [ref=e2875] [cursor=pointer]:
+            - generic [ref=e2877] [cursor=pointer]:
+              - generic [ref=e2878] [cursor=pointer]:
+                - generic [ref=e2879] [cursor=pointer]: "#105"
+                - button "Add to comparison" [ref=e2880] [cursor=pointer]:
+                  - img [ref=e2881] [cursor=pointer]
+              - generic [ref=e2888] [cursor=pointer]:
+                - generic [ref=e2891] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 105" [ref=e2893] [cursor=pointer]
+              - heading [level=3] [ref=e2895] [cursor=pointer]
+          - button "View details for Pokemon 106" [ref=e2902] [cursor=pointer]:
+            - generic [ref=e2904] [cursor=pointer]:
+              - generic [ref=e2905] [cursor=pointer]:
+                - generic [ref=e2906] [cursor=pointer]: "#106"
+                - button "Add to comparison" [ref=e2907] [cursor=pointer]:
+                  - img [ref=e2908] [cursor=pointer]
+              - generic [ref=e2915] [cursor=pointer]:
+                - generic [ref=e2918] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 106" [ref=e2920] [cursor=pointer]
+              - heading [level=3] [ref=e2922] [cursor=pointer]
+          - button "View details for Pokemon 107" [ref=e2929] [cursor=pointer]:
+            - generic [ref=e2931] [cursor=pointer]:
+              - generic [ref=e2932] [cursor=pointer]:
+                - generic [ref=e2933] [cursor=pointer]: "#107"
+                - button "Add to comparison" [ref=e2934] [cursor=pointer]:
+                  - img [ref=e2935] [cursor=pointer]
+              - generic [ref=e2942] [cursor=pointer]:
+                - generic [ref=e2945] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 107" [ref=e2947] [cursor=pointer]
+              - heading [level=3] [ref=e2949] [cursor=pointer]
+          - button "View details for Pokemon 108" [ref=e2956] [cursor=pointer]:
+            - generic [ref=e2958] [cursor=pointer]:
+              - generic [ref=e2959] [cursor=pointer]:
+                - generic [ref=e2960] [cursor=pointer]: "#108"
+                - button "Add to comparison" [ref=e2961] [cursor=pointer]:
+                  - img [ref=e2962] [cursor=pointer]
+              - generic [ref=e2969] [cursor=pointer]:
+                - generic [ref=e2972] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 108" [ref=e2974] [cursor=pointer]
+              - heading [level=3] [ref=e2976] [cursor=pointer]
+          - button "View details for Pokemon 109" [ref=e2983] [cursor=pointer]:
+            - generic [ref=e2985] [cursor=pointer]:
+              - generic [ref=e2986] [cursor=pointer]:
+                - generic [ref=e2987] [cursor=pointer]: "#109"
+                - button "Add to comparison" [ref=e2988] [cursor=pointer]:
+                  - img [ref=e2989] [cursor=pointer]
+              - generic [ref=e2996] [cursor=pointer]:
+                - generic [ref=e2999] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 109" [ref=e3001] [cursor=pointer]
+              - heading [level=3] [ref=e3003] [cursor=pointer]
+          - button "View details for Pokemon 110" [ref=e3010] [cursor=pointer]:
+            - generic [ref=e3012] [cursor=pointer]:
+              - generic [ref=e3013] [cursor=pointer]:
+                - generic [ref=e3014] [cursor=pointer]: "#110"
+                - button "Add to comparison" [ref=e3015] [cursor=pointer]:
+                  - img [ref=e3016] [cursor=pointer]
+              - generic [ref=e3023] [cursor=pointer]:
+                - generic [ref=e3026] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 110" [ref=e3028] [cursor=pointer]
+              - heading [level=3] [ref=e3030] [cursor=pointer]
+          - button "View details for Pokemon 111" [ref=e3037] [cursor=pointer]:
+            - generic [ref=e3039] [cursor=pointer]:
+              - generic [ref=e3040] [cursor=pointer]:
+                - generic [ref=e3041] [cursor=pointer]: "#111"
+                - button "Add to comparison" [ref=e3042] [cursor=pointer]:
+                  - img [ref=e3043] [cursor=pointer]
+              - generic [ref=e3050] [cursor=pointer]:
+                - generic [ref=e3053] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 111" [ref=e3055] [cursor=pointer]
+              - heading [level=3] [ref=e3057] [cursor=pointer]
+          - button "View details for Pokemon 112" [ref=e3064] [cursor=pointer]:
+            - generic [ref=e3066] [cursor=pointer]:
+              - generic [ref=e3067] [cursor=pointer]:
+                - generic [ref=e3068] [cursor=pointer]: "#112"
+                - button "Add to comparison" [ref=e3069] [cursor=pointer]:
+                  - img [ref=e3070] [cursor=pointer]
+              - generic [ref=e3077] [cursor=pointer]:
+                - generic [ref=e3080] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 112" [ref=e3082] [cursor=pointer]
+              - heading [level=3] [ref=e3084] [cursor=pointer]
+          - button "View details for Pokemon 113" [ref=e3091] [cursor=pointer]:
+            - generic [ref=e3093] [cursor=pointer]:
+              - generic [ref=e3094] [cursor=pointer]:
+                - generic [ref=e3095] [cursor=pointer]: "#113"
+                - button "Add to comparison" [ref=e3096] [cursor=pointer]:
+                  - img [ref=e3097] [cursor=pointer]
+              - generic [ref=e3104] [cursor=pointer]:
+                - generic [ref=e3107] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 113" [ref=e3109] [cursor=pointer]
+              - heading [level=3] [ref=e3111] [cursor=pointer]
+          - button "View details for Pokemon 114" [ref=e3118] [cursor=pointer]:
+            - generic [ref=e3120] [cursor=pointer]:
+              - generic [ref=e3121] [cursor=pointer]:
+                - generic [ref=e3122] [cursor=pointer]: "#114"
+                - button "Add to comparison" [ref=e3123] [cursor=pointer]:
+                  - img [ref=e3124] [cursor=pointer]
+              - generic [ref=e3131] [cursor=pointer]:
+                - generic [ref=e3134] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 114" [ref=e3136] [cursor=pointer]
+              - heading [level=3] [ref=e3138] [cursor=pointer]
+          - button "View details for Pokemon 115" [ref=e3145] [cursor=pointer]:
+            - generic [ref=e3147] [cursor=pointer]:
+              - generic [ref=e3148] [cursor=pointer]:
+                - generic [ref=e3149] [cursor=pointer]: "#115"
+                - button "Add to comparison" [ref=e3150] [cursor=pointer]:
+                  - img [ref=e3151] [cursor=pointer]
+              - generic [ref=e3158] [cursor=pointer]:
+                - generic [ref=e3161] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 115" [ref=e3163] [cursor=pointer]
+              - heading [level=3] [ref=e3165] [cursor=pointer]
+          - button "View details for Pokemon 116" [ref=e3172] [cursor=pointer]:
+            - generic [ref=e3174] [cursor=pointer]:
+              - generic [ref=e3175] [cursor=pointer]:
+                - generic [ref=e3176] [cursor=pointer]: "#116"
+                - button "Add to comparison" [ref=e3177] [cursor=pointer]:
+                  - img [ref=e3178] [cursor=pointer]
+              - generic [ref=e3185] [cursor=pointer]:
+                - generic [ref=e3188] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 116" [ref=e3190] [cursor=pointer]
+              - heading [level=3] [ref=e3192] [cursor=pointer]
+          - button "View details for Pokemon 117" [ref=e3199] [cursor=pointer]:
+            - generic [ref=e3201] [cursor=pointer]:
+              - generic [ref=e3202] [cursor=pointer]:
+                - generic [ref=e3203] [cursor=pointer]: "#117"
+                - button "Add to comparison" [ref=e3204] [cursor=pointer]:
+                  - img [ref=e3205] [cursor=pointer]
+              - generic [ref=e3212] [cursor=pointer]:
+                - generic [ref=e3215] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 117" [ref=e3217] [cursor=pointer]
+              - heading [level=3] [ref=e3219] [cursor=pointer]
+          - button "View details for Pokemon 118" [ref=e3226] [cursor=pointer]:
+            - generic [ref=e3228] [cursor=pointer]:
+              - generic [ref=e3229] [cursor=pointer]:
+                - generic [ref=e3230] [cursor=pointer]: "#118"
+                - button "Add to comparison" [ref=e3231] [cursor=pointer]:
+                  - img [ref=e3232] [cursor=pointer]
+              - generic [ref=e3239] [cursor=pointer]:
+                - generic [ref=e3242] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 118" [ref=e3244] [cursor=pointer]
+              - heading [level=3] [ref=e3246] [cursor=pointer]
+          - button "View details for Pokemon 119" [ref=e3253] [cursor=pointer]:
+            - generic [ref=e3255] [cursor=pointer]:
+              - generic [ref=e3256] [cursor=pointer]:
+                - generic [ref=e3257] [cursor=pointer]: "#119"
+                - button "Add to comparison" [ref=e3258] [cursor=pointer]:
+                  - img [ref=e3259] [cursor=pointer]
+              - generic [ref=e3266] [cursor=pointer]:
+                - generic [ref=e3269] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 119" [ref=e3271] [cursor=pointer]
+              - heading [level=3] [ref=e3273] [cursor=pointer]
+          - button "View details for Pokemon 120" [ref=e3280] [cursor=pointer]:
+            - generic [ref=e3282] [cursor=pointer]:
+              - generic [ref=e3283] [cursor=pointer]:
+                - generic [ref=e3284] [cursor=pointer]: "#120"
+                - button "Add to comparison" [ref=e3285] [cursor=pointer]:
+                  - img [ref=e3286] [cursor=pointer]
+              - generic [ref=e3293] [cursor=pointer]:
+                - generic [ref=e3296] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 120" [ref=e3298] [cursor=pointer]
+              - heading [level=3] [ref=e3300] [cursor=pointer]
+          - button "View details for Pokemon 121" [ref=e3307] [cursor=pointer]:
+            - generic [ref=e3309] [cursor=pointer]:
+              - generic [ref=e3310] [cursor=pointer]:
+                - generic [ref=e3311] [cursor=pointer]: "#121"
+                - button "Add to comparison" [ref=e3312] [cursor=pointer]:
+                  - img [ref=e3313] [cursor=pointer]
+              - generic [ref=e3320] [cursor=pointer]:
+                - generic [ref=e3323] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 121" [ref=e3325] [cursor=pointer]
+              - heading [level=3] [ref=e3327] [cursor=pointer]
+          - button "View details for Pokemon 122" [ref=e3334] [cursor=pointer]:
+            - generic [ref=e3336] [cursor=pointer]:
+              - generic [ref=e3337] [cursor=pointer]:
+                - generic [ref=e3338] [cursor=pointer]: "#122"
+                - button "Add to comparison" [ref=e3339] [cursor=pointer]:
+                  - img [ref=e3340] [cursor=pointer]
+              - generic [ref=e3347] [cursor=pointer]:
+                - generic [ref=e3350] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 122" [ref=e3352] [cursor=pointer]
+              - heading [level=3] [ref=e3354] [cursor=pointer]
+          - button "View details for Pokemon 123" [ref=e3361] [cursor=pointer]:
+            - generic [ref=e3363] [cursor=pointer]:
+              - generic [ref=e3364] [cursor=pointer]:
+                - generic [ref=e3365] [cursor=pointer]: "#123"
+                - button "Add to comparison" [ref=e3366] [cursor=pointer]:
+                  - img [ref=e3367] [cursor=pointer]
+              - generic [ref=e3374] [cursor=pointer]:
+                - generic [ref=e3377] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 123" [ref=e3379] [cursor=pointer]
+              - heading [level=3] [ref=e3381] [cursor=pointer]
+          - button "View details for Pokemon 124" [ref=e3388] [cursor=pointer]:
+            - generic [ref=e3390] [cursor=pointer]:
+              - generic [ref=e3391] [cursor=pointer]:
+                - generic [ref=e3392] [cursor=pointer]: "#124"
+                - button "Add to comparison" [ref=e3393] [cursor=pointer]:
+                  - img [ref=e3394] [cursor=pointer]
+              - generic [ref=e3401] [cursor=pointer]:
+                - generic [ref=e3404] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 124" [ref=e3406] [cursor=pointer]
+              - heading [level=3] [ref=e3408] [cursor=pointer]
+          - button "View details for Pokemon 125" [ref=e3415] [cursor=pointer]:
+            - generic [ref=e3417] [cursor=pointer]:
+              - generic [ref=e3418] [cursor=pointer]:
+                - generic [ref=e3419] [cursor=pointer]: "#125"
+                - button "Add to comparison" [ref=e3420] [cursor=pointer]:
+                  - img [ref=e3421] [cursor=pointer]
+              - generic [ref=e3428] [cursor=pointer]:
+                - generic [ref=e3431] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 125" [ref=e3433] [cursor=pointer]
+              - heading [level=3] [ref=e3435] [cursor=pointer]
+          - button "View details for Pokemon 126" [ref=e3442] [cursor=pointer]:
+            - generic [ref=e3444] [cursor=pointer]:
+              - generic [ref=e3445] [cursor=pointer]:
+                - generic [ref=e3446] [cursor=pointer]: "#126"
+                - button "Add to comparison" [ref=e3447] [cursor=pointer]:
+                  - img [ref=e3448] [cursor=pointer]
+              - generic [ref=e3455] [cursor=pointer]:
+                - generic [ref=e3458] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 126" [ref=e3460] [cursor=pointer]
+              - heading [level=3] [ref=e3462] [cursor=pointer]
+          - button "View details for Pokemon 127" [ref=e3469] [cursor=pointer]:
+            - generic [ref=e3471] [cursor=pointer]:
+              - generic [ref=e3472] [cursor=pointer]:
+                - generic [ref=e3473] [cursor=pointer]: "#127"
+                - button "Add to comparison" [ref=e3474] [cursor=pointer]:
+                  - img [ref=e3475] [cursor=pointer]
+              - generic [ref=e3482] [cursor=pointer]:
+                - generic [ref=e3485] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 127" [ref=e3487] [cursor=pointer]
+              - heading [level=3] [ref=e3489] [cursor=pointer]
+          - button "View details for Pokemon 128" [ref=e3496] [cursor=pointer]:
+            - generic [ref=e3498] [cursor=pointer]:
+              - generic [ref=e3499] [cursor=pointer]:
+                - generic [ref=e3500] [cursor=pointer]: "#128"
+                - button "Add to comparison" [ref=e3501] [cursor=pointer]:
+                  - img [ref=e3502] [cursor=pointer]
+              - generic [ref=e3509] [cursor=pointer]:
+                - generic [ref=e3512] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 128" [ref=e3514] [cursor=pointer]
+              - heading [level=3] [ref=e3516] [cursor=pointer]
+          - button "View details for Pokemon 129" [ref=e3523] [cursor=pointer]:
+            - generic [ref=e3525] [cursor=pointer]:
+              - generic [ref=e3526] [cursor=pointer]:
+                - generic [ref=e3527] [cursor=pointer]: "#129"
+                - button "Add to comparison" [ref=e3528] [cursor=pointer]:
+                  - img [ref=e3529] [cursor=pointer]
+              - generic [ref=e3536] [cursor=pointer]:
+                - generic [ref=e3539] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 129" [ref=e3541] [cursor=pointer]
+              - heading [level=3] [ref=e3543] [cursor=pointer]
+          - button "View details for Pokemon 130" [ref=e3550] [cursor=pointer]:
+            - generic [ref=e3552] [cursor=pointer]:
+              - generic [ref=e3553] [cursor=pointer]:
+                - generic [ref=e3554] [cursor=pointer]: "#130"
+                - button "Add to comparison" [ref=e3555] [cursor=pointer]:
+                  - img [ref=e3556] [cursor=pointer]
+              - generic [ref=e3563] [cursor=pointer]:
+                - generic [ref=e3566] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 130" [ref=e3568] [cursor=pointer]
+              - heading [level=3] [ref=e3570] [cursor=pointer]
+          - button "View details for Pokemon 131" [ref=e3577] [cursor=pointer]:
+            - generic [ref=e3579] [cursor=pointer]:
+              - generic [ref=e3580] [cursor=pointer]:
+                - generic [ref=e3581] [cursor=pointer]: "#131"
+                - button "Add to comparison" [ref=e3582] [cursor=pointer]:
+                  - img [ref=e3583] [cursor=pointer]
+              - generic [ref=e3590] [cursor=pointer]:
+                - generic [ref=e3593] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 131" [ref=e3595] [cursor=pointer]
+              - heading [level=3] [ref=e3597] [cursor=pointer]
+          - button "View details for Pokemon 132" [ref=e3604] [cursor=pointer]:
+            - generic [ref=e3606] [cursor=pointer]:
+              - generic [ref=e3607] [cursor=pointer]:
+                - generic [ref=e3608] [cursor=pointer]: "#132"
+                - button "Add to comparison" [ref=e3609] [cursor=pointer]:
+                  - img [ref=e3610] [cursor=pointer]
+              - generic [ref=e3617] [cursor=pointer]:
+                - generic [ref=e3620] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 132" [ref=e3622] [cursor=pointer]
+              - heading [level=3] [ref=e3624] [cursor=pointer]
+          - button "View details for Pokemon 133" [ref=e3631] [cursor=pointer]:
+            - generic [ref=e3633] [cursor=pointer]:
+              - generic [ref=e3634] [cursor=pointer]:
+                - generic [ref=e3635] [cursor=pointer]: "#133"
+                - button "Add to comparison" [ref=e3636] [cursor=pointer]:
+                  - img [ref=e3637] [cursor=pointer]
+              - generic [ref=e3644] [cursor=pointer]:
+                - generic [ref=e3647] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 133" [ref=e3649] [cursor=pointer]
+              - heading [level=3] [ref=e3651] [cursor=pointer]
+          - button "View details for Pokemon 134" [ref=e3658] [cursor=pointer]:
+            - generic [ref=e3660] [cursor=pointer]:
+              - generic [ref=e3661] [cursor=pointer]:
+                - generic [ref=e3662] [cursor=pointer]: "#134"
+                - button "Add to comparison" [ref=e3663] [cursor=pointer]:
+                  - img [ref=e3664] [cursor=pointer]
+              - generic [ref=e3671] [cursor=pointer]:
+                - generic [ref=e3674] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 134" [ref=e3676] [cursor=pointer]
+              - heading [level=3] [ref=e3678] [cursor=pointer]
+          - button "View details for Pokemon 135" [ref=e3685] [cursor=pointer]:
+            - generic [ref=e3687] [cursor=pointer]:
+              - generic [ref=e3688] [cursor=pointer]:
+                - generic [ref=e3689] [cursor=pointer]: "#135"
+                - button "Add to comparison" [ref=e3690] [cursor=pointer]:
+                  - img [ref=e3691] [cursor=pointer]
+              - generic [ref=e3698] [cursor=pointer]:
+                - generic [ref=e3701] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 135" [ref=e3703] [cursor=pointer]
+              - heading [level=3] [ref=e3705] [cursor=pointer]
+          - button "View details for Pokemon 136" [ref=e3712] [cursor=pointer]:
+            - generic [ref=e3714] [cursor=pointer]:
+              - generic [ref=e3715] [cursor=pointer]:
+                - generic [ref=e3716] [cursor=pointer]: "#136"
+                - button "Add to comparison" [ref=e3717] [cursor=pointer]:
+                  - img [ref=e3718] [cursor=pointer]
+              - generic [ref=e3725] [cursor=pointer]:
+                - generic [ref=e3728] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 136" [ref=e3730] [cursor=pointer]
+              - heading [level=3] [ref=e3732] [cursor=pointer]
+          - button "View details for Pokemon 137" [ref=e3739] [cursor=pointer]:
+            - generic [ref=e3741] [cursor=pointer]:
+              - generic [ref=e3742] [cursor=pointer]:
+                - generic [ref=e3743] [cursor=pointer]: "#137"
+                - button "Add to comparison" [ref=e3744] [cursor=pointer]:
+                  - img [ref=e3745] [cursor=pointer]
+              - generic [ref=e3752] [cursor=pointer]:
+                - generic [ref=e3755] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 137" [ref=e3757] [cursor=pointer]
+              - heading [level=3] [ref=e3759] [cursor=pointer]
+          - button "View details for Pokemon 138" [ref=e3766] [cursor=pointer]:
+            - generic [ref=e3768] [cursor=pointer]:
+              - generic [ref=e3769] [cursor=pointer]:
+                - generic [ref=e3770] [cursor=pointer]: "#138"
+                - button "Add to comparison" [ref=e3771] [cursor=pointer]:
+                  - img [ref=e3772] [cursor=pointer]
+              - generic [ref=e3779] [cursor=pointer]:
+                - generic [ref=e3782] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 138" [ref=e3784] [cursor=pointer]
+              - heading [level=3] [ref=e3786] [cursor=pointer]
+          - button "View details for Pokemon 139" [ref=e3793] [cursor=pointer]:
+            - generic [ref=e3795] [cursor=pointer]:
+              - generic [ref=e3796] [cursor=pointer]:
+                - generic [ref=e3797] [cursor=pointer]: "#139"
+                - button "Add to comparison" [ref=e3798] [cursor=pointer]:
+                  - img [ref=e3799] [cursor=pointer]
+              - generic [ref=e3806] [cursor=pointer]:
+                - generic [ref=e3809] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 139" [ref=e3811] [cursor=pointer]
+              - heading [level=3] [ref=e3813] [cursor=pointer]
+          - button "View details for Pokemon 140" [ref=e3820] [cursor=pointer]:
+            - generic [ref=e3822] [cursor=pointer]:
+              - generic [ref=e3823] [cursor=pointer]:
+                - generic [ref=e3824] [cursor=pointer]: "#140"
+                - button "Add to comparison" [ref=e3825] [cursor=pointer]:
+                  - img [ref=e3826] [cursor=pointer]
+              - generic [ref=e3833] [cursor=pointer]:
+                - generic [ref=e3836] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 140" [ref=e3838] [cursor=pointer]
+              - heading [level=3] [ref=e3840] [cursor=pointer]
+          - button "View details for Pokemon 141" [ref=e3847] [cursor=pointer]:
+            - generic [ref=e3849] [cursor=pointer]:
+              - generic [ref=e3850] [cursor=pointer]:
+                - generic [ref=e3851] [cursor=pointer]: "#141"
+                - button "Add to comparison" [ref=e3852] [cursor=pointer]:
+                  - img [ref=e3853] [cursor=pointer]
+              - generic [ref=e3860] [cursor=pointer]:
+                - generic [ref=e3863] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 141" [ref=e3865] [cursor=pointer]
+              - heading [level=3] [ref=e3867] [cursor=pointer]
+          - button "View details for Pokemon 142" [ref=e3874] [cursor=pointer]:
+            - generic [ref=e3876] [cursor=pointer]:
+              - generic [ref=e3877] [cursor=pointer]:
+                - generic [ref=e3878] [cursor=pointer]: "#142"
+                - button "Add to comparison" [ref=e3879] [cursor=pointer]:
+                  - img [ref=e3880] [cursor=pointer]
+              - generic [ref=e3887] [cursor=pointer]:
+                - generic [ref=e3890] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 142" [ref=e3892] [cursor=pointer]
+              - heading [level=3] [ref=e3894] [cursor=pointer]
+          - button "View details for Pokemon 143" [ref=e3901] [cursor=pointer]:
+            - generic [ref=e3903] [cursor=pointer]:
+              - generic [ref=e3904] [cursor=pointer]:
+                - generic [ref=e3905] [cursor=pointer]: "#143"
+                - button "Add to comparison" [ref=e3906] [cursor=pointer]:
+                  - img [ref=e3907] [cursor=pointer]
+              - generic [ref=e3914] [cursor=pointer]:
+                - generic [ref=e3917] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 143" [ref=e3919] [cursor=pointer]
+              - heading [level=3] [ref=e3921] [cursor=pointer]
+          - button "View details for Pokemon 144" [ref=e3928] [cursor=pointer]:
+            - generic [ref=e3930] [cursor=pointer]:
+              - generic [ref=e3931] [cursor=pointer]:
+                - generic [ref=e3932] [cursor=pointer]: "#144"
+                - button "Add to comparison" [ref=e3933] [cursor=pointer]:
+                  - img [ref=e3934] [cursor=pointer]
+              - generic [ref=e3941] [cursor=pointer]:
+                - generic [ref=e3944] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 144" [ref=e3946] [cursor=pointer]
+              - heading [level=3] [ref=e3948] [cursor=pointer]
+          - button "View details for Pokemon 145" [ref=e3955] [cursor=pointer]:
+            - generic [ref=e3957] [cursor=pointer]:
+              - generic [ref=e3958] [cursor=pointer]:
+                - generic [ref=e3959] [cursor=pointer]: "#145"
+                - button "Add to comparison" [ref=e3960] [cursor=pointer]:
+                  - img [ref=e3961] [cursor=pointer]
+              - generic [ref=e3968] [cursor=pointer]:
+                - generic [ref=e3971] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 145" [ref=e3973] [cursor=pointer]
+              - heading [level=3] [ref=e3975] [cursor=pointer]
+          - button "View details for Pokemon 146" [ref=e3982] [cursor=pointer]:
+            - generic [ref=e3984] [cursor=pointer]:
+              - generic [ref=e3985] [cursor=pointer]:
+                - generic [ref=e3986] [cursor=pointer]: "#146"
+                - button "Add to comparison" [ref=e3987] [cursor=pointer]:
+                  - img [ref=e3988] [cursor=pointer]
+              - generic [ref=e3995] [cursor=pointer]:
+                - generic [ref=e3998] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 146" [ref=e4000] [cursor=pointer]
+              - heading [level=3] [ref=e4002] [cursor=pointer]
+          - button "View details for Pokemon 147" [ref=e4009] [cursor=pointer]:
+            - generic [ref=e4011] [cursor=pointer]:
+              - generic [ref=e4012] [cursor=pointer]:
+                - generic [ref=e4013] [cursor=pointer]: "#147"
+                - button "Add to comparison" [ref=e4014] [cursor=pointer]:
+                  - img [ref=e4015] [cursor=pointer]
+              - generic [ref=e4022] [cursor=pointer]:
+                - generic [ref=e4025] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 147" [ref=e4027] [cursor=pointer]
+              - heading [level=3] [ref=e4029] [cursor=pointer]
+          - button "View details for Pokemon 148" [ref=e4036] [cursor=pointer]:
+            - generic [ref=e4038] [cursor=pointer]:
+              - generic [ref=e4039] [cursor=pointer]:
+                - generic [ref=e4040] [cursor=pointer]: "#148"
+                - button "Add to comparison" [ref=e4041] [cursor=pointer]:
+                  - img [ref=e4042] [cursor=pointer]
+              - generic [ref=e4049] [cursor=pointer]:
+                - generic [ref=e4052] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 148" [ref=e4054] [cursor=pointer]
+              - heading [level=3] [ref=e4056] [cursor=pointer]
+          - button "View details for Pokemon 149" [ref=e4063] [cursor=pointer]:
+            - generic [ref=e4065] [cursor=pointer]:
+              - generic [ref=e4066] [cursor=pointer]:
+                - generic [ref=e4067] [cursor=pointer]: "#149"
+                - button "Add to comparison" [ref=e4068] [cursor=pointer]:
+                  - img [ref=e4069] [cursor=pointer]
+              - generic [ref=e4076] [cursor=pointer]:
+                - generic [ref=e4079] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 149" [ref=e4081] [cursor=pointer]
+              - heading [level=3] [ref=e4083] [cursor=pointer]
+          - button "View details for Pokemon 150" [ref=e4090] [cursor=pointer]:
+            - generic [ref=e4092] [cursor=pointer]:
+              - generic [ref=e4093] [cursor=pointer]:
+                - generic [ref=e4094] [cursor=pointer]: "#150"
+                - button "Add to comparison" [ref=e4095] [cursor=pointer]:
+                  - img [ref=e4096] [cursor=pointer]
+              - generic [ref=e4103] [cursor=pointer]:
+                - generic [ref=e4106] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 150" [ref=e4108] [cursor=pointer]
+              - heading [level=3] [ref=e4110] [cursor=pointer]
+          - button "View details for Pokemon 151" [ref=e4117] [cursor=pointer]:
+            - generic [ref=e4119] [cursor=pointer]:
+              - generic [ref=e4120] [cursor=pointer]:
+                - generic [ref=e4121] [cursor=pointer]: "#151"
+                - button "Add to comparison" [ref=e4122] [cursor=pointer]:
+                  - img [ref=e4123] [cursor=pointer]
+              - generic [ref=e4130] [cursor=pointer]:
+                - generic [ref=e4133] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 151" [ref=e4135] [cursor=pointer]
+              - heading [level=3] [ref=e4137] [cursor=pointer]
+          - button "View details for Pokemon 152" [ref=e4144] [cursor=pointer]:
+            - generic [ref=e4146] [cursor=pointer]:
+              - generic [ref=e4147] [cursor=pointer]:
+                - generic [ref=e4148] [cursor=pointer]: "#152"
+                - button "Add to comparison" [ref=e4149] [cursor=pointer]:
+                  - img [ref=e4150] [cursor=pointer]
+              - generic [ref=e4157] [cursor=pointer]:
+                - generic [ref=e4160] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 152" [ref=e4162] [cursor=pointer]
+              - heading [level=3] [ref=e4164] [cursor=pointer]
+          - button "View details for Pokemon 153" [ref=e4171] [cursor=pointer]:
+            - generic [ref=e4173] [cursor=pointer]:
+              - generic [ref=e4174] [cursor=pointer]:
+                - generic [ref=e4175] [cursor=pointer]: "#153"
+                - button "Add to comparison" [ref=e4176] [cursor=pointer]:
+                  - img [ref=e4177] [cursor=pointer]
+              - generic [ref=e4184] [cursor=pointer]:
+                - generic [ref=e4187] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 153" [ref=e4189] [cursor=pointer]
+              - heading [level=3] [ref=e4191] [cursor=pointer]
+          - button "View details for Pokemon 154" [ref=e4198] [cursor=pointer]:
+            - generic [ref=e4200] [cursor=pointer]:
+              - generic [ref=e4201] [cursor=pointer]:
+                - generic [ref=e4202] [cursor=pointer]: "#154"
+                - button "Add to comparison" [ref=e4203] [cursor=pointer]:
+                  - img [ref=e4204] [cursor=pointer]
+              - generic [ref=e4211] [cursor=pointer]:
+                - generic [ref=e4214] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 154" [ref=e4216] [cursor=pointer]
+              - heading [level=3] [ref=e4218] [cursor=pointer]
+          - button "View details for Pokemon 155" [ref=e4225] [cursor=pointer]:
+            - generic [ref=e4227] [cursor=pointer]:
+              - generic [ref=e4228] [cursor=pointer]:
+                - generic [ref=e4229] [cursor=pointer]: "#155"
+                - button "Add to comparison" [ref=e4230] [cursor=pointer]:
+                  - img [ref=e4231] [cursor=pointer]
+              - generic [ref=e4238] [cursor=pointer]:
+                - generic [ref=e4241] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 155" [ref=e4243] [cursor=pointer]
+              - heading [level=3] [ref=e4245] [cursor=pointer]
+          - button "View details for Pokemon 156" [ref=e4252] [cursor=pointer]:
+            - generic [ref=e4254] [cursor=pointer]:
+              - generic [ref=e4255] [cursor=pointer]:
+                - generic [ref=e4256] [cursor=pointer]: "#156"
+                - button "Add to comparison" [ref=e4257] [cursor=pointer]:
+                  - img [ref=e4258] [cursor=pointer]
+              - generic [ref=e4265] [cursor=pointer]:
+                - generic [ref=e4268] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 156" [ref=e4270] [cursor=pointer]
+              - heading [level=3] [ref=e4272] [cursor=pointer]
+          - button "View details for Pokemon 157" [ref=e4279] [cursor=pointer]:
+            - generic [ref=e4281] [cursor=pointer]:
+              - generic [ref=e4282] [cursor=pointer]:
+                - generic [ref=e4283] [cursor=pointer]: "#157"
+                - button "Add to comparison" [ref=e4284] [cursor=pointer]:
+                  - img [ref=e4285] [cursor=pointer]
+              - generic [ref=e4292] [cursor=pointer]:
+                - generic [ref=e4295] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 157" [ref=e4297] [cursor=pointer]
+              - heading [level=3] [ref=e4299] [cursor=pointer]
+          - button "View details for Pokemon 158" [ref=e4306] [cursor=pointer]:
+            - generic [ref=e4308] [cursor=pointer]:
+              - generic [ref=e4309] [cursor=pointer]:
+                - generic [ref=e4310] [cursor=pointer]: "#158"
+                - button "Add to comparison" [ref=e4311] [cursor=pointer]:
+                  - img [ref=e4312] [cursor=pointer]
+              - generic [ref=e4319] [cursor=pointer]:
+                - generic [ref=e4322] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 158" [ref=e4324] [cursor=pointer]
+              - heading [level=3] [ref=e4326] [cursor=pointer]
+          - button "View details for Pokemon 159" [ref=e4333] [cursor=pointer]:
+            - generic [ref=e4335] [cursor=pointer]:
+              - generic [ref=e4336] [cursor=pointer]:
+                - generic [ref=e4337] [cursor=pointer]: "#159"
+                - button "Add to comparison" [ref=e4338] [cursor=pointer]:
+                  - img [ref=e4339] [cursor=pointer]
+              - generic [ref=e4346] [cursor=pointer]:
+                - generic [ref=e4349] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 159" [ref=e4351] [cursor=pointer]
+              - heading [level=3] [ref=e4353] [cursor=pointer]
+          - button "View details for Pokemon 160" [ref=e4360] [cursor=pointer]:
+            - generic [ref=e4362] [cursor=pointer]:
+              - generic [ref=e4363] [cursor=pointer]:
+                - generic [ref=e4364] [cursor=pointer]: "#160"
+                - button "Add to comparison" [ref=e4365] [cursor=pointer]:
+                  - img [ref=e4366] [cursor=pointer]
+              - generic [ref=e4373] [cursor=pointer]:
+                - generic [ref=e4376] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 160" [ref=e4378] [cursor=pointer]
+              - heading [level=3] [ref=e4380] [cursor=pointer]
+          - button "View details for Pokemon 161" [ref=e4387] [cursor=pointer]:
+            - generic [ref=e4389] [cursor=pointer]:
+              - generic [ref=e4390] [cursor=pointer]:
+                - generic [ref=e4391] [cursor=pointer]: "#161"
+                - button "Add to comparison" [ref=e4392] [cursor=pointer]:
+                  - img [ref=e4393] [cursor=pointer]
+              - generic [ref=e4400] [cursor=pointer]:
+                - generic [ref=e4403] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 161" [ref=e4405] [cursor=pointer]
+              - heading [level=3] [ref=e4407] [cursor=pointer]
+          - button "View details for Pokemon 162" [ref=e4414] [cursor=pointer]:
+            - generic [ref=e4416] [cursor=pointer]:
+              - generic [ref=e4417] [cursor=pointer]:
+                - generic [ref=e4418] [cursor=pointer]: "#162"
+                - button "Add to comparison" [ref=e4419] [cursor=pointer]:
+                  - img [ref=e4420] [cursor=pointer]
+              - generic [ref=e4427] [cursor=pointer]:
+                - generic [ref=e4430] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 162" [ref=e4432] [cursor=pointer]
+              - heading [level=3] [ref=e4434] [cursor=pointer]
+          - button "View details for Pokemon 163" [ref=e4441] [cursor=pointer]:
+            - generic [ref=e4443] [cursor=pointer]:
+              - generic [ref=e4444] [cursor=pointer]:
+                - generic [ref=e4445] [cursor=pointer]: "#163"
+                - button "Add to comparison" [ref=e4446] [cursor=pointer]:
+                  - img [ref=e4447] [cursor=pointer]
+              - generic [ref=e4454] [cursor=pointer]:
+                - generic [ref=e4457] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 163" [ref=e4459] [cursor=pointer]
+              - heading [level=3] [ref=e4461] [cursor=pointer]
+          - button "View details for Pokemon 164" [ref=e4468] [cursor=pointer]:
+            - generic [ref=e4470] [cursor=pointer]:
+              - generic [ref=e4471] [cursor=pointer]:
+                - generic [ref=e4472] [cursor=pointer]: "#164"
+                - button "Add to comparison" [ref=e4473] [cursor=pointer]:
+                  - img [ref=e4474] [cursor=pointer]
+              - generic [ref=e4481] [cursor=pointer]:
+                - generic [ref=e4484] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 164" [ref=e4486] [cursor=pointer]
+              - heading [level=3] [ref=e4488] [cursor=pointer]
+          - button "View details for Pokemon 165" [ref=e4495] [cursor=pointer]:
+            - generic [ref=e4497] [cursor=pointer]:
+              - generic [ref=e4498] [cursor=pointer]:
+                - generic [ref=e4499] [cursor=pointer]: "#165"
+                - button "Add to comparison" [ref=e4500] [cursor=pointer]:
+                  - img [ref=e4501] [cursor=pointer]
+              - generic [ref=e4508] [cursor=pointer]:
+                - generic [ref=e4511] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 165" [ref=e4513] [cursor=pointer]
+              - heading [level=3] [ref=e4515] [cursor=pointer]
+          - button "View details for Pokemon 166" [ref=e4522] [cursor=pointer]:
+            - generic [ref=e4524] [cursor=pointer]:
+              - generic [ref=e4525] [cursor=pointer]:
+                - generic [ref=e4526] [cursor=pointer]: "#166"
+                - button "Add to comparison" [ref=e4527] [cursor=pointer]:
+                  - img [ref=e4528] [cursor=pointer]
+              - generic [ref=e4535] [cursor=pointer]:
+                - generic [ref=e4538] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 166" [ref=e4540] [cursor=pointer]
+              - heading [level=3] [ref=e4542] [cursor=pointer]
+          - button "View details for Pokemon 167" [ref=e4549] [cursor=pointer]:
+            - generic [ref=e4551] [cursor=pointer]:
+              - generic [ref=e4552] [cursor=pointer]:
+                - generic [ref=e4553] [cursor=pointer]: "#167"
+                - button "Add to comparison" [ref=e4554] [cursor=pointer]:
+                  - img [ref=e4555] [cursor=pointer]
+              - generic [ref=e4562] [cursor=pointer]:
+                - generic [ref=e4565] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 167" [ref=e4567] [cursor=pointer]
+              - heading [level=3] [ref=e4569] [cursor=pointer]
+          - button "View details for Pokemon 168" [ref=e4576] [cursor=pointer]:
+            - generic [ref=e4578] [cursor=pointer]:
+              - generic [ref=e4579] [cursor=pointer]:
+                - generic [ref=e4580] [cursor=pointer]: "#168"
+                - button "Add to comparison" [ref=e4581] [cursor=pointer]:
+                  - img [ref=e4582] [cursor=pointer]
+              - generic [ref=e4589] [cursor=pointer]:
+                - generic [ref=e4592] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 168" [ref=e4594] [cursor=pointer]
+              - heading [level=3] [ref=e4596] [cursor=pointer]
+          - button "View details for Pokemon 169" [ref=e4603] [cursor=pointer]:
+            - generic [ref=e4605] [cursor=pointer]:
+              - generic [ref=e4606] [cursor=pointer]:
+                - generic [ref=e4607] [cursor=pointer]: "#169"
+                - button "Add to comparison" [ref=e4608] [cursor=pointer]:
+                  - img [ref=e4609] [cursor=pointer]
+              - generic [ref=e4616] [cursor=pointer]:
+                - generic [ref=e4619] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 169" [ref=e4621] [cursor=pointer]
+              - heading [level=3] [ref=e4623] [cursor=pointer]
+          - button "View details for Pokemon 170" [ref=e4630] [cursor=pointer]:
+            - generic [ref=e4632] [cursor=pointer]:
+              - generic [ref=e4633] [cursor=pointer]:
+                - generic [ref=e4634] [cursor=pointer]: "#170"
+                - button "Add to comparison" [ref=e4635] [cursor=pointer]:
+                  - img [ref=e4636] [cursor=pointer]
+              - generic [ref=e4643] [cursor=pointer]:
+                - generic [ref=e4646] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 170" [ref=e4648] [cursor=pointer]
+              - heading [level=3] [ref=e4650] [cursor=pointer]
+          - button "View details for Pokemon 171" [ref=e4657] [cursor=pointer]:
+            - generic [ref=e4659] [cursor=pointer]:
+              - generic [ref=e4660] [cursor=pointer]:
+                - generic [ref=e4661] [cursor=pointer]: "#171"
+                - button "Add to comparison" [ref=e4662] [cursor=pointer]:
+                  - img [ref=e4663] [cursor=pointer]
+              - generic [ref=e4670] [cursor=pointer]:
+                - generic [ref=e4673] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 171" [ref=e4675] [cursor=pointer]
+              - heading [level=3] [ref=e4677] [cursor=pointer]
+          - button "View details for Pokemon 172" [ref=e4684] [cursor=pointer]:
+            - generic [ref=e4686] [cursor=pointer]:
+              - generic [ref=e4687] [cursor=pointer]:
+                - generic [ref=e4688] [cursor=pointer]: "#172"
+                - button "Add to comparison" [ref=e4689] [cursor=pointer]:
+                  - img [ref=e4690] [cursor=pointer]
+              - generic [ref=e4697] [cursor=pointer]:
+                - generic [ref=e4700] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 172" [ref=e4702] [cursor=pointer]
+              - heading [level=3] [ref=e4704] [cursor=pointer]
+          - button "View details for Pokemon 173" [ref=e4711] [cursor=pointer]:
+            - generic [ref=e4713] [cursor=pointer]:
+              - generic [ref=e4714] [cursor=pointer]:
+                - generic [ref=e4715] [cursor=pointer]: "#173"
+                - button "Add to comparison" [ref=e4716] [cursor=pointer]:
+                  - img [ref=e4717] [cursor=pointer]
+              - generic [ref=e4724] [cursor=pointer]:
+                - generic [ref=e4727] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 173" [ref=e4729] [cursor=pointer]
+              - heading [level=3] [ref=e4731] [cursor=pointer]
+          - button "View details for Pokemon 174" [ref=e4738] [cursor=pointer]:
+            - generic [ref=e4740] [cursor=pointer]:
+              - generic [ref=e4741] [cursor=pointer]:
+                - generic [ref=e4742] [cursor=pointer]: "#174"
+                - button "Add to comparison" [ref=e4743] [cursor=pointer]:
+                  - img [ref=e4744] [cursor=pointer]
+              - generic [ref=e4751] [cursor=pointer]:
+                - generic [ref=e4754] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 174" [ref=e4756] [cursor=pointer]
+              - heading [level=3] [ref=e4758] [cursor=pointer]
+          - button "View details for Pokemon 175" [ref=e4765] [cursor=pointer]:
+            - generic [ref=e4767] [cursor=pointer]:
+              - generic [ref=e4768] [cursor=pointer]:
+                - generic [ref=e4769] [cursor=pointer]: "#175"
+                - button "Add to comparison" [ref=e4770] [cursor=pointer]:
+                  - img [ref=e4771] [cursor=pointer]
+              - generic [ref=e4778] [cursor=pointer]:
+                - generic [ref=e4781] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 175" [ref=e4783] [cursor=pointer]
+              - heading [level=3] [ref=e4785] [cursor=pointer]
+          - button "View details for Pokemon 176" [ref=e4792] [cursor=pointer]:
+            - generic [ref=e4794] [cursor=pointer]:
+              - generic [ref=e4795] [cursor=pointer]:
+                - generic [ref=e4796] [cursor=pointer]: "#176"
+                - button "Add to comparison" [ref=e4797] [cursor=pointer]:
+                  - img [ref=e4798] [cursor=pointer]
+              - generic [ref=e4805] [cursor=pointer]:
+                - generic [ref=e4808] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 176" [ref=e4810] [cursor=pointer]
+              - heading [level=3] [ref=e4812] [cursor=pointer]
+          - button "View details for Pokemon 177" [ref=e4819] [cursor=pointer]:
+            - generic [ref=e4821] [cursor=pointer]:
+              - generic [ref=e4822] [cursor=pointer]:
+                - generic [ref=e4823] [cursor=pointer]: "#177"
+                - button "Add to comparison" [ref=e4824] [cursor=pointer]:
+                  - img [ref=e4825] [cursor=pointer]
+              - generic [ref=e4832] [cursor=pointer]:
+                - generic [ref=e4835] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 177" [ref=e4837] [cursor=pointer]
+              - heading [level=3] [ref=e4839] [cursor=pointer]
+          - button "View details for Pokemon 178" [ref=e4846] [cursor=pointer]:
+            - generic [ref=e4848] [cursor=pointer]:
+              - generic [ref=e4849] [cursor=pointer]:
+                - generic [ref=e4850] [cursor=pointer]: "#178"
+                - button "Add to comparison" [ref=e4851] [cursor=pointer]:
+                  - img [ref=e4852] [cursor=pointer]
+              - generic [ref=e4859] [cursor=pointer]:
+                - generic [ref=e4862] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 178" [ref=e4864] [cursor=pointer]
+              - heading [level=3] [ref=e4866] [cursor=pointer]
+          - button "View details for Pokemon 179" [ref=e4873] [cursor=pointer]:
+            - generic [ref=e4875] [cursor=pointer]:
+              - generic [ref=e4876] [cursor=pointer]:
+                - generic [ref=e4877] [cursor=pointer]: "#179"
+                - button "Add to comparison" [ref=e4878] [cursor=pointer]:
+                  - img [ref=e4879] [cursor=pointer]
+              - generic [ref=e4886] [cursor=pointer]:
+                - generic [ref=e4889] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 179" [ref=e4891] [cursor=pointer]
+              - heading [level=3] [ref=e4893] [cursor=pointer]
+          - button "View details for Pokemon 180" [ref=e4900] [cursor=pointer]:
+            - generic [ref=e4902] [cursor=pointer]:
+              - generic [ref=e4903] [cursor=pointer]:
+                - generic [ref=e4904] [cursor=pointer]: "#180"
+                - button "Add to comparison" [ref=e4905] [cursor=pointer]:
+                  - img [ref=e4906] [cursor=pointer]
+              - generic [ref=e4913] [cursor=pointer]:
+                - generic [ref=e4916] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 180" [ref=e4918] [cursor=pointer]
+              - heading [level=3] [ref=e4920] [cursor=pointer]
+          - button "View details for Pokemon 181" [ref=e4927] [cursor=pointer]:
+            - generic [ref=e4929] [cursor=pointer]:
+              - generic [ref=e4930] [cursor=pointer]:
+                - generic [ref=e4931] [cursor=pointer]: "#181"
+                - button "Add to comparison" [ref=e4932] [cursor=pointer]:
+                  - img [ref=e4933] [cursor=pointer]
+              - generic [ref=e4940] [cursor=pointer]:
+                - generic [ref=e4943] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 181" [ref=e4945] [cursor=pointer]
+              - heading [level=3] [ref=e4947] [cursor=pointer]
+          - button "View details for Pokemon 182" [ref=e4954] [cursor=pointer]:
+            - generic [ref=e4956] [cursor=pointer]:
+              - generic [ref=e4957] [cursor=pointer]:
+                - generic [ref=e4958] [cursor=pointer]: "#182"
+                - button "Add to comparison" [ref=e4959] [cursor=pointer]:
+                  - img [ref=e4960] [cursor=pointer]
+              - generic [ref=e4967] [cursor=pointer]:
+                - generic [ref=e4970] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 182" [ref=e4972] [cursor=pointer]
+              - heading [level=3] [ref=e4974] [cursor=pointer]
+          - button "View details for Pokemon 183" [ref=e4981] [cursor=pointer]:
+            - generic [ref=e4983] [cursor=pointer]:
+              - generic [ref=e4984] [cursor=pointer]:
+                - generic [ref=e4985] [cursor=pointer]: "#183"
+                - button "Add to comparison" [ref=e4986] [cursor=pointer]:
+                  - img [ref=e4987] [cursor=pointer]
+              - generic [ref=e4994] [cursor=pointer]:
+                - generic [ref=e4997] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 183" [ref=e4999] [cursor=pointer]
+              - heading [level=3] [ref=e5001] [cursor=pointer]
+          - button "View details for Pokemon 184" [ref=e5008] [cursor=pointer]:
+            - generic [ref=e5010] [cursor=pointer]:
+              - generic [ref=e5011] [cursor=pointer]:
+                - generic [ref=e5012] [cursor=pointer]: "#184"
+                - button "Add to comparison" [ref=e5013] [cursor=pointer]:
+                  - img [ref=e5014] [cursor=pointer]
+              - generic [ref=e5021] [cursor=pointer]:
+                - generic [ref=e5024] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 184" [ref=e5026] [cursor=pointer]
+              - heading [level=3] [ref=e5028] [cursor=pointer]
+          - button "View details for Pokemon 185" [ref=e5035] [cursor=pointer]:
+            - generic [ref=e5037] [cursor=pointer]:
+              - generic [ref=e5038] [cursor=pointer]:
+                - generic [ref=e5039] [cursor=pointer]: "#185"
+                - button "Add to comparison" [ref=e5040] [cursor=pointer]:
+                  - img [ref=e5041] [cursor=pointer]
+              - generic [ref=e5048] [cursor=pointer]:
+                - generic [ref=e5051] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 185" [ref=e5053] [cursor=pointer]
+              - heading [level=3] [ref=e5055] [cursor=pointer]
+          - button "View details for Pokemon 186" [ref=e5062] [cursor=pointer]:
+            - generic [ref=e5064] [cursor=pointer]:
+              - generic [ref=e5065] [cursor=pointer]:
+                - generic [ref=e5066] [cursor=pointer]: "#186"
+                - button "Add to comparison" [ref=e5067] [cursor=pointer]:
+                  - img [ref=e5068] [cursor=pointer]
+              - generic [ref=e5075] [cursor=pointer]:
+                - generic [ref=e5078] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 186" [ref=e5080] [cursor=pointer]
+              - heading [level=3] [ref=e5082] [cursor=pointer]
+          - button "View details for Pokemon 187" [ref=e5089] [cursor=pointer]:
+            - generic [ref=e5091] [cursor=pointer]:
+              - generic [ref=e5092] [cursor=pointer]:
+                - generic [ref=e5093] [cursor=pointer]: "#187"
+                - button "Add to comparison" [ref=e5094] [cursor=pointer]:
+                  - img [ref=e5095] [cursor=pointer]
+              - generic [ref=e5102] [cursor=pointer]:
+                - generic [ref=e5105] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 187" [ref=e5107] [cursor=pointer]
+              - heading [level=3] [ref=e5109] [cursor=pointer]
+          - button "View details for Pokemon 188" [ref=e5116] [cursor=pointer]:
+            - generic [ref=e5118] [cursor=pointer]:
+              - generic [ref=e5119] [cursor=pointer]:
+                - generic [ref=e5120] [cursor=pointer]: "#188"
+                - button "Add to comparison" [ref=e5121] [cursor=pointer]:
+                  - img [ref=e5122] [cursor=pointer]
+              - generic [ref=e5129] [cursor=pointer]:
+                - generic [ref=e5132] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 188" [ref=e5134] [cursor=pointer]
+              - heading [level=3] [ref=e5136] [cursor=pointer]
+          - button "View details for Pokemon 189" [ref=e5143] [cursor=pointer]:
+            - generic [ref=e5145] [cursor=pointer]:
+              - generic [ref=e5146] [cursor=pointer]:
+                - generic [ref=e5147] [cursor=pointer]: "#189"
+                - button "Add to comparison" [ref=e5148] [cursor=pointer]:
+                  - img [ref=e5149] [cursor=pointer]
+              - generic [ref=e5156] [cursor=pointer]:
+                - generic [ref=e5159] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 189" [ref=e5161] [cursor=pointer]
+              - heading [level=3] [ref=e5163] [cursor=pointer]
+          - button "View details for Pokemon 190" [ref=e5170] [cursor=pointer]:
+            - generic [ref=e5172] [cursor=pointer]:
+              - generic [ref=e5173] [cursor=pointer]:
+                - generic [ref=e5174] [cursor=pointer]: "#190"
+                - button "Add to comparison" [ref=e5175] [cursor=pointer]:
+                  - img [ref=e5176] [cursor=pointer]
+              - generic [ref=e5183] [cursor=pointer]:
+                - generic [ref=e5186] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 190" [ref=e5188] [cursor=pointer]
+              - heading [level=3] [ref=e5190] [cursor=pointer]
+          - button "View details for Pokemon 191" [ref=e5197] [cursor=pointer]:
+            - generic [ref=e5199] [cursor=pointer]:
+              - generic [ref=e5200] [cursor=pointer]:
+                - generic [ref=e5201] [cursor=pointer]: "#191"
+                - button "Add to comparison" [ref=e5202] [cursor=pointer]:
+                  - img [ref=e5203] [cursor=pointer]
+              - generic [ref=e5210] [cursor=pointer]:
+                - generic [ref=e5213] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 191" [ref=e5215] [cursor=pointer]
+              - heading [level=3] [ref=e5217] [cursor=pointer]
+          - button "View details for Pokemon 192" [ref=e5224] [cursor=pointer]:
+            - generic [ref=e5226] [cursor=pointer]:
+              - generic [ref=e5227] [cursor=pointer]:
+                - generic [ref=e5228] [cursor=pointer]: "#192"
+                - button "Add to comparison" [ref=e5229] [cursor=pointer]:
+                  - img [ref=e5230] [cursor=pointer]
+              - generic [ref=e5237] [cursor=pointer]:
+                - generic [ref=e5240] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 192" [ref=e5242] [cursor=pointer]
+              - heading [level=3] [ref=e5244] [cursor=pointer]
+          - button "View details for Pokemon 193" [ref=e5251] [cursor=pointer]:
+            - generic [ref=e5253] [cursor=pointer]:
+              - generic [ref=e5254] [cursor=pointer]:
+                - generic [ref=e5255] [cursor=pointer]: "#193"
+                - button "Add to comparison" [ref=e5256] [cursor=pointer]:
+                  - img [ref=e5257] [cursor=pointer]
+              - generic [ref=e5264] [cursor=pointer]:
+                - generic [ref=e5267] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 193" [ref=e5269] [cursor=pointer]
+              - heading [level=3] [ref=e5271] [cursor=pointer]
+          - button "View details for Pokemon 194" [ref=e5278] [cursor=pointer]:
+            - generic [ref=e5280] [cursor=pointer]:
+              - generic [ref=e5281] [cursor=pointer]:
+                - generic [ref=e5282] [cursor=pointer]: "#194"
+                - button "Add to comparison" [ref=e5283] [cursor=pointer]:
+                  - img [ref=e5284] [cursor=pointer]
+              - generic [ref=e5291] [cursor=pointer]:
+                - generic [ref=e5294] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 194" [ref=e5296] [cursor=pointer]
+              - heading [level=3] [ref=e5298] [cursor=pointer]
+          - button "View details for Pokemon 195" [ref=e5305] [cursor=pointer]:
+            - generic [ref=e5307] [cursor=pointer]:
+              - generic [ref=e5308] [cursor=pointer]:
+                - generic [ref=e5309] [cursor=pointer]: "#195"
+                - button "Add to comparison" [ref=e5310] [cursor=pointer]:
+                  - img [ref=e5311] [cursor=pointer]
+              - generic [ref=e5318] [cursor=pointer]:
+                - generic [ref=e5321] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 195" [ref=e5323] [cursor=pointer]
+              - heading [level=3] [ref=e5325] [cursor=pointer]
+          - button "View details for Pokemon 196" [ref=e5332] [cursor=pointer]:
+            - generic [ref=e5334] [cursor=pointer]:
+              - generic [ref=e5335] [cursor=pointer]:
+                - generic [ref=e5336] [cursor=pointer]: "#196"
+                - button "Add to comparison" [ref=e5337] [cursor=pointer]:
+                  - img [ref=e5338] [cursor=pointer]
+              - generic [ref=e5345] [cursor=pointer]:
+                - generic [ref=e5348] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 196" [ref=e5350] [cursor=pointer]
+              - heading [level=3] [ref=e5352] [cursor=pointer]
+          - button "View details for Pokemon 197" [ref=e5359] [cursor=pointer]:
+            - generic [ref=e5361] [cursor=pointer]:
+              - generic [ref=e5362] [cursor=pointer]:
+                - generic [ref=e5363] [cursor=pointer]: "#197"
+                - button "Add to comparison" [ref=e5364] [cursor=pointer]:
+                  - img [ref=e5365] [cursor=pointer]
+              - generic [ref=e5372] [cursor=pointer]:
+                - generic [ref=e5375] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 197" [ref=e5377] [cursor=pointer]
+              - heading [level=3] [ref=e5379] [cursor=pointer]
+          - button "View details for Pokemon 198" [ref=e5386] [cursor=pointer]:
+            - generic [ref=e5388] [cursor=pointer]:
+              - generic [ref=e5389] [cursor=pointer]:
+                - generic [ref=e5390] [cursor=pointer]: "#198"
+                - button "Add to comparison" [ref=e5391] [cursor=pointer]:
+                  - img [ref=e5392] [cursor=pointer]
+              - generic [ref=e5399] [cursor=pointer]:
+                - generic [ref=e5402] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 198" [ref=e5404] [cursor=pointer]
+              - heading [level=3] [ref=e5406] [cursor=pointer]
+          - button "View details for Pokemon 199" [ref=e5413] [cursor=pointer]:
+            - generic [ref=e5415] [cursor=pointer]:
+              - generic [ref=e5416] [cursor=pointer]:
+                - generic [ref=e5417] [cursor=pointer]: "#199"
+                - button "Add to comparison" [ref=e5418] [cursor=pointer]:
+                  - img [ref=e5419] [cursor=pointer]
+              - generic [ref=e5426] [cursor=pointer]:
+                - generic [ref=e5429] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 199" [ref=e5431] [cursor=pointer]
+              - heading [level=3] [ref=e5433] [cursor=pointer]
+          - button "View details for Pokemon 200" [ref=e5440] [cursor=pointer]:
+            - generic [ref=e5442] [cursor=pointer]:
+              - generic [ref=e5443] [cursor=pointer]:
+                - generic [ref=e5444] [cursor=pointer]: "#200"
+                - button "Add to comparison" [ref=e5445] [cursor=pointer]:
+                  - img [ref=e5446] [cursor=pointer]
+              - generic [ref=e5453] [cursor=pointer]:
+                - generic [ref=e5456] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 200" [ref=e5458] [cursor=pointer]
+              - heading [level=3] [ref=e5460] [cursor=pointer]
+          - button "View details for Pokemon 201" [ref=e5467] [cursor=pointer]:
+            - generic [ref=e5469] [cursor=pointer]:
+              - generic [ref=e5470] [cursor=pointer]:
+                - generic [ref=e5471] [cursor=pointer]: "#201"
+                - button "Add to comparison" [ref=e5472] [cursor=pointer]:
+                  - img [ref=e5473] [cursor=pointer]
+              - generic [ref=e5480] [cursor=pointer]:
+                - generic [ref=e5483] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 201" [ref=e5485] [cursor=pointer]
+              - heading [level=3] [ref=e5487] [cursor=pointer]
+          - button "View details for Pokemon 202" [ref=e5494] [cursor=pointer]:
+            - generic [ref=e5496] [cursor=pointer]:
+              - generic [ref=e5497] [cursor=pointer]:
+                - generic [ref=e5498] [cursor=pointer]: "#202"
+                - button "Add to comparison" [ref=e5499] [cursor=pointer]:
+                  - img [ref=e5500] [cursor=pointer]
+              - generic [ref=e5507] [cursor=pointer]:
+                - generic [ref=e5510] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 202" [ref=e5512] [cursor=pointer]
+              - heading [level=3] [ref=e5514] [cursor=pointer]
+          - button "View details for Pokemon 203" [ref=e5521] [cursor=pointer]:
+            - generic [ref=e5523] [cursor=pointer]:
+              - generic [ref=e5524] [cursor=pointer]:
+                - generic [ref=e5525] [cursor=pointer]: "#203"
+                - button "Add to comparison" [ref=e5526] [cursor=pointer]:
+                  - img [ref=e5527] [cursor=pointer]
+              - generic [ref=e5534] [cursor=pointer]:
+                - generic [ref=e5537] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 203" [ref=e5539] [cursor=pointer]
+              - heading [level=3] [ref=e5541] [cursor=pointer]
+          - button "View details for Pokemon 204" [ref=e5548] [cursor=pointer]:
+            - generic [ref=e5550] [cursor=pointer]:
+              - generic [ref=e5551] [cursor=pointer]:
+                - generic [ref=e5552] [cursor=pointer]: "#204"
+                - button "Add to comparison" [ref=e5553] [cursor=pointer]:
+                  - img [ref=e5554] [cursor=pointer]
+              - generic [ref=e5561] [cursor=pointer]:
+                - generic [ref=e5564] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 204" [ref=e5566] [cursor=pointer]
+              - heading [level=3] [ref=e5568] [cursor=pointer]
+          - button "View details for Pokemon 205" [ref=e5575] [cursor=pointer]:
+            - generic [ref=e5577] [cursor=pointer]:
+              - generic [ref=e5578] [cursor=pointer]:
+                - generic [ref=e5579] [cursor=pointer]: "#205"
+                - button "Add to comparison" [ref=e5580] [cursor=pointer]:
+                  - img [ref=e5581] [cursor=pointer]
+              - generic [ref=e5588] [cursor=pointer]:
+                - generic [ref=e5591] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 205" [ref=e5593] [cursor=pointer]
+              - heading [level=3] [ref=e5595] [cursor=pointer]
+          - button "View details for Pokemon 206" [ref=e5602] [cursor=pointer]:
+            - generic [ref=e5604] [cursor=pointer]:
+              - generic [ref=e5605] [cursor=pointer]:
+                - generic [ref=e5606] [cursor=pointer]: "#206"
+                - button "Add to comparison" [ref=e5607] [cursor=pointer]:
+                  - img [ref=e5608] [cursor=pointer]
+              - generic [ref=e5615] [cursor=pointer]:
+                - generic [ref=e5618] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 206" [ref=e5620] [cursor=pointer]
+              - heading [level=3] [ref=e5622] [cursor=pointer]
+          - button "View details for Pokemon 207" [ref=e5629] [cursor=pointer]:
+            - generic [ref=e5631] [cursor=pointer]:
+              - generic [ref=e5632] [cursor=pointer]:
+                - generic [ref=e5633] [cursor=pointer]: "#207"
+                - button "Add to comparison" [ref=e5634] [cursor=pointer]:
+                  - img [ref=e5635] [cursor=pointer]
+              - generic [ref=e5642] [cursor=pointer]:
+                - generic [ref=e5645] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 207" [ref=e5647] [cursor=pointer]
+              - heading [level=3] [ref=e5649] [cursor=pointer]
+          - button "View details for Pokemon 208" [ref=e5656] [cursor=pointer]:
+            - generic [ref=e5658] [cursor=pointer]:
+              - generic [ref=e5659] [cursor=pointer]:
+                - generic [ref=e5660] [cursor=pointer]: "#208"
+                - button "Add to comparison" [ref=e5661] [cursor=pointer]:
+                  - img [ref=e5662] [cursor=pointer]
+              - generic [ref=e5669] [cursor=pointer]:
+                - generic [ref=e5672] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 208" [ref=e5674] [cursor=pointer]
+              - heading [level=3] [ref=e5676] [cursor=pointer]
+          - button "View details for Pokemon 209" [ref=e5683] [cursor=pointer]:
+            - generic [ref=e5685] [cursor=pointer]:
+              - generic [ref=e5686] [cursor=pointer]:
+                - generic [ref=e5687] [cursor=pointer]: "#209"
+                - button "Add to comparison" [ref=e5688] [cursor=pointer]:
+                  - img [ref=e5689] [cursor=pointer]
+              - generic [ref=e5696] [cursor=pointer]:
+                - generic [ref=e5699] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 209" [ref=e5701] [cursor=pointer]
+              - heading [level=3] [ref=e5703] [cursor=pointer]
+          - button "View details for Pokemon 210" [ref=e5710] [cursor=pointer]:
+            - generic [ref=e5712] [cursor=pointer]:
+              - generic [ref=e5713] [cursor=pointer]:
+                - generic [ref=e5714] [cursor=pointer]: "#210"
+                - button "Add to comparison" [ref=e5715] [cursor=pointer]:
+                  - img [ref=e5716] [cursor=pointer]
+              - generic [ref=e5723] [cursor=pointer]:
+                - generic [ref=e5726] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 210" [ref=e5728] [cursor=pointer]
+              - heading [level=3] [ref=e5730] [cursor=pointer]
+          - button "View details for Pokemon 211" [ref=e5737] [cursor=pointer]:
+            - generic [ref=e5739] [cursor=pointer]:
+              - generic [ref=e5740] [cursor=pointer]:
+                - generic [ref=e5741] [cursor=pointer]: "#211"
+                - button "Add to comparison" [ref=e5742] [cursor=pointer]:
+                  - img [ref=e5743] [cursor=pointer]
+              - generic [ref=e5750] [cursor=pointer]:
+                - generic [ref=e5753] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 211" [ref=e5755] [cursor=pointer]
+              - heading [level=3] [ref=e5757] [cursor=pointer]
+          - button "View details for Pokemon 212" [ref=e5764] [cursor=pointer]:
+            - generic [ref=e5766] [cursor=pointer]:
+              - generic [ref=e5767] [cursor=pointer]:
+                - generic [ref=e5768] [cursor=pointer]: "#212"
+                - button "Add to comparison" [ref=e5769] [cursor=pointer]:
+                  - img [ref=e5770] [cursor=pointer]
+              - generic [ref=e5777] [cursor=pointer]:
+                - generic [ref=e5780] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 212" [ref=e5782] [cursor=pointer]
+              - heading [level=3] [ref=e5784] [cursor=pointer]
+          - button "View details for Pokemon 213" [ref=e5791] [cursor=pointer]:
+            - generic [ref=e5793] [cursor=pointer]:
+              - generic [ref=e5794] [cursor=pointer]:
+                - generic [ref=e5795] [cursor=pointer]: "#213"
+                - button "Add to comparison" [ref=e5796] [cursor=pointer]:
+                  - img [ref=e5797] [cursor=pointer]
+              - generic [ref=e5804] [cursor=pointer]:
+                - generic [ref=e5807] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 213" [ref=e5809] [cursor=pointer]
+              - heading [level=3] [ref=e5811] [cursor=pointer]
+          - button "View details for Pokemon 214" [ref=e5818] [cursor=pointer]:
+            - generic [ref=e5820] [cursor=pointer]:
+              - generic [ref=e5821] [cursor=pointer]:
+                - generic [ref=e5822] [cursor=pointer]: "#214"
+                - button "Add to comparison" [ref=e5823] [cursor=pointer]:
+                  - img [ref=e5824] [cursor=pointer]
+              - generic [ref=e5831] [cursor=pointer]:
+                - generic [ref=e5834] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 214" [ref=e5836] [cursor=pointer]
+              - heading [level=3] [ref=e5838] [cursor=pointer]
+          - button "View details for Pokemon 215" [ref=e5845] [cursor=pointer]:
+            - generic [ref=e5847] [cursor=pointer]:
+              - generic [ref=e5848] [cursor=pointer]:
+                - generic [ref=e5849] [cursor=pointer]: "#215"
+                - button "Add to comparison" [ref=e5850] [cursor=pointer]:
+                  - img [ref=e5851] [cursor=pointer]
+              - generic [ref=e5858] [cursor=pointer]:
+                - generic [ref=e5861] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 215" [ref=e5863] [cursor=pointer]
+              - heading [level=3] [ref=e5865] [cursor=pointer]
+          - button "View details for Pokemon 216" [ref=e5872] [cursor=pointer]:
+            - generic [ref=e5874] [cursor=pointer]:
+              - generic [ref=e5875] [cursor=pointer]:
+                - generic [ref=e5876] [cursor=pointer]: "#216"
+                - button "Add to comparison" [ref=e5877] [cursor=pointer]:
+                  - img [ref=e5878] [cursor=pointer]
+              - generic [ref=e5885] [cursor=pointer]:
+                - generic [ref=e5888] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 216" [ref=e5890] [cursor=pointer]
+              - heading [level=3] [ref=e5892] [cursor=pointer]
+          - button "View details for Pokemon 217" [ref=e5899] [cursor=pointer]:
+            - generic [ref=e5901] [cursor=pointer]:
+              - generic [ref=e5902] [cursor=pointer]:
+                - generic [ref=e5903] [cursor=pointer]: "#217"
+                - button "Add to comparison" [ref=e5904] [cursor=pointer]:
+                  - img [ref=e5905] [cursor=pointer]
+              - generic [ref=e5912] [cursor=pointer]:
+                - generic [ref=e5915] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 217" [ref=e5917] [cursor=pointer]
+              - heading [level=3] [ref=e5919] [cursor=pointer]
+          - button "View details for Pokemon 218" [ref=e5926] [cursor=pointer]:
+            - generic [ref=e5928] [cursor=pointer]:
+              - generic [ref=e5929] [cursor=pointer]:
+                - generic [ref=e5930] [cursor=pointer]: "#218"
+                - button "Add to comparison" [ref=e5931] [cursor=pointer]:
+                  - img [ref=e5932] [cursor=pointer]
+              - generic [ref=e5939] [cursor=pointer]:
+                - generic [ref=e5942] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 218" [ref=e5944] [cursor=pointer]
+              - heading [level=3] [ref=e5946] [cursor=pointer]
+          - button "View details for Pokemon 219" [ref=e5953] [cursor=pointer]:
+            - generic [ref=e5955] [cursor=pointer]:
+              - generic [ref=e5956] [cursor=pointer]:
+                - generic [ref=e5957] [cursor=pointer]: "#219"
+                - button "Add to comparison" [ref=e5958] [cursor=pointer]:
+                  - img [ref=e5959] [cursor=pointer]
+              - generic [ref=e5966] [cursor=pointer]:
+                - generic [ref=e5969] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 219" [ref=e5971] [cursor=pointer]
+              - heading [level=3] [ref=e5973] [cursor=pointer]
+          - button "View details for Pokemon 220" [ref=e5980] [cursor=pointer]:
+            - generic [ref=e5982] [cursor=pointer]:
+              - generic [ref=e5983] [cursor=pointer]:
+                - generic [ref=e5984] [cursor=pointer]: "#220"
+                - button "Add to comparison" [ref=e5985] [cursor=pointer]:
+                  - img [ref=e5986] [cursor=pointer]
+              - generic [ref=e5993] [cursor=pointer]:
+                - generic [ref=e5996] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 220" [ref=e5998] [cursor=pointer]
+              - heading [level=3] [ref=e6000] [cursor=pointer]
+          - button "View details for Pokemon 221" [ref=e6007] [cursor=pointer]:
+            - generic [ref=e6009] [cursor=pointer]:
+              - generic [ref=e6010] [cursor=pointer]:
+                - generic [ref=e6011] [cursor=pointer]: "#221"
+                - button "Add to comparison" [ref=e6012] [cursor=pointer]:
+                  - img [ref=e6013] [cursor=pointer]
+              - generic [ref=e6020] [cursor=pointer]:
+                - generic [ref=e6023] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 221" [ref=e6025] [cursor=pointer]
+              - heading [level=3] [ref=e6027] [cursor=pointer]
+          - button "View details for Pokemon 222" [ref=e6034] [cursor=pointer]:
+            - generic [ref=e6036] [cursor=pointer]:
+              - generic [ref=e6037] [cursor=pointer]:
+                - generic [ref=e6038] [cursor=pointer]: "#222"
+                - button "Add to comparison" [ref=e6039] [cursor=pointer]:
+                  - img [ref=e6040] [cursor=pointer]
+              - generic [ref=e6047] [cursor=pointer]:
+                - generic [ref=e6050] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 222" [ref=e6052] [cursor=pointer]
+              - heading [level=3] [ref=e6054] [cursor=pointer]
+          - button "View details for Pokemon 223" [ref=e6061] [cursor=pointer]:
+            - generic [ref=e6063] [cursor=pointer]:
+              - generic [ref=e6064] [cursor=pointer]:
+                - generic [ref=e6065] [cursor=pointer]: "#223"
+                - button "Add to comparison" [ref=e6066] [cursor=pointer]:
+                  - img [ref=e6067] [cursor=pointer]
+              - generic [ref=e6074] [cursor=pointer]:
+                - generic [ref=e6077] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 223" [ref=e6079] [cursor=pointer]
+              - heading [level=3] [ref=e6081] [cursor=pointer]
+          - button "View details for Pokemon 224" [ref=e6088] [cursor=pointer]:
+            - generic [ref=e6090] [cursor=pointer]:
+              - generic [ref=e6091] [cursor=pointer]:
+                - generic [ref=e6092] [cursor=pointer]: "#224"
+                - button "Add to comparison" [ref=e6093] [cursor=pointer]:
+                  - img [ref=e6094] [cursor=pointer]
+              - generic [ref=e6101] [cursor=pointer]:
+                - generic [ref=e6104] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 224" [ref=e6106] [cursor=pointer]
+              - heading [level=3] [ref=e6108] [cursor=pointer]
+          - button "View details for Pokemon 225" [ref=e6115] [cursor=pointer]:
+            - generic [ref=e6117] [cursor=pointer]:
+              - generic [ref=e6118] [cursor=pointer]:
+                - generic [ref=e6119] [cursor=pointer]: "#225"
+                - button "Add to comparison" [ref=e6120] [cursor=pointer]:
+                  - img [ref=e6121] [cursor=pointer]
+              - generic [ref=e6128] [cursor=pointer]:
+                - generic [ref=e6131] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 225" [ref=e6133] [cursor=pointer]
+              - heading [level=3] [ref=e6135] [cursor=pointer]
+          - button "View details for Pokemon 226" [ref=e6142] [cursor=pointer]:
+            - generic [ref=e6144] [cursor=pointer]:
+              - generic [ref=e6145] [cursor=pointer]:
+                - generic [ref=e6146] [cursor=pointer]: "#226"
+                - button "Add to comparison" [ref=e6147] [cursor=pointer]:
+                  - img [ref=e6148] [cursor=pointer]
+              - generic [ref=e6155] [cursor=pointer]:
+                - generic [ref=e6158] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 226" [ref=e6160] [cursor=pointer]
+              - heading [level=3] [ref=e6162] [cursor=pointer]
+          - button "View details for Pokemon 227" [ref=e6169] [cursor=pointer]:
+            - generic [ref=e6171] [cursor=pointer]:
+              - generic [ref=e6172] [cursor=pointer]:
+                - generic [ref=e6173] [cursor=pointer]: "#227"
+                - button "Add to comparison" [ref=e6174] [cursor=pointer]:
+                  - img [ref=e6175] [cursor=pointer]
+              - generic [ref=e6182] [cursor=pointer]:
+                - generic [ref=e6185] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 227" [ref=e6187] [cursor=pointer]
+              - heading [level=3] [ref=e6189] [cursor=pointer]
+          - button "View details for Pokemon 228" [ref=e6196] [cursor=pointer]:
+            - generic [ref=e6198] [cursor=pointer]:
+              - generic [ref=e6199] [cursor=pointer]:
+                - generic [ref=e6200] [cursor=pointer]: "#228"
+                - button "Add to comparison" [ref=e6201] [cursor=pointer]:
+                  - img [ref=e6202] [cursor=pointer]
+              - generic [ref=e6209] [cursor=pointer]:
+                - generic [ref=e6212] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 228" [ref=e6214] [cursor=pointer]
+              - heading [level=3] [ref=e6216] [cursor=pointer]
+          - button "View details for Pokemon 229" [ref=e6223] [cursor=pointer]:
+            - generic [ref=e6225] [cursor=pointer]:
+              - generic [ref=e6226] [cursor=pointer]:
+                - generic [ref=e6227] [cursor=pointer]: "#229"
+                - button "Add to comparison" [ref=e6228] [cursor=pointer]:
+                  - img [ref=e6229] [cursor=pointer]
+              - generic [ref=e6236] [cursor=pointer]:
+                - generic [ref=e6239] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 229" [ref=e6241] [cursor=pointer]
+              - heading [level=3] [ref=e6243] [cursor=pointer]
+          - button "View details for Pokemon 230" [ref=e6250] [cursor=pointer]:
+            - generic [ref=e6252] [cursor=pointer]:
+              - generic [ref=e6253] [cursor=pointer]:
+                - generic [ref=e6254] [cursor=pointer]: "#230"
+                - button "Add to comparison" [ref=e6255] [cursor=pointer]:
+                  - img [ref=e6256] [cursor=pointer]
+              - generic [ref=e6263] [cursor=pointer]:
+                - generic [ref=e6266] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 230" [ref=e6268] [cursor=pointer]
+              - heading [level=3] [ref=e6270] [cursor=pointer]
+          - button "View details for Pokemon 231" [ref=e6277] [cursor=pointer]:
+            - generic [ref=e6279] [cursor=pointer]:
+              - generic [ref=e6280] [cursor=pointer]:
+                - generic [ref=e6281] [cursor=pointer]: "#231"
+                - button "Add to comparison" [ref=e6282] [cursor=pointer]:
+                  - img [ref=e6283] [cursor=pointer]
+              - generic [ref=e6290] [cursor=pointer]:
+                - generic [ref=e6293] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 231" [ref=e6295] [cursor=pointer]
+              - heading [level=3] [ref=e6297] [cursor=pointer]
+          - button "View details for Pokemon 232" [ref=e6304] [cursor=pointer]:
+            - generic [ref=e6306] [cursor=pointer]:
+              - generic [ref=e6307] [cursor=pointer]:
+                - generic [ref=e6308] [cursor=pointer]: "#232"
+                - button "Add to comparison" [ref=e6309] [cursor=pointer]:
+                  - img [ref=e6310] [cursor=pointer]
+              - generic [ref=e6317] [cursor=pointer]:
+                - generic [ref=e6320] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 232" [ref=e6322] [cursor=pointer]
+              - heading [level=3] [ref=e6324] [cursor=pointer]
+          - button "View details for Pokemon 233" [ref=e6331] [cursor=pointer]:
+            - generic [ref=e6333] [cursor=pointer]:
+              - generic [ref=e6334] [cursor=pointer]:
+                - generic [ref=e6335] [cursor=pointer]: "#233"
+                - button "Add to comparison" [ref=e6336] [cursor=pointer]:
+                  - img [ref=e6337] [cursor=pointer]
+              - generic [ref=e6344] [cursor=pointer]:
+                - generic [ref=e6347] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 233" [ref=e6349] [cursor=pointer]
+              - heading [level=3] [ref=e6351] [cursor=pointer]
+          - button "View details for Pokemon 234" [ref=e6358] [cursor=pointer]:
+            - generic [ref=e6360] [cursor=pointer]:
+              - generic [ref=e6361] [cursor=pointer]:
+                - generic [ref=e6362] [cursor=pointer]: "#234"
+                - button "Add to comparison" [ref=e6363] [cursor=pointer]:
+                  - img [ref=e6364] [cursor=pointer]
+              - generic [ref=e6371] [cursor=pointer]:
+                - generic [ref=e6374] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 234" [ref=e6376] [cursor=pointer]
+              - heading [level=3] [ref=e6378] [cursor=pointer]
+          - button "View details for Pokemon 235" [ref=e6385] [cursor=pointer]:
+            - generic [ref=e6387] [cursor=pointer]:
+              - generic [ref=e6388] [cursor=pointer]:
+                - generic [ref=e6389] [cursor=pointer]: "#235"
+                - button "Add to comparison" [ref=e6390] [cursor=pointer]:
+                  - img [ref=e6391] [cursor=pointer]
+              - generic [ref=e6398] [cursor=pointer]:
+                - generic [ref=e6401] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 235" [ref=e6403] [cursor=pointer]
+              - heading [level=3] [ref=e6405] [cursor=pointer]
+          - button "View details for Pokemon 236" [ref=e6412] [cursor=pointer]:
+            - generic [ref=e6414] [cursor=pointer]:
+              - generic [ref=e6415] [cursor=pointer]:
+                - generic [ref=e6416] [cursor=pointer]: "#236"
+                - button "Add to comparison" [ref=e6417] [cursor=pointer]:
+                  - img [ref=e6418] [cursor=pointer]
+              - generic [ref=e6425] [cursor=pointer]:
+                - generic [ref=e6428] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 236" [ref=e6430] [cursor=pointer]
+              - heading [level=3] [ref=e6432] [cursor=pointer]
+          - button "View details for Pokemon 237" [ref=e6439] [cursor=pointer]:
+            - generic [ref=e6441] [cursor=pointer]:
+              - generic [ref=e6442] [cursor=pointer]:
+                - generic [ref=e6443] [cursor=pointer]: "#237"
+                - button "Add to comparison" [ref=e6444] [cursor=pointer]:
+                  - img [ref=e6445] [cursor=pointer]
+              - generic [ref=e6452] [cursor=pointer]:
+                - generic [ref=e6455] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 237" [ref=e6457] [cursor=pointer]
+              - heading [level=3] [ref=e6459] [cursor=pointer]
+          - button "View details for Pokemon 238" [ref=e6466] [cursor=pointer]:
+            - generic [ref=e6468] [cursor=pointer]:
+              - generic [ref=e6469] [cursor=pointer]:
+                - generic [ref=e6470] [cursor=pointer]: "#238"
+                - button "Add to comparison" [ref=e6471] [cursor=pointer]:
+                  - img [ref=e6472] [cursor=pointer]
+              - generic [ref=e6479] [cursor=pointer]:
+                - generic [ref=e6482] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 238" [ref=e6484] [cursor=pointer]
+              - heading [level=3] [ref=e6486] [cursor=pointer]
+          - button "View details for Pokemon 239" [ref=e6493] [cursor=pointer]:
+            - generic [ref=e6495] [cursor=pointer]:
+              - generic [ref=e6496] [cursor=pointer]:
+                - generic [ref=e6497] [cursor=pointer]: "#239"
+                - button "Add to comparison" [ref=e6498] [cursor=pointer]:
+                  - img [ref=e6499] [cursor=pointer]
+              - generic [ref=e6506] [cursor=pointer]:
+                - generic [ref=e6509] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 239" [ref=e6511] [cursor=pointer]
+              - heading [level=3] [ref=e6513] [cursor=pointer]
+          - button "View details for Pokemon 240" [ref=e6520] [cursor=pointer]:
+            - generic [ref=e6522] [cursor=pointer]:
+              - generic [ref=e6523] [cursor=pointer]:
+                - generic [ref=e6524] [cursor=pointer]: "#240"
+                - button "Add to comparison" [ref=e6525] [cursor=pointer]:
+                  - img [ref=e6526] [cursor=pointer]
+              - generic [ref=e6533] [cursor=pointer]:
+                - generic [ref=e6536] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 240" [ref=e6538] [cursor=pointer]
+              - heading [level=3] [ref=e6540] [cursor=pointer]
+          - button "View details for Pokemon 241" [ref=e6547] [cursor=pointer]:
+            - generic [ref=e6549] [cursor=pointer]:
+              - generic [ref=e6550] [cursor=pointer]:
+                - generic [ref=e6551] [cursor=pointer]: "#241"
+                - button "Add to comparison" [ref=e6552] [cursor=pointer]:
+                  - img [ref=e6553] [cursor=pointer]
+              - generic [ref=e6560] [cursor=pointer]:
+                - generic [ref=e6563] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 241" [ref=e6565] [cursor=pointer]
+              - heading [level=3] [ref=e6567] [cursor=pointer]
+          - button "View details for Pokemon 242" [ref=e6574] [cursor=pointer]:
+            - generic [ref=e6576] [cursor=pointer]:
+              - generic [ref=e6577] [cursor=pointer]:
+                - generic [ref=e6578] [cursor=pointer]: "#242"
+                - button "Add to comparison" [ref=e6579] [cursor=pointer]:
+                  - img [ref=e6580] [cursor=pointer]
+              - generic [ref=e6587] [cursor=pointer]:
+                - generic [ref=e6590] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 242" [ref=e6592] [cursor=pointer]
+              - heading [level=3] [ref=e6594] [cursor=pointer]
+          - button "View details for Pokemon 243" [ref=e6601] [cursor=pointer]:
+            - generic [ref=e6603] [cursor=pointer]:
+              - generic [ref=e6604] [cursor=pointer]:
+                - generic [ref=e6605] [cursor=pointer]: "#243"
+                - button "Add to comparison" [ref=e6606] [cursor=pointer]:
+                  - img [ref=e6607] [cursor=pointer]
+              - generic [ref=e6614] [cursor=pointer]:
+                - generic [ref=e6617] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 243" [ref=e6619] [cursor=pointer]
+              - heading [level=3] [ref=e6621] [cursor=pointer]
+          - button "View details for Pokemon 244" [ref=e6628] [cursor=pointer]:
+            - generic [ref=e6630] [cursor=pointer]:
+              - generic [ref=e6631] [cursor=pointer]:
+                - generic [ref=e6632] [cursor=pointer]: "#244"
+                - button "Add to comparison" [ref=e6633] [cursor=pointer]:
+                  - img [ref=e6634] [cursor=pointer]
+              - generic [ref=e6641] [cursor=pointer]:
+                - generic [ref=e6644] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 244" [ref=e6646] [cursor=pointer]
+              - heading [level=3] [ref=e6648] [cursor=pointer]
+          - button "View details for Pokemon 245" [ref=e6655] [cursor=pointer]:
+            - generic [ref=e6657] [cursor=pointer]:
+              - generic [ref=e6658] [cursor=pointer]:
+                - generic [ref=e6659] [cursor=pointer]: "#245"
+                - button "Add to comparison" [ref=e6660] [cursor=pointer]:
+                  - img [ref=e6661] [cursor=pointer]
+              - generic [ref=e6668] [cursor=pointer]:
+                - generic [ref=e6671] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 245" [ref=e6673] [cursor=pointer]
+              - heading [level=3] [ref=e6675] [cursor=pointer]
+          - button "View details for Pokemon 246" [ref=e6682] [cursor=pointer]:
+            - generic [ref=e6684] [cursor=pointer]:
+              - generic [ref=e6685] [cursor=pointer]:
+                - generic [ref=e6686] [cursor=pointer]: "#246"
+                - button "Add to comparison" [ref=e6687] [cursor=pointer]:
+                  - img [ref=e6688] [cursor=pointer]
+              - generic [ref=e6695] [cursor=pointer]:
+                - generic [ref=e6698] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 246" [ref=e6700] [cursor=pointer]
+              - heading [level=3] [ref=e6702] [cursor=pointer]
+          - button "View details for Pokemon 247" [ref=e6709] [cursor=pointer]:
+            - generic [ref=e6711] [cursor=pointer]:
+              - generic [ref=e6712] [cursor=pointer]:
+                - generic [ref=e6713] [cursor=pointer]: "#247"
+                - button "Add to comparison" [ref=e6714] [cursor=pointer]:
+                  - img [ref=e6715] [cursor=pointer]
+              - generic [ref=e6722] [cursor=pointer]:
+                - generic [ref=e6725] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 247" [ref=e6727] [cursor=pointer]
+              - heading [level=3] [ref=e6729] [cursor=pointer]
+          - button "View details for Pokemon 248" [ref=e6736] [cursor=pointer]:
+            - generic [ref=e6738] [cursor=pointer]:
+              - generic [ref=e6739] [cursor=pointer]:
+                - generic [ref=e6740] [cursor=pointer]: "#248"
+                - button "Add to comparison" [ref=e6741] [cursor=pointer]:
+                  - img [ref=e6742] [cursor=pointer]
+              - generic [ref=e6749] [cursor=pointer]:
+                - generic [ref=e6752] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 248" [ref=e6754] [cursor=pointer]
+              - heading [level=3] [ref=e6756] [cursor=pointer]
+          - button "View details for Pokemon 249" [ref=e6763] [cursor=pointer]:
+            - generic [ref=e6765] [cursor=pointer]:
+              - generic [ref=e6766] [cursor=pointer]:
+                - generic [ref=e6767] [cursor=pointer]: "#249"
+                - button "Add to comparison" [ref=e6768] [cursor=pointer]:
+                  - img [ref=e6769] [cursor=pointer]
+              - generic [ref=e6776] [cursor=pointer]:
+                - generic [ref=e6779] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 249" [ref=e6781] [cursor=pointer]
+              - heading [level=3] [ref=e6783] [cursor=pointer]
+          - button "View details for Pokemon 250" [ref=e6790] [cursor=pointer]:
+            - generic [ref=e6792] [cursor=pointer]:
+              - generic [ref=e6793] [cursor=pointer]:
+                - generic [ref=e6794] [cursor=pointer]: "#250"
+                - button "Add to comparison" [ref=e6795] [cursor=pointer]:
+                  - img [ref=e6796] [cursor=pointer]
+              - generic [ref=e6803] [cursor=pointer]:
+                - generic [ref=e6806] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 250" [ref=e6808] [cursor=pointer]
+              - heading [level=3] [ref=e6810] [cursor=pointer]
+          - button "View details for Pokemon 251" [ref=e6817] [cursor=pointer]:
+            - generic [ref=e6819] [cursor=pointer]:
+              - generic [ref=e6820] [cursor=pointer]:
+                - generic [ref=e6821] [cursor=pointer]: "#251"
+                - button "Add to comparison" [ref=e6822] [cursor=pointer]:
+                  - img [ref=e6823] [cursor=pointer]
+              - generic [ref=e6830] [cursor=pointer]:
+                - generic [ref=e6833] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 251" [ref=e6835] [cursor=pointer]
+              - heading [level=3] [ref=e6837] [cursor=pointer]
+          - button "View details for Pokemon 252" [ref=e6844] [cursor=pointer]:
+            - generic [ref=e6846] [cursor=pointer]:
+              - generic [ref=e6847] [cursor=pointer]:
+                - generic [ref=e6848] [cursor=pointer]: "#252"
+                - button "Add to comparison" [ref=e6849] [cursor=pointer]:
+                  - img [ref=e6850] [cursor=pointer]
+              - generic [ref=e6857] [cursor=pointer]:
+                - generic [ref=e6860] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 252" [ref=e6862] [cursor=pointer]
+              - heading [level=3] [ref=e6864] [cursor=pointer]
+          - button "View details for Pokemon 253" [ref=e6871] [cursor=pointer]:
+            - generic [ref=e6873] [cursor=pointer]:
+              - generic [ref=e6874] [cursor=pointer]:
+                - generic [ref=e6875] [cursor=pointer]: "#253"
+                - button "Add to comparison" [ref=e6876] [cursor=pointer]:
+                  - img [ref=e6877] [cursor=pointer]
+              - generic [ref=e6884] [cursor=pointer]:
+                - generic [ref=e6887] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 253" [ref=e6889] [cursor=pointer]
+              - heading [level=3] [ref=e6891] [cursor=pointer]
+          - button "View details for Pokemon 254" [ref=e6898] [cursor=pointer]:
+            - generic [ref=e6900] [cursor=pointer]:
+              - generic [ref=e6901] [cursor=pointer]:
+                - generic [ref=e6902] [cursor=pointer]: "#254"
+                - button "Add to comparison" [ref=e6903] [cursor=pointer]:
+                  - img [ref=e6904] [cursor=pointer]
+              - generic [ref=e6911] [cursor=pointer]:
+                - generic [ref=e6914] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 254" [ref=e6916] [cursor=pointer]
+              - heading [level=3] [ref=e6918] [cursor=pointer]
+          - button "View details for Pokemon 255" [ref=e6925] [cursor=pointer]:
+            - generic [ref=e6927] [cursor=pointer]:
+              - generic [ref=e6928] [cursor=pointer]:
+                - generic [ref=e6929] [cursor=pointer]: "#255"
+                - button "Add to comparison" [ref=e6930] [cursor=pointer]:
+                  - img [ref=e6931] [cursor=pointer]
+              - generic [ref=e6938] [cursor=pointer]:
+                - generic [ref=e6941] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 255" [ref=e6943] [cursor=pointer]
+              - heading [level=3] [ref=e6945] [cursor=pointer]
+          - button "View details for Pokemon 256" [ref=e6952] [cursor=pointer]:
+            - generic [ref=e6954] [cursor=pointer]:
+              - generic [ref=e6955] [cursor=pointer]:
+                - generic [ref=e6956] [cursor=pointer]: "#256"
+                - button "Add to comparison" [ref=e6957] [cursor=pointer]:
+                  - img [ref=e6958] [cursor=pointer]
+              - generic [ref=e6965] [cursor=pointer]:
+                - generic [ref=e6968] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 256" [ref=e6970] [cursor=pointer]
+              - heading [level=3] [ref=e6972] [cursor=pointer]
+          - button "View details for Pokemon 257" [ref=e6979] [cursor=pointer]:
+            - generic [ref=e6981] [cursor=pointer]:
+              - generic [ref=e6982] [cursor=pointer]:
+                - generic [ref=e6983] [cursor=pointer]: "#257"
+                - button "Add to comparison" [ref=e6984] [cursor=pointer]:
+                  - img [ref=e6985] [cursor=pointer]
+              - generic [ref=e6992] [cursor=pointer]:
+                - generic [ref=e6995] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 257" [ref=e6997] [cursor=pointer]
+              - heading [level=3] [ref=e6999] [cursor=pointer]
+          - button "View details for Pokemon 258" [ref=e7006] [cursor=pointer]:
+            - generic [ref=e7008] [cursor=pointer]:
+              - generic [ref=e7009] [cursor=pointer]:
+                - generic [ref=e7010] [cursor=pointer]: "#258"
+                - button "Add to comparison" [ref=e7011] [cursor=pointer]:
+                  - img [ref=e7012] [cursor=pointer]
+              - generic [ref=e7019] [cursor=pointer]:
+                - generic [ref=e7022] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 258" [ref=e7024] [cursor=pointer]
+              - heading [level=3] [ref=e7026] [cursor=pointer]
+          - button "View details for Pokemon 259" [ref=e7033] [cursor=pointer]:
+            - generic [ref=e7035] [cursor=pointer]:
+              - generic [ref=e7036] [cursor=pointer]:
+                - generic [ref=e7037] [cursor=pointer]: "#259"
+                - button "Add to comparison" [ref=e7038] [cursor=pointer]:
+                  - img [ref=e7039] [cursor=pointer]
+              - generic [ref=e7046] [cursor=pointer]:
+                - generic [ref=e7049] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 259" [ref=e7051] [cursor=pointer]
+              - heading [level=3] [ref=e7053] [cursor=pointer]
+          - button "View details for Pokemon 260" [ref=e7060] [cursor=pointer]:
+            - generic [ref=e7062] [cursor=pointer]:
+              - generic [ref=e7063] [cursor=pointer]:
+                - generic [ref=e7064] [cursor=pointer]: "#260"
+                - button "Add to comparison" [ref=e7065] [cursor=pointer]:
+                  - img [ref=e7066] [cursor=pointer]
+              - generic [ref=e7073] [cursor=pointer]:
+                - generic [ref=e7076] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 260" [ref=e7078] [cursor=pointer]
+              - heading [level=3] [ref=e7080] [cursor=pointer]
+          - button "View details for Pokemon 261" [ref=e7087] [cursor=pointer]:
+            - generic [ref=e7089] [cursor=pointer]:
+              - generic [ref=e7090] [cursor=pointer]:
+                - generic [ref=e7091] [cursor=pointer]: "#261"
+                - button "Add to comparison" [ref=e7092] [cursor=pointer]:
+                  - img [ref=e7093] [cursor=pointer]
+              - generic [ref=e7100] [cursor=pointer]:
+                - generic [ref=e7103] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 261" [ref=e7105] [cursor=pointer]
+              - heading [level=3] [ref=e7107] [cursor=pointer]
+          - button "View details for Pokemon 262" [ref=e7114] [cursor=pointer]:
+            - generic [ref=e7116] [cursor=pointer]:
+              - generic [ref=e7117] [cursor=pointer]:
+                - generic [ref=e7118] [cursor=pointer]: "#262"
+                - button "Add to comparison" [ref=e7119] [cursor=pointer]:
+                  - img [ref=e7120] [cursor=pointer]
+              - generic [ref=e7127] [cursor=pointer]:
+                - generic [ref=e7130] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 262" [ref=e7132] [cursor=pointer]
+              - heading [level=3] [ref=e7134] [cursor=pointer]
+          - button "View details for Pokemon 263" [ref=e7141] [cursor=pointer]:
+            - generic [ref=e7143] [cursor=pointer]:
+              - generic [ref=e7144] [cursor=pointer]:
+                - generic [ref=e7145] [cursor=pointer]: "#263"
+                - button "Add to comparison" [ref=e7146] [cursor=pointer]:
+                  - img [ref=e7147] [cursor=pointer]
+              - generic [ref=e7154] [cursor=pointer]:
+                - generic [ref=e7157] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 263" [ref=e7159] [cursor=pointer]
+              - heading [level=3] [ref=e7161] [cursor=pointer]
+          - button "View details for Pokemon 264" [ref=e7168] [cursor=pointer]:
+            - generic [ref=e7170] [cursor=pointer]:
+              - generic [ref=e7171] [cursor=pointer]:
+                - generic [ref=e7172] [cursor=pointer]: "#264"
+                - button "Add to comparison" [ref=e7173] [cursor=pointer]:
+                  - img [ref=e7174] [cursor=pointer]
+              - generic [ref=e7181] [cursor=pointer]:
+                - generic [ref=e7184] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 264" [ref=e7186] [cursor=pointer]
+              - heading [level=3] [ref=e7188] [cursor=pointer]
+          - button "View details for Pokemon 265" [ref=e7195] [cursor=pointer]:
+            - generic [ref=e7197] [cursor=pointer]:
+              - generic [ref=e7198] [cursor=pointer]:
+                - generic [ref=e7199] [cursor=pointer]: "#265"
+                - button "Add to comparison" [ref=e7200] [cursor=pointer]:
+                  - img [ref=e7201] [cursor=pointer]
+              - generic [ref=e7208] [cursor=pointer]:
+                - generic [ref=e7211] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 265" [ref=e7213] [cursor=pointer]
+              - heading [level=3] [ref=e7215] [cursor=pointer]
+          - button "View details for Pokemon 266" [ref=e7222] [cursor=pointer]:
+            - generic [ref=e7224] [cursor=pointer]:
+              - generic [ref=e7225] [cursor=pointer]:
+                - generic [ref=e7226] [cursor=pointer]: "#266"
+                - button "Add to comparison" [ref=e7227] [cursor=pointer]:
+                  - img [ref=e7228] [cursor=pointer]
+              - generic [ref=e7235] [cursor=pointer]:
+                - generic [ref=e7238] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 266" [ref=e7240] [cursor=pointer]
+              - heading [level=3] [ref=e7242] [cursor=pointer]
+          - button "View details for Pokemon 267" [ref=e7249] [cursor=pointer]:
+            - generic [ref=e7251] [cursor=pointer]:
+              - generic [ref=e7252] [cursor=pointer]:
+                - generic [ref=e7253] [cursor=pointer]: "#267"
+                - button "Add to comparison" [ref=e7254] [cursor=pointer]:
+                  - img [ref=e7255] [cursor=pointer]
+              - generic [ref=e7262] [cursor=pointer]:
+                - generic [ref=e7265] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 267" [ref=e7267] [cursor=pointer]
+              - heading [level=3] [ref=e7269] [cursor=pointer]
+          - button "View details for Pokemon 268" [ref=e7276] [cursor=pointer]:
+            - generic [ref=e7278] [cursor=pointer]:
+              - generic [ref=e7279] [cursor=pointer]:
+                - generic [ref=e7280] [cursor=pointer]: "#268"
+                - button "Add to comparison" [ref=e7281] [cursor=pointer]:
+                  - img [ref=e7282] [cursor=pointer]
+              - generic [ref=e7289] [cursor=pointer]:
+                - generic [ref=e7292] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 268" [ref=e7294] [cursor=pointer]
+              - heading [level=3] [ref=e7296] [cursor=pointer]
+          - button "View details for Pokemon 269" [ref=e7303] [cursor=pointer]:
+            - generic [ref=e7305] [cursor=pointer]:
+              - generic [ref=e7306] [cursor=pointer]:
+                - generic [ref=e7307] [cursor=pointer]: "#269"
+                - button "Add to comparison" [ref=e7308] [cursor=pointer]:
+                  - img [ref=e7309] [cursor=pointer]
+              - generic [ref=e7316] [cursor=pointer]:
+                - generic [ref=e7319] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 269" [ref=e7321] [cursor=pointer]
+              - heading [level=3] [ref=e7323] [cursor=pointer]
+          - button "View details for Pokemon 270" [ref=e7330] [cursor=pointer]:
+            - generic [ref=e7332] [cursor=pointer]:
+              - generic [ref=e7333] [cursor=pointer]:
+                - generic [ref=e7334] [cursor=pointer]: "#270"
+                - button "Add to comparison" [ref=e7335] [cursor=pointer]:
+                  - img [ref=e7336] [cursor=pointer]
+              - generic [ref=e7343] [cursor=pointer]:
+                - generic [ref=e7346] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 270" [ref=e7348] [cursor=pointer]
+              - heading [level=3] [ref=e7350] [cursor=pointer]
+          - button "View details for Pokemon 271" [ref=e7357] [cursor=pointer]:
+            - generic [ref=e7359] [cursor=pointer]:
+              - generic [ref=e7360] [cursor=pointer]:
+                - generic [ref=e7361] [cursor=pointer]: "#271"
+                - button "Add to comparison" [ref=e7362] [cursor=pointer]:
+                  - img [ref=e7363] [cursor=pointer]
+              - generic [ref=e7370] [cursor=pointer]:
+                - generic [ref=e7373] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 271" [ref=e7375] [cursor=pointer]
+              - heading [level=3] [ref=e7377] [cursor=pointer]
+          - button "View details for Pokemon 272" [ref=e7384] [cursor=pointer]:
+            - generic [ref=e7386] [cursor=pointer]:
+              - generic [ref=e7387] [cursor=pointer]:
+                - generic [ref=e7388] [cursor=pointer]: "#272"
+                - button "Add to comparison" [ref=e7389] [cursor=pointer]:
+                  - img [ref=e7390] [cursor=pointer]
+              - generic [ref=e7397] [cursor=pointer]:
+                - generic [ref=e7400] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 272" [ref=e7402] [cursor=pointer]
+              - heading [level=3] [ref=e7404] [cursor=pointer]
+          - button "View details for Pokemon 273" [ref=e7411] [cursor=pointer]:
+            - generic [ref=e7413] [cursor=pointer]:
+              - generic [ref=e7414] [cursor=pointer]:
+                - generic [ref=e7415] [cursor=pointer]: "#273"
+                - button "Add to comparison" [ref=e7416] [cursor=pointer]:
+                  - img [ref=e7417] [cursor=pointer]
+              - generic [ref=e7424] [cursor=pointer]:
+                - generic [ref=e7427] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 273" [ref=e7429] [cursor=pointer]
+              - heading [level=3] [ref=e7431] [cursor=pointer]
+          - button "View details for Pokemon 274" [ref=e7438] [cursor=pointer]:
+            - generic [ref=e7440] [cursor=pointer]:
+              - generic [ref=e7441] [cursor=pointer]:
+                - generic [ref=e7442] [cursor=pointer]: "#274"
+                - button "Add to comparison" [ref=e7443] [cursor=pointer]:
+                  - img [ref=e7444] [cursor=pointer]
+              - generic [ref=e7451] [cursor=pointer]:
+                - generic [ref=e7454] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 274" [ref=e7456] [cursor=pointer]
+              - heading [level=3] [ref=e7458] [cursor=pointer]
+          - button "View details for Pokemon 275" [ref=e7465] [cursor=pointer]:
+            - generic [ref=e7467] [cursor=pointer]:
+              - generic [ref=e7468] [cursor=pointer]:
+                - generic [ref=e7469] [cursor=pointer]: "#275"
+                - button "Add to comparison" [ref=e7470] [cursor=pointer]:
+                  - img [ref=e7471] [cursor=pointer]
+              - generic [ref=e7478] [cursor=pointer]:
+                - generic [ref=e7481] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 275" [ref=e7483] [cursor=pointer]
+              - heading [level=3] [ref=e7485] [cursor=pointer]
+          - button "View details for Pokemon 276" [ref=e7492] [cursor=pointer]:
+            - generic [ref=e7494] [cursor=pointer]:
+              - generic [ref=e7495] [cursor=pointer]:
+                - generic [ref=e7496] [cursor=pointer]: "#276"
+                - button "Add to comparison" [ref=e7497] [cursor=pointer]:
+                  - img [ref=e7498] [cursor=pointer]
+              - generic [ref=e7505] [cursor=pointer]:
+                - generic [ref=e7508] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 276" [ref=e7510] [cursor=pointer]
+              - heading [level=3] [ref=e7512] [cursor=pointer]
+          - button "View details for Pokemon 277" [ref=e7519] [cursor=pointer]:
+            - generic [ref=e7521] [cursor=pointer]:
+              - generic [ref=e7522] [cursor=pointer]:
+                - generic [ref=e7523] [cursor=pointer]: "#277"
+                - button "Add to comparison" [ref=e7524] [cursor=pointer]:
+                  - img [ref=e7525] [cursor=pointer]
+              - generic [ref=e7532] [cursor=pointer]:
+                - generic [ref=e7535] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 277" [ref=e7537] [cursor=pointer]
+              - heading [level=3] [ref=e7539] [cursor=pointer]
+          - button "View details for Pokemon 278" [ref=e7546] [cursor=pointer]:
+            - generic [ref=e7548] [cursor=pointer]:
+              - generic [ref=e7549] [cursor=pointer]:
+                - generic [ref=e7550] [cursor=pointer]: "#278"
+                - button "Add to comparison" [ref=e7551] [cursor=pointer]:
+                  - img [ref=e7552] [cursor=pointer]
+              - generic [ref=e7559] [cursor=pointer]:
+                - generic [ref=e7562] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 278" [ref=e7564] [cursor=pointer]
+              - heading [level=3] [ref=e7566] [cursor=pointer]
+          - button "View details for Pokemon 279" [ref=e7573] [cursor=pointer]:
+            - generic [ref=e7575] [cursor=pointer]:
+              - generic [ref=e7576] [cursor=pointer]:
+                - generic [ref=e7577] [cursor=pointer]: "#279"
+                - button "Add to comparison" [ref=e7578] [cursor=pointer]:
+                  - img [ref=e7579] [cursor=pointer]
+              - generic [ref=e7586] [cursor=pointer]:
+                - generic [ref=e7589] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 279" [ref=e7591] [cursor=pointer]
+              - heading [level=3] [ref=e7593] [cursor=pointer]
+          - button "View details for Pokemon 280" [ref=e7600] [cursor=pointer]:
+            - generic [ref=e7602] [cursor=pointer]:
+              - generic [ref=e7603] [cursor=pointer]:
+                - generic [ref=e7604] [cursor=pointer]: "#280"
+                - button "Add to comparison" [ref=e7605] [cursor=pointer]:
+                  - img [ref=e7606] [cursor=pointer]
+              - generic [ref=e7613] [cursor=pointer]:
+                - generic [ref=e7616] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 280" [ref=e7618] [cursor=pointer]
+              - heading [level=3] [ref=e7620] [cursor=pointer]
+          - button "View details for Pokemon 281" [ref=e7627] [cursor=pointer]:
+            - generic [ref=e7629] [cursor=pointer]:
+              - generic [ref=e7630] [cursor=pointer]:
+                - generic [ref=e7631] [cursor=pointer]: "#281"
+                - button "Add to comparison" [ref=e7632] [cursor=pointer]:
+                  - img [ref=e7633] [cursor=pointer]
+              - generic [ref=e7640] [cursor=pointer]:
+                - generic [ref=e7643] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 281" [ref=e7645] [cursor=pointer]
+              - heading [level=3] [ref=e7647] [cursor=pointer]
+          - button "View details for Pokemon 282" [ref=e7654] [cursor=pointer]:
+            - generic [ref=e7656] [cursor=pointer]:
+              - generic [ref=e7657] [cursor=pointer]:
+                - generic [ref=e7658] [cursor=pointer]: "#282"
+                - button "Add to comparison" [ref=e7659] [cursor=pointer]:
+                  - img [ref=e7660] [cursor=pointer]
+              - generic [ref=e7667] [cursor=pointer]:
+                - generic [ref=e7670] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 282" [ref=e7672] [cursor=pointer]
+              - heading [level=3] [ref=e7674] [cursor=pointer]
+          - button "View details for Pokemon 283" [ref=e7681] [cursor=pointer]:
+            - generic [ref=e7683] [cursor=pointer]:
+              - generic [ref=e7684] [cursor=pointer]:
+                - generic [ref=e7685] [cursor=pointer]: "#283"
+                - button "Add to comparison" [ref=e7686] [cursor=pointer]:
+                  - img [ref=e7687] [cursor=pointer]
+              - generic [ref=e7694] [cursor=pointer]:
+                - generic [ref=e7697] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 283" [ref=e7699] [cursor=pointer]
+              - heading [level=3] [ref=e7701] [cursor=pointer]
+          - button "View details for Pokemon 284" [ref=e7708] [cursor=pointer]:
+            - generic [ref=e7710] [cursor=pointer]:
+              - generic [ref=e7711] [cursor=pointer]:
+                - generic [ref=e7712] [cursor=pointer]: "#284"
+                - button "Add to comparison" [ref=e7713] [cursor=pointer]:
+                  - img [ref=e7714] [cursor=pointer]
+              - generic [ref=e7721] [cursor=pointer]:
+                - generic [ref=e7724] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 284" [ref=e7726] [cursor=pointer]
+              - heading [level=3] [ref=e7728] [cursor=pointer]
+          - button "View details for Pokemon 285" [ref=e7735] [cursor=pointer]:
+            - generic [ref=e7737] [cursor=pointer]:
+              - generic [ref=e7738] [cursor=pointer]:
+                - generic [ref=e7739] [cursor=pointer]: "#285"
+                - button "Add to comparison" [ref=e7740] [cursor=pointer]:
+                  - img [ref=e7741] [cursor=pointer]
+              - generic [ref=e7748] [cursor=pointer]:
+                - generic [ref=e7751] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 285" [ref=e7753] [cursor=pointer]
+              - heading [level=3] [ref=e7755] [cursor=pointer]
+          - button "View details for Pokemon 286" [ref=e7762] [cursor=pointer]:
+            - generic [ref=e7764] [cursor=pointer]:
+              - generic [ref=e7765] [cursor=pointer]:
+                - generic [ref=e7766] [cursor=pointer]: "#286"
+                - button "Add to comparison" [ref=e7767] [cursor=pointer]:
+                  - img [ref=e7768] [cursor=pointer]
+              - generic [ref=e7775] [cursor=pointer]:
+                - generic [ref=e7778] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 286" [ref=e7780] [cursor=pointer]
+              - heading [level=3] [ref=e7782] [cursor=pointer]
+          - button "View details for Pokemon 287" [ref=e7789] [cursor=pointer]:
+            - generic [ref=e7791] [cursor=pointer]:
+              - generic [ref=e7792] [cursor=pointer]:
+                - generic [ref=e7793] [cursor=pointer]: "#287"
+                - button "Add to comparison" [ref=e7794] [cursor=pointer]:
+                  - img [ref=e7795] [cursor=pointer]
+              - generic [ref=e7802] [cursor=pointer]:
+                - generic [ref=e7805] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 287" [ref=e7807] [cursor=pointer]
+              - heading [level=3] [ref=e7809] [cursor=pointer]
+          - button "View details for Pokemon 288" [ref=e7816] [cursor=pointer]:
+            - generic [ref=e7818] [cursor=pointer]:
+              - generic [ref=e7819] [cursor=pointer]:
+                - generic [ref=e7820] [cursor=pointer]: "#288"
+                - button "Add to comparison" [ref=e7821] [cursor=pointer]:
+                  - img [ref=e7822] [cursor=pointer]
+              - generic [ref=e7829] [cursor=pointer]:
+                - generic [ref=e7832] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 288" [ref=e7834] [cursor=pointer]
+              - heading [level=3] [ref=e7836] [cursor=pointer]
+          - button "View details for Pokemon 289" [ref=e7843] [cursor=pointer]:
+            - generic [ref=e7845] [cursor=pointer]:
+              - generic [ref=e7846] [cursor=pointer]:
+                - generic [ref=e7847] [cursor=pointer]: "#289"
+                - button "Add to comparison" [ref=e7848] [cursor=pointer]:
+                  - img [ref=e7849] [cursor=pointer]
+              - generic [ref=e7856] [cursor=pointer]:
+                - generic [ref=e7859] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 289" [ref=e7861] [cursor=pointer]
+              - heading [level=3] [ref=e7863] [cursor=pointer]
+          - button "View details for Pokemon 290" [ref=e7870] [cursor=pointer]:
+            - generic [ref=e7872] [cursor=pointer]:
+              - generic [ref=e7873] [cursor=pointer]:
+                - generic [ref=e7874] [cursor=pointer]: "#290"
+                - button "Add to comparison" [ref=e7875] [cursor=pointer]:
+                  - img [ref=e7876] [cursor=pointer]
+              - generic [ref=e7883] [cursor=pointer]:
+                - generic [ref=e7886] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 290" [ref=e7888] [cursor=pointer]
+              - heading [level=3] [ref=e7890] [cursor=pointer]
+          - button "View details for Pokemon 291" [ref=e7897] [cursor=pointer]:
+            - generic [ref=e7899] [cursor=pointer]:
+              - generic [ref=e7900] [cursor=pointer]:
+                - generic [ref=e7901] [cursor=pointer]: "#291"
+                - button "Add to comparison" [ref=e7902] [cursor=pointer]:
+                  - img [ref=e7903] [cursor=pointer]
+              - generic [ref=e7910] [cursor=pointer]:
+                - generic [ref=e7913] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 291" [ref=e7915] [cursor=pointer]
+              - heading [level=3] [ref=e7917] [cursor=pointer]
+          - button "View details for Pokemon 292" [ref=e7924] [cursor=pointer]:
+            - generic [ref=e7926] [cursor=pointer]:
+              - generic [ref=e7927] [cursor=pointer]:
+                - generic [ref=e7928] [cursor=pointer]: "#292"
+                - button "Add to comparison" [ref=e7929] [cursor=pointer]:
+                  - img [ref=e7930] [cursor=pointer]
+              - generic [ref=e7937] [cursor=pointer]:
+                - generic [ref=e7940] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 292" [ref=e7942] [cursor=pointer]
+              - heading [level=3] [ref=e7944] [cursor=pointer]
+          - button "View details for Pokemon 293" [ref=e7951] [cursor=pointer]:
+            - generic [ref=e7953] [cursor=pointer]:
+              - generic [ref=e7954] [cursor=pointer]:
+                - generic [ref=e7955] [cursor=pointer]: "#293"
+                - button "Add to comparison" [ref=e7956] [cursor=pointer]:
+                  - img [ref=e7957] [cursor=pointer]
+              - generic [ref=e7964] [cursor=pointer]:
+                - generic [ref=e7967] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 293" [ref=e7969] [cursor=pointer]
+              - heading [level=3] [ref=e7971] [cursor=pointer]
+          - button "View details for Pokemon 294" [ref=e7978] [cursor=pointer]:
+            - generic [ref=e7980] [cursor=pointer]:
+              - generic [ref=e7981] [cursor=pointer]:
+                - generic [ref=e7982] [cursor=pointer]: "#294"
+                - button "Add to comparison" [ref=e7983] [cursor=pointer]:
+                  - img [ref=e7984] [cursor=pointer]
+              - generic [ref=e7991] [cursor=pointer]:
+                - generic [ref=e7994] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 294" [ref=e7996] [cursor=pointer]
+              - heading [level=3] [ref=e7998] [cursor=pointer]
+          - button "View details for Pokemon 295" [ref=e8005] [cursor=pointer]:
+            - generic [ref=e8007] [cursor=pointer]:
+              - generic [ref=e8008] [cursor=pointer]:
+                - generic [ref=e8009] [cursor=pointer]: "#295"
+                - button "Add to comparison" [ref=e8010] [cursor=pointer]:
+                  - img [ref=e8011] [cursor=pointer]
+              - generic [ref=e8018] [cursor=pointer]:
+                - generic [ref=e8021] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 295" [ref=e8023] [cursor=pointer]
+              - heading [level=3] [ref=e8025] [cursor=pointer]
+          - button "View details for Pokemon 296" [ref=e8032] [cursor=pointer]:
+            - generic [ref=e8034] [cursor=pointer]:
+              - generic [ref=e8035] [cursor=pointer]:
+                - generic [ref=e8036] [cursor=pointer]: "#296"
+                - button "Add to comparison" [ref=e8037] [cursor=pointer]:
+                  - img [ref=e8038] [cursor=pointer]
+              - generic [ref=e8045] [cursor=pointer]:
+                - generic [ref=e8048] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 296" [ref=e8050] [cursor=pointer]
+              - heading [level=3] [ref=e8052] [cursor=pointer]
+          - button "View details for Pokemon 297" [ref=e8059] [cursor=pointer]:
+            - generic [ref=e8061] [cursor=pointer]:
+              - generic [ref=e8062] [cursor=pointer]:
+                - generic [ref=e8063] [cursor=pointer]: "#297"
+                - button "Add to comparison" [ref=e8064] [cursor=pointer]:
+                  - img [ref=e8065] [cursor=pointer]
+              - generic [ref=e8072] [cursor=pointer]:
+                - generic [ref=e8075] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 297" [ref=e8077] [cursor=pointer]
+              - heading [level=3] [ref=e8079] [cursor=pointer]
+          - button "View details for Pokemon 298" [ref=e8086] [cursor=pointer]:
+            - generic [ref=e8088] [cursor=pointer]:
+              - generic [ref=e8089] [cursor=pointer]:
+                - generic [ref=e8090] [cursor=pointer]: "#298"
+                - button "Add to comparison" [ref=e8091] [cursor=pointer]:
+                  - img [ref=e8092] [cursor=pointer]
+              - generic [ref=e8099] [cursor=pointer]:
+                - generic [ref=e8102] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 298" [ref=e8104] [cursor=pointer]
+              - heading [level=3] [ref=e8106] [cursor=pointer]
+          - button "View details for Pokemon 299" [ref=e8113] [cursor=pointer]:
+            - generic [ref=e8115] [cursor=pointer]:
+              - generic [ref=e8116] [cursor=pointer]:
+                - generic [ref=e8117] [cursor=pointer]: "#299"
+                - button "Add to comparison" [ref=e8118] [cursor=pointer]:
+                  - img [ref=e8119] [cursor=pointer]
+              - generic [ref=e8126] [cursor=pointer]:
+                - generic [ref=e8129] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 299" [ref=e8131] [cursor=pointer]
+              - heading [level=3] [ref=e8133] [cursor=pointer]
+          - button "View details for Pokemon 300" [ref=e8140] [cursor=pointer]:
+            - generic [ref=e8142] [cursor=pointer]:
+              - generic [ref=e8143] [cursor=pointer]:
+                - generic [ref=e8144] [cursor=pointer]: "#300"
+                - button "Add to comparison" [ref=e8145] [cursor=pointer]:
+                  - img [ref=e8146] [cursor=pointer]
+              - generic [ref=e8153] [cursor=pointer]:
+                - generic [ref=e8156] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 300" [ref=e8158] [cursor=pointer]
+              - heading [level=3] [ref=e8160] [cursor=pointer]
+          - button "View details for Pokemon 301" [ref=e8167] [cursor=pointer]:
+            - generic [ref=e8169] [cursor=pointer]:
+              - generic [ref=e8170] [cursor=pointer]:
+                - generic [ref=e8171] [cursor=pointer]: "#301"
+                - button "Add to comparison" [ref=e8172] [cursor=pointer]:
+                  - img [ref=e8173] [cursor=pointer]
+              - generic [ref=e8180] [cursor=pointer]:
+                - generic [ref=e8183] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 301" [ref=e8185] [cursor=pointer]
+              - heading [level=3] [ref=e8187] [cursor=pointer]
+          - button "View details for Pokemon 302" [ref=e8194] [cursor=pointer]:
+            - generic [ref=e8196] [cursor=pointer]:
+              - generic [ref=e8197] [cursor=pointer]:
+                - generic [ref=e8198] [cursor=pointer]: "#302"
+                - button "Add to comparison" [ref=e8199] [cursor=pointer]:
+                  - img [ref=e8200] [cursor=pointer]
+              - generic [ref=e8207] [cursor=pointer]:
+                - generic [ref=e8210] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 302" [ref=e8212] [cursor=pointer]
+              - heading [level=3] [ref=e8214] [cursor=pointer]
+          - button "View details for Pokemon 303" [ref=e8221] [cursor=pointer]:
+            - generic [ref=e8223] [cursor=pointer]:
+              - generic [ref=e8224] [cursor=pointer]:
+                - generic [ref=e8225] [cursor=pointer]: "#303"
+                - button "Add to comparison" [ref=e8226] [cursor=pointer]:
+                  - img [ref=e8227] [cursor=pointer]
+              - generic [ref=e8234] [cursor=pointer]:
+                - generic [ref=e8237] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 303" [ref=e8239] [cursor=pointer]
+              - heading [level=3] [ref=e8241] [cursor=pointer]
+          - button "View details for Pokemon 304" [ref=e8248] [cursor=pointer]:
+            - generic [ref=e8250] [cursor=pointer]:
+              - generic [ref=e8251] [cursor=pointer]:
+                - generic [ref=e8252] [cursor=pointer]: "#304"
+                - button "Add to comparison" [ref=e8253] [cursor=pointer]:
+                  - img [ref=e8254] [cursor=pointer]
+              - generic [ref=e8261] [cursor=pointer]:
+                - generic [ref=e8264] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 304" [ref=e8266] [cursor=pointer]
+              - heading [level=3] [ref=e8268] [cursor=pointer]
+          - button "View details for Pokemon 305" [ref=e8275] [cursor=pointer]:
+            - generic [ref=e8277] [cursor=pointer]:
+              - generic [ref=e8278] [cursor=pointer]:
+                - generic [ref=e8279] [cursor=pointer]: "#305"
+                - button "Add to comparison" [ref=e8280] [cursor=pointer]:
+                  - img [ref=e8281] [cursor=pointer]
+              - generic [ref=e8288] [cursor=pointer]:
+                - generic [ref=e8291] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 305" [ref=e8293] [cursor=pointer]
+              - heading [level=3] [ref=e8295] [cursor=pointer]
+          - button "View details for Pokemon 306" [ref=e8302] [cursor=pointer]:
+            - generic [ref=e8304] [cursor=pointer]:
+              - generic [ref=e8305] [cursor=pointer]:
+                - generic [ref=e8306] [cursor=pointer]: "#306"
+                - button "Add to comparison" [ref=e8307] [cursor=pointer]:
+                  - img [ref=e8308] [cursor=pointer]
+              - generic [ref=e8315] [cursor=pointer]:
+                - generic [ref=e8318] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 306" [ref=e8320] [cursor=pointer]
+              - heading [level=3] [ref=e8322] [cursor=pointer]
+          - button "View details for Pokemon 307" [ref=e8329] [cursor=pointer]:
+            - generic [ref=e8331] [cursor=pointer]:
+              - generic [ref=e8332] [cursor=pointer]:
+                - generic [ref=e8333] [cursor=pointer]: "#307"
+                - button "Add to comparison" [ref=e8334] [cursor=pointer]:
+                  - img [ref=e8335] [cursor=pointer]
+              - generic [ref=e8342] [cursor=pointer]:
+                - generic [ref=e8345] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 307" [ref=e8347] [cursor=pointer]
+              - heading [level=3] [ref=e8349] [cursor=pointer]
+          - button "View details for Pokemon 308" [ref=e8356] [cursor=pointer]:
+            - generic [ref=e8358] [cursor=pointer]:
+              - generic [ref=e8359] [cursor=pointer]:
+                - generic [ref=e8360] [cursor=pointer]: "#308"
+                - button "Add to comparison" [ref=e8361] [cursor=pointer]:
+                  - img [ref=e8362] [cursor=pointer]
+              - generic [ref=e8369] [cursor=pointer]:
+                - generic [ref=e8372] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 308" [ref=e8374] [cursor=pointer]
+              - heading [level=3] [ref=e8376] [cursor=pointer]
+          - button "View details for Pokemon 309" [ref=e8383] [cursor=pointer]:
+            - generic [ref=e8385] [cursor=pointer]:
+              - generic [ref=e8386] [cursor=pointer]:
+                - generic [ref=e8387] [cursor=pointer]: "#309"
+                - button "Add to comparison" [ref=e8388] [cursor=pointer]:
+                  - img [ref=e8389] [cursor=pointer]
+              - generic [ref=e8396] [cursor=pointer]:
+                - generic [ref=e8399] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 309" [ref=e8401] [cursor=pointer]
+              - heading [level=3] [ref=e8403] [cursor=pointer]
+          - button "View details for Pokemon 310" [ref=e8410] [cursor=pointer]:
+            - generic [ref=e8412] [cursor=pointer]:
+              - generic [ref=e8413] [cursor=pointer]:
+                - generic [ref=e8414] [cursor=pointer]: "#310"
+                - button "Add to comparison" [ref=e8415] [cursor=pointer]:
+                  - img [ref=e8416] [cursor=pointer]
+              - generic [ref=e8423] [cursor=pointer]:
+                - generic [ref=e8426] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 310" [ref=e8428] [cursor=pointer]
+              - heading [level=3] [ref=e8430] [cursor=pointer]
+          - button "View details for Pokemon 311" [ref=e8437] [cursor=pointer]:
+            - generic [ref=e8439] [cursor=pointer]:
+              - generic [ref=e8440] [cursor=pointer]:
+                - generic [ref=e8441] [cursor=pointer]: "#311"
+                - button "Add to comparison" [ref=e8442] [cursor=pointer]:
+                  - img [ref=e8443] [cursor=pointer]
+              - generic [ref=e8450] [cursor=pointer]:
+                - generic [ref=e8453] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 311" [ref=e8455] [cursor=pointer]
+              - heading [level=3] [ref=e8457] [cursor=pointer]
+          - button "View details for Pokemon 312" [ref=e8464] [cursor=pointer]:
+            - generic [ref=e8466] [cursor=pointer]:
+              - generic [ref=e8467] [cursor=pointer]:
+                - generic [ref=e8468] [cursor=pointer]: "#312"
+                - button "Add to comparison" [ref=e8469] [cursor=pointer]:
+                  - img [ref=e8470] [cursor=pointer]
+              - generic [ref=e8477] [cursor=pointer]:
+                - generic [ref=e8480] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 312" [ref=e8482] [cursor=pointer]
+              - heading [level=3] [ref=e8484] [cursor=pointer]
+          - button "View details for Pokemon 313" [ref=e8491] [cursor=pointer]:
+            - generic [ref=e8493] [cursor=pointer]:
+              - generic [ref=e8494] [cursor=pointer]:
+                - generic [ref=e8495] [cursor=pointer]: "#313"
+                - button "Add to comparison" [ref=e8496] [cursor=pointer]:
+                  - img [ref=e8497] [cursor=pointer]
+              - generic [ref=e8504] [cursor=pointer]:
+                - generic [ref=e8507] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 313" [ref=e8509] [cursor=pointer]
+              - heading [level=3] [ref=e8511] [cursor=pointer]
+          - button "View details for Pokemon 314" [ref=e8518] [cursor=pointer]:
+            - generic [ref=e8520] [cursor=pointer]:
+              - generic [ref=e8521] [cursor=pointer]:
+                - generic [ref=e8522] [cursor=pointer]: "#314"
+                - button "Add to comparison" [ref=e8523] [cursor=pointer]:
+                  - img [ref=e8524] [cursor=pointer]
+              - generic [ref=e8531] [cursor=pointer]:
+                - generic [ref=e8534] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 314" [ref=e8536] [cursor=pointer]
+              - heading [level=3] [ref=e8538] [cursor=pointer]
+          - button "View details for Pokemon 315" [ref=e8545] [cursor=pointer]:
+            - generic [ref=e8547] [cursor=pointer]:
+              - generic [ref=e8548] [cursor=pointer]:
+                - generic [ref=e8549] [cursor=pointer]: "#315"
+                - button "Add to comparison" [ref=e8550] [cursor=pointer]:
+                  - img [ref=e8551] [cursor=pointer]
+              - generic [ref=e8558] [cursor=pointer]:
+                - generic [ref=e8561] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 315" [ref=e8563] [cursor=pointer]
+              - heading [level=3] [ref=e8565] [cursor=pointer]
+          - button "View details for Pokemon 316" [ref=e8572] [cursor=pointer]:
+            - generic [ref=e8574] [cursor=pointer]:
+              - generic [ref=e8575] [cursor=pointer]:
+                - generic [ref=e8576] [cursor=pointer]: "#316"
+                - button "Add to comparison" [ref=e8577] [cursor=pointer]:
+                  - img [ref=e8578] [cursor=pointer]
+              - generic [ref=e8585] [cursor=pointer]:
+                - generic [ref=e8588] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 316" [ref=e8590] [cursor=pointer]
+              - heading [level=3] [ref=e8592] [cursor=pointer]
+          - button "View details for Pokemon 317" [ref=e8599] [cursor=pointer]:
+            - generic [ref=e8601] [cursor=pointer]:
+              - generic [ref=e8602] [cursor=pointer]:
+                - generic [ref=e8603] [cursor=pointer]: "#317"
+                - button "Add to comparison" [ref=e8604] [cursor=pointer]:
+                  - img [ref=e8605] [cursor=pointer]
+              - generic [ref=e8612] [cursor=pointer]:
+                - generic [ref=e8615] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 317" [ref=e8617] [cursor=pointer]
+              - heading [level=3] [ref=e8619] [cursor=pointer]
+          - button "View details for Pokemon 318" [ref=e8626] [cursor=pointer]:
+            - generic [ref=e8628] [cursor=pointer]:
+              - generic [ref=e8629] [cursor=pointer]:
+                - generic [ref=e8630] [cursor=pointer]: "#318"
+                - button "Add to comparison" [ref=e8631] [cursor=pointer]:
+                  - img [ref=e8632] [cursor=pointer]
+              - generic [ref=e8639] [cursor=pointer]:
+                - generic [ref=e8642] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 318" [ref=e8644] [cursor=pointer]
+              - heading [level=3] [ref=e8646] [cursor=pointer]
+          - button "View details for Pokemon 319" [ref=e8653] [cursor=pointer]:
+            - generic [ref=e8655] [cursor=pointer]:
+              - generic [ref=e8656] [cursor=pointer]:
+                - generic [ref=e8657] [cursor=pointer]: "#319"
+                - button "Add to comparison" [ref=e8658] [cursor=pointer]:
+                  - img [ref=e8659] [cursor=pointer]
+              - generic [ref=e8666] [cursor=pointer]:
+                - generic [ref=e8669] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 319" [ref=e8671] [cursor=pointer]
+              - heading [level=3] [ref=e8673] [cursor=pointer]
+          - button "View details for Pokemon 320" [ref=e8680] [cursor=pointer]:
+            - generic [ref=e8682] [cursor=pointer]:
+              - generic [ref=e8683] [cursor=pointer]:
+                - generic [ref=e8684] [cursor=pointer]: "#320"
+                - button "Add to comparison" [ref=e8685] [cursor=pointer]:
+                  - img [ref=e8686] [cursor=pointer]
+              - generic [ref=e8693] [cursor=pointer]:
+                - generic [ref=e8696] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 320" [ref=e8698] [cursor=pointer]
+              - heading [level=3] [ref=e8700] [cursor=pointer]
+          - button "View details for Pokemon 321" [ref=e8707] [cursor=pointer]:
+            - generic [ref=e8709] [cursor=pointer]:
+              - generic [ref=e8710] [cursor=pointer]:
+                - generic [ref=e8711] [cursor=pointer]: "#321"
+                - button "Add to comparison" [ref=e8712] [cursor=pointer]:
+                  - img [ref=e8713] [cursor=pointer]
+              - generic [ref=e8720] [cursor=pointer]:
+                - generic [ref=e8723] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 321" [ref=e8725] [cursor=pointer]
+              - heading [level=3] [ref=e8727] [cursor=pointer]
+          - button "View details for Pokemon 322" [ref=e8734] [cursor=pointer]:
+            - generic [ref=e8736] [cursor=pointer]:
+              - generic [ref=e8737] [cursor=pointer]:
+                - generic [ref=e8738] [cursor=pointer]: "#322"
+                - button "Add to comparison" [ref=e8739] [cursor=pointer]:
+                  - img [ref=e8740] [cursor=pointer]
+              - generic [ref=e8747] [cursor=pointer]:
+                - generic [ref=e8750] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 322" [ref=e8752] [cursor=pointer]
+              - heading [level=3] [ref=e8754] [cursor=pointer]
+          - button "View details for Pokemon 323" [ref=e8761] [cursor=pointer]:
+            - generic [ref=e8763] [cursor=pointer]:
+              - generic [ref=e8764] [cursor=pointer]:
+                - generic [ref=e8765] [cursor=pointer]: "#323"
+                - button "Add to comparison" [ref=e8766] [cursor=pointer]:
+                  - img [ref=e8767] [cursor=pointer]
+              - generic [ref=e8774] [cursor=pointer]:
+                - generic [ref=e8777] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 323" [ref=e8779] [cursor=pointer]
+              - heading [level=3] [ref=e8781] [cursor=pointer]
+          - button "View details for Pokemon 324" [ref=e8788] [cursor=pointer]:
+            - generic [ref=e8790] [cursor=pointer]:
+              - generic [ref=e8791] [cursor=pointer]:
+                - generic [ref=e8792] [cursor=pointer]: "#324"
+                - button "Add to comparison" [ref=e8793] [cursor=pointer]:
+                  - img [ref=e8794] [cursor=pointer]
+              - generic [ref=e8801] [cursor=pointer]:
+                - generic [ref=e8804] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 324" [ref=e8806] [cursor=pointer]
+              - heading [level=3] [ref=e8808] [cursor=pointer]
+          - button "View details for Pokemon 325" [ref=e8815] [cursor=pointer]:
+            - generic [ref=e8817] [cursor=pointer]:
+              - generic [ref=e8818] [cursor=pointer]:
+                - generic [ref=e8819] [cursor=pointer]: "#325"
+                - button "Add to comparison" [ref=e8820] [cursor=pointer]:
+                  - img [ref=e8821] [cursor=pointer]
+              - generic [ref=e8828] [cursor=pointer]:
+                - generic [ref=e8831] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 325" [ref=e8833] [cursor=pointer]
+              - heading [level=3] [ref=e8835] [cursor=pointer]
+          - button "View details for Pokemon 326" [ref=e8842] [cursor=pointer]:
+            - generic [ref=e8844] [cursor=pointer]:
+              - generic [ref=e8845] [cursor=pointer]:
+                - generic [ref=e8846] [cursor=pointer]: "#326"
+                - button "Add to comparison" [ref=e8847] [cursor=pointer]:
+                  - img [ref=e8848] [cursor=pointer]
+              - generic [ref=e8855] [cursor=pointer]:
+                - generic [ref=e8858] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 326" [ref=e8860] [cursor=pointer]
+              - heading [level=3] [ref=e8862] [cursor=pointer]
+          - button "View details for Pokemon 327" [ref=e8869] [cursor=pointer]:
+            - generic [ref=e8871] [cursor=pointer]:
+              - generic [ref=e8872] [cursor=pointer]:
+                - generic [ref=e8873] [cursor=pointer]: "#327"
+                - button "Add to comparison" [ref=e8874] [cursor=pointer]:
+                  - img [ref=e8875] [cursor=pointer]
+              - generic [ref=e8882] [cursor=pointer]:
+                - generic [ref=e8885] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 327" [ref=e8887] [cursor=pointer]
+              - heading [level=3] [ref=e8889] [cursor=pointer]
+          - button "View details for Pokemon 328" [ref=e8896] [cursor=pointer]:
+            - generic [ref=e8898] [cursor=pointer]:
+              - generic [ref=e8899] [cursor=pointer]:
+                - generic [ref=e8900] [cursor=pointer]: "#328"
+                - button "Add to comparison" [ref=e8901] [cursor=pointer]:
+                  - img [ref=e8902] [cursor=pointer]
+              - generic [ref=e8909] [cursor=pointer]:
+                - generic [ref=e8912] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 328" [ref=e8914] [cursor=pointer]
+              - heading [level=3] [ref=e8916] [cursor=pointer]
+          - button "View details for Pokemon 329" [ref=e8923] [cursor=pointer]:
+            - generic [ref=e8925] [cursor=pointer]:
+              - generic [ref=e8926] [cursor=pointer]:
+                - generic [ref=e8927] [cursor=pointer]: "#329"
+                - button "Add to comparison" [ref=e8928] [cursor=pointer]:
+                  - img [ref=e8929] [cursor=pointer]
+              - generic [ref=e8936] [cursor=pointer]:
+                - generic [ref=e8939] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 329" [ref=e8941] [cursor=pointer]
+              - heading [level=3] [ref=e8943] [cursor=pointer]
+          - button "View details for Pokemon 330" [ref=e8950] [cursor=pointer]:
+            - generic [ref=e8952] [cursor=pointer]:
+              - generic [ref=e8953] [cursor=pointer]:
+                - generic [ref=e8954] [cursor=pointer]: "#330"
+                - button "Add to comparison" [ref=e8955] [cursor=pointer]:
+                  - img [ref=e8956] [cursor=pointer]
+              - generic [ref=e8963] [cursor=pointer]:
+                - generic [ref=e8966] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 330" [ref=e8968] [cursor=pointer]
+              - heading [level=3] [ref=e8970] [cursor=pointer]
+          - button "View details for Pokemon 331" [ref=e8977] [cursor=pointer]:
+            - generic [ref=e8979] [cursor=pointer]:
+              - generic [ref=e8980] [cursor=pointer]:
+                - generic [ref=e8981] [cursor=pointer]: "#331"
+                - button "Add to comparison" [ref=e8982] [cursor=pointer]:
+                  - img [ref=e8983] [cursor=pointer]
+              - generic [ref=e8990] [cursor=pointer]:
+                - generic [ref=e8993] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 331" [ref=e8995] [cursor=pointer]
+              - heading [level=3] [ref=e8997] [cursor=pointer]
+          - button "View details for Pokemon 332" [ref=e9004] [cursor=pointer]:
+            - generic [ref=e9006] [cursor=pointer]:
+              - generic [ref=e9007] [cursor=pointer]:
+                - generic [ref=e9008] [cursor=pointer]: "#332"
+                - button "Add to comparison" [ref=e9009] [cursor=pointer]:
+                  - img [ref=e9010] [cursor=pointer]
+              - generic [ref=e9017] [cursor=pointer]:
+                - generic [ref=e9020] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 332" [ref=e9022] [cursor=pointer]
+              - heading [level=3] [ref=e9024] [cursor=pointer]
+          - button "View details for Pokemon 333" [ref=e9031] [cursor=pointer]:
+            - generic [ref=e9033] [cursor=pointer]:
+              - generic [ref=e9034] [cursor=pointer]:
+                - generic [ref=e9035] [cursor=pointer]: "#333"
+                - button "Add to comparison" [ref=e9036] [cursor=pointer]:
+                  - img [ref=e9037] [cursor=pointer]
+              - generic [ref=e9044] [cursor=pointer]:
+                - generic [ref=e9047] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 333" [ref=e9049] [cursor=pointer]
+              - heading [level=3] [ref=e9051] [cursor=pointer]
+          - button "View details for Pokemon 334" [ref=e9058] [cursor=pointer]:
+            - generic [ref=e9060] [cursor=pointer]:
+              - generic [ref=e9061] [cursor=pointer]:
+                - generic [ref=e9062] [cursor=pointer]: "#334"
+                - button "Add to comparison" [ref=e9063] [cursor=pointer]:
+                  - img [ref=e9064] [cursor=pointer]
+              - generic [ref=e9071] [cursor=pointer]:
+                - generic [ref=e9074] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 334" [ref=e9076] [cursor=pointer]
+              - heading [level=3] [ref=e9078] [cursor=pointer]
+          - button "View details for Pokemon 335" [ref=e9085] [cursor=pointer]:
+            - generic [ref=e9087] [cursor=pointer]:
+              - generic [ref=e9088] [cursor=pointer]:
+                - generic [ref=e9089] [cursor=pointer]: "#335"
+                - button "Add to comparison" [ref=e9090] [cursor=pointer]:
+                  - img [ref=e9091] [cursor=pointer]
+              - generic [ref=e9098] [cursor=pointer]:
+                - generic [ref=e9101] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 335" [ref=e9103] [cursor=pointer]
+              - heading [level=3] [ref=e9105] [cursor=pointer]
+          - button "View details for Pokemon 336" [ref=e9112] [cursor=pointer]:
+            - generic [ref=e9114] [cursor=pointer]:
+              - generic [ref=e9115] [cursor=pointer]:
+                - generic [ref=e9116] [cursor=pointer]: "#336"
+                - button "Add to comparison" [ref=e9117] [cursor=pointer]:
+                  - img [ref=e9118] [cursor=pointer]
+              - generic [ref=e9125] [cursor=pointer]:
+                - generic [ref=e9128] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 336" [ref=e9130] [cursor=pointer]
+              - heading [level=3] [ref=e9132] [cursor=pointer]
+          - button "View details for Pokemon 337" [ref=e9139] [cursor=pointer]:
+            - generic [ref=e9141] [cursor=pointer]:
+              - generic [ref=e9142] [cursor=pointer]:
+                - generic [ref=e9143] [cursor=pointer]: "#337"
+                - button "Add to comparison" [ref=e9144] [cursor=pointer]:
+                  - img [ref=e9145] [cursor=pointer]
+              - generic [ref=e9152] [cursor=pointer]:
+                - generic [ref=e9155] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 337" [ref=e9157] [cursor=pointer]
+              - heading [level=3] [ref=e9159] [cursor=pointer]
+          - button "View details for Pokemon 338" [ref=e9166] [cursor=pointer]:
+            - generic [ref=e9168] [cursor=pointer]:
+              - generic [ref=e9169] [cursor=pointer]:
+                - generic [ref=e9170] [cursor=pointer]: "#338"
+                - button "Add to comparison" [ref=e9171] [cursor=pointer]:
+                  - img [ref=e9172] [cursor=pointer]
+              - generic [ref=e9179] [cursor=pointer]:
+                - generic [ref=e9182] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 338" [ref=e9184] [cursor=pointer]
+              - heading [level=3] [ref=e9186] [cursor=pointer]
+          - button "View details for Pokemon 339" [ref=e9193] [cursor=pointer]:
+            - generic [ref=e9195] [cursor=pointer]:
+              - generic [ref=e9196] [cursor=pointer]:
+                - generic [ref=e9197] [cursor=pointer]: "#339"
+                - button "Add to comparison" [ref=e9198] [cursor=pointer]:
+                  - img [ref=e9199] [cursor=pointer]
+              - generic [ref=e9206] [cursor=pointer]:
+                - generic [ref=e9209] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 339" [ref=e9211] [cursor=pointer]
+              - heading [level=3] [ref=e9213] [cursor=pointer]
+          - button "View details for Pokemon 340" [ref=e9220] [cursor=pointer]:
+            - generic [ref=e9222] [cursor=pointer]:
+              - generic [ref=e9223] [cursor=pointer]:
+                - generic [ref=e9224] [cursor=pointer]: "#340"
+                - button "Add to comparison" [ref=e9225] [cursor=pointer]:
+                  - img [ref=e9226] [cursor=pointer]
+              - generic [ref=e9233] [cursor=pointer]:
+                - generic [ref=e9236] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 340" [ref=e9238] [cursor=pointer]
+              - heading [level=3] [ref=e9240] [cursor=pointer]
+          - button "View details for Pokemon 341" [ref=e9247] [cursor=pointer]:
+            - generic [ref=e9249] [cursor=pointer]:
+              - generic [ref=e9250] [cursor=pointer]:
+                - generic [ref=e9251] [cursor=pointer]: "#341"
+                - button "Add to comparison" [ref=e9252] [cursor=pointer]:
+                  - img [ref=e9253] [cursor=pointer]
+              - generic [ref=e9260] [cursor=pointer]:
+                - generic [ref=e9263] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 341" [ref=e9265] [cursor=pointer]
+              - heading [level=3] [ref=e9267] [cursor=pointer]
+          - button "View details for Pokemon 342" [ref=e9274] [cursor=pointer]:
+            - generic [ref=e9276] [cursor=pointer]:
+              - generic [ref=e9277] [cursor=pointer]:
+                - generic [ref=e9278] [cursor=pointer]: "#342"
+                - button "Add to comparison" [ref=e9279] [cursor=pointer]:
+                  - img [ref=e9280] [cursor=pointer]
+              - generic [ref=e9287] [cursor=pointer]:
+                - generic [ref=e9290] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 342" [ref=e9292] [cursor=pointer]
+              - heading [level=3] [ref=e9294] [cursor=pointer]
+          - button "View details for Pokemon 343" [ref=e9301] [cursor=pointer]:
+            - generic [ref=e9303] [cursor=pointer]:
+              - generic [ref=e9304] [cursor=pointer]:
+                - generic [ref=e9305] [cursor=pointer]: "#343"
+                - button "Add to comparison" [ref=e9306] [cursor=pointer]:
+                  - img [ref=e9307] [cursor=pointer]
+              - generic [ref=e9314] [cursor=pointer]:
+                - generic [ref=e9317] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 343" [ref=e9319] [cursor=pointer]
+              - heading [level=3] [ref=e9321] [cursor=pointer]
+          - button "View details for Pokemon 344" [ref=e9328] [cursor=pointer]:
+            - generic [ref=e9330] [cursor=pointer]:
+              - generic [ref=e9331] [cursor=pointer]:
+                - generic [ref=e9332] [cursor=pointer]: "#344"
+                - button "Add to comparison" [ref=e9333] [cursor=pointer]:
+                  - img [ref=e9334] [cursor=pointer]
+              - generic [ref=e9341] [cursor=pointer]:
+                - generic [ref=e9344] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 344" [ref=e9346] [cursor=pointer]
+              - heading [level=3] [ref=e9348] [cursor=pointer]
+          - button "View details for Pokemon 345" [ref=e9355] [cursor=pointer]:
+            - generic [ref=e9357] [cursor=pointer]:
+              - generic [ref=e9358] [cursor=pointer]:
+                - generic [ref=e9359] [cursor=pointer]: "#345"
+                - button "Add to comparison" [ref=e9360] [cursor=pointer]:
+                  - img [ref=e9361] [cursor=pointer]
+              - generic [ref=e9368] [cursor=pointer]:
+                - generic [ref=e9371] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 345" [ref=e9373] [cursor=pointer]
+              - heading [level=3] [ref=e9375] [cursor=pointer]
+          - button "View details for Pokemon 346" [ref=e9382] [cursor=pointer]:
+            - generic [ref=e9384] [cursor=pointer]:
+              - generic [ref=e9385] [cursor=pointer]:
+                - generic [ref=e9386] [cursor=pointer]: "#346"
+                - button "Add to comparison" [ref=e9387] [cursor=pointer]:
+                  - img [ref=e9388] [cursor=pointer]
+              - generic [ref=e9395] [cursor=pointer]:
+                - generic [ref=e9398] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 346" [ref=e9400] [cursor=pointer]
+              - heading [level=3] [ref=e9402] [cursor=pointer]
+          - button "View details for Pokemon 347" [ref=e9409] [cursor=pointer]:
+            - generic [ref=e9411] [cursor=pointer]:
+              - generic [ref=e9412] [cursor=pointer]:
+                - generic [ref=e9413] [cursor=pointer]: "#347"
+                - button "Add to comparison" [ref=e9414] [cursor=pointer]:
+                  - img [ref=e9415] [cursor=pointer]
+              - generic [ref=e9422] [cursor=pointer]:
+                - generic [ref=e9425] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 347" [ref=e9427] [cursor=pointer]
+              - heading [level=3] [ref=e9429] [cursor=pointer]
+          - button "View details for Pokemon 348" [ref=e9436] [cursor=pointer]:
+            - generic [ref=e9438] [cursor=pointer]:
+              - generic [ref=e9439] [cursor=pointer]:
+                - generic [ref=e9440] [cursor=pointer]: "#348"
+                - button "Add to comparison" [ref=e9441] [cursor=pointer]:
+                  - img [ref=e9442] [cursor=pointer]
+              - generic [ref=e9449] [cursor=pointer]:
+                - generic [ref=e9452] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 348" [ref=e9454] [cursor=pointer]
+              - heading [level=3] [ref=e9456] [cursor=pointer]
+          - button "View details for Pokemon 349" [ref=e9463] [cursor=pointer]:
+            - generic [ref=e9465] [cursor=pointer]:
+              - generic [ref=e9466] [cursor=pointer]:
+                - generic [ref=e9467] [cursor=pointer]: "#349"
+                - button "Add to comparison" [ref=e9468] [cursor=pointer]:
+                  - img [ref=e9469] [cursor=pointer]
+              - generic [ref=e9476] [cursor=pointer]:
+                - generic [ref=e9479] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 349" [ref=e9481] [cursor=pointer]
+              - heading [level=3] [ref=e9483] [cursor=pointer]
+          - button "View details for Pokemon 350" [ref=e9490] [cursor=pointer]:
+            - generic [ref=e9492] [cursor=pointer]:
+              - generic [ref=e9493] [cursor=pointer]:
+                - generic [ref=e9494] [cursor=pointer]: "#350"
+                - button "Add to comparison" [ref=e9495] [cursor=pointer]:
+                  - img [ref=e9496] [cursor=pointer]
+              - generic [ref=e9503] [cursor=pointer]:
+                - generic [ref=e9506] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 350" [ref=e9508] [cursor=pointer]
+              - heading [level=3] [ref=e9510] [cursor=pointer]
+          - button "View details for Pokemon 351" [ref=e9517] [cursor=pointer]:
+            - generic [ref=e9519] [cursor=pointer]:
+              - generic [ref=e9520] [cursor=pointer]:
+                - generic [ref=e9521] [cursor=pointer]: "#351"
+                - button "Add to comparison" [ref=e9522] [cursor=pointer]:
+                  - img [ref=e9523] [cursor=pointer]
+              - generic [ref=e9530] [cursor=pointer]:
+                - generic [ref=e9533] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 351" [ref=e9535] [cursor=pointer]
+              - heading [level=3] [ref=e9537] [cursor=pointer]
+          - button "View details for Pokemon 352" [ref=e9544] [cursor=pointer]:
+            - generic [ref=e9546] [cursor=pointer]:
+              - generic [ref=e9547] [cursor=pointer]:
+                - generic [ref=e9548] [cursor=pointer]: "#352"
+                - button "Add to comparison" [ref=e9549] [cursor=pointer]:
+                  - img [ref=e9550] [cursor=pointer]
+              - generic [ref=e9557] [cursor=pointer]:
+                - generic [ref=e9560] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 352" [ref=e9562] [cursor=pointer]
+              - heading [level=3] [ref=e9564] [cursor=pointer]
+          - button "View details for Pokemon 353" [ref=e9571] [cursor=pointer]:
+            - generic [ref=e9573] [cursor=pointer]:
+              - generic [ref=e9574] [cursor=pointer]:
+                - generic [ref=e9575] [cursor=pointer]: "#353"
+                - button "Add to comparison" [ref=e9576] [cursor=pointer]:
+                  - img [ref=e9577] [cursor=pointer]
+              - generic [ref=e9584] [cursor=pointer]:
+                - generic [ref=e9587] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 353" [ref=e9589] [cursor=pointer]
+              - heading [level=3] [ref=e9591] [cursor=pointer]
+          - button "View details for Pokemon 354" [ref=e9598] [cursor=pointer]:
+            - generic [ref=e9600] [cursor=pointer]:
+              - generic [ref=e9601] [cursor=pointer]:
+                - generic [ref=e9602] [cursor=pointer]: "#354"
+                - button "Add to comparison" [ref=e9603] [cursor=pointer]:
+                  - img [ref=e9604] [cursor=pointer]
+              - generic [ref=e9611] [cursor=pointer]:
+                - generic [ref=e9614] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 354" [ref=e9616] [cursor=pointer]
+              - heading [level=3] [ref=e9618] [cursor=pointer]
+          - button "View details for Pokemon 355" [ref=e9625] [cursor=pointer]:
+            - generic [ref=e9627] [cursor=pointer]:
+              - generic [ref=e9628] [cursor=pointer]:
+                - generic [ref=e9629] [cursor=pointer]: "#355"
+                - button "Add to comparison" [ref=e9630] [cursor=pointer]:
+                  - img [ref=e9631] [cursor=pointer]
+              - generic [ref=e9638] [cursor=pointer]:
+                - generic [ref=e9641] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 355" [ref=e9643] [cursor=pointer]
+              - heading [level=3] [ref=e9645] [cursor=pointer]
+          - button "View details for Pokemon 356" [ref=e9652] [cursor=pointer]:
+            - generic [ref=e9654] [cursor=pointer]:
+              - generic [ref=e9655] [cursor=pointer]:
+                - generic [ref=e9656] [cursor=pointer]: "#356"
+                - button "Add to comparison" [ref=e9657] [cursor=pointer]:
+                  - img [ref=e9658] [cursor=pointer]
+              - generic [ref=e9665] [cursor=pointer]:
+                - generic [ref=e9668] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 356" [ref=e9670] [cursor=pointer]
+              - heading [level=3] [ref=e9672] [cursor=pointer]
+          - button "View details for Pokemon 357" [ref=e9679] [cursor=pointer]:
+            - generic [ref=e9681] [cursor=pointer]:
+              - generic [ref=e9682] [cursor=pointer]:
+                - generic [ref=e9683] [cursor=pointer]: "#357"
+                - button "Add to comparison" [ref=e9684] [cursor=pointer]:
+                  - img [ref=e9685] [cursor=pointer]
+              - generic [ref=e9692] [cursor=pointer]:
+                - generic [ref=e9695] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 357" [ref=e9697] [cursor=pointer]
+              - heading [level=3] [ref=e9699] [cursor=pointer]
+          - button "View details for Pokemon 358" [ref=e9706] [cursor=pointer]:
+            - generic [ref=e9708] [cursor=pointer]:
+              - generic [ref=e9709] [cursor=pointer]:
+                - generic [ref=e9710] [cursor=pointer]: "#358"
+                - button "Add to comparison" [ref=e9711] [cursor=pointer]:
+                  - img [ref=e9712] [cursor=pointer]
+              - generic [ref=e9719] [cursor=pointer]:
+                - generic [ref=e9722] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 358" [ref=e9724] [cursor=pointer]
+              - heading [level=3] [ref=e9726] [cursor=pointer]
+          - button "View details for Pokemon 359" [ref=e9733] [cursor=pointer]:
+            - generic [ref=e9735] [cursor=pointer]:
+              - generic [ref=e9736] [cursor=pointer]:
+                - generic [ref=e9737] [cursor=pointer]: "#359"
+                - button "Add to comparison" [ref=e9738] [cursor=pointer]:
+                  - img [ref=e9739] [cursor=pointer]
+              - generic [ref=e9746] [cursor=pointer]:
+                - generic [ref=e9749] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 359" [ref=e9751] [cursor=pointer]
+              - heading [level=3] [ref=e9753] [cursor=pointer]
+          - button "View details for Pokemon 360" [ref=e9760] [cursor=pointer]:
+            - generic [ref=e9762] [cursor=pointer]:
+              - generic [ref=e9763] [cursor=pointer]:
+                - generic [ref=e9764] [cursor=pointer]: "#360"
+                - button "Add to comparison" [ref=e9765] [cursor=pointer]:
+                  - img [ref=e9766] [cursor=pointer]
+              - generic [ref=e9773] [cursor=pointer]:
+                - generic [ref=e9776] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 360" [ref=e9778] [cursor=pointer]
+              - heading [level=3] [ref=e9780] [cursor=pointer]
+          - button "View details for Pokemon 361" [ref=e9787] [cursor=pointer]:
+            - generic [ref=e9789] [cursor=pointer]:
+              - generic [ref=e9790] [cursor=pointer]:
+                - generic [ref=e9791] [cursor=pointer]: "#361"
+                - button "Add to comparison" [ref=e9792] [cursor=pointer]:
+                  - img [ref=e9793] [cursor=pointer]
+              - generic [ref=e9800] [cursor=pointer]:
+                - generic [ref=e9803] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 361" [ref=e9805] [cursor=pointer]
+              - heading [level=3] [ref=e9807] [cursor=pointer]
+          - button "View details for Pokemon 362" [ref=e9814] [cursor=pointer]:
+            - generic [ref=e9816] [cursor=pointer]:
+              - generic [ref=e9817] [cursor=pointer]:
+                - generic [ref=e9818] [cursor=pointer]: "#362"
+                - button "Add to comparison" [ref=e9819] [cursor=pointer]:
+                  - img [ref=e9820] [cursor=pointer]
+              - generic [ref=e9827] [cursor=pointer]:
+                - generic [ref=e9830] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 362" [ref=e9832] [cursor=pointer]
+              - heading [level=3] [ref=e9834] [cursor=pointer]
+          - button "View details for Pokemon 363" [ref=e9841] [cursor=pointer]:
+            - generic [ref=e9843] [cursor=pointer]:
+              - generic [ref=e9844] [cursor=pointer]:
+                - generic [ref=e9845] [cursor=pointer]: "#363"
+                - button "Add to comparison" [ref=e9846] [cursor=pointer]:
+                  - img [ref=e9847] [cursor=pointer]
+              - generic [ref=e9854] [cursor=pointer]:
+                - generic [ref=e9857] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 363" [ref=e9859] [cursor=pointer]
+              - heading [level=3] [ref=e9861] [cursor=pointer]
+          - button "View details for Pokemon 364" [ref=e9868] [cursor=pointer]:
+            - generic [ref=e9870] [cursor=pointer]:
+              - generic [ref=e9871] [cursor=pointer]:
+                - generic [ref=e9872] [cursor=pointer]: "#364"
+                - button "Add to comparison" [ref=e9873] [cursor=pointer]:
+                  - img [ref=e9874] [cursor=pointer]
+              - generic [ref=e9881] [cursor=pointer]:
+                - generic [ref=e9884] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 364" [ref=e9886] [cursor=pointer]
+              - heading [level=3] [ref=e9888] [cursor=pointer]
+          - button "View details for Pokemon 365" [ref=e9895] [cursor=pointer]:
+            - generic [ref=e9897] [cursor=pointer]:
+              - generic [ref=e9898] [cursor=pointer]:
+                - generic [ref=e9899] [cursor=pointer]: "#365"
+                - button "Add to comparison" [ref=e9900] [cursor=pointer]:
+                  - img [ref=e9901] [cursor=pointer]
+              - generic [ref=e9908] [cursor=pointer]:
+                - generic [ref=e9911] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 365" [ref=e9913] [cursor=pointer]
+              - heading [level=3] [ref=e9915] [cursor=pointer]
+          - button "View details for Pokemon 366" [ref=e9922] [cursor=pointer]:
+            - generic [ref=e9924] [cursor=pointer]:
+              - generic [ref=e9925] [cursor=pointer]:
+                - generic [ref=e9926] [cursor=pointer]: "#366"
+                - button "Add to comparison" [ref=e9927] [cursor=pointer]:
+                  - img [ref=e9928] [cursor=pointer]
+              - generic [ref=e9935] [cursor=pointer]:
+                - generic [ref=e9938] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 366" [ref=e9940] [cursor=pointer]
+              - heading [level=3] [ref=e9942] [cursor=pointer]
+          - button "View details for Pokemon 367" [ref=e9949] [cursor=pointer]:
+            - generic [ref=e9951] [cursor=pointer]:
+              - generic [ref=e9952] [cursor=pointer]:
+                - generic [ref=e9953] [cursor=pointer]: "#367"
+                - button "Add to comparison" [ref=e9954] [cursor=pointer]:
+                  - img [ref=e9955] [cursor=pointer]
+              - generic [ref=e9962] [cursor=pointer]:
+                - generic [ref=e9965] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 367" [ref=e9967] [cursor=pointer]
+              - heading [level=3] [ref=e9969] [cursor=pointer]
+          - button "View details for Pokemon 368" [ref=e9976] [cursor=pointer]:
+            - generic [ref=e9978] [cursor=pointer]:
+              - generic [ref=e9979] [cursor=pointer]:
+                - generic [ref=e9980] [cursor=pointer]: "#368"
+                - button "Add to comparison" [ref=e9981] [cursor=pointer]:
+                  - img [ref=e9982] [cursor=pointer]
+              - generic [ref=e9989] [cursor=pointer]:
+                - generic [ref=e9992] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 368" [ref=e9994] [cursor=pointer]
+              - heading [level=3] [ref=e9996] [cursor=pointer]
+          - button "View details for Pokemon 369" [ref=e10003] [cursor=pointer]:
+            - generic [ref=e10005] [cursor=pointer]:
+              - generic [ref=e10006] [cursor=pointer]:
+                - generic [ref=e10007] [cursor=pointer]: "#369"
+                - button "Add to comparison" [ref=e10008] [cursor=pointer]:
+                  - img [ref=e10009] [cursor=pointer]
+              - generic [ref=e10016] [cursor=pointer]:
+                - generic [ref=e10019] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 369" [ref=e10021] [cursor=pointer]
+              - heading [level=3] [ref=e10023] [cursor=pointer]
+          - button "View details for Pokemon 370" [ref=e10030] [cursor=pointer]:
+            - generic [ref=e10032] [cursor=pointer]:
+              - generic [ref=e10033] [cursor=pointer]:
+                - generic [ref=e10034] [cursor=pointer]: "#370"
+                - button "Add to comparison" [ref=e10035] [cursor=pointer]:
+                  - img [ref=e10036] [cursor=pointer]
+              - generic [ref=e10043] [cursor=pointer]:
+                - generic [ref=e10046] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 370" [ref=e10048] [cursor=pointer]
+              - heading [level=3] [ref=e10050] [cursor=pointer]
+          - button "View details for Pokemon 371" [ref=e10057] [cursor=pointer]:
+            - generic [ref=e10059] [cursor=pointer]:
+              - generic [ref=e10060] [cursor=pointer]:
+                - generic [ref=e10061] [cursor=pointer]: "#371"
+                - button "Add to comparison" [ref=e10062] [cursor=pointer]:
+                  - img [ref=e10063] [cursor=pointer]
+              - generic [ref=e10070] [cursor=pointer]:
+                - generic [ref=e10073] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 371" [ref=e10075] [cursor=pointer]
+              - heading [level=3] [ref=e10077] [cursor=pointer]
+          - button "View details for Pokemon 372" [ref=e10084] [cursor=pointer]:
+            - generic [ref=e10086] [cursor=pointer]:
+              - generic [ref=e10087] [cursor=pointer]:
+                - generic [ref=e10088] [cursor=pointer]: "#372"
+                - button "Add to comparison" [ref=e10089] [cursor=pointer]:
+                  - img [ref=e10090] [cursor=pointer]
+              - generic [ref=e10097] [cursor=pointer]:
+                - generic [ref=e10100] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 372" [ref=e10102] [cursor=pointer]
+              - heading [level=3] [ref=e10104] [cursor=pointer]
+          - button "View details for Pokemon 373" [ref=e10111] [cursor=pointer]:
+            - generic [ref=e10113] [cursor=pointer]:
+              - generic [ref=e10114] [cursor=pointer]:
+                - generic [ref=e10115] [cursor=pointer]: "#373"
+                - button "Add to comparison" [ref=e10116] [cursor=pointer]:
+                  - img [ref=e10117] [cursor=pointer]
+              - generic [ref=e10124] [cursor=pointer]:
+                - generic [ref=e10127] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 373" [ref=e10129] [cursor=pointer]
+              - heading [level=3] [ref=e10131] [cursor=pointer]
+          - button "View details for Pokemon 374" [ref=e10138] [cursor=pointer]:
+            - generic [ref=e10140] [cursor=pointer]:
+              - generic [ref=e10141] [cursor=pointer]:
+                - generic [ref=e10142] [cursor=pointer]: "#374"
+                - button "Add to comparison" [ref=e10143] [cursor=pointer]:
+                  - img [ref=e10144] [cursor=pointer]
+              - generic [ref=e10151] [cursor=pointer]:
+                - generic [ref=e10154] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 374" [ref=e10156] [cursor=pointer]
+              - heading [level=3] [ref=e10158] [cursor=pointer]
+          - button "View details for Pokemon 375" [ref=e10165] [cursor=pointer]:
+            - generic [ref=e10167] [cursor=pointer]:
+              - generic [ref=e10168] [cursor=pointer]:
+                - generic [ref=e10169] [cursor=pointer]: "#375"
+                - button "Add to comparison" [ref=e10170] [cursor=pointer]:
+                  - img [ref=e10171] [cursor=pointer]
+              - generic [ref=e10178] [cursor=pointer]:
+                - generic [ref=e10181] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 375" [ref=e10183] [cursor=pointer]
+              - heading [level=3] [ref=e10185] [cursor=pointer]
+          - button "View details for Pokemon 376" [ref=e10192] [cursor=pointer]:
+            - generic [ref=e10194] [cursor=pointer]:
+              - generic [ref=e10195] [cursor=pointer]:
+                - generic [ref=e10196] [cursor=pointer]: "#376"
+                - button "Add to comparison" [ref=e10197] [cursor=pointer]:
+                  - img [ref=e10198] [cursor=pointer]
+              - generic [ref=e10205] [cursor=pointer]:
+                - generic [ref=e10208] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 376" [ref=e10210] [cursor=pointer]
+              - heading [level=3] [ref=e10212] [cursor=pointer]
+          - button "View details for Pokemon 377" [ref=e10219] [cursor=pointer]:
+            - generic [ref=e10221] [cursor=pointer]:
+              - generic [ref=e10222] [cursor=pointer]:
+                - generic [ref=e10223] [cursor=pointer]: "#377"
+                - button "Add to comparison" [ref=e10224] [cursor=pointer]:
+                  - img [ref=e10225] [cursor=pointer]
+              - generic [ref=e10232] [cursor=pointer]:
+                - generic [ref=e10235] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 377" [ref=e10237] [cursor=pointer]
+              - heading [level=3] [ref=e10239] [cursor=pointer]
+          - button "View details for Pokemon 378" [ref=e10246] [cursor=pointer]:
+            - generic [ref=e10248] [cursor=pointer]:
+              - generic [ref=e10249] [cursor=pointer]:
+                - generic [ref=e10250] [cursor=pointer]: "#378"
+                - button "Add to comparison" [ref=e10251] [cursor=pointer]:
+                  - img [ref=e10252] [cursor=pointer]
+              - generic [ref=e10259] [cursor=pointer]:
+                - generic [ref=e10262] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 378" [ref=e10264] [cursor=pointer]
+              - heading [level=3] [ref=e10266] [cursor=pointer]
+          - button "View details for Pokemon 379" [ref=e10273] [cursor=pointer]:
+            - generic [ref=e10275] [cursor=pointer]:
+              - generic [ref=e10276] [cursor=pointer]:
+                - generic [ref=e10277] [cursor=pointer]: "#379"
+                - button "Add to comparison" [ref=e10278] [cursor=pointer]:
+                  - img [ref=e10279] [cursor=pointer]
+              - generic [ref=e10286] [cursor=pointer]:
+                - generic [ref=e10289] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 379" [ref=e10291] [cursor=pointer]
+              - heading [level=3] [ref=e10293] [cursor=pointer]
+          - button "View details for Pokemon 380" [ref=e10300] [cursor=pointer]:
+            - generic [ref=e10302] [cursor=pointer]:
+              - generic [ref=e10303] [cursor=pointer]:
+                - generic [ref=e10304] [cursor=pointer]: "#380"
+                - button "Add to comparison" [ref=e10305] [cursor=pointer]:
+                  - img [ref=e10306] [cursor=pointer]
+              - generic [ref=e10313] [cursor=pointer]:
+                - generic [ref=e10316] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 380" [ref=e10318] [cursor=pointer]
+              - heading [level=3] [ref=e10320] [cursor=pointer]
+          - button "View details for Pokemon 381" [ref=e10327] [cursor=pointer]:
+            - generic [ref=e10329] [cursor=pointer]:
+              - generic [ref=e10330] [cursor=pointer]:
+                - generic [ref=e10331] [cursor=pointer]: "#381"
+                - button "Add to comparison" [ref=e10332] [cursor=pointer]:
+                  - img [ref=e10333] [cursor=pointer]
+              - generic [ref=e10340] [cursor=pointer]:
+                - generic [ref=e10343] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 381" [ref=e10345] [cursor=pointer]
+              - heading [level=3] [ref=e10347] [cursor=pointer]
+          - button "View details for Pokemon 382" [ref=e10354] [cursor=pointer]:
+            - generic [ref=e10356] [cursor=pointer]:
+              - generic [ref=e10357] [cursor=pointer]:
+                - generic [ref=e10358] [cursor=pointer]: "#382"
+                - button "Add to comparison" [ref=e10359] [cursor=pointer]:
+                  - img [ref=e10360] [cursor=pointer]
+              - generic [ref=e10367] [cursor=pointer]:
+                - generic [ref=e10370] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 382" [ref=e10372] [cursor=pointer]
+              - heading [level=3] [ref=e10374] [cursor=pointer]
+          - button "View details for Pokemon 383" [ref=e10381] [cursor=pointer]:
+            - generic [ref=e10383] [cursor=pointer]:
+              - generic [ref=e10384] [cursor=pointer]:
+                - generic [ref=e10385] [cursor=pointer]: "#383"
+                - button "Add to comparison" [ref=e10386] [cursor=pointer]:
+                  - img [ref=e10387] [cursor=pointer]
+              - generic [ref=e10394] [cursor=pointer]:
+                - generic [ref=e10397] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 383" [ref=e10399] [cursor=pointer]
+              - heading [level=3] [ref=e10401] [cursor=pointer]
+          - button "View details for Pokemon 384" [ref=e10408] [cursor=pointer]:
+            - generic [ref=e10410] [cursor=pointer]:
+              - generic [ref=e10411] [cursor=pointer]:
+                - generic [ref=e10412] [cursor=pointer]: "#384"
+                - button "Add to comparison" [ref=e10413] [cursor=pointer]:
+                  - img [ref=e10414] [cursor=pointer]
+              - generic [ref=e10421] [cursor=pointer]:
+                - generic [ref=e10424] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 384" [ref=e10426] [cursor=pointer]
+              - heading [level=3] [ref=e10428] [cursor=pointer]
+          - button "View details for Pokemon 385" [ref=e10435] [cursor=pointer]:
+            - generic [ref=e10437] [cursor=pointer]:
+              - generic [ref=e10438] [cursor=pointer]:
+                - generic [ref=e10439] [cursor=pointer]: "#385"
+                - button "Add to comparison" [ref=e10440] [cursor=pointer]:
+                  - img [ref=e10441] [cursor=pointer]
+              - generic [ref=e10448] [cursor=pointer]:
+                - generic [ref=e10451] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 385" [ref=e10453] [cursor=pointer]
+              - heading [level=3] [ref=e10455] [cursor=pointer]
+          - button "View details for Pokemon 386" [ref=e10462] [cursor=pointer]:
+            - generic [ref=e10464] [cursor=pointer]:
+              - generic [ref=e10465] [cursor=pointer]:
+                - generic [ref=e10466] [cursor=pointer]: "#386"
+                - button "Add to comparison" [ref=e10467] [cursor=pointer]:
+                  - img [ref=e10468] [cursor=pointer]
+              - generic [ref=e10475] [cursor=pointer]:
+                - generic [ref=e10478] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 386" [ref=e10480] [cursor=pointer]
+              - heading [level=3] [ref=e10482] [cursor=pointer]
+          - button "View details for Pokemon 387" [ref=e10489] [cursor=pointer]:
+            - generic [ref=e10491] [cursor=pointer]:
+              - generic [ref=e10492] [cursor=pointer]:
+                - generic [ref=e10493] [cursor=pointer]: "#387"
+                - button "Add to comparison" [ref=e10494] [cursor=pointer]:
+                  - img [ref=e10495] [cursor=pointer]
+              - generic [ref=e10502] [cursor=pointer]:
+                - generic [ref=e10505] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 387" [ref=e10507] [cursor=pointer]
+              - heading [level=3] [ref=e10509] [cursor=pointer]
+          - button "View details for Pokemon 388" [ref=e10516] [cursor=pointer]:
+            - generic [ref=e10518] [cursor=pointer]:
+              - generic [ref=e10519] [cursor=pointer]:
+                - generic [ref=e10520] [cursor=pointer]: "#388"
+                - button "Add to comparison" [ref=e10521] [cursor=pointer]:
+                  - img [ref=e10522] [cursor=pointer]
+              - generic [ref=e10529] [cursor=pointer]:
+                - generic [ref=e10532] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 388" [ref=e10534] [cursor=pointer]
+              - heading [level=3] [ref=e10536] [cursor=pointer]
+          - button "View details for Pokemon 389" [ref=e10543] [cursor=pointer]:
+            - generic [ref=e10545] [cursor=pointer]:
+              - generic [ref=e10546] [cursor=pointer]:
+                - generic [ref=e10547] [cursor=pointer]: "#389"
+                - button "Add to comparison" [ref=e10548] [cursor=pointer]:
+                  - img [ref=e10549] [cursor=pointer]
+              - generic [ref=e10556] [cursor=pointer]:
+                - generic [ref=e10559] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 389" [ref=e10561] [cursor=pointer]
+              - heading [level=3] [ref=e10563] [cursor=pointer]
+          - button "View details for Pokemon 390" [ref=e10570] [cursor=pointer]:
+            - generic [ref=e10572] [cursor=pointer]:
+              - generic [ref=e10573] [cursor=pointer]:
+                - generic [ref=e10574] [cursor=pointer]: "#390"
+                - button "Add to comparison" [ref=e10575] [cursor=pointer]:
+                  - img [ref=e10576] [cursor=pointer]
+              - generic [ref=e10583] [cursor=pointer]:
+                - generic [ref=e10586] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 390" [ref=e10588] [cursor=pointer]
+              - heading [level=3] [ref=e10590] [cursor=pointer]
+          - button "View details for Pokemon 391" [ref=e10597] [cursor=pointer]:
+            - generic [ref=e10599] [cursor=pointer]:
+              - generic [ref=e10600] [cursor=pointer]:
+                - generic [ref=e10601] [cursor=pointer]: "#391"
+                - button "Add to comparison" [ref=e10602] [cursor=pointer]:
+                  - img [ref=e10603] [cursor=pointer]
+              - generic [ref=e10610] [cursor=pointer]:
+                - generic [ref=e10613] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 391" [ref=e10615] [cursor=pointer]
+              - heading [level=3] [ref=e10617] [cursor=pointer]
+          - button "View details for Pokemon 392" [ref=e10624] [cursor=pointer]:
+            - generic [ref=e10626] [cursor=pointer]:
+              - generic [ref=e10627] [cursor=pointer]:
+                - generic [ref=e10628] [cursor=pointer]: "#392"
+                - button "Add to comparison" [ref=e10629] [cursor=pointer]:
+                  - img [ref=e10630] [cursor=pointer]
+              - generic [ref=e10637] [cursor=pointer]:
+                - generic [ref=e10640] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 392" [ref=e10642] [cursor=pointer]
+              - heading [level=3] [ref=e10644] [cursor=pointer]
+          - button "View details for Pokemon 393" [ref=e10651] [cursor=pointer]:
+            - generic [ref=e10653] [cursor=pointer]:
+              - generic [ref=e10654] [cursor=pointer]:
+                - generic [ref=e10655] [cursor=pointer]: "#393"
+                - button "Add to comparison" [ref=e10656] [cursor=pointer]:
+                  - img [ref=e10657] [cursor=pointer]
+              - generic [ref=e10664] [cursor=pointer]:
+                - generic [ref=e10667] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 393" [ref=e10669] [cursor=pointer]
+              - heading [level=3] [ref=e10671] [cursor=pointer]
+          - button "View details for Pokemon 394" [ref=e10678] [cursor=pointer]:
+            - generic [ref=e10680] [cursor=pointer]:
+              - generic [ref=e10681] [cursor=pointer]:
+                - generic [ref=e10682] [cursor=pointer]: "#394"
+                - button "Add to comparison" [ref=e10683] [cursor=pointer]:
+                  - img [ref=e10684] [cursor=pointer]
+              - generic [ref=e10691] [cursor=pointer]:
+                - generic [ref=e10694] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 394" [ref=e10696] [cursor=pointer]
+              - heading [level=3] [ref=e10698] [cursor=pointer]
+          - button "View details for Pokemon 395" [ref=e10705] [cursor=pointer]:
+            - generic [ref=e10707] [cursor=pointer]:
+              - generic [ref=e10708] [cursor=pointer]:
+                - generic [ref=e10709] [cursor=pointer]: "#395"
+                - button "Add to comparison" [ref=e10710] [cursor=pointer]:
+                  - img [ref=e10711] [cursor=pointer]
+              - generic [ref=e10718] [cursor=pointer]:
+                - generic [ref=e10721] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 395" [ref=e10723] [cursor=pointer]
+              - heading [level=3] [ref=e10725] [cursor=pointer]
+          - button "View details for Pokemon 396" [ref=e10732] [cursor=pointer]:
+            - generic [ref=e10734] [cursor=pointer]:
+              - generic [ref=e10735] [cursor=pointer]:
+                - generic [ref=e10736] [cursor=pointer]: "#396"
+                - button "Add to comparison" [ref=e10737] [cursor=pointer]:
+                  - img [ref=e10738] [cursor=pointer]
+              - generic [ref=e10745] [cursor=pointer]:
+                - generic [ref=e10748] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 396" [ref=e10750] [cursor=pointer]
+              - heading [level=3] [ref=e10752] [cursor=pointer]
+          - button "View details for Pokemon 397" [ref=e10759] [cursor=pointer]:
+            - generic [ref=e10761] [cursor=pointer]:
+              - generic [ref=e10762] [cursor=pointer]:
+                - generic [ref=e10763] [cursor=pointer]: "#397"
+                - button "Add to comparison" [ref=e10764] [cursor=pointer]:
+                  - img [ref=e10765] [cursor=pointer]
+              - generic [ref=e10772] [cursor=pointer]:
+                - generic [ref=e10775] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 397" [ref=e10777] [cursor=pointer]
+              - heading [level=3] [ref=e10779] [cursor=pointer]
+          - button "View details for Pokemon 398" [ref=e10786] [cursor=pointer]:
+            - generic [ref=e10788] [cursor=pointer]:
+              - generic [ref=e10789] [cursor=pointer]:
+                - generic [ref=e10790] [cursor=pointer]: "#398"
+                - button "Add to comparison" [ref=e10791] [cursor=pointer]:
+                  - img [ref=e10792] [cursor=pointer]
+              - generic [ref=e10799] [cursor=pointer]:
+                - generic [ref=e10802] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 398" [ref=e10804] [cursor=pointer]
+              - heading [level=3] [ref=e10806] [cursor=pointer]
+          - button "View details for Pokemon 399" [ref=e10813] [cursor=pointer]:
+            - generic [ref=e10815] [cursor=pointer]:
+              - generic [ref=e10816] [cursor=pointer]:
+                - generic [ref=e10817] [cursor=pointer]: "#399"
+                - button "Add to comparison" [ref=e10818] [cursor=pointer]:
+                  - img [ref=e10819] [cursor=pointer]
+              - generic [ref=e10826] [cursor=pointer]:
+                - generic [ref=e10829] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 399" [ref=e10831] [cursor=pointer]
+              - heading [level=3] [ref=e10833] [cursor=pointer]
+          - button "View details for Pokemon 400" [ref=e10840] [cursor=pointer]:
+            - generic [ref=e10842] [cursor=pointer]:
+              - generic [ref=e10843] [cursor=pointer]:
+                - generic [ref=e10844] [cursor=pointer]: "#400"
+                - button "Add to comparison" [ref=e10845] [cursor=pointer]:
+                  - img [ref=e10846] [cursor=pointer]
+              - generic [ref=e10853] [cursor=pointer]:
+                - generic [ref=e10856] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 400" [ref=e10858] [cursor=pointer]
+              - heading [level=3] [ref=e10860] [cursor=pointer]
+          - button "View details for Pokemon 401" [ref=e10867] [cursor=pointer]:
+            - generic [ref=e10869] [cursor=pointer]:
+              - generic [ref=e10870] [cursor=pointer]:
+                - generic [ref=e10871] [cursor=pointer]: "#401"
+                - button "Add to comparison" [ref=e10872] [cursor=pointer]:
+                  - img [ref=e10873] [cursor=pointer]
+              - generic [ref=e10880] [cursor=pointer]:
+                - generic [ref=e10883] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 401" [ref=e10885] [cursor=pointer]
+              - heading [level=3] [ref=e10887] [cursor=pointer]
+          - button "View details for Pokemon 402" [ref=e10894] [cursor=pointer]:
+            - generic [ref=e10896] [cursor=pointer]:
+              - generic [ref=e10897] [cursor=pointer]:
+                - generic [ref=e10898] [cursor=pointer]: "#402"
+                - button "Add to comparison" [ref=e10899] [cursor=pointer]:
+                  - img [ref=e10900] [cursor=pointer]
+              - generic [ref=e10907] [cursor=pointer]:
+                - generic [ref=e10910] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 402" [ref=e10912] [cursor=pointer]
+              - heading [level=3] [ref=e10914] [cursor=pointer]
+          - button "View details for Pokemon 403" [ref=e10921] [cursor=pointer]:
+            - generic [ref=e10923] [cursor=pointer]:
+              - generic [ref=e10924] [cursor=pointer]:
+                - generic [ref=e10925] [cursor=pointer]: "#403"
+                - button "Add to comparison" [ref=e10926] [cursor=pointer]:
+                  - img [ref=e10927] [cursor=pointer]
+              - generic [ref=e10934] [cursor=pointer]:
+                - generic [ref=e10937] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 403" [ref=e10939] [cursor=pointer]
+              - heading [level=3] [ref=e10941] [cursor=pointer]
+          - button "View details for Pokemon 404" [ref=e10948] [cursor=pointer]:
+            - generic [ref=e10950] [cursor=pointer]:
+              - generic [ref=e10951] [cursor=pointer]:
+                - generic [ref=e10952] [cursor=pointer]: "#404"
+                - button "Add to comparison" [ref=e10953] [cursor=pointer]:
+                  - img [ref=e10954] [cursor=pointer]
+              - generic [ref=e10961] [cursor=pointer]:
+                - generic [ref=e10964] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 404" [ref=e10966] [cursor=pointer]
+              - heading [level=3] [ref=e10968] [cursor=pointer]
+          - button "View details for Pokemon 405" [ref=e10975] [cursor=pointer]:
+            - generic [ref=e10977] [cursor=pointer]:
+              - generic [ref=e10978] [cursor=pointer]:
+                - generic [ref=e10979] [cursor=pointer]: "#405"
+                - button "Add to comparison" [ref=e10980] [cursor=pointer]:
+                  - img [ref=e10981] [cursor=pointer]
+              - generic [ref=e10988] [cursor=pointer]:
+                - generic [ref=e10991] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 405" [ref=e10993] [cursor=pointer]
+              - heading [level=3] [ref=e10995] [cursor=pointer]
+          - button "View details for Pokemon 406" [ref=e11002] [cursor=pointer]:
+            - generic [ref=e11004] [cursor=pointer]:
+              - generic [ref=e11005] [cursor=pointer]:
+                - generic [ref=e11006] [cursor=pointer]: "#406"
+                - button "Add to comparison" [ref=e11007] [cursor=pointer]:
+                  - img [ref=e11008] [cursor=pointer]
+              - generic [ref=e11015] [cursor=pointer]:
+                - generic [ref=e11018] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 406" [ref=e11020] [cursor=pointer]
+              - heading [level=3] [ref=e11022] [cursor=pointer]
+          - button "View details for Pokemon 407" [ref=e11029] [cursor=pointer]:
+            - generic [ref=e11031] [cursor=pointer]:
+              - generic [ref=e11032] [cursor=pointer]:
+                - generic [ref=e11033] [cursor=pointer]: "#407"
+                - button "Add to comparison" [ref=e11034] [cursor=pointer]:
+                  - img [ref=e11035] [cursor=pointer]
+              - generic [ref=e11042] [cursor=pointer]:
+                - generic [ref=e11045] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 407" [ref=e11047] [cursor=pointer]
+              - heading [level=3] [ref=e11049] [cursor=pointer]
+          - button "View details for Pokemon 408" [ref=e11056] [cursor=pointer]:
+            - generic [ref=e11058] [cursor=pointer]:
+              - generic [ref=e11059] [cursor=pointer]:
+                - generic [ref=e11060] [cursor=pointer]: "#408"
+                - button "Add to comparison" [ref=e11061] [cursor=pointer]:
+                  - img [ref=e11062] [cursor=pointer]
+              - generic [ref=e11069] [cursor=pointer]:
+                - generic [ref=e11072] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 408" [ref=e11074] [cursor=pointer]
+              - heading [level=3] [ref=e11076] [cursor=pointer]
+          - button "View details for Pokemon 409" [ref=e11083] [cursor=pointer]:
+            - generic [ref=e11085] [cursor=pointer]:
+              - generic [ref=e11086] [cursor=pointer]:
+                - generic [ref=e11087] [cursor=pointer]: "#409"
+                - button "Add to comparison" [ref=e11088] [cursor=pointer]:
+                  - img [ref=e11089] [cursor=pointer]
+              - generic [ref=e11096] [cursor=pointer]:
+                - generic [ref=e11099] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 409" [ref=e11101] [cursor=pointer]
+              - heading [level=3] [ref=e11103] [cursor=pointer]
+          - button "View details for Pokemon 410" [ref=e11110] [cursor=pointer]:
+            - generic [ref=e11112] [cursor=pointer]:
+              - generic [ref=e11113] [cursor=pointer]:
+                - generic [ref=e11114] [cursor=pointer]: "#410"
+                - button "Add to comparison" [ref=e11115] [cursor=pointer]:
+                  - img [ref=e11116] [cursor=pointer]
+              - generic [ref=e11123] [cursor=pointer]:
+                - generic [ref=e11126] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 410" [ref=e11128] [cursor=pointer]
+              - heading [level=3] [ref=e11130] [cursor=pointer]
+          - button "View details for Pokemon 411" [ref=e11137] [cursor=pointer]:
+            - generic [ref=e11139] [cursor=pointer]:
+              - generic [ref=e11140] [cursor=pointer]:
+                - generic [ref=e11141] [cursor=pointer]: "#411"
+                - button "Add to comparison" [ref=e11142] [cursor=pointer]:
+                  - img [ref=e11143] [cursor=pointer]
+              - generic [ref=e11150] [cursor=pointer]:
+                - generic [ref=e11153] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 411" [ref=e11155] [cursor=pointer]
+              - heading [level=3] [ref=e11157] [cursor=pointer]
+          - button "View details for Pokemon 412" [ref=e11164] [cursor=pointer]:
+            - generic [ref=e11166] [cursor=pointer]:
+              - generic [ref=e11167] [cursor=pointer]:
+                - generic [ref=e11168] [cursor=pointer]: "#412"
+                - button "Add to comparison" [ref=e11169] [cursor=pointer]:
+                  - img [ref=e11170] [cursor=pointer]
+              - generic [ref=e11177] [cursor=pointer]:
+                - generic [ref=e11180] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 412" [ref=e11182] [cursor=pointer]
+              - heading [level=3] [ref=e11184] [cursor=pointer]
+          - button "View details for Pokemon 413" [ref=e11191] [cursor=pointer]:
+            - generic [ref=e11193] [cursor=pointer]:
+              - generic [ref=e11194] [cursor=pointer]:
+                - generic [ref=e11195] [cursor=pointer]: "#413"
+                - button "Add to comparison" [ref=e11196] [cursor=pointer]:
+                  - img [ref=e11197] [cursor=pointer]
+              - generic [ref=e11204] [cursor=pointer]:
+                - generic [ref=e11207] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 413" [ref=e11209] [cursor=pointer]
+              - heading [level=3] [ref=e11211] [cursor=pointer]
+          - button "View details for Pokemon 414" [ref=e11218] [cursor=pointer]:
+            - generic [ref=e11220] [cursor=pointer]:
+              - generic [ref=e11221] [cursor=pointer]:
+                - generic [ref=e11222] [cursor=pointer]: "#414"
+                - button "Add to comparison" [ref=e11223] [cursor=pointer]:
+                  - img [ref=e11224] [cursor=pointer]
+              - generic [ref=e11231] [cursor=pointer]:
+                - generic [ref=e11234] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 414" [ref=e11236] [cursor=pointer]
+              - heading [level=3] [ref=e11238] [cursor=pointer]
+          - button "View details for Pokemon 415" [ref=e11245] [cursor=pointer]:
+            - generic [ref=e11247] [cursor=pointer]:
+              - generic [ref=e11248] [cursor=pointer]:
+                - generic [ref=e11249] [cursor=pointer]: "#415"
+                - button "Add to comparison" [ref=e11250] [cursor=pointer]:
+                  - img [ref=e11251] [cursor=pointer]
+              - generic [ref=e11258] [cursor=pointer]:
+                - generic [ref=e11261] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 415" [ref=e11263] [cursor=pointer]
+              - heading [level=3] [ref=e11265] [cursor=pointer]
+          - button "View details for Pokemon 416" [ref=e11272] [cursor=pointer]:
+            - generic [ref=e11274] [cursor=pointer]:
+              - generic [ref=e11275] [cursor=pointer]:
+                - generic [ref=e11276] [cursor=pointer]: "#416"
+                - button "Add to comparison" [ref=e11277] [cursor=pointer]:
+                  - img [ref=e11278] [cursor=pointer]
+              - generic [ref=e11285] [cursor=pointer]:
+                - generic [ref=e11288] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 416" [ref=e11290] [cursor=pointer]
+              - heading [level=3] [ref=e11292] [cursor=pointer]
+          - button "View details for Pokemon 417" [ref=e11299] [cursor=pointer]:
+            - generic [ref=e11301] [cursor=pointer]:
+              - generic [ref=e11302] [cursor=pointer]:
+                - generic [ref=e11303] [cursor=pointer]: "#417"
+                - button "Add to comparison" [ref=e11304] [cursor=pointer]:
+                  - img [ref=e11305] [cursor=pointer]
+              - generic [ref=e11312] [cursor=pointer]:
+                - generic [ref=e11315] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 417" [ref=e11317] [cursor=pointer]
+              - heading [level=3] [ref=e11319] [cursor=pointer]
+          - button "View details for Pokemon 418" [ref=e11326] [cursor=pointer]:
+            - generic [ref=e11328] [cursor=pointer]:
+              - generic [ref=e11329] [cursor=pointer]:
+                - generic [ref=e11330] [cursor=pointer]: "#418"
+                - button "Add to comparison" [ref=e11331] [cursor=pointer]:
+                  - img [ref=e11332] [cursor=pointer]
+              - generic [ref=e11339] [cursor=pointer]:
+                - generic [ref=e11342] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 418" [ref=e11344] [cursor=pointer]
+              - heading [level=3] [ref=e11346] [cursor=pointer]
+          - button "View details for Pokemon 419" [ref=e11353] [cursor=pointer]:
+            - generic [ref=e11355] [cursor=pointer]:
+              - generic [ref=e11356] [cursor=pointer]:
+                - generic [ref=e11357] [cursor=pointer]: "#419"
+                - button "Add to comparison" [ref=e11358] [cursor=pointer]:
+                  - img [ref=e11359] [cursor=pointer]
+              - generic [ref=e11366] [cursor=pointer]:
+                - generic [ref=e11369] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 419" [ref=e11371] [cursor=pointer]
+              - heading [level=3] [ref=e11373] [cursor=pointer]
+          - button "View details for Pokemon 420" [ref=e11380] [cursor=pointer]:
+            - generic [ref=e11382] [cursor=pointer]:
+              - generic [ref=e11383] [cursor=pointer]:
+                - generic [ref=e11384] [cursor=pointer]: "#420"
+                - button "Add to comparison" [ref=e11385] [cursor=pointer]:
+                  - img [ref=e11386] [cursor=pointer]
+              - generic [ref=e11393] [cursor=pointer]:
+                - generic [ref=e11396] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 420" [ref=e11398] [cursor=pointer]
+              - heading [level=3] [ref=e11400] [cursor=pointer]
+          - button "View details for Pokemon 421" [ref=e11407] [cursor=pointer]:
+            - generic [ref=e11409] [cursor=pointer]:
+              - generic [ref=e11410] [cursor=pointer]:
+                - generic [ref=e11411] [cursor=pointer]: "#421"
+                - button "Add to comparison" [ref=e11412] [cursor=pointer]:
+                  - img [ref=e11413] [cursor=pointer]
+              - generic [ref=e11420] [cursor=pointer]:
+                - generic [ref=e11423] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 421" [ref=e11425] [cursor=pointer]
+              - heading [level=3] [ref=e11427] [cursor=pointer]
+          - button "View details for Pokemon 422" [ref=e11434] [cursor=pointer]:
+            - generic [ref=e11436] [cursor=pointer]:
+              - generic [ref=e11437] [cursor=pointer]:
+                - generic [ref=e11438] [cursor=pointer]: "#422"
+                - button "Add to comparison" [ref=e11439] [cursor=pointer]:
+                  - img [ref=e11440] [cursor=pointer]
+              - generic [ref=e11447] [cursor=pointer]:
+                - generic [ref=e11450] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 422" [ref=e11452] [cursor=pointer]
+              - heading [level=3] [ref=e11454] [cursor=pointer]
+          - button "View details for Pokemon 423" [ref=e11461] [cursor=pointer]:
+            - generic [ref=e11463] [cursor=pointer]:
+              - generic [ref=e11464] [cursor=pointer]:
+                - generic [ref=e11465] [cursor=pointer]: "#423"
+                - button "Add to comparison" [ref=e11466] [cursor=pointer]:
+                  - img [ref=e11467] [cursor=pointer]
+              - generic [ref=e11474] [cursor=pointer]:
+                - generic [ref=e11477] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 423" [ref=e11479] [cursor=pointer]
+              - heading [level=3] [ref=e11481] [cursor=pointer]
+          - button "View details for Pokemon 424" [ref=e11488] [cursor=pointer]:
+            - generic [ref=e11490] [cursor=pointer]:
+              - generic [ref=e11491] [cursor=pointer]:
+                - generic [ref=e11492] [cursor=pointer]: "#424"
+                - button "Add to comparison" [ref=e11493] [cursor=pointer]:
+                  - img [ref=e11494] [cursor=pointer]
+              - generic [ref=e11501] [cursor=pointer]:
+                - generic [ref=e11504] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 424" [ref=e11506] [cursor=pointer]
+              - heading [level=3] [ref=e11508] [cursor=pointer]
+          - button "View details for Pokemon 425" [ref=e11515] [cursor=pointer]:
+            - generic [ref=e11517] [cursor=pointer]:
+              - generic [ref=e11518] [cursor=pointer]:
+                - generic [ref=e11519] [cursor=pointer]: "#425"
+                - button "Add to comparison" [ref=e11520] [cursor=pointer]:
+                  - img [ref=e11521] [cursor=pointer]
+              - generic [ref=e11528] [cursor=pointer]:
+                - generic [ref=e11531] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 425" [ref=e11533] [cursor=pointer]
+              - heading [level=3] [ref=e11535] [cursor=pointer]
+          - button "View details for Pokemon 426" [ref=e11542] [cursor=pointer]:
+            - generic [ref=e11544] [cursor=pointer]:
+              - generic [ref=e11545] [cursor=pointer]:
+                - generic [ref=e11546] [cursor=pointer]: "#426"
+                - button "Add to comparison" [ref=e11547] [cursor=pointer]:
+                  - img [ref=e11548] [cursor=pointer]
+              - generic [ref=e11555] [cursor=pointer]:
+                - generic [ref=e11558] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 426" [ref=e11560] [cursor=pointer]
+              - heading [level=3] [ref=e11562] [cursor=pointer]
+          - button "View details for Pokemon 427" [ref=e11569] [cursor=pointer]:
+            - generic [ref=e11571] [cursor=pointer]:
+              - generic [ref=e11572] [cursor=pointer]:
+                - generic [ref=e11573] [cursor=pointer]: "#427"
+                - button "Add to comparison" [ref=e11574] [cursor=pointer]:
+                  - img [ref=e11575] [cursor=pointer]
+              - generic [ref=e11582] [cursor=pointer]:
+                - generic [ref=e11585] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 427" [ref=e11587] [cursor=pointer]
+              - heading [level=3] [ref=e11589] [cursor=pointer]
+          - button "View details for Pokemon 428" [ref=e11596] [cursor=pointer]:
+            - generic [ref=e11598] [cursor=pointer]:
+              - generic [ref=e11599] [cursor=pointer]:
+                - generic [ref=e11600] [cursor=pointer]: "#428"
+                - button "Add to comparison" [ref=e11601] [cursor=pointer]:
+                  - img [ref=e11602] [cursor=pointer]
+              - generic [ref=e11609] [cursor=pointer]:
+                - generic [ref=e11612] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 428" [ref=e11614] [cursor=pointer]
+              - heading [level=3] [ref=e11616] [cursor=pointer]
+          - button "View details for Pokemon 429" [ref=e11623] [cursor=pointer]:
+            - generic [ref=e11625] [cursor=pointer]:
+              - generic [ref=e11626] [cursor=pointer]:
+                - generic [ref=e11627] [cursor=pointer]: "#429"
+                - button "Add to comparison" [ref=e11628] [cursor=pointer]:
+                  - img [ref=e11629] [cursor=pointer]
+              - generic [ref=e11636] [cursor=pointer]:
+                - generic [ref=e11639] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 429" [ref=e11641] [cursor=pointer]
+              - heading [level=3] [ref=e11643] [cursor=pointer]
+          - button "View details for Pokemon 430" [ref=e11650] [cursor=pointer]:
+            - generic [ref=e11652] [cursor=pointer]:
+              - generic [ref=e11653] [cursor=pointer]:
+                - generic [ref=e11654] [cursor=pointer]: "#430"
+                - button "Add to comparison" [ref=e11655] [cursor=pointer]:
+                  - img [ref=e11656] [cursor=pointer]
+              - generic [ref=e11663] [cursor=pointer]:
+                - generic [ref=e11666] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 430" [ref=e11668] [cursor=pointer]
+              - heading [level=3] [ref=e11670] [cursor=pointer]
+          - button "View details for Pokemon 431" [ref=e11677] [cursor=pointer]:
+            - generic [ref=e11679] [cursor=pointer]:
+              - generic [ref=e11680] [cursor=pointer]:
+                - generic [ref=e11681] [cursor=pointer]: "#431"
+                - button "Add to comparison" [ref=e11682] [cursor=pointer]:
+                  - img [ref=e11683] [cursor=pointer]
+              - generic [ref=e11690] [cursor=pointer]:
+                - generic [ref=e11693] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 431" [ref=e11695] [cursor=pointer]
+              - heading [level=3] [ref=e11697] [cursor=pointer]
+          - button "View details for Pokemon 432" [ref=e11704] [cursor=pointer]:
+            - generic [ref=e11706] [cursor=pointer]:
+              - generic [ref=e11707] [cursor=pointer]:
+                - generic [ref=e11708] [cursor=pointer]: "#432"
+                - button "Add to comparison" [ref=e11709] [cursor=pointer]:
+                  - img [ref=e11710] [cursor=pointer]
+              - generic [ref=e11717] [cursor=pointer]:
+                - generic [ref=e11720] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 432" [ref=e11722] [cursor=pointer]
+              - heading [level=3] [ref=e11724] [cursor=pointer]
+          - button "View details for Pokemon 433" [ref=e11731] [cursor=pointer]:
+            - generic [ref=e11733] [cursor=pointer]:
+              - generic [ref=e11734] [cursor=pointer]:
+                - generic [ref=e11735] [cursor=pointer]: "#433"
+                - button "Add to comparison" [ref=e11736] [cursor=pointer]:
+                  - img [ref=e11737] [cursor=pointer]
+              - generic [ref=e11744] [cursor=pointer]:
+                - generic [ref=e11747] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 433" [ref=e11749] [cursor=pointer]
+              - heading [level=3] [ref=e11751] [cursor=pointer]
+          - button "View details for Pokemon 434" [ref=e11758] [cursor=pointer]:
+            - generic [ref=e11760] [cursor=pointer]:
+              - generic [ref=e11761] [cursor=pointer]:
+                - generic [ref=e11762] [cursor=pointer]: "#434"
+                - button "Add to comparison" [ref=e11763] [cursor=pointer]:
+                  - img [ref=e11764] [cursor=pointer]
+              - generic [ref=e11771] [cursor=pointer]:
+                - generic [ref=e11774] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 434" [ref=e11776] [cursor=pointer]
+              - heading [level=3] [ref=e11778] [cursor=pointer]
+          - button "View details for Pokemon 435" [ref=e11785] [cursor=pointer]:
+            - generic [ref=e11787] [cursor=pointer]:
+              - generic [ref=e11788] [cursor=pointer]:
+                - generic [ref=e11789] [cursor=pointer]: "#435"
+                - button "Add to comparison" [ref=e11790] [cursor=pointer]:
+                  - img [ref=e11791] [cursor=pointer]
+              - generic [ref=e11798] [cursor=pointer]:
+                - generic [ref=e11801] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 435" [ref=e11803] [cursor=pointer]
+              - heading [level=3] [ref=e11805] [cursor=pointer]
+          - button "View details for Pokemon 436" [ref=e11812] [cursor=pointer]:
+            - generic [ref=e11814] [cursor=pointer]:
+              - generic [ref=e11815] [cursor=pointer]:
+                - generic [ref=e11816] [cursor=pointer]: "#436"
+                - button "Add to comparison" [ref=e11817] [cursor=pointer]:
+                  - img [ref=e11818] [cursor=pointer]
+              - generic [ref=e11825] [cursor=pointer]:
+                - generic [ref=e11828] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 436" [ref=e11830] [cursor=pointer]
+              - heading [level=3] [ref=e11832] [cursor=pointer]
+          - button "View details for Pokemon 437" [ref=e11839] [cursor=pointer]:
+            - generic [ref=e11841] [cursor=pointer]:
+              - generic [ref=e11842] [cursor=pointer]:
+                - generic [ref=e11843] [cursor=pointer]: "#437"
+                - button "Add to comparison" [ref=e11844] [cursor=pointer]:
+                  - img [ref=e11845] [cursor=pointer]
+              - generic [ref=e11852] [cursor=pointer]:
+                - generic [ref=e11855] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 437" [ref=e11857] [cursor=pointer]
+              - heading [level=3] [ref=e11859] [cursor=pointer]
+          - button "View details for Pokemon 438" [ref=e11866] [cursor=pointer]:
+            - generic [ref=e11868] [cursor=pointer]:
+              - generic [ref=e11869] [cursor=pointer]:
+                - generic [ref=e11870] [cursor=pointer]: "#438"
+                - button "Add to comparison" [ref=e11871] [cursor=pointer]:
+                  - img [ref=e11872] [cursor=pointer]
+              - generic [ref=e11879] [cursor=pointer]:
+                - generic [ref=e11882] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 438" [ref=e11884] [cursor=pointer]
+              - heading [level=3] [ref=e11886] [cursor=pointer]
+          - button "View details for Pokemon 439" [ref=e11893] [cursor=pointer]:
+            - generic [ref=e11895] [cursor=pointer]:
+              - generic [ref=e11896] [cursor=pointer]:
+                - generic [ref=e11897] [cursor=pointer]: "#439"
+                - button "Add to comparison" [ref=e11898] [cursor=pointer]:
+                  - img [ref=e11899] [cursor=pointer]
+              - generic [ref=e11906] [cursor=pointer]:
+                - generic [ref=e11909] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 439" [ref=e11911] [cursor=pointer]
+              - heading [level=3] [ref=e11913] [cursor=pointer]
+          - button "View details for Pokemon 440" [ref=e11920] [cursor=pointer]:
+            - generic [ref=e11922] [cursor=pointer]:
+              - generic [ref=e11923] [cursor=pointer]:
+                - generic [ref=e11924] [cursor=pointer]: "#440"
+                - button "Add to comparison" [ref=e11925] [cursor=pointer]:
+                  - img [ref=e11926] [cursor=pointer]
+              - generic [ref=e11933] [cursor=pointer]:
+                - generic [ref=e11936] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 440" [ref=e11938] [cursor=pointer]
+              - heading [level=3] [ref=e11940] [cursor=pointer]
+          - button "View details for Pokemon 441" [ref=e11947] [cursor=pointer]:
+            - generic [ref=e11949] [cursor=pointer]:
+              - generic [ref=e11950] [cursor=pointer]:
+                - generic [ref=e11951] [cursor=pointer]: "#441"
+                - button "Add to comparison" [ref=e11952] [cursor=pointer]:
+                  - img [ref=e11953] [cursor=pointer]
+              - generic [ref=e11960] [cursor=pointer]:
+                - generic [ref=e11963] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 441" [ref=e11965] [cursor=pointer]
+              - heading [level=3] [ref=e11967] [cursor=pointer]
+          - button "View details for Pokemon 442" [ref=e11974] [cursor=pointer]:
+            - generic [ref=e11976] [cursor=pointer]:
+              - generic [ref=e11977] [cursor=pointer]:
+                - generic [ref=e11978] [cursor=pointer]: "#442"
+                - button "Add to comparison" [ref=e11979] [cursor=pointer]:
+                  - img [ref=e11980] [cursor=pointer]
+              - generic [ref=e11987] [cursor=pointer]:
+                - generic [ref=e11990] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 442" [ref=e11992] [cursor=pointer]
+              - heading [level=3] [ref=e11994] [cursor=pointer]
+          - button "View details for Pokemon 443" [ref=e12001] [cursor=pointer]:
+            - generic [ref=e12003] [cursor=pointer]:
+              - generic [ref=e12004] [cursor=pointer]:
+                - generic [ref=e12005] [cursor=pointer]: "#443"
+                - button "Add to comparison" [ref=e12006] [cursor=pointer]:
+                  - img [ref=e12007] [cursor=pointer]
+              - generic [ref=e12014] [cursor=pointer]:
+                - generic [ref=e12017] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 443" [ref=e12019] [cursor=pointer]
+              - heading [level=3] [ref=e12021] [cursor=pointer]
+          - button "View details for Pokemon 444" [ref=e12028] [cursor=pointer]:
+            - generic [ref=e12030] [cursor=pointer]:
+              - generic [ref=e12031] [cursor=pointer]:
+                - generic [ref=e12032] [cursor=pointer]: "#444"
+                - button "Add to comparison" [ref=e12033] [cursor=pointer]:
+                  - img [ref=e12034] [cursor=pointer]
+              - generic [ref=e12041] [cursor=pointer]:
+                - generic [ref=e12044] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 444" [ref=e12046] [cursor=pointer]
+              - heading [level=3] [ref=e12048] [cursor=pointer]
+          - button "View details for Pokemon 445" [ref=e12055] [cursor=pointer]:
+            - generic [ref=e12057] [cursor=pointer]:
+              - generic [ref=e12058] [cursor=pointer]:
+                - generic [ref=e12059] [cursor=pointer]: "#445"
+                - button "Add to comparison" [ref=e12060] [cursor=pointer]:
+                  - img [ref=e12061] [cursor=pointer]
+              - generic [ref=e12068] [cursor=pointer]:
+                - generic [ref=e12071] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 445" [ref=e12073] [cursor=pointer]
+              - heading [level=3] [ref=e12075] [cursor=pointer]
+          - button "View details for Pokemon 446" [ref=e12082] [cursor=pointer]:
+            - generic [ref=e12084] [cursor=pointer]:
+              - generic [ref=e12085] [cursor=pointer]:
+                - generic [ref=e12086] [cursor=pointer]: "#446"
+                - button "Add to comparison" [ref=e12087] [cursor=pointer]:
+                  - img [ref=e12088] [cursor=pointer]
+              - generic [ref=e12095] [cursor=pointer]:
+                - generic [ref=e12098] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 446" [ref=e12100] [cursor=pointer]
+              - heading [level=3] [ref=e12102] [cursor=pointer]
+          - button "View details for Pokemon 447" [ref=e12109] [cursor=pointer]:
+            - generic [ref=e12111] [cursor=pointer]:
+              - generic [ref=e12112] [cursor=pointer]:
+                - generic [ref=e12113] [cursor=pointer]: "#447"
+                - button "Add to comparison" [ref=e12114] [cursor=pointer]:
+                  - img [ref=e12115] [cursor=pointer]
+              - generic [ref=e12122] [cursor=pointer]:
+                - generic [ref=e12125] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 447" [ref=e12127] [cursor=pointer]
+              - heading [level=3] [ref=e12129] [cursor=pointer]
+          - button "View details for Pokemon 448" [ref=e12136] [cursor=pointer]:
+            - generic [ref=e12138] [cursor=pointer]:
+              - generic [ref=e12139] [cursor=pointer]:
+                - generic [ref=e12140] [cursor=pointer]: "#448"
+                - button "Add to comparison" [ref=e12141] [cursor=pointer]:
+                  - img [ref=e12142] [cursor=pointer]
+              - generic [ref=e12149] [cursor=pointer]:
+                - generic [ref=e12152] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 448" [ref=e12154] [cursor=pointer]
+              - heading [level=3] [ref=e12156] [cursor=pointer]
+          - button "View details for Pokemon 449" [ref=e12163] [cursor=pointer]:
+            - generic [ref=e12165] [cursor=pointer]:
+              - generic [ref=e12166] [cursor=pointer]:
+                - generic [ref=e12167] [cursor=pointer]: "#449"
+                - button "Add to comparison" [ref=e12168] [cursor=pointer]:
+                  - img [ref=e12169] [cursor=pointer]
+              - generic [ref=e12176] [cursor=pointer]:
+                - generic [ref=e12179] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 449" [ref=e12181] [cursor=pointer]
+              - heading [level=3] [ref=e12183] [cursor=pointer]
+          - button "View details for Pokemon 450" [ref=e12190] [cursor=pointer]:
+            - generic [ref=e12192] [cursor=pointer]:
+              - generic [ref=e12193] [cursor=pointer]:
+                - generic [ref=e12194] [cursor=pointer]: "#450"
+                - button "Add to comparison" [ref=e12195] [cursor=pointer]:
+                  - img [ref=e12196] [cursor=pointer]
+              - generic [ref=e12203] [cursor=pointer]:
+                - generic [ref=e12206] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 450" [ref=e12208] [cursor=pointer]
+              - heading [level=3] [ref=e12210] [cursor=pointer]
+          - button "View details for Pokemon 451" [ref=e12217] [cursor=pointer]:
+            - generic [ref=e12219] [cursor=pointer]:
+              - generic [ref=e12220] [cursor=pointer]:
+                - generic [ref=e12221] [cursor=pointer]: "#451"
+                - button "Add to comparison" [ref=e12222] [cursor=pointer]:
+                  - img [ref=e12223] [cursor=pointer]
+              - generic [ref=e12230] [cursor=pointer]:
+                - generic [ref=e12233] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 451" [ref=e12235] [cursor=pointer]
+              - heading [level=3] [ref=e12237] [cursor=pointer]
+          - button "View details for Pokemon 452" [ref=e12244] [cursor=pointer]:
+            - generic [ref=e12246] [cursor=pointer]:
+              - generic [ref=e12247] [cursor=pointer]:
+                - generic [ref=e12248] [cursor=pointer]: "#452"
+                - button "Add to comparison" [ref=e12249] [cursor=pointer]:
+                  - img [ref=e12250] [cursor=pointer]
+              - generic [ref=e12257] [cursor=pointer]:
+                - generic [ref=e12260] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 452" [ref=e12262] [cursor=pointer]
+              - heading [level=3] [ref=e12264] [cursor=pointer]
+          - button "View details for Pokemon 453" [ref=e12271] [cursor=pointer]:
+            - generic [ref=e12273] [cursor=pointer]:
+              - generic [ref=e12274] [cursor=pointer]:
+                - generic [ref=e12275] [cursor=pointer]: "#453"
+                - button "Add to comparison" [ref=e12276] [cursor=pointer]:
+                  - img [ref=e12277] [cursor=pointer]
+              - generic [ref=e12284] [cursor=pointer]:
+                - generic [ref=e12287] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 453" [ref=e12289] [cursor=pointer]
+              - heading [level=3] [ref=e12291] [cursor=pointer]
+          - button "View details for Pokemon 454" [ref=e12298] [cursor=pointer]:
+            - generic [ref=e12300] [cursor=pointer]:
+              - generic [ref=e12301] [cursor=pointer]:
+                - generic [ref=e12302] [cursor=pointer]: "#454"
+                - button "Add to comparison" [ref=e12303] [cursor=pointer]:
+                  - img [ref=e12304] [cursor=pointer]
+              - generic [ref=e12311] [cursor=pointer]:
+                - generic [ref=e12314] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 454" [ref=e12316] [cursor=pointer]
+              - heading [level=3] [ref=e12318] [cursor=pointer]
+          - button "View details for Pokemon 455" [ref=e12325] [cursor=pointer]:
+            - generic [ref=e12327] [cursor=pointer]:
+              - generic [ref=e12328] [cursor=pointer]:
+                - generic [ref=e12329] [cursor=pointer]: "#455"
+                - button "Add to comparison" [ref=e12330] [cursor=pointer]:
+                  - img [ref=e12331] [cursor=pointer]
+              - generic [ref=e12338] [cursor=pointer]:
+                - generic [ref=e12341] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 455" [ref=e12343] [cursor=pointer]
+              - heading [level=3] [ref=e12345] [cursor=pointer]
+          - button "View details for Pokemon 456" [ref=e12352] [cursor=pointer]:
+            - generic [ref=e12354] [cursor=pointer]:
+              - generic [ref=e12355] [cursor=pointer]:
+                - generic [ref=e12356] [cursor=pointer]: "#456"
+                - button "Add to comparison" [ref=e12357] [cursor=pointer]:
+                  - img [ref=e12358] [cursor=pointer]
+              - generic [ref=e12365] [cursor=pointer]:
+                - generic [ref=e12368] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 456" [ref=e12370] [cursor=pointer]
+              - heading [level=3] [ref=e12372] [cursor=pointer]
+          - button "View details for Pokemon 457" [ref=e12379] [cursor=pointer]:
+            - generic [ref=e12381] [cursor=pointer]:
+              - generic [ref=e12382] [cursor=pointer]:
+                - generic [ref=e12383] [cursor=pointer]: "#457"
+                - button "Add to comparison" [ref=e12384] [cursor=pointer]:
+                  - img [ref=e12385] [cursor=pointer]
+              - generic [ref=e12392] [cursor=pointer]:
+                - generic [ref=e12395] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 457" [ref=e12397] [cursor=pointer]
+              - heading [level=3] [ref=e12399] [cursor=pointer]
+          - button "View details for Pokemon 458" [ref=e12406] [cursor=pointer]:
+            - generic [ref=e12408] [cursor=pointer]:
+              - generic [ref=e12409] [cursor=pointer]:
+                - generic [ref=e12410] [cursor=pointer]: "#458"
+                - button "Add to comparison" [ref=e12411] [cursor=pointer]:
+                  - img [ref=e12412] [cursor=pointer]
+              - generic [ref=e12419] [cursor=pointer]:
+                - generic [ref=e12422] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 458" [ref=e12424] [cursor=pointer]
+              - heading [level=3] [ref=e12426] [cursor=pointer]
+          - button "View details for Pokemon 459" [ref=e12433] [cursor=pointer]:
+            - generic [ref=e12435] [cursor=pointer]:
+              - generic [ref=e12436] [cursor=pointer]:
+                - generic [ref=e12437] [cursor=pointer]: "#459"
+                - button "Add to comparison" [ref=e12438] [cursor=pointer]:
+                  - img [ref=e12439] [cursor=pointer]
+              - generic [ref=e12446] [cursor=pointer]:
+                - generic [ref=e12449] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 459" [ref=e12451] [cursor=pointer]
+              - heading [level=3] [ref=e12453] [cursor=pointer]
+          - button "View details for Pokemon 460" [ref=e12460] [cursor=pointer]:
+            - generic [ref=e12462] [cursor=pointer]:
+              - generic [ref=e12463] [cursor=pointer]:
+                - generic [ref=e12464] [cursor=pointer]: "#460"
+                - button "Add to comparison" [ref=e12465] [cursor=pointer]:
+                  - img [ref=e12466] [cursor=pointer]
+              - generic [ref=e12473] [cursor=pointer]:
+                - generic [ref=e12476] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 460" [ref=e12478] [cursor=pointer]
+              - heading [level=3] [ref=e12480] [cursor=pointer]
+          - button "View details for Pokemon 461" [ref=e12487] [cursor=pointer]:
+            - generic [ref=e12489] [cursor=pointer]:
+              - generic [ref=e12490] [cursor=pointer]:
+                - generic [ref=e12491] [cursor=pointer]: "#461"
+                - button "Add to comparison" [ref=e12492] [cursor=pointer]:
+                  - img [ref=e12493] [cursor=pointer]
+              - generic [ref=e12500] [cursor=pointer]:
+                - generic [ref=e12503] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 461" [ref=e12505] [cursor=pointer]
+              - heading [level=3] [ref=e12507] [cursor=pointer]
+          - button "View details for Pokemon 462" [ref=e12514] [cursor=pointer]:
+            - generic [ref=e12516] [cursor=pointer]:
+              - generic [ref=e12517] [cursor=pointer]:
+                - generic [ref=e12518] [cursor=pointer]: "#462"
+                - button "Add to comparison" [ref=e12519] [cursor=pointer]:
+                  - img [ref=e12520] [cursor=pointer]
+              - generic [ref=e12527] [cursor=pointer]:
+                - generic [ref=e12530] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 462" [ref=e12532] [cursor=pointer]
+              - heading [level=3] [ref=e12534] [cursor=pointer]
+          - button "View details for Pokemon 463" [ref=e12541] [cursor=pointer]:
+            - generic [ref=e12543] [cursor=pointer]:
+              - generic [ref=e12544] [cursor=pointer]:
+                - generic [ref=e12545] [cursor=pointer]: "#463"
+                - button "Add to comparison" [ref=e12546] [cursor=pointer]:
+                  - img [ref=e12547] [cursor=pointer]
+              - generic [ref=e12554] [cursor=pointer]:
+                - generic [ref=e12557] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 463" [ref=e12559] [cursor=pointer]
+              - heading [level=3] [ref=e12561] [cursor=pointer]
+          - button "View details for Pokemon 464" [ref=e12568] [cursor=pointer]:
+            - generic [ref=e12570] [cursor=pointer]:
+              - generic [ref=e12571] [cursor=pointer]:
+                - generic [ref=e12572] [cursor=pointer]: "#464"
+                - button "Add to comparison" [ref=e12573] [cursor=pointer]:
+                  - img [ref=e12574] [cursor=pointer]
+              - generic [ref=e12581] [cursor=pointer]:
+                - generic [ref=e12584] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 464" [ref=e12586] [cursor=pointer]
+              - heading [level=3] [ref=e12588] [cursor=pointer]
+          - button "View details for Pokemon 465" [ref=e12595] [cursor=pointer]:
+            - generic [ref=e12597] [cursor=pointer]:
+              - generic [ref=e12598] [cursor=pointer]:
+                - generic [ref=e12599] [cursor=pointer]: "#465"
+                - button "Add to comparison" [ref=e12600] [cursor=pointer]:
+                  - img [ref=e12601] [cursor=pointer]
+              - generic [ref=e12608] [cursor=pointer]:
+                - generic [ref=e12611] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 465" [ref=e12613] [cursor=pointer]
+              - heading [level=3] [ref=e12615] [cursor=pointer]
+          - button "View details for Pokemon 466" [ref=e12622] [cursor=pointer]:
+            - generic [ref=e12624] [cursor=pointer]:
+              - generic [ref=e12625] [cursor=pointer]:
+                - generic [ref=e12626] [cursor=pointer]: "#466"
+                - button "Add to comparison" [ref=e12627] [cursor=pointer]:
+                  - img [ref=e12628] [cursor=pointer]
+              - generic [ref=e12635] [cursor=pointer]:
+                - generic [ref=e12638] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 466" [ref=e12640] [cursor=pointer]
+              - heading [level=3] [ref=e12642] [cursor=pointer]
+          - button "View details for Pokemon 467" [ref=e12649] [cursor=pointer]:
+            - generic [ref=e12651] [cursor=pointer]:
+              - generic [ref=e12652] [cursor=pointer]:
+                - generic [ref=e12653] [cursor=pointer]: "#467"
+                - button "Add to comparison" [ref=e12654] [cursor=pointer]:
+                  - img [ref=e12655] [cursor=pointer]
+              - generic [ref=e12662] [cursor=pointer]:
+                - generic [ref=e12665] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 467" [ref=e12667] [cursor=pointer]
+              - heading [level=3] [ref=e12669] [cursor=pointer]
+          - button "View details for Pokemon 468" [ref=e12676] [cursor=pointer]:
+            - generic [ref=e12678] [cursor=pointer]:
+              - generic [ref=e12679] [cursor=pointer]:
+                - generic [ref=e12680] [cursor=pointer]: "#468"
+                - button "Add to comparison" [ref=e12681] [cursor=pointer]:
+                  - img [ref=e12682] [cursor=pointer]
+              - generic [ref=e12689] [cursor=pointer]:
+                - generic [ref=e12692] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 468" [ref=e12694] [cursor=pointer]
+              - heading [level=3] [ref=e12696] [cursor=pointer]
+          - button "View details for Pokemon 469" [ref=e12703] [cursor=pointer]:
+            - generic [ref=e12705] [cursor=pointer]:
+              - generic [ref=e12706] [cursor=pointer]:
+                - generic [ref=e12707] [cursor=pointer]: "#469"
+                - button "Add to comparison" [ref=e12708] [cursor=pointer]:
+                  - img [ref=e12709] [cursor=pointer]
+              - generic [ref=e12716] [cursor=pointer]:
+                - generic [ref=e12719] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 469" [ref=e12721] [cursor=pointer]
+              - heading [level=3] [ref=e12723] [cursor=pointer]
+          - button "View details for Pokemon 470" [ref=e12730] [cursor=pointer]:
+            - generic [ref=e12732] [cursor=pointer]:
+              - generic [ref=e12733] [cursor=pointer]:
+                - generic [ref=e12734] [cursor=pointer]: "#470"
+                - button "Add to comparison" [ref=e12735] [cursor=pointer]:
+                  - img [ref=e12736] [cursor=pointer]
+              - generic [ref=e12743] [cursor=pointer]:
+                - generic [ref=e12746] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 470" [ref=e12748] [cursor=pointer]
+              - heading [level=3] [ref=e12750] [cursor=pointer]
+          - button "View details for Pokemon 471" [ref=e12757] [cursor=pointer]:
+            - generic [ref=e12759] [cursor=pointer]:
+              - generic [ref=e12760] [cursor=pointer]:
+                - generic [ref=e12761] [cursor=pointer]: "#471"
+                - button "Add to comparison" [ref=e12762] [cursor=pointer]:
+                  - img [ref=e12763] [cursor=pointer]
+              - generic [ref=e12770] [cursor=pointer]:
+                - generic [ref=e12773] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 471" [ref=e12775] [cursor=pointer]
+              - heading [level=3] [ref=e12777] [cursor=pointer]
+          - button "View details for Pokemon 472" [ref=e12784] [cursor=pointer]:
+            - generic [ref=e12786] [cursor=pointer]:
+              - generic [ref=e12787] [cursor=pointer]:
+                - generic [ref=e12788] [cursor=pointer]: "#472"
+                - button "Add to comparison" [ref=e12789] [cursor=pointer]:
+                  - img [ref=e12790] [cursor=pointer]
+              - generic [ref=e12797] [cursor=pointer]:
+                - generic [ref=e12800] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 472" [ref=e12802] [cursor=pointer]
+              - heading [level=3] [ref=e12804] [cursor=pointer]
+          - button "View details for Pokemon 473" [ref=e12811] [cursor=pointer]:
+            - generic [ref=e12813] [cursor=pointer]:
+              - generic [ref=e12814] [cursor=pointer]:
+                - generic [ref=e12815] [cursor=pointer]: "#473"
+                - button "Add to comparison" [ref=e12816] [cursor=pointer]:
+                  - img [ref=e12817] [cursor=pointer]
+              - generic [ref=e12824] [cursor=pointer]:
+                - generic [ref=e12827] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 473" [ref=e12829] [cursor=pointer]
+              - heading [level=3] [ref=e12831] [cursor=pointer]
+          - button "View details for Pokemon 474" [ref=e12838] [cursor=pointer]:
+            - generic [ref=e12840] [cursor=pointer]:
+              - generic [ref=e12841] [cursor=pointer]:
+                - generic [ref=e12842] [cursor=pointer]: "#474"
+                - button "Add to comparison" [ref=e12843] [cursor=pointer]:
+                  - img [ref=e12844] [cursor=pointer]
+              - generic [ref=e12851] [cursor=pointer]:
+                - generic [ref=e12854] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 474" [ref=e12856] [cursor=pointer]
+              - heading [level=3] [ref=e12858] [cursor=pointer]
+          - button "View details for Pokemon 475" [ref=e12865] [cursor=pointer]:
+            - generic [ref=e12867] [cursor=pointer]:
+              - generic [ref=e12868] [cursor=pointer]:
+                - generic [ref=e12869] [cursor=pointer]: "#475"
+                - button "Add to comparison" [ref=e12870] [cursor=pointer]:
+                  - img [ref=e12871] [cursor=pointer]
+              - generic [ref=e12878] [cursor=pointer]:
+                - generic [ref=e12881] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 475" [ref=e12883] [cursor=pointer]
+              - heading [level=3] [ref=e12885] [cursor=pointer]
+          - button "View details for Pokemon 476" [ref=e12892] [cursor=pointer]:
+            - generic [ref=e12894] [cursor=pointer]:
+              - generic [ref=e12895] [cursor=pointer]:
+                - generic [ref=e12896] [cursor=pointer]: "#476"
+                - button "Add to comparison" [ref=e12897] [cursor=pointer]:
+                  - img [ref=e12898] [cursor=pointer]
+              - generic [ref=e12905] [cursor=pointer]:
+                - generic [ref=e12908] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 476" [ref=e12910] [cursor=pointer]
+              - heading [level=3] [ref=e12912] [cursor=pointer]
+          - button "View details for Pokemon 477" [ref=e12919] [cursor=pointer]:
+            - generic [ref=e12921] [cursor=pointer]:
+              - generic [ref=e12922] [cursor=pointer]:
+                - generic [ref=e12923] [cursor=pointer]: "#477"
+                - button "Add to comparison" [ref=e12924] [cursor=pointer]:
+                  - img [ref=e12925] [cursor=pointer]
+              - generic [ref=e12932] [cursor=pointer]:
+                - generic [ref=e12935] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 477" [ref=e12937] [cursor=pointer]
+              - heading [level=3] [ref=e12939] [cursor=pointer]
+          - button "View details for Pokemon 478" [ref=e12946] [cursor=pointer]:
+            - generic [ref=e12948] [cursor=pointer]:
+              - generic [ref=e12949] [cursor=pointer]:
+                - generic [ref=e12950] [cursor=pointer]: "#478"
+                - button "Add to comparison" [ref=e12951] [cursor=pointer]:
+                  - img [ref=e12952] [cursor=pointer]
+              - generic [ref=e12959] [cursor=pointer]:
+                - generic [ref=e12962] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 478" [ref=e12964] [cursor=pointer]
+              - heading [level=3] [ref=e12966] [cursor=pointer]
+          - button "View details for Pokemon 479" [ref=e12973] [cursor=pointer]:
+            - generic [ref=e12975] [cursor=pointer]:
+              - generic [ref=e12976] [cursor=pointer]:
+                - generic [ref=e12977] [cursor=pointer]: "#479"
+                - button "Add to comparison" [ref=e12978] [cursor=pointer]:
+                  - img [ref=e12979] [cursor=pointer]
+              - generic [ref=e12986] [cursor=pointer]:
+                - generic [ref=e12989] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 479" [ref=e12991] [cursor=pointer]
+              - heading [level=3] [ref=e12993] [cursor=pointer]
+          - button "View details for Pokemon 480" [ref=e13000] [cursor=pointer]:
+            - generic [ref=e13002] [cursor=pointer]:
+              - generic [ref=e13003] [cursor=pointer]:
+                - generic [ref=e13004] [cursor=pointer]: "#480"
+                - button "Add to comparison" [ref=e13005] [cursor=pointer]:
+                  - img [ref=e13006] [cursor=pointer]
+              - generic [ref=e13013] [cursor=pointer]:
+                - generic [ref=e13016] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 480" [ref=e13018] [cursor=pointer]
+              - heading [level=3] [ref=e13020] [cursor=pointer]
+          - button "View details for Pokemon 481" [ref=e13027] [cursor=pointer]:
+            - generic [ref=e13029] [cursor=pointer]:
+              - generic [ref=e13030] [cursor=pointer]:
+                - generic [ref=e13031] [cursor=pointer]: "#481"
+                - button "Add to comparison" [ref=e13032] [cursor=pointer]:
+                  - img [ref=e13033] [cursor=pointer]
+              - generic [ref=e13040] [cursor=pointer]:
+                - generic [ref=e13043] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 481" [ref=e13045] [cursor=pointer]
+              - heading [level=3] [ref=e13047] [cursor=pointer]
+          - button "View details for Pokemon 482" [ref=e13054] [cursor=pointer]:
+            - generic [ref=e13056] [cursor=pointer]:
+              - generic [ref=e13057] [cursor=pointer]:
+                - generic [ref=e13058] [cursor=pointer]: "#482"
+                - button "Add to comparison" [ref=e13059] [cursor=pointer]:
+                  - img [ref=e13060] [cursor=pointer]
+              - generic [ref=e13067] [cursor=pointer]:
+                - generic [ref=e13070] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 482" [ref=e13072] [cursor=pointer]
+              - heading [level=3] [ref=e13074] [cursor=pointer]
+          - button "View details for Pokemon 483" [ref=e13081] [cursor=pointer]:
+            - generic [ref=e13083] [cursor=pointer]:
+              - generic [ref=e13084] [cursor=pointer]:
+                - generic [ref=e13085] [cursor=pointer]: "#483"
+                - button "Add to comparison" [ref=e13086] [cursor=pointer]:
+                  - img [ref=e13087] [cursor=pointer]
+              - generic [ref=e13094] [cursor=pointer]:
+                - generic [ref=e13097] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 483" [ref=e13099] [cursor=pointer]
+              - heading [level=3] [ref=e13101] [cursor=pointer]
+          - button "View details for Pokemon 484" [ref=e13108] [cursor=pointer]:
+            - generic [ref=e13110] [cursor=pointer]:
+              - generic [ref=e13111] [cursor=pointer]:
+                - generic [ref=e13112] [cursor=pointer]: "#484"
+                - button "Add to comparison" [ref=e13113] [cursor=pointer]:
+                  - img [ref=e13114] [cursor=pointer]
+              - generic [ref=e13121] [cursor=pointer]:
+                - generic [ref=e13124] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 484" [ref=e13126] [cursor=pointer]
+              - heading [level=3] [ref=e13128] [cursor=pointer]
+          - button "View details for Pokemon 485" [ref=e13135] [cursor=pointer]:
+            - generic [ref=e13137] [cursor=pointer]:
+              - generic [ref=e13138] [cursor=pointer]:
+                - generic [ref=e13139] [cursor=pointer]: "#485"
+                - button "Add to comparison" [ref=e13140] [cursor=pointer]:
+                  - img [ref=e13141] [cursor=pointer]
+              - generic [ref=e13148] [cursor=pointer]:
+                - generic [ref=e13151] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 485" [ref=e13153] [cursor=pointer]
+              - heading [level=3] [ref=e13155] [cursor=pointer]
+          - button "View details for Pokemon 486" [ref=e13162] [cursor=pointer]:
+            - generic [ref=e13164] [cursor=pointer]:
+              - generic [ref=e13165] [cursor=pointer]:
+                - generic [ref=e13166] [cursor=pointer]: "#486"
+                - button "Add to comparison" [ref=e13167] [cursor=pointer]:
+                  - img [ref=e13168] [cursor=pointer]
+              - generic [ref=e13175] [cursor=pointer]:
+                - generic [ref=e13178] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 486" [ref=e13180] [cursor=pointer]
+              - heading [level=3] [ref=e13182] [cursor=pointer]
+          - button "View details for Pokemon 487" [ref=e13189] [cursor=pointer]:
+            - generic [ref=e13191] [cursor=pointer]:
+              - generic [ref=e13192] [cursor=pointer]:
+                - generic [ref=e13193] [cursor=pointer]: "#487"
+                - button "Add to comparison" [ref=e13194] [cursor=pointer]:
+                  - img [ref=e13195] [cursor=pointer]
+              - generic [ref=e13202] [cursor=pointer]:
+                - generic [ref=e13205] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 487" [ref=e13207] [cursor=pointer]
+              - heading [level=3] [ref=e13209] [cursor=pointer]
+          - button "View details for Pokemon 488" [ref=e13216] [cursor=pointer]:
+            - generic [ref=e13218] [cursor=pointer]:
+              - generic [ref=e13219] [cursor=pointer]:
+                - generic [ref=e13220] [cursor=pointer]: "#488"
+                - button "Add to comparison" [ref=e13221] [cursor=pointer]:
+                  - img [ref=e13222] [cursor=pointer]
+              - generic [ref=e13229] [cursor=pointer]:
+                - generic [ref=e13232] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 488" [ref=e13234] [cursor=pointer]
+              - heading [level=3] [ref=e13236] [cursor=pointer]
+          - button "View details for Pokemon 489" [ref=e13243] [cursor=pointer]:
+            - generic [ref=e13245] [cursor=pointer]:
+              - generic [ref=e13246] [cursor=pointer]:
+                - generic [ref=e13247] [cursor=pointer]: "#489"
+                - button "Add to comparison" [ref=e13248] [cursor=pointer]:
+                  - img [ref=e13249] [cursor=pointer]
+              - generic [ref=e13256] [cursor=pointer]:
+                - generic [ref=e13259] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 489" [ref=e13261] [cursor=pointer]
+              - heading [level=3] [ref=e13263] [cursor=pointer]
+          - button "View details for Pokemon 490" [ref=e13270] [cursor=pointer]:
+            - generic [ref=e13272] [cursor=pointer]:
+              - generic [ref=e13273] [cursor=pointer]:
+                - generic [ref=e13274] [cursor=pointer]: "#490"
+                - button "Add to comparison" [ref=e13275] [cursor=pointer]:
+                  - img [ref=e13276] [cursor=pointer]
+              - generic [ref=e13283] [cursor=pointer]:
+                - generic [ref=e13286] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 490" [ref=e13288] [cursor=pointer]
+              - heading [level=3] [ref=e13290] [cursor=pointer]
+          - button "View details for Pokemon 491" [ref=e13297] [cursor=pointer]:
+            - generic [ref=e13299] [cursor=pointer]:
+              - generic [ref=e13300] [cursor=pointer]:
+                - generic [ref=e13301] [cursor=pointer]: "#491"
+                - button "Add to comparison" [ref=e13302] [cursor=pointer]:
+                  - img [ref=e13303] [cursor=pointer]
+              - generic [ref=e13310] [cursor=pointer]:
+                - generic [ref=e13313] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 491" [ref=e13315] [cursor=pointer]
+              - heading [level=3] [ref=e13317] [cursor=pointer]
+          - button "View details for Pokemon 492" [ref=e13324] [cursor=pointer]:
+            - generic [ref=e13326] [cursor=pointer]:
+              - generic [ref=e13327] [cursor=pointer]:
+                - generic [ref=e13328] [cursor=pointer]: "#492"
+                - button "Add to comparison" [ref=e13329] [cursor=pointer]:
+                  - img [ref=e13330] [cursor=pointer]
+              - generic [ref=e13337] [cursor=pointer]:
+                - generic [ref=e13340] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 492" [ref=e13342] [cursor=pointer]
+              - heading [level=3] [ref=e13344] [cursor=pointer]
+          - button "View details for Pokemon 493" [ref=e13351] [cursor=pointer]:
+            - generic [ref=e13353] [cursor=pointer]:
+              - generic [ref=e13354] [cursor=pointer]:
+                - generic [ref=e13355] [cursor=pointer]: "#493"
+                - button "Add to comparison" [ref=e13356] [cursor=pointer]:
+                  - img [ref=e13357] [cursor=pointer]
+              - generic [ref=e13364] [cursor=pointer]:
+                - generic [ref=e13367] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 493" [ref=e13369] [cursor=pointer]
+              - heading [level=3] [ref=e13371] [cursor=pointer]
+          - button "View details for Pokemon 494" [ref=e13378] [cursor=pointer]:
+            - generic [ref=e13380] [cursor=pointer]:
+              - generic [ref=e13381] [cursor=pointer]:
+                - generic [ref=e13382] [cursor=pointer]: "#494"
+                - button "Add to comparison" [ref=e13383] [cursor=pointer]:
+                  - img [ref=e13384] [cursor=pointer]
+              - generic [ref=e13391] [cursor=pointer]:
+                - generic [ref=e13394] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 494" [ref=e13396] [cursor=pointer]
+              - heading [level=3] [ref=e13398] [cursor=pointer]
+          - button "View details for Pokemon 495" [ref=e13405] [cursor=pointer]:
+            - generic [ref=e13407] [cursor=pointer]:
+              - generic [ref=e13408] [cursor=pointer]:
+                - generic [ref=e13409] [cursor=pointer]: "#495"
+                - button "Add to comparison" [ref=e13410] [cursor=pointer]:
+                  - img [ref=e13411] [cursor=pointer]
+              - generic [ref=e13418] [cursor=pointer]:
+                - generic [ref=e13421] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 495" [ref=e13423] [cursor=pointer]
+              - heading [level=3] [ref=e13425] [cursor=pointer]
+          - button "View details for Pokemon 496" [ref=e13432] [cursor=pointer]:
+            - generic [ref=e13434] [cursor=pointer]:
+              - generic [ref=e13435] [cursor=pointer]:
+                - generic [ref=e13436] [cursor=pointer]: "#496"
+                - button "Add to comparison" [ref=e13437] [cursor=pointer]:
+                  - img [ref=e13438] [cursor=pointer]
+              - generic [ref=e13445] [cursor=pointer]:
+                - generic [ref=e13448] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 496" [ref=e13450] [cursor=pointer]
+              - heading [level=3] [ref=e13452] [cursor=pointer]
+          - button "View details for Pokemon 497" [ref=e13459] [cursor=pointer]:
+            - generic [ref=e13461] [cursor=pointer]:
+              - generic [ref=e13462] [cursor=pointer]:
+                - generic [ref=e13463] [cursor=pointer]: "#497"
+                - button "Add to comparison" [ref=e13464] [cursor=pointer]:
+                  - img [ref=e13465] [cursor=pointer]
+              - generic [ref=e13472] [cursor=pointer]:
+                - generic [ref=e13475] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 497" [ref=e13477] [cursor=pointer]
+              - heading [level=3] [ref=e13479] [cursor=pointer]
+          - button "View details for Pokemon 498" [ref=e13486] [cursor=pointer]:
+            - generic [ref=e13488] [cursor=pointer]:
+              - generic [ref=e13489] [cursor=pointer]:
+                - generic [ref=e13490] [cursor=pointer]: "#498"
+                - button "Add to comparison" [ref=e13491] [cursor=pointer]:
+                  - img [ref=e13492] [cursor=pointer]
+              - generic [ref=e13499] [cursor=pointer]:
+                - generic [ref=e13502] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 498" [ref=e13504] [cursor=pointer]
+              - heading [level=3] [ref=e13506] [cursor=pointer]
+          - button "View details for Pokemon 499" [ref=e13513] [cursor=pointer]:
+            - generic [ref=e13515] [cursor=pointer]:
+              - generic [ref=e13516] [cursor=pointer]:
+                - generic [ref=e13517] [cursor=pointer]: "#499"
+                - button "Add to comparison" [ref=e13518] [cursor=pointer]:
+                  - img [ref=e13519] [cursor=pointer]
+              - generic [ref=e13526] [cursor=pointer]:
+                - generic [ref=e13529] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 499" [ref=e13531] [cursor=pointer]
+              - heading [level=3] [ref=e13533] [cursor=pointer]
+          - button "View details for Pokemon 500" [ref=e13540] [cursor=pointer]:
+            - generic [ref=e13542] [cursor=pointer]:
+              - generic [ref=e13543] [cursor=pointer]:
+                - generic [ref=e13544] [cursor=pointer]: "#500"
+                - button "Add to comparison" [ref=e13545] [cursor=pointer]:
+                  - img [ref=e13546] [cursor=pointer]
+              - generic [ref=e13553] [cursor=pointer]:
+                - generic [ref=e13556] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 500" [ref=e13558] [cursor=pointer]
+              - heading [level=3] [ref=e13560] [cursor=pointer]
+          - button "View details for Pokemon 501" [ref=e13567] [cursor=pointer]:
+            - generic [ref=e13569] [cursor=pointer]:
+              - generic [ref=e13570] [cursor=pointer]:
+                - generic [ref=e13571] [cursor=pointer]: "#501"
+                - button "Add to comparison" [ref=e13572] [cursor=pointer]:
+                  - img [ref=e13573] [cursor=pointer]
+              - generic [ref=e13580] [cursor=pointer]:
+                - generic [ref=e13583] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 501" [ref=e13585] [cursor=pointer]
+              - heading [level=3] [ref=e13587] [cursor=pointer]
+          - button "View details for Pokemon 502" [ref=e13594] [cursor=pointer]:
+            - generic [ref=e13596] [cursor=pointer]:
+              - generic [ref=e13597] [cursor=pointer]:
+                - generic [ref=e13598] [cursor=pointer]: "#502"
+                - button "Add to comparison" [ref=e13599] [cursor=pointer]:
+                  - img [ref=e13600] [cursor=pointer]
+              - generic [ref=e13607] [cursor=pointer]:
+                - generic [ref=e13610] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 502" [ref=e13612] [cursor=pointer]
+              - heading [level=3] [ref=e13614] [cursor=pointer]
+          - button "View details for Pokemon 503" [ref=e13621] [cursor=pointer]:
+            - generic [ref=e13623] [cursor=pointer]:
+              - generic [ref=e13624] [cursor=pointer]:
+                - generic [ref=e13625] [cursor=pointer]: "#503"
+                - button "Add to comparison" [ref=e13626] [cursor=pointer]:
+                  - img [ref=e13627] [cursor=pointer]
+              - generic [ref=e13634] [cursor=pointer]:
+                - generic [ref=e13637] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 503" [ref=e13639] [cursor=pointer]
+              - heading [level=3] [ref=e13641] [cursor=pointer]
+          - button "View details for Pokemon 504" [ref=e13648] [cursor=pointer]:
+            - generic [ref=e13650] [cursor=pointer]:
+              - generic [ref=e13651] [cursor=pointer]:
+                - generic [ref=e13652] [cursor=pointer]: "#504"
+                - button "Add to comparison" [ref=e13653] [cursor=pointer]:
+                  - img [ref=e13654] [cursor=pointer]
+              - generic [ref=e13661] [cursor=pointer]:
+                - generic [ref=e13664] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 504" [ref=e13666] [cursor=pointer]
+              - heading [level=3] [ref=e13668] [cursor=pointer]
+          - button "View details for Pokemon 505" [ref=e13675] [cursor=pointer]:
+            - generic [ref=e13677] [cursor=pointer]:
+              - generic [ref=e13678] [cursor=pointer]:
+                - generic [ref=e13679] [cursor=pointer]: "#505"
+                - button "Add to comparison" [ref=e13680] [cursor=pointer]:
+                  - img [ref=e13681] [cursor=pointer]
+              - generic [ref=e13688] [cursor=pointer]:
+                - generic [ref=e13691] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 505" [ref=e13693] [cursor=pointer]
+              - heading [level=3] [ref=e13695] [cursor=pointer]
+          - button "View details for Pokemon 506" [ref=e13702] [cursor=pointer]:
+            - generic [ref=e13704] [cursor=pointer]:
+              - generic [ref=e13705] [cursor=pointer]:
+                - generic [ref=e13706] [cursor=pointer]: "#506"
+                - button "Add to comparison" [ref=e13707] [cursor=pointer]:
+                  - img [ref=e13708] [cursor=pointer]
+              - generic [ref=e13715] [cursor=pointer]:
+                - generic [ref=e13718] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 506" [ref=e13720] [cursor=pointer]
+              - heading [level=3] [ref=e13722] [cursor=pointer]
+          - button "View details for Pokemon 507" [ref=e13729] [cursor=pointer]:
+            - generic [ref=e13731] [cursor=pointer]:
+              - generic [ref=e13732] [cursor=pointer]:
+                - generic [ref=e13733] [cursor=pointer]: "#507"
+                - button "Add to comparison" [ref=e13734] [cursor=pointer]:
+                  - img [ref=e13735] [cursor=pointer]
+              - generic [ref=e13742] [cursor=pointer]:
+                - generic [ref=e13745] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 507" [ref=e13747] [cursor=pointer]
+              - heading [level=3] [ref=e13749] [cursor=pointer]
+          - button "View details for Pokemon 508" [ref=e13756] [cursor=pointer]:
+            - generic [ref=e13758] [cursor=pointer]:
+              - generic [ref=e13759] [cursor=pointer]:
+                - generic [ref=e13760] [cursor=pointer]: "#508"
+                - button "Add to comparison" [ref=e13761] [cursor=pointer]:
+                  - img [ref=e13762] [cursor=pointer]
+              - generic [ref=e13769] [cursor=pointer]:
+                - generic [ref=e13772] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 508" [ref=e13774] [cursor=pointer]
+              - heading [level=3] [ref=e13776] [cursor=pointer]
+          - button "View details for Pokemon 509" [ref=e13783] [cursor=pointer]:
+            - generic [ref=e13785] [cursor=pointer]:
+              - generic [ref=e13786] [cursor=pointer]:
+                - generic [ref=e13787] [cursor=pointer]: "#509"
+                - button "Add to comparison" [ref=e13788] [cursor=pointer]:
+                  - img [ref=e13789] [cursor=pointer]
+              - generic [ref=e13796] [cursor=pointer]:
+                - generic [ref=e13799] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 509" [ref=e13801] [cursor=pointer]
+              - heading [level=3] [ref=e13803] [cursor=pointer]
+          - button "View details for Pokemon 510" [ref=e13810] [cursor=pointer]:
+            - generic [ref=e13812] [cursor=pointer]:
+              - generic [ref=e13813] [cursor=pointer]:
+                - generic [ref=e13814] [cursor=pointer]: "#510"
+                - button "Add to comparison" [ref=e13815] [cursor=pointer]:
+                  - img [ref=e13816] [cursor=pointer]
+              - generic [ref=e13823] [cursor=pointer]:
+                - generic [ref=e13826] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 510" [ref=e13828] [cursor=pointer]
+              - heading [level=3] [ref=e13830] [cursor=pointer]
+          - button "View details for Pokemon 511" [ref=e13837] [cursor=pointer]:
+            - generic [ref=e13839] [cursor=pointer]:
+              - generic [ref=e13840] [cursor=pointer]:
+                - generic [ref=e13841] [cursor=pointer]: "#511"
+                - button "Add to comparison" [ref=e13842] [cursor=pointer]:
+                  - img [ref=e13843] [cursor=pointer]
+              - generic [ref=e13850] [cursor=pointer]:
+                - generic [ref=e13853] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 511" [ref=e13855] [cursor=pointer]
+              - heading [level=3] [ref=e13857] [cursor=pointer]
+          - button "View details for Pokemon 512" [ref=e13864] [cursor=pointer]:
+            - generic [ref=e13866] [cursor=pointer]:
+              - generic [ref=e13867] [cursor=pointer]:
+                - generic [ref=e13868] [cursor=pointer]: "#512"
+                - button "Add to comparison" [ref=e13869] [cursor=pointer]:
+                  - img [ref=e13870] [cursor=pointer]
+              - generic [ref=e13877] [cursor=pointer]:
+                - generic [ref=e13880] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 512" [ref=e13882] [cursor=pointer]
+              - heading [level=3] [ref=e13884] [cursor=pointer]
+          - button "View details for Pokemon 513" [ref=e13891] [cursor=pointer]:
+            - generic [ref=e13893] [cursor=pointer]:
+              - generic [ref=e13894] [cursor=pointer]:
+                - generic [ref=e13895] [cursor=pointer]: "#513"
+                - button "Add to comparison" [ref=e13896] [cursor=pointer]:
+                  - img [ref=e13897] [cursor=pointer]
+              - generic [ref=e13904] [cursor=pointer]:
+                - generic [ref=e13907] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 513" [ref=e13909] [cursor=pointer]
+              - heading [level=3] [ref=e13911] [cursor=pointer]
+          - button "View details for Pokemon 514" [ref=e13918] [cursor=pointer]:
+            - generic [ref=e13920] [cursor=pointer]:
+              - generic [ref=e13921] [cursor=pointer]:
+                - generic [ref=e13922] [cursor=pointer]: "#514"
+                - button "Add to comparison" [ref=e13923] [cursor=pointer]:
+                  - img [ref=e13924] [cursor=pointer]
+              - generic [ref=e13931] [cursor=pointer]:
+                - generic [ref=e13934] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 514" [ref=e13936] [cursor=pointer]
+              - heading [level=3] [ref=e13938] [cursor=pointer]
+          - button "View details for Pokemon 515" [ref=e13945] [cursor=pointer]:
+            - generic [ref=e13947] [cursor=pointer]:
+              - generic [ref=e13948] [cursor=pointer]:
+                - generic [ref=e13949] [cursor=pointer]: "#515"
+                - button "Add to comparison" [ref=e13950] [cursor=pointer]:
+                  - img [ref=e13951] [cursor=pointer]
+              - generic [ref=e13958] [cursor=pointer]:
+                - generic [ref=e13961] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 515" [ref=e13963] [cursor=pointer]
+              - heading [level=3] [ref=e13965] [cursor=pointer]
+          - button "View details for Pokemon 516" [ref=e13972] [cursor=pointer]:
+            - generic [ref=e13974] [cursor=pointer]:
+              - generic [ref=e13975] [cursor=pointer]:
+                - generic [ref=e13976] [cursor=pointer]: "#516"
+                - button "Add to comparison" [ref=e13977] [cursor=pointer]:
+                  - img [ref=e13978] [cursor=pointer]
+              - generic [ref=e13985] [cursor=pointer]:
+                - generic [ref=e13988] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 516" [ref=e13990] [cursor=pointer]
+              - heading [level=3] [ref=e13992] [cursor=pointer]
+          - button "View details for Pokemon 517" [ref=e13999] [cursor=pointer]:
+            - generic [ref=e14001] [cursor=pointer]:
+              - generic [ref=e14002] [cursor=pointer]:
+                - generic [ref=e14003] [cursor=pointer]: "#517"
+                - button "Add to comparison" [ref=e14004] [cursor=pointer]:
+                  - img [ref=e14005] [cursor=pointer]
+              - generic [ref=e14012] [cursor=pointer]:
+                - generic [ref=e14015] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 517" [ref=e14017] [cursor=pointer]
+              - heading [level=3] [ref=e14019] [cursor=pointer]
+          - button "View details for Pokemon 518" [ref=e14026] [cursor=pointer]:
+            - generic [ref=e14028] [cursor=pointer]:
+              - generic [ref=e14029] [cursor=pointer]:
+                - generic [ref=e14030] [cursor=pointer]: "#518"
+                - button "Add to comparison" [ref=e14031] [cursor=pointer]:
+                  - img [ref=e14032] [cursor=pointer]
+              - generic [ref=e14039] [cursor=pointer]:
+                - generic [ref=e14042] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 518" [ref=e14044] [cursor=pointer]
+              - heading [level=3] [ref=e14046] [cursor=pointer]
+          - button "View details for Pokemon 519" [ref=e14053] [cursor=pointer]:
+            - generic [ref=e14055] [cursor=pointer]:
+              - generic [ref=e14056] [cursor=pointer]:
+                - generic [ref=e14057] [cursor=pointer]: "#519"
+                - button "Add to comparison" [ref=e14058] [cursor=pointer]:
+                  - img [ref=e14059] [cursor=pointer]
+              - generic [ref=e14066] [cursor=pointer]:
+                - generic [ref=e14069] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 519" [ref=e14071] [cursor=pointer]
+              - heading [level=3] [ref=e14073] [cursor=pointer]
+          - button "View details for Pokemon 520" [ref=e14080] [cursor=pointer]:
+            - generic [ref=e14082] [cursor=pointer]:
+              - generic [ref=e14083] [cursor=pointer]:
+                - generic [ref=e14084] [cursor=pointer]: "#520"
+                - button "Add to comparison" [ref=e14085] [cursor=pointer]:
+                  - img [ref=e14086] [cursor=pointer]
+              - generic [ref=e14093] [cursor=pointer]:
+                - generic [ref=e14096] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 520" [ref=e14098] [cursor=pointer]
+              - heading [level=3] [ref=e14100] [cursor=pointer]
+          - button "View details for Pokemon 521" [ref=e14107] [cursor=pointer]:
+            - generic [ref=e14109] [cursor=pointer]:
+              - generic [ref=e14110] [cursor=pointer]:
+                - generic [ref=e14111] [cursor=pointer]: "#521"
+                - button "Add to comparison" [ref=e14112] [cursor=pointer]:
+                  - img [ref=e14113] [cursor=pointer]
+              - generic [ref=e14120] [cursor=pointer]:
+                - generic [ref=e14123] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 521" [ref=e14125] [cursor=pointer]
+              - heading [level=3] [ref=e14127] [cursor=pointer]
+          - button "View details for Pokemon 522" [ref=e14134] [cursor=pointer]:
+            - generic [ref=e14136] [cursor=pointer]:
+              - generic [ref=e14137] [cursor=pointer]:
+                - generic [ref=e14138] [cursor=pointer]: "#522"
+                - button "Add to comparison" [ref=e14139] [cursor=pointer]:
+                  - img [ref=e14140] [cursor=pointer]
+              - generic [ref=e14147] [cursor=pointer]:
+                - generic [ref=e14150] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 522" [ref=e14152] [cursor=pointer]
+              - heading [level=3] [ref=e14154] [cursor=pointer]
+          - button "View details for Pokemon 523" [ref=e14161] [cursor=pointer]:
+            - generic [ref=e14163] [cursor=pointer]:
+              - generic [ref=e14164] [cursor=pointer]:
+                - generic [ref=e14165] [cursor=pointer]: "#523"
+                - button "Add to comparison" [ref=e14166] [cursor=pointer]:
+                  - img [ref=e14167] [cursor=pointer]
+              - generic [ref=e14174] [cursor=pointer]:
+                - generic [ref=e14177] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 523" [ref=e14179] [cursor=pointer]
+              - heading [level=3] [ref=e14181] [cursor=pointer]
+          - button "View details for Pokemon 524" [ref=e14188] [cursor=pointer]:
+            - generic [ref=e14190] [cursor=pointer]:
+              - generic [ref=e14191] [cursor=pointer]:
+                - generic [ref=e14192] [cursor=pointer]: "#524"
+                - button "Add to comparison" [ref=e14193] [cursor=pointer]:
+                  - img [ref=e14194] [cursor=pointer]
+              - generic [ref=e14201] [cursor=pointer]:
+                - generic [ref=e14204] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 524" [ref=e14206] [cursor=pointer]
+              - heading [level=3] [ref=e14208] [cursor=pointer]
+          - button "View details for Pokemon 525" [ref=e14215] [cursor=pointer]:
+            - generic [ref=e14217] [cursor=pointer]:
+              - generic [ref=e14218] [cursor=pointer]:
+                - generic [ref=e14219] [cursor=pointer]: "#525"
+                - button "Add to comparison" [ref=e14220] [cursor=pointer]:
+                  - img [ref=e14221] [cursor=pointer]
+              - generic [ref=e14228] [cursor=pointer]:
+                - generic [ref=e14231] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 525" [ref=e14233] [cursor=pointer]
+              - heading [level=3] [ref=e14235] [cursor=pointer]
+          - button "View details for Pokemon 526" [ref=e14242] [cursor=pointer]:
+            - generic [ref=e14244] [cursor=pointer]:
+              - generic [ref=e14245] [cursor=pointer]:
+                - generic [ref=e14246] [cursor=pointer]: "#526"
+                - button "Add to comparison" [ref=e14247] [cursor=pointer]:
+                  - img [ref=e14248] [cursor=pointer]
+              - generic [ref=e14255] [cursor=pointer]:
+                - generic [ref=e14258] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 526" [ref=e14260] [cursor=pointer]
+              - heading [level=3] [ref=e14262] [cursor=pointer]
+          - button "View details for Pokemon 527" [ref=e14269] [cursor=pointer]:
+            - generic [ref=e14271] [cursor=pointer]:
+              - generic [ref=e14272] [cursor=pointer]:
+                - generic [ref=e14273] [cursor=pointer]: "#527"
+                - button "Add to comparison" [ref=e14274] [cursor=pointer]:
+                  - img [ref=e14275] [cursor=pointer]
+              - generic [ref=e14282] [cursor=pointer]:
+                - generic [ref=e14285] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 527" [ref=e14287] [cursor=pointer]
+              - heading [level=3] [ref=e14289] [cursor=pointer]
+          - button "View details for Pokemon 528" [ref=e14296] [cursor=pointer]:
+            - generic [ref=e14298] [cursor=pointer]:
+              - generic [ref=e14299] [cursor=pointer]:
+                - generic [ref=e14300] [cursor=pointer]: "#528"
+                - button "Add to comparison" [ref=e14301] [cursor=pointer]:
+                  - img [ref=e14302] [cursor=pointer]
+              - generic [ref=e14309] [cursor=pointer]:
+                - generic [ref=e14312] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 528" [ref=e14314] [cursor=pointer]
+              - heading [level=3] [ref=e14316] [cursor=pointer]
+          - button "View details for Pokemon 529" [ref=e14323] [cursor=pointer]:
+            - generic [ref=e14325] [cursor=pointer]:
+              - generic [ref=e14326] [cursor=pointer]:
+                - generic [ref=e14327] [cursor=pointer]: "#529"
+                - button "Add to comparison" [ref=e14328] [cursor=pointer]:
+                  - img [ref=e14329] [cursor=pointer]
+              - generic [ref=e14336] [cursor=pointer]:
+                - generic [ref=e14339] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 529" [ref=e14341] [cursor=pointer]
+              - heading [level=3] [ref=e14343] [cursor=pointer]
+          - button "View details for Pokemon 530" [ref=e14350] [cursor=pointer]:
+            - generic [ref=e14352] [cursor=pointer]:
+              - generic [ref=e14353] [cursor=pointer]:
+                - generic [ref=e14354] [cursor=pointer]: "#530"
+                - button "Add to comparison" [ref=e14355] [cursor=pointer]:
+                  - img [ref=e14356] [cursor=pointer]
+              - generic [ref=e14363] [cursor=pointer]:
+                - generic [ref=e14366] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 530" [ref=e14368] [cursor=pointer]
+              - heading [level=3] [ref=e14370] [cursor=pointer]
+          - button "View details for Pokemon 531" [ref=e14377] [cursor=pointer]:
+            - generic [ref=e14379] [cursor=pointer]:
+              - generic [ref=e14380] [cursor=pointer]:
+                - generic [ref=e14381] [cursor=pointer]: "#531"
+                - button "Add to comparison" [ref=e14382] [cursor=pointer]:
+                  - img [ref=e14383] [cursor=pointer]
+              - generic [ref=e14390] [cursor=pointer]:
+                - generic [ref=e14393] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 531" [ref=e14395] [cursor=pointer]
+              - heading [level=3] [ref=e14397] [cursor=pointer]
+          - button "View details for Pokemon 532" [ref=e14404] [cursor=pointer]:
+            - generic [ref=e14406] [cursor=pointer]:
+              - generic [ref=e14407] [cursor=pointer]:
+                - generic [ref=e14408] [cursor=pointer]: "#532"
+                - button "Add to comparison" [ref=e14409] [cursor=pointer]:
+                  - img [ref=e14410] [cursor=pointer]
+              - generic [ref=e14417] [cursor=pointer]:
+                - generic [ref=e14420] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 532" [ref=e14422] [cursor=pointer]
+              - heading [level=3] [ref=e14424] [cursor=pointer]
+          - button "View details for Pokemon 533" [ref=e14431] [cursor=pointer]:
+            - generic [ref=e14433] [cursor=pointer]:
+              - generic [ref=e14434] [cursor=pointer]:
+                - generic [ref=e14435] [cursor=pointer]: "#533"
+                - button "Add to comparison" [ref=e14436] [cursor=pointer]:
+                  - img [ref=e14437] [cursor=pointer]
+              - generic [ref=e14444] [cursor=pointer]:
+                - generic [ref=e14447] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 533" [ref=e14449] [cursor=pointer]
+              - heading [level=3] [ref=e14451] [cursor=pointer]
+          - button "View details for Pokemon 534" [ref=e14458] [cursor=pointer]:
+            - generic [ref=e14460] [cursor=pointer]:
+              - generic [ref=e14461] [cursor=pointer]:
+                - generic [ref=e14462] [cursor=pointer]: "#534"
+                - button "Add to comparison" [ref=e14463] [cursor=pointer]:
+                  - img [ref=e14464] [cursor=pointer]
+              - generic [ref=e14471] [cursor=pointer]:
+                - generic [ref=e14474] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 534" [ref=e14476] [cursor=pointer]
+              - heading [level=3] [ref=e14478] [cursor=pointer]
+          - button "View details for Pokemon 535" [ref=e14485] [cursor=pointer]:
+            - generic [ref=e14487] [cursor=pointer]:
+              - generic [ref=e14488] [cursor=pointer]:
+                - generic [ref=e14489] [cursor=pointer]: "#535"
+                - button "Add to comparison" [ref=e14490] [cursor=pointer]:
+                  - img [ref=e14491] [cursor=pointer]
+              - generic [ref=e14498] [cursor=pointer]:
+                - generic [ref=e14501] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 535" [ref=e14503] [cursor=pointer]
+              - heading [level=3] [ref=e14505] [cursor=pointer]
+          - button "View details for Pokemon 536" [ref=e14512] [cursor=pointer]:
+            - generic [ref=e14514] [cursor=pointer]:
+              - generic [ref=e14515] [cursor=pointer]:
+                - generic [ref=e14516] [cursor=pointer]: "#536"
+                - button "Add to comparison" [ref=e14517] [cursor=pointer]:
+                  - img [ref=e14518] [cursor=pointer]
+              - generic [ref=e14525] [cursor=pointer]:
+                - generic [ref=e14528] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 536" [ref=e14530] [cursor=pointer]
+              - heading [level=3] [ref=e14532] [cursor=pointer]
+          - button "View details for Pokemon 537" [ref=e14539] [cursor=pointer]:
+            - generic [ref=e14541] [cursor=pointer]:
+              - generic [ref=e14542] [cursor=pointer]:
+                - generic [ref=e14543] [cursor=pointer]: "#537"
+                - button "Add to comparison" [ref=e14544] [cursor=pointer]:
+                  - img [ref=e14545] [cursor=pointer]
+              - generic [ref=e14552] [cursor=pointer]:
+                - generic [ref=e14555] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 537" [ref=e14557] [cursor=pointer]
+              - heading [level=3] [ref=e14559] [cursor=pointer]
+          - button "View details for Pokemon 538" [ref=e14566] [cursor=pointer]:
+            - generic [ref=e14568] [cursor=pointer]:
+              - generic [ref=e14569] [cursor=pointer]:
+                - generic [ref=e14570] [cursor=pointer]: "#538"
+                - button "Add to comparison" [ref=e14571] [cursor=pointer]:
+                  - img [ref=e14572] [cursor=pointer]
+              - generic [ref=e14579] [cursor=pointer]:
+                - generic [ref=e14582] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 538" [ref=e14584] [cursor=pointer]
+              - heading [level=3] [ref=e14586] [cursor=pointer]
+          - button "View details for Pokemon 539" [ref=e14593] [cursor=pointer]:
+            - generic [ref=e14595] [cursor=pointer]:
+              - generic [ref=e14596] [cursor=pointer]:
+                - generic [ref=e14597] [cursor=pointer]: "#539"
+                - button "Add to comparison" [ref=e14598] [cursor=pointer]:
+                  - img [ref=e14599] [cursor=pointer]
+              - generic [ref=e14606] [cursor=pointer]:
+                - generic [ref=e14609] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 539" [ref=e14611] [cursor=pointer]
+              - heading [level=3] [ref=e14613] [cursor=pointer]
+          - button "View details for Pokemon 540" [ref=e14620] [cursor=pointer]:
+            - generic [ref=e14622] [cursor=pointer]:
+              - generic [ref=e14623] [cursor=pointer]:
+                - generic [ref=e14624] [cursor=pointer]: "#540"
+                - button "Add to comparison" [ref=e14625] [cursor=pointer]:
+                  - img [ref=e14626] [cursor=pointer]
+              - generic [ref=e14633] [cursor=pointer]:
+                - generic [ref=e14636] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 540" [ref=e14638] [cursor=pointer]
+              - heading [level=3] [ref=e14640] [cursor=pointer]
+          - button "View details for Pokemon 541" [ref=e14647] [cursor=pointer]:
+            - generic [ref=e14649] [cursor=pointer]:
+              - generic [ref=e14650] [cursor=pointer]:
+                - generic [ref=e14651] [cursor=pointer]: "#541"
+                - button "Add to comparison" [ref=e14652] [cursor=pointer]:
+                  - img [ref=e14653] [cursor=pointer]
+              - generic [ref=e14660] [cursor=pointer]:
+                - generic [ref=e14663] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 541" [ref=e14665] [cursor=pointer]
+              - heading [level=3] [ref=e14667] [cursor=pointer]
+          - button "View details for Pokemon 542" [ref=e14674] [cursor=pointer]:
+            - generic [ref=e14676] [cursor=pointer]:
+              - generic [ref=e14677] [cursor=pointer]:
+                - generic [ref=e14678] [cursor=pointer]: "#542"
+                - button "Add to comparison" [ref=e14679] [cursor=pointer]:
+                  - img [ref=e14680] [cursor=pointer]
+              - generic [ref=e14687] [cursor=pointer]:
+                - generic [ref=e14690] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 542" [ref=e14692] [cursor=pointer]
+              - heading [level=3] [ref=e14694] [cursor=pointer]
+          - button "View details for Pokemon 543" [ref=e14701] [cursor=pointer]:
+            - generic [ref=e14703] [cursor=pointer]:
+              - generic [ref=e14704] [cursor=pointer]:
+                - generic [ref=e14705] [cursor=pointer]: "#543"
+                - button "Add to comparison" [ref=e14706] [cursor=pointer]:
+                  - img [ref=e14707] [cursor=pointer]
+              - generic [ref=e14714] [cursor=pointer]:
+                - generic [ref=e14717] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 543" [ref=e14719] [cursor=pointer]
+              - heading [level=3] [ref=e14721] [cursor=pointer]
+          - button "View details for Pokemon 544" [ref=e14728] [cursor=pointer]:
+            - generic [ref=e14730] [cursor=pointer]:
+              - generic [ref=e14731] [cursor=pointer]:
+                - generic [ref=e14732] [cursor=pointer]: "#544"
+                - button "Add to comparison" [ref=e14733] [cursor=pointer]:
+                  - img [ref=e14734] [cursor=pointer]
+              - generic [ref=e14741] [cursor=pointer]:
+                - generic [ref=e14744] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 544" [ref=e14746] [cursor=pointer]
+              - heading [level=3] [ref=e14748] [cursor=pointer]
+          - button "View details for Pokemon 545" [ref=e14755] [cursor=pointer]:
+            - generic [ref=e14757] [cursor=pointer]:
+              - generic [ref=e14758] [cursor=pointer]:
+                - generic [ref=e14759] [cursor=pointer]: "#545"
+                - button "Add to comparison" [ref=e14760] [cursor=pointer]:
+                  - img [ref=e14761] [cursor=pointer]
+              - generic [ref=e14768] [cursor=pointer]:
+                - generic [ref=e14771] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 545" [ref=e14773] [cursor=pointer]
+              - heading [level=3] [ref=e14775] [cursor=pointer]
+          - button "View details for Pokemon 546" [ref=e14782] [cursor=pointer]:
+            - generic [ref=e14784] [cursor=pointer]:
+              - generic [ref=e14785] [cursor=pointer]:
+                - generic [ref=e14786] [cursor=pointer]: "#546"
+                - button "Add to comparison" [ref=e14787] [cursor=pointer]:
+                  - img [ref=e14788] [cursor=pointer]
+              - generic [ref=e14795] [cursor=pointer]:
+                - generic [ref=e14798] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 546" [ref=e14800] [cursor=pointer]
+              - heading [level=3] [ref=e14802] [cursor=pointer]
+          - button "View details for Pokemon 547" [ref=e14809] [cursor=pointer]:
+            - generic [ref=e14811] [cursor=pointer]:
+              - generic [ref=e14812] [cursor=pointer]:
+                - generic [ref=e14813] [cursor=pointer]: "#547"
+                - button "Add to comparison" [ref=e14814] [cursor=pointer]:
+                  - img [ref=e14815] [cursor=pointer]
+              - generic [ref=e14822] [cursor=pointer]:
+                - generic [ref=e14825] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 547" [ref=e14827] [cursor=pointer]
+              - heading [level=3] [ref=e14829] [cursor=pointer]
+          - button "View details for Pokemon 548" [ref=e14836] [cursor=pointer]:
+            - generic [ref=e14838] [cursor=pointer]:
+              - generic [ref=e14839] [cursor=pointer]:
+                - generic [ref=e14840] [cursor=pointer]: "#548"
+                - button "Add to comparison" [ref=e14841] [cursor=pointer]:
+                  - img [ref=e14842] [cursor=pointer]
+              - generic [ref=e14849] [cursor=pointer]:
+                - generic [ref=e14852] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 548" [ref=e14854] [cursor=pointer]
+              - heading [level=3] [ref=e14856] [cursor=pointer]
+          - button "View details for Pokemon 549" [ref=e14863] [cursor=pointer]:
+            - generic [ref=e14865] [cursor=pointer]:
+              - generic [ref=e14866] [cursor=pointer]:
+                - generic [ref=e14867] [cursor=pointer]: "#549"
+                - button "Add to comparison" [ref=e14868] [cursor=pointer]:
+                  - img [ref=e14869] [cursor=pointer]
+              - generic [ref=e14876] [cursor=pointer]:
+                - generic [ref=e14879] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 549" [ref=e14881] [cursor=pointer]
+              - heading [level=3] [ref=e14883] [cursor=pointer]
+          - button "View details for Pokemon 550" [ref=e14890] [cursor=pointer]:
+            - generic [ref=e14892] [cursor=pointer]:
+              - generic [ref=e14893] [cursor=pointer]:
+                - generic [ref=e14894] [cursor=pointer]: "#550"
+                - button "Add to comparison" [ref=e14895] [cursor=pointer]:
+                  - img [ref=e14896] [cursor=pointer]
+              - generic [ref=e14903] [cursor=pointer]:
+                - generic [ref=e14906] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 550" [ref=e14908] [cursor=pointer]
+              - heading [level=3] [ref=e14910] [cursor=pointer]
+          - button "View details for Pokemon 551" [ref=e14917] [cursor=pointer]:
+            - generic [ref=e14919] [cursor=pointer]:
+              - generic [ref=e14920] [cursor=pointer]:
+                - generic [ref=e14921] [cursor=pointer]: "#551"
+                - button "Add to comparison" [ref=e14922] [cursor=pointer]:
+                  - img [ref=e14923] [cursor=pointer]
+              - generic [ref=e14930] [cursor=pointer]:
+                - generic [ref=e14933] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 551" [ref=e14935] [cursor=pointer]
+              - heading [level=3] [ref=e14937] [cursor=pointer]
+          - button "View details for Pokemon 552" [ref=e14944] [cursor=pointer]:
+            - generic [ref=e14946] [cursor=pointer]:
+              - generic [ref=e14947] [cursor=pointer]:
+                - generic [ref=e14948] [cursor=pointer]: "#552"
+                - button "Add to comparison" [ref=e14949] [cursor=pointer]:
+                  - img [ref=e14950] [cursor=pointer]
+              - generic [ref=e14957] [cursor=pointer]:
+                - generic [ref=e14960] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 552" [ref=e14962] [cursor=pointer]
+              - heading [level=3] [ref=e14964] [cursor=pointer]
+          - button "View details for Pokemon 553" [ref=e14971] [cursor=pointer]:
+            - generic [ref=e14973] [cursor=pointer]:
+              - generic [ref=e14974] [cursor=pointer]:
+                - generic [ref=e14975] [cursor=pointer]: "#553"
+                - button "Add to comparison" [ref=e14976] [cursor=pointer]:
+                  - img [ref=e14977] [cursor=pointer]
+              - generic [ref=e14984] [cursor=pointer]:
+                - generic [ref=e14987] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 553" [ref=e14989] [cursor=pointer]
+              - heading [level=3] [ref=e14991] [cursor=pointer]
+          - button "View details for Pokemon 554" [ref=e14998] [cursor=pointer]:
+            - generic [ref=e15000] [cursor=pointer]:
+              - generic [ref=e15001] [cursor=pointer]:
+                - generic [ref=e15002] [cursor=pointer]: "#554"
+                - button "Add to comparison" [ref=e15003] [cursor=pointer]:
+                  - img [ref=e15004] [cursor=pointer]
+              - generic [ref=e15011] [cursor=pointer]:
+                - generic [ref=e15014] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 554" [ref=e15016] [cursor=pointer]
+              - heading [level=3] [ref=e15018] [cursor=pointer]
+          - button "View details for Pokemon 555" [ref=e15025] [cursor=pointer]:
+            - generic [ref=e15027] [cursor=pointer]:
+              - generic [ref=e15028] [cursor=pointer]:
+                - generic [ref=e15029] [cursor=pointer]: "#555"
+                - button "Add to comparison" [ref=e15030] [cursor=pointer]:
+                  - img [ref=e15031] [cursor=pointer]
+              - generic [ref=e15038] [cursor=pointer]:
+                - generic [ref=e15041] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 555" [ref=e15043] [cursor=pointer]
+              - heading [level=3] [ref=e15045] [cursor=pointer]
+          - button "View details for Pokemon 556" [ref=e15052] [cursor=pointer]:
+            - generic [ref=e15054] [cursor=pointer]:
+              - generic [ref=e15055] [cursor=pointer]:
+                - generic [ref=e15056] [cursor=pointer]: "#556"
+                - button "Add to comparison" [ref=e15057] [cursor=pointer]:
+                  - img [ref=e15058] [cursor=pointer]
+              - generic [ref=e15065] [cursor=pointer]:
+                - generic [ref=e15068] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 556" [ref=e15070] [cursor=pointer]
+              - heading [level=3] [ref=e15072] [cursor=pointer]
+          - button "View details for Pokemon 557" [ref=e15079] [cursor=pointer]:
+            - generic [ref=e15081] [cursor=pointer]:
+              - generic [ref=e15082] [cursor=pointer]:
+                - generic [ref=e15083] [cursor=pointer]: "#557"
+                - button "Add to comparison" [ref=e15084] [cursor=pointer]:
+                  - img [ref=e15085] [cursor=pointer]
+              - generic [ref=e15092] [cursor=pointer]:
+                - generic [ref=e15095] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 557" [ref=e15097] [cursor=pointer]
+              - heading [level=3] [ref=e15099] [cursor=pointer]
+          - button "View details for Pokemon 558" [ref=e15106] [cursor=pointer]:
+            - generic [ref=e15108] [cursor=pointer]:
+              - generic [ref=e15109] [cursor=pointer]:
+                - generic [ref=e15110] [cursor=pointer]: "#558"
+                - button "Add to comparison" [ref=e15111] [cursor=pointer]:
+                  - img [ref=e15112] [cursor=pointer]
+              - generic [ref=e15119] [cursor=pointer]:
+                - generic [ref=e15122] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 558" [ref=e15124] [cursor=pointer]
+              - heading [level=3] [ref=e15126] [cursor=pointer]
+          - button "View details for Pokemon 559" [ref=e15133] [cursor=pointer]:
+            - generic [ref=e15135] [cursor=pointer]:
+              - generic [ref=e15136] [cursor=pointer]:
+                - generic [ref=e15137] [cursor=pointer]: "#559"
+                - button "Add to comparison" [ref=e15138] [cursor=pointer]:
+                  - img [ref=e15139] [cursor=pointer]
+              - generic [ref=e15146] [cursor=pointer]:
+                - generic [ref=e15149] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 559" [ref=e15151] [cursor=pointer]
+              - heading [level=3] [ref=e15153] [cursor=pointer]
+          - button "View details for Pokemon 560" [ref=e15160] [cursor=pointer]:
+            - generic [ref=e15162] [cursor=pointer]:
+              - generic [ref=e15163] [cursor=pointer]:
+                - generic [ref=e15164] [cursor=pointer]: "#560"
+                - button "Add to comparison" [ref=e15165] [cursor=pointer]:
+                  - img [ref=e15166] [cursor=pointer]
+              - generic [ref=e15173] [cursor=pointer]:
+                - generic [ref=e15176] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 560" [ref=e15178] [cursor=pointer]
+              - heading [level=3] [ref=e15180] [cursor=pointer]
+          - button "View details for Pokemon 561" [ref=e15187] [cursor=pointer]:
+            - generic [ref=e15189] [cursor=pointer]:
+              - generic [ref=e15190] [cursor=pointer]:
+                - generic [ref=e15191] [cursor=pointer]: "#561"
+                - button "Add to comparison" [ref=e15192] [cursor=pointer]:
+                  - img [ref=e15193] [cursor=pointer]
+              - generic [ref=e15200] [cursor=pointer]:
+                - generic [ref=e15203] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 561" [ref=e15205] [cursor=pointer]
+              - heading [level=3] [ref=e15207] [cursor=pointer]
+          - button "View details for Pokemon 562" [ref=e15214] [cursor=pointer]:
+            - generic [ref=e15216] [cursor=pointer]:
+              - generic [ref=e15217] [cursor=pointer]:
+                - generic [ref=e15218] [cursor=pointer]: "#562"
+                - button "Add to comparison" [ref=e15219] [cursor=pointer]:
+                  - img [ref=e15220] [cursor=pointer]
+              - generic [ref=e15227] [cursor=pointer]:
+                - generic [ref=e15230] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 562" [ref=e15232] [cursor=pointer]
+              - heading [level=3] [ref=e15234] [cursor=pointer]
+          - button "View details for Pokemon 563" [ref=e15241] [cursor=pointer]:
+            - generic [ref=e15243] [cursor=pointer]:
+              - generic [ref=e15244] [cursor=pointer]:
+                - generic [ref=e15245] [cursor=pointer]: "#563"
+                - button "Add to comparison" [ref=e15246] [cursor=pointer]:
+                  - img [ref=e15247] [cursor=pointer]
+              - generic [ref=e15254] [cursor=pointer]:
+                - generic [ref=e15257] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 563" [ref=e15259] [cursor=pointer]
+              - heading [level=3] [ref=e15261] [cursor=pointer]
+          - button "View details for Pokemon 564" [ref=e15268] [cursor=pointer]:
+            - generic [ref=e15270] [cursor=pointer]:
+              - generic [ref=e15271] [cursor=pointer]:
+                - generic [ref=e15272] [cursor=pointer]: "#564"
+                - button "Add to comparison" [ref=e15273] [cursor=pointer]:
+                  - img [ref=e15274] [cursor=pointer]
+              - generic [ref=e15281] [cursor=pointer]:
+                - generic [ref=e15284] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 564" [ref=e15286] [cursor=pointer]
+              - heading [level=3] [ref=e15288] [cursor=pointer]
+          - button "View details for Pokemon 565" [ref=e15295] [cursor=pointer]:
+            - generic [ref=e15297] [cursor=pointer]:
+              - generic [ref=e15298] [cursor=pointer]:
+                - generic [ref=e15299] [cursor=pointer]: "#565"
+                - button "Add to comparison" [ref=e15300] [cursor=pointer]:
+                  - img [ref=e15301] [cursor=pointer]
+              - generic [ref=e15308] [cursor=pointer]:
+                - generic [ref=e15311] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 565" [ref=e15313] [cursor=pointer]
+              - heading [level=3] [ref=e15315] [cursor=pointer]
+          - button "View details for Pokemon 566" [ref=e15322] [cursor=pointer]:
+            - generic [ref=e15324] [cursor=pointer]:
+              - generic [ref=e15325] [cursor=pointer]:
+                - generic [ref=e15326] [cursor=pointer]: "#566"
+                - button "Add to comparison" [ref=e15327] [cursor=pointer]:
+                  - img [ref=e15328] [cursor=pointer]
+              - generic [ref=e15335] [cursor=pointer]:
+                - generic [ref=e15338] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 566" [ref=e15340] [cursor=pointer]
+              - heading [level=3] [ref=e15342] [cursor=pointer]
+          - button "View details for Pokemon 567" [ref=e15349] [cursor=pointer]:
+            - generic [ref=e15351] [cursor=pointer]:
+              - generic [ref=e15352] [cursor=pointer]:
+                - generic [ref=e15353] [cursor=pointer]: "#567"
+                - button "Add to comparison" [ref=e15354] [cursor=pointer]:
+                  - img [ref=e15355] [cursor=pointer]
+              - generic [ref=e15362] [cursor=pointer]:
+                - generic [ref=e15365] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 567" [ref=e15367] [cursor=pointer]
+              - heading [level=3] [ref=e15369] [cursor=pointer]
+          - button "View details for Pokemon 568" [ref=e15376] [cursor=pointer]:
+            - generic [ref=e15378] [cursor=pointer]:
+              - generic [ref=e15379] [cursor=pointer]:
+                - generic [ref=e15380] [cursor=pointer]: "#568"
+                - button "Add to comparison" [ref=e15381] [cursor=pointer]:
+                  - img [ref=e15382] [cursor=pointer]
+              - generic [ref=e15389] [cursor=pointer]:
+                - generic [ref=e15392] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 568" [ref=e15394] [cursor=pointer]
+              - heading [level=3] [ref=e15396] [cursor=pointer]
+          - button "View details for Pokemon 569" [ref=e15403] [cursor=pointer]:
+            - generic [ref=e15405] [cursor=pointer]:
+              - generic [ref=e15406] [cursor=pointer]:
+                - generic [ref=e15407] [cursor=pointer]: "#569"
+                - button "Add to comparison" [ref=e15408] [cursor=pointer]:
+                  - img [ref=e15409] [cursor=pointer]
+              - generic [ref=e15416] [cursor=pointer]:
+                - generic [ref=e15419] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 569" [ref=e15421] [cursor=pointer]
+              - heading [level=3] [ref=e15423] [cursor=pointer]
+          - button "View details for Pokemon 570" [ref=e15430] [cursor=pointer]:
+            - generic [ref=e15432] [cursor=pointer]:
+              - generic [ref=e15433] [cursor=pointer]:
+                - generic [ref=e15434] [cursor=pointer]: "#570"
+                - button "Add to comparison" [ref=e15435] [cursor=pointer]:
+                  - img [ref=e15436] [cursor=pointer]
+              - generic [ref=e15443] [cursor=pointer]:
+                - generic [ref=e15446] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 570" [ref=e15448] [cursor=pointer]
+              - heading [level=3] [ref=e15450] [cursor=pointer]
+          - button "View details for Pokemon 571" [ref=e15457] [cursor=pointer]:
+            - generic [ref=e15459] [cursor=pointer]:
+              - generic [ref=e15460] [cursor=pointer]:
+                - generic [ref=e15461] [cursor=pointer]: "#571"
+                - button "Add to comparison" [ref=e15462] [cursor=pointer]:
+                  - img [ref=e15463] [cursor=pointer]
+              - generic [ref=e15470] [cursor=pointer]:
+                - generic [ref=e15473] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 571" [ref=e15475] [cursor=pointer]
+              - heading [level=3] [ref=e15477] [cursor=pointer]
+          - button "View details for Pokemon 572" [ref=e15484] [cursor=pointer]:
+            - generic [ref=e15486] [cursor=pointer]:
+              - generic [ref=e15487] [cursor=pointer]:
+                - generic [ref=e15488] [cursor=pointer]: "#572"
+                - button "Add to comparison" [ref=e15489] [cursor=pointer]:
+                  - img [ref=e15490] [cursor=pointer]
+              - generic [ref=e15497] [cursor=pointer]:
+                - generic [ref=e15500] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 572" [ref=e15502] [cursor=pointer]
+              - heading [level=3] [ref=e15504] [cursor=pointer]
+          - button "View details for Pokemon 573" [ref=e15511] [cursor=pointer]:
+            - generic [ref=e15513] [cursor=pointer]:
+              - generic [ref=e15514] [cursor=pointer]:
+                - generic [ref=e15515] [cursor=pointer]: "#573"
+                - button "Add to comparison" [ref=e15516] [cursor=pointer]:
+                  - img [ref=e15517] [cursor=pointer]
+              - generic [ref=e15524] [cursor=pointer]:
+                - generic [ref=e15527] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 573" [ref=e15529] [cursor=pointer]
+              - heading [level=3] [ref=e15531] [cursor=pointer]
+          - button "View details for Pokemon 574" [ref=e15538] [cursor=pointer]:
+            - generic [ref=e15540] [cursor=pointer]:
+              - generic [ref=e15541] [cursor=pointer]:
+                - generic [ref=e15542] [cursor=pointer]: "#574"
+                - button "Add to comparison" [ref=e15543] [cursor=pointer]:
+                  - img [ref=e15544] [cursor=pointer]
+              - generic [ref=e15551] [cursor=pointer]:
+                - generic [ref=e15554] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 574" [ref=e15556] [cursor=pointer]
+              - heading [level=3] [ref=e15558] [cursor=pointer]
+          - button "View details for Pokemon 575" [ref=e15565] [cursor=pointer]:
+            - generic [ref=e15567] [cursor=pointer]:
+              - generic [ref=e15568] [cursor=pointer]:
+                - generic [ref=e15569] [cursor=pointer]: "#575"
+                - button "Add to comparison" [ref=e15570] [cursor=pointer]:
+                  - img [ref=e15571] [cursor=pointer]
+              - generic [ref=e15578] [cursor=pointer]:
+                - generic [ref=e15581] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 575" [ref=e15583] [cursor=pointer]
+              - heading [level=3] [ref=e15585] [cursor=pointer]
+          - button "View details for Pokemon 576" [ref=e15592] [cursor=pointer]:
+            - generic [ref=e15594] [cursor=pointer]:
+              - generic [ref=e15595] [cursor=pointer]:
+                - generic [ref=e15596] [cursor=pointer]: "#576"
+                - button "Add to comparison" [ref=e15597] [cursor=pointer]:
+                  - img [ref=e15598] [cursor=pointer]
+              - generic [ref=e15605] [cursor=pointer]:
+                - generic [ref=e15608] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 576" [ref=e15610] [cursor=pointer]
+              - heading [level=3] [ref=e15612] [cursor=pointer]
+          - button "View details for Pokemon 577" [ref=e15619] [cursor=pointer]:
+            - generic [ref=e15621] [cursor=pointer]:
+              - generic [ref=e15622] [cursor=pointer]:
+                - generic [ref=e15623] [cursor=pointer]: "#577"
+                - button "Add to comparison" [ref=e15624] [cursor=pointer]:
+                  - img [ref=e15625] [cursor=pointer]
+              - generic [ref=e15632] [cursor=pointer]:
+                - generic [ref=e15635] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 577" [ref=e15637] [cursor=pointer]
+              - heading [level=3] [ref=e15639] [cursor=pointer]
+          - button "View details for Pokemon 578" [ref=e15646] [cursor=pointer]:
+            - generic [ref=e15648] [cursor=pointer]:
+              - generic [ref=e15649] [cursor=pointer]:
+                - generic [ref=e15650] [cursor=pointer]: "#578"
+                - button "Add to comparison" [ref=e15651] [cursor=pointer]:
+                  - img [ref=e15652] [cursor=pointer]
+              - generic [ref=e15659] [cursor=pointer]:
+                - generic [ref=e15662] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 578" [ref=e15664] [cursor=pointer]
+              - heading [level=3] [ref=e15666] [cursor=pointer]
+          - button "View details for Pokemon 579" [ref=e15673] [cursor=pointer]:
+            - generic [ref=e15675] [cursor=pointer]:
+              - generic [ref=e15676] [cursor=pointer]:
+                - generic [ref=e15677] [cursor=pointer]: "#579"
+                - button "Add to comparison" [ref=e15678] [cursor=pointer]:
+                  - img [ref=e15679] [cursor=pointer]
+              - generic [ref=e15686] [cursor=pointer]:
+                - generic [ref=e15689] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 579" [ref=e15691] [cursor=pointer]
+              - heading [level=3] [ref=e15693] [cursor=pointer]
+          - button "View details for Pokemon 580" [ref=e15700] [cursor=pointer]:
+            - generic [ref=e15702] [cursor=pointer]:
+              - generic [ref=e15703] [cursor=pointer]:
+                - generic [ref=e15704] [cursor=pointer]: "#580"
+                - button "Add to comparison" [ref=e15705] [cursor=pointer]:
+                  - img [ref=e15706] [cursor=pointer]
+              - generic [ref=e15713] [cursor=pointer]:
+                - generic [ref=e15716] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 580" [ref=e15718] [cursor=pointer]
+              - heading [level=3] [ref=e15720] [cursor=pointer]
+          - button "View details for Pokemon 581" [ref=e15727] [cursor=pointer]:
+            - generic [ref=e15729] [cursor=pointer]:
+              - generic [ref=e15730] [cursor=pointer]:
+                - generic [ref=e15731] [cursor=pointer]: "#581"
+                - button "Add to comparison" [ref=e15732] [cursor=pointer]:
+                  - img [ref=e15733] [cursor=pointer]
+              - generic [ref=e15740] [cursor=pointer]:
+                - generic [ref=e15743] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 581" [ref=e15745] [cursor=pointer]
+              - heading [level=3] [ref=e15747] [cursor=pointer]
+          - button "View details for Pokemon 582" [ref=e15754] [cursor=pointer]:
+            - generic [ref=e15756] [cursor=pointer]:
+              - generic [ref=e15757] [cursor=pointer]:
+                - generic [ref=e15758] [cursor=pointer]: "#582"
+                - button "Add to comparison" [ref=e15759] [cursor=pointer]:
+                  - img [ref=e15760] [cursor=pointer]
+              - generic [ref=e15767] [cursor=pointer]:
+                - generic [ref=e15770] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 582" [ref=e15772] [cursor=pointer]
+              - heading [level=3] [ref=e15774] [cursor=pointer]
+          - button "View details for Pokemon 583" [ref=e15781] [cursor=pointer]:
+            - generic [ref=e15783] [cursor=pointer]:
+              - generic [ref=e15784] [cursor=pointer]:
+                - generic [ref=e15785] [cursor=pointer]: "#583"
+                - button "Add to comparison" [ref=e15786] [cursor=pointer]:
+                  - img [ref=e15787] [cursor=pointer]
+              - generic [ref=e15794] [cursor=pointer]:
+                - generic [ref=e15797] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 583" [ref=e15799] [cursor=pointer]
+              - heading [level=3] [ref=e15801] [cursor=pointer]
+          - button "View details for Pokemon 584" [ref=e15808] [cursor=pointer]:
+            - generic [ref=e15810] [cursor=pointer]:
+              - generic [ref=e15811] [cursor=pointer]:
+                - generic [ref=e15812] [cursor=pointer]: "#584"
+                - button "Add to comparison" [ref=e15813] [cursor=pointer]:
+                  - img [ref=e15814] [cursor=pointer]
+              - generic [ref=e15821] [cursor=pointer]:
+                - generic [ref=e15824] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 584" [ref=e15826] [cursor=pointer]
+              - heading [level=3] [ref=e15828] [cursor=pointer]
+          - button "View details for Pokemon 585" [ref=e15835] [cursor=pointer]:
+            - generic [ref=e15837] [cursor=pointer]:
+              - generic [ref=e15838] [cursor=pointer]:
+                - generic [ref=e15839] [cursor=pointer]: "#585"
+                - button "Add to comparison" [ref=e15840] [cursor=pointer]:
+                  - img [ref=e15841] [cursor=pointer]
+              - generic [ref=e15848] [cursor=pointer]:
+                - generic [ref=e15851] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 585" [ref=e15853] [cursor=pointer]
+              - heading [level=3] [ref=e15855] [cursor=pointer]
+          - button "View details for Pokemon 586" [ref=e15862] [cursor=pointer]:
+            - generic [ref=e15864] [cursor=pointer]:
+              - generic [ref=e15865] [cursor=pointer]:
+                - generic [ref=e15866] [cursor=pointer]: "#586"
+                - button "Add to comparison" [ref=e15867] [cursor=pointer]:
+                  - img [ref=e15868] [cursor=pointer]
+              - generic [ref=e15875] [cursor=pointer]:
+                - generic [ref=e15878] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 586" [ref=e15880] [cursor=pointer]
+              - heading [level=3] [ref=e15882] [cursor=pointer]
+          - button "View details for Pokemon 587" [ref=e15889] [cursor=pointer]:
+            - generic [ref=e15891] [cursor=pointer]:
+              - generic [ref=e15892] [cursor=pointer]:
+                - generic [ref=e15893] [cursor=pointer]: "#587"
+                - button "Add to comparison" [ref=e15894] [cursor=pointer]:
+                  - img [ref=e15895] [cursor=pointer]
+              - generic [ref=e15902] [cursor=pointer]:
+                - generic [ref=e15905] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 587" [ref=e15907] [cursor=pointer]
+              - heading [level=3] [ref=e15909] [cursor=pointer]
+          - button "View details for Pokemon 588" [ref=e15916] [cursor=pointer]:
+            - generic [ref=e15918] [cursor=pointer]:
+              - generic [ref=e15919] [cursor=pointer]:
+                - generic [ref=e15920] [cursor=pointer]: "#588"
+                - button "Add to comparison" [ref=e15921] [cursor=pointer]:
+                  - img [ref=e15922] [cursor=pointer]
+              - generic [ref=e15929] [cursor=pointer]:
+                - generic [ref=e15932] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 588" [ref=e15934] [cursor=pointer]
+              - heading [level=3] [ref=e15936] [cursor=pointer]
+          - button "View details for Pokemon 589" [ref=e15943] [cursor=pointer]:
+            - generic [ref=e15945] [cursor=pointer]:
+              - generic [ref=e15946] [cursor=pointer]:
+                - generic [ref=e15947] [cursor=pointer]: "#589"
+                - button "Add to comparison" [ref=e15948] [cursor=pointer]:
+                  - img [ref=e15949] [cursor=pointer]
+              - generic [ref=e15956] [cursor=pointer]:
+                - generic [ref=e15959] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 589" [ref=e15961] [cursor=pointer]
+              - heading [level=3] [ref=e15963] [cursor=pointer]
+          - button "View details for Pokemon 590" [ref=e15970] [cursor=pointer]:
+            - generic [ref=e15972] [cursor=pointer]:
+              - generic [ref=e15973] [cursor=pointer]:
+                - generic [ref=e15974] [cursor=pointer]: "#590"
+                - button "Add to comparison" [ref=e15975] [cursor=pointer]:
+                  - img [ref=e15976] [cursor=pointer]
+              - generic [ref=e15983] [cursor=pointer]:
+                - generic [ref=e15986] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 590" [ref=e15988] [cursor=pointer]
+              - heading [level=3] [ref=e15990] [cursor=pointer]
+          - button "View details for Pokemon 591" [ref=e15997] [cursor=pointer]:
+            - generic [ref=e15999] [cursor=pointer]:
+              - generic [ref=e16000] [cursor=pointer]:
+                - generic [ref=e16001] [cursor=pointer]: "#591"
+                - button "Add to comparison" [ref=e16002] [cursor=pointer]:
+                  - img [ref=e16003] [cursor=pointer]
+              - generic [ref=e16010] [cursor=pointer]:
+                - generic [ref=e16013] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 591" [ref=e16015] [cursor=pointer]
+              - heading [level=3] [ref=e16017] [cursor=pointer]
+          - button "View details for Pokemon 592" [ref=e16024] [cursor=pointer]:
+            - generic [ref=e16026] [cursor=pointer]:
+              - generic [ref=e16027] [cursor=pointer]:
+                - generic [ref=e16028] [cursor=pointer]: "#592"
+                - button "Add to comparison" [ref=e16029] [cursor=pointer]:
+                  - img [ref=e16030] [cursor=pointer]
+              - generic [ref=e16037] [cursor=pointer]:
+                - generic [ref=e16040] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 592" [ref=e16042] [cursor=pointer]
+              - heading [level=3] [ref=e16044] [cursor=pointer]
+          - button "View details for Pokemon 593" [ref=e16051] [cursor=pointer]:
+            - generic [ref=e16053] [cursor=pointer]:
+              - generic [ref=e16054] [cursor=pointer]:
+                - generic [ref=e16055] [cursor=pointer]: "#593"
+                - button "Add to comparison" [ref=e16056] [cursor=pointer]:
+                  - img [ref=e16057] [cursor=pointer]
+              - generic [ref=e16064] [cursor=pointer]:
+                - generic [ref=e16067] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 593" [ref=e16069] [cursor=pointer]
+              - heading [level=3] [ref=e16071] [cursor=pointer]
+          - button "View details for Pokemon 594" [ref=e16078] [cursor=pointer]:
+            - generic [ref=e16080] [cursor=pointer]:
+              - generic [ref=e16081] [cursor=pointer]:
+                - generic [ref=e16082] [cursor=pointer]: "#594"
+                - button "Add to comparison" [ref=e16083] [cursor=pointer]:
+                  - img [ref=e16084] [cursor=pointer]
+              - generic [ref=e16091] [cursor=pointer]:
+                - generic [ref=e16094] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 594" [ref=e16096] [cursor=pointer]
+              - heading [level=3] [ref=e16098] [cursor=pointer]
+          - button "View details for Pokemon 595" [ref=e16105] [cursor=pointer]:
+            - generic [ref=e16107] [cursor=pointer]:
+              - generic [ref=e16108] [cursor=pointer]:
+                - generic [ref=e16109] [cursor=pointer]: "#595"
+                - button "Add to comparison" [ref=e16110] [cursor=pointer]:
+                  - img [ref=e16111] [cursor=pointer]
+              - generic [ref=e16118] [cursor=pointer]:
+                - generic [ref=e16121] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 595" [ref=e16123] [cursor=pointer]
+              - heading [level=3] [ref=e16125] [cursor=pointer]
+          - button "View details for Pokemon 596" [ref=e16132] [cursor=pointer]:
+            - generic [ref=e16134] [cursor=pointer]:
+              - generic [ref=e16135] [cursor=pointer]:
+                - generic [ref=e16136] [cursor=pointer]: "#596"
+                - button "Add to comparison" [ref=e16137] [cursor=pointer]:
+                  - img [ref=e16138] [cursor=pointer]
+              - generic [ref=e16145] [cursor=pointer]:
+                - generic [ref=e16148] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 596" [ref=e16150] [cursor=pointer]
+              - heading [level=3] [ref=e16152] [cursor=pointer]
+          - button "View details for Pokemon 597" [ref=e16159] [cursor=pointer]:
+            - generic [ref=e16161] [cursor=pointer]:
+              - generic [ref=e16162] [cursor=pointer]:
+                - generic [ref=e16163] [cursor=pointer]: "#597"
+                - button "Add to comparison" [ref=e16164] [cursor=pointer]:
+                  - img [ref=e16165] [cursor=pointer]
+              - generic [ref=e16172] [cursor=pointer]:
+                - generic [ref=e16175] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 597" [ref=e16177] [cursor=pointer]
+              - heading [level=3] [ref=e16179] [cursor=pointer]
+          - button "View details for Pokemon 598" [ref=e16186] [cursor=pointer]:
+            - generic [ref=e16188] [cursor=pointer]:
+              - generic [ref=e16189] [cursor=pointer]:
+                - generic [ref=e16190] [cursor=pointer]: "#598"
+                - button "Add to comparison" [ref=e16191] [cursor=pointer]:
+                  - img [ref=e16192] [cursor=pointer]
+              - generic [ref=e16199] [cursor=pointer]:
+                - generic [ref=e16202] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 598" [ref=e16204] [cursor=pointer]
+              - heading [level=3] [ref=e16206] [cursor=pointer]
+          - button "View details for Pokemon 599" [ref=e16213] [cursor=pointer]:
+            - generic [ref=e16215] [cursor=pointer]:
+              - generic [ref=e16216] [cursor=pointer]:
+                - generic [ref=e16217] [cursor=pointer]: "#599"
+                - button "Add to comparison" [ref=e16218] [cursor=pointer]:
+                  - img [ref=e16219] [cursor=pointer]
+              - generic [ref=e16226] [cursor=pointer]:
+                - generic [ref=e16229] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 599" [ref=e16231] [cursor=pointer]
+              - heading [level=3] [ref=e16233] [cursor=pointer]
+          - button "View details for Pokemon 600" [ref=e16240] [cursor=pointer]:
+            - generic [ref=e16242] [cursor=pointer]:
+              - generic [ref=e16243] [cursor=pointer]:
+                - generic [ref=e16244] [cursor=pointer]: "#600"
+                - button "Add to comparison" [ref=e16245] [cursor=pointer]:
+                  - img [ref=e16246] [cursor=pointer]
+              - generic [ref=e16253] [cursor=pointer]:
+                - generic [ref=e16256] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 600" [ref=e16258] [cursor=pointer]
+              - heading [level=3] [ref=e16260] [cursor=pointer]
+          - button "View details for Pokemon 601" [ref=e16267] [cursor=pointer]:
+            - generic [ref=e16269] [cursor=pointer]:
+              - generic [ref=e16270] [cursor=pointer]:
+                - generic [ref=e16271] [cursor=pointer]: "#601"
+                - button "Add to comparison" [ref=e16272] [cursor=pointer]:
+                  - img [ref=e16273] [cursor=pointer]
+              - generic [ref=e16280] [cursor=pointer]:
+                - generic [ref=e16283] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 601" [ref=e16285] [cursor=pointer]
+              - heading [level=3] [ref=e16287] [cursor=pointer]
+          - button "View details for Pokemon 602" [ref=e16294] [cursor=pointer]:
+            - generic [ref=e16296] [cursor=pointer]:
+              - generic [ref=e16297] [cursor=pointer]:
+                - generic [ref=e16298] [cursor=pointer]: "#602"
+                - button "Add to comparison" [ref=e16299] [cursor=pointer]:
+                  - img [ref=e16300] [cursor=pointer]
+              - generic [ref=e16307] [cursor=pointer]:
+                - generic [ref=e16310] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 602" [ref=e16312] [cursor=pointer]
+              - heading [level=3] [ref=e16314] [cursor=pointer]
+          - button "View details for Pokemon 603" [ref=e16321] [cursor=pointer]:
+            - generic [ref=e16323] [cursor=pointer]:
+              - generic [ref=e16324] [cursor=pointer]:
+                - generic [ref=e16325] [cursor=pointer]: "#603"
+                - button "Add to comparison" [ref=e16326] [cursor=pointer]:
+                  - img [ref=e16327] [cursor=pointer]
+              - generic [ref=e16334] [cursor=pointer]:
+                - generic [ref=e16337] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 603" [ref=e16339] [cursor=pointer]
+              - heading [level=3] [ref=e16341] [cursor=pointer]
+          - button "View details for Pokemon 604" [ref=e16348] [cursor=pointer]:
+            - generic [ref=e16350] [cursor=pointer]:
+              - generic [ref=e16351] [cursor=pointer]:
+                - generic [ref=e16352] [cursor=pointer]: "#604"
+                - button "Add to comparison" [ref=e16353] [cursor=pointer]:
+                  - img [ref=e16354] [cursor=pointer]
+              - generic [ref=e16361] [cursor=pointer]:
+                - generic [ref=e16364] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 604" [ref=e16366] [cursor=pointer]
+              - heading [level=3] [ref=e16368] [cursor=pointer]
+          - button "View details for Pokemon 605" [ref=e16375] [cursor=pointer]:
+            - generic [ref=e16377] [cursor=pointer]:
+              - generic [ref=e16378] [cursor=pointer]:
+                - generic [ref=e16379] [cursor=pointer]: "#605"
+                - button "Add to comparison" [ref=e16380] [cursor=pointer]:
+                  - img [ref=e16381] [cursor=pointer]
+              - generic [ref=e16388] [cursor=pointer]:
+                - generic [ref=e16391] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 605" [ref=e16393] [cursor=pointer]
+              - heading [level=3] [ref=e16395] [cursor=pointer]
+          - button "View details for Pokemon 606" [ref=e16402] [cursor=pointer]:
+            - generic [ref=e16404] [cursor=pointer]:
+              - generic [ref=e16405] [cursor=pointer]:
+                - generic [ref=e16406] [cursor=pointer]: "#606"
+                - button "Add to comparison" [ref=e16407] [cursor=pointer]:
+                  - img [ref=e16408] [cursor=pointer]
+              - generic [ref=e16415] [cursor=pointer]:
+                - generic [ref=e16418] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 606" [ref=e16420] [cursor=pointer]
+              - heading [level=3] [ref=e16422] [cursor=pointer]
+          - button "View details for Pokemon 607" [ref=e16429] [cursor=pointer]:
+            - generic [ref=e16431] [cursor=pointer]:
+              - generic [ref=e16432] [cursor=pointer]:
+                - generic [ref=e16433] [cursor=pointer]: "#607"
+                - button "Add to comparison" [ref=e16434] [cursor=pointer]:
+                  - img [ref=e16435] [cursor=pointer]
+              - generic [ref=e16442] [cursor=pointer]:
+                - generic [ref=e16445] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 607" [ref=e16447] [cursor=pointer]
+              - heading [level=3] [ref=e16449] [cursor=pointer]
+          - button "View details for Pokemon 608" [ref=e16456] [cursor=pointer]:
+            - generic [ref=e16458] [cursor=pointer]:
+              - generic [ref=e16459] [cursor=pointer]:
+                - generic [ref=e16460] [cursor=pointer]: "#608"
+                - button "Add to comparison" [ref=e16461] [cursor=pointer]:
+                  - img [ref=e16462] [cursor=pointer]
+              - generic [ref=e16469] [cursor=pointer]:
+                - generic [ref=e16472] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 608" [ref=e16474] [cursor=pointer]
+              - heading [level=3] [ref=e16476] [cursor=pointer]
+          - button "View details for Pokemon 609" [ref=e16483] [cursor=pointer]:
+            - generic [ref=e16485] [cursor=pointer]:
+              - generic [ref=e16486] [cursor=pointer]:
+                - generic [ref=e16487] [cursor=pointer]: "#609"
+                - button "Add to comparison" [ref=e16488] [cursor=pointer]:
+                  - img [ref=e16489] [cursor=pointer]
+              - generic [ref=e16496] [cursor=pointer]:
+                - generic [ref=e16499] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 609" [ref=e16501] [cursor=pointer]
+              - heading [level=3] [ref=e16503] [cursor=pointer]
+          - button "View details for Pokemon 610" [ref=e16510] [cursor=pointer]:
+            - generic [ref=e16512] [cursor=pointer]:
+              - generic [ref=e16513] [cursor=pointer]:
+                - generic [ref=e16514] [cursor=pointer]: "#610"
+                - button "Add to comparison" [ref=e16515] [cursor=pointer]:
+                  - img [ref=e16516] [cursor=pointer]
+              - generic [ref=e16523] [cursor=pointer]:
+                - generic [ref=e16526] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 610" [ref=e16528] [cursor=pointer]
+              - heading [level=3] [ref=e16530] [cursor=pointer]
+          - button "View details for Pokemon 611" [ref=e16537] [cursor=pointer]:
+            - generic [ref=e16539] [cursor=pointer]:
+              - generic [ref=e16540] [cursor=pointer]:
+                - generic [ref=e16541] [cursor=pointer]: "#611"
+                - button "Add to comparison" [ref=e16542] [cursor=pointer]:
+                  - img [ref=e16543] [cursor=pointer]
+              - generic [ref=e16550] [cursor=pointer]:
+                - generic [ref=e16553] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 611" [ref=e16555] [cursor=pointer]
+              - heading [level=3] [ref=e16557] [cursor=pointer]
+          - button "View details for Pokemon 612" [ref=e16564] [cursor=pointer]:
+            - generic [ref=e16566] [cursor=pointer]:
+              - generic [ref=e16567] [cursor=pointer]:
+                - generic [ref=e16568] [cursor=pointer]: "#612"
+                - button "Add to comparison" [ref=e16569] [cursor=pointer]:
+                  - img [ref=e16570] [cursor=pointer]
+              - generic [ref=e16577] [cursor=pointer]:
+                - generic [ref=e16580] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 612" [ref=e16582] [cursor=pointer]
+              - heading [level=3] [ref=e16584] [cursor=pointer]
+          - button "View details for Pokemon 613" [ref=e16591] [cursor=pointer]:
+            - generic [ref=e16593] [cursor=pointer]:
+              - generic [ref=e16594] [cursor=pointer]:
+                - generic [ref=e16595] [cursor=pointer]: "#613"
+                - button "Add to comparison" [ref=e16596] [cursor=pointer]:
+                  - img [ref=e16597] [cursor=pointer]
+              - generic [ref=e16604] [cursor=pointer]:
+                - generic [ref=e16607] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 613" [ref=e16609] [cursor=pointer]
+              - heading [level=3] [ref=e16611] [cursor=pointer]
+          - button "View details for Pokemon 614" [ref=e16618] [cursor=pointer]:
+            - generic [ref=e16620] [cursor=pointer]:
+              - generic [ref=e16621] [cursor=pointer]:
+                - generic [ref=e16622] [cursor=pointer]: "#614"
+                - button "Add to comparison" [ref=e16623] [cursor=pointer]:
+                  - img [ref=e16624] [cursor=pointer]
+              - generic [ref=e16631] [cursor=pointer]:
+                - generic [ref=e16634] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 614" [ref=e16636] [cursor=pointer]
+              - heading [level=3] [ref=e16638] [cursor=pointer]
+          - button "View details for Pokemon 615" [ref=e16645] [cursor=pointer]:
+            - generic [ref=e16647] [cursor=pointer]:
+              - generic [ref=e16648] [cursor=pointer]:
+                - generic [ref=e16649] [cursor=pointer]: "#615"
+                - button "Add to comparison" [ref=e16650] [cursor=pointer]:
+                  - img [ref=e16651] [cursor=pointer]
+              - generic [ref=e16658] [cursor=pointer]:
+                - generic [ref=e16661] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 615" [ref=e16663] [cursor=pointer]
+              - heading [level=3] [ref=e16665] [cursor=pointer]
+          - button "View details for Pokemon 616" [ref=e16672] [cursor=pointer]:
+            - generic [ref=e16674] [cursor=pointer]:
+              - generic [ref=e16675] [cursor=pointer]:
+                - generic [ref=e16676] [cursor=pointer]: "#616"
+                - button "Add to comparison" [ref=e16677] [cursor=pointer]:
+                  - img [ref=e16678] [cursor=pointer]
+              - generic [ref=e16685] [cursor=pointer]:
+                - generic [ref=e16688] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 616" [ref=e16690] [cursor=pointer]
+              - heading [level=3] [ref=e16692] [cursor=pointer]
+          - button "View details for Pokemon 617" [ref=e16699] [cursor=pointer]:
+            - generic [ref=e16701] [cursor=pointer]:
+              - generic [ref=e16702] [cursor=pointer]:
+                - generic [ref=e16703] [cursor=pointer]: "#617"
+                - button "Add to comparison" [ref=e16704] [cursor=pointer]:
+                  - img [ref=e16705] [cursor=pointer]
+              - generic [ref=e16712] [cursor=pointer]:
+                - generic [ref=e16715] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 617" [ref=e16717] [cursor=pointer]
+              - heading [level=3] [ref=e16719] [cursor=pointer]
+          - button "View details for Pokemon 618" [ref=e16726] [cursor=pointer]:
+            - generic [ref=e16728] [cursor=pointer]:
+              - generic [ref=e16729] [cursor=pointer]:
+                - generic [ref=e16730] [cursor=pointer]: "#618"
+                - button "Add to comparison" [ref=e16731] [cursor=pointer]:
+                  - img [ref=e16732] [cursor=pointer]
+              - generic [ref=e16739] [cursor=pointer]:
+                - generic [ref=e16742] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 618" [ref=e16744] [cursor=pointer]
+              - heading [level=3] [ref=e16746] [cursor=pointer]
+          - button "View details for Pokemon 619" [ref=e16753] [cursor=pointer]:
+            - generic [ref=e16755] [cursor=pointer]:
+              - generic [ref=e16756] [cursor=pointer]:
+                - generic [ref=e16757] [cursor=pointer]: "#619"
+                - button "Add to comparison" [ref=e16758] [cursor=pointer]:
+                  - img [ref=e16759] [cursor=pointer]
+              - generic [ref=e16766] [cursor=pointer]:
+                - generic [ref=e16769] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 619" [ref=e16771] [cursor=pointer]
+              - heading [level=3] [ref=e16773] [cursor=pointer]
+          - button "View details for Pokemon 620" [ref=e16780] [cursor=pointer]:
+            - generic [ref=e16782] [cursor=pointer]:
+              - generic [ref=e16783] [cursor=pointer]:
+                - generic [ref=e16784] [cursor=pointer]: "#620"
+                - button "Add to comparison" [ref=e16785] [cursor=pointer]:
+                  - img [ref=e16786] [cursor=pointer]
+              - generic [ref=e16793] [cursor=pointer]:
+                - generic [ref=e16796] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 620" [ref=e16798] [cursor=pointer]
+              - heading [level=3] [ref=e16800] [cursor=pointer]
+          - button "View details for Pokemon 621" [ref=e16807] [cursor=pointer]:
+            - generic [ref=e16809] [cursor=pointer]:
+              - generic [ref=e16810] [cursor=pointer]:
+                - generic [ref=e16811] [cursor=pointer]: "#621"
+                - button "Add to comparison" [ref=e16812] [cursor=pointer]:
+                  - img [ref=e16813] [cursor=pointer]
+              - generic [ref=e16820] [cursor=pointer]:
+                - generic [ref=e16823] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 621" [ref=e16825] [cursor=pointer]
+              - heading [level=3] [ref=e16827] [cursor=pointer]
+          - button "View details for Pokemon 622" [ref=e16834] [cursor=pointer]:
+            - generic [ref=e16836] [cursor=pointer]:
+              - generic [ref=e16837] [cursor=pointer]:
+                - generic [ref=e16838] [cursor=pointer]: "#622"
+                - button "Add to comparison" [ref=e16839] [cursor=pointer]:
+                  - img [ref=e16840] [cursor=pointer]
+              - generic [ref=e16847] [cursor=pointer]:
+                - generic [ref=e16850] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 622" [ref=e16852] [cursor=pointer]
+              - heading [level=3] [ref=e16854] [cursor=pointer]
+          - button "View details for Pokemon 623" [ref=e16861] [cursor=pointer]:
+            - generic [ref=e16863] [cursor=pointer]:
+              - generic [ref=e16864] [cursor=pointer]:
+                - generic [ref=e16865] [cursor=pointer]: "#623"
+                - button "Add to comparison" [ref=e16866] [cursor=pointer]:
+                  - img [ref=e16867] [cursor=pointer]
+              - generic [ref=e16874] [cursor=pointer]:
+                - generic [ref=e16877] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 623" [ref=e16879] [cursor=pointer]
+              - heading [level=3] [ref=e16881] [cursor=pointer]
+          - button "View details for Pokemon 624" [ref=e16888] [cursor=pointer]:
+            - generic [ref=e16890] [cursor=pointer]:
+              - generic [ref=e16891] [cursor=pointer]:
+                - generic [ref=e16892] [cursor=pointer]: "#624"
+                - button "Add to comparison" [ref=e16893] [cursor=pointer]:
+                  - img [ref=e16894] [cursor=pointer]
+              - generic [ref=e16901] [cursor=pointer]:
+                - generic [ref=e16904] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 624" [ref=e16906] [cursor=pointer]
+              - heading [level=3] [ref=e16908] [cursor=pointer]
+          - button "View details for Pokemon 625" [ref=e16915] [cursor=pointer]:
+            - generic [ref=e16917] [cursor=pointer]:
+              - generic [ref=e16918] [cursor=pointer]:
+                - generic [ref=e16919] [cursor=pointer]: "#625"
+                - button "Add to comparison" [ref=e16920] [cursor=pointer]:
+                  - img [ref=e16921] [cursor=pointer]
+              - generic [ref=e16928] [cursor=pointer]:
+                - generic [ref=e16931] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 625" [ref=e16933] [cursor=pointer]
+              - heading [level=3] [ref=e16935] [cursor=pointer]
+          - button "View details for Pokemon 626" [ref=e16942] [cursor=pointer]:
+            - generic [ref=e16944] [cursor=pointer]:
+              - generic [ref=e16945] [cursor=pointer]:
+                - generic [ref=e16946] [cursor=pointer]: "#626"
+                - button "Add to comparison" [ref=e16947] [cursor=pointer]:
+                  - img [ref=e16948] [cursor=pointer]
+              - generic [ref=e16955] [cursor=pointer]:
+                - generic [ref=e16958] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 626" [ref=e16960] [cursor=pointer]
+              - heading [level=3] [ref=e16962] [cursor=pointer]
+          - button "View details for Pokemon 627" [ref=e16969] [cursor=pointer]:
+            - generic [ref=e16971] [cursor=pointer]:
+              - generic [ref=e16972] [cursor=pointer]:
+                - generic [ref=e16973] [cursor=pointer]: "#627"
+                - button "Add to comparison" [ref=e16974] [cursor=pointer]:
+                  - img [ref=e16975] [cursor=pointer]
+              - generic [ref=e16982] [cursor=pointer]:
+                - generic [ref=e16985] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 627" [ref=e16987] [cursor=pointer]
+              - heading [level=3] [ref=e16989] [cursor=pointer]
+          - button "View details for Pokemon 628" [ref=e16996] [cursor=pointer]:
+            - generic [ref=e16998] [cursor=pointer]:
+              - generic [ref=e16999] [cursor=pointer]:
+                - generic [ref=e17000] [cursor=pointer]: "#628"
+                - button "Add to comparison" [ref=e17001] [cursor=pointer]:
+                  - img [ref=e17002] [cursor=pointer]
+              - generic [ref=e17009] [cursor=pointer]:
+                - generic [ref=e17012] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 628" [ref=e17014] [cursor=pointer]
+              - heading [level=3] [ref=e17016] [cursor=pointer]
+          - button "View details for Pokemon 629" [ref=e17023] [cursor=pointer]:
+            - generic [ref=e17025] [cursor=pointer]:
+              - generic [ref=e17026] [cursor=pointer]:
+                - generic [ref=e17027] [cursor=pointer]: "#629"
+                - button "Add to comparison" [ref=e17028] [cursor=pointer]:
+                  - img [ref=e17029] [cursor=pointer]
+              - generic [ref=e17036] [cursor=pointer]:
+                - generic [ref=e17039] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 629" [ref=e17041] [cursor=pointer]
+              - heading [level=3] [ref=e17043] [cursor=pointer]
+          - button "View details for Pokemon 630" [ref=e17050] [cursor=pointer]:
+            - generic [ref=e17052] [cursor=pointer]:
+              - generic [ref=e17053] [cursor=pointer]:
+                - generic [ref=e17054] [cursor=pointer]: "#630"
+                - button "Add to comparison" [ref=e17055] [cursor=pointer]:
+                  - img [ref=e17056] [cursor=pointer]
+              - generic [ref=e17063] [cursor=pointer]:
+                - generic [ref=e17066] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 630" [ref=e17068] [cursor=pointer]
+              - heading [level=3] [ref=e17070] [cursor=pointer]
+          - button "View details for Pokemon 631" [ref=e17077] [cursor=pointer]:
+            - generic [ref=e17079] [cursor=pointer]:
+              - generic [ref=e17080] [cursor=pointer]:
+                - generic [ref=e17081] [cursor=pointer]: "#631"
+                - button "Add to comparison" [ref=e17082] [cursor=pointer]:
+                  - img [ref=e17083] [cursor=pointer]
+              - generic [ref=e17090] [cursor=pointer]:
+                - generic [ref=e17093] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 631" [ref=e17095] [cursor=pointer]
+              - heading [level=3] [ref=e17097] [cursor=pointer]
+          - button "View details for Pokemon 632" [ref=e17104] [cursor=pointer]:
+            - generic [ref=e17106] [cursor=pointer]:
+              - generic [ref=e17107] [cursor=pointer]:
+                - generic [ref=e17108] [cursor=pointer]: "#632"
+                - button "Add to comparison" [ref=e17109] [cursor=pointer]:
+                  - img [ref=e17110] [cursor=pointer]
+              - generic [ref=e17117] [cursor=pointer]:
+                - generic [ref=e17120] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 632" [ref=e17122] [cursor=pointer]
+              - heading [level=3] [ref=e17124] [cursor=pointer]
+          - button "View details for Pokemon 633" [ref=e17131] [cursor=pointer]:
+            - generic [ref=e17133] [cursor=pointer]:
+              - generic [ref=e17134] [cursor=pointer]:
+                - generic [ref=e17135] [cursor=pointer]: "#633"
+                - button "Add to comparison" [ref=e17136] [cursor=pointer]:
+                  - img [ref=e17137] [cursor=pointer]
+              - generic [ref=e17144] [cursor=pointer]:
+                - generic [ref=e17147] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 633" [ref=e17149] [cursor=pointer]
+              - heading [level=3] [ref=e17151] [cursor=pointer]
+          - button "View details for Pokemon 634" [ref=e17158] [cursor=pointer]:
+            - generic [ref=e17160] [cursor=pointer]:
+              - generic [ref=e17161] [cursor=pointer]:
+                - generic [ref=e17162] [cursor=pointer]: "#634"
+                - button "Add to comparison" [ref=e17163] [cursor=pointer]:
+                  - img [ref=e17164] [cursor=pointer]
+              - generic [ref=e17171] [cursor=pointer]:
+                - generic [ref=e17174] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 634" [ref=e17176] [cursor=pointer]
+              - heading [level=3] [ref=e17178] [cursor=pointer]
+          - button "View details for Pokemon 635" [ref=e17185] [cursor=pointer]:
+            - generic [ref=e17187] [cursor=pointer]:
+              - generic [ref=e17188] [cursor=pointer]:
+                - generic [ref=e17189] [cursor=pointer]: "#635"
+                - button "Add to comparison" [ref=e17190] [cursor=pointer]:
+                  - img [ref=e17191] [cursor=pointer]
+              - generic [ref=e17198] [cursor=pointer]:
+                - generic [ref=e17201] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 635" [ref=e17203] [cursor=pointer]
+              - heading [level=3] [ref=e17205] [cursor=pointer]
+          - button "View details for Pokemon 636" [ref=e17212] [cursor=pointer]:
+            - generic [ref=e17214] [cursor=pointer]:
+              - generic [ref=e17215] [cursor=pointer]:
+                - generic [ref=e17216] [cursor=pointer]: "#636"
+                - button "Add to comparison" [ref=e17217] [cursor=pointer]:
+                  - img [ref=e17218] [cursor=pointer]
+              - generic [ref=e17225] [cursor=pointer]:
+                - generic [ref=e17228] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 636" [ref=e17230] [cursor=pointer]
+              - heading [level=3] [ref=e17232] [cursor=pointer]
+          - button "View details for Pokemon 637" [ref=e17239] [cursor=pointer]:
+            - generic [ref=e17241] [cursor=pointer]:
+              - generic [ref=e17242] [cursor=pointer]:
+                - generic [ref=e17243] [cursor=pointer]: "#637"
+                - button "Add to comparison" [ref=e17244] [cursor=pointer]:
+                  - img [ref=e17245] [cursor=pointer]
+              - generic [ref=e17252] [cursor=pointer]:
+                - generic [ref=e17255] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 637" [ref=e17257] [cursor=pointer]
+              - heading [level=3] [ref=e17259] [cursor=pointer]
+          - button "View details for Pokemon 638" [ref=e17266] [cursor=pointer]:
+            - generic [ref=e17268] [cursor=pointer]:
+              - generic [ref=e17269] [cursor=pointer]:
+                - generic [ref=e17270] [cursor=pointer]: "#638"
+                - button "Add to comparison" [ref=e17271] [cursor=pointer]:
+                  - img [ref=e17272] [cursor=pointer]
+              - generic [ref=e17279] [cursor=pointer]:
+                - generic [ref=e17282] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 638" [ref=e17284] [cursor=pointer]
+              - heading [level=3] [ref=e17286] [cursor=pointer]
+          - button "View details for Pokemon 639" [ref=e17293] [cursor=pointer]:
+            - generic [ref=e17295] [cursor=pointer]:
+              - generic [ref=e17296] [cursor=pointer]:
+                - generic [ref=e17297] [cursor=pointer]: "#639"
+                - button "Add to comparison" [ref=e17298] [cursor=pointer]:
+                  - img [ref=e17299] [cursor=pointer]
+              - generic [ref=e17306] [cursor=pointer]:
+                - generic [ref=e17309] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 639" [ref=e17311] [cursor=pointer]
+              - heading [level=3] [ref=e17313] [cursor=pointer]
+          - button "View details for Pokemon 640" [ref=e17320] [cursor=pointer]:
+            - generic [ref=e17322] [cursor=pointer]:
+              - generic [ref=e17323] [cursor=pointer]:
+                - generic [ref=e17324] [cursor=pointer]: "#640"
+                - button "Add to comparison" [ref=e17325] [cursor=pointer]:
+                  - img [ref=e17326] [cursor=pointer]
+              - generic [ref=e17333] [cursor=pointer]:
+                - generic [ref=e17336] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 640" [ref=e17338] [cursor=pointer]
+              - heading [level=3] [ref=e17340] [cursor=pointer]
+          - button "View details for Pokemon 641" [ref=e17347] [cursor=pointer]:
+            - generic [ref=e17349] [cursor=pointer]:
+              - generic [ref=e17350] [cursor=pointer]:
+                - generic [ref=e17351] [cursor=pointer]: "#641"
+                - button "Add to comparison" [ref=e17352] [cursor=pointer]:
+                  - img [ref=e17353] [cursor=pointer]
+              - generic [ref=e17360] [cursor=pointer]:
+                - generic [ref=e17363] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 641" [ref=e17365] [cursor=pointer]
+              - heading [level=3] [ref=e17367] [cursor=pointer]
+          - button "View details for Pokemon 642" [ref=e17374] [cursor=pointer]:
+            - generic [ref=e17376] [cursor=pointer]:
+              - generic [ref=e17377] [cursor=pointer]:
+                - generic [ref=e17378] [cursor=pointer]: "#642"
+                - button "Add to comparison" [ref=e17379] [cursor=pointer]:
+                  - img [ref=e17380] [cursor=pointer]
+              - generic [ref=e17387] [cursor=pointer]:
+                - generic [ref=e17390] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 642" [ref=e17392] [cursor=pointer]
+              - heading [level=3] [ref=e17394] [cursor=pointer]
+          - button "View details for Pokemon 643" [ref=e17401] [cursor=pointer]:
+            - generic [ref=e17403] [cursor=pointer]:
+              - generic [ref=e17404] [cursor=pointer]:
+                - generic [ref=e17405] [cursor=pointer]: "#643"
+                - button "Add to comparison" [ref=e17406] [cursor=pointer]:
+                  - img [ref=e17407] [cursor=pointer]
+              - generic [ref=e17414] [cursor=pointer]:
+                - generic [ref=e17417] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 643" [ref=e17419] [cursor=pointer]
+              - heading [level=3] [ref=e17421] [cursor=pointer]
+          - button "View details for Pokemon 644" [ref=e17428] [cursor=pointer]:
+            - generic [ref=e17430] [cursor=pointer]:
+              - generic [ref=e17431] [cursor=pointer]:
+                - generic [ref=e17432] [cursor=pointer]: "#644"
+                - button "Add to comparison" [ref=e17433] [cursor=pointer]:
+                  - img [ref=e17434] [cursor=pointer]
+              - generic [ref=e17441] [cursor=pointer]:
+                - generic [ref=e17444] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 644" [ref=e17446] [cursor=pointer]
+              - heading [level=3] [ref=e17448] [cursor=pointer]
+          - button "View details for Pokemon 645" [ref=e17455] [cursor=pointer]:
+            - generic [ref=e17457] [cursor=pointer]:
+              - generic [ref=e17458] [cursor=pointer]:
+                - generic [ref=e17459] [cursor=pointer]: "#645"
+                - button "Add to comparison" [ref=e17460] [cursor=pointer]:
+                  - img [ref=e17461] [cursor=pointer]
+              - generic [ref=e17468] [cursor=pointer]:
+                - generic [ref=e17471] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 645" [ref=e17473] [cursor=pointer]
+              - heading [level=3] [ref=e17475] [cursor=pointer]
+          - button "View details for Pokemon 646" [ref=e17482] [cursor=pointer]:
+            - generic [ref=e17484] [cursor=pointer]:
+              - generic [ref=e17485] [cursor=pointer]:
+                - generic [ref=e17486] [cursor=pointer]: "#646"
+                - button "Add to comparison" [ref=e17487] [cursor=pointer]:
+                  - img [ref=e17488] [cursor=pointer]
+              - generic [ref=e17495] [cursor=pointer]:
+                - generic [ref=e17498] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 646" [ref=e17500] [cursor=pointer]
+              - heading [level=3] [ref=e17502] [cursor=pointer]
+          - button "View details for Pokemon 647" [ref=e17509] [cursor=pointer]:
+            - generic [ref=e17511] [cursor=pointer]:
+              - generic [ref=e17512] [cursor=pointer]:
+                - generic [ref=e17513] [cursor=pointer]: "#647"
+                - button "Add to comparison" [ref=e17514] [cursor=pointer]:
+                  - img [ref=e17515] [cursor=pointer]
+              - generic [ref=e17522] [cursor=pointer]:
+                - generic [ref=e17525] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 647" [ref=e17527] [cursor=pointer]
+              - heading [level=3] [ref=e17529] [cursor=pointer]
+          - button "View details for Pokemon 648" [ref=e17536] [cursor=pointer]:
+            - generic [ref=e17538] [cursor=pointer]:
+              - generic [ref=e17539] [cursor=pointer]:
+                - generic [ref=e17540] [cursor=pointer]: "#648"
+                - button "Add to comparison" [ref=e17541] [cursor=pointer]:
+                  - img [ref=e17542] [cursor=pointer]
+              - generic [ref=e17549] [cursor=pointer]:
+                - generic [ref=e17552] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 648" [ref=e17554] [cursor=pointer]
+              - heading [level=3] [ref=e17556] [cursor=pointer]
+          - button "View details for Pokemon 649" [ref=e17563] [cursor=pointer]:
+            - generic [ref=e17565] [cursor=pointer]:
+              - generic [ref=e17566] [cursor=pointer]:
+                - generic [ref=e17567] [cursor=pointer]: "#649"
+                - button "Add to comparison" [ref=e17568] [cursor=pointer]:
+                  - img [ref=e17569] [cursor=pointer]
+              - generic [ref=e17576] [cursor=pointer]:
+                - generic [ref=e17579] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 649" [ref=e17581] [cursor=pointer]
+              - heading [level=3] [ref=e17583] [cursor=pointer]
+          - button "View details for Pokemon 650" [ref=e17590] [cursor=pointer]:
+            - generic [ref=e17592] [cursor=pointer]:
+              - generic [ref=e17593] [cursor=pointer]:
+                - generic [ref=e17594] [cursor=pointer]: "#650"
+                - button "Add to comparison" [ref=e17595] [cursor=pointer]:
+                  - img [ref=e17596] [cursor=pointer]
+              - generic [ref=e17603] [cursor=pointer]:
+                - generic [ref=e17606] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 650" [ref=e17608] [cursor=pointer]
+              - heading [level=3] [ref=e17610] [cursor=pointer]
+          - button "View details for Pokemon 651" [ref=e17617] [cursor=pointer]:
+            - generic [ref=e17619] [cursor=pointer]:
+              - generic [ref=e17620] [cursor=pointer]:
+                - generic [ref=e17621] [cursor=pointer]: "#651"
+                - button "Add to comparison" [ref=e17622] [cursor=pointer]:
+                  - img [ref=e17623] [cursor=pointer]
+              - generic [ref=e17630] [cursor=pointer]:
+                - generic [ref=e17633] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 651" [ref=e17635] [cursor=pointer]
+              - heading [level=3] [ref=e17637] [cursor=pointer]
+          - button "View details for Pokemon 652" [ref=e17644] [cursor=pointer]:
+            - generic [ref=e17646] [cursor=pointer]:
+              - generic [ref=e17647] [cursor=pointer]:
+                - generic [ref=e17648] [cursor=pointer]: "#652"
+                - button "Add to comparison" [ref=e17649] [cursor=pointer]:
+                  - img [ref=e17650] [cursor=pointer]
+              - generic [ref=e17657] [cursor=pointer]:
+                - generic [ref=e17660] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 652" [ref=e17662] [cursor=pointer]
+              - heading [level=3] [ref=e17664] [cursor=pointer]
+          - button "View details for Pokemon 653" [ref=e17671] [cursor=pointer]:
+            - generic [ref=e17673] [cursor=pointer]:
+              - generic [ref=e17674] [cursor=pointer]:
+                - generic [ref=e17675] [cursor=pointer]: "#653"
+                - button "Add to comparison" [ref=e17676] [cursor=pointer]:
+                  - img [ref=e17677] [cursor=pointer]
+              - generic [ref=e17684] [cursor=pointer]:
+                - generic [ref=e17687] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 653" [ref=e17689] [cursor=pointer]
+              - heading [level=3] [ref=e17691] [cursor=pointer]
+          - button "View details for Pokemon 654" [ref=e17698] [cursor=pointer]:
+            - generic [ref=e17700] [cursor=pointer]:
+              - generic [ref=e17701] [cursor=pointer]:
+                - generic [ref=e17702] [cursor=pointer]: "#654"
+                - button "Add to comparison" [ref=e17703] [cursor=pointer]:
+                  - img [ref=e17704] [cursor=pointer]
+              - generic [ref=e17711] [cursor=pointer]:
+                - generic [ref=e17714] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 654" [ref=e17716] [cursor=pointer]
+              - heading [level=3] [ref=e17718] [cursor=pointer]
+          - button "View details for Pokemon 655" [ref=e17725] [cursor=pointer]:
+            - generic [ref=e17727] [cursor=pointer]:
+              - generic [ref=e17728] [cursor=pointer]:
+                - generic [ref=e17729] [cursor=pointer]: "#655"
+                - button "Add to comparison" [ref=e17730] [cursor=pointer]:
+                  - img [ref=e17731] [cursor=pointer]
+              - generic [ref=e17738] [cursor=pointer]:
+                - generic [ref=e17741] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 655" [ref=e17743] [cursor=pointer]
+              - heading [level=3] [ref=e17745] [cursor=pointer]
+          - button "View details for Pokemon 656" [ref=e17752] [cursor=pointer]:
+            - generic [ref=e17754] [cursor=pointer]:
+              - generic [ref=e17755] [cursor=pointer]:
+                - generic [ref=e17756] [cursor=pointer]: "#656"
+                - button "Add to comparison" [ref=e17757] [cursor=pointer]:
+                  - img [ref=e17758] [cursor=pointer]
+              - generic [ref=e17765] [cursor=pointer]:
+                - generic [ref=e17768] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 656" [ref=e17770] [cursor=pointer]
+              - heading [level=3] [ref=e17772] [cursor=pointer]
+          - button "View details for Pokemon 657" [ref=e17779] [cursor=pointer]:
+            - generic [ref=e17781] [cursor=pointer]:
+              - generic [ref=e17782] [cursor=pointer]:
+                - generic [ref=e17783] [cursor=pointer]: "#657"
+                - button "Add to comparison" [ref=e17784] [cursor=pointer]:
+                  - img [ref=e17785] [cursor=pointer]
+              - generic [ref=e17792] [cursor=pointer]:
+                - generic [ref=e17795] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 657" [ref=e17797] [cursor=pointer]
+              - heading [level=3] [ref=e17799] [cursor=pointer]
+          - button "View details for Pokemon 658" [ref=e17806] [cursor=pointer]:
+            - generic [ref=e17808] [cursor=pointer]:
+              - generic [ref=e17809] [cursor=pointer]:
+                - generic [ref=e17810] [cursor=pointer]: "#658"
+                - button "Add to comparison" [ref=e17811] [cursor=pointer]:
+                  - img [ref=e17812] [cursor=pointer]
+              - generic [ref=e17819] [cursor=pointer]:
+                - generic [ref=e17822] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 658" [ref=e17824] [cursor=pointer]
+              - heading [level=3] [ref=e17826] [cursor=pointer]
+          - button "View details for Pokemon 659" [ref=e17833] [cursor=pointer]:
+            - generic [ref=e17835] [cursor=pointer]:
+              - generic [ref=e17836] [cursor=pointer]:
+                - generic [ref=e17837] [cursor=pointer]: "#659"
+                - button "Add to comparison" [ref=e17838] [cursor=pointer]:
+                  - img [ref=e17839] [cursor=pointer]
+              - generic [ref=e17846] [cursor=pointer]:
+                - generic [ref=e17849] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 659" [ref=e17851] [cursor=pointer]
+              - heading [level=3] [ref=e17853] [cursor=pointer]
+          - button "View details for Pokemon 660" [ref=e17860] [cursor=pointer]:
+            - generic [ref=e17862] [cursor=pointer]:
+              - generic [ref=e17863] [cursor=pointer]:
+                - generic [ref=e17864] [cursor=pointer]: "#660"
+                - button "Add to comparison" [ref=e17865] [cursor=pointer]:
+                  - img [ref=e17866] [cursor=pointer]
+              - generic [ref=e17873] [cursor=pointer]:
+                - generic [ref=e17876] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 660" [ref=e17878] [cursor=pointer]
+              - heading [level=3] [ref=e17880] [cursor=pointer]
+          - button "View details for Pokemon 661" [ref=e17887] [cursor=pointer]:
+            - generic [ref=e17889] [cursor=pointer]:
+              - generic [ref=e17890] [cursor=pointer]:
+                - generic [ref=e17891] [cursor=pointer]: "#661"
+                - button "Add to comparison" [ref=e17892] [cursor=pointer]:
+                  - img [ref=e17893] [cursor=pointer]
+              - generic [ref=e17900] [cursor=pointer]:
+                - generic [ref=e17903] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 661" [ref=e17905] [cursor=pointer]
+              - heading [level=3] [ref=e17907] [cursor=pointer]
+          - button "View details for Pokemon 662" [ref=e17914] [cursor=pointer]:
+            - generic [ref=e17916] [cursor=pointer]:
+              - generic [ref=e17917] [cursor=pointer]:
+                - generic [ref=e17918] [cursor=pointer]: "#662"
+                - button "Add to comparison" [ref=e17919] [cursor=pointer]:
+                  - img [ref=e17920] [cursor=pointer]
+              - generic [ref=e17927] [cursor=pointer]:
+                - generic [ref=e17930] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 662" [ref=e17932] [cursor=pointer]
+              - heading [level=3] [ref=e17934] [cursor=pointer]
+          - button "View details for Pokemon 663" [ref=e17941] [cursor=pointer]:
+            - generic [ref=e17943] [cursor=pointer]:
+              - generic [ref=e17944] [cursor=pointer]:
+                - generic [ref=e17945] [cursor=pointer]: "#663"
+                - button "Add to comparison" [ref=e17946] [cursor=pointer]:
+                  - img [ref=e17947] [cursor=pointer]
+              - generic [ref=e17954] [cursor=pointer]:
+                - generic [ref=e17957] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 663" [ref=e17959] [cursor=pointer]
+              - heading [level=3] [ref=e17961] [cursor=pointer]
+          - button "View details for Pokemon 664" [ref=e17968] [cursor=pointer]:
+            - generic [ref=e17970] [cursor=pointer]:
+              - generic [ref=e17971] [cursor=pointer]:
+                - generic [ref=e17972] [cursor=pointer]: "#664"
+                - button "Add to comparison" [ref=e17973] [cursor=pointer]:
+                  - img [ref=e17974] [cursor=pointer]
+              - generic [ref=e17981] [cursor=pointer]:
+                - generic [ref=e17984] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 664" [ref=e17986] [cursor=pointer]
+              - heading [level=3] [ref=e17988] [cursor=pointer]
+          - button "View details for Pokemon 665" [ref=e17995] [cursor=pointer]:
+            - generic [ref=e17997] [cursor=pointer]:
+              - generic [ref=e17998] [cursor=pointer]:
+                - generic [ref=e17999] [cursor=pointer]: "#665"
+                - button "Add to comparison" [ref=e18000] [cursor=pointer]:
+                  - img [ref=e18001] [cursor=pointer]
+              - generic [ref=e18008] [cursor=pointer]:
+                - generic [ref=e18011] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 665" [ref=e18013] [cursor=pointer]
+              - heading [level=3] [ref=e18015] [cursor=pointer]
+          - button "View details for Pokemon 666" [ref=e18022] [cursor=pointer]:
+            - generic [ref=e18024] [cursor=pointer]:
+              - generic [ref=e18025] [cursor=pointer]:
+                - generic [ref=e18026] [cursor=pointer]: "#666"
+                - button "Add to comparison" [ref=e18027] [cursor=pointer]:
+                  - img [ref=e18028] [cursor=pointer]
+              - generic [ref=e18035] [cursor=pointer]:
+                - generic [ref=e18038] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 666" [ref=e18040] [cursor=pointer]
+              - heading [level=3] [ref=e18042] [cursor=pointer]
+          - button "View details for Pokemon 667" [ref=e18049] [cursor=pointer]:
+            - generic [ref=e18051] [cursor=pointer]:
+              - generic [ref=e18052] [cursor=pointer]:
+                - generic [ref=e18053] [cursor=pointer]: "#667"
+                - button "Add to comparison" [ref=e18054] [cursor=pointer]:
+                  - img [ref=e18055] [cursor=pointer]
+              - generic [ref=e18062] [cursor=pointer]:
+                - generic [ref=e18065] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 667" [ref=e18067] [cursor=pointer]
+              - heading [level=3] [ref=e18069] [cursor=pointer]
+          - button "View details for Pokemon 668" [ref=e18076] [cursor=pointer]:
+            - generic [ref=e18078] [cursor=pointer]:
+              - generic [ref=e18079] [cursor=pointer]:
+                - generic [ref=e18080] [cursor=pointer]: "#668"
+                - button "Add to comparison" [ref=e18081] [cursor=pointer]:
+                  - img [ref=e18082] [cursor=pointer]
+              - generic [ref=e18089] [cursor=pointer]:
+                - generic [ref=e18092] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 668" [ref=e18094] [cursor=pointer]
+              - heading [level=3] [ref=e18096] [cursor=pointer]
+          - button "View details for Pokemon 669" [ref=e18103] [cursor=pointer]:
+            - generic [ref=e18105] [cursor=pointer]:
+              - generic [ref=e18106] [cursor=pointer]:
+                - generic [ref=e18107] [cursor=pointer]: "#669"
+                - button "Add to comparison" [ref=e18108] [cursor=pointer]:
+                  - img [ref=e18109] [cursor=pointer]
+              - generic [ref=e18116] [cursor=pointer]:
+                - generic [ref=e18119] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 669" [ref=e18121] [cursor=pointer]
+              - heading [level=3] [ref=e18123] [cursor=pointer]
+          - button "View details for Pokemon 670" [ref=e18130] [cursor=pointer]:
+            - generic [ref=e18132] [cursor=pointer]:
+              - generic [ref=e18133] [cursor=pointer]:
+                - generic [ref=e18134] [cursor=pointer]: "#670"
+                - button "Add to comparison" [ref=e18135] [cursor=pointer]:
+                  - img [ref=e18136] [cursor=pointer]
+              - generic [ref=e18143] [cursor=pointer]:
+                - generic [ref=e18146] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 670" [ref=e18148] [cursor=pointer]
+              - heading [level=3] [ref=e18150] [cursor=pointer]
+          - button "View details for Pokemon 671" [ref=e18157] [cursor=pointer]:
+            - generic [ref=e18159] [cursor=pointer]:
+              - generic [ref=e18160] [cursor=pointer]:
+                - generic [ref=e18161] [cursor=pointer]: "#671"
+                - button "Add to comparison" [ref=e18162] [cursor=pointer]:
+                  - img [ref=e18163] [cursor=pointer]
+              - generic [ref=e18170] [cursor=pointer]:
+                - generic [ref=e18173] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 671" [ref=e18175] [cursor=pointer]
+              - heading [level=3] [ref=e18177] [cursor=pointer]
+          - button "View details for Pokemon 672" [ref=e18184] [cursor=pointer]:
+            - generic [ref=e18186] [cursor=pointer]:
+              - generic [ref=e18187] [cursor=pointer]:
+                - generic [ref=e18188] [cursor=pointer]: "#672"
+                - button "Add to comparison" [ref=e18189] [cursor=pointer]:
+                  - img [ref=e18190] [cursor=pointer]
+              - generic [ref=e18197] [cursor=pointer]:
+                - generic [ref=e18200] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 672" [ref=e18202] [cursor=pointer]
+              - heading [level=3] [ref=e18204] [cursor=pointer]
+          - button "View details for Pokemon 673" [ref=e18211] [cursor=pointer]:
+            - generic [ref=e18213] [cursor=pointer]:
+              - generic [ref=e18214] [cursor=pointer]:
+                - generic [ref=e18215] [cursor=pointer]: "#673"
+                - button "Add to comparison" [ref=e18216] [cursor=pointer]:
+                  - img [ref=e18217] [cursor=pointer]
+              - generic [ref=e18224] [cursor=pointer]:
+                - generic [ref=e18227] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 673" [ref=e18229] [cursor=pointer]
+              - heading [level=3] [ref=e18231] [cursor=pointer]
+          - button "View details for Pokemon 674" [ref=e18238] [cursor=pointer]:
+            - generic [ref=e18240] [cursor=pointer]:
+              - generic [ref=e18241] [cursor=pointer]:
+                - generic [ref=e18242] [cursor=pointer]: "#674"
+                - button "Add to comparison" [ref=e18243] [cursor=pointer]:
+                  - img [ref=e18244] [cursor=pointer]
+              - generic [ref=e18251] [cursor=pointer]:
+                - generic [ref=e18254] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 674" [ref=e18256] [cursor=pointer]
+              - heading [level=3] [ref=e18258] [cursor=pointer]
+          - button "View details for Pokemon 675" [ref=e18265] [cursor=pointer]:
+            - generic [ref=e18267] [cursor=pointer]:
+              - generic [ref=e18268] [cursor=pointer]:
+                - generic [ref=e18269] [cursor=pointer]: "#675"
+                - button "Add to comparison" [ref=e18270] [cursor=pointer]:
+                  - img [ref=e18271] [cursor=pointer]
+              - generic [ref=e18278] [cursor=pointer]:
+                - generic [ref=e18281] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 675" [ref=e18283] [cursor=pointer]
+              - heading [level=3] [ref=e18285] [cursor=pointer]
+          - button "View details for Pokemon 676" [ref=e18292] [cursor=pointer]:
+            - generic [ref=e18294] [cursor=pointer]:
+              - generic [ref=e18295] [cursor=pointer]:
+                - generic [ref=e18296] [cursor=pointer]: "#676"
+                - button "Add to comparison" [ref=e18297] [cursor=pointer]:
+                  - img [ref=e18298] [cursor=pointer]
+              - generic [ref=e18305] [cursor=pointer]:
+                - generic [ref=e18308] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 676" [ref=e18310] [cursor=pointer]
+              - heading [level=3] [ref=e18312] [cursor=pointer]
+          - button "View details for Pokemon 677" [ref=e18319] [cursor=pointer]:
+            - generic [ref=e18321] [cursor=pointer]:
+              - generic [ref=e18322] [cursor=pointer]:
+                - generic [ref=e18323] [cursor=pointer]: "#677"
+                - button "Add to comparison" [ref=e18324] [cursor=pointer]:
+                  - img [ref=e18325] [cursor=pointer]
+              - generic [ref=e18332] [cursor=pointer]:
+                - generic [ref=e18335] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 677" [ref=e18337] [cursor=pointer]
+              - heading [level=3] [ref=e18339] [cursor=pointer]
+          - button "View details for Pokemon 678" [ref=e18346] [cursor=pointer]:
+            - generic [ref=e18348] [cursor=pointer]:
+              - generic [ref=e18349] [cursor=pointer]:
+                - generic [ref=e18350] [cursor=pointer]: "#678"
+                - button "Add to comparison" [ref=e18351] [cursor=pointer]:
+                  - img [ref=e18352] [cursor=pointer]
+              - generic [ref=e18359] [cursor=pointer]:
+                - generic [ref=e18362] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 678" [ref=e18364] [cursor=pointer]
+              - heading [level=3] [ref=e18366] [cursor=pointer]
+          - button "View details for Pokemon 679" [ref=e18373] [cursor=pointer]:
+            - generic [ref=e18375] [cursor=pointer]:
+              - generic [ref=e18376] [cursor=pointer]:
+                - generic [ref=e18377] [cursor=pointer]: "#679"
+                - button "Add to comparison" [ref=e18378] [cursor=pointer]:
+                  - img [ref=e18379] [cursor=pointer]
+              - generic [ref=e18386] [cursor=pointer]:
+                - generic [ref=e18389] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 679" [ref=e18391] [cursor=pointer]
+              - heading [level=3] [ref=e18393] [cursor=pointer]
+          - button "View details for Pokemon 680" [ref=e18400] [cursor=pointer]:
+            - generic [ref=e18402] [cursor=pointer]:
+              - generic [ref=e18403] [cursor=pointer]:
+                - generic [ref=e18404] [cursor=pointer]: "#680"
+                - button "Add to comparison" [ref=e18405] [cursor=pointer]:
+                  - img [ref=e18406] [cursor=pointer]
+              - generic [ref=e18413] [cursor=pointer]:
+                - generic [ref=e18416] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 680" [ref=e18418] [cursor=pointer]
+              - heading [level=3] [ref=e18420] [cursor=pointer]
+          - button "View details for Pokemon 681" [ref=e18427] [cursor=pointer]:
+            - generic [ref=e18429] [cursor=pointer]:
+              - generic [ref=e18430] [cursor=pointer]:
+                - generic [ref=e18431] [cursor=pointer]: "#681"
+                - button "Add to comparison" [ref=e18432] [cursor=pointer]:
+                  - img [ref=e18433] [cursor=pointer]
+              - generic [ref=e18440] [cursor=pointer]:
+                - generic [ref=e18443] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 681" [ref=e18445] [cursor=pointer]
+              - heading [level=3] [ref=e18447] [cursor=pointer]
+          - button "View details for Pokemon 682" [ref=e18454] [cursor=pointer]:
+            - generic [ref=e18456] [cursor=pointer]:
+              - generic [ref=e18457] [cursor=pointer]:
+                - generic [ref=e18458] [cursor=pointer]: "#682"
+                - button "Add to comparison" [ref=e18459] [cursor=pointer]:
+                  - img [ref=e18460] [cursor=pointer]
+              - generic [ref=e18467] [cursor=pointer]:
+                - generic [ref=e18470] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 682" [ref=e18472] [cursor=pointer]
+              - heading [level=3] [ref=e18474] [cursor=pointer]
+          - button "View details for Pokemon 683" [ref=e18481] [cursor=pointer]:
+            - generic [ref=e18483] [cursor=pointer]:
+              - generic [ref=e18484] [cursor=pointer]:
+                - generic [ref=e18485] [cursor=pointer]: "#683"
+                - button "Add to comparison" [ref=e18486] [cursor=pointer]:
+                  - img [ref=e18487] [cursor=pointer]
+              - generic [ref=e18494] [cursor=pointer]:
+                - generic [ref=e18497] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 683" [ref=e18499] [cursor=pointer]
+              - heading [level=3] [ref=e18501] [cursor=pointer]
+          - button "View details for Pokemon 684" [ref=e18508] [cursor=pointer]:
+            - generic [ref=e18510] [cursor=pointer]:
+              - generic [ref=e18511] [cursor=pointer]:
+                - generic [ref=e18512] [cursor=pointer]: "#684"
+                - button "Add to comparison" [ref=e18513] [cursor=pointer]:
+                  - img [ref=e18514] [cursor=pointer]
+              - generic [ref=e18521] [cursor=pointer]:
+                - generic [ref=e18524] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 684" [ref=e18526] [cursor=pointer]
+              - heading [level=3] [ref=e18528] [cursor=pointer]
+          - button "View details for Pokemon 685" [ref=e18535] [cursor=pointer]:
+            - generic [ref=e18537] [cursor=pointer]:
+              - generic [ref=e18538] [cursor=pointer]:
+                - generic [ref=e18539] [cursor=pointer]: "#685"
+                - button "Add to comparison" [ref=e18540] [cursor=pointer]:
+                  - img [ref=e18541] [cursor=pointer]
+              - generic [ref=e18548] [cursor=pointer]:
+                - generic [ref=e18551] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 685" [ref=e18553] [cursor=pointer]
+              - heading [level=3] [ref=e18555] [cursor=pointer]
+          - button "View details for Pokemon 686" [ref=e18562] [cursor=pointer]:
+            - generic [ref=e18564] [cursor=pointer]:
+              - generic [ref=e18565] [cursor=pointer]:
+                - generic [ref=e18566] [cursor=pointer]: "#686"
+                - button "Add to comparison" [ref=e18567] [cursor=pointer]:
+                  - img [ref=e18568] [cursor=pointer]
+              - generic [ref=e18575] [cursor=pointer]:
+                - generic [ref=e18578] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 686" [ref=e18580] [cursor=pointer]
+              - heading [level=3] [ref=e18582] [cursor=pointer]
+          - button "View details for Pokemon 687" [ref=e18589] [cursor=pointer]:
+            - generic [ref=e18591] [cursor=pointer]:
+              - generic [ref=e18592] [cursor=pointer]:
+                - generic [ref=e18593] [cursor=pointer]: "#687"
+                - button "Add to comparison" [ref=e18594] [cursor=pointer]:
+                  - img [ref=e18595] [cursor=pointer]
+              - generic [ref=e18602] [cursor=pointer]:
+                - generic [ref=e18605] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 687" [ref=e18607] [cursor=pointer]
+              - heading [level=3] [ref=e18609] [cursor=pointer]
+          - button "View details for Pokemon 688" [ref=e18616] [cursor=pointer]:
+            - generic [ref=e18618] [cursor=pointer]:
+              - generic [ref=e18619] [cursor=pointer]:
+                - generic [ref=e18620] [cursor=pointer]: "#688"
+                - button "Add to comparison" [ref=e18621] [cursor=pointer]:
+                  - img [ref=e18622] [cursor=pointer]
+              - generic [ref=e18629] [cursor=pointer]:
+                - generic [ref=e18632] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 688" [ref=e18634] [cursor=pointer]
+              - heading [level=3] [ref=e18636] [cursor=pointer]
+          - button "View details for Pokemon 689" [ref=e18643] [cursor=pointer]:
+            - generic [ref=e18645] [cursor=pointer]:
+              - generic [ref=e18646] [cursor=pointer]:
+                - generic [ref=e18647] [cursor=pointer]: "#689"
+                - button "Add to comparison" [ref=e18648] [cursor=pointer]:
+                  - img [ref=e18649] [cursor=pointer]
+              - generic [ref=e18656] [cursor=pointer]:
+                - generic [ref=e18659] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 689" [ref=e18661] [cursor=pointer]
+              - heading [level=3] [ref=e18663] [cursor=pointer]
+          - button "View details for Pokemon 690" [ref=e18670] [cursor=pointer]:
+            - generic [ref=e18672] [cursor=pointer]:
+              - generic [ref=e18673] [cursor=pointer]:
+                - generic [ref=e18674] [cursor=pointer]: "#690"
+                - button "Add to comparison" [ref=e18675] [cursor=pointer]:
+                  - img [ref=e18676] [cursor=pointer]
+              - generic [ref=e18683] [cursor=pointer]:
+                - generic [ref=e18686] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 690" [ref=e18688] [cursor=pointer]
+              - heading [level=3] [ref=e18690] [cursor=pointer]
+          - button "View details for Pokemon 691" [ref=e18697] [cursor=pointer]:
+            - generic [ref=e18699] [cursor=pointer]:
+              - generic [ref=e18700] [cursor=pointer]:
+                - generic [ref=e18701] [cursor=pointer]: "#691"
+                - button "Add to comparison" [ref=e18702] [cursor=pointer]:
+                  - img [ref=e18703] [cursor=pointer]
+              - generic [ref=e18710] [cursor=pointer]:
+                - generic [ref=e18713] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 691" [ref=e18715] [cursor=pointer]
+              - heading [level=3] [ref=e18717] [cursor=pointer]
+          - button "View details for Pokemon 692" [ref=e18724] [cursor=pointer]:
+            - generic [ref=e18726] [cursor=pointer]:
+              - generic [ref=e18727] [cursor=pointer]:
+                - generic [ref=e18728] [cursor=pointer]: "#692"
+                - button "Add to comparison" [ref=e18729] [cursor=pointer]:
+                  - img [ref=e18730] [cursor=pointer]
+              - generic [ref=e18737] [cursor=pointer]:
+                - generic [ref=e18740] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 692" [ref=e18742] [cursor=pointer]
+              - heading [level=3] [ref=e18744] [cursor=pointer]
+          - button "View details for Pokemon 693" [ref=e18751] [cursor=pointer]:
+            - generic [ref=e18753] [cursor=pointer]:
+              - generic [ref=e18754] [cursor=pointer]:
+                - generic [ref=e18755] [cursor=pointer]: "#693"
+                - button "Add to comparison" [ref=e18756] [cursor=pointer]:
+                  - img [ref=e18757] [cursor=pointer]
+              - generic [ref=e18764] [cursor=pointer]:
+                - generic [ref=e18767] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 693" [ref=e18769] [cursor=pointer]
+              - heading [level=3] [ref=e18771] [cursor=pointer]
+          - button "View details for Pokemon 694" [ref=e18778] [cursor=pointer]:
+            - generic [ref=e18780] [cursor=pointer]:
+              - generic [ref=e18781] [cursor=pointer]:
+                - generic [ref=e18782] [cursor=pointer]: "#694"
+                - button "Add to comparison" [ref=e18783] [cursor=pointer]:
+                  - img [ref=e18784] [cursor=pointer]
+              - generic [ref=e18791] [cursor=pointer]:
+                - generic [ref=e18794] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 694" [ref=e18796] [cursor=pointer]
+              - heading [level=3] [ref=e18798] [cursor=pointer]
+          - button "View details for Pokemon 695" [ref=e18805] [cursor=pointer]:
+            - generic [ref=e18807] [cursor=pointer]:
+              - generic [ref=e18808] [cursor=pointer]:
+                - generic [ref=e18809] [cursor=pointer]: "#695"
+                - button "Add to comparison" [ref=e18810] [cursor=pointer]:
+                  - img [ref=e18811] [cursor=pointer]
+              - generic [ref=e18818] [cursor=pointer]:
+                - generic [ref=e18821] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 695" [ref=e18823] [cursor=pointer]
+              - heading [level=3] [ref=e18825] [cursor=pointer]
+          - button "View details for Pokemon 696" [ref=e18832] [cursor=pointer]:
+            - generic [ref=e18834] [cursor=pointer]:
+              - generic [ref=e18835] [cursor=pointer]:
+                - generic [ref=e18836] [cursor=pointer]: "#696"
+                - button "Add to comparison" [ref=e18837] [cursor=pointer]:
+                  - img [ref=e18838] [cursor=pointer]
+              - generic [ref=e18845] [cursor=pointer]:
+                - generic [ref=e18848] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 696" [ref=e18850] [cursor=pointer]
+              - heading [level=3] [ref=e18852] [cursor=pointer]
+          - button "View details for Pokemon 697" [ref=e18859] [cursor=pointer]:
+            - generic [ref=e18861] [cursor=pointer]:
+              - generic [ref=e18862] [cursor=pointer]:
+                - generic [ref=e18863] [cursor=pointer]: "#697"
+                - button "Add to comparison" [ref=e18864] [cursor=pointer]:
+                  - img [ref=e18865] [cursor=pointer]
+              - generic [ref=e18872] [cursor=pointer]:
+                - generic [ref=e18875] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 697" [ref=e18877] [cursor=pointer]
+              - heading [level=3] [ref=e18879] [cursor=pointer]
+          - button "View details for Pokemon 698" [ref=e18886] [cursor=pointer]:
+            - generic [ref=e18888] [cursor=pointer]:
+              - generic [ref=e18889] [cursor=pointer]:
+                - generic [ref=e18890] [cursor=pointer]: "#698"
+                - button "Add to comparison" [ref=e18891] [cursor=pointer]:
+                  - img [ref=e18892] [cursor=pointer]
+              - generic [ref=e18899] [cursor=pointer]:
+                - generic [ref=e18902] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 698" [ref=e18904] [cursor=pointer]
+              - heading [level=3] [ref=e18906] [cursor=pointer]
+          - button "View details for Pokemon 699" [ref=e18913] [cursor=pointer]:
+            - generic [ref=e18915] [cursor=pointer]:
+              - generic [ref=e18916] [cursor=pointer]:
+                - generic [ref=e18917] [cursor=pointer]: "#699"
+                - button "Add to comparison" [ref=e18918] [cursor=pointer]:
+                  - img [ref=e18919] [cursor=pointer]
+              - generic [ref=e18926] [cursor=pointer]:
+                - generic [ref=e18929] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 699" [ref=e18931] [cursor=pointer]
+              - heading [level=3] [ref=e18933] [cursor=pointer]
+          - button "View details for Pokemon 700" [ref=e18940] [cursor=pointer]:
+            - generic [ref=e18942] [cursor=pointer]:
+              - generic [ref=e18943] [cursor=pointer]:
+                - generic [ref=e18944] [cursor=pointer]: "#700"
+                - button "Add to comparison" [ref=e18945] [cursor=pointer]:
+                  - img [ref=e18946] [cursor=pointer]
+              - generic [ref=e18953] [cursor=pointer]:
+                - generic [ref=e18956] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 700" [ref=e18958] [cursor=pointer]
+              - heading [level=3] [ref=e18960] [cursor=pointer]
+          - button "View details for Pokemon 701" [ref=e18967] [cursor=pointer]:
+            - generic [ref=e18969] [cursor=pointer]:
+              - generic [ref=e18970] [cursor=pointer]:
+                - generic [ref=e18971] [cursor=pointer]: "#701"
+                - button "Add to comparison" [ref=e18972] [cursor=pointer]:
+                  - img [ref=e18973] [cursor=pointer]
+              - generic [ref=e18980] [cursor=pointer]:
+                - generic [ref=e18983] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 701" [ref=e18985] [cursor=pointer]
+              - heading [level=3] [ref=e18987] [cursor=pointer]
+          - button "View details for Pokemon 702" [ref=e18994] [cursor=pointer]:
+            - generic [ref=e18996] [cursor=pointer]:
+              - generic [ref=e18997] [cursor=pointer]:
+                - generic [ref=e18998] [cursor=pointer]: "#702"
+                - button "Add to comparison" [ref=e18999] [cursor=pointer]:
+                  - img [ref=e19000] [cursor=pointer]
+              - generic [ref=e19007] [cursor=pointer]:
+                - generic [ref=e19010] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 702" [ref=e19012] [cursor=pointer]
+              - heading [level=3] [ref=e19014] [cursor=pointer]
+          - button "View details for Pokemon 703" [ref=e19021] [cursor=pointer]:
+            - generic [ref=e19023] [cursor=pointer]:
+              - generic [ref=e19024] [cursor=pointer]:
+                - generic [ref=e19025] [cursor=pointer]: "#703"
+                - button "Add to comparison" [ref=e19026] [cursor=pointer]:
+                  - img [ref=e19027] [cursor=pointer]
+              - generic [ref=e19034] [cursor=pointer]:
+                - generic [ref=e19037] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 703" [ref=e19039] [cursor=pointer]
+              - heading [level=3] [ref=e19041] [cursor=pointer]
+          - button "View details for Pokemon 704" [ref=e19048] [cursor=pointer]:
+            - generic [ref=e19050] [cursor=pointer]:
+              - generic [ref=e19051] [cursor=pointer]:
+                - generic [ref=e19052] [cursor=pointer]: "#704"
+                - button "Add to comparison" [ref=e19053] [cursor=pointer]:
+                  - img [ref=e19054] [cursor=pointer]
+              - generic [ref=e19061] [cursor=pointer]:
+                - generic [ref=e19064] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 704" [ref=e19066] [cursor=pointer]
+              - heading [level=3] [ref=e19068] [cursor=pointer]
+          - button "View details for Pokemon 705" [ref=e19075] [cursor=pointer]:
+            - generic [ref=e19077] [cursor=pointer]:
+              - generic [ref=e19078] [cursor=pointer]:
+                - generic [ref=e19079] [cursor=pointer]: "#705"
+                - button "Add to comparison" [ref=e19080] [cursor=pointer]:
+                  - img [ref=e19081] [cursor=pointer]
+              - generic [ref=e19088] [cursor=pointer]:
+                - generic [ref=e19091] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 705" [ref=e19093] [cursor=pointer]
+              - heading [level=3] [ref=e19095] [cursor=pointer]
+          - button "View details for Pokemon 706" [ref=e19102] [cursor=pointer]:
+            - generic [ref=e19104] [cursor=pointer]:
+              - generic [ref=e19105] [cursor=pointer]:
+                - generic [ref=e19106] [cursor=pointer]: "#706"
+                - button "Add to comparison" [ref=e19107] [cursor=pointer]:
+                  - img [ref=e19108] [cursor=pointer]
+              - generic [ref=e19115] [cursor=pointer]:
+                - generic [ref=e19118] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 706" [ref=e19120] [cursor=pointer]
+              - heading [level=3] [ref=e19122] [cursor=pointer]
+          - button "View details for Pokemon 707" [ref=e19129] [cursor=pointer]:
+            - generic [ref=e19131] [cursor=pointer]:
+              - generic [ref=e19132] [cursor=pointer]:
+                - generic [ref=e19133] [cursor=pointer]: "#707"
+                - button "Add to comparison" [ref=e19134] [cursor=pointer]:
+                  - img [ref=e19135] [cursor=pointer]
+              - generic [ref=e19142] [cursor=pointer]:
+                - generic [ref=e19145] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 707" [ref=e19147] [cursor=pointer]
+              - heading [level=3] [ref=e19149] [cursor=pointer]
+          - button "View details for Pokemon 708" [ref=e19156] [cursor=pointer]:
+            - generic [ref=e19158] [cursor=pointer]:
+              - generic [ref=e19159] [cursor=pointer]:
+                - generic [ref=e19160] [cursor=pointer]: "#708"
+                - button "Add to comparison" [ref=e19161] [cursor=pointer]:
+                  - img [ref=e19162] [cursor=pointer]
+              - generic [ref=e19169] [cursor=pointer]:
+                - generic [ref=e19172] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 708" [ref=e19174] [cursor=pointer]
+              - heading [level=3] [ref=e19176] [cursor=pointer]
+          - button "View details for Pokemon 709" [ref=e19183] [cursor=pointer]:
+            - generic [ref=e19185] [cursor=pointer]:
+              - generic [ref=e19186] [cursor=pointer]:
+                - generic [ref=e19187] [cursor=pointer]: "#709"
+                - button "Add to comparison" [ref=e19188] [cursor=pointer]:
+                  - img [ref=e19189] [cursor=pointer]
+              - generic [ref=e19196] [cursor=pointer]:
+                - generic [ref=e19199] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 709" [ref=e19201] [cursor=pointer]
+              - heading [level=3] [ref=e19203] [cursor=pointer]
+          - button "View details for Pokemon 710" [ref=e19210] [cursor=pointer]:
+            - generic [ref=e19212] [cursor=pointer]:
+              - generic [ref=e19213] [cursor=pointer]:
+                - generic [ref=e19214] [cursor=pointer]: "#710"
+                - button "Add to comparison" [ref=e19215] [cursor=pointer]:
+                  - img [ref=e19216] [cursor=pointer]
+              - generic [ref=e19223] [cursor=pointer]:
+                - generic [ref=e19226] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 710" [ref=e19228] [cursor=pointer]
+              - heading [level=3] [ref=e19230] [cursor=pointer]
+          - button "View details for Pokemon 711" [ref=e19237] [cursor=pointer]:
+            - generic [ref=e19239] [cursor=pointer]:
+              - generic [ref=e19240] [cursor=pointer]:
+                - generic [ref=e19241] [cursor=pointer]: "#711"
+                - button "Add to comparison" [ref=e19242] [cursor=pointer]:
+                  - img [ref=e19243] [cursor=pointer]
+              - generic [ref=e19250] [cursor=pointer]:
+                - generic [ref=e19253] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 711" [ref=e19255] [cursor=pointer]
+              - heading [level=3] [ref=e19257] [cursor=pointer]
+          - button "View details for Pokemon 712" [ref=e19264] [cursor=pointer]:
+            - generic [ref=e19266] [cursor=pointer]:
+              - generic [ref=e19267] [cursor=pointer]:
+                - generic [ref=e19268] [cursor=pointer]: "#712"
+                - button "Add to comparison" [ref=e19269] [cursor=pointer]:
+                  - img [ref=e19270] [cursor=pointer]
+              - generic [ref=e19277] [cursor=pointer]:
+                - generic [ref=e19280] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 712" [ref=e19282] [cursor=pointer]
+              - heading [level=3] [ref=e19284] [cursor=pointer]
+          - button "View details for Pokemon 713" [ref=e19291] [cursor=pointer]:
+            - generic [ref=e19293] [cursor=pointer]:
+              - generic [ref=e19294] [cursor=pointer]:
+                - generic [ref=e19295] [cursor=pointer]: "#713"
+                - button "Add to comparison" [ref=e19296] [cursor=pointer]:
+                  - img [ref=e19297] [cursor=pointer]
+              - generic [ref=e19304] [cursor=pointer]:
+                - generic [ref=e19307] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 713" [ref=e19309] [cursor=pointer]
+              - heading [level=3] [ref=e19311] [cursor=pointer]
+          - button "View details for Pokemon 714" [ref=e19318] [cursor=pointer]:
+            - generic [ref=e19320] [cursor=pointer]:
+              - generic [ref=e19321] [cursor=pointer]:
+                - generic [ref=e19322] [cursor=pointer]: "#714"
+                - button "Add to comparison" [ref=e19323] [cursor=pointer]:
+                  - img [ref=e19324] [cursor=pointer]
+              - generic [ref=e19331] [cursor=pointer]:
+                - generic [ref=e19334] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 714" [ref=e19336] [cursor=pointer]
+              - heading [level=3] [ref=e19338] [cursor=pointer]
+          - button "View details for Pokemon 715" [ref=e19345] [cursor=pointer]:
+            - generic [ref=e19347] [cursor=pointer]:
+              - generic [ref=e19348] [cursor=pointer]:
+                - generic [ref=e19349] [cursor=pointer]: "#715"
+                - button "Add to comparison" [ref=e19350] [cursor=pointer]:
+                  - img [ref=e19351] [cursor=pointer]
+              - generic [ref=e19358] [cursor=pointer]:
+                - generic [ref=e19361] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 715" [ref=e19363] [cursor=pointer]
+              - heading [level=3] [ref=e19365] [cursor=pointer]
+          - button "View details for Pokemon 716" [ref=e19372] [cursor=pointer]:
+            - generic [ref=e19374] [cursor=pointer]:
+              - generic [ref=e19375] [cursor=pointer]:
+                - generic [ref=e19376] [cursor=pointer]: "#716"
+                - button "Add to comparison" [ref=e19377] [cursor=pointer]:
+                  - img [ref=e19378] [cursor=pointer]
+              - generic [ref=e19385] [cursor=pointer]:
+                - generic [ref=e19388] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 716" [ref=e19390] [cursor=pointer]
+              - heading [level=3] [ref=e19392] [cursor=pointer]
+          - button "View details for Pokemon 717" [ref=e19399] [cursor=pointer]:
+            - generic [ref=e19401] [cursor=pointer]:
+              - generic [ref=e19402] [cursor=pointer]:
+                - generic [ref=e19403] [cursor=pointer]: "#717"
+                - button "Add to comparison" [ref=e19404] [cursor=pointer]:
+                  - img [ref=e19405] [cursor=pointer]
+              - generic [ref=e19412] [cursor=pointer]:
+                - generic [ref=e19415] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 717" [ref=e19417] [cursor=pointer]
+              - heading [level=3] [ref=e19419] [cursor=pointer]
+          - button "View details for Pokemon 718" [ref=e19426] [cursor=pointer]:
+            - generic [ref=e19428] [cursor=pointer]:
+              - generic [ref=e19429] [cursor=pointer]:
+                - generic [ref=e19430] [cursor=pointer]: "#718"
+                - button "Add to comparison" [ref=e19431] [cursor=pointer]:
+                  - img [ref=e19432] [cursor=pointer]
+              - generic [ref=e19439] [cursor=pointer]:
+                - generic [ref=e19442] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 718" [ref=e19444] [cursor=pointer]
+              - heading [level=3] [ref=e19446] [cursor=pointer]
+          - button "View details for Pokemon 719" [ref=e19453] [cursor=pointer]:
+            - generic [ref=e19455] [cursor=pointer]:
+              - generic [ref=e19456] [cursor=pointer]:
+                - generic [ref=e19457] [cursor=pointer]: "#719"
+                - button "Add to comparison" [ref=e19458] [cursor=pointer]:
+                  - img [ref=e19459] [cursor=pointer]
+              - generic [ref=e19466] [cursor=pointer]:
+                - generic [ref=e19469] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 719" [ref=e19471] [cursor=pointer]
+              - heading [level=3] [ref=e19473] [cursor=pointer]
+          - button "View details for Pokemon 720" [ref=e19480] [cursor=pointer]:
+            - generic [ref=e19482] [cursor=pointer]:
+              - generic [ref=e19483] [cursor=pointer]:
+                - generic [ref=e19484] [cursor=pointer]: "#720"
+                - button "Add to comparison" [ref=e19485] [cursor=pointer]:
+                  - img [ref=e19486] [cursor=pointer]
+              - generic [ref=e19493] [cursor=pointer]:
+                - generic [ref=e19496] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 720" [ref=e19498] [cursor=pointer]
+              - heading [level=3] [ref=e19500] [cursor=pointer]
+          - button "View details for Pokemon 721" [ref=e19507] [cursor=pointer]:
+            - generic [ref=e19509] [cursor=pointer]:
+              - generic [ref=e19510] [cursor=pointer]:
+                - generic [ref=e19511] [cursor=pointer]: "#721"
+                - button "Add to comparison" [ref=e19512] [cursor=pointer]:
+                  - img [ref=e19513] [cursor=pointer]
+              - generic [ref=e19520] [cursor=pointer]:
+                - generic [ref=e19523] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 721" [ref=e19525] [cursor=pointer]
+              - heading [level=3] [ref=e19527] [cursor=pointer]
+          - button "View details for Pokemon 722" [ref=e19534] [cursor=pointer]:
+            - generic [ref=e19536] [cursor=pointer]:
+              - generic [ref=e19537] [cursor=pointer]:
+                - generic [ref=e19538] [cursor=pointer]: "#722"
+                - button "Add to comparison" [ref=e19539] [cursor=pointer]:
+                  - img [ref=e19540] [cursor=pointer]
+              - generic [ref=e19547] [cursor=pointer]:
+                - generic [ref=e19550] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 722" [ref=e19552] [cursor=pointer]
+              - heading [level=3] [ref=e19554] [cursor=pointer]
+          - button "View details for Pokemon 723" [ref=e19561] [cursor=pointer]:
+            - generic [ref=e19563] [cursor=pointer]:
+              - generic [ref=e19564] [cursor=pointer]:
+                - generic [ref=e19565] [cursor=pointer]: "#723"
+                - button "Add to comparison" [ref=e19566] [cursor=pointer]:
+                  - img [ref=e19567] [cursor=pointer]
+              - generic [ref=e19574] [cursor=pointer]:
+                - generic [ref=e19577] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 723" [ref=e19579] [cursor=pointer]
+              - heading [level=3] [ref=e19581] [cursor=pointer]
+          - button "View details for Pokemon 724" [ref=e19588] [cursor=pointer]:
+            - generic [ref=e19590] [cursor=pointer]:
+              - generic [ref=e19591] [cursor=pointer]:
+                - generic [ref=e19592] [cursor=pointer]: "#724"
+                - button "Add to comparison" [ref=e19593] [cursor=pointer]:
+                  - img [ref=e19594] [cursor=pointer]
+              - generic [ref=e19601] [cursor=pointer]:
+                - generic [ref=e19604] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 724" [ref=e19606] [cursor=pointer]
+              - heading [level=3] [ref=e19608] [cursor=pointer]
+          - button "View details for Pokemon 725" [ref=e19615] [cursor=pointer]:
+            - generic [ref=e19617] [cursor=pointer]:
+              - generic [ref=e19618] [cursor=pointer]:
+                - generic [ref=e19619] [cursor=pointer]: "#725"
+                - button "Add to comparison" [ref=e19620] [cursor=pointer]:
+                  - img [ref=e19621] [cursor=pointer]
+              - generic [ref=e19628] [cursor=pointer]:
+                - generic [ref=e19631] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 725" [ref=e19633] [cursor=pointer]
+              - heading [level=3] [ref=e19635] [cursor=pointer]
+          - button "View details for Pokemon 726" [ref=e19642] [cursor=pointer]:
+            - generic [ref=e19644] [cursor=pointer]:
+              - generic [ref=e19645] [cursor=pointer]:
+                - generic [ref=e19646] [cursor=pointer]: "#726"
+                - button "Add to comparison" [ref=e19647] [cursor=pointer]:
+                  - img [ref=e19648] [cursor=pointer]
+              - generic [ref=e19655] [cursor=pointer]:
+                - generic [ref=e19658] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 726" [ref=e19660] [cursor=pointer]
+              - heading [level=3] [ref=e19662] [cursor=pointer]
+          - button "View details for Pokemon 727" [ref=e19669] [cursor=pointer]:
+            - generic [ref=e19671] [cursor=pointer]:
+              - generic [ref=e19672] [cursor=pointer]:
+                - generic [ref=e19673] [cursor=pointer]: "#727"
+                - button "Add to comparison" [ref=e19674] [cursor=pointer]:
+                  - img [ref=e19675] [cursor=pointer]
+              - generic [ref=e19682] [cursor=pointer]:
+                - generic [ref=e19685] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 727" [ref=e19687] [cursor=pointer]
+              - heading [level=3] [ref=e19689] [cursor=pointer]
+          - button "View details for Pokemon 728" [ref=e19696] [cursor=pointer]:
+            - generic [ref=e19698] [cursor=pointer]:
+              - generic [ref=e19699] [cursor=pointer]:
+                - generic [ref=e19700] [cursor=pointer]: "#728"
+                - button "Add to comparison" [ref=e19701] [cursor=pointer]:
+                  - img [ref=e19702] [cursor=pointer]
+              - generic [ref=e19709] [cursor=pointer]:
+                - generic [ref=e19712] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 728" [ref=e19714] [cursor=pointer]
+              - heading [level=3] [ref=e19716] [cursor=pointer]
+          - button "View details for Pokemon 729" [ref=e19723] [cursor=pointer]:
+            - generic [ref=e19725] [cursor=pointer]:
+              - generic [ref=e19726] [cursor=pointer]:
+                - generic [ref=e19727] [cursor=pointer]: "#729"
+                - button "Add to comparison" [ref=e19728] [cursor=pointer]:
+                  - img [ref=e19729] [cursor=pointer]
+              - generic [ref=e19736] [cursor=pointer]:
+                - generic [ref=e19739] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 729" [ref=e19741] [cursor=pointer]
+              - heading [level=3] [ref=e19743] [cursor=pointer]
+          - button "View details for Pokemon 730" [ref=e19750] [cursor=pointer]:
+            - generic [ref=e19752] [cursor=pointer]:
+              - generic [ref=e19753] [cursor=pointer]:
+                - generic [ref=e19754] [cursor=pointer]: "#730"
+                - button "Add to comparison" [ref=e19755] [cursor=pointer]:
+                  - img [ref=e19756] [cursor=pointer]
+              - generic [ref=e19763] [cursor=pointer]:
+                - generic [ref=e19766] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 730" [ref=e19768] [cursor=pointer]
+              - heading [level=3] [ref=e19770] [cursor=pointer]
+          - button "View details for Pokemon 731" [ref=e19777] [cursor=pointer]:
+            - generic [ref=e19779] [cursor=pointer]:
+              - generic [ref=e19780] [cursor=pointer]:
+                - generic [ref=e19781] [cursor=pointer]: "#731"
+                - button "Add to comparison" [ref=e19782] [cursor=pointer]:
+                  - img [ref=e19783] [cursor=pointer]
+              - generic [ref=e19790] [cursor=pointer]:
+                - generic [ref=e19793] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 731" [ref=e19795] [cursor=pointer]
+              - heading [level=3] [ref=e19797] [cursor=pointer]
+          - button "View details for Pokemon 732" [ref=e19804] [cursor=pointer]:
+            - generic [ref=e19806] [cursor=pointer]:
+              - generic [ref=e19807] [cursor=pointer]:
+                - generic [ref=e19808] [cursor=pointer]: "#732"
+                - button "Add to comparison" [ref=e19809] [cursor=pointer]:
+                  - img [ref=e19810] [cursor=pointer]
+              - generic [ref=e19817] [cursor=pointer]:
+                - generic [ref=e19820] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 732" [ref=e19822] [cursor=pointer]
+              - heading [level=3] [ref=e19824] [cursor=pointer]
+          - button "View details for Pokemon 733" [ref=e19831] [cursor=pointer]:
+            - generic [ref=e19833] [cursor=pointer]:
+              - generic [ref=e19834] [cursor=pointer]:
+                - generic [ref=e19835] [cursor=pointer]: "#733"
+                - button "Add to comparison" [ref=e19836] [cursor=pointer]:
+                  - img [ref=e19837] [cursor=pointer]
+              - generic [ref=e19844] [cursor=pointer]:
+                - generic [ref=e19847] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 733" [ref=e19849] [cursor=pointer]
+              - heading [level=3] [ref=e19851] [cursor=pointer]
+          - button "View details for Pokemon 734" [ref=e19858] [cursor=pointer]:
+            - generic [ref=e19860] [cursor=pointer]:
+              - generic [ref=e19861] [cursor=pointer]:
+                - generic [ref=e19862] [cursor=pointer]: "#734"
+                - button "Add to comparison" [ref=e19863] [cursor=pointer]:
+                  - img [ref=e19864] [cursor=pointer]
+              - generic [ref=e19871] [cursor=pointer]:
+                - generic [ref=e19874] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 734" [ref=e19876] [cursor=pointer]
+              - heading [level=3] [ref=e19878] [cursor=pointer]
+          - button "View details for Pokemon 735" [ref=e19885] [cursor=pointer]:
+            - generic [ref=e19887] [cursor=pointer]:
+              - generic [ref=e19888] [cursor=pointer]:
+                - generic [ref=e19889] [cursor=pointer]: "#735"
+                - button "Add to comparison" [ref=e19890] [cursor=pointer]:
+                  - img [ref=e19891] [cursor=pointer]
+              - generic [ref=e19898] [cursor=pointer]:
+                - generic [ref=e19901] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 735" [ref=e19903] [cursor=pointer]
+              - heading [level=3] [ref=e19905] [cursor=pointer]
+          - button "View details for Pokemon 736" [ref=e19912] [cursor=pointer]:
+            - generic [ref=e19914] [cursor=pointer]:
+              - generic [ref=e19915] [cursor=pointer]:
+                - generic [ref=e19916] [cursor=pointer]: "#736"
+                - button "Add to comparison" [ref=e19917] [cursor=pointer]:
+                  - img [ref=e19918] [cursor=pointer]
+              - generic [ref=e19925] [cursor=pointer]:
+                - generic [ref=e19928] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 736" [ref=e19930] [cursor=pointer]
+              - heading [level=3] [ref=e19932] [cursor=pointer]
+          - button "View details for Pokemon 737" [ref=e19939] [cursor=pointer]:
+            - generic [ref=e19941] [cursor=pointer]:
+              - generic [ref=e19942] [cursor=pointer]:
+                - generic [ref=e19943] [cursor=pointer]: "#737"
+                - button "Add to comparison" [ref=e19944] [cursor=pointer]:
+                  - img [ref=e19945] [cursor=pointer]
+              - generic [ref=e19952] [cursor=pointer]:
+                - generic [ref=e19955] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 737" [ref=e19957] [cursor=pointer]
+              - heading [level=3] [ref=e19959] [cursor=pointer]
+          - button "View details for Pokemon 738" [ref=e19966] [cursor=pointer]:
+            - generic [ref=e19968] [cursor=pointer]:
+              - generic [ref=e19969] [cursor=pointer]:
+                - generic [ref=e19970] [cursor=pointer]: "#738"
+                - button "Add to comparison" [ref=e19971] [cursor=pointer]:
+                  - img [ref=e19972] [cursor=pointer]
+              - generic [ref=e19979] [cursor=pointer]:
+                - generic [ref=e19982] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 738" [ref=e19984] [cursor=pointer]
+              - heading [level=3] [ref=e19986] [cursor=pointer]
+          - button "View details for Pokemon 739" [ref=e19993] [cursor=pointer]:
+            - generic [ref=e19995] [cursor=pointer]:
+              - generic [ref=e19996] [cursor=pointer]:
+                - generic [ref=e19997] [cursor=pointer]: "#739"
+                - button "Add to comparison" [ref=e19998] [cursor=pointer]:
+                  - img [ref=e19999] [cursor=pointer]
+              - generic [ref=e20006] [cursor=pointer]:
+                - generic [ref=e20009] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 739" [ref=e20011] [cursor=pointer]
+              - heading [level=3] [ref=e20013] [cursor=pointer]
+          - button "View details for Pokemon 740" [ref=e20020] [cursor=pointer]:
+            - generic [ref=e20022] [cursor=pointer]:
+              - generic [ref=e20023] [cursor=pointer]:
+                - generic [ref=e20024] [cursor=pointer]: "#740"
+                - button "Add to comparison" [ref=e20025] [cursor=pointer]:
+                  - img [ref=e20026] [cursor=pointer]
+              - generic [ref=e20033] [cursor=pointer]:
+                - generic [ref=e20036] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 740" [ref=e20038] [cursor=pointer]
+              - heading [level=3] [ref=e20040] [cursor=pointer]
+          - button "View details for Pokemon 741" [ref=e20047] [cursor=pointer]:
+            - generic [ref=e20049] [cursor=pointer]:
+              - generic [ref=e20050] [cursor=pointer]:
+                - generic [ref=e20051] [cursor=pointer]: "#741"
+                - button "Add to comparison" [ref=e20052] [cursor=pointer]:
+                  - img [ref=e20053] [cursor=pointer]
+              - generic [ref=e20060] [cursor=pointer]:
+                - generic [ref=e20063] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 741" [ref=e20065] [cursor=pointer]
+              - heading [level=3] [ref=e20067] [cursor=pointer]
+          - button "View details for Pokemon 742" [ref=e20074] [cursor=pointer]:
+            - generic [ref=e20076] [cursor=pointer]:
+              - generic [ref=e20077] [cursor=pointer]:
+                - generic [ref=e20078] [cursor=pointer]: "#742"
+                - button "Add to comparison" [ref=e20079] [cursor=pointer]:
+                  - img [ref=e20080] [cursor=pointer]
+              - generic [ref=e20087] [cursor=pointer]:
+                - generic [ref=e20090] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 742" [ref=e20092] [cursor=pointer]
+              - heading [level=3] [ref=e20094] [cursor=pointer]
+          - button "View details for Pokemon 743" [ref=e20101] [cursor=pointer]:
+            - generic [ref=e20103] [cursor=pointer]:
+              - generic [ref=e20104] [cursor=pointer]:
+                - generic [ref=e20105] [cursor=pointer]: "#743"
+                - button "Add to comparison" [ref=e20106] [cursor=pointer]:
+                  - img [ref=e20107] [cursor=pointer]
+              - generic [ref=e20114] [cursor=pointer]:
+                - generic [ref=e20117] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 743" [ref=e20119] [cursor=pointer]
+              - heading [level=3] [ref=e20121] [cursor=pointer]
+          - button "View details for Pokemon 744" [ref=e20128] [cursor=pointer]:
+            - generic [ref=e20130] [cursor=pointer]:
+              - generic [ref=e20131] [cursor=pointer]:
+                - generic [ref=e20132] [cursor=pointer]: "#744"
+                - button "Add to comparison" [ref=e20133] [cursor=pointer]:
+                  - img [ref=e20134] [cursor=pointer]
+              - generic [ref=e20141] [cursor=pointer]:
+                - generic [ref=e20144] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 744" [ref=e20146] [cursor=pointer]
+              - heading [level=3] [ref=e20148] [cursor=pointer]
+          - button "View details for Pokemon 745" [ref=e20155] [cursor=pointer]:
+            - generic [ref=e20157] [cursor=pointer]:
+              - generic [ref=e20158] [cursor=pointer]:
+                - generic [ref=e20159] [cursor=pointer]: "#745"
+                - button "Add to comparison" [ref=e20160] [cursor=pointer]:
+                  - img [ref=e20161] [cursor=pointer]
+              - generic [ref=e20168] [cursor=pointer]:
+                - generic [ref=e20171] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 745" [ref=e20173] [cursor=pointer]
+              - heading [level=3] [ref=e20175] [cursor=pointer]
+          - button "View details for Pokemon 746" [ref=e20182] [cursor=pointer]:
+            - generic [ref=e20184] [cursor=pointer]:
+              - generic [ref=e20185] [cursor=pointer]:
+                - generic [ref=e20186] [cursor=pointer]: "#746"
+                - button "Add to comparison" [ref=e20187] [cursor=pointer]:
+                  - img [ref=e20188] [cursor=pointer]
+              - generic [ref=e20195] [cursor=pointer]:
+                - generic [ref=e20198] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 746" [ref=e20200] [cursor=pointer]
+              - heading [level=3] [ref=e20202] [cursor=pointer]
+          - button "View details for Pokemon 747" [ref=e20209] [cursor=pointer]:
+            - generic [ref=e20211] [cursor=pointer]:
+              - generic [ref=e20212] [cursor=pointer]:
+                - generic [ref=e20213] [cursor=pointer]: "#747"
+                - button "Add to comparison" [ref=e20214] [cursor=pointer]:
+                  - img [ref=e20215] [cursor=pointer]
+              - generic [ref=e20222] [cursor=pointer]:
+                - generic [ref=e20225] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 747" [ref=e20227] [cursor=pointer]
+              - heading [level=3] [ref=e20229] [cursor=pointer]
+          - button "View details for Pokemon 748" [ref=e20236] [cursor=pointer]:
+            - generic [ref=e20238] [cursor=pointer]:
+              - generic [ref=e20239] [cursor=pointer]:
+                - generic [ref=e20240] [cursor=pointer]: "#748"
+                - button "Add to comparison" [ref=e20241] [cursor=pointer]:
+                  - img [ref=e20242] [cursor=pointer]
+              - generic [ref=e20249] [cursor=pointer]:
+                - generic [ref=e20252] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 748" [ref=e20254] [cursor=pointer]
+              - heading [level=3] [ref=e20256] [cursor=pointer]
+          - button "View details for Pokemon 749" [ref=e20263] [cursor=pointer]:
+            - generic [ref=e20265] [cursor=pointer]:
+              - generic [ref=e20266] [cursor=pointer]:
+                - generic [ref=e20267] [cursor=pointer]: "#749"
+                - button "Add to comparison" [ref=e20268] [cursor=pointer]:
+                  - img [ref=e20269] [cursor=pointer]
+              - generic [ref=e20276] [cursor=pointer]:
+                - generic [ref=e20279] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 749" [ref=e20281] [cursor=pointer]
+              - heading [level=3] [ref=e20283] [cursor=pointer]
+          - button "View details for Pokemon 750" [ref=e20290] [cursor=pointer]:
+            - generic [ref=e20292] [cursor=pointer]:
+              - generic [ref=e20293] [cursor=pointer]:
+                - generic [ref=e20294] [cursor=pointer]: "#750"
+                - button "Add to comparison" [ref=e20295] [cursor=pointer]:
+                  - img [ref=e20296] [cursor=pointer]
+              - generic [ref=e20303] [cursor=pointer]:
+                - generic [ref=e20306] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 750" [ref=e20308] [cursor=pointer]
+              - heading [level=3] [ref=e20310] [cursor=pointer]
+          - button "View details for Pokemon 751" [ref=e20317] [cursor=pointer]:
+            - generic [ref=e20319] [cursor=pointer]:
+              - generic [ref=e20320] [cursor=pointer]:
+                - generic [ref=e20321] [cursor=pointer]: "#751"
+                - button "Add to comparison" [ref=e20322] [cursor=pointer]:
+                  - img [ref=e20323] [cursor=pointer]
+              - generic [ref=e20330] [cursor=pointer]:
+                - generic [ref=e20333] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 751" [ref=e20335] [cursor=pointer]
+              - heading [level=3] [ref=e20337] [cursor=pointer]
+          - button "View details for Pokemon 752" [ref=e20344] [cursor=pointer]:
+            - generic [ref=e20346] [cursor=pointer]:
+              - generic [ref=e20347] [cursor=pointer]:
+                - generic [ref=e20348] [cursor=pointer]: "#752"
+                - button "Add to comparison" [ref=e20349] [cursor=pointer]:
+                  - img [ref=e20350] [cursor=pointer]
+              - generic [ref=e20357] [cursor=pointer]:
+                - generic [ref=e20360] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 752" [ref=e20362] [cursor=pointer]
+              - heading [level=3] [ref=e20364] [cursor=pointer]
+          - button "View details for Pokemon 753" [ref=e20371] [cursor=pointer]:
+            - generic [ref=e20373] [cursor=pointer]:
+              - generic [ref=e20374] [cursor=pointer]:
+                - generic [ref=e20375] [cursor=pointer]: "#753"
+                - button "Add to comparison" [ref=e20376] [cursor=pointer]:
+                  - img [ref=e20377] [cursor=pointer]
+              - generic [ref=e20384] [cursor=pointer]:
+                - generic [ref=e20387] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 753" [ref=e20389] [cursor=pointer]
+              - heading [level=3] [ref=e20391] [cursor=pointer]
+          - button "View details for Pokemon 754" [ref=e20398] [cursor=pointer]:
+            - generic [ref=e20400] [cursor=pointer]:
+              - generic [ref=e20401] [cursor=pointer]:
+                - generic [ref=e20402] [cursor=pointer]: "#754"
+                - button "Add to comparison" [ref=e20403] [cursor=pointer]:
+                  - img [ref=e20404] [cursor=pointer]
+              - generic [ref=e20411] [cursor=pointer]:
+                - generic [ref=e20414] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 754" [ref=e20416] [cursor=pointer]
+              - heading [level=3] [ref=e20418] [cursor=pointer]
+          - button "View details for Pokemon 755" [ref=e20425] [cursor=pointer]:
+            - generic [ref=e20427] [cursor=pointer]:
+              - generic [ref=e20428] [cursor=pointer]:
+                - generic [ref=e20429] [cursor=pointer]: "#755"
+                - button "Add to comparison" [ref=e20430] [cursor=pointer]:
+                  - img [ref=e20431] [cursor=pointer]
+              - generic [ref=e20438] [cursor=pointer]:
+                - generic [ref=e20441] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 755" [ref=e20443] [cursor=pointer]
+              - heading [level=3] [ref=e20445] [cursor=pointer]
+          - button "View details for Pokemon 756" [ref=e20452] [cursor=pointer]:
+            - generic [ref=e20454] [cursor=pointer]:
+              - generic [ref=e20455] [cursor=pointer]:
+                - generic [ref=e20456] [cursor=pointer]: "#756"
+                - button "Add to comparison" [ref=e20457] [cursor=pointer]:
+                  - img [ref=e20458] [cursor=pointer]
+              - generic [ref=e20465] [cursor=pointer]:
+                - generic [ref=e20468] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 756" [ref=e20470] [cursor=pointer]
+              - heading [level=3] [ref=e20472] [cursor=pointer]
+          - button "View details for Pokemon 757" [ref=e20479] [cursor=pointer]:
+            - generic [ref=e20481] [cursor=pointer]:
+              - generic [ref=e20482] [cursor=pointer]:
+                - generic [ref=e20483] [cursor=pointer]: "#757"
+                - button "Add to comparison" [ref=e20484] [cursor=pointer]:
+                  - img [ref=e20485] [cursor=pointer]
+              - generic [ref=e20492] [cursor=pointer]:
+                - generic [ref=e20495] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 757" [ref=e20497] [cursor=pointer]
+              - heading [level=3] [ref=e20499] [cursor=pointer]
+          - button "View details for Pokemon 758" [ref=e20506] [cursor=pointer]:
+            - generic [ref=e20508] [cursor=pointer]:
+              - generic [ref=e20509] [cursor=pointer]:
+                - generic [ref=e20510] [cursor=pointer]: "#758"
+                - button "Add to comparison" [ref=e20511] [cursor=pointer]:
+                  - img [ref=e20512] [cursor=pointer]
+              - generic [ref=e20519] [cursor=pointer]:
+                - generic [ref=e20522] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 758" [ref=e20524] [cursor=pointer]
+              - heading [level=3] [ref=e20526] [cursor=pointer]
+          - button "View details for Pokemon 759" [ref=e20533] [cursor=pointer]:
+            - generic [ref=e20535] [cursor=pointer]:
+              - generic [ref=e20536] [cursor=pointer]:
+                - generic [ref=e20537] [cursor=pointer]: "#759"
+                - button "Add to comparison" [ref=e20538] [cursor=pointer]:
+                  - img [ref=e20539] [cursor=pointer]
+              - generic [ref=e20546] [cursor=pointer]:
+                - generic [ref=e20549] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 759" [ref=e20551] [cursor=pointer]
+              - heading [level=3] [ref=e20553] [cursor=pointer]
+          - button "View details for Pokemon 760" [ref=e20560] [cursor=pointer]:
+            - generic [ref=e20562] [cursor=pointer]:
+              - generic [ref=e20563] [cursor=pointer]:
+                - generic [ref=e20564] [cursor=pointer]: "#760"
+                - button "Add to comparison" [ref=e20565] [cursor=pointer]:
+                  - img [ref=e20566] [cursor=pointer]
+              - generic [ref=e20573] [cursor=pointer]:
+                - generic [ref=e20576] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 760" [ref=e20578] [cursor=pointer]
+              - heading [level=3] [ref=e20580] [cursor=pointer]
+          - button "View details for Pokemon 761" [ref=e20587] [cursor=pointer]:
+            - generic [ref=e20589] [cursor=pointer]:
+              - generic [ref=e20590] [cursor=pointer]:
+                - generic [ref=e20591] [cursor=pointer]: "#761"
+                - button "Add to comparison" [ref=e20592] [cursor=pointer]:
+                  - img [ref=e20593] [cursor=pointer]
+              - generic [ref=e20600] [cursor=pointer]:
+                - generic [ref=e20603] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 761" [ref=e20605] [cursor=pointer]
+              - heading [level=3] [ref=e20607] [cursor=pointer]
+          - button "View details for Pokemon 762" [ref=e20614] [cursor=pointer]:
+            - generic [ref=e20616] [cursor=pointer]:
+              - generic [ref=e20617] [cursor=pointer]:
+                - generic [ref=e20618] [cursor=pointer]: "#762"
+                - button "Add to comparison" [ref=e20619] [cursor=pointer]:
+                  - img [ref=e20620] [cursor=pointer]
+              - generic [ref=e20627] [cursor=pointer]:
+                - generic [ref=e20630] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 762" [ref=e20632] [cursor=pointer]
+              - heading [level=3] [ref=e20634] [cursor=pointer]
+          - button "View details for Pokemon 763" [ref=e20641] [cursor=pointer]:
+            - generic [ref=e20643] [cursor=pointer]:
+              - generic [ref=e20644] [cursor=pointer]:
+                - generic [ref=e20645] [cursor=pointer]: "#763"
+                - button "Add to comparison" [ref=e20646] [cursor=pointer]:
+                  - img [ref=e20647] [cursor=pointer]
+              - generic [ref=e20654] [cursor=pointer]:
+                - generic [ref=e20657] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 763" [ref=e20659] [cursor=pointer]
+              - heading [level=3] [ref=e20661] [cursor=pointer]
+          - button "View details for Pokemon 764" [ref=e20668] [cursor=pointer]:
+            - generic [ref=e20670] [cursor=pointer]:
+              - generic [ref=e20671] [cursor=pointer]:
+                - generic [ref=e20672] [cursor=pointer]: "#764"
+                - button "Add to comparison" [ref=e20673] [cursor=pointer]:
+                  - img [ref=e20674] [cursor=pointer]
+              - generic [ref=e20681] [cursor=pointer]:
+                - generic [ref=e20684] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 764" [ref=e20686] [cursor=pointer]
+              - heading [level=3] [ref=e20688] [cursor=pointer]
+          - button "View details for Pokemon 765" [ref=e20695] [cursor=pointer]:
+            - generic [ref=e20697] [cursor=pointer]:
+              - generic [ref=e20698] [cursor=pointer]:
+                - generic [ref=e20699] [cursor=pointer]: "#765"
+                - button "Add to comparison" [ref=e20700] [cursor=pointer]:
+                  - img [ref=e20701] [cursor=pointer]
+              - generic [ref=e20708] [cursor=pointer]:
+                - generic [ref=e20711] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 765" [ref=e20713] [cursor=pointer]
+              - heading [level=3] [ref=e20715] [cursor=pointer]
+          - button "View details for Pokemon 766" [ref=e20722] [cursor=pointer]:
+            - generic [ref=e20724] [cursor=pointer]:
+              - generic [ref=e20725] [cursor=pointer]:
+                - generic [ref=e20726] [cursor=pointer]: "#766"
+                - button "Add to comparison" [ref=e20727] [cursor=pointer]:
+                  - img [ref=e20728] [cursor=pointer]
+              - generic [ref=e20735] [cursor=pointer]:
+                - generic [ref=e20738] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 766" [ref=e20740] [cursor=pointer]
+              - heading [level=3] [ref=e20742] [cursor=pointer]
+          - button "View details for Pokemon 767" [ref=e20749] [cursor=pointer]:
+            - generic [ref=e20751] [cursor=pointer]:
+              - generic [ref=e20752] [cursor=pointer]:
+                - generic [ref=e20753] [cursor=pointer]: "#767"
+                - button "Add to comparison" [ref=e20754] [cursor=pointer]:
+                  - img [ref=e20755] [cursor=pointer]
+              - generic [ref=e20762] [cursor=pointer]:
+                - generic [ref=e20765] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 767" [ref=e20767] [cursor=pointer]
+              - heading [level=3] [ref=e20769] [cursor=pointer]
+          - button "View details for Pokemon 768" [ref=e20776] [cursor=pointer]:
+            - generic [ref=e20778] [cursor=pointer]:
+              - generic [ref=e20779] [cursor=pointer]:
+                - generic [ref=e20780] [cursor=pointer]: "#768"
+                - button "Add to comparison" [ref=e20781] [cursor=pointer]:
+                  - img [ref=e20782] [cursor=pointer]
+              - generic [ref=e20789] [cursor=pointer]:
+                - generic [ref=e20792] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 768" [ref=e20794] [cursor=pointer]
+              - heading [level=3] [ref=e20796] [cursor=pointer]
+          - button "View details for Pokemon 769" [ref=e20803] [cursor=pointer]:
+            - generic [ref=e20805] [cursor=pointer]:
+              - generic [ref=e20806] [cursor=pointer]:
+                - generic [ref=e20807] [cursor=pointer]: "#769"
+                - button "Add to comparison" [ref=e20808] [cursor=pointer]:
+                  - img [ref=e20809] [cursor=pointer]
+              - generic [ref=e20816] [cursor=pointer]:
+                - generic [ref=e20819] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 769" [ref=e20821] [cursor=pointer]
+              - heading [level=3] [ref=e20823] [cursor=pointer]
+          - button "View details for Pokemon 770" [ref=e20830] [cursor=pointer]:
+            - generic [ref=e20832] [cursor=pointer]:
+              - generic [ref=e20833] [cursor=pointer]:
+                - generic [ref=e20834] [cursor=pointer]: "#770"
+                - button "Add to comparison" [ref=e20835] [cursor=pointer]:
+                  - img [ref=e20836] [cursor=pointer]
+              - generic [ref=e20843] [cursor=pointer]:
+                - generic [ref=e20846] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 770" [ref=e20848] [cursor=pointer]
+              - heading [level=3] [ref=e20850] [cursor=pointer]
+          - button "View details for Pokemon 771" [ref=e20857] [cursor=pointer]:
+            - generic [ref=e20859] [cursor=pointer]:
+              - generic [ref=e20860] [cursor=pointer]:
+                - generic [ref=e20861] [cursor=pointer]: "#771"
+                - button "Add to comparison" [ref=e20862] [cursor=pointer]:
+                  - img [ref=e20863] [cursor=pointer]
+              - generic [ref=e20870] [cursor=pointer]:
+                - generic [ref=e20873] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 771" [ref=e20875] [cursor=pointer]
+              - heading [level=3] [ref=e20877] [cursor=pointer]
+          - button "View details for Pokemon 772" [ref=e20884] [cursor=pointer]:
+            - generic [ref=e20886] [cursor=pointer]:
+              - generic [ref=e20887] [cursor=pointer]:
+                - generic [ref=e20888] [cursor=pointer]: "#772"
+                - button "Add to comparison" [ref=e20889] [cursor=pointer]:
+                  - img [ref=e20890] [cursor=pointer]
+              - generic [ref=e20897] [cursor=pointer]:
+                - generic [ref=e20900] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 772" [ref=e20902] [cursor=pointer]
+              - heading [level=3] [ref=e20904] [cursor=pointer]
+          - button "View details for Pokemon 773" [ref=e20911] [cursor=pointer]:
+            - generic [ref=e20913] [cursor=pointer]:
+              - generic [ref=e20914] [cursor=pointer]:
+                - generic [ref=e20915] [cursor=pointer]: "#773"
+                - button "Add to comparison" [ref=e20916] [cursor=pointer]:
+                  - img [ref=e20917] [cursor=pointer]
+              - generic [ref=e20924] [cursor=pointer]:
+                - generic [ref=e20927] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 773" [ref=e20929] [cursor=pointer]
+              - heading [level=3] [ref=e20931] [cursor=pointer]
+          - button "View details for Pokemon 774" [ref=e20938] [cursor=pointer]:
+            - generic [ref=e20940] [cursor=pointer]:
+              - generic [ref=e20941] [cursor=pointer]:
+                - generic [ref=e20942] [cursor=pointer]: "#774"
+                - button "Add to comparison" [ref=e20943] [cursor=pointer]:
+                  - img [ref=e20944] [cursor=pointer]
+              - generic [ref=e20951] [cursor=pointer]:
+                - generic [ref=e20954] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 774" [ref=e20956] [cursor=pointer]
+              - heading [level=3] [ref=e20958] [cursor=pointer]
+          - button "View details for Pokemon 775" [ref=e20965] [cursor=pointer]:
+            - generic [ref=e20967] [cursor=pointer]:
+              - generic [ref=e20968] [cursor=pointer]:
+                - generic [ref=e20969] [cursor=pointer]: "#775"
+                - button "Add to comparison" [ref=e20970] [cursor=pointer]:
+                  - img [ref=e20971] [cursor=pointer]
+              - generic [ref=e20978] [cursor=pointer]:
+                - generic [ref=e20981] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 775" [ref=e20983] [cursor=pointer]
+              - heading [level=3] [ref=e20985] [cursor=pointer]
+          - button "View details for Pokemon 776" [ref=e20992] [cursor=pointer]:
+            - generic [ref=e20994] [cursor=pointer]:
+              - generic [ref=e20995] [cursor=pointer]:
+                - generic [ref=e20996] [cursor=pointer]: "#776"
+                - button "Add to comparison" [ref=e20997] [cursor=pointer]:
+                  - img [ref=e20998] [cursor=pointer]
+              - generic [ref=e21005] [cursor=pointer]:
+                - generic [ref=e21008] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 776" [ref=e21010] [cursor=pointer]
+              - heading [level=3] [ref=e21012] [cursor=pointer]
+          - button "View details for Pokemon 777" [ref=e21019] [cursor=pointer]:
+            - generic [ref=e21021] [cursor=pointer]:
+              - generic [ref=e21022] [cursor=pointer]:
+                - generic [ref=e21023] [cursor=pointer]: "#777"
+                - button "Add to comparison" [ref=e21024] [cursor=pointer]:
+                  - img [ref=e21025] [cursor=pointer]
+              - generic [ref=e21032] [cursor=pointer]:
+                - generic [ref=e21035] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 777" [ref=e21037] [cursor=pointer]
+              - heading [level=3] [ref=e21039] [cursor=pointer]
+          - button "View details for Pokemon 778" [ref=e21046] [cursor=pointer]:
+            - generic [ref=e21048] [cursor=pointer]:
+              - generic [ref=e21049] [cursor=pointer]:
+                - generic [ref=e21050] [cursor=pointer]: "#778"
+                - button "Add to comparison" [ref=e21051] [cursor=pointer]:
+                  - img [ref=e21052] [cursor=pointer]
+              - generic [ref=e21059] [cursor=pointer]:
+                - generic [ref=e21062] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 778" [ref=e21064] [cursor=pointer]
+              - heading [level=3] [ref=e21066] [cursor=pointer]
+          - button "View details for Pokemon 779" [ref=e21073] [cursor=pointer]:
+            - generic [ref=e21075] [cursor=pointer]:
+              - generic [ref=e21076] [cursor=pointer]:
+                - generic [ref=e21077] [cursor=pointer]: "#779"
+                - button "Add to comparison" [ref=e21078] [cursor=pointer]:
+                  - img [ref=e21079] [cursor=pointer]
+              - generic [ref=e21086] [cursor=pointer]:
+                - generic [ref=e21089] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 779" [ref=e21091] [cursor=pointer]
+              - heading [level=3] [ref=e21093] [cursor=pointer]
+          - button "View details for Pokemon 780" [ref=e21100] [cursor=pointer]:
+            - generic [ref=e21102] [cursor=pointer]:
+              - generic [ref=e21103] [cursor=pointer]:
+                - generic [ref=e21104] [cursor=pointer]: "#780"
+                - button "Add to comparison" [ref=e21105] [cursor=pointer]:
+                  - img [ref=e21106] [cursor=pointer]
+              - generic [ref=e21113] [cursor=pointer]:
+                - generic [ref=e21116] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 780" [ref=e21118] [cursor=pointer]
+              - heading [level=3] [ref=e21120] [cursor=pointer]
+          - button "View details for Pokemon 781" [ref=e21127] [cursor=pointer]:
+            - generic [ref=e21129] [cursor=pointer]:
+              - generic [ref=e21130] [cursor=pointer]:
+                - generic [ref=e21131] [cursor=pointer]: "#781"
+                - button "Add to comparison" [ref=e21132] [cursor=pointer]:
+                  - img [ref=e21133] [cursor=pointer]
+              - generic [ref=e21140] [cursor=pointer]:
+                - generic [ref=e21143] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 781" [ref=e21145] [cursor=pointer]
+              - heading [level=3] [ref=e21147] [cursor=pointer]
+          - button "View details for Pokemon 782" [ref=e21154] [cursor=pointer]:
+            - generic [ref=e21156] [cursor=pointer]:
+              - generic [ref=e21157] [cursor=pointer]:
+                - generic [ref=e21158] [cursor=pointer]: "#782"
+                - button "Add to comparison" [ref=e21159] [cursor=pointer]:
+                  - img [ref=e21160] [cursor=pointer]
+              - generic [ref=e21167] [cursor=pointer]:
+                - generic [ref=e21170] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 782" [ref=e21172] [cursor=pointer]
+              - heading [level=3] [ref=e21174] [cursor=pointer]
+          - button "View details for Pokemon 783" [ref=e21181] [cursor=pointer]:
+            - generic [ref=e21183] [cursor=pointer]:
+              - generic [ref=e21184] [cursor=pointer]:
+                - generic [ref=e21185] [cursor=pointer]: "#783"
+                - button "Add to comparison" [ref=e21186] [cursor=pointer]:
+                  - img [ref=e21187] [cursor=pointer]
+              - generic [ref=e21194] [cursor=pointer]:
+                - generic [ref=e21197] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 783" [ref=e21199] [cursor=pointer]
+              - heading [level=3] [ref=e21201] [cursor=pointer]
+          - button "View details for Pokemon 784" [ref=e21208] [cursor=pointer]:
+            - generic [ref=e21210] [cursor=pointer]:
+              - generic [ref=e21211] [cursor=pointer]:
+                - generic [ref=e21212] [cursor=pointer]: "#784"
+                - button "Add to comparison" [ref=e21213] [cursor=pointer]:
+                  - img [ref=e21214] [cursor=pointer]
+              - generic [ref=e21221] [cursor=pointer]:
+                - generic [ref=e21224] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 784" [ref=e21226] [cursor=pointer]
+              - heading [level=3] [ref=e21228] [cursor=pointer]
+          - button "View details for Pokemon 785" [ref=e21235] [cursor=pointer]:
+            - generic [ref=e21237] [cursor=pointer]:
+              - generic [ref=e21238] [cursor=pointer]:
+                - generic [ref=e21239] [cursor=pointer]: "#785"
+                - button "Add to comparison" [ref=e21240] [cursor=pointer]:
+                  - img [ref=e21241] [cursor=pointer]
+              - generic [ref=e21248] [cursor=pointer]:
+                - generic [ref=e21251] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 785" [ref=e21253] [cursor=pointer]
+              - heading [level=3] [ref=e21255] [cursor=pointer]
+          - button "View details for Pokemon 786" [ref=e21262] [cursor=pointer]:
+            - generic [ref=e21264] [cursor=pointer]:
+              - generic [ref=e21265] [cursor=pointer]:
+                - generic [ref=e21266] [cursor=pointer]: "#786"
+                - button "Add to comparison" [ref=e21267] [cursor=pointer]:
+                  - img [ref=e21268] [cursor=pointer]
+              - generic [ref=e21275] [cursor=pointer]:
+                - generic [ref=e21278] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 786" [ref=e21280] [cursor=pointer]
+              - heading [level=3] [ref=e21282] [cursor=pointer]
+          - button "View details for Pokemon 787" [ref=e21289] [cursor=pointer]:
+            - generic [ref=e21291] [cursor=pointer]:
+              - generic [ref=e21292] [cursor=pointer]:
+                - generic [ref=e21293] [cursor=pointer]: "#787"
+                - button "Add to comparison" [ref=e21294] [cursor=pointer]:
+                  - img [ref=e21295] [cursor=pointer]
+              - generic [ref=e21302] [cursor=pointer]:
+                - generic [ref=e21305] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 787" [ref=e21307] [cursor=pointer]
+              - heading [level=3] [ref=e21309] [cursor=pointer]
+          - button "View details for Pokemon 788" [ref=e21316] [cursor=pointer]:
+            - generic [ref=e21318] [cursor=pointer]:
+              - generic [ref=e21319] [cursor=pointer]:
+                - generic [ref=e21320] [cursor=pointer]: "#788"
+                - button "Add to comparison" [ref=e21321] [cursor=pointer]:
+                  - img [ref=e21322] [cursor=pointer]
+              - generic [ref=e21329] [cursor=pointer]:
+                - generic [ref=e21332] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 788" [ref=e21334] [cursor=pointer]
+              - heading [level=3] [ref=e21336] [cursor=pointer]
+          - button "View details for Pokemon 789" [ref=e21343] [cursor=pointer]:
+            - generic [ref=e21345] [cursor=pointer]:
+              - generic [ref=e21346] [cursor=pointer]:
+                - generic [ref=e21347] [cursor=pointer]: "#789"
+                - button "Add to comparison" [ref=e21348] [cursor=pointer]:
+                  - img [ref=e21349] [cursor=pointer]
+              - generic [ref=e21356] [cursor=pointer]:
+                - generic [ref=e21359] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 789" [ref=e21361] [cursor=pointer]
+              - heading [level=3] [ref=e21363] [cursor=pointer]
+          - button "View details for Pokemon 790" [ref=e21370] [cursor=pointer]:
+            - generic [ref=e21372] [cursor=pointer]:
+              - generic [ref=e21373] [cursor=pointer]:
+                - generic [ref=e21374] [cursor=pointer]: "#790"
+                - button "Add to comparison" [ref=e21375] [cursor=pointer]:
+                  - img [ref=e21376] [cursor=pointer]
+              - generic [ref=e21383] [cursor=pointer]:
+                - generic [ref=e21386] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 790" [ref=e21388] [cursor=pointer]
+              - heading [level=3] [ref=e21390] [cursor=pointer]
+          - button "View details for Pokemon 791" [ref=e21397] [cursor=pointer]:
+            - generic [ref=e21399] [cursor=pointer]:
+              - generic [ref=e21400] [cursor=pointer]:
+                - generic [ref=e21401] [cursor=pointer]: "#791"
+                - button "Add to comparison" [ref=e21402] [cursor=pointer]:
+                  - img [ref=e21403] [cursor=pointer]
+              - generic [ref=e21410] [cursor=pointer]:
+                - generic [ref=e21413] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 791" [ref=e21415] [cursor=pointer]
+              - heading [level=3] [ref=e21417] [cursor=pointer]
+          - button "View details for Pokemon 792" [ref=e21424] [cursor=pointer]:
+            - generic [ref=e21426] [cursor=pointer]:
+              - generic [ref=e21427] [cursor=pointer]:
+                - generic [ref=e21428] [cursor=pointer]: "#792"
+                - button "Add to comparison" [ref=e21429] [cursor=pointer]:
+                  - img [ref=e21430] [cursor=pointer]
+              - generic [ref=e21437] [cursor=pointer]:
+                - generic [ref=e21440] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 792" [ref=e21442] [cursor=pointer]
+              - heading [level=3] [ref=e21444] [cursor=pointer]
+          - button "View details for Pokemon 793" [ref=e21451] [cursor=pointer]:
+            - generic [ref=e21453] [cursor=pointer]:
+              - generic [ref=e21454] [cursor=pointer]:
+                - generic [ref=e21455] [cursor=pointer]: "#793"
+                - button "Add to comparison" [ref=e21456] [cursor=pointer]:
+                  - img [ref=e21457] [cursor=pointer]
+              - generic [ref=e21464] [cursor=pointer]:
+                - generic [ref=e21467] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 793" [ref=e21469] [cursor=pointer]
+              - heading [level=3] [ref=e21471] [cursor=pointer]
+          - button "View details for Pokemon 794" [ref=e21478] [cursor=pointer]:
+            - generic [ref=e21480] [cursor=pointer]:
+              - generic [ref=e21481] [cursor=pointer]:
+                - generic [ref=e21482] [cursor=pointer]: "#794"
+                - button "Add to comparison" [ref=e21483] [cursor=pointer]:
+                  - img [ref=e21484] [cursor=pointer]
+              - generic [ref=e21491] [cursor=pointer]:
+                - generic [ref=e21494] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 794" [ref=e21496] [cursor=pointer]
+              - heading [level=3] [ref=e21498] [cursor=pointer]
+          - button "View details for Pokemon 795" [ref=e21505] [cursor=pointer]:
+            - generic [ref=e21507] [cursor=pointer]:
+              - generic [ref=e21508] [cursor=pointer]:
+                - generic [ref=e21509] [cursor=pointer]: "#795"
+                - button "Add to comparison" [ref=e21510] [cursor=pointer]:
+                  - img [ref=e21511] [cursor=pointer]
+              - generic [ref=e21518] [cursor=pointer]:
+                - generic [ref=e21521] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 795" [ref=e21523] [cursor=pointer]
+              - heading [level=3] [ref=e21525] [cursor=pointer]
+          - button "View details for Pokemon 796" [ref=e21532] [cursor=pointer]:
+            - generic [ref=e21534] [cursor=pointer]:
+              - generic [ref=e21535] [cursor=pointer]:
+                - generic [ref=e21536] [cursor=pointer]: "#796"
+                - button "Add to comparison" [ref=e21537] [cursor=pointer]:
+                  - img [ref=e21538] [cursor=pointer]
+              - generic [ref=e21545] [cursor=pointer]:
+                - generic [ref=e21548] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 796" [ref=e21550] [cursor=pointer]
+              - heading [level=3] [ref=e21552] [cursor=pointer]
+          - button "View details for Pokemon 797" [ref=e21559] [cursor=pointer]:
+            - generic [ref=e21561] [cursor=pointer]:
+              - generic [ref=e21562] [cursor=pointer]:
+                - generic [ref=e21563] [cursor=pointer]: "#797"
+                - button "Add to comparison" [ref=e21564] [cursor=pointer]:
+                  - img [ref=e21565] [cursor=pointer]
+              - generic [ref=e21572] [cursor=pointer]:
+                - generic [ref=e21575] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 797" [ref=e21577] [cursor=pointer]
+              - heading [level=3] [ref=e21579] [cursor=pointer]
+          - button "View details for Pokemon 798" [ref=e21586] [cursor=pointer]:
+            - generic [ref=e21588] [cursor=pointer]:
+              - generic [ref=e21589] [cursor=pointer]:
+                - generic [ref=e21590] [cursor=pointer]: "#798"
+                - button "Add to comparison" [ref=e21591] [cursor=pointer]:
+                  - img [ref=e21592] [cursor=pointer]
+              - generic [ref=e21599] [cursor=pointer]:
+                - generic [ref=e21602] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 798" [ref=e21604] [cursor=pointer]
+              - heading [level=3] [ref=e21606] [cursor=pointer]
+          - button "View details for Pokemon 799" [ref=e21613] [cursor=pointer]:
+            - generic [ref=e21615] [cursor=pointer]:
+              - generic [ref=e21616] [cursor=pointer]:
+                - generic [ref=e21617] [cursor=pointer]: "#799"
+                - button "Add to comparison" [ref=e21618] [cursor=pointer]:
+                  - img [ref=e21619] [cursor=pointer]
+              - generic [ref=e21626] [cursor=pointer]:
+                - generic [ref=e21629] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 799" [ref=e21631] [cursor=pointer]
+              - heading [level=3] [ref=e21633] [cursor=pointer]
+          - button "View details for Pokemon 800" [ref=e21640] [cursor=pointer]:
+            - generic [ref=e21642] [cursor=pointer]:
+              - generic [ref=e21643] [cursor=pointer]:
+                - generic [ref=e21644] [cursor=pointer]: "#800"
+                - button "Add to comparison" [ref=e21645] [cursor=pointer]:
+                  - img [ref=e21646] [cursor=pointer]
+              - generic [ref=e21653] [cursor=pointer]:
+                - generic [ref=e21656] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 800" [ref=e21658] [cursor=pointer]
+              - heading [level=3] [ref=e21660] [cursor=pointer]
+          - button "View details for Pokemon 801" [ref=e21667] [cursor=pointer]:
+            - generic [ref=e21669] [cursor=pointer]:
+              - generic [ref=e21670] [cursor=pointer]:
+                - generic [ref=e21671] [cursor=pointer]: "#801"
+                - button "Add to comparison" [ref=e21672] [cursor=pointer]:
+                  - img [ref=e21673] [cursor=pointer]
+              - generic [ref=e21680] [cursor=pointer]:
+                - generic [ref=e21683] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 801" [ref=e21685] [cursor=pointer]
+              - heading [level=3] [ref=e21687] [cursor=pointer]
+          - button "View details for Pokemon 802" [ref=e21694] [cursor=pointer]:
+            - generic [ref=e21696] [cursor=pointer]:
+              - generic [ref=e21697] [cursor=pointer]:
+                - generic [ref=e21698] [cursor=pointer]: "#802"
+                - button "Add to comparison" [ref=e21699] [cursor=pointer]:
+                  - img [ref=e21700] [cursor=pointer]
+              - generic [ref=e21707] [cursor=pointer]:
+                - generic [ref=e21710] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 802" [ref=e21712] [cursor=pointer]
+              - heading [level=3] [ref=e21714] [cursor=pointer]
+          - button "View details for Pokemon 803" [ref=e21721] [cursor=pointer]:
+            - generic [ref=e21723] [cursor=pointer]:
+              - generic [ref=e21724] [cursor=pointer]:
+                - generic [ref=e21725] [cursor=pointer]: "#803"
+                - button "Add to comparison" [ref=e21726] [cursor=pointer]:
+                  - img [ref=e21727] [cursor=pointer]
+              - generic [ref=e21734] [cursor=pointer]:
+                - generic [ref=e21737] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 803" [ref=e21739] [cursor=pointer]
+              - heading [level=3] [ref=e21741] [cursor=pointer]
+          - button "View details for Pokemon 804" [ref=e21748] [cursor=pointer]:
+            - generic [ref=e21750] [cursor=pointer]:
+              - generic [ref=e21751] [cursor=pointer]:
+                - generic [ref=e21752] [cursor=pointer]: "#804"
+                - button "Add to comparison" [ref=e21753] [cursor=pointer]:
+                  - img [ref=e21754] [cursor=pointer]
+              - generic [ref=e21761] [cursor=pointer]:
+                - generic [ref=e21764] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 804" [ref=e21766] [cursor=pointer]
+              - heading [level=3] [ref=e21768] [cursor=pointer]
+          - button "View details for Pokemon 805" [ref=e21775] [cursor=pointer]:
+            - generic [ref=e21777] [cursor=pointer]:
+              - generic [ref=e21778] [cursor=pointer]:
+                - generic [ref=e21779] [cursor=pointer]: "#805"
+                - button "Add to comparison" [ref=e21780] [cursor=pointer]:
+                  - img [ref=e21781] [cursor=pointer]
+              - generic [ref=e21788] [cursor=pointer]:
+                - generic [ref=e21791] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 805" [ref=e21793] [cursor=pointer]
+              - heading [level=3] [ref=e21795] [cursor=pointer]
+          - button "View details for Pokemon 806" [ref=e21802] [cursor=pointer]:
+            - generic [ref=e21804] [cursor=pointer]:
+              - generic [ref=e21805] [cursor=pointer]:
+                - generic [ref=e21806] [cursor=pointer]: "#806"
+                - button "Add to comparison" [ref=e21807] [cursor=pointer]:
+                  - img [ref=e21808] [cursor=pointer]
+              - generic [ref=e21815] [cursor=pointer]:
+                - generic [ref=e21818] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 806" [ref=e21820] [cursor=pointer]
+              - heading [level=3] [ref=e21822] [cursor=pointer]
+          - button "View details for Pokemon 807" [ref=e21829] [cursor=pointer]:
+            - generic [ref=e21831] [cursor=pointer]:
+              - generic [ref=e21832] [cursor=pointer]:
+                - generic [ref=e21833] [cursor=pointer]: "#807"
+                - button "Add to comparison" [ref=e21834] [cursor=pointer]:
+                  - img [ref=e21835] [cursor=pointer]
+              - generic [ref=e21842] [cursor=pointer]:
+                - generic [ref=e21845] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 807" [ref=e21847] [cursor=pointer]
+              - heading [level=3] [ref=e21849] [cursor=pointer]
+          - button "View details for Pokemon 808" [ref=e21856] [cursor=pointer]:
+            - generic [ref=e21858] [cursor=pointer]:
+              - generic [ref=e21859] [cursor=pointer]:
+                - generic [ref=e21860] [cursor=pointer]: "#808"
+                - button "Add to comparison" [ref=e21861] [cursor=pointer]:
+                  - img [ref=e21862] [cursor=pointer]
+              - generic [ref=e21869] [cursor=pointer]:
+                - generic [ref=e21872] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 808" [ref=e21874] [cursor=pointer]
+              - heading [level=3] [ref=e21876] [cursor=pointer]
+          - button "View details for Pokemon 809" [ref=e21883] [cursor=pointer]:
+            - generic [ref=e21885] [cursor=pointer]:
+              - generic [ref=e21886] [cursor=pointer]:
+                - generic [ref=e21887] [cursor=pointer]: "#809"
+                - button "Add to comparison" [ref=e21888] [cursor=pointer]:
+                  - img [ref=e21889] [cursor=pointer]
+              - generic [ref=e21896] [cursor=pointer]:
+                - generic [ref=e21899] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 809" [ref=e21901] [cursor=pointer]
+              - heading [level=3] [ref=e21903] [cursor=pointer]
+          - button "View details for Pokemon 810" [ref=e21910] [cursor=pointer]:
+            - generic [ref=e21912] [cursor=pointer]:
+              - generic [ref=e21913] [cursor=pointer]:
+                - generic [ref=e21914] [cursor=pointer]: "#810"
+                - button "Add to comparison" [ref=e21915] [cursor=pointer]:
+                  - img [ref=e21916] [cursor=pointer]
+              - generic [ref=e21923] [cursor=pointer]:
+                - generic [ref=e21926] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 810" [ref=e21928] [cursor=pointer]
+              - heading [level=3] [ref=e21930] [cursor=pointer]
+          - button "View details for Pokemon 811" [ref=e21937] [cursor=pointer]:
+            - generic [ref=e21939] [cursor=pointer]:
+              - generic [ref=e21940] [cursor=pointer]:
+                - generic [ref=e21941] [cursor=pointer]: "#811"
+                - button "Add to comparison" [ref=e21942] [cursor=pointer]:
+                  - img [ref=e21943] [cursor=pointer]
+              - generic [ref=e21950] [cursor=pointer]:
+                - generic [ref=e21953] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 811" [ref=e21955] [cursor=pointer]
+              - heading [level=3] [ref=e21957] [cursor=pointer]
+          - button "View details for Pokemon 812" [ref=e21964] [cursor=pointer]:
+            - generic [ref=e21966] [cursor=pointer]:
+              - generic [ref=e21967] [cursor=pointer]:
+                - generic [ref=e21968] [cursor=pointer]: "#812"
+                - button "Add to comparison" [ref=e21969] [cursor=pointer]:
+                  - img [ref=e21970] [cursor=pointer]
+              - generic [ref=e21977] [cursor=pointer]:
+                - generic [ref=e21980] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 812" [ref=e21982] [cursor=pointer]
+              - heading [level=3] [ref=e21984] [cursor=pointer]
+          - button "View details for Pokemon 813" [ref=e21991] [cursor=pointer]:
+            - generic [ref=e21993] [cursor=pointer]:
+              - generic [ref=e21994] [cursor=pointer]:
+                - generic [ref=e21995] [cursor=pointer]: "#813"
+                - button "Add to comparison" [ref=e21996] [cursor=pointer]:
+                  - img [ref=e21997] [cursor=pointer]
+              - generic [ref=e22004] [cursor=pointer]:
+                - generic [ref=e22007] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 813" [ref=e22009] [cursor=pointer]
+              - heading [level=3] [ref=e22011] [cursor=pointer]
+          - button "View details for Pokemon 814" [ref=e22018] [cursor=pointer]:
+            - generic [ref=e22020] [cursor=pointer]:
+              - generic [ref=e22021] [cursor=pointer]:
+                - generic [ref=e22022] [cursor=pointer]: "#814"
+                - button "Add to comparison" [ref=e22023] [cursor=pointer]:
+                  - img [ref=e22024] [cursor=pointer]
+              - generic [ref=e22031] [cursor=pointer]:
+                - generic [ref=e22034] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 814" [ref=e22036] [cursor=pointer]
+              - heading [level=3] [ref=e22038] [cursor=pointer]
+          - button "View details for Pokemon 815" [ref=e22045] [cursor=pointer]:
+            - generic [ref=e22047] [cursor=pointer]:
+              - generic [ref=e22048] [cursor=pointer]:
+                - generic [ref=e22049] [cursor=pointer]: "#815"
+                - button "Add to comparison" [ref=e22050] [cursor=pointer]:
+                  - img [ref=e22051] [cursor=pointer]
+              - generic [ref=e22058] [cursor=pointer]:
+                - generic [ref=e22061] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 815" [ref=e22063] [cursor=pointer]
+              - heading [level=3] [ref=e22065] [cursor=pointer]
+          - button "View details for Pokemon 816" [ref=e22072] [cursor=pointer]:
+            - generic [ref=e22074] [cursor=pointer]:
+              - generic [ref=e22075] [cursor=pointer]:
+                - generic [ref=e22076] [cursor=pointer]: "#816"
+                - button "Add to comparison" [ref=e22077] [cursor=pointer]:
+                  - img [ref=e22078] [cursor=pointer]
+              - generic [ref=e22085] [cursor=pointer]:
+                - generic [ref=e22088] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 816" [ref=e22090] [cursor=pointer]
+              - heading [level=3] [ref=e22092] [cursor=pointer]
+          - button "View details for Pokemon 817" [ref=e22099] [cursor=pointer]:
+            - generic [ref=e22101] [cursor=pointer]:
+              - generic [ref=e22102] [cursor=pointer]:
+                - generic [ref=e22103] [cursor=pointer]: "#817"
+                - button "Add to comparison" [ref=e22104] [cursor=pointer]:
+                  - img [ref=e22105] [cursor=pointer]
+              - generic [ref=e22112] [cursor=pointer]:
+                - generic [ref=e22115] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 817" [ref=e22117] [cursor=pointer]
+              - heading [level=3] [ref=e22119] [cursor=pointer]
+          - button "View details for Pokemon 818" [ref=e22126] [cursor=pointer]:
+            - generic [ref=e22128] [cursor=pointer]:
+              - generic [ref=e22129] [cursor=pointer]:
+                - generic [ref=e22130] [cursor=pointer]: "#818"
+                - button "Add to comparison" [ref=e22131] [cursor=pointer]:
+                  - img [ref=e22132] [cursor=pointer]
+              - generic [ref=e22139] [cursor=pointer]:
+                - generic [ref=e22142] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 818" [ref=e22144] [cursor=pointer]
+              - heading [level=3] [ref=e22146] [cursor=pointer]
+          - button "View details for Pokemon 819" [ref=e22153] [cursor=pointer]:
+            - generic [ref=e22155] [cursor=pointer]:
+              - generic [ref=e22156] [cursor=pointer]:
+                - generic [ref=e22157] [cursor=pointer]: "#819"
+                - button "Add to comparison" [ref=e22158] [cursor=pointer]:
+                  - img [ref=e22159] [cursor=pointer]
+              - generic [ref=e22166] [cursor=pointer]:
+                - generic [ref=e22169] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 819" [ref=e22171] [cursor=pointer]
+              - heading [level=3] [ref=e22173] [cursor=pointer]
+          - button "View details for Pokemon 820" [ref=e22180] [cursor=pointer]:
+            - generic [ref=e22182] [cursor=pointer]:
+              - generic [ref=e22183] [cursor=pointer]:
+                - generic [ref=e22184] [cursor=pointer]: "#820"
+                - button "Add to comparison" [ref=e22185] [cursor=pointer]:
+                  - img [ref=e22186] [cursor=pointer]
+              - generic [ref=e22193] [cursor=pointer]:
+                - generic [ref=e22196] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 820" [ref=e22198] [cursor=pointer]
+              - heading [level=3] [ref=e22200] [cursor=pointer]
+          - button "View details for Pokemon 821" [ref=e22207] [cursor=pointer]:
+            - generic [ref=e22209] [cursor=pointer]:
+              - generic [ref=e22210] [cursor=pointer]:
+                - generic [ref=e22211] [cursor=pointer]: "#821"
+                - button "Add to comparison" [ref=e22212] [cursor=pointer]:
+                  - img [ref=e22213] [cursor=pointer]
+              - generic [ref=e22220] [cursor=pointer]:
+                - generic [ref=e22223] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 821" [ref=e22225] [cursor=pointer]
+              - heading [level=3] [ref=e22227] [cursor=pointer]
+          - button "View details for Pokemon 822" [ref=e22234] [cursor=pointer]:
+            - generic [ref=e22236] [cursor=pointer]:
+              - generic [ref=e22237] [cursor=pointer]:
+                - generic [ref=e22238] [cursor=pointer]: "#822"
+                - button "Add to comparison" [ref=e22239] [cursor=pointer]:
+                  - img [ref=e22240] [cursor=pointer]
+              - generic [ref=e22247] [cursor=pointer]:
+                - generic [ref=e22250] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 822" [ref=e22252] [cursor=pointer]
+              - heading [level=3] [ref=e22254] [cursor=pointer]
+          - button "View details for Pokemon 823" [ref=e22261] [cursor=pointer]:
+            - generic [ref=e22263] [cursor=pointer]:
+              - generic [ref=e22264] [cursor=pointer]:
+                - generic [ref=e22265] [cursor=pointer]: "#823"
+                - button "Add to comparison" [ref=e22266] [cursor=pointer]:
+                  - img [ref=e22267] [cursor=pointer]
+              - generic [ref=e22274] [cursor=pointer]:
+                - generic [ref=e22277] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 823" [ref=e22279] [cursor=pointer]
+              - heading [level=3] [ref=e22281] [cursor=pointer]
+          - button "View details for Pokemon 824" [ref=e22288] [cursor=pointer]:
+            - generic [ref=e22290] [cursor=pointer]:
+              - generic [ref=e22291] [cursor=pointer]:
+                - generic [ref=e22292] [cursor=pointer]: "#824"
+                - button "Add to comparison" [ref=e22293] [cursor=pointer]:
+                  - img [ref=e22294] [cursor=pointer]
+              - generic [ref=e22301] [cursor=pointer]:
+                - generic [ref=e22304] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 824" [ref=e22306] [cursor=pointer]
+              - heading [level=3] [ref=e22308] [cursor=pointer]
+          - button "View details for Pokemon 825" [ref=e22315] [cursor=pointer]:
+            - generic [ref=e22317] [cursor=pointer]:
+              - generic [ref=e22318] [cursor=pointer]:
+                - generic [ref=e22319] [cursor=pointer]: "#825"
+                - button "Add to comparison" [ref=e22320] [cursor=pointer]:
+                  - img [ref=e22321] [cursor=pointer]
+              - generic [ref=e22328] [cursor=pointer]:
+                - generic [ref=e22331] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 825" [ref=e22333] [cursor=pointer]
+              - heading [level=3] [ref=e22335] [cursor=pointer]
+          - button "View details for Pokemon 826" [ref=e22342] [cursor=pointer]:
+            - generic [ref=e22344] [cursor=pointer]:
+              - generic [ref=e22345] [cursor=pointer]:
+                - generic [ref=e22346] [cursor=pointer]: "#826"
+                - button "Add to comparison" [ref=e22347] [cursor=pointer]:
+                  - img [ref=e22348] [cursor=pointer]
+              - generic [ref=e22355] [cursor=pointer]:
+                - generic [ref=e22358] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 826" [ref=e22360] [cursor=pointer]
+              - heading [level=3] [ref=e22362] [cursor=pointer]
+          - button "View details for Pokemon 827" [ref=e22369] [cursor=pointer]:
+            - generic [ref=e22371] [cursor=pointer]:
+              - generic [ref=e22372] [cursor=pointer]:
+                - generic [ref=e22373] [cursor=pointer]: "#827"
+                - button "Add to comparison" [ref=e22374] [cursor=pointer]:
+                  - img [ref=e22375] [cursor=pointer]
+              - generic [ref=e22382] [cursor=pointer]:
+                - generic [ref=e22385] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 827" [ref=e22387] [cursor=pointer]
+              - heading [level=3] [ref=e22389] [cursor=pointer]
+          - button "View details for Pokemon 828" [ref=e22396] [cursor=pointer]:
+            - generic [ref=e22398] [cursor=pointer]:
+              - generic [ref=e22399] [cursor=pointer]:
+                - generic [ref=e22400] [cursor=pointer]: "#828"
+                - button "Add to comparison" [ref=e22401] [cursor=pointer]:
+                  - img [ref=e22402] [cursor=pointer]
+              - generic [ref=e22409] [cursor=pointer]:
+                - generic [ref=e22412] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 828" [ref=e22414] [cursor=pointer]
+              - heading [level=3] [ref=e22416] [cursor=pointer]
+          - button "View details for Pokemon 829" [ref=e22423] [cursor=pointer]:
+            - generic [ref=e22425] [cursor=pointer]:
+              - generic [ref=e22426] [cursor=pointer]:
+                - generic [ref=e22427] [cursor=pointer]: "#829"
+                - button "Add to comparison" [ref=e22428] [cursor=pointer]:
+                  - img [ref=e22429] [cursor=pointer]
+              - generic [ref=e22436] [cursor=pointer]:
+                - generic [ref=e22439] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 829" [ref=e22441] [cursor=pointer]
+              - heading [level=3] [ref=e22443] [cursor=pointer]
+          - button "View details for Pokemon 830" [ref=e22450] [cursor=pointer]:
+            - generic [ref=e22452] [cursor=pointer]:
+              - generic [ref=e22453] [cursor=pointer]:
+                - generic [ref=e22454] [cursor=pointer]: "#830"
+                - button "Add to comparison" [ref=e22455] [cursor=pointer]:
+                  - img [ref=e22456] [cursor=pointer]
+              - generic [ref=e22463] [cursor=pointer]:
+                - generic [ref=e22466] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 830" [ref=e22468] [cursor=pointer]
+              - heading [level=3] [ref=e22470] [cursor=pointer]
+          - button "View details for Pokemon 831" [ref=e22477] [cursor=pointer]:
+            - generic [ref=e22479] [cursor=pointer]:
+              - generic [ref=e22480] [cursor=pointer]:
+                - generic [ref=e22481] [cursor=pointer]: "#831"
+                - button "Add to comparison" [ref=e22482] [cursor=pointer]:
+                  - img [ref=e22483] [cursor=pointer]
+              - generic [ref=e22490] [cursor=pointer]:
+                - generic [ref=e22493] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 831" [ref=e22495] [cursor=pointer]
+              - heading [level=3] [ref=e22497] [cursor=pointer]
+          - button "View details for Pokemon 832" [ref=e22504] [cursor=pointer]:
+            - generic [ref=e22506] [cursor=pointer]:
+              - generic [ref=e22507] [cursor=pointer]:
+                - generic [ref=e22508] [cursor=pointer]: "#832"
+                - button "Add to comparison" [ref=e22509] [cursor=pointer]:
+                  - img [ref=e22510] [cursor=pointer]
+              - generic [ref=e22517] [cursor=pointer]:
+                - generic [ref=e22520] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 832" [ref=e22522] [cursor=pointer]
+              - heading [level=3] [ref=e22524] [cursor=pointer]
+          - button "View details for Pokemon 833" [ref=e22531] [cursor=pointer]:
+            - generic [ref=e22533] [cursor=pointer]:
+              - generic [ref=e22534] [cursor=pointer]:
+                - generic [ref=e22535] [cursor=pointer]: "#833"
+                - button "Add to comparison" [ref=e22536] [cursor=pointer]:
+                  - img [ref=e22537] [cursor=pointer]
+              - generic [ref=e22544] [cursor=pointer]:
+                - generic [ref=e22547] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 833" [ref=e22549] [cursor=pointer]
+              - heading [level=3] [ref=e22551] [cursor=pointer]
+          - button "View details for Pokemon 834" [ref=e22558] [cursor=pointer]:
+            - generic [ref=e22560] [cursor=pointer]:
+              - generic [ref=e22561] [cursor=pointer]:
+                - generic [ref=e22562] [cursor=pointer]: "#834"
+                - button "Add to comparison" [ref=e22563] [cursor=pointer]:
+                  - img [ref=e22564] [cursor=pointer]
+              - generic [ref=e22571] [cursor=pointer]:
+                - generic [ref=e22574] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 834" [ref=e22576] [cursor=pointer]
+              - heading [level=3] [ref=e22578] [cursor=pointer]
+          - button "View details for Pokemon 835" [ref=e22585] [cursor=pointer]:
+            - generic [ref=e22587] [cursor=pointer]:
+              - generic [ref=e22588] [cursor=pointer]:
+                - generic [ref=e22589] [cursor=pointer]: "#835"
+                - button "Add to comparison" [ref=e22590] [cursor=pointer]:
+                  - img [ref=e22591] [cursor=pointer]
+              - generic [ref=e22598] [cursor=pointer]:
+                - generic [ref=e22601] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 835" [ref=e22603] [cursor=pointer]
+              - heading [level=3] [ref=e22605] [cursor=pointer]
+          - button "View details for Pokemon 836" [ref=e22612] [cursor=pointer]:
+            - generic [ref=e22614] [cursor=pointer]:
+              - generic [ref=e22615] [cursor=pointer]:
+                - generic [ref=e22616] [cursor=pointer]: "#836"
+                - button "Add to comparison" [ref=e22617] [cursor=pointer]:
+                  - img [ref=e22618] [cursor=pointer]
+              - generic [ref=e22625] [cursor=pointer]:
+                - generic [ref=e22628] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 836" [ref=e22630] [cursor=pointer]
+              - heading [level=3] [ref=e22632] [cursor=pointer]
+          - button "View details for Pokemon 837" [ref=e22639] [cursor=pointer]:
+            - generic [ref=e22641] [cursor=pointer]:
+              - generic [ref=e22642] [cursor=pointer]:
+                - generic [ref=e22643] [cursor=pointer]: "#837"
+                - button "Add to comparison" [ref=e22644] [cursor=pointer]:
+                  - img [ref=e22645] [cursor=pointer]
+              - generic [ref=e22652] [cursor=pointer]:
+                - generic [ref=e22655] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 837" [ref=e22657] [cursor=pointer]
+              - heading [level=3] [ref=e22659] [cursor=pointer]
+          - button "View details for Pokemon 838" [ref=e22666] [cursor=pointer]:
+            - generic [ref=e22668] [cursor=pointer]:
+              - generic [ref=e22669] [cursor=pointer]:
+                - generic [ref=e22670] [cursor=pointer]: "#838"
+                - button "Add to comparison" [ref=e22671] [cursor=pointer]:
+                  - img [ref=e22672] [cursor=pointer]
+              - generic [ref=e22679] [cursor=pointer]:
+                - generic [ref=e22682] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 838" [ref=e22684] [cursor=pointer]
+              - heading [level=3] [ref=e22686] [cursor=pointer]
+          - button "View details for Pokemon 839" [ref=e22693] [cursor=pointer]:
+            - generic [ref=e22695] [cursor=pointer]:
+              - generic [ref=e22696] [cursor=pointer]:
+                - generic [ref=e22697] [cursor=pointer]: "#839"
+                - button "Add to comparison" [ref=e22698] [cursor=pointer]:
+                  - img [ref=e22699] [cursor=pointer]
+              - generic [ref=e22706] [cursor=pointer]:
+                - generic [ref=e22709] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 839" [ref=e22711] [cursor=pointer]
+              - heading [level=3] [ref=e22713] [cursor=pointer]
+          - button "View details for Pokemon 840" [ref=e22720] [cursor=pointer]:
+            - generic [ref=e22722] [cursor=pointer]:
+              - generic [ref=e22723] [cursor=pointer]:
+                - generic [ref=e22724] [cursor=pointer]: "#840"
+                - button "Add to comparison" [ref=e22725] [cursor=pointer]:
+                  - img [ref=e22726] [cursor=pointer]
+              - generic [ref=e22733] [cursor=pointer]:
+                - generic [ref=e22736] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 840" [ref=e22738] [cursor=pointer]
+              - heading [level=3] [ref=e22740] [cursor=pointer]
+          - button "View details for Pokemon 841" [ref=e22747] [cursor=pointer]:
+            - generic [ref=e22749] [cursor=pointer]:
+              - generic [ref=e22750] [cursor=pointer]:
+                - generic [ref=e22751] [cursor=pointer]: "#841"
+                - button "Add to comparison" [ref=e22752] [cursor=pointer]:
+                  - img [ref=e22753] [cursor=pointer]
+              - generic [ref=e22760] [cursor=pointer]:
+                - generic [ref=e22763] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 841" [ref=e22765] [cursor=pointer]
+              - heading [level=3] [ref=e22767] [cursor=pointer]
+          - button "View details for Pokemon 842" [ref=e22774] [cursor=pointer]:
+            - generic [ref=e22776] [cursor=pointer]:
+              - generic [ref=e22777] [cursor=pointer]:
+                - generic [ref=e22778] [cursor=pointer]: "#842"
+                - button "Add to comparison" [ref=e22779] [cursor=pointer]:
+                  - img [ref=e22780] [cursor=pointer]
+              - generic [ref=e22787] [cursor=pointer]:
+                - generic [ref=e22790] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 842" [ref=e22792] [cursor=pointer]
+              - heading [level=3] [ref=e22794] [cursor=pointer]
+          - button "View details for Pokemon 843" [ref=e22801] [cursor=pointer]:
+            - generic [ref=e22803] [cursor=pointer]:
+              - generic [ref=e22804] [cursor=pointer]:
+                - generic [ref=e22805] [cursor=pointer]: "#843"
+                - button "Add to comparison" [ref=e22806] [cursor=pointer]:
+                  - img [ref=e22807] [cursor=pointer]
+              - generic [ref=e22814] [cursor=pointer]:
+                - generic [ref=e22817] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 843" [ref=e22819] [cursor=pointer]
+              - heading [level=3] [ref=e22821] [cursor=pointer]
+          - button "View details for Pokemon 844" [ref=e22828] [cursor=pointer]:
+            - generic [ref=e22830] [cursor=pointer]:
+              - generic [ref=e22831] [cursor=pointer]:
+                - generic [ref=e22832] [cursor=pointer]: "#844"
+                - button "Add to comparison" [ref=e22833] [cursor=pointer]:
+                  - img [ref=e22834] [cursor=pointer]
+              - generic [ref=e22841] [cursor=pointer]:
+                - generic [ref=e22844] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 844" [ref=e22846] [cursor=pointer]
+              - heading [level=3] [ref=e22848] [cursor=pointer]
+          - button "View details for Pokemon 845" [ref=e22855] [cursor=pointer]:
+            - generic [ref=e22857] [cursor=pointer]:
+              - generic [ref=e22858] [cursor=pointer]:
+                - generic [ref=e22859] [cursor=pointer]: "#845"
+                - button "Add to comparison" [ref=e22860] [cursor=pointer]:
+                  - img [ref=e22861] [cursor=pointer]
+              - generic [ref=e22868] [cursor=pointer]:
+                - generic [ref=e22871] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 845" [ref=e22873] [cursor=pointer]
+              - heading [level=3] [ref=e22875] [cursor=pointer]
+          - button "View details for Pokemon 846" [ref=e22882] [cursor=pointer]:
+            - generic [ref=e22884] [cursor=pointer]:
+              - generic [ref=e22885] [cursor=pointer]:
+                - generic [ref=e22886] [cursor=pointer]: "#846"
+                - button "Add to comparison" [ref=e22887] [cursor=pointer]:
+                  - img [ref=e22888] [cursor=pointer]
+              - generic [ref=e22895] [cursor=pointer]:
+                - generic [ref=e22898] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 846" [ref=e22900] [cursor=pointer]
+              - heading [level=3] [ref=e22902] [cursor=pointer]
+          - button "View details for Pokemon 847" [ref=e22909] [cursor=pointer]:
+            - generic [ref=e22911] [cursor=pointer]:
+              - generic [ref=e22912] [cursor=pointer]:
+                - generic [ref=e22913] [cursor=pointer]: "#847"
+                - button "Add to comparison" [ref=e22914] [cursor=pointer]:
+                  - img [ref=e22915] [cursor=pointer]
+              - generic [ref=e22922] [cursor=pointer]:
+                - generic [ref=e22925] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 847" [ref=e22927] [cursor=pointer]
+              - heading [level=3] [ref=e22929] [cursor=pointer]
+          - button "View details for Pokemon 848" [ref=e22936] [cursor=pointer]:
+            - generic [ref=e22938] [cursor=pointer]:
+              - generic [ref=e22939] [cursor=pointer]:
+                - generic [ref=e22940] [cursor=pointer]: "#848"
+                - button "Add to comparison" [ref=e22941] [cursor=pointer]:
+                  - img [ref=e22942] [cursor=pointer]
+              - generic [ref=e22949] [cursor=pointer]:
+                - generic [ref=e22952] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 848" [ref=e22954] [cursor=pointer]
+              - heading [level=3] [ref=e22956] [cursor=pointer]
+          - button "View details for Pokemon 849" [ref=e22963] [cursor=pointer]:
+            - generic [ref=e22965] [cursor=pointer]:
+              - generic [ref=e22966] [cursor=pointer]:
+                - generic [ref=e22967] [cursor=pointer]: "#849"
+                - button "Add to comparison" [ref=e22968] [cursor=pointer]:
+                  - img [ref=e22969] [cursor=pointer]
+              - generic [ref=e22976] [cursor=pointer]:
+                - generic [ref=e22979] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 849" [ref=e22981] [cursor=pointer]
+              - heading [level=3] [ref=e22983] [cursor=pointer]
+          - button "View details for Pokemon 850" [ref=e22990] [cursor=pointer]:
+            - generic [ref=e22992] [cursor=pointer]:
+              - generic [ref=e22993] [cursor=pointer]:
+                - generic [ref=e22994] [cursor=pointer]: "#850"
+                - button "Add to comparison" [ref=e22995] [cursor=pointer]:
+                  - img [ref=e22996] [cursor=pointer]
+              - generic [ref=e23003] [cursor=pointer]:
+                - generic [ref=e23006] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 850" [ref=e23008] [cursor=pointer]
+              - heading [level=3] [ref=e23010] [cursor=pointer]
+          - button "View details for Pokemon 851" [ref=e23017] [cursor=pointer]:
+            - generic [ref=e23019] [cursor=pointer]:
+              - generic [ref=e23020] [cursor=pointer]:
+                - generic [ref=e23021] [cursor=pointer]: "#851"
+                - button "Add to comparison" [ref=e23022] [cursor=pointer]:
+                  - img [ref=e23023] [cursor=pointer]
+              - generic [ref=e23030] [cursor=pointer]:
+                - generic [ref=e23033] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 851" [ref=e23035] [cursor=pointer]
+              - heading [level=3] [ref=e23037] [cursor=pointer]
+          - button "View details for Pokemon 852" [ref=e23044] [cursor=pointer]:
+            - generic [ref=e23046] [cursor=pointer]:
+              - generic [ref=e23047] [cursor=pointer]:
+                - generic [ref=e23048] [cursor=pointer]: "#852"
+                - button "Add to comparison" [ref=e23049] [cursor=pointer]:
+                  - img [ref=e23050] [cursor=pointer]
+              - generic [ref=e23057] [cursor=pointer]:
+                - generic [ref=e23060] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 852" [ref=e23062] [cursor=pointer]
+              - heading [level=3] [ref=e23064] [cursor=pointer]
+          - button "View details for Pokemon 853" [ref=e23071] [cursor=pointer]:
+            - generic [ref=e23073] [cursor=pointer]:
+              - generic [ref=e23074] [cursor=pointer]:
+                - generic [ref=e23075] [cursor=pointer]: "#853"
+                - button "Add to comparison" [ref=e23076] [cursor=pointer]:
+                  - img [ref=e23077] [cursor=pointer]
+              - generic [ref=e23084] [cursor=pointer]:
+                - generic [ref=e23087] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 853" [ref=e23089] [cursor=pointer]
+              - heading [level=3] [ref=e23091] [cursor=pointer]
+          - button "View details for Pokemon 854" [ref=e23098] [cursor=pointer]:
+            - generic [ref=e23100] [cursor=pointer]:
+              - generic [ref=e23101] [cursor=pointer]:
+                - generic [ref=e23102] [cursor=pointer]: "#854"
+                - button "Add to comparison" [ref=e23103] [cursor=pointer]:
+                  - img [ref=e23104] [cursor=pointer]
+              - generic [ref=e23111] [cursor=pointer]:
+                - generic [ref=e23114] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 854" [ref=e23116] [cursor=pointer]
+              - heading [level=3] [ref=e23118] [cursor=pointer]
+          - button "View details for Pokemon 855" [ref=e23125] [cursor=pointer]:
+            - generic [ref=e23127] [cursor=pointer]:
+              - generic [ref=e23128] [cursor=pointer]:
+                - generic [ref=e23129] [cursor=pointer]: "#855"
+                - button "Add to comparison" [ref=e23130] [cursor=pointer]:
+                  - img [ref=e23131] [cursor=pointer]
+              - generic [ref=e23138] [cursor=pointer]:
+                - generic [ref=e23141] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 855" [ref=e23143] [cursor=pointer]
+              - heading [level=3] [ref=e23145] [cursor=pointer]
+          - button "View details for Pokemon 856" [ref=e23152] [cursor=pointer]:
+            - generic [ref=e23154] [cursor=pointer]:
+              - generic [ref=e23155] [cursor=pointer]:
+                - generic [ref=e23156] [cursor=pointer]: "#856"
+                - button "Add to comparison" [ref=e23157] [cursor=pointer]:
+                  - img [ref=e23158] [cursor=pointer]
+              - generic [ref=e23165] [cursor=pointer]:
+                - generic [ref=e23168] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 856" [ref=e23170] [cursor=pointer]
+              - heading [level=3] [ref=e23172] [cursor=pointer]
+          - button "View details for Pokemon 857" [ref=e23179] [cursor=pointer]:
+            - generic [ref=e23181] [cursor=pointer]:
+              - generic [ref=e23182] [cursor=pointer]:
+                - generic [ref=e23183] [cursor=pointer]: "#857"
+                - button "Add to comparison" [ref=e23184] [cursor=pointer]:
+                  - img [ref=e23185] [cursor=pointer]
+              - generic [ref=e23192] [cursor=pointer]:
+                - generic [ref=e23195] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 857" [ref=e23197] [cursor=pointer]
+              - heading [level=3] [ref=e23199] [cursor=pointer]
+          - button "View details for Pokemon 858" [ref=e23206] [cursor=pointer]:
+            - generic [ref=e23208] [cursor=pointer]:
+              - generic [ref=e23209] [cursor=pointer]:
+                - generic [ref=e23210] [cursor=pointer]: "#858"
+                - button "Add to comparison" [ref=e23211] [cursor=pointer]:
+                  - img [ref=e23212] [cursor=pointer]
+              - generic [ref=e23219] [cursor=pointer]:
+                - generic [ref=e23222] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 858" [ref=e23224] [cursor=pointer]
+              - heading [level=3] [ref=e23226] [cursor=pointer]
+          - button "View details for Pokemon 859" [ref=e23233] [cursor=pointer]:
+            - generic [ref=e23235] [cursor=pointer]:
+              - generic [ref=e23236] [cursor=pointer]:
+                - generic [ref=e23237] [cursor=pointer]: "#859"
+                - button "Add to comparison" [ref=e23238] [cursor=pointer]:
+                  - img [ref=e23239] [cursor=pointer]
+              - generic [ref=e23246] [cursor=pointer]:
+                - generic [ref=e23249] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 859" [ref=e23251] [cursor=pointer]
+              - heading [level=3] [ref=e23253] [cursor=pointer]
+          - button "View details for Pokemon 860" [ref=e23260] [cursor=pointer]:
+            - generic [ref=e23262] [cursor=pointer]:
+              - generic [ref=e23263] [cursor=pointer]:
+                - generic [ref=e23264] [cursor=pointer]: "#860"
+                - button "Add to comparison" [ref=e23265] [cursor=pointer]:
+                  - img [ref=e23266] [cursor=pointer]
+              - generic [ref=e23273] [cursor=pointer]:
+                - generic [ref=e23276] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 860" [ref=e23278] [cursor=pointer]
+              - heading [level=3] [ref=e23280] [cursor=pointer]
+          - button "View details for Pokemon 861" [ref=e23287] [cursor=pointer]:
+            - generic [ref=e23289] [cursor=pointer]:
+              - generic [ref=e23290] [cursor=pointer]:
+                - generic [ref=e23291] [cursor=pointer]: "#861"
+                - button "Add to comparison" [ref=e23292] [cursor=pointer]:
+                  - img [ref=e23293] [cursor=pointer]
+              - generic [ref=e23300] [cursor=pointer]:
+                - generic [ref=e23303] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 861" [ref=e23305] [cursor=pointer]
+              - heading [level=3] [ref=e23307] [cursor=pointer]
+          - button "View details for Pokemon 862" [ref=e23314] [cursor=pointer]:
+            - generic [ref=e23316] [cursor=pointer]:
+              - generic [ref=e23317] [cursor=pointer]:
+                - generic [ref=e23318] [cursor=pointer]: "#862"
+                - button "Add to comparison" [ref=e23319] [cursor=pointer]:
+                  - img [ref=e23320] [cursor=pointer]
+              - generic [ref=e23327] [cursor=pointer]:
+                - generic [ref=e23330] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 862" [ref=e23332] [cursor=pointer]
+              - heading [level=3] [ref=e23334] [cursor=pointer]
+          - button "View details for Pokemon 863" [ref=e23341] [cursor=pointer]:
+            - generic [ref=e23343] [cursor=pointer]:
+              - generic [ref=e23344] [cursor=pointer]:
+                - generic [ref=e23345] [cursor=pointer]: "#863"
+                - button "Add to comparison" [ref=e23346] [cursor=pointer]:
+                  - img [ref=e23347] [cursor=pointer]
+              - generic [ref=e23354] [cursor=pointer]:
+                - generic [ref=e23357] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 863" [ref=e23359] [cursor=pointer]
+              - heading [level=3] [ref=e23361] [cursor=pointer]
+          - button "View details for Pokemon 864" [ref=e23368] [cursor=pointer]:
+            - generic [ref=e23370] [cursor=pointer]:
+              - generic [ref=e23371] [cursor=pointer]:
+                - generic [ref=e23372] [cursor=pointer]: "#864"
+                - button "Add to comparison" [ref=e23373] [cursor=pointer]:
+                  - img [ref=e23374] [cursor=pointer]
+              - generic [ref=e23381] [cursor=pointer]:
+                - generic [ref=e23384] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 864" [ref=e23386] [cursor=pointer]
+              - heading [level=3] [ref=e23388] [cursor=pointer]
+          - button "View details for Pokemon 865" [ref=e23395] [cursor=pointer]:
+            - generic [ref=e23397] [cursor=pointer]:
+              - generic [ref=e23398] [cursor=pointer]:
+                - generic [ref=e23399] [cursor=pointer]: "#865"
+                - button "Add to comparison" [ref=e23400] [cursor=pointer]:
+                  - img [ref=e23401] [cursor=pointer]
+              - generic [ref=e23408] [cursor=pointer]:
+                - generic [ref=e23411] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 865" [ref=e23413] [cursor=pointer]
+              - heading [level=3] [ref=e23415] [cursor=pointer]
+          - button "View details for Pokemon 866" [ref=e23422] [cursor=pointer]:
+            - generic [ref=e23424] [cursor=pointer]:
+              - generic [ref=e23425] [cursor=pointer]:
+                - generic [ref=e23426] [cursor=pointer]: "#866"
+                - button "Add to comparison" [ref=e23427] [cursor=pointer]:
+                  - img [ref=e23428] [cursor=pointer]
+              - generic [ref=e23435] [cursor=pointer]:
+                - generic [ref=e23438] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 866" [ref=e23440] [cursor=pointer]
+              - heading [level=3] [ref=e23442] [cursor=pointer]
+          - button "View details for Pokemon 867" [ref=e23449] [cursor=pointer]:
+            - generic [ref=e23451] [cursor=pointer]:
+              - generic [ref=e23452] [cursor=pointer]:
+                - generic [ref=e23453] [cursor=pointer]: "#867"
+                - button "Add to comparison" [ref=e23454] [cursor=pointer]:
+                  - img [ref=e23455] [cursor=pointer]
+              - generic [ref=e23462] [cursor=pointer]:
+                - generic [ref=e23465] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 867" [ref=e23467] [cursor=pointer]
+              - heading [level=3] [ref=e23469] [cursor=pointer]
+          - button "View details for Pokemon 868" [ref=e23476] [cursor=pointer]:
+            - generic [ref=e23478] [cursor=pointer]:
+              - generic [ref=e23479] [cursor=pointer]:
+                - generic [ref=e23480] [cursor=pointer]: "#868"
+                - button "Add to comparison" [ref=e23481] [cursor=pointer]:
+                  - img [ref=e23482] [cursor=pointer]
+              - generic [ref=e23489] [cursor=pointer]:
+                - generic [ref=e23492] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 868" [ref=e23494] [cursor=pointer]
+              - heading [level=3] [ref=e23496] [cursor=pointer]
+          - button "View details for Pokemon 869" [ref=e23503] [cursor=pointer]:
+            - generic [ref=e23505] [cursor=pointer]:
+              - generic [ref=e23506] [cursor=pointer]:
+                - generic [ref=e23507] [cursor=pointer]: "#869"
+                - button "Add to comparison" [ref=e23508] [cursor=pointer]:
+                  - img [ref=e23509] [cursor=pointer]
+              - generic [ref=e23516] [cursor=pointer]:
+                - generic [ref=e23519] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 869" [ref=e23521] [cursor=pointer]
+              - heading [level=3] [ref=e23523] [cursor=pointer]
+          - button "View details for Pokemon 870" [ref=e23530] [cursor=pointer]:
+            - generic [ref=e23532] [cursor=pointer]:
+              - generic [ref=e23533] [cursor=pointer]:
+                - generic [ref=e23534] [cursor=pointer]: "#870"
+                - button "Add to comparison" [ref=e23535] [cursor=pointer]:
+                  - img [ref=e23536] [cursor=pointer]
+              - generic [ref=e23543] [cursor=pointer]:
+                - generic [ref=e23546] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 870" [ref=e23548] [cursor=pointer]
+              - heading [level=3] [ref=e23550] [cursor=pointer]
+          - button "View details for Pokemon 871" [ref=e23557] [cursor=pointer]:
+            - generic [ref=e23559] [cursor=pointer]:
+              - generic [ref=e23560] [cursor=pointer]:
+                - generic [ref=e23561] [cursor=pointer]: "#871"
+                - button "Add to comparison" [ref=e23562] [cursor=pointer]:
+                  - img [ref=e23563] [cursor=pointer]
+              - generic [ref=e23570] [cursor=pointer]:
+                - generic [ref=e23573] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 871" [ref=e23575] [cursor=pointer]
+              - heading [level=3] [ref=e23577] [cursor=pointer]
+          - button "View details for Pokemon 872" [ref=e23584] [cursor=pointer]:
+            - generic [ref=e23586] [cursor=pointer]:
+              - generic [ref=e23587] [cursor=pointer]:
+                - generic [ref=e23588] [cursor=pointer]: "#872"
+                - button "Add to comparison" [ref=e23589] [cursor=pointer]:
+                  - img [ref=e23590] [cursor=pointer]
+              - generic [ref=e23597] [cursor=pointer]:
+                - generic [ref=e23600] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 872" [ref=e23602] [cursor=pointer]
+              - heading [level=3] [ref=e23604] [cursor=pointer]
+          - button "View details for Pokemon 873" [ref=e23611] [cursor=pointer]:
+            - generic [ref=e23613] [cursor=pointer]:
+              - generic [ref=e23614] [cursor=pointer]:
+                - generic [ref=e23615] [cursor=pointer]: "#873"
+                - button "Add to comparison" [ref=e23616] [cursor=pointer]:
+                  - img [ref=e23617] [cursor=pointer]
+              - generic [ref=e23624] [cursor=pointer]:
+                - generic [ref=e23627] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 873" [ref=e23629] [cursor=pointer]
+              - heading [level=3] [ref=e23631] [cursor=pointer]
+          - button "View details for Pokemon 874" [ref=e23638] [cursor=pointer]:
+            - generic [ref=e23640] [cursor=pointer]:
+              - generic [ref=e23641] [cursor=pointer]:
+                - generic [ref=e23642] [cursor=pointer]: "#874"
+                - button "Add to comparison" [ref=e23643] [cursor=pointer]:
+                  - img [ref=e23644] [cursor=pointer]
+              - generic [ref=e23651] [cursor=pointer]:
+                - generic [ref=e23654] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 874" [ref=e23656] [cursor=pointer]
+              - heading [level=3] [ref=e23658] [cursor=pointer]
+          - button "View details for Pokemon 875" [ref=e23665] [cursor=pointer]:
+            - generic [ref=e23667] [cursor=pointer]:
+              - generic [ref=e23668] [cursor=pointer]:
+                - generic [ref=e23669] [cursor=pointer]: "#875"
+                - button "Add to comparison" [ref=e23670] [cursor=pointer]:
+                  - img [ref=e23671] [cursor=pointer]
+              - generic [ref=e23678] [cursor=pointer]:
+                - generic [ref=e23681] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 875" [ref=e23683] [cursor=pointer]
+              - heading [level=3] [ref=e23685] [cursor=pointer]
+          - button "View details for Pokemon 876" [ref=e23692] [cursor=pointer]:
+            - generic [ref=e23694] [cursor=pointer]:
+              - generic [ref=e23695] [cursor=pointer]:
+                - generic [ref=e23696] [cursor=pointer]: "#876"
+                - button "Add to comparison" [ref=e23697] [cursor=pointer]:
+                  - img [ref=e23698] [cursor=pointer]
+              - generic [ref=e23705] [cursor=pointer]:
+                - generic [ref=e23708] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 876" [ref=e23710] [cursor=pointer]
+              - heading [level=3] [ref=e23712] [cursor=pointer]
+          - button "View details for Pokemon 877" [ref=e23719] [cursor=pointer]:
+            - generic [ref=e23721] [cursor=pointer]:
+              - generic [ref=e23722] [cursor=pointer]:
+                - generic [ref=e23723] [cursor=pointer]: "#877"
+                - button "Add to comparison" [ref=e23724] [cursor=pointer]:
+                  - img [ref=e23725] [cursor=pointer]
+              - generic [ref=e23732] [cursor=pointer]:
+                - generic [ref=e23735] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 877" [ref=e23737] [cursor=pointer]
+              - heading [level=3] [ref=e23739] [cursor=pointer]
+          - button "View details for Pokemon 878" [ref=e23746] [cursor=pointer]:
+            - generic [ref=e23748] [cursor=pointer]:
+              - generic [ref=e23749] [cursor=pointer]:
+                - generic [ref=e23750] [cursor=pointer]: "#878"
+                - button "Add to comparison" [ref=e23751] [cursor=pointer]:
+                  - img [ref=e23752] [cursor=pointer]
+              - generic [ref=e23759] [cursor=pointer]:
+                - generic [ref=e23762] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 878" [ref=e23764] [cursor=pointer]
+              - heading [level=3] [ref=e23766] [cursor=pointer]
+          - button "View details for Pokemon 879" [ref=e23773] [cursor=pointer]:
+            - generic [ref=e23775] [cursor=pointer]:
+              - generic [ref=e23776] [cursor=pointer]:
+                - generic [ref=e23777] [cursor=pointer]: "#879"
+                - button "Add to comparison" [ref=e23778] [cursor=pointer]:
+                  - img [ref=e23779] [cursor=pointer]
+              - generic [ref=e23786] [cursor=pointer]:
+                - generic [ref=e23789] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 879" [ref=e23791] [cursor=pointer]
+              - heading [level=3] [ref=e23793] [cursor=pointer]
+          - button "View details for Pokemon 880" [ref=e23800] [cursor=pointer]:
+            - generic [ref=e23802] [cursor=pointer]:
+              - generic [ref=e23803] [cursor=pointer]:
+                - generic [ref=e23804] [cursor=pointer]: "#880"
+                - button "Add to comparison" [ref=e23805] [cursor=pointer]:
+                  - img [ref=e23806] [cursor=pointer]
+              - generic [ref=e23813] [cursor=pointer]:
+                - generic [ref=e23816] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 880" [ref=e23818] [cursor=pointer]
+              - heading [level=3] [ref=e23820] [cursor=pointer]
+          - button "View details for Pokemon 881" [ref=e23827] [cursor=pointer]:
+            - generic [ref=e23829] [cursor=pointer]:
+              - generic [ref=e23830] [cursor=pointer]:
+                - generic [ref=e23831] [cursor=pointer]: "#881"
+                - button "Add to comparison" [ref=e23832] [cursor=pointer]:
+                  - img [ref=e23833] [cursor=pointer]
+              - generic [ref=e23840] [cursor=pointer]:
+                - generic [ref=e23843] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 881" [ref=e23845] [cursor=pointer]
+              - heading [level=3] [ref=e23847] [cursor=pointer]
+          - button "View details for Pokemon 882" [ref=e23854] [cursor=pointer]:
+            - generic [ref=e23856] [cursor=pointer]:
+              - generic [ref=e23857] [cursor=pointer]:
+                - generic [ref=e23858] [cursor=pointer]: "#882"
+                - button "Add to comparison" [ref=e23859] [cursor=pointer]:
+                  - img [ref=e23860] [cursor=pointer]
+              - generic [ref=e23867] [cursor=pointer]:
+                - generic [ref=e23870] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 882" [ref=e23872] [cursor=pointer]
+              - heading [level=3] [ref=e23874] [cursor=pointer]
+          - button "View details for Pokemon 883" [ref=e23881] [cursor=pointer]:
+            - generic [ref=e23883] [cursor=pointer]:
+              - generic [ref=e23884] [cursor=pointer]:
+                - generic [ref=e23885] [cursor=pointer]: "#883"
+                - button "Add to comparison" [ref=e23886] [cursor=pointer]:
+                  - img [ref=e23887] [cursor=pointer]
+              - generic [ref=e23894] [cursor=pointer]:
+                - generic [ref=e23897] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 883" [ref=e23899] [cursor=pointer]
+              - heading [level=3] [ref=e23901] [cursor=pointer]
+          - button "View details for Pokemon 884" [ref=e23908] [cursor=pointer]:
+            - generic [ref=e23910] [cursor=pointer]:
+              - generic [ref=e23911] [cursor=pointer]:
+                - generic [ref=e23912] [cursor=pointer]: "#884"
+                - button "Add to comparison" [ref=e23913] [cursor=pointer]:
+                  - img [ref=e23914] [cursor=pointer]
+              - generic [ref=e23921] [cursor=pointer]:
+                - generic [ref=e23924] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 884" [ref=e23926] [cursor=pointer]
+              - heading [level=3] [ref=e23928] [cursor=pointer]
+          - button "View details for Pokemon 885" [ref=e23935] [cursor=pointer]:
+            - generic [ref=e23937] [cursor=pointer]:
+              - generic [ref=e23938] [cursor=pointer]:
+                - generic [ref=e23939] [cursor=pointer]: "#885"
+                - button "Add to comparison" [ref=e23940] [cursor=pointer]:
+                  - img [ref=e23941] [cursor=pointer]
+              - generic [ref=e23948] [cursor=pointer]:
+                - generic [ref=e23951] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 885" [ref=e23953] [cursor=pointer]
+              - heading [level=3] [ref=e23955] [cursor=pointer]
+          - button "View details for Pokemon 886" [ref=e23962] [cursor=pointer]:
+            - generic [ref=e23964] [cursor=pointer]:
+              - generic [ref=e23965] [cursor=pointer]:
+                - generic [ref=e23966] [cursor=pointer]: "#886"
+                - button "Add to comparison" [ref=e23967] [cursor=pointer]:
+                  - img [ref=e23968] [cursor=pointer]
+              - generic [ref=e23975] [cursor=pointer]:
+                - generic [ref=e23978] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 886" [ref=e23980] [cursor=pointer]
+              - heading [level=3] [ref=e23982] [cursor=pointer]
+          - button "View details for Pokemon 887" [ref=e23989] [cursor=pointer]:
+            - generic [ref=e23991] [cursor=pointer]:
+              - generic [ref=e23992] [cursor=pointer]:
+                - generic [ref=e23993] [cursor=pointer]: "#887"
+                - button "Add to comparison" [ref=e23994] [cursor=pointer]:
+                  - img [ref=e23995] [cursor=pointer]
+              - generic [ref=e24002] [cursor=pointer]:
+                - generic [ref=e24005] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 887" [ref=e24007] [cursor=pointer]
+              - heading [level=3] [ref=e24009] [cursor=pointer]
+          - button "View details for Pokemon 888" [ref=e24016] [cursor=pointer]:
+            - generic [ref=e24018] [cursor=pointer]:
+              - generic [ref=e24019] [cursor=pointer]:
+                - generic [ref=e24020] [cursor=pointer]: "#888"
+                - button "Add to comparison" [ref=e24021] [cursor=pointer]:
+                  - img [ref=e24022] [cursor=pointer]
+              - generic [ref=e24029] [cursor=pointer]:
+                - generic [ref=e24032] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 888" [ref=e24034] [cursor=pointer]
+              - heading [level=3] [ref=e24036] [cursor=pointer]
+          - button "View details for Pokemon 889" [ref=e24043] [cursor=pointer]:
+            - generic [ref=e24045] [cursor=pointer]:
+              - generic [ref=e24046] [cursor=pointer]:
+                - generic [ref=e24047] [cursor=pointer]: "#889"
+                - button "Add to comparison" [ref=e24048] [cursor=pointer]:
+                  - img [ref=e24049] [cursor=pointer]
+              - generic [ref=e24056] [cursor=pointer]:
+                - generic [ref=e24059] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 889" [ref=e24061] [cursor=pointer]
+              - heading [level=3] [ref=e24063] [cursor=pointer]
+          - button "View details for Pokemon 890" [ref=e24070] [cursor=pointer]:
+            - generic [ref=e24072] [cursor=pointer]:
+              - generic [ref=e24073] [cursor=pointer]:
+                - generic [ref=e24074] [cursor=pointer]: "#890"
+                - button "Add to comparison" [ref=e24075] [cursor=pointer]:
+                  - img [ref=e24076] [cursor=pointer]
+              - generic [ref=e24083] [cursor=pointer]:
+                - generic [ref=e24086] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 890" [ref=e24088] [cursor=pointer]
+              - heading [level=3] [ref=e24090] [cursor=pointer]
+          - button "View details for Pokemon 891" [ref=e24097] [cursor=pointer]:
+            - generic [ref=e24099] [cursor=pointer]:
+              - generic [ref=e24100] [cursor=pointer]:
+                - generic [ref=e24101] [cursor=pointer]: "#891"
+                - button "Add to comparison" [ref=e24102] [cursor=pointer]:
+                  - img [ref=e24103] [cursor=pointer]
+              - generic [ref=e24110] [cursor=pointer]:
+                - generic [ref=e24113] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 891" [ref=e24115] [cursor=pointer]
+              - heading [level=3] [ref=e24117] [cursor=pointer]
+          - button "View details for Pokemon 892" [ref=e24124] [cursor=pointer]:
+            - generic [ref=e24126] [cursor=pointer]:
+              - generic [ref=e24127] [cursor=pointer]:
+                - generic [ref=e24128] [cursor=pointer]: "#892"
+                - button "Add to comparison" [ref=e24129] [cursor=pointer]:
+                  - img [ref=e24130] [cursor=pointer]
+              - generic [ref=e24137] [cursor=pointer]:
+                - generic [ref=e24140] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 892" [ref=e24142] [cursor=pointer]
+              - heading [level=3] [ref=e24144] [cursor=pointer]
+          - button "View details for Pokemon 893" [ref=e24151] [cursor=pointer]:
+            - generic [ref=e24153] [cursor=pointer]:
+              - generic [ref=e24154] [cursor=pointer]:
+                - generic [ref=e24155] [cursor=pointer]: "#893"
+                - button "Add to comparison" [ref=e24156] [cursor=pointer]:
+                  - img [ref=e24157] [cursor=pointer]
+              - generic [ref=e24164] [cursor=pointer]:
+                - generic [ref=e24167] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 893" [ref=e24169] [cursor=pointer]
+              - heading [level=3] [ref=e24171] [cursor=pointer]
+          - button "View details for Pokemon 894" [ref=e24178] [cursor=pointer]:
+            - generic [ref=e24180] [cursor=pointer]:
+              - generic [ref=e24181] [cursor=pointer]:
+                - generic [ref=e24182] [cursor=pointer]: "#894"
+                - button "Add to comparison" [ref=e24183] [cursor=pointer]:
+                  - img [ref=e24184] [cursor=pointer]
+              - generic [ref=e24191] [cursor=pointer]:
+                - generic [ref=e24194] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 894" [ref=e24196] [cursor=pointer]
+              - heading [level=3] [ref=e24198] [cursor=pointer]
+          - button "View details for Pokemon 895" [ref=e24205] [cursor=pointer]:
+            - generic [ref=e24207] [cursor=pointer]:
+              - generic [ref=e24208] [cursor=pointer]:
+                - generic [ref=e24209] [cursor=pointer]: "#895"
+                - button "Add to comparison" [ref=e24210] [cursor=pointer]:
+                  - img [ref=e24211] [cursor=pointer]
+              - generic [ref=e24218] [cursor=pointer]:
+                - generic [ref=e24221] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 895" [ref=e24223] [cursor=pointer]
+              - heading [level=3] [ref=e24225] [cursor=pointer]
+          - button "View details for Pokemon 896" [ref=e24232] [cursor=pointer]:
+            - generic [ref=e24234] [cursor=pointer]:
+              - generic [ref=e24235] [cursor=pointer]:
+                - generic [ref=e24236] [cursor=pointer]: "#896"
+                - button "Add to comparison" [ref=e24237] [cursor=pointer]:
+                  - img [ref=e24238] [cursor=pointer]
+              - generic [ref=e24245] [cursor=pointer]:
+                - generic [ref=e24248] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 896" [ref=e24250] [cursor=pointer]
+              - heading [level=3] [ref=e24252] [cursor=pointer]
+          - button "View details for Pokemon 897" [ref=e24259] [cursor=pointer]:
+            - generic [ref=e24261] [cursor=pointer]:
+              - generic [ref=e24262] [cursor=pointer]:
+                - generic [ref=e24263] [cursor=pointer]: "#897"
+                - button "Add to comparison" [ref=e24264] [cursor=pointer]:
+                  - img [ref=e24265] [cursor=pointer]
+              - generic [ref=e24272] [cursor=pointer]:
+                - generic [ref=e24275] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 897" [ref=e24277] [cursor=pointer]
+              - heading [level=3] [ref=e24279] [cursor=pointer]
+          - button "View details for Pokemon 898" [ref=e24286] [cursor=pointer]:
+            - generic [ref=e24288] [cursor=pointer]:
+              - generic [ref=e24289] [cursor=pointer]:
+                - generic [ref=e24290] [cursor=pointer]: "#898"
+                - button "Add to comparison" [ref=e24291] [cursor=pointer]:
+                  - img [ref=e24292] [cursor=pointer]
+              - generic [ref=e24299] [cursor=pointer]:
+                - generic [ref=e24302] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 898" [ref=e24304] [cursor=pointer]
+              - heading [level=3] [ref=e24306] [cursor=pointer]
+          - button "View details for Pokemon 899" [ref=e24313] [cursor=pointer]:
+            - generic [ref=e24315] [cursor=pointer]:
+              - generic [ref=e24316] [cursor=pointer]:
+                - generic [ref=e24317] [cursor=pointer]: "#899"
+                - button "Add to comparison" [ref=e24318] [cursor=pointer]:
+                  - img [ref=e24319] [cursor=pointer]
+              - generic [ref=e24326] [cursor=pointer]:
+                - generic [ref=e24329] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 899" [ref=e24331] [cursor=pointer]
+              - heading [level=3] [ref=e24333] [cursor=pointer]
+          - button "View details for Pokemon 900" [ref=e24340] [cursor=pointer]:
+            - generic [ref=e24342] [cursor=pointer]:
+              - generic [ref=e24343] [cursor=pointer]:
+                - generic [ref=e24344] [cursor=pointer]: "#900"
+                - button "Add to comparison" [ref=e24345] [cursor=pointer]:
+                  - img [ref=e24346] [cursor=pointer]
+              - generic [ref=e24353] [cursor=pointer]:
+                - generic [ref=e24356] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 900" [ref=e24358] [cursor=pointer]
+              - heading [level=3] [ref=e24360] [cursor=pointer]
+          - button "View details for Pokemon 901" [ref=e24367] [cursor=pointer]:
+            - generic [ref=e24369] [cursor=pointer]:
+              - generic [ref=e24370] [cursor=pointer]:
+                - generic [ref=e24371] [cursor=pointer]: "#901"
+                - button "Add to comparison" [ref=e24372] [cursor=pointer]:
+                  - img [ref=e24373] [cursor=pointer]
+              - generic [ref=e24380] [cursor=pointer]:
+                - generic [ref=e24383] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 901" [ref=e24385] [cursor=pointer]
+              - heading [level=3] [ref=e24387] [cursor=pointer]
+          - button "View details for Pokemon 902" [ref=e24394] [cursor=pointer]:
+            - generic [ref=e24396] [cursor=pointer]:
+              - generic [ref=e24397] [cursor=pointer]:
+                - generic [ref=e24398] [cursor=pointer]: "#902"
+                - button "Add to comparison" [ref=e24399] [cursor=pointer]:
+                  - img [ref=e24400] [cursor=pointer]
+              - generic [ref=e24407] [cursor=pointer]:
+                - generic [ref=e24410] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 902" [ref=e24412] [cursor=pointer]
+              - heading [level=3] [ref=e24414] [cursor=pointer]
+          - button "View details for Pokemon 903" [ref=e24421] [cursor=pointer]:
+            - generic [ref=e24423] [cursor=pointer]:
+              - generic [ref=e24424] [cursor=pointer]:
+                - generic [ref=e24425] [cursor=pointer]: "#903"
+                - button "Add to comparison" [ref=e24426] [cursor=pointer]:
+                  - img [ref=e24427] [cursor=pointer]
+              - generic [ref=e24434] [cursor=pointer]:
+                - generic [ref=e24437] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 903" [ref=e24439] [cursor=pointer]
+              - heading [level=3] [ref=e24441] [cursor=pointer]
+          - button "View details for Pokemon 904" [ref=e24448] [cursor=pointer]:
+            - generic [ref=e24450] [cursor=pointer]:
+              - generic [ref=e24451] [cursor=pointer]:
+                - generic [ref=e24452] [cursor=pointer]: "#904"
+                - button "Add to comparison" [ref=e24453] [cursor=pointer]:
+                  - img [ref=e24454] [cursor=pointer]
+              - generic [ref=e24461] [cursor=pointer]:
+                - generic [ref=e24464] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 904" [ref=e24466] [cursor=pointer]
+              - heading [level=3] [ref=e24468] [cursor=pointer]
+          - button "View details for Pokemon 905" [ref=e24475] [cursor=pointer]:
+            - generic [ref=e24477] [cursor=pointer]:
+              - generic [ref=e24478] [cursor=pointer]:
+                - generic [ref=e24479] [cursor=pointer]: "#905"
+                - button "Add to comparison" [ref=e24480] [cursor=pointer]:
+                  - img [ref=e24481] [cursor=pointer]
+              - generic [ref=e24488] [cursor=pointer]:
+                - generic [ref=e24491] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 905" [ref=e24493] [cursor=pointer]
+              - heading [level=3] [ref=e24495] [cursor=pointer]
+          - button "View details for Pokemon 906" [ref=e24502] [cursor=pointer]:
+            - generic [ref=e24504] [cursor=pointer]:
+              - generic [ref=e24505] [cursor=pointer]:
+                - generic [ref=e24506] [cursor=pointer]: "#906"
+                - button "Add to comparison" [ref=e24507] [cursor=pointer]:
+                  - img [ref=e24508] [cursor=pointer]
+              - generic [ref=e24515] [cursor=pointer]:
+                - generic [ref=e24518] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 906" [ref=e24520] [cursor=pointer]
+              - heading [level=3] [ref=e24522] [cursor=pointer]
+          - button "View details for Pokemon 907" [ref=e24529] [cursor=pointer]:
+            - generic [ref=e24531] [cursor=pointer]:
+              - generic [ref=e24532] [cursor=pointer]:
+                - generic [ref=e24533] [cursor=pointer]: "#907"
+                - button "Add to comparison" [ref=e24534] [cursor=pointer]:
+                  - img [ref=e24535] [cursor=pointer]
+              - generic [ref=e24542] [cursor=pointer]:
+                - generic [ref=e24545] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 907" [ref=e24547] [cursor=pointer]
+              - heading [level=3] [ref=e24549] [cursor=pointer]
+          - button "View details for Pokemon 908" [ref=e24556] [cursor=pointer]:
+            - generic [ref=e24558] [cursor=pointer]:
+              - generic [ref=e24559] [cursor=pointer]:
+                - generic [ref=e24560] [cursor=pointer]: "#908"
+                - button "Add to comparison" [ref=e24561] [cursor=pointer]:
+                  - img [ref=e24562] [cursor=pointer]
+              - generic [ref=e24569] [cursor=pointer]:
+                - generic [ref=e24572] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 908" [ref=e24574] [cursor=pointer]
+              - heading [level=3] [ref=e24576] [cursor=pointer]
+          - button "View details for Pokemon 909" [ref=e24583] [cursor=pointer]:
+            - generic [ref=e24585] [cursor=pointer]:
+              - generic [ref=e24586] [cursor=pointer]:
+                - generic [ref=e24587] [cursor=pointer]: "#909"
+                - button "Add to comparison" [ref=e24588] [cursor=pointer]:
+                  - img [ref=e24589] [cursor=pointer]
+              - generic [ref=e24596] [cursor=pointer]:
+                - generic [ref=e24599] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 909" [ref=e24601] [cursor=pointer]
+              - heading [level=3] [ref=e24603] [cursor=pointer]
+          - button "View details for Pokemon 910" [ref=e24610] [cursor=pointer]:
+            - generic [ref=e24612] [cursor=pointer]:
+              - generic [ref=e24613] [cursor=pointer]:
+                - generic [ref=e24614] [cursor=pointer]: "#910"
+                - button "Add to comparison" [ref=e24615] [cursor=pointer]:
+                  - img [ref=e24616] [cursor=pointer]
+              - generic [ref=e24623] [cursor=pointer]:
+                - generic [ref=e24626] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 910" [ref=e24628] [cursor=pointer]
+              - heading [level=3] [ref=e24630] [cursor=pointer]
+          - button "View details for Pokemon 911" [ref=e24637] [cursor=pointer]:
+            - generic [ref=e24639] [cursor=pointer]:
+              - generic [ref=e24640] [cursor=pointer]:
+                - generic [ref=e24641] [cursor=pointer]: "#911"
+                - button "Add to comparison" [ref=e24642] [cursor=pointer]:
+                  - img [ref=e24643] [cursor=pointer]
+              - generic [ref=e24650] [cursor=pointer]:
+                - generic [ref=e24653] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 911" [ref=e24655] [cursor=pointer]
+              - heading [level=3] [ref=e24657] [cursor=pointer]
+          - button "View details for Pokemon 912" [ref=e24664] [cursor=pointer]:
+            - generic [ref=e24666] [cursor=pointer]:
+              - generic [ref=e24667] [cursor=pointer]:
+                - generic [ref=e24668] [cursor=pointer]: "#912"
+                - button "Add to comparison" [ref=e24669] [cursor=pointer]:
+                  - img [ref=e24670] [cursor=pointer]
+              - generic [ref=e24677] [cursor=pointer]:
+                - generic [ref=e24680] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 912" [ref=e24682] [cursor=pointer]
+              - heading [level=3] [ref=e24684] [cursor=pointer]
+          - button "View details for Pokemon 913" [ref=e24691] [cursor=pointer]:
+            - generic [ref=e24693] [cursor=pointer]:
+              - generic [ref=e24694] [cursor=pointer]:
+                - generic [ref=e24695] [cursor=pointer]: "#913"
+                - button "Add to comparison" [ref=e24696] [cursor=pointer]:
+                  - img [ref=e24697] [cursor=pointer]
+              - generic [ref=e24704] [cursor=pointer]:
+                - generic [ref=e24707] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 913" [ref=e24709] [cursor=pointer]
+              - heading [level=3] [ref=e24711] [cursor=pointer]
+          - button "View details for Pokemon 914" [ref=e24718] [cursor=pointer]:
+            - generic [ref=e24720] [cursor=pointer]:
+              - generic [ref=e24721] [cursor=pointer]:
+                - generic [ref=e24722] [cursor=pointer]: "#914"
+                - button "Add to comparison" [ref=e24723] [cursor=pointer]:
+                  - img [ref=e24724] [cursor=pointer]
+              - generic [ref=e24731] [cursor=pointer]:
+                - generic [ref=e24734] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 914" [ref=e24736] [cursor=pointer]
+              - heading [level=3] [ref=e24738] [cursor=pointer]
+          - button "View details for Pokemon 915" [ref=e24745] [cursor=pointer]:
+            - generic [ref=e24747] [cursor=pointer]:
+              - generic [ref=e24748] [cursor=pointer]:
+                - generic [ref=e24749] [cursor=pointer]: "#915"
+                - button "Add to comparison" [ref=e24750] [cursor=pointer]:
+                  - img [ref=e24751] [cursor=pointer]
+              - generic [ref=e24758] [cursor=pointer]:
+                - generic [ref=e24761] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 915" [ref=e24763] [cursor=pointer]
+              - heading [level=3] [ref=e24765] [cursor=pointer]
+          - button "View details for Pokemon 916" [ref=e24772] [cursor=pointer]:
+            - generic [ref=e24774] [cursor=pointer]:
+              - generic [ref=e24775] [cursor=pointer]:
+                - generic [ref=e24776] [cursor=pointer]: "#916"
+                - button "Add to comparison" [ref=e24777] [cursor=pointer]:
+                  - img [ref=e24778] [cursor=pointer]
+              - generic [ref=e24785] [cursor=pointer]:
+                - generic [ref=e24788] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 916" [ref=e24790] [cursor=pointer]
+              - heading [level=3] [ref=e24792] [cursor=pointer]
+          - button "View details for Pokemon 917" [ref=e24799] [cursor=pointer]:
+            - generic [ref=e24801] [cursor=pointer]:
+              - generic [ref=e24802] [cursor=pointer]:
+                - generic [ref=e24803] [cursor=pointer]: "#917"
+                - button "Add to comparison" [ref=e24804] [cursor=pointer]:
+                  - img [ref=e24805] [cursor=pointer]
+              - generic [ref=e24812] [cursor=pointer]:
+                - generic [ref=e24815] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 917" [ref=e24817] [cursor=pointer]
+              - heading [level=3] [ref=e24819] [cursor=pointer]
+          - button "View details for Pokemon 918" [ref=e24826] [cursor=pointer]:
+            - generic [ref=e24828] [cursor=pointer]:
+              - generic [ref=e24829] [cursor=pointer]:
+                - generic [ref=e24830] [cursor=pointer]: "#918"
+                - button "Add to comparison" [ref=e24831] [cursor=pointer]:
+                  - img [ref=e24832] [cursor=pointer]
+              - generic [ref=e24839] [cursor=pointer]:
+                - generic [ref=e24842] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 918" [ref=e24844] [cursor=pointer]
+              - heading [level=3] [ref=e24846] [cursor=pointer]
+          - button "View details for Pokemon 919" [ref=e24853] [cursor=pointer]:
+            - generic [ref=e24855] [cursor=pointer]:
+              - generic [ref=e24856] [cursor=pointer]:
+                - generic [ref=e24857] [cursor=pointer]: "#919"
+                - button "Add to comparison" [ref=e24858] [cursor=pointer]:
+                  - img [ref=e24859] [cursor=pointer]
+              - generic [ref=e24866] [cursor=pointer]:
+                - generic [ref=e24869] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 919" [ref=e24871] [cursor=pointer]
+              - heading [level=3] [ref=e24873] [cursor=pointer]
+          - button "View details for Pokemon 920" [ref=e24880] [cursor=pointer]:
+            - generic [ref=e24882] [cursor=pointer]:
+              - generic [ref=e24883] [cursor=pointer]:
+                - generic [ref=e24884] [cursor=pointer]: "#920"
+                - button "Add to comparison" [ref=e24885] [cursor=pointer]:
+                  - img [ref=e24886] [cursor=pointer]
+              - generic [ref=e24893] [cursor=pointer]:
+                - generic [ref=e24896] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 920" [ref=e24898] [cursor=pointer]
+              - heading [level=3] [ref=e24900] [cursor=pointer]
+          - button "View details for Pokemon 921" [ref=e24907] [cursor=pointer]:
+            - generic [ref=e24909] [cursor=pointer]:
+              - generic [ref=e24910] [cursor=pointer]:
+                - generic [ref=e24911] [cursor=pointer]: "#921"
+                - button "Add to comparison" [ref=e24912] [cursor=pointer]:
+                  - img [ref=e24913] [cursor=pointer]
+              - generic [ref=e24920] [cursor=pointer]:
+                - generic [ref=e24923] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 921" [ref=e24925] [cursor=pointer]
+              - heading [level=3] [ref=e24927] [cursor=pointer]
+          - button "View details for Pokemon 922" [ref=e24934] [cursor=pointer]:
+            - generic [ref=e24936] [cursor=pointer]:
+              - generic [ref=e24937] [cursor=pointer]:
+                - generic [ref=e24938] [cursor=pointer]: "#922"
+                - button "Add to comparison" [ref=e24939] [cursor=pointer]:
+                  - img [ref=e24940] [cursor=pointer]
+              - generic [ref=e24947] [cursor=pointer]:
+                - generic [ref=e24950] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 922" [ref=e24952] [cursor=pointer]
+              - heading [level=3] [ref=e24954] [cursor=pointer]
+          - button "View details for Pokemon 923" [ref=e24961] [cursor=pointer]:
+            - generic [ref=e24963] [cursor=pointer]:
+              - generic [ref=e24964] [cursor=pointer]:
+                - generic [ref=e24965] [cursor=pointer]: "#923"
+                - button "Add to comparison" [ref=e24966] [cursor=pointer]:
+                  - img [ref=e24967] [cursor=pointer]
+              - generic [ref=e24974] [cursor=pointer]:
+                - generic [ref=e24977] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 923" [ref=e24979] [cursor=pointer]
+              - heading [level=3] [ref=e24981] [cursor=pointer]
+          - button "View details for Pokemon 924" [ref=e24988] [cursor=pointer]:
+            - generic [ref=e24990] [cursor=pointer]:
+              - generic [ref=e24991] [cursor=pointer]:
+                - generic [ref=e24992] [cursor=pointer]: "#924"
+                - button "Add to comparison" [ref=e24993] [cursor=pointer]:
+                  - img [ref=e24994] [cursor=pointer]
+              - generic [ref=e25001] [cursor=pointer]:
+                - generic [ref=e25004] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 924" [ref=e25006] [cursor=pointer]
+              - heading [level=3] [ref=e25008] [cursor=pointer]
+          - button "View details for Pokemon 925" [ref=e25015] [cursor=pointer]:
+            - generic [ref=e25017] [cursor=pointer]:
+              - generic [ref=e25018] [cursor=pointer]:
+                - generic [ref=e25019] [cursor=pointer]: "#925"
+                - button "Add to comparison" [ref=e25020] [cursor=pointer]:
+                  - img [ref=e25021] [cursor=pointer]
+              - generic [ref=e25028] [cursor=pointer]:
+                - generic [ref=e25031] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 925" [ref=e25033] [cursor=pointer]
+              - heading [level=3] [ref=e25035] [cursor=pointer]
+          - button "View details for Pokemon 926" [ref=e25042] [cursor=pointer]:
+            - generic [ref=e25044] [cursor=pointer]:
+              - generic [ref=e25045] [cursor=pointer]:
+                - generic [ref=e25046] [cursor=pointer]: "#926"
+                - button "Add to comparison" [ref=e25047] [cursor=pointer]:
+                  - img [ref=e25048] [cursor=pointer]
+              - generic [ref=e25055] [cursor=pointer]:
+                - generic [ref=e25058] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 926" [ref=e25060] [cursor=pointer]
+              - heading [level=3] [ref=e25062] [cursor=pointer]
+          - button "View details for Pokemon 927" [ref=e25069] [cursor=pointer]:
+            - generic [ref=e25071] [cursor=pointer]:
+              - generic [ref=e25072] [cursor=pointer]:
+                - generic [ref=e25073] [cursor=pointer]: "#927"
+                - button "Add to comparison" [ref=e25074] [cursor=pointer]:
+                  - img [ref=e25075] [cursor=pointer]
+              - generic [ref=e25082] [cursor=pointer]:
+                - generic [ref=e25085] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 927" [ref=e25087] [cursor=pointer]
+              - heading [level=3] [ref=e25089] [cursor=pointer]
+          - button "View details for Pokemon 928" [ref=e25096] [cursor=pointer]:
+            - generic [ref=e25098] [cursor=pointer]:
+              - generic [ref=e25099] [cursor=pointer]:
+                - generic [ref=e25100] [cursor=pointer]: "#928"
+                - button "Add to comparison" [ref=e25101] [cursor=pointer]:
+                  - img [ref=e25102] [cursor=pointer]
+              - generic [ref=e25109] [cursor=pointer]:
+                - generic [ref=e25112] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 928" [ref=e25114] [cursor=pointer]
+              - heading [level=3] [ref=e25116] [cursor=pointer]
+          - button "View details for Pokemon 929" [ref=e25123] [cursor=pointer]:
+            - generic [ref=e25125] [cursor=pointer]:
+              - generic [ref=e25126] [cursor=pointer]:
+                - generic [ref=e25127] [cursor=pointer]: "#929"
+                - button "Add to comparison" [ref=e25128] [cursor=pointer]:
+                  - img [ref=e25129] [cursor=pointer]
+              - generic [ref=e25136] [cursor=pointer]:
+                - generic [ref=e25139] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 929" [ref=e25141] [cursor=pointer]
+              - heading [level=3] [ref=e25143] [cursor=pointer]
+          - button "View details for Pokemon 930" [ref=e25150] [cursor=pointer]:
+            - generic [ref=e25152] [cursor=pointer]:
+              - generic [ref=e25153] [cursor=pointer]:
+                - generic [ref=e25154] [cursor=pointer]: "#930"
+                - button "Add to comparison" [ref=e25155] [cursor=pointer]:
+                  - img [ref=e25156] [cursor=pointer]
+              - generic [ref=e25163] [cursor=pointer]:
+                - generic [ref=e25166] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 930" [ref=e25168] [cursor=pointer]
+              - heading [level=3] [ref=e25170] [cursor=pointer]
+          - button "View details for Pokemon 931" [ref=e25177] [cursor=pointer]:
+            - generic [ref=e25179] [cursor=pointer]:
+              - generic [ref=e25180] [cursor=pointer]:
+                - generic [ref=e25181] [cursor=pointer]: "#931"
+                - button "Add to comparison" [ref=e25182] [cursor=pointer]:
+                  - img [ref=e25183] [cursor=pointer]
+              - generic [ref=e25190] [cursor=pointer]:
+                - generic [ref=e25193] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 931" [ref=e25195] [cursor=pointer]
+              - heading [level=3] [ref=e25197] [cursor=pointer]
+          - button "View details for Pokemon 932" [ref=e25204] [cursor=pointer]:
+            - generic [ref=e25206] [cursor=pointer]:
+              - generic [ref=e25207] [cursor=pointer]:
+                - generic [ref=e25208] [cursor=pointer]: "#932"
+                - button "Add to comparison" [ref=e25209] [cursor=pointer]:
+                  - img [ref=e25210] [cursor=pointer]
+              - generic [ref=e25217] [cursor=pointer]:
+                - generic [ref=e25220] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 932" [ref=e25222] [cursor=pointer]
+              - heading [level=3] [ref=e25224] [cursor=pointer]
+          - button "View details for Pokemon 933" [ref=e25231] [cursor=pointer]:
+            - generic [ref=e25233] [cursor=pointer]:
+              - generic [ref=e25234] [cursor=pointer]:
+                - generic [ref=e25235] [cursor=pointer]: "#933"
+                - button "Add to comparison" [ref=e25236] [cursor=pointer]:
+                  - img [ref=e25237] [cursor=pointer]
+              - generic [ref=e25244] [cursor=pointer]:
+                - generic [ref=e25247] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 933" [ref=e25249] [cursor=pointer]
+              - heading [level=3] [ref=e25251] [cursor=pointer]
+          - button "View details for Pokemon 934" [ref=e25258] [cursor=pointer]:
+            - generic [ref=e25260] [cursor=pointer]:
+              - generic [ref=e25261] [cursor=pointer]:
+                - generic [ref=e25262] [cursor=pointer]: "#934"
+                - button "Add to comparison" [ref=e25263] [cursor=pointer]:
+                  - img [ref=e25264] [cursor=pointer]
+              - generic [ref=e25271] [cursor=pointer]:
+                - generic [ref=e25274] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 934" [ref=e25276] [cursor=pointer]
+              - heading [level=3] [ref=e25278] [cursor=pointer]
+          - button "View details for Pokemon 935" [ref=e25285] [cursor=pointer]:
+            - generic [ref=e25287] [cursor=pointer]:
+              - generic [ref=e25288] [cursor=pointer]:
+                - generic [ref=e25289] [cursor=pointer]: "#935"
+                - button "Add to comparison" [ref=e25290] [cursor=pointer]:
+                  - img [ref=e25291] [cursor=pointer]
+              - generic [ref=e25298] [cursor=pointer]:
+                - generic [ref=e25301] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 935" [ref=e25303] [cursor=pointer]
+              - heading [level=3] [ref=e25305] [cursor=pointer]
+          - button "View details for Pokemon 936" [ref=e25312] [cursor=pointer]:
+            - generic [ref=e25314] [cursor=pointer]:
+              - generic [ref=e25315] [cursor=pointer]:
+                - generic [ref=e25316] [cursor=pointer]: "#936"
+                - button "Add to comparison" [ref=e25317] [cursor=pointer]:
+                  - img [ref=e25318] [cursor=pointer]
+              - generic [ref=e25325] [cursor=pointer]:
+                - generic [ref=e25328] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 936" [ref=e25330] [cursor=pointer]
+              - heading [level=3] [ref=e25332] [cursor=pointer]
+          - button "View details for Pokemon 937" [ref=e25339] [cursor=pointer]:
+            - generic [ref=e25341] [cursor=pointer]:
+              - generic [ref=e25342] [cursor=pointer]:
+                - generic [ref=e25343] [cursor=pointer]: "#937"
+                - button "Add to comparison" [ref=e25344] [cursor=pointer]:
+                  - img [ref=e25345] [cursor=pointer]
+              - generic [ref=e25352] [cursor=pointer]:
+                - generic [ref=e25355] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 937" [ref=e25357] [cursor=pointer]
+              - heading [level=3] [ref=e25359] [cursor=pointer]
+          - button "View details for Pokemon 938" [ref=e25366] [cursor=pointer]:
+            - generic [ref=e25368] [cursor=pointer]:
+              - generic [ref=e25369] [cursor=pointer]:
+                - generic [ref=e25370] [cursor=pointer]: "#938"
+                - button "Add to comparison" [ref=e25371] [cursor=pointer]:
+                  - img [ref=e25372] [cursor=pointer]
+              - generic [ref=e25379] [cursor=pointer]:
+                - generic [ref=e25382] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 938" [ref=e25384] [cursor=pointer]
+              - heading [level=3] [ref=e25386] [cursor=pointer]
+          - button "View details for Pokemon 939" [ref=e25393] [cursor=pointer]:
+            - generic [ref=e25395] [cursor=pointer]:
+              - generic [ref=e25396] [cursor=pointer]:
+                - generic [ref=e25397] [cursor=pointer]: "#939"
+                - button "Add to comparison" [ref=e25398] [cursor=pointer]:
+                  - img [ref=e25399] [cursor=pointer]
+              - generic [ref=e25406] [cursor=pointer]:
+                - generic [ref=e25409] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 939" [ref=e25411] [cursor=pointer]
+              - heading [level=3] [ref=e25413] [cursor=pointer]
+          - button "View details for Pokemon 940" [ref=e25420] [cursor=pointer]:
+            - generic [ref=e25422] [cursor=pointer]:
+              - generic [ref=e25423] [cursor=pointer]:
+                - generic [ref=e25424] [cursor=pointer]: "#940"
+                - button "Add to comparison" [ref=e25425] [cursor=pointer]:
+                  - img [ref=e25426] [cursor=pointer]
+              - generic [ref=e25433] [cursor=pointer]:
+                - generic [ref=e25436] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 940" [ref=e25438] [cursor=pointer]
+              - heading [level=3] [ref=e25440] [cursor=pointer]
+          - button "View details for Pokemon 941" [ref=e25447] [cursor=pointer]:
+            - generic [ref=e25449] [cursor=pointer]:
+              - generic [ref=e25450] [cursor=pointer]:
+                - generic [ref=e25451] [cursor=pointer]: "#941"
+                - button "Add to comparison" [ref=e25452] [cursor=pointer]:
+                  - img [ref=e25453] [cursor=pointer]
+              - generic [ref=e25460] [cursor=pointer]:
+                - generic [ref=e25463] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 941" [ref=e25465] [cursor=pointer]
+              - heading [level=3] [ref=e25467] [cursor=pointer]
+          - button "View details for Pokemon 942" [ref=e25474] [cursor=pointer]:
+            - generic [ref=e25476] [cursor=pointer]:
+              - generic [ref=e25477] [cursor=pointer]:
+                - generic [ref=e25478] [cursor=pointer]: "#942"
+                - button "Add to comparison" [ref=e25479] [cursor=pointer]:
+                  - img [ref=e25480] [cursor=pointer]
+              - generic [ref=e25487] [cursor=pointer]:
+                - generic [ref=e25490] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 942" [ref=e25492] [cursor=pointer]
+              - heading [level=3] [ref=e25494] [cursor=pointer]
+          - button "View details for Pokemon 943" [ref=e25501] [cursor=pointer]:
+            - generic [ref=e25503] [cursor=pointer]:
+              - generic [ref=e25504] [cursor=pointer]:
+                - generic [ref=e25505] [cursor=pointer]: "#943"
+                - button "Add to comparison" [ref=e25506] [cursor=pointer]:
+                  - img [ref=e25507] [cursor=pointer]
+              - generic [ref=e25514] [cursor=pointer]:
+                - generic [ref=e25517] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 943" [ref=e25519] [cursor=pointer]
+              - heading [level=3] [ref=e25521] [cursor=pointer]
+          - button "View details for Pokemon 944" [ref=e25528] [cursor=pointer]:
+            - generic [ref=e25530] [cursor=pointer]:
+              - generic [ref=e25531] [cursor=pointer]:
+                - generic [ref=e25532] [cursor=pointer]: "#944"
+                - button "Add to comparison" [ref=e25533] [cursor=pointer]:
+                  - img [ref=e25534] [cursor=pointer]
+              - generic [ref=e25541] [cursor=pointer]:
+                - generic [ref=e25544] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 944" [ref=e25546] [cursor=pointer]
+              - heading [level=3] [ref=e25548] [cursor=pointer]
+          - button "View details for Pokemon 945" [ref=e25555] [cursor=pointer]:
+            - generic [ref=e25557] [cursor=pointer]:
+              - generic [ref=e25558] [cursor=pointer]:
+                - generic [ref=e25559] [cursor=pointer]: "#945"
+                - button "Add to comparison" [ref=e25560] [cursor=pointer]:
+                  - img [ref=e25561] [cursor=pointer]
+              - generic [ref=e25568] [cursor=pointer]:
+                - generic [ref=e25571] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 945" [ref=e25573] [cursor=pointer]
+              - heading [level=3] [ref=e25575] [cursor=pointer]
+          - button "View details for Pokemon 946" [ref=e25582] [cursor=pointer]:
+            - generic [ref=e25584] [cursor=pointer]:
+              - generic [ref=e25585] [cursor=pointer]:
+                - generic [ref=e25586] [cursor=pointer]: "#946"
+                - button "Add to comparison" [ref=e25587] [cursor=pointer]:
+                  - img [ref=e25588] [cursor=pointer]
+              - generic [ref=e25595] [cursor=pointer]:
+                - generic [ref=e25598] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 946" [ref=e25600] [cursor=pointer]
+              - heading [level=3] [ref=e25602] [cursor=pointer]
+          - button "View details for Pokemon 947" [ref=e25609] [cursor=pointer]:
+            - generic [ref=e25611] [cursor=pointer]:
+              - generic [ref=e25612] [cursor=pointer]:
+                - generic [ref=e25613] [cursor=pointer]: "#947"
+                - button "Add to comparison" [ref=e25614] [cursor=pointer]:
+                  - img [ref=e25615] [cursor=pointer]
+              - generic [ref=e25622] [cursor=pointer]:
+                - generic [ref=e25625] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 947" [ref=e25627] [cursor=pointer]
+              - heading [level=3] [ref=e25629] [cursor=pointer]
+          - button "View details for Pokemon 948" [ref=e25636] [cursor=pointer]:
+            - generic [ref=e25638] [cursor=pointer]:
+              - generic [ref=e25639] [cursor=pointer]:
+                - generic [ref=e25640] [cursor=pointer]: "#948"
+                - button "Add to comparison" [ref=e25641] [cursor=pointer]:
+                  - img [ref=e25642] [cursor=pointer]
+              - generic [ref=e25649] [cursor=pointer]:
+                - generic [ref=e25652] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 948" [ref=e25654] [cursor=pointer]
+              - heading [level=3] [ref=e25656] [cursor=pointer]
+          - button "View details for Pokemon 949" [ref=e25663] [cursor=pointer]:
+            - generic [ref=e25665] [cursor=pointer]:
+              - generic [ref=e25666] [cursor=pointer]:
+                - generic [ref=e25667] [cursor=pointer]: "#949"
+                - button "Add to comparison" [ref=e25668] [cursor=pointer]:
+                  - img [ref=e25669] [cursor=pointer]
+              - generic [ref=e25676] [cursor=pointer]:
+                - generic [ref=e25679] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 949" [ref=e25681] [cursor=pointer]
+              - heading [level=3] [ref=e25683] [cursor=pointer]
+          - button "View details for Pokemon 950" [ref=e25690] [cursor=pointer]:
+            - generic [ref=e25692] [cursor=pointer]:
+              - generic [ref=e25693] [cursor=pointer]:
+                - generic [ref=e25694] [cursor=pointer]: "#950"
+                - button "Add to comparison" [ref=e25695] [cursor=pointer]:
+                  - img [ref=e25696] [cursor=pointer]
+              - generic [ref=e25703] [cursor=pointer]:
+                - generic [ref=e25706] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 950" [ref=e25708] [cursor=pointer]
+              - heading [level=3] [ref=e25710] [cursor=pointer]
+          - button "View details for Pokemon 951" [ref=e25717] [cursor=pointer]:
+            - generic [ref=e25719] [cursor=pointer]:
+              - generic [ref=e25720] [cursor=pointer]:
+                - generic [ref=e25721] [cursor=pointer]: "#951"
+                - button "Add to comparison" [ref=e25722] [cursor=pointer]:
+                  - img [ref=e25723] [cursor=pointer]
+              - generic [ref=e25730] [cursor=pointer]:
+                - generic [ref=e25733] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 951" [ref=e25735] [cursor=pointer]
+              - heading [level=3] [ref=e25737] [cursor=pointer]
+          - button "View details for Pokemon 952" [ref=e25744] [cursor=pointer]:
+            - generic [ref=e25746] [cursor=pointer]:
+              - generic [ref=e25747] [cursor=pointer]:
+                - generic [ref=e25748] [cursor=pointer]: "#952"
+                - button "Add to comparison" [ref=e25749] [cursor=pointer]:
+                  - img [ref=e25750] [cursor=pointer]
+              - generic [ref=e25757] [cursor=pointer]:
+                - generic [ref=e25760] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 952" [ref=e25762] [cursor=pointer]
+              - heading [level=3] [ref=e25764] [cursor=pointer]
+          - button "View details for Pokemon 953" [ref=e25771] [cursor=pointer]:
+            - generic [ref=e25773] [cursor=pointer]:
+              - generic [ref=e25774] [cursor=pointer]:
+                - generic [ref=e25775] [cursor=pointer]: "#953"
+                - button "Add to comparison" [ref=e25776] [cursor=pointer]:
+                  - img [ref=e25777] [cursor=pointer]
+              - generic [ref=e25784] [cursor=pointer]:
+                - generic [ref=e25787] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 953" [ref=e25789] [cursor=pointer]
+              - heading [level=3] [ref=e25791] [cursor=pointer]
+          - button "View details for Pokemon 954" [ref=e25798] [cursor=pointer]:
+            - generic [ref=e25800] [cursor=pointer]:
+              - generic [ref=e25801] [cursor=pointer]:
+                - generic [ref=e25802] [cursor=pointer]: "#954"
+                - button "Add to comparison" [ref=e25803] [cursor=pointer]:
+                  - img [ref=e25804] [cursor=pointer]
+              - generic [ref=e25811] [cursor=pointer]:
+                - generic [ref=e25814] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 954" [ref=e25816] [cursor=pointer]
+              - heading [level=3] [ref=e25818] [cursor=pointer]
+          - button "View details for Pokemon 955" [ref=e25825] [cursor=pointer]:
+            - generic [ref=e25827] [cursor=pointer]:
+              - generic [ref=e25828] [cursor=pointer]:
+                - generic [ref=e25829] [cursor=pointer]: "#955"
+                - button "Add to comparison" [ref=e25830] [cursor=pointer]:
+                  - img [ref=e25831] [cursor=pointer]
+              - generic [ref=e25838] [cursor=pointer]:
+                - generic [ref=e25841] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 955" [ref=e25843] [cursor=pointer]
+              - heading [level=3] [ref=e25845] [cursor=pointer]
+          - button "View details for Pokemon 956" [ref=e25852] [cursor=pointer]:
+            - generic [ref=e25854] [cursor=pointer]:
+              - generic [ref=e25855] [cursor=pointer]:
+                - generic [ref=e25856] [cursor=pointer]: "#956"
+                - button "Add to comparison" [ref=e25857] [cursor=pointer]:
+                  - img [ref=e25858] [cursor=pointer]
+              - generic [ref=e25865] [cursor=pointer]:
+                - generic [ref=e25868] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 956" [ref=e25870] [cursor=pointer]
+              - heading [level=3] [ref=e25872] [cursor=pointer]
+          - button "View details for Pokemon 957" [ref=e25879] [cursor=pointer]:
+            - generic [ref=e25881] [cursor=pointer]:
+              - generic [ref=e25882] [cursor=pointer]:
+                - generic [ref=e25883] [cursor=pointer]: "#957"
+                - button "Add to comparison" [ref=e25884] [cursor=pointer]:
+                  - img [ref=e25885] [cursor=pointer]
+              - generic [ref=e25892] [cursor=pointer]:
+                - generic [ref=e25895] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 957" [ref=e25897] [cursor=pointer]
+              - heading [level=3] [ref=e25899] [cursor=pointer]
+          - button "View details for Pokemon 958" [ref=e25906] [cursor=pointer]:
+            - generic [ref=e25908] [cursor=pointer]:
+              - generic [ref=e25909] [cursor=pointer]:
+                - generic [ref=e25910] [cursor=pointer]: "#958"
+                - button "Add to comparison" [ref=e25911] [cursor=pointer]:
+                  - img [ref=e25912] [cursor=pointer]
+              - generic [ref=e25919] [cursor=pointer]:
+                - generic [ref=e25922] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 958" [ref=e25924] [cursor=pointer]
+              - heading [level=3] [ref=e25926] [cursor=pointer]
+          - button "View details for Pokemon 959" [ref=e25933] [cursor=pointer]:
+            - generic [ref=e25935] [cursor=pointer]:
+              - generic [ref=e25936] [cursor=pointer]:
+                - generic [ref=e25937] [cursor=pointer]: "#959"
+                - button "Add to comparison" [ref=e25938] [cursor=pointer]:
+                  - img [ref=e25939] [cursor=pointer]
+              - generic [ref=e25946] [cursor=pointer]:
+                - generic [ref=e25949] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 959" [ref=e25951] [cursor=pointer]
+              - heading [level=3] [ref=e25953] [cursor=pointer]
+          - button "View details for Pokemon 960" [ref=e25960] [cursor=pointer]:
+            - generic [ref=e25962] [cursor=pointer]:
+              - generic [ref=e25963] [cursor=pointer]:
+                - generic [ref=e25964] [cursor=pointer]: "#960"
+                - button "Add to comparison" [ref=e25965] [cursor=pointer]:
+                  - img [ref=e25966] [cursor=pointer]
+              - generic [ref=e25973] [cursor=pointer]:
+                - generic [ref=e25976] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 960" [ref=e25978] [cursor=pointer]
+              - heading [level=3] [ref=e25980] [cursor=pointer]
+          - button "View details for Pokemon 961" [ref=e25987] [cursor=pointer]:
+            - generic [ref=e25989] [cursor=pointer]:
+              - generic [ref=e25990] [cursor=pointer]:
+                - generic [ref=e25991] [cursor=pointer]: "#961"
+                - button "Add to comparison" [ref=e25992] [cursor=pointer]:
+                  - img [ref=e25993] [cursor=pointer]
+              - generic [ref=e26000] [cursor=pointer]:
+                - generic [ref=e26003] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 961" [ref=e26005] [cursor=pointer]
+              - heading [level=3] [ref=e26007] [cursor=pointer]
+          - button "View details for Pokemon 962" [ref=e26014] [cursor=pointer]:
+            - generic [ref=e26016] [cursor=pointer]:
+              - generic [ref=e26017] [cursor=pointer]:
+                - generic [ref=e26018] [cursor=pointer]: "#962"
+                - button "Add to comparison" [ref=e26019] [cursor=pointer]:
+                  - img [ref=e26020] [cursor=pointer]
+              - generic [ref=e26027] [cursor=pointer]:
+                - generic [ref=e26030] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 962" [ref=e26032] [cursor=pointer]
+              - heading [level=3] [ref=e26034] [cursor=pointer]
+          - button "View details for Pokemon 963" [ref=e26041] [cursor=pointer]:
+            - generic [ref=e26043] [cursor=pointer]:
+              - generic [ref=e26044] [cursor=pointer]:
+                - generic [ref=e26045] [cursor=pointer]: "#963"
+                - button "Add to comparison" [ref=e26046] [cursor=pointer]:
+                  - img [ref=e26047] [cursor=pointer]
+              - generic [ref=e26054] [cursor=pointer]:
+                - generic [ref=e26057] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 963" [ref=e26059] [cursor=pointer]
+              - heading [level=3] [ref=e26061] [cursor=pointer]
+          - button "View details for Pokemon 964" [ref=e26068] [cursor=pointer]:
+            - generic [ref=e26070] [cursor=pointer]:
+              - generic [ref=e26071] [cursor=pointer]:
+                - generic [ref=e26072] [cursor=pointer]: "#964"
+                - button "Add to comparison" [ref=e26073] [cursor=pointer]:
+                  - img [ref=e26074] [cursor=pointer]
+              - generic [ref=e26081] [cursor=pointer]:
+                - generic [ref=e26084] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 964" [ref=e26086] [cursor=pointer]
+              - heading [level=3] [ref=e26088] [cursor=pointer]
+          - button "View details for Pokemon 965" [ref=e26095] [cursor=pointer]:
+            - generic [ref=e26097] [cursor=pointer]:
+              - generic [ref=e26098] [cursor=pointer]:
+                - generic [ref=e26099] [cursor=pointer]: "#965"
+                - button "Add to comparison" [ref=e26100] [cursor=pointer]:
+                  - img [ref=e26101] [cursor=pointer]
+              - generic [ref=e26108] [cursor=pointer]:
+                - generic [ref=e26111] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 965" [ref=e26113] [cursor=pointer]
+              - heading [level=3] [ref=e26115] [cursor=pointer]
+          - button "View details for Pokemon 966" [ref=e26122] [cursor=pointer]:
+            - generic [ref=e26124] [cursor=pointer]:
+              - generic [ref=e26125] [cursor=pointer]:
+                - generic [ref=e26126] [cursor=pointer]: "#966"
+                - button "Add to comparison" [ref=e26127] [cursor=pointer]:
+                  - img [ref=e26128] [cursor=pointer]
+              - generic [ref=e26135] [cursor=pointer]:
+                - generic [ref=e26138] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 966" [ref=e26140] [cursor=pointer]
+              - heading [level=3] [ref=e26142] [cursor=pointer]
+          - button "View details for Pokemon 967" [ref=e26149] [cursor=pointer]:
+            - generic [ref=e26151] [cursor=pointer]:
+              - generic [ref=e26152] [cursor=pointer]:
+                - generic [ref=e26153] [cursor=pointer]: "#967"
+                - button "Add to comparison" [ref=e26154] [cursor=pointer]:
+                  - img [ref=e26155] [cursor=pointer]
+              - generic [ref=e26162] [cursor=pointer]:
+                - generic [ref=e26165] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 967" [ref=e26167] [cursor=pointer]
+              - heading [level=3] [ref=e26169] [cursor=pointer]
+          - button "View details for Pokemon 968" [ref=e26176] [cursor=pointer]:
+            - generic [ref=e26178] [cursor=pointer]:
+              - generic [ref=e26179] [cursor=pointer]:
+                - generic [ref=e26180] [cursor=pointer]: "#968"
+                - button "Add to comparison" [ref=e26181] [cursor=pointer]:
+                  - img [ref=e26182] [cursor=pointer]
+              - generic [ref=e26189] [cursor=pointer]:
+                - generic [ref=e26192] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 968" [ref=e26194] [cursor=pointer]
+              - heading [level=3] [ref=e26196] [cursor=pointer]
+          - button "View details for Pokemon 969" [ref=e26203] [cursor=pointer]:
+            - generic [ref=e26205] [cursor=pointer]:
+              - generic [ref=e26206] [cursor=pointer]:
+                - generic [ref=e26207] [cursor=pointer]: "#969"
+                - button "Add to comparison" [ref=e26208] [cursor=pointer]:
+                  - img [ref=e26209] [cursor=pointer]
+              - generic [ref=e26216] [cursor=pointer]:
+                - generic [ref=e26219] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 969" [ref=e26221] [cursor=pointer]
+              - heading [level=3] [ref=e26223] [cursor=pointer]
+          - button "View details for Pokemon 970" [ref=e26230] [cursor=pointer]:
+            - generic [ref=e26232] [cursor=pointer]:
+              - generic [ref=e26233] [cursor=pointer]:
+                - generic [ref=e26234] [cursor=pointer]: "#970"
+                - button "Add to comparison" [ref=e26235] [cursor=pointer]:
+                  - img [ref=e26236] [cursor=pointer]
+              - generic [ref=e26243] [cursor=pointer]:
+                - generic [ref=e26246] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 970" [ref=e26248] [cursor=pointer]
+              - heading [level=3] [ref=e26250] [cursor=pointer]
+          - button "View details for Pokemon 971" [ref=e26257] [cursor=pointer]:
+            - generic [ref=e26259] [cursor=pointer]:
+              - generic [ref=e26260] [cursor=pointer]:
+                - generic [ref=e26261] [cursor=pointer]: "#971"
+                - button "Add to comparison" [ref=e26262] [cursor=pointer]:
+                  - img [ref=e26263] [cursor=pointer]
+              - generic [ref=e26270] [cursor=pointer]:
+                - generic [ref=e26273] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 971" [ref=e26275] [cursor=pointer]
+              - heading [level=3] [ref=e26277] [cursor=pointer]
+          - button "View details for Pokemon 972" [ref=e26284] [cursor=pointer]:
+            - generic [ref=e26286] [cursor=pointer]:
+              - generic [ref=e26287] [cursor=pointer]:
+                - generic [ref=e26288] [cursor=pointer]: "#972"
+                - button "Add to comparison" [ref=e26289] [cursor=pointer]:
+                  - img [ref=e26290] [cursor=pointer]
+              - generic [ref=e26297] [cursor=pointer]:
+                - generic [ref=e26300] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 972" [ref=e26302] [cursor=pointer]
+              - heading [level=3] [ref=e26304] [cursor=pointer]
+          - button "View details for Pokemon 973" [ref=e26311] [cursor=pointer]:
+            - generic [ref=e26313] [cursor=pointer]:
+              - generic [ref=e26314] [cursor=pointer]:
+                - generic [ref=e26315] [cursor=pointer]: "#973"
+                - button "Add to comparison" [ref=e26316] [cursor=pointer]:
+                  - img [ref=e26317] [cursor=pointer]
+              - generic [ref=e26324] [cursor=pointer]:
+                - generic [ref=e26327] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 973" [ref=e26329] [cursor=pointer]
+              - heading [level=3] [ref=e26331] [cursor=pointer]
+          - button "View details for Pokemon 974" [ref=e26338] [cursor=pointer]:
+            - generic [ref=e26340] [cursor=pointer]:
+              - generic [ref=e26341] [cursor=pointer]:
+                - generic [ref=e26342] [cursor=pointer]: "#974"
+                - button "Add to comparison" [ref=e26343] [cursor=pointer]:
+                  - img [ref=e26344] [cursor=pointer]
+              - generic [ref=e26351] [cursor=pointer]:
+                - generic [ref=e26354] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 974" [ref=e26356] [cursor=pointer]
+              - heading [level=3] [ref=e26358] [cursor=pointer]
+          - button "View details for Pokemon 975" [ref=e26365] [cursor=pointer]:
+            - generic [ref=e26367] [cursor=pointer]:
+              - generic [ref=e26368] [cursor=pointer]:
+                - generic [ref=e26369] [cursor=pointer]: "#975"
+                - button "Add to comparison" [ref=e26370] [cursor=pointer]:
+                  - img [ref=e26371] [cursor=pointer]
+              - generic [ref=e26378] [cursor=pointer]:
+                - generic [ref=e26381] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 975" [ref=e26383] [cursor=pointer]
+              - heading [level=3] [ref=e26385] [cursor=pointer]
+          - button "View details for Pokemon 976" [ref=e26392] [cursor=pointer]:
+            - generic [ref=e26394] [cursor=pointer]:
+              - generic [ref=e26395] [cursor=pointer]:
+                - generic [ref=e26396] [cursor=pointer]: "#976"
+                - button "Add to comparison" [ref=e26397] [cursor=pointer]:
+                  - img [ref=e26398] [cursor=pointer]
+              - generic [ref=e26405] [cursor=pointer]:
+                - generic [ref=e26408] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 976" [ref=e26410] [cursor=pointer]
+              - heading [level=3] [ref=e26412] [cursor=pointer]
+          - button "View details for Pokemon 977" [ref=e26419] [cursor=pointer]:
+            - generic [ref=e26421] [cursor=pointer]:
+              - generic [ref=e26422] [cursor=pointer]:
+                - generic [ref=e26423] [cursor=pointer]: "#977"
+                - button "Add to comparison" [ref=e26424] [cursor=pointer]:
+                  - img [ref=e26425] [cursor=pointer]
+              - generic [ref=e26432] [cursor=pointer]:
+                - generic [ref=e26435] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 977" [ref=e26437] [cursor=pointer]
+              - heading [level=3] [ref=e26439] [cursor=pointer]
+          - button "View details for Pokemon 978" [ref=e26446] [cursor=pointer]:
+            - generic [ref=e26448] [cursor=pointer]:
+              - generic [ref=e26449] [cursor=pointer]:
+                - generic [ref=e26450] [cursor=pointer]: "#978"
+                - button "Add to comparison" [ref=e26451] [cursor=pointer]:
+                  - img [ref=e26452] [cursor=pointer]
+              - generic [ref=e26459] [cursor=pointer]:
+                - generic [ref=e26462] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 978" [ref=e26464] [cursor=pointer]
+              - heading [level=3] [ref=e26466] [cursor=pointer]
+          - button "View details for Pokemon 979" [ref=e26473] [cursor=pointer]:
+            - generic [ref=e26475] [cursor=pointer]:
+              - generic [ref=e26476] [cursor=pointer]:
+                - generic [ref=e26477] [cursor=pointer]: "#979"
+                - button "Add to comparison" [ref=e26478] [cursor=pointer]:
+                  - img [ref=e26479] [cursor=pointer]
+              - generic [ref=e26486] [cursor=pointer]:
+                - generic [ref=e26489] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 979" [ref=e26491] [cursor=pointer]
+              - heading [level=3] [ref=e26493] [cursor=pointer]
+          - button "View details for Pokemon 980" [ref=e26500] [cursor=pointer]:
+            - generic [ref=e26502] [cursor=pointer]:
+              - generic [ref=e26503] [cursor=pointer]:
+                - generic [ref=e26504] [cursor=pointer]: "#980"
+                - button "Add to comparison" [ref=e26505] [cursor=pointer]:
+                  - img [ref=e26506] [cursor=pointer]
+              - generic [ref=e26513] [cursor=pointer]:
+                - generic [ref=e26516] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 980" [ref=e26518] [cursor=pointer]
+              - heading [level=3] [ref=e26520] [cursor=pointer]
+          - button "View details for Pokemon 981" [ref=e26527] [cursor=pointer]:
+            - generic [ref=e26529] [cursor=pointer]:
+              - generic [ref=e26530] [cursor=pointer]:
+                - generic [ref=e26531] [cursor=pointer]: "#981"
+                - button "Add to comparison" [ref=e26532] [cursor=pointer]:
+                  - img [ref=e26533] [cursor=pointer]
+              - generic [ref=e26540] [cursor=pointer]:
+                - generic [ref=e26543] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 981" [ref=e26545] [cursor=pointer]
+              - heading [level=3] [ref=e26547] [cursor=pointer]
+          - button "View details for Pokemon 982" [ref=e26554] [cursor=pointer]:
+            - generic [ref=e26556] [cursor=pointer]:
+              - generic [ref=e26557] [cursor=pointer]:
+                - generic [ref=e26558] [cursor=pointer]: "#982"
+                - button "Add to comparison" [ref=e26559] [cursor=pointer]:
+                  - img [ref=e26560] [cursor=pointer]
+              - generic [ref=e26567] [cursor=pointer]:
+                - generic [ref=e26570] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 982" [ref=e26572] [cursor=pointer]
+              - heading [level=3] [ref=e26574] [cursor=pointer]
+          - button "View details for Pokemon 983" [ref=e26581] [cursor=pointer]:
+            - generic [ref=e26583] [cursor=pointer]:
+              - generic [ref=e26584] [cursor=pointer]:
+                - generic [ref=e26585] [cursor=pointer]: "#983"
+                - button "Add to comparison" [ref=e26586] [cursor=pointer]:
+                  - img [ref=e26587] [cursor=pointer]
+              - generic [ref=e26594] [cursor=pointer]:
+                - generic [ref=e26597] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 983" [ref=e26599] [cursor=pointer]
+              - heading [level=3] [ref=e26601] [cursor=pointer]
+          - button "View details for Pokemon 984" [ref=e26608] [cursor=pointer]:
+            - generic [ref=e26610] [cursor=pointer]:
+              - generic [ref=e26611] [cursor=pointer]:
+                - generic [ref=e26612] [cursor=pointer]: "#984"
+                - button "Add to comparison" [ref=e26613] [cursor=pointer]:
+                  - img [ref=e26614] [cursor=pointer]
+              - generic [ref=e26621] [cursor=pointer]:
+                - generic [ref=e26624] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 984" [ref=e26626] [cursor=pointer]
+              - heading [level=3] [ref=e26628] [cursor=pointer]
+          - button "View details for Pokemon 985" [ref=e26635] [cursor=pointer]:
+            - generic [ref=e26637] [cursor=pointer]:
+              - generic [ref=e26638] [cursor=pointer]:
+                - generic [ref=e26639] [cursor=pointer]: "#985"
+                - button "Add to comparison" [ref=e26640] [cursor=pointer]:
+                  - img [ref=e26641] [cursor=pointer]
+              - generic [ref=e26648] [cursor=pointer]:
+                - generic [ref=e26651] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 985" [ref=e26653] [cursor=pointer]
+              - heading [level=3] [ref=e26655] [cursor=pointer]
+          - button "View details for Pokemon 986" [ref=e26662] [cursor=pointer]:
+            - generic [ref=e26664] [cursor=pointer]:
+              - generic [ref=e26665] [cursor=pointer]:
+                - generic [ref=e26666] [cursor=pointer]: "#986"
+                - button "Add to comparison" [ref=e26667] [cursor=pointer]:
+                  - img [ref=e26668] [cursor=pointer]
+              - generic [ref=e26675] [cursor=pointer]:
+                - generic [ref=e26678] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 986" [ref=e26680] [cursor=pointer]
+              - heading [level=3] [ref=e26682] [cursor=pointer]
+          - button "View details for Pokemon 987" [ref=e26689] [cursor=pointer]:
+            - generic [ref=e26691] [cursor=pointer]:
+              - generic [ref=e26692] [cursor=pointer]:
+                - generic [ref=e26693] [cursor=pointer]: "#987"
+                - button "Add to comparison" [ref=e26694] [cursor=pointer]:
+                  - img [ref=e26695] [cursor=pointer]
+              - generic [ref=e26702] [cursor=pointer]:
+                - generic [ref=e26705] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 987" [ref=e26707] [cursor=pointer]
+              - heading [level=3] [ref=e26709] [cursor=pointer]
+          - button "View details for Pokemon 988" [ref=e26716] [cursor=pointer]:
+            - generic [ref=e26718] [cursor=pointer]:
+              - generic [ref=e26719] [cursor=pointer]:
+                - generic [ref=e26720] [cursor=pointer]: "#988"
+                - button "Add to comparison" [ref=e26721] [cursor=pointer]:
+                  - img [ref=e26722] [cursor=pointer]
+              - generic [ref=e26729] [cursor=pointer]:
+                - generic [ref=e26732] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 988" [ref=e26734] [cursor=pointer]
+              - heading [level=3] [ref=e26736] [cursor=pointer]
+          - button "View details for Pokemon 989" [ref=e26743] [cursor=pointer]:
+            - generic [ref=e26745] [cursor=pointer]:
+              - generic [ref=e26746] [cursor=pointer]:
+                - generic [ref=e26747] [cursor=pointer]: "#989"
+                - button "Add to comparison" [ref=e26748] [cursor=pointer]:
+                  - img [ref=e26749] [cursor=pointer]
+              - generic [ref=e26756] [cursor=pointer]:
+                - generic [ref=e26759] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 989" [ref=e26761] [cursor=pointer]
+              - heading [level=3] [ref=e26763] [cursor=pointer]
+          - button "View details for Pokemon 990" [ref=e26770] [cursor=pointer]:
+            - generic [ref=e26772] [cursor=pointer]:
+              - generic [ref=e26773] [cursor=pointer]:
+                - generic [ref=e26774] [cursor=pointer]: "#990"
+                - button "Add to comparison" [ref=e26775] [cursor=pointer]:
+                  - img [ref=e26776] [cursor=pointer]
+              - generic [ref=e26783] [cursor=pointer]:
+                - generic [ref=e26786] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 990" [ref=e26788] [cursor=pointer]
+              - heading [level=3] [ref=e26790] [cursor=pointer]
+          - button "View details for Pokemon 991" [ref=e26797] [cursor=pointer]:
+            - generic [ref=e26799] [cursor=pointer]:
+              - generic [ref=e26800] [cursor=pointer]:
+                - generic [ref=e26801] [cursor=pointer]: "#991"
+                - button "Add to comparison" [ref=e26802] [cursor=pointer]:
+                  - img [ref=e26803] [cursor=pointer]
+              - generic [ref=e26810] [cursor=pointer]:
+                - generic [ref=e26813] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 991" [ref=e26815] [cursor=pointer]
+              - heading [level=3] [ref=e26817] [cursor=pointer]
+          - button "View details for Pokemon 992" [ref=e26824] [cursor=pointer]:
+            - generic [ref=e26826] [cursor=pointer]:
+              - generic [ref=e26827] [cursor=pointer]:
+                - generic [ref=e26828] [cursor=pointer]: "#992"
+                - button "Add to comparison" [ref=e26829] [cursor=pointer]:
+                  - img [ref=e26830] [cursor=pointer]
+              - generic [ref=e26837] [cursor=pointer]:
+                - generic [ref=e26840] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 992" [ref=e26842] [cursor=pointer]
+              - heading [level=3] [ref=e26844] [cursor=pointer]
+          - button "View details for Pokemon 993" [ref=e26851] [cursor=pointer]:
+            - generic [ref=e26853] [cursor=pointer]:
+              - generic [ref=e26854] [cursor=pointer]:
+                - generic [ref=e26855] [cursor=pointer]: "#993"
+                - button "Add to comparison" [ref=e26856] [cursor=pointer]:
+                  - img [ref=e26857] [cursor=pointer]
+              - generic [ref=e26864] [cursor=pointer]:
+                - generic [ref=e26867] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 993" [ref=e26869] [cursor=pointer]
+              - heading [level=3] [ref=e26871] [cursor=pointer]
+          - button "View details for Pokemon 994" [ref=e26878] [cursor=pointer]:
+            - generic [ref=e26880] [cursor=pointer]:
+              - generic [ref=e26881] [cursor=pointer]:
+                - generic [ref=e26882] [cursor=pointer]: "#994"
+                - button "Add to comparison" [ref=e26883] [cursor=pointer]:
+                  - img [ref=e26884] [cursor=pointer]
+              - generic [ref=e26891] [cursor=pointer]:
+                - generic [ref=e26894] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 994" [ref=e26896] [cursor=pointer]
+              - heading [level=3] [ref=e26898] [cursor=pointer]
+          - button "View details for Pokemon 995" [ref=e26905] [cursor=pointer]:
+            - generic [ref=e26907] [cursor=pointer]:
+              - generic [ref=e26908] [cursor=pointer]:
+                - generic [ref=e26909] [cursor=pointer]: "#995"
+                - button "Add to comparison" [ref=e26910] [cursor=pointer]:
+                  - img [ref=e26911] [cursor=pointer]
+              - generic [ref=e26918] [cursor=pointer]:
+                - generic [ref=e26921] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 995" [ref=e26923] [cursor=pointer]
+              - heading [level=3] [ref=e26925] [cursor=pointer]
+          - button "View details for Pokemon 996" [ref=e26932] [cursor=pointer]:
+            - generic [ref=e26934] [cursor=pointer]:
+              - generic [ref=e26935] [cursor=pointer]:
+                - generic [ref=e26936] [cursor=pointer]: "#996"
+                - button "Add to comparison" [ref=e26937] [cursor=pointer]:
+                  - img [ref=e26938] [cursor=pointer]
+              - generic [ref=e26945] [cursor=pointer]:
+                - generic [ref=e26948] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 996" [ref=e26950] [cursor=pointer]
+              - heading [level=3] [ref=e26952] [cursor=pointer]
+          - button "View details for Pokemon 997" [ref=e26959] [cursor=pointer]:
+            - generic [ref=e26961] [cursor=pointer]:
+              - generic [ref=e26962] [cursor=pointer]:
+                - generic [ref=e26963] [cursor=pointer]: "#997"
+                - button "Add to comparison" [ref=e26964] [cursor=pointer]:
+                  - img [ref=e26965] [cursor=pointer]
+              - generic [ref=e26972] [cursor=pointer]:
+                - generic [ref=e26975] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 997" [ref=e26977] [cursor=pointer]
+              - heading [level=3] [ref=e26979] [cursor=pointer]
+          - button "View details for Pokemon 998" [ref=e26986] [cursor=pointer]:
+            - generic [ref=e26988] [cursor=pointer]:
+              - generic [ref=e26989] [cursor=pointer]:
+                - generic [ref=e26990] [cursor=pointer]: "#998"
+                - button "Add to comparison" [ref=e26991] [cursor=pointer]:
+                  - img [ref=e26992] [cursor=pointer]
+              - generic [ref=e26999] [cursor=pointer]:
+                - generic [ref=e27002] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 998" [ref=e27004] [cursor=pointer]
+              - heading [level=3] [ref=e27006] [cursor=pointer]
+          - button "View details for Pokemon 999" [ref=e27013] [cursor=pointer]:
+            - generic [ref=e27015] [cursor=pointer]:
+              - generic [ref=e27016] [cursor=pointer]:
+                - generic [ref=e27017] [cursor=pointer]: "#999"
+                - button "Add to comparison" [ref=e27018] [cursor=pointer]:
+                  - img [ref=e27019] [cursor=pointer]
+              - generic [ref=e27026] [cursor=pointer]:
+                - generic [ref=e27029] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 999" [ref=e27031] [cursor=pointer]
+              - heading [level=3] [ref=e27033] [cursor=pointer]
+          - button "View details for Pokemon 1000" [ref=e27040] [cursor=pointer]:
+            - generic [ref=e27042] [cursor=pointer]:
+              - generic [ref=e27043] [cursor=pointer]:
+                - generic [ref=e27044] [cursor=pointer]: "#1000"
+                - button "Add to comparison" [ref=e27045] [cursor=pointer]:
+                  - img [ref=e27046] [cursor=pointer]
+              - generic [ref=e27053] [cursor=pointer]:
+                - generic [ref=e27056] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 1000" [ref=e27058] [cursor=pointer]
+              - heading [level=3] [ref=e27060] [cursor=pointer]
+          - button "View details for Pokemon 1001" [ref=e27067] [cursor=pointer]:
+            - generic [ref=e27069] [cursor=pointer]:
+              - generic [ref=e27070] [cursor=pointer]:
+                - generic [ref=e27071] [cursor=pointer]: "#1001"
+                - button "Add to comparison" [ref=e27072] [cursor=pointer]:
+                  - img [ref=e27073] [cursor=pointer]
+              - generic [ref=e27080] [cursor=pointer]:
+                - generic [ref=e27083] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 1001" [ref=e27085] [cursor=pointer]
+              - heading [level=3] [ref=e27087] [cursor=pointer]
+          - button "View details for Pokemon 1002" [ref=e27094] [cursor=pointer]:
+            - generic [ref=e27096] [cursor=pointer]:
+              - generic [ref=e27097] [cursor=pointer]:
+                - generic [ref=e27098] [cursor=pointer]: "#1002"
+                - button "Add to comparison" [ref=e27099] [cursor=pointer]:
+                  - img [ref=e27100] [cursor=pointer]
+              - generic [ref=e27107] [cursor=pointer]:
+                - generic [ref=e27110] [cursor=pointer]: Loading Pokémon artwork
+                - img "Pokemon 1002" [ref=e27112] [cursor=pointer]
+              - heading [level=3] [ref=e27114] [cursor=pointer]
+    - button "Open Pikachu help assistant" [ref=e27122] [cursor=pointer]:
+      - img "Pikachu Help Assistant" [ref=e27123] [cursor=pointer]
+      - generic [ref=e27124] [cursor=pointer]: "!"
+  - button "Open Next.js Dev Tools" [ref=e27131] [cursor=pointer]:
+    - img [ref=e27132] [cursor=pointer]
+  - alert [ref=e27136]
+```

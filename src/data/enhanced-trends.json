@@ -1,0 +1,202 @@
+[
+  {
+    "name": "Pikachu",
+    "rank_global": 1,
+    "peak_percent": 20.4,
+    "peak_year": 2021,
+    "notable_sources": ["Franchise mascot", "Google Trends #1", "Bulbapedia traffic leader"],
+    "national_number": 25,
+    "generation": 1,
+    "home_region": "Kanto",
+    "types": ["Electric"],
+    "competitive_tier": "meta",
+    "trend": [
+      { "year": 2020, "values": { "Global": 18.2, "Asia": 22.1, "US": 16.8, "EU": 15.9 } },
+      { "year": 2021, "values": { "Global": 20.4, "Asia": 24.3, "US": 18.9, "EU": 18.1 } },
+      { "year": 2022, "values": { "Global": 19.8, "Asia": 23.2, "US": 18.1, "EU": 17.5 } },
+      { "year": 2023, "values": { "Global": 19.2, "Asia": 22.8, "US": 17.3, "EU": 16.9 } },
+      { "year": 2024, "values": { "Global": 18.7, "Asia": 22.1, "US": 16.8, "EU": 16.4 } },
+      { "year": 2025, "values": { "Global": 18.1, "Asia": 21.5, "US": 16.2, "EU": 15.8 } }
+    ]
+  },
+  {
+    "name": "Charizard",
+    "rank_global": 2,
+    "peak_percent": 18.1,
+    "peak_year": 2020,
+    "notable_sources": ["Top 5 in official polls", "High search volume", "Smash Bros popularity"],
+    "national_number": 6,
+    "generation": 1,
+    "home_region": "Kanto",
+    "types": ["Fire", "Flying"],
+    "competitive_tier": "meta",
+    "trend": [
+      { "year": 2020, "values": { "Global": 18.1, "Asia": 16.8, "US": 19.2, "EU": 18.5 } },
+      { "year": 2021, "values": { "Global": 17.5, "Asia": 16.1, "US": 18.8, "EU": 17.9 } },
+      { "year": 2022, "values": { "Global": 17.2, "Asia": 15.8, "US": 18.4, "EU": 17.6 } },
+      { "year": 2023, "values": { "Global": 16.9, "Asia": 15.5, "US": 18.1, "EU": 17.3 } },
+      { "year": 2024, "values": { "Global": 16.6, "Asia": 15.2, "US": 17.8, "EU": 17.0 } },
+      { "year": 2025, "values": { "Global": 16.3, "Asia": 14.9, "US": 17.5, "EU": 16.7 } }
+    ]
+  },
+  {
+    "name": "Dragonite",
+    "rank_global": 3,
+    "peak_percent": 15.7,
+    "peak_year": 2022,
+    "notable_sources": ["Gen 1 pseudo-legendary", "Competitive viability", "Fan favorite"],
+    "national_number": 149,
+    "generation": 1,
+    "home_region": "Kanto",
+    "types": ["Dragon", "Flying"],
+    "competitive_tier": "meta",
+    "trend": [
+      { "year": 2020, "values": { "Global": 14.2, "Asia": 13.8, "US": 14.8, "EU": 14.1 } },
+      { "year": 2021, "values": { "Global": 14.8, "Asia": 14.4, "US": 15.2, "EU": 14.7 } },
+      { "year": 2022, "values": { "Global": 15.7, "Asia": 15.3, "US": 16.1, "EU": 15.6 } },
+      { "year": 2023, "values": { "Global": 15.3, "Asia": 14.9, "US": 15.7, "EU": 15.2 } },
+      { "year": 2024, "values": { "Global": 14.9, "Asia": 14.5, "US": 15.3, "EU": 14.8 } },
+      { "year": 2025, "values": { "Global": 14.5, "Asia": 14.1, "US": 14.9, "EU": 14.4 } }
+    ]
+  },
+  {
+    "name": "Mewtwo",
+    "rank_global": 4,
+    "peak_percent": 13.4,
+    "peak_year": 2021,
+    "notable_sources": ["Legendary status", "Movie appearances", "High stats"],
+    "national_number": 150,
+    "generation": 1,
+    "home_region": "Kanto",
+    "types": ["Psychic"],
+    "competitive_tier": "meta",
+    "trend": [
+      { "year": 2020, "values": { "Global": 12.8, "Asia": 11.9, "US": 13.2, "EU": 13.3 } },
+      { "year": 2021, "values": { "Global": 13.4, "Asia": 12.5, "US": 13.8, "EU": 13.9 } },
+      { "year": 2022, "values": { "Global": 13.1, "Asia": 12.2, "US": 13.5, "EU": 13.6 } },
+      { "year": 2023, "values": { "Global": 12.8, "Asia": 11.9, "US": 13.2, "EU": 13.3 } },
+      { "year": 2024, "values": { "Global": 12.5, "Asia": 11.6, "US": 12.9, "EU": 13.0 } },
+      { "year": 2025, "values": { "Global": 12.2, "Asia": 11.3, "US": 12.6, "EU": 12.7 } }
+    ]
+  },
+  {
+    "name": "Gyarados",
+    "rank_global": 5,
+    "peak_percent": 12.1,
+    "peak_year": 2023,
+    "notable_sources": ["Iconic design", "Competitive relevance", "Magikarp evolution"],
+    "national_number": 130,
+    "generation": 1,
+    "home_region": "Kanto",
+    "types": ["Water", "Flying"],
+    "competitive_tier": "meta",
+    "trend": [
+      { "year": 2020, "values": { "Global": 11.2, "Asia": 10.8, "US": 11.8, "EU": 11.1 } },
+      { "year": 2021, "values": { "Global": 11.5, "Asia": 11.1, "US": 12.1, "EU": 11.4 } },
+      { "year": 2022, "values": { "Global": 11.8, "Asia": 11.4, "US": 12.4, "EU": 11.7 } },
+      { "year": 2023, "values": { "Global": 12.1, "Asia": 11.7, "US": 12.7, "EU": 12.0 } },
+      { "year": 2024, "values": { "Global": 11.9, "Asia": 11.5, "US": 12.5, "EU": 11.8 } },
+      { "year": 2025, "values": { "Global": 11.7, "Asia": 11.3, "US": 12.3, "EU": 11.6 } }
+    ]
+  },
+  {
+    "name": "Snorlax",
+    "rank_global": 6,
+    "peak_percent": 10.8,
+    "peak_year": 2022,
+    "notable_sources": ["Sleepy mascot", "High HP stat", "Anime appearances"],
+    "national_number": 143,
+    "generation": 1,
+    "home_region": "Kanto",
+    "types": ["Normal"],
+    "competitive_tier": "meta",
+    "trend": [
+      { "year": 2020, "values": { "Global": 10.1, "Asia": 9.8, "US": 10.5, "EU": 10.0 } },
+      { "year": 2021, "values": { "Global": 10.4, "Asia": 10.1, "US": 10.8, "EU": 10.3 } },
+      { "year": 2022, "values": { "Global": 10.8, "Asia": 10.5, "US": 11.2, "EU": 10.7 } },
+      { "year": 2023, "values": { "Global": 10.6, "Asia": 10.3, "US": 11.0, "EU": 10.5 } },
+      { "year": 2024, "values": { "Global": 10.4, "Asia": 10.1, "US": 10.8, "EU": 10.3 } },
+      { "year": 2025, "values": { "Global": 10.2, "Asia": 9.9, "US": 10.6, "EU": 10.1 } }
+    ]
+  },
+  {
+    "name": "Blastoise",
+    "rank_global": 7,
+    "peak_percent": 9.5,
+    "peak_year": 2021,
+    "notable_sources": ["Starter evolution", "Tank design", "Competitive viability"],
+    "national_number": 9,
+    "generation": 1,
+    "home_region": "Kanto",
+    "types": ["Water"],
+    "competitive_tier": "meta",
+    "trend": [
+      { "year": 2020, "values": { "Global": 9.2, "Asia": 8.9, "US": 9.6, "EU": 9.1 } },
+      { "year": 2021, "values": { "Global": 9.5, "Asia": 9.2, "US": 9.9, "EU": 9.4 } },
+      { "year": 2022, "values": { "Global": 9.3, "Asia": 9.0, "US": 9.7, "EU": 9.2 } },
+      { "year": 2023, "values": { "Global": 9.1, "Asia": 8.8, "US": 9.5, "EU": 9.0 } },
+      { "year": 2024, "values": { "Global": 8.9, "Asia": 8.6, "US": 9.3, "EU": 8.8 } },
+      { "year": 2025, "values": { "Global": 8.7, "Asia": 8.4, "US": 9.1, "EU": 8.6 } }
+    ]
+  },
+  {
+    "name": "Venusaur",
+    "rank_global": 8,
+    "peak_percent": 8.9,
+    "peak_year": 2020,
+    "notable_sources": ["Starter evolution", "Grass type rep", "Mega evolution"],
+    "national_number": 3,
+    "generation": 1,
+    "home_region": "Kanto",
+    "types": ["Grass", "Poison"],
+    "competitive_tier": "meta",
+    "trend": [
+      { "year": 2020, "values": { "Global": 8.9, "Asia": 8.6, "US": 9.2, "EU": 8.8 } },
+      { "year": 2021, "values": { "Global": 8.7, "Asia": 8.4, "US": 9.0, "EU": 8.6 } },
+      { "year": 2022, "values": { "Global": 8.5, "Asia": 8.2, "US": 8.8, "EU": 8.4 } },
+      { "year": 2023, "values": { "Global": 8.3, "Asia": 8.0, "US": 8.6, "EU": 8.2 } },
+      { "year": 2024, "values": { "Global": 8.1, "Asia": 7.8, "US": 8.4, "EU": 8.0 } },
+      { "year": 2025, "values": { "Global": 7.9, "Asia": 7.6, "US": 8.2, "EU": 7.8 } }
+    ]
+  },
+  {
+    "name": "Pidgeot",
+    "rank_global": 9,
+    "peak_percent": 7.8,
+    "peak_year": 2023,
+    "notable_sources": ["Early route bird", "Mega evolution", "Ash's companion"],
+    "national_number": 18,
+    "generation": 1,
+    "home_region": "Kanto",
+    "types": ["Normal", "Flying"],
+    "competitive_tier": "meta",
+    "trend": [
+      { "year": 2020, "values": { "Global": 7.2, "Asia": 7.0, "US": 7.5, "EU": 7.1 } },
+      { "year": 2021, "values": { "Global": 7.4, "Asia": 7.2, "US": 7.7, "EU": 7.3 } },
+      { "year": 2022, "values": { "Global": 7.6, "Asia": 7.4, "US": 7.9, "EU": 7.5 } },
+      { "year": 2023, "values": { "Global": 7.8, "Asia": 7.6, "US": 8.1, "EU": 7.7 } },
+      { "year": 2024, "values": { "Global": 7.6, "Asia": 7.4, "US": 7.9, "EU": 7.5 } },
+      { "year": 2025, "values": { "Global": 7.4, "Asia": 7.2, "US": 7.7, "EU": 7.3 } }
+    ]
+  },
+  {
+    "name": "Alakazam",
+    "rank_global": 10,
+    "peak_percent": 7.1,
+    "peak_year": 2022,
+    "notable_sources": ["High special attack", "Psychic type", "Trade evolution"],
+    "national_number": 65,
+    "generation": 1,
+    "home_region": "Kanto",
+    "types": ["Psychic"],
+    "competitive_tier": "meta",
+    "trend": [
+      { "year": 2020, "values": { "Global": 6.8, "Asia": 6.5, "US": 7.1, "EU": 6.7 } },
+      { "year": 2021, "values": { "Global": 6.9, "Asia": 6.6, "US": 7.2, "EU": 6.8 } },
+      { "year": 2022, "values": { "Global": 7.1, "Asia": 6.8, "US": 7.4, "EU": 7.0 } },
+      { "year": 2023, "values": { "Global": 7.0, "Asia": 6.7, "US": 7.3, "EU": 6.9 } },
+      { "year": 2024, "values": { "Global": 6.9, "Asia": 6.6, "US": 7.2, "EU": 6.8 } },
+      { "year": 2025, "values": { "Global": 6.8, "Asia": 6.5, "US": 7.1, "EU": 6.7 } }
+    ]
+  }
+]

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Top 50 Back Button Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            background: #f5f5f5;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+        }
+        .test-step {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        .expected {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .interaction {
+            color: #dc3545;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Top 50 Back Button Behavior Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Scenarios</h2>
+        
+        <div class="test-step">
+            <h3>Scenario 1: No Interaction</h3>
+            <p>1. Navigate to <a href="http://localhost:3000/top50" target="_blank">Top 50 page</a></p>
+            <p>2. Do NOT click on any Pokémon or change phases</p>
+            <p>3. Click the back button</p>
+            <p class="expected">Expected: Should navigate back to main PokéDex page (/)</p>
+        </div>
+        
+        <div class="test-step">
+            <h3>Scenario 2: With Interaction</h3>
+            <p>1. Navigate to <a href="http://localhost:3000/top50" target="_blank">Top 50 page</a></p>
+            <p>2. <span class="interaction">Click on any Pokémon</span> or change to a different phase</p>
+            <p>3. Click the back button</p>
+            <p class="expected">Expected: Should reset to cover phase within Top 50 (not leave the page)</p>
+        </div>
+        
+        <div class="test-step">
+            <h3>Scenario 3: Multiple Interactions</h3>
+            <p>1. Navigate to <a href="http://localhost:3000/top50" target="_blank">Top 50 page</a></p>
+            <p>2. <span class="interaction">Click on different Pokémon</span></p>
+            <p>3. <span class="interaction">Change phases</span></p>
+            <p>4. <span class="interaction">Use the reference bar</span></p>
+            <p>5. Click the back button</p>
+            <p class="expected">Expected: Should reset to cover phase within Top 50</p>
+        </div>
+        
+        <div class="test-step">
+            <h3>Scenario 4: URL with Rank Parameter</h3>
+            <p>1. Navigate to <a href="http://localhost:3000/top50?rank=25" target="_blank">Top 50 page with rank=25</a></p>
+            <p>2. Do NOT interact further</p>
+            <p>3. Click the back button</p>
+            <p class="expected">Expected: Should navigate back to main PokéDex page (/)</p>
+        </div>
+        
+        <div class="test-step">
+            <h3>Scenario 5: URL with Rank + Interaction</h3>
+            <p>1. Navigate to <a href="http://localhost:3000/top50?rank=25" target="_blank">Top 50 page with rank=25</a></p>
+            <p>2. <span class="interaction">Click on a different Pokémon</span></p>
+            <p>3. Click the back button</p>
+            <p class="expected">Expected: Should reset to cover phase within Top 50</p>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Implementation Details</h2>
+        <ul>
+            <li><strong>Interaction Tracking:</strong> The system tracks when users click on Pokémon, change phases, or use the reference bar</li>
+            <li><strong>Back Button Logic:</strong> 
+                <ul>
+                    <li>No interaction → Navigate to main page</li>
+                    <li>Has interaction → Reset to cover phase within Top 50</li>
+                </ul>
+            </li>
+            <li><strong>State Management:</strong> Uses React state to track interaction status</li>
+            <li><strong>URL Parameters:</strong> Initial rank from URL doesn't count as interaction</li>
+        </ul>
+    </div>
+    
+    <div class="test-section">
+        <h2>Notes</h2>
+        <p>This implementation ensures that users who haven't explored the Top 50 section can easily return to the main page, while users who have engaged with the content stay within the Top 50 experience when using the back button.</p>
+    </div>
+</body>
+</html>

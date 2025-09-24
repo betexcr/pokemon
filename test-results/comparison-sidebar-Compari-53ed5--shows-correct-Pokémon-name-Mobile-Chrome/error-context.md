@@ -1,0 +1,6068 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3]:
+      - banner [ref=e4]:
+        - generic [ref=e6]:
+          - generic [ref=e8]:
+            - img [ref=e11]
+            - heading "PokéDex" [level=2] [ref=e14]
+          - generic [ref=e15]:
+            - generic [ref=e16]:
+              - link "Open insights menu" [ref=e19] [cursor=pointer]:
+                - /url: /insights
+                - img [ref=e21] [cursor=pointer]
+              - link "Team Builder" [ref=e25] [cursor=pointer]:
+                - /url: /team
+              - link "Battles" [ref=e28] [cursor=pointer]:
+                - /url: /battle
+              - link "Top 50" [ref=e31] [cursor=pointer]:
+                - /url: /top50
+              - link "Compare" [ref=e34] [cursor=pointer]:
+                - /url: /compare
+            - generic [ref=e36]:
+              - button "Profile Placeholder" [ref=e37] [cursor=pointer]:
+                - img "Profile Placeholder" [ref=e38] [cursor=pointer]
+              - menu:
+                - generic: Not signed in
+                - generic: Sign in to access your profile and teams
+                - generic:
+                  - generic:
+                    - generic: Theme
+                    - switch:
+                      - generic: Switch to dark theme
+                - button:
+                  - img
+                  - text: Reset Poke-Tips
+                - button:
+                  - img
+                  - text: Sign In / Sign Up
+      - generic [ref=e42]:
+        - img
+        - textbox "Search Pokémon..." [ref=e43]
+      - generic [ref=e46]:
+        - generic [ref=e47]:
+          - button "Normal" [ref=e48] [cursor=pointer]
+          - button "Fire" [ref=e49] [cursor=pointer]
+          - button "Water" [ref=e50] [cursor=pointer]
+          - button "Electric" [ref=e51] [cursor=pointer]
+          - button "Grass" [ref=e52] [cursor=pointer]
+          - button "Ice" [ref=e53] [cursor=pointer]
+          - button "Fighting" [ref=e54] [cursor=pointer]
+          - button "Poison" [ref=e55] [cursor=pointer]
+          - button "Ground" [ref=e56] [cursor=pointer]
+          - button "Flying" [ref=e57] [cursor=pointer]
+          - button "Psychic" [ref=e58] [cursor=pointer]
+          - button "Bug" [ref=e59] [cursor=pointer]
+          - button "Rock" [ref=e60] [cursor=pointer]
+          - button "Ghost" [ref=e61] [cursor=pointer]
+          - button "Dragon" [ref=e62] [cursor=pointer]
+          - button "Dark" [ref=e63] [cursor=pointer]
+          - button "Steel" [ref=e64] [cursor=pointer]
+          - button "Fairy" [ref=e65] [cursor=pointer]
+        - button "Clear filters" [ref=e70] [cursor=pointer]
+      - generic [ref=e73]:
+        - generic [ref=e74]:
+          - button "Filters Filters" [ref=e76] [cursor=pointer]:
+            - img "Filters" [ref=e77] [cursor=pointer]
+            - generic [ref=e78] [cursor=pointer]: Filters
+          - generic [ref=e79]:
+            - generic [ref=e80]: Size
+            - generic [ref=e81]:
+              - button [ref=e82] [cursor=pointer]
+              - button [ref=e87] [cursor=pointer]
+              - button [ref=e89] [cursor=pointer]
+              - button [ref=e91] [cursor=pointer]
+        - generic [ref=e92]:
+          - generic [ref=e93]: Sort
+          - generic [ref=e94]:
+            - combobox [ref=e95]:
+              - option "Number" [selected]
+              - option "Name"
+              - option "Total Stats"
+              - option "HP"
+              - option "Attack"
+              - option "Defense"
+              - option "Sp. Attack"
+              - option "Sp. Defense"
+              - option "Speed"
+            - button "ASC" [ref=e96] [cursor=pointer]:
+              - generic:
+                - img
+              - generic [ref=e98] [cursor=pointer]: ASC
+      - generic [ref=e103]:
+        - button "View details for Bulbasaur" [ref=e105] [cursor=pointer]:
+          - generic [ref=e107] [cursor=pointer]:
+            - generic [ref=e109] [cursor=pointer]: "#001"
+            - img "Bulbasaur" [ref=e113] [cursor=pointer]
+        - button "View details for Ivysaur" [ref=e116] [cursor=pointer]:
+          - generic [ref=e118] [cursor=pointer]:
+            - generic [ref=e120] [cursor=pointer]: "#002"
+            - img "Ivysaur" [ref=e124] [cursor=pointer]
+        - button "View details for Venusaur" [ref=e127] [cursor=pointer]:
+          - generic [ref=e129] [cursor=pointer]:
+            - generic [ref=e131] [cursor=pointer]: "#003"
+            - img "Venusaur" [ref=e135] [cursor=pointer]
+        - button "View details for Charmander" [ref=e138] [cursor=pointer]:
+          - generic [ref=e140] [cursor=pointer]:
+            - generic [ref=e142] [cursor=pointer]: "#004"
+            - img "Charmander" [ref=e146] [cursor=pointer]
+        - button "View details for Charmeleon" [ref=e149] [cursor=pointer]:
+          - generic [ref=e151] [cursor=pointer]:
+            - generic [ref=e153] [cursor=pointer]: "#005"
+            - img "Charmeleon" [ref=e157] [cursor=pointer]
+        - button "View details for Charizard" [ref=e160] [cursor=pointer]:
+          - generic [ref=e162] [cursor=pointer]:
+            - generic [ref=e164] [cursor=pointer]: "#006"
+            - img "Charizard" [ref=e168] [cursor=pointer]
+        - button "View details for Squirtle" [ref=e171] [cursor=pointer]:
+          - generic [ref=e173] [cursor=pointer]:
+            - generic [ref=e175] [cursor=pointer]: "#007"
+            - img "Squirtle" [ref=e179] [cursor=pointer]
+        - button "View details for Wartortle" [ref=e182] [cursor=pointer]:
+          - generic [ref=e184] [cursor=pointer]:
+            - generic [ref=e186] [cursor=pointer]: "#008"
+            - img "Wartortle" [ref=e190] [cursor=pointer]
+        - button "View details for Blastoise" [ref=e193] [cursor=pointer]:
+          - generic [ref=e195] [cursor=pointer]:
+            - generic [ref=e197] [cursor=pointer]: "#009"
+            - img "Blastoise" [ref=e201] [cursor=pointer]
+        - button "View details for Caterpie" [ref=e204] [cursor=pointer]:
+          - generic [ref=e206] [cursor=pointer]:
+            - generic [ref=e208] [cursor=pointer]: "#010"
+            - img "Caterpie" [ref=e212] [cursor=pointer]
+        - button "View details for Metapod" [ref=e215] [cursor=pointer]:
+          - generic [ref=e217] [cursor=pointer]:
+            - generic [ref=e219] [cursor=pointer]: "#011"
+            - img "Metapod" [ref=e223] [cursor=pointer]
+        - button "View details for Butterfree" [ref=e226] [cursor=pointer]:
+          - generic [ref=e228] [cursor=pointer]:
+            - generic [ref=e230] [cursor=pointer]: "#012"
+            - img "Butterfree" [ref=e234] [cursor=pointer]
+        - button "View details for Weedle" [ref=e237] [cursor=pointer]:
+          - generic [ref=e239] [cursor=pointer]:
+            - generic [ref=e241] [cursor=pointer]: "#013"
+            - img "Weedle" [ref=e245] [cursor=pointer]
+        - button "View details for Kakuna" [ref=e248] [cursor=pointer]:
+          - generic [ref=e250] [cursor=pointer]:
+            - generic [ref=e252] [cursor=pointer]: "#014"
+            - img "Kakuna" [ref=e256] [cursor=pointer]
+        - button "View details for Beedrill" [ref=e259] [cursor=pointer]:
+          - generic [ref=e261] [cursor=pointer]:
+            - generic [ref=e263] [cursor=pointer]: "#015"
+            - img "Beedrill" [ref=e267] [cursor=pointer]
+        - button "View details for Pidgey" [ref=e270] [cursor=pointer]:
+          - generic [ref=e272] [cursor=pointer]:
+            - generic [ref=e274] [cursor=pointer]: "#016"
+            - img "Pidgey" [ref=e278] [cursor=pointer]
+        - button "View details for Pidgeotto" [ref=e281] [cursor=pointer]:
+          - generic [ref=e283] [cursor=pointer]:
+            - generic [ref=e285] [cursor=pointer]: "#017"
+            - img "Pidgeotto" [ref=e289] [cursor=pointer]
+        - button "View details for Pidgeot" [ref=e292] [cursor=pointer]:
+          - generic [ref=e294] [cursor=pointer]:
+            - generic [ref=e296] [cursor=pointer]: "#018"
+            - img "Pidgeot" [ref=e300] [cursor=pointer]
+        - button "View details for Rattata" [ref=e303] [cursor=pointer]:
+          - generic [ref=e305] [cursor=pointer]:
+            - generic [ref=e307] [cursor=pointer]: "#019"
+            - img "Rattata" [ref=e311] [cursor=pointer]
+        - button "View details for Raticate" [ref=e314] [cursor=pointer]:
+          - generic [ref=e316] [cursor=pointer]:
+            - generic [ref=e318] [cursor=pointer]: "#020"
+            - img "Raticate" [ref=e322] [cursor=pointer]
+        - button "View details for Spearow" [ref=e325] [cursor=pointer]:
+          - generic [ref=e327] [cursor=pointer]:
+            - generic [ref=e329] [cursor=pointer]: "#021"
+            - img "Spearow" [ref=e333] [cursor=pointer]
+        - button "View details for Fearow" [ref=e336] [cursor=pointer]:
+          - generic [ref=e338] [cursor=pointer]:
+            - generic [ref=e340] [cursor=pointer]: "#022"
+            - img "Fearow" [ref=e344] [cursor=pointer]
+        - button "View details for Ekans" [ref=e347] [cursor=pointer]:
+          - generic [ref=e349] [cursor=pointer]:
+            - generic [ref=e351] [cursor=pointer]: "#023"
+            - img "Ekans" [ref=e355] [cursor=pointer]
+        - button "View details for Arbok" [ref=e358] [cursor=pointer]:
+          - generic [ref=e360] [cursor=pointer]:
+            - generic [ref=e362] [cursor=pointer]: "#024"
+            - img "Arbok" [ref=e366] [cursor=pointer]
+        - button "View details for Pikachu" [ref=e369] [cursor=pointer]:
+          - generic [ref=e371] [cursor=pointer]:
+            - generic [ref=e373] [cursor=pointer]: "#025"
+            - generic [ref=e375] [cursor=pointer]:
+              - generic [ref=e378] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pikachu" [ref=e380] [cursor=pointer]
+        - button "View details for Raichu" [ref=e383] [cursor=pointer]:
+          - generic [ref=e385] [cursor=pointer]:
+            - generic [ref=e387] [cursor=pointer]: "#026"
+            - generic [ref=e389] [cursor=pointer]:
+              - generic [ref=e392] [cursor=pointer]: Loading Pokémon artwork
+              - img "Raichu" [ref=e394] [cursor=pointer]
+        - button "View details for Sandshrew" [ref=e397] [cursor=pointer]:
+          - generic [ref=e399] [cursor=pointer]:
+            - generic [ref=e401] [cursor=pointer]: "#027"
+            - generic [ref=e403] [cursor=pointer]:
+              - generic [ref=e406] [cursor=pointer]: Loading Pokémon artwork
+              - img "Sandshrew" [ref=e408] [cursor=pointer]
+        - button "View details for Sandslash" [ref=e411] [cursor=pointer]:
+          - generic [ref=e413] [cursor=pointer]:
+            - generic [ref=e415] [cursor=pointer]: "#028"
+            - generic [ref=e417] [cursor=pointer]:
+              - generic [ref=e420] [cursor=pointer]: Loading Pokémon artwork
+              - img "Sandslash" [ref=e422] [cursor=pointer]
+        - button "View details for Nidoran f" [ref=e425] [cursor=pointer]:
+          - generic [ref=e427] [cursor=pointer]:
+            - generic [ref=e429] [cursor=pointer]: "#029"
+            - generic [ref=e431] [cursor=pointer]:
+              - generic [ref=e434] [cursor=pointer]: Loading Pokémon artwork
+              - img "Nidoran f" [ref=e436] [cursor=pointer]
+        - button "View details for Nidorina" [ref=e439] [cursor=pointer]:
+          - generic [ref=e441] [cursor=pointer]:
+            - generic [ref=e443] [cursor=pointer]: "#030"
+            - generic [ref=e445] [cursor=pointer]:
+              - generic [ref=e448] [cursor=pointer]: Loading Pokémon artwork
+              - img "Nidorina" [ref=e450] [cursor=pointer]
+        - button "View details for Nidoqueen" [ref=e453] [cursor=pointer]:
+          - generic [ref=e455] [cursor=pointer]:
+            - generic [ref=e457] [cursor=pointer]: "#031"
+            - generic [ref=e459] [cursor=pointer]:
+              - generic [ref=e462] [cursor=pointer]: Loading Pokémon artwork
+              - img "Nidoqueen" [ref=e464] [cursor=pointer]
+        - button "View details for Nidoran m" [ref=e467] [cursor=pointer]:
+          - generic [ref=e469] [cursor=pointer]:
+            - generic [ref=e471] [cursor=pointer]: "#032"
+            - generic [ref=e473] [cursor=pointer]:
+              - generic [ref=e476] [cursor=pointer]: Loading Pokémon artwork
+              - img "Nidoran m" [ref=e478] [cursor=pointer]
+        - button "View details for Nidorino" [ref=e481] [cursor=pointer]:
+          - generic [ref=e483] [cursor=pointer]:
+            - generic [ref=e485] [cursor=pointer]: "#033"
+            - generic [ref=e487] [cursor=pointer]:
+              - generic [ref=e490] [cursor=pointer]: Loading Pokémon artwork
+              - img "Nidorino" [ref=e492] [cursor=pointer]
+        - button "View details for Nidoking" [ref=e495] [cursor=pointer]:
+          - generic [ref=e497] [cursor=pointer]:
+            - generic [ref=e499] [cursor=pointer]: "#034"
+            - generic [ref=e501] [cursor=pointer]:
+              - generic [ref=e504] [cursor=pointer]: Loading Pokémon artwork
+              - img "Nidoking" [ref=e506] [cursor=pointer]
+        - button "View details for Clefairy" [ref=e509] [cursor=pointer]:
+          - generic [ref=e511] [cursor=pointer]:
+            - generic [ref=e513] [cursor=pointer]: "#035"
+            - generic [ref=e515] [cursor=pointer]:
+              - generic [ref=e518] [cursor=pointer]: Loading Pokémon artwork
+              - img "Clefairy" [ref=e520] [cursor=pointer]
+        - button "View details for Clefable" [ref=e523] [cursor=pointer]:
+          - generic [ref=e525] [cursor=pointer]:
+            - generic [ref=e527] [cursor=pointer]: "#036"
+            - generic [ref=e529] [cursor=pointer]:
+              - generic [ref=e532] [cursor=pointer]: Loading Pokémon artwork
+              - img "Clefable" [ref=e534] [cursor=pointer]
+        - button "View details for Vulpix" [ref=e537] [cursor=pointer]:
+          - generic [ref=e539] [cursor=pointer]:
+            - generic [ref=e541] [cursor=pointer]: "#037"
+            - generic [ref=e543] [cursor=pointer]:
+              - generic [ref=e546] [cursor=pointer]: Loading Pokémon artwork
+              - img "Vulpix" [ref=e548] [cursor=pointer]
+        - button "View details for Ninetales" [ref=e551] [cursor=pointer]:
+          - generic [ref=e553] [cursor=pointer]:
+            - generic [ref=e555] [cursor=pointer]: "#038"
+            - generic [ref=e557] [cursor=pointer]:
+              - generic [ref=e560] [cursor=pointer]: Loading Pokémon artwork
+              - img "Ninetales" [ref=e562] [cursor=pointer]
+        - button "View details for Jigglypuff" [ref=e565] [cursor=pointer]:
+          - generic [ref=e567] [cursor=pointer]:
+            - generic [ref=e569] [cursor=pointer]: "#039"
+            - generic [ref=e571] [cursor=pointer]:
+              - generic [ref=e574] [cursor=pointer]: Loading Pokémon artwork
+              - img "Jigglypuff" [ref=e576] [cursor=pointer]
+        - button "View details for Wigglytuff" [ref=e579] [cursor=pointer]:
+          - generic [ref=e581] [cursor=pointer]:
+            - generic [ref=e583] [cursor=pointer]: "#040"
+            - generic [ref=e585] [cursor=pointer]:
+              - generic [ref=e588] [cursor=pointer]: Loading Pokémon artwork
+              - img "Wigglytuff" [ref=e590] [cursor=pointer]
+        - button "View details for Zubat" [ref=e593] [cursor=pointer]:
+          - generic [ref=e595] [cursor=pointer]:
+            - generic [ref=e597] [cursor=pointer]: "#041"
+            - generic [ref=e599] [cursor=pointer]:
+              - generic [ref=e602] [cursor=pointer]: Loading Pokémon artwork
+              - img "Zubat" [ref=e604] [cursor=pointer]
+        - button "View details for Golbat" [ref=e607] [cursor=pointer]:
+          - generic [ref=e609] [cursor=pointer]:
+            - generic [ref=e611] [cursor=pointer]: "#042"
+            - generic [ref=e613] [cursor=pointer]:
+              - generic [ref=e616] [cursor=pointer]: Loading Pokémon artwork
+              - img "Golbat" [ref=e618] [cursor=pointer]
+        - button "View details for Pokemon 43" [ref=e621] [cursor=pointer]:
+          - generic [ref=e623] [cursor=pointer]:
+            - generic [ref=e625] [cursor=pointer]: "#043"
+            - generic [ref=e627] [cursor=pointer]:
+              - generic [ref=e630] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 43" [ref=e632] [cursor=pointer]
+        - button "View details for Pokemon 44" [ref=e635] [cursor=pointer]:
+          - generic [ref=e637] [cursor=pointer]:
+            - generic [ref=e639] [cursor=pointer]: "#044"
+            - generic [ref=e641] [cursor=pointer]:
+              - generic [ref=e644] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 44" [ref=e646] [cursor=pointer]
+        - button "View details for Pokemon 45" [ref=e649] [cursor=pointer]:
+          - generic [ref=e651] [cursor=pointer]:
+            - generic [ref=e653] [cursor=pointer]: "#045"
+            - generic [ref=e655] [cursor=pointer]:
+              - generic [ref=e658] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 45" [ref=e660] [cursor=pointer]
+        - button "View details for Pokemon 46" [ref=e663] [cursor=pointer]:
+          - generic [ref=e665] [cursor=pointer]:
+            - generic [ref=e667] [cursor=pointer]: "#046"
+            - generic [ref=e669] [cursor=pointer]:
+              - generic [ref=e672] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 46" [ref=e674] [cursor=pointer]
+        - button "View details for Pokemon 47" [ref=e677] [cursor=pointer]:
+          - generic [ref=e679] [cursor=pointer]:
+            - generic [ref=e681] [cursor=pointer]: "#047"
+            - generic [ref=e683] [cursor=pointer]:
+              - generic [ref=e686] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 47" [ref=e688] [cursor=pointer]
+        - button "View details for Pokemon 48" [ref=e691] [cursor=pointer]:
+          - generic [ref=e693] [cursor=pointer]:
+            - generic [ref=e695] [cursor=pointer]: "#048"
+            - generic [ref=e697] [cursor=pointer]:
+              - generic [ref=e700] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 48" [ref=e702] [cursor=pointer]
+        - button "View details for Pokemon 49" [ref=e705] [cursor=pointer]:
+          - generic [ref=e707] [cursor=pointer]:
+            - generic [ref=e709] [cursor=pointer]: "#049"
+            - generic [ref=e711] [cursor=pointer]:
+              - generic [ref=e714] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 49" [ref=e716] [cursor=pointer]
+        - button "View details for Pokemon 50" [ref=e719] [cursor=pointer]:
+          - generic [ref=e721] [cursor=pointer]:
+            - generic [ref=e723] [cursor=pointer]: "#050"
+            - generic [ref=e725] [cursor=pointer]:
+              - generic [ref=e728] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 50" [ref=e730] [cursor=pointer]
+        - button "View details for Pokemon 51" [ref=e733] [cursor=pointer]:
+          - generic [ref=e735] [cursor=pointer]:
+            - generic [ref=e737] [cursor=pointer]: "#051"
+            - generic [ref=e739] [cursor=pointer]:
+              - generic [ref=e742] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 51" [ref=e744] [cursor=pointer]
+        - button "View details for Pokemon 52" [ref=e747] [cursor=pointer]:
+          - generic [ref=e749] [cursor=pointer]:
+            - generic [ref=e751] [cursor=pointer]: "#052"
+            - generic [ref=e753] [cursor=pointer]:
+              - generic [ref=e756] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 52" [ref=e758] [cursor=pointer]
+        - button "View details for Pokemon 53" [ref=e761] [cursor=pointer]:
+          - generic [ref=e763] [cursor=pointer]:
+            - generic [ref=e765] [cursor=pointer]: "#053"
+            - generic [ref=e767] [cursor=pointer]:
+              - generic [ref=e770] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 53" [ref=e772] [cursor=pointer]
+        - button "View details for Pokemon 54" [ref=e775] [cursor=pointer]:
+          - generic [ref=e777] [cursor=pointer]:
+            - generic [ref=e779] [cursor=pointer]: "#054"
+            - generic [ref=e781] [cursor=pointer]:
+              - generic [ref=e784] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 54" [ref=e786] [cursor=pointer]
+        - button "View details for Pokemon 55" [ref=e789] [cursor=pointer]:
+          - generic [ref=e791] [cursor=pointer]:
+            - generic [ref=e793] [cursor=pointer]: "#055"
+            - generic [ref=e795] [cursor=pointer]:
+              - generic [ref=e798] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 55" [ref=e800] [cursor=pointer]
+        - button "View details for Pokemon 56" [ref=e803] [cursor=pointer]:
+          - generic [ref=e805] [cursor=pointer]:
+            - generic [ref=e807] [cursor=pointer]: "#056"
+            - generic [ref=e809] [cursor=pointer]:
+              - generic [ref=e812] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 56" [ref=e814] [cursor=pointer]
+        - button "View details for Pokemon 57" [ref=e817] [cursor=pointer]:
+          - generic [ref=e819] [cursor=pointer]:
+            - generic [ref=e821] [cursor=pointer]: "#057"
+            - generic [ref=e823] [cursor=pointer]:
+              - generic [ref=e826] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 57" [ref=e828] [cursor=pointer]
+        - button "View details for Pokemon 58" [ref=e831] [cursor=pointer]:
+          - generic [ref=e833] [cursor=pointer]:
+            - generic [ref=e835] [cursor=pointer]: "#058"
+            - generic [ref=e837] [cursor=pointer]:
+              - generic [ref=e840] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 58" [ref=e842] [cursor=pointer]
+        - button "View details for Pokemon 59" [ref=e845] [cursor=pointer]:
+          - generic [ref=e847] [cursor=pointer]:
+            - generic [ref=e849] [cursor=pointer]: "#059"
+            - generic [ref=e851] [cursor=pointer]:
+              - generic [ref=e854] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 59" [ref=e856] [cursor=pointer]
+        - button "View details for Pokemon 60" [ref=e859] [cursor=pointer]:
+          - generic [ref=e861] [cursor=pointer]:
+            - generic [ref=e863] [cursor=pointer]: "#060"
+            - generic [ref=e865] [cursor=pointer]:
+              - generic [ref=e868] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 60" [ref=e870] [cursor=pointer]
+        - button "View details for Pokemon 61" [ref=e873] [cursor=pointer]:
+          - generic [ref=e875] [cursor=pointer]:
+            - generic [ref=e877] [cursor=pointer]: "#061"
+            - generic [ref=e879] [cursor=pointer]:
+              - generic [ref=e882] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 61" [ref=e884] [cursor=pointer]
+        - button "View details for Pokemon 62" [ref=e887] [cursor=pointer]:
+          - generic [ref=e889] [cursor=pointer]:
+            - generic [ref=e891] [cursor=pointer]: "#062"
+            - generic [ref=e893] [cursor=pointer]:
+              - generic [ref=e896] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 62" [ref=e898] [cursor=pointer]
+        - button "View details for Pokemon 63" [ref=e901] [cursor=pointer]:
+          - generic [ref=e903] [cursor=pointer]:
+            - generic [ref=e905] [cursor=pointer]: "#063"
+            - generic [ref=e907] [cursor=pointer]:
+              - generic [ref=e910] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 63" [ref=e912] [cursor=pointer]
+        - button "View details for Pokemon 64" [ref=e915] [cursor=pointer]:
+          - generic [ref=e917] [cursor=pointer]:
+            - generic [ref=e919] [cursor=pointer]: "#064"
+            - generic [ref=e921] [cursor=pointer]:
+              - generic [ref=e924] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 64" [ref=e926] [cursor=pointer]
+        - button "View details for Pokemon 65" [ref=e929] [cursor=pointer]:
+          - generic [ref=e931] [cursor=pointer]:
+            - generic [ref=e933] [cursor=pointer]: "#065"
+            - generic [ref=e935] [cursor=pointer]:
+              - generic [ref=e938] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 65" [ref=e940] [cursor=pointer]
+        - button "View details for Pokemon 66" [ref=e943] [cursor=pointer]:
+          - generic [ref=e945] [cursor=pointer]:
+            - generic [ref=e947] [cursor=pointer]: "#066"
+            - generic [ref=e949] [cursor=pointer]:
+              - generic [ref=e952] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 66" [ref=e954] [cursor=pointer]
+        - button "View details for Pokemon 67" [ref=e957] [cursor=pointer]:
+          - generic [ref=e959] [cursor=pointer]:
+            - generic [ref=e961] [cursor=pointer]: "#067"
+            - generic [ref=e963] [cursor=pointer]:
+              - generic [ref=e966] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 67" [ref=e968] [cursor=pointer]
+        - button "View details for Pokemon 68" [ref=e971] [cursor=pointer]:
+          - generic [ref=e973] [cursor=pointer]:
+            - generic [ref=e975] [cursor=pointer]: "#068"
+            - generic [ref=e977] [cursor=pointer]:
+              - generic [ref=e980] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 68" [ref=e982] [cursor=pointer]
+        - button "View details for Pokemon 69" [ref=e985] [cursor=pointer]:
+          - generic [ref=e987] [cursor=pointer]:
+            - generic [ref=e989] [cursor=pointer]: "#069"
+            - generic [ref=e991] [cursor=pointer]:
+              - generic [ref=e994] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 69" [ref=e996] [cursor=pointer]
+        - button "View details for Pokemon 70" [ref=e999] [cursor=pointer]:
+          - generic [ref=e1001] [cursor=pointer]:
+            - generic [ref=e1003] [cursor=pointer]: "#070"
+            - generic [ref=e1005] [cursor=pointer]:
+              - generic [ref=e1008] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 70" [ref=e1010] [cursor=pointer]
+        - button "View details for Pokemon 71" [ref=e1013] [cursor=pointer]:
+          - generic [ref=e1015] [cursor=pointer]:
+            - generic [ref=e1017] [cursor=pointer]: "#071"
+            - generic [ref=e1019] [cursor=pointer]:
+              - generic [ref=e1022] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 71" [ref=e1024] [cursor=pointer]
+        - button "View details for Pokemon 72" [ref=e1027] [cursor=pointer]:
+          - generic [ref=e1029] [cursor=pointer]:
+            - generic [ref=e1031] [cursor=pointer]: "#072"
+            - generic [ref=e1033] [cursor=pointer]:
+              - generic [ref=e1036] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 72" [ref=e1038] [cursor=pointer]
+        - button "View details for Pokemon 73" [ref=e1041] [cursor=pointer]:
+          - generic [ref=e1043] [cursor=pointer]:
+            - generic [ref=e1045] [cursor=pointer]: "#073"
+            - generic [ref=e1047] [cursor=pointer]:
+              - generic [ref=e1050] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 73" [ref=e1052] [cursor=pointer]
+        - button "View details for Pokemon 74" [ref=e1055] [cursor=pointer]:
+          - generic [ref=e1057] [cursor=pointer]:
+            - generic [ref=e1059] [cursor=pointer]: "#074"
+            - generic [ref=e1061] [cursor=pointer]:
+              - generic [ref=e1064] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 74" [ref=e1066] [cursor=pointer]
+        - button "View details for Pokemon 75" [ref=e1069] [cursor=pointer]:
+          - generic [ref=e1071] [cursor=pointer]:
+            - generic [ref=e1073] [cursor=pointer]: "#075"
+            - generic [ref=e1075] [cursor=pointer]:
+              - generic [ref=e1078] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 75" [ref=e1080] [cursor=pointer]
+        - button "View details for Pokemon 76" [ref=e1083] [cursor=pointer]:
+          - generic [ref=e1085] [cursor=pointer]:
+            - generic [ref=e1087] [cursor=pointer]: "#076"
+            - generic [ref=e1089] [cursor=pointer]:
+              - generic [ref=e1092] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 76" [ref=e1094] [cursor=pointer]
+        - button "View details for Pokemon 77" [ref=e1097] [cursor=pointer]:
+          - generic [ref=e1099] [cursor=pointer]:
+            - generic [ref=e1101] [cursor=pointer]: "#077"
+            - generic [ref=e1103] [cursor=pointer]:
+              - generic [ref=e1106] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 77" [ref=e1108] [cursor=pointer]
+        - button "View details for Pokemon 78" [ref=e1111] [cursor=pointer]:
+          - generic [ref=e1113] [cursor=pointer]:
+            - generic [ref=e1115] [cursor=pointer]: "#078"
+            - generic [ref=e1117] [cursor=pointer]:
+              - generic [ref=e1120] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 78" [ref=e1122] [cursor=pointer]
+        - button "View details for Pokemon 79" [ref=e1125] [cursor=pointer]:
+          - generic [ref=e1127] [cursor=pointer]:
+            - generic [ref=e1129] [cursor=pointer]: "#079"
+            - generic [ref=e1131] [cursor=pointer]:
+              - generic [ref=e1134] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 79" [ref=e1136] [cursor=pointer]
+        - button "View details for Pokemon 80" [ref=e1139] [cursor=pointer]:
+          - generic [ref=e1141] [cursor=pointer]:
+            - generic [ref=e1143] [cursor=pointer]: "#080"
+            - generic [ref=e1145] [cursor=pointer]:
+              - generic [ref=e1148] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 80" [ref=e1150] [cursor=pointer]
+        - button "View details for Pokemon 81" [ref=e1153] [cursor=pointer]:
+          - generic [ref=e1155] [cursor=pointer]:
+            - generic [ref=e1157] [cursor=pointer]: "#081"
+            - generic [ref=e1159] [cursor=pointer]:
+              - generic [ref=e1162] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 81" [ref=e1164] [cursor=pointer]
+        - button "View details for Pokemon 82" [ref=e1167] [cursor=pointer]:
+          - generic [ref=e1169] [cursor=pointer]:
+            - generic [ref=e1171] [cursor=pointer]: "#082"
+            - generic [ref=e1173] [cursor=pointer]:
+              - generic [ref=e1176] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 82" [ref=e1178] [cursor=pointer]
+        - button "View details for Pokemon 83" [ref=e1181] [cursor=pointer]:
+          - generic [ref=e1183] [cursor=pointer]:
+            - generic [ref=e1185] [cursor=pointer]: "#083"
+            - generic [ref=e1187] [cursor=pointer]:
+              - generic [ref=e1190] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 83" [ref=e1192] [cursor=pointer]
+        - button "View details for Pokemon 84" [ref=e1195] [cursor=pointer]:
+          - generic [ref=e1197] [cursor=pointer]:
+            - generic [ref=e1199] [cursor=pointer]: "#084"
+            - generic [ref=e1201] [cursor=pointer]:
+              - generic [ref=e1204] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 84" [ref=e1206] [cursor=pointer]
+        - button "View details for Pokemon 85" [ref=e1209] [cursor=pointer]:
+          - generic [ref=e1211] [cursor=pointer]:
+            - generic [ref=e1213] [cursor=pointer]: "#085"
+            - generic [ref=e1215] [cursor=pointer]:
+              - generic [ref=e1218] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 85" [ref=e1220] [cursor=pointer]
+        - button "View details for Pokemon 86" [ref=e1223] [cursor=pointer]:
+          - generic [ref=e1225] [cursor=pointer]:
+            - generic [ref=e1227] [cursor=pointer]: "#086"
+            - generic [ref=e1229] [cursor=pointer]:
+              - generic [ref=e1232] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 86" [ref=e1234] [cursor=pointer]
+        - button "View details for Pokemon 87" [ref=e1237] [cursor=pointer]:
+          - generic [ref=e1239] [cursor=pointer]:
+            - generic [ref=e1241] [cursor=pointer]: "#087"
+            - generic [ref=e1243] [cursor=pointer]:
+              - generic [ref=e1246] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 87" [ref=e1248] [cursor=pointer]
+        - button "View details for Pokemon 88" [ref=e1251] [cursor=pointer]:
+          - generic [ref=e1253] [cursor=pointer]:
+            - generic [ref=e1255] [cursor=pointer]: "#088"
+            - generic [ref=e1257] [cursor=pointer]:
+              - generic [ref=e1260] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 88" [ref=e1262] [cursor=pointer]
+        - button "View details for Pokemon 89" [ref=e1265] [cursor=pointer]:
+          - generic [ref=e1267] [cursor=pointer]:
+            - generic [ref=e1269] [cursor=pointer]: "#089"
+            - generic [ref=e1271] [cursor=pointer]:
+              - generic [ref=e1274] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 89" [ref=e1276] [cursor=pointer]
+        - button "View details for Pokemon 90" [ref=e1279] [cursor=pointer]:
+          - generic [ref=e1281] [cursor=pointer]:
+            - generic [ref=e1283] [cursor=pointer]: "#090"
+            - generic [ref=e1285] [cursor=pointer]:
+              - generic [ref=e1288] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 90" [ref=e1290] [cursor=pointer]
+        - button "View details for Pokemon 91" [ref=e1293] [cursor=pointer]:
+          - generic [ref=e1295] [cursor=pointer]:
+            - generic [ref=e1297] [cursor=pointer]: "#091"
+            - generic [ref=e1299] [cursor=pointer]:
+              - generic [ref=e1302] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 91" [ref=e1304] [cursor=pointer]
+        - button "View details for Pokemon 92" [ref=e1307] [cursor=pointer]:
+          - generic [ref=e1309] [cursor=pointer]:
+            - generic [ref=e1311] [cursor=pointer]: "#092"
+            - generic [ref=e1313] [cursor=pointer]:
+              - generic [ref=e1316] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 92" [ref=e1318] [cursor=pointer]
+        - button "View details for Pokemon 93" [ref=e1321] [cursor=pointer]:
+          - generic [ref=e1323] [cursor=pointer]:
+            - generic [ref=e1325] [cursor=pointer]: "#093"
+            - generic [ref=e1327] [cursor=pointer]:
+              - generic [ref=e1330] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 93" [ref=e1332] [cursor=pointer]
+        - button "View details for Pokemon 94" [ref=e1335] [cursor=pointer]:
+          - generic [ref=e1337] [cursor=pointer]:
+            - generic [ref=e1339] [cursor=pointer]: "#094"
+            - generic [ref=e1341] [cursor=pointer]:
+              - generic [ref=e1344] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 94" [ref=e1346] [cursor=pointer]
+        - button "View details for Pokemon 95" [ref=e1349] [cursor=pointer]:
+          - generic [ref=e1351] [cursor=pointer]:
+            - generic [ref=e1353] [cursor=pointer]: "#095"
+            - generic [ref=e1355] [cursor=pointer]:
+              - generic [ref=e1358] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 95" [ref=e1360] [cursor=pointer]
+        - button "View details for Pokemon 96" [ref=e1363] [cursor=pointer]:
+          - generic [ref=e1365] [cursor=pointer]:
+            - generic [ref=e1367] [cursor=pointer]: "#096"
+            - generic [ref=e1369] [cursor=pointer]:
+              - generic [ref=e1372] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 96" [ref=e1374] [cursor=pointer]
+        - button "View details for Pokemon 97" [ref=e1377] [cursor=pointer]:
+          - generic [ref=e1379] [cursor=pointer]:
+            - generic [ref=e1381] [cursor=pointer]: "#097"
+            - generic [ref=e1383] [cursor=pointer]:
+              - generic [ref=e1386] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 97" [ref=e1388] [cursor=pointer]
+        - button "View details for Pokemon 98" [ref=e1391] [cursor=pointer]:
+          - generic [ref=e1393] [cursor=pointer]:
+            - generic [ref=e1395] [cursor=pointer]: "#098"
+            - generic [ref=e1397] [cursor=pointer]:
+              - generic [ref=e1400] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 98" [ref=e1402] [cursor=pointer]
+        - button "View details for Pokemon 99" [ref=e1405] [cursor=pointer]:
+          - generic [ref=e1407] [cursor=pointer]:
+            - generic [ref=e1409] [cursor=pointer]: "#099"
+            - generic [ref=e1411] [cursor=pointer]:
+              - generic [ref=e1414] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 99" [ref=e1416] [cursor=pointer]
+        - button "View details for Pokemon 100" [ref=e1419] [cursor=pointer]:
+          - generic [ref=e1421] [cursor=pointer]:
+            - generic [ref=e1423] [cursor=pointer]: "#100"
+            - generic [ref=e1425] [cursor=pointer]:
+              - generic [ref=e1428] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 100" [ref=e1430] [cursor=pointer]
+        - button "View details for Pokemon 101" [ref=e1433] [cursor=pointer]:
+          - generic [ref=e1435] [cursor=pointer]:
+            - generic [ref=e1437] [cursor=pointer]: "#101"
+            - generic [ref=e1439] [cursor=pointer]:
+              - generic [ref=e1442] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 101" [ref=e1444] [cursor=pointer]
+        - button "View details for Pokemon 102" [ref=e1447] [cursor=pointer]:
+          - generic [ref=e1449] [cursor=pointer]:
+            - generic [ref=e1451] [cursor=pointer]: "#102"
+            - generic [ref=e1453] [cursor=pointer]:
+              - generic [ref=e1456] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 102" [ref=e1458] [cursor=pointer]
+        - button "View details for Pokemon 103" [ref=e1461] [cursor=pointer]:
+          - generic [ref=e1463] [cursor=pointer]:
+            - generic [ref=e1465] [cursor=pointer]: "#103"
+            - generic [ref=e1467] [cursor=pointer]:
+              - generic [ref=e1470] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 103" [ref=e1472] [cursor=pointer]
+        - button "View details for Pokemon 104" [ref=e1475] [cursor=pointer]:
+          - generic [ref=e1477] [cursor=pointer]:
+            - generic [ref=e1479] [cursor=pointer]: "#104"
+            - generic [ref=e1481] [cursor=pointer]:
+              - generic [ref=e1484] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 104" [ref=e1486] [cursor=pointer]
+        - button "View details for Pokemon 105" [ref=e1489] [cursor=pointer]:
+          - generic [ref=e1491] [cursor=pointer]:
+            - generic [ref=e1493] [cursor=pointer]: "#105"
+            - generic [ref=e1495] [cursor=pointer]:
+              - generic [ref=e1498] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 105" [ref=e1500] [cursor=pointer]
+        - button "View details for Pokemon 106" [ref=e1503] [cursor=pointer]:
+          - generic [ref=e1505] [cursor=pointer]:
+            - generic [ref=e1507] [cursor=pointer]: "#106"
+            - generic [ref=e1509] [cursor=pointer]:
+              - generic [ref=e1512] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 106" [ref=e1514] [cursor=pointer]
+        - button "View details for Pokemon 107" [ref=e1517] [cursor=pointer]:
+          - generic [ref=e1519] [cursor=pointer]:
+            - generic [ref=e1521] [cursor=pointer]: "#107"
+            - generic [ref=e1523] [cursor=pointer]:
+              - generic [ref=e1526] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 107" [ref=e1528] [cursor=pointer]
+        - button "View details for Pokemon 108" [ref=e1531] [cursor=pointer]:
+          - generic [ref=e1533] [cursor=pointer]:
+            - generic [ref=e1535] [cursor=pointer]: "#108"
+            - generic [ref=e1537] [cursor=pointer]:
+              - generic [ref=e1540] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 108" [ref=e1542] [cursor=pointer]
+        - button "View details for Pokemon 109" [ref=e1545] [cursor=pointer]:
+          - generic [ref=e1547] [cursor=pointer]:
+            - generic [ref=e1549] [cursor=pointer]: "#109"
+            - generic [ref=e1551] [cursor=pointer]:
+              - generic [ref=e1554] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 109" [ref=e1556] [cursor=pointer]
+        - button "View details for Pokemon 110" [ref=e1559] [cursor=pointer]:
+          - generic [ref=e1561] [cursor=pointer]:
+            - generic [ref=e1563] [cursor=pointer]: "#110"
+            - generic [ref=e1565] [cursor=pointer]:
+              - generic [ref=e1568] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 110" [ref=e1570] [cursor=pointer]
+        - button "View details for Pokemon 111" [ref=e1573] [cursor=pointer]:
+          - generic [ref=e1575] [cursor=pointer]:
+            - generic [ref=e1577] [cursor=pointer]: "#111"
+            - generic [ref=e1579] [cursor=pointer]:
+              - generic [ref=e1582] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 111" [ref=e1584] [cursor=pointer]
+        - button "View details for Pokemon 112" [ref=e1587] [cursor=pointer]:
+          - generic [ref=e1589] [cursor=pointer]:
+            - generic [ref=e1591] [cursor=pointer]: "#112"
+            - generic [ref=e1593] [cursor=pointer]:
+              - generic [ref=e1596] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 112" [ref=e1598] [cursor=pointer]
+        - button "View details for Pokemon 113" [ref=e1601] [cursor=pointer]:
+          - generic [ref=e1603] [cursor=pointer]:
+            - generic [ref=e1605] [cursor=pointer]: "#113"
+            - generic [ref=e1607] [cursor=pointer]:
+              - generic [ref=e1610] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 113" [ref=e1612] [cursor=pointer]
+        - button "View details for Pokemon 114" [ref=e1615] [cursor=pointer]:
+          - generic [ref=e1617] [cursor=pointer]:
+            - generic [ref=e1619] [cursor=pointer]: "#114"
+            - generic [ref=e1621] [cursor=pointer]:
+              - generic [ref=e1624] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 114" [ref=e1626] [cursor=pointer]
+        - button "View details for Pokemon 115" [ref=e1629] [cursor=pointer]:
+          - generic [ref=e1631] [cursor=pointer]:
+            - generic [ref=e1633] [cursor=pointer]: "#115"
+            - generic [ref=e1635] [cursor=pointer]:
+              - generic [ref=e1638] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 115" [ref=e1640] [cursor=pointer]
+        - button "View details for Pokemon 116" [ref=e1643] [cursor=pointer]:
+          - generic [ref=e1645] [cursor=pointer]:
+            - generic [ref=e1647] [cursor=pointer]: "#116"
+            - generic [ref=e1649] [cursor=pointer]:
+              - generic [ref=e1652] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 116" [ref=e1654] [cursor=pointer]
+        - button "View details for Pokemon 117" [ref=e1657] [cursor=pointer]:
+          - generic [ref=e1659] [cursor=pointer]:
+            - generic [ref=e1661] [cursor=pointer]: "#117"
+            - generic [ref=e1663] [cursor=pointer]:
+              - generic [ref=e1666] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 117" [ref=e1668] [cursor=pointer]
+        - button "View details for Pokemon 118" [ref=e1671] [cursor=pointer]:
+          - generic [ref=e1673] [cursor=pointer]:
+            - generic [ref=e1675] [cursor=pointer]: "#118"
+            - generic [ref=e1677] [cursor=pointer]:
+              - generic [ref=e1680] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 118" [ref=e1682] [cursor=pointer]
+        - button "View details for Pokemon 119" [ref=e1685] [cursor=pointer]:
+          - generic [ref=e1687] [cursor=pointer]:
+            - generic [ref=e1689] [cursor=pointer]: "#119"
+            - generic [ref=e1691] [cursor=pointer]:
+              - generic [ref=e1694] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 119" [ref=e1696] [cursor=pointer]
+        - button "View details for Pokemon 120" [ref=e1699] [cursor=pointer]:
+          - generic [ref=e1701] [cursor=pointer]:
+            - generic [ref=e1703] [cursor=pointer]: "#120"
+            - generic [ref=e1705] [cursor=pointer]:
+              - generic [ref=e1708] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 120" [ref=e1710] [cursor=pointer]
+        - button "View details for Pokemon 121" [ref=e1713] [cursor=pointer]:
+          - generic [ref=e1715] [cursor=pointer]:
+            - generic [ref=e1717] [cursor=pointer]: "#121"
+            - generic [ref=e1719] [cursor=pointer]:
+              - generic [ref=e1722] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 121" [ref=e1724] [cursor=pointer]
+        - button "View details for Pokemon 122" [ref=e1727] [cursor=pointer]:
+          - generic [ref=e1729] [cursor=pointer]:
+            - generic [ref=e1731] [cursor=pointer]: "#122"
+            - generic [ref=e1733] [cursor=pointer]:
+              - generic [ref=e1736] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 122" [ref=e1738] [cursor=pointer]
+        - button "View details for Pokemon 123" [ref=e1741] [cursor=pointer]:
+          - generic [ref=e1743] [cursor=pointer]:
+            - generic [ref=e1745] [cursor=pointer]: "#123"
+            - generic [ref=e1747] [cursor=pointer]:
+              - generic [ref=e1750] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 123" [ref=e1752] [cursor=pointer]
+        - button "View details for Pokemon 124" [ref=e1755] [cursor=pointer]:
+          - generic [ref=e1757] [cursor=pointer]:
+            - generic [ref=e1759] [cursor=pointer]: "#124"
+            - generic [ref=e1761] [cursor=pointer]:
+              - generic [ref=e1764] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 124" [ref=e1766] [cursor=pointer]
+        - button "View details for Pokemon 125" [ref=e1769] [cursor=pointer]:
+          - generic [ref=e1771] [cursor=pointer]:
+            - generic [ref=e1773] [cursor=pointer]: "#125"
+            - generic [ref=e1775] [cursor=pointer]:
+              - generic [ref=e1778] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 125" [ref=e1780] [cursor=pointer]
+        - button "View details for Pokemon 126" [ref=e1783] [cursor=pointer]:
+          - generic [ref=e1785] [cursor=pointer]:
+            - generic [ref=e1787] [cursor=pointer]: "#126"
+            - generic [ref=e1789] [cursor=pointer]:
+              - generic [ref=e1792] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 126" [ref=e1794] [cursor=pointer]
+        - button "View details for Pokemon 127" [ref=e1797] [cursor=pointer]:
+          - generic [ref=e1799] [cursor=pointer]:
+            - generic [ref=e1801] [cursor=pointer]: "#127"
+            - generic [ref=e1803] [cursor=pointer]:
+              - generic [ref=e1806] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 127" [ref=e1808] [cursor=pointer]
+        - button "View details for Pokemon 128" [ref=e1811] [cursor=pointer]:
+          - generic [ref=e1813] [cursor=pointer]:
+            - generic [ref=e1815] [cursor=pointer]: "#128"
+            - generic [ref=e1817] [cursor=pointer]:
+              - generic [ref=e1820] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 128" [ref=e1822] [cursor=pointer]
+        - button "View details for Pokemon 129" [ref=e1825] [cursor=pointer]:
+          - generic [ref=e1827] [cursor=pointer]:
+            - generic [ref=e1829] [cursor=pointer]: "#129"
+            - generic [ref=e1831] [cursor=pointer]:
+              - generic [ref=e1834] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 129" [ref=e1836] [cursor=pointer]
+        - button "View details for Pokemon 130" [ref=e1839] [cursor=pointer]:
+          - generic [ref=e1841] [cursor=pointer]:
+            - generic [ref=e1843] [cursor=pointer]: "#130"
+            - generic [ref=e1845] [cursor=pointer]:
+              - generic [ref=e1848] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 130" [ref=e1850] [cursor=pointer]
+        - button "View details for Pokemon 131" [ref=e1853] [cursor=pointer]:
+          - generic [ref=e1855] [cursor=pointer]:
+            - generic [ref=e1857] [cursor=pointer]: "#131"
+            - generic [ref=e1859] [cursor=pointer]:
+              - generic [ref=e1862] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 131" [ref=e1864] [cursor=pointer]
+        - button "View details for Pokemon 132" [ref=e1867] [cursor=pointer]:
+          - generic [ref=e1869] [cursor=pointer]:
+            - generic [ref=e1871] [cursor=pointer]: "#132"
+            - generic [ref=e1873] [cursor=pointer]:
+              - generic [ref=e1876] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 132" [ref=e1878] [cursor=pointer]
+        - button "View details for Pokemon 133" [ref=e1881] [cursor=pointer]:
+          - generic [ref=e1883] [cursor=pointer]:
+            - generic [ref=e1885] [cursor=pointer]: "#133"
+            - generic [ref=e1887] [cursor=pointer]:
+              - generic [ref=e1890] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 133" [ref=e1892] [cursor=pointer]
+        - button "View details for Pokemon 134" [ref=e1895] [cursor=pointer]:
+          - generic [ref=e1897] [cursor=pointer]:
+            - generic [ref=e1899] [cursor=pointer]: "#134"
+            - generic [ref=e1901] [cursor=pointer]:
+              - generic [ref=e1904] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 134" [ref=e1906] [cursor=pointer]
+        - button "View details for Pokemon 135" [ref=e1909] [cursor=pointer]:
+          - generic [ref=e1911] [cursor=pointer]:
+            - generic [ref=e1913] [cursor=pointer]: "#135"
+            - generic [ref=e1915] [cursor=pointer]:
+              - generic [ref=e1918] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 135" [ref=e1920] [cursor=pointer]
+        - button "View details for Pokemon 136" [ref=e1923] [cursor=pointer]:
+          - generic [ref=e1925] [cursor=pointer]:
+            - generic [ref=e1927] [cursor=pointer]: "#136"
+            - generic [ref=e1929] [cursor=pointer]:
+              - generic [ref=e1932] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 136" [ref=e1934] [cursor=pointer]
+        - button "View details for Pokemon 137" [ref=e1937] [cursor=pointer]:
+          - generic [ref=e1939] [cursor=pointer]:
+            - generic [ref=e1941] [cursor=pointer]: "#137"
+            - generic [ref=e1943] [cursor=pointer]:
+              - generic [ref=e1946] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 137" [ref=e1948] [cursor=pointer]
+        - button "View details for Pokemon 138" [ref=e1951] [cursor=pointer]:
+          - generic [ref=e1953] [cursor=pointer]:
+            - generic [ref=e1955] [cursor=pointer]: "#138"
+            - generic [ref=e1957] [cursor=pointer]:
+              - generic [ref=e1960] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 138" [ref=e1962] [cursor=pointer]
+        - button "View details for Pokemon 139" [ref=e1965] [cursor=pointer]:
+          - generic [ref=e1967] [cursor=pointer]:
+            - generic [ref=e1969] [cursor=pointer]: "#139"
+            - generic [ref=e1971] [cursor=pointer]:
+              - generic [ref=e1974] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 139" [ref=e1976] [cursor=pointer]
+        - button "View details for Pokemon 140" [ref=e1979] [cursor=pointer]:
+          - generic [ref=e1981] [cursor=pointer]:
+            - generic [ref=e1983] [cursor=pointer]: "#140"
+            - generic [ref=e1985] [cursor=pointer]:
+              - generic [ref=e1988] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 140" [ref=e1990] [cursor=pointer]
+        - button "View details for Pokemon 141" [ref=e1993] [cursor=pointer]:
+          - generic [ref=e1995] [cursor=pointer]:
+            - generic [ref=e1997] [cursor=pointer]: "#141"
+            - generic [ref=e1999] [cursor=pointer]:
+              - generic [ref=e2002] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 141" [ref=e2004] [cursor=pointer]
+        - button "View details for Pokemon 142" [ref=e2007] [cursor=pointer]:
+          - generic [ref=e2009] [cursor=pointer]:
+            - generic [ref=e2011] [cursor=pointer]: "#142"
+            - generic [ref=e2013] [cursor=pointer]:
+              - generic [ref=e2016] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 142" [ref=e2018] [cursor=pointer]
+        - button "View details for Pokemon 143" [ref=e2021] [cursor=pointer]:
+          - generic [ref=e2023] [cursor=pointer]:
+            - generic [ref=e2025] [cursor=pointer]: "#143"
+            - generic [ref=e2027] [cursor=pointer]:
+              - generic [ref=e2030] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 143" [ref=e2032] [cursor=pointer]
+        - button "View details for Pokemon 144" [ref=e2035] [cursor=pointer]:
+          - generic [ref=e2037] [cursor=pointer]:
+            - generic [ref=e2039] [cursor=pointer]: "#144"
+            - generic [ref=e2041] [cursor=pointer]:
+              - generic [ref=e2044] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 144" [ref=e2046] [cursor=pointer]
+        - button "View details for Pokemon 145" [ref=e2049] [cursor=pointer]:
+          - generic [ref=e2051] [cursor=pointer]:
+            - generic [ref=e2053] [cursor=pointer]: "#145"
+            - generic [ref=e2055] [cursor=pointer]:
+              - generic [ref=e2058] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 145" [ref=e2060] [cursor=pointer]
+        - button "View details for Pokemon 146" [ref=e2063] [cursor=pointer]:
+          - generic [ref=e2065] [cursor=pointer]:
+            - generic [ref=e2067] [cursor=pointer]: "#146"
+            - generic [ref=e2069] [cursor=pointer]:
+              - generic [ref=e2072] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 146" [ref=e2074] [cursor=pointer]
+        - button "View details for Pokemon 147" [ref=e2077] [cursor=pointer]:
+          - generic [ref=e2079] [cursor=pointer]:
+            - generic [ref=e2081] [cursor=pointer]: "#147"
+            - generic [ref=e2083] [cursor=pointer]:
+              - generic [ref=e2086] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 147" [ref=e2088] [cursor=pointer]
+        - button "View details for Pokemon 148" [ref=e2091] [cursor=pointer]:
+          - generic [ref=e2093] [cursor=pointer]:
+            - generic [ref=e2095] [cursor=pointer]: "#148"
+            - generic [ref=e2097] [cursor=pointer]:
+              - generic [ref=e2100] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 148" [ref=e2102] [cursor=pointer]
+        - button "View details for Pokemon 149" [ref=e2105] [cursor=pointer]:
+          - generic [ref=e2107] [cursor=pointer]:
+            - generic [ref=e2109] [cursor=pointer]: "#149"
+            - generic [ref=e2111] [cursor=pointer]:
+              - generic [ref=e2114] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 149" [ref=e2116] [cursor=pointer]
+        - button "View details for Pokemon 150" [ref=e2119] [cursor=pointer]:
+          - generic [ref=e2121] [cursor=pointer]:
+            - generic [ref=e2123] [cursor=pointer]: "#150"
+            - generic [ref=e2125] [cursor=pointer]:
+              - generic [ref=e2128] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 150" [ref=e2130] [cursor=pointer]
+        - button "View details for Pokemon 151" [ref=e2133] [cursor=pointer]:
+          - generic [ref=e2135] [cursor=pointer]:
+            - generic [ref=e2137] [cursor=pointer]: "#151"
+            - generic [ref=e2139] [cursor=pointer]:
+              - generic [ref=e2142] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 151" [ref=e2144] [cursor=pointer]
+        - button "View details for Pokemon 152" [ref=e2147] [cursor=pointer]:
+          - generic [ref=e2149] [cursor=pointer]:
+            - generic [ref=e2151] [cursor=pointer]: "#152"
+            - generic [ref=e2153] [cursor=pointer]:
+              - generic [ref=e2156] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 152" [ref=e2158] [cursor=pointer]
+        - button "View details for Pokemon 153" [ref=e2161] [cursor=pointer]:
+          - generic [ref=e2163] [cursor=pointer]:
+            - generic [ref=e2165] [cursor=pointer]: "#153"
+            - generic [ref=e2167] [cursor=pointer]:
+              - generic [ref=e2170] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 153" [ref=e2172] [cursor=pointer]
+        - button "View details for Pokemon 154" [ref=e2175] [cursor=pointer]:
+          - generic [ref=e2177] [cursor=pointer]:
+            - generic [ref=e2179] [cursor=pointer]: "#154"
+            - generic [ref=e2181] [cursor=pointer]:
+              - generic [ref=e2184] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 154" [ref=e2186] [cursor=pointer]
+        - button "View details for Pokemon 155" [ref=e2189] [cursor=pointer]:
+          - generic [ref=e2191] [cursor=pointer]:
+            - generic [ref=e2193] [cursor=pointer]: "#155"
+            - generic [ref=e2195] [cursor=pointer]:
+              - generic [ref=e2198] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 155" [ref=e2200] [cursor=pointer]
+        - button "View details for Pokemon 156" [ref=e2203] [cursor=pointer]:
+          - generic [ref=e2205] [cursor=pointer]:
+            - generic [ref=e2207] [cursor=pointer]: "#156"
+            - generic [ref=e2209] [cursor=pointer]:
+              - generic [ref=e2212] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 156" [ref=e2214] [cursor=pointer]
+        - button "View details for Pokemon 157" [ref=e2217] [cursor=pointer]:
+          - generic [ref=e2219] [cursor=pointer]:
+            - generic [ref=e2221] [cursor=pointer]: "#157"
+            - generic [ref=e2223] [cursor=pointer]:
+              - generic [ref=e2226] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 157" [ref=e2228] [cursor=pointer]
+        - button "View details for Pokemon 158" [ref=e2231] [cursor=pointer]:
+          - generic [ref=e2233] [cursor=pointer]:
+            - generic [ref=e2235] [cursor=pointer]: "#158"
+            - generic [ref=e2237] [cursor=pointer]:
+              - generic [ref=e2240] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 158" [ref=e2242] [cursor=pointer]
+        - button "View details for Pokemon 159" [ref=e2245] [cursor=pointer]:
+          - generic [ref=e2247] [cursor=pointer]:
+            - generic [ref=e2249] [cursor=pointer]: "#159"
+            - generic [ref=e2251] [cursor=pointer]:
+              - generic [ref=e2254] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 159" [ref=e2256] [cursor=pointer]
+        - button "View details for Pokemon 160" [ref=e2259] [cursor=pointer]:
+          - generic [ref=e2261] [cursor=pointer]:
+            - generic [ref=e2263] [cursor=pointer]: "#160"
+            - generic [ref=e2265] [cursor=pointer]:
+              - generic [ref=e2268] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 160" [ref=e2270] [cursor=pointer]
+        - button "View details for Pokemon 161" [ref=e2273] [cursor=pointer]:
+          - generic [ref=e2275] [cursor=pointer]:
+            - generic [ref=e2277] [cursor=pointer]: "#161"
+            - generic [ref=e2279] [cursor=pointer]:
+              - generic [ref=e2282] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 161" [ref=e2284] [cursor=pointer]
+        - button "View details for Pokemon 162" [ref=e2287] [cursor=pointer]:
+          - generic [ref=e2289] [cursor=pointer]:
+            - generic [ref=e2291] [cursor=pointer]: "#162"
+            - generic [ref=e2293] [cursor=pointer]:
+              - generic [ref=e2296] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 162" [ref=e2298] [cursor=pointer]
+        - button "View details for Pokemon 163" [ref=e2301] [cursor=pointer]:
+          - generic [ref=e2303] [cursor=pointer]:
+            - generic [ref=e2305] [cursor=pointer]: "#163"
+            - generic [ref=e2307] [cursor=pointer]:
+              - generic [ref=e2310] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 163" [ref=e2312] [cursor=pointer]
+        - button "View details for Pokemon 164" [ref=e2315] [cursor=pointer]:
+          - generic [ref=e2317] [cursor=pointer]:
+            - generic [ref=e2319] [cursor=pointer]: "#164"
+            - generic [ref=e2321] [cursor=pointer]:
+              - generic [ref=e2324] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 164" [ref=e2326] [cursor=pointer]
+        - button "View details for Pokemon 165" [ref=e2329] [cursor=pointer]:
+          - generic [ref=e2331] [cursor=pointer]:
+            - generic [ref=e2333] [cursor=pointer]: "#165"
+            - generic [ref=e2335] [cursor=pointer]:
+              - generic [ref=e2338] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 165" [ref=e2340] [cursor=pointer]
+        - button "View details for Pokemon 166" [ref=e2343] [cursor=pointer]:
+          - generic [ref=e2345] [cursor=pointer]:
+            - generic [ref=e2347] [cursor=pointer]: "#166"
+            - generic [ref=e2349] [cursor=pointer]:
+              - generic [ref=e2352] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 166" [ref=e2354] [cursor=pointer]
+        - button "View details for Pokemon 167" [ref=e2357] [cursor=pointer]:
+          - generic [ref=e2359] [cursor=pointer]:
+            - generic [ref=e2361] [cursor=pointer]: "#167"
+            - generic [ref=e2363] [cursor=pointer]:
+              - generic [ref=e2366] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 167" [ref=e2368] [cursor=pointer]
+        - button "View details for Pokemon 168" [ref=e2371] [cursor=pointer]:
+          - generic [ref=e2373] [cursor=pointer]:
+            - generic [ref=e2375] [cursor=pointer]: "#168"
+            - generic [ref=e2377] [cursor=pointer]:
+              - generic [ref=e2380] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 168" [ref=e2382] [cursor=pointer]
+        - button "View details for Pokemon 169" [ref=e2385] [cursor=pointer]:
+          - generic [ref=e2387] [cursor=pointer]:
+            - generic [ref=e2389] [cursor=pointer]: "#169"
+            - generic [ref=e2391] [cursor=pointer]:
+              - generic [ref=e2394] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 169" [ref=e2396] [cursor=pointer]
+        - button "View details for Pokemon 170" [ref=e2399] [cursor=pointer]:
+          - generic [ref=e2401] [cursor=pointer]:
+            - generic [ref=e2403] [cursor=pointer]: "#170"
+            - generic [ref=e2405] [cursor=pointer]:
+              - generic [ref=e2408] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 170" [ref=e2410] [cursor=pointer]
+        - button "View details for Pokemon 171" [ref=e2413] [cursor=pointer]:
+          - generic [ref=e2415] [cursor=pointer]:
+            - generic [ref=e2417] [cursor=pointer]: "#171"
+            - generic [ref=e2419] [cursor=pointer]:
+              - generic [ref=e2422] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 171" [ref=e2424] [cursor=pointer]
+        - button "View details for Pokemon 172" [ref=e2427] [cursor=pointer]:
+          - generic [ref=e2429] [cursor=pointer]:
+            - generic [ref=e2431] [cursor=pointer]: "#172"
+            - generic [ref=e2433] [cursor=pointer]:
+              - generic [ref=e2436] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 172" [ref=e2438] [cursor=pointer]
+        - button "View details for Pokemon 173" [ref=e2441] [cursor=pointer]:
+          - generic [ref=e2443] [cursor=pointer]:
+            - generic [ref=e2445] [cursor=pointer]: "#173"
+            - generic [ref=e2447] [cursor=pointer]:
+              - generic [ref=e2450] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 173" [ref=e2452] [cursor=pointer]
+        - button "View details for Pokemon 174" [ref=e2455] [cursor=pointer]:
+          - generic [ref=e2457] [cursor=pointer]:
+            - generic [ref=e2459] [cursor=pointer]: "#174"
+            - generic [ref=e2461] [cursor=pointer]:
+              - generic [ref=e2464] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 174" [ref=e2466] [cursor=pointer]
+        - button "View details for Pokemon 175" [ref=e2469] [cursor=pointer]:
+          - generic [ref=e2471] [cursor=pointer]:
+            - generic [ref=e2473] [cursor=pointer]: "#175"
+            - generic [ref=e2475] [cursor=pointer]:
+              - generic [ref=e2478] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 175" [ref=e2480] [cursor=pointer]
+        - button "View details for Pokemon 176" [ref=e2483] [cursor=pointer]:
+          - generic [ref=e2485] [cursor=pointer]:
+            - generic [ref=e2487] [cursor=pointer]: "#176"
+            - generic [ref=e2489] [cursor=pointer]:
+              - generic [ref=e2492] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 176" [ref=e2494] [cursor=pointer]
+        - button "View details for Pokemon 177" [ref=e2497] [cursor=pointer]:
+          - generic [ref=e2499] [cursor=pointer]:
+            - generic [ref=e2501] [cursor=pointer]: "#177"
+            - generic [ref=e2503] [cursor=pointer]:
+              - generic [ref=e2506] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 177" [ref=e2508] [cursor=pointer]
+        - button "View details for Pokemon 178" [ref=e2511] [cursor=pointer]:
+          - generic [ref=e2513] [cursor=pointer]:
+            - generic [ref=e2515] [cursor=pointer]: "#178"
+            - generic [ref=e2517] [cursor=pointer]:
+              - generic [ref=e2520] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 178" [ref=e2522] [cursor=pointer]
+        - button "View details for Pokemon 179" [ref=e2525] [cursor=pointer]:
+          - generic [ref=e2527] [cursor=pointer]:
+            - generic [ref=e2529] [cursor=pointer]: "#179"
+            - generic [ref=e2531] [cursor=pointer]:
+              - generic [ref=e2534] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 179" [ref=e2536] [cursor=pointer]
+        - button "View details for Pokemon 180" [ref=e2539] [cursor=pointer]:
+          - generic [ref=e2541] [cursor=pointer]:
+            - generic [ref=e2543] [cursor=pointer]: "#180"
+            - generic [ref=e2545] [cursor=pointer]:
+              - generic [ref=e2548] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 180" [ref=e2550] [cursor=pointer]
+        - button "View details for Pokemon 181" [ref=e2553] [cursor=pointer]:
+          - generic [ref=e2555] [cursor=pointer]:
+            - generic [ref=e2557] [cursor=pointer]: "#181"
+            - generic [ref=e2559] [cursor=pointer]:
+              - generic [ref=e2562] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 181" [ref=e2564] [cursor=pointer]
+        - button "View details for Pokemon 182" [ref=e2567] [cursor=pointer]:
+          - generic [ref=e2569] [cursor=pointer]:
+            - generic [ref=e2571] [cursor=pointer]: "#182"
+            - generic [ref=e2573] [cursor=pointer]:
+              - generic [ref=e2576] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 182" [ref=e2578] [cursor=pointer]
+        - button "View details for Pokemon 183" [ref=e2581] [cursor=pointer]:
+          - generic [ref=e2583] [cursor=pointer]:
+            - generic [ref=e2585] [cursor=pointer]: "#183"
+            - generic [ref=e2587] [cursor=pointer]:
+              - generic [ref=e2590] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 183" [ref=e2592] [cursor=pointer]
+        - button "View details for Pokemon 184" [ref=e2595] [cursor=pointer]:
+          - generic [ref=e2597] [cursor=pointer]:
+            - generic [ref=e2599] [cursor=pointer]: "#184"
+            - generic [ref=e2601] [cursor=pointer]:
+              - generic [ref=e2604] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 184" [ref=e2606] [cursor=pointer]
+        - button "View details for Pokemon 185" [ref=e2609] [cursor=pointer]:
+          - generic [ref=e2611] [cursor=pointer]:
+            - generic [ref=e2613] [cursor=pointer]: "#185"
+            - generic [ref=e2615] [cursor=pointer]:
+              - generic [ref=e2618] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 185" [ref=e2620] [cursor=pointer]
+        - button "View details for Pokemon 186" [ref=e2623] [cursor=pointer]:
+          - generic [ref=e2625] [cursor=pointer]:
+            - generic [ref=e2627] [cursor=pointer]: "#186"
+            - generic [ref=e2629] [cursor=pointer]:
+              - generic [ref=e2632] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 186" [ref=e2634] [cursor=pointer]
+        - button "View details for Pokemon 187" [ref=e2637] [cursor=pointer]:
+          - generic [ref=e2639] [cursor=pointer]:
+            - generic [ref=e2641] [cursor=pointer]: "#187"
+            - generic [ref=e2643] [cursor=pointer]:
+              - generic [ref=e2646] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 187" [ref=e2648] [cursor=pointer]
+        - button "View details for Pokemon 188" [ref=e2651] [cursor=pointer]:
+          - generic [ref=e2653] [cursor=pointer]:
+            - generic [ref=e2655] [cursor=pointer]: "#188"
+            - generic [ref=e2657] [cursor=pointer]:
+              - generic [ref=e2660] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 188" [ref=e2662] [cursor=pointer]
+        - button "View details for Pokemon 189" [ref=e2665] [cursor=pointer]:
+          - generic [ref=e2667] [cursor=pointer]:
+            - generic [ref=e2669] [cursor=pointer]: "#189"
+            - generic [ref=e2671] [cursor=pointer]:
+              - generic [ref=e2674] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 189" [ref=e2676] [cursor=pointer]
+        - button "View details for Pokemon 190" [ref=e2679] [cursor=pointer]:
+          - generic [ref=e2681] [cursor=pointer]:
+            - generic [ref=e2683] [cursor=pointer]: "#190"
+            - generic [ref=e2685] [cursor=pointer]:
+              - generic [ref=e2688] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 190" [ref=e2690] [cursor=pointer]
+        - button "View details for Pokemon 191" [ref=e2693] [cursor=pointer]:
+          - generic [ref=e2695] [cursor=pointer]:
+            - generic [ref=e2697] [cursor=pointer]: "#191"
+            - generic [ref=e2699] [cursor=pointer]:
+              - generic [ref=e2702] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 191" [ref=e2704] [cursor=pointer]
+        - button "View details for Pokemon 192" [ref=e2707] [cursor=pointer]:
+          - generic [ref=e2709] [cursor=pointer]:
+            - generic [ref=e2711] [cursor=pointer]: "#192"
+            - generic [ref=e2713] [cursor=pointer]:
+              - generic [ref=e2716] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 192" [ref=e2718] [cursor=pointer]
+        - button "View details for Pokemon 193" [ref=e2721] [cursor=pointer]:
+          - generic [ref=e2723] [cursor=pointer]:
+            - generic [ref=e2725] [cursor=pointer]: "#193"
+            - generic [ref=e2727] [cursor=pointer]:
+              - generic [ref=e2730] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 193" [ref=e2732] [cursor=pointer]
+        - button "View details for Pokemon 194" [ref=e2735] [cursor=pointer]:
+          - generic [ref=e2737] [cursor=pointer]:
+            - generic [ref=e2739] [cursor=pointer]: "#194"
+            - generic [ref=e2741] [cursor=pointer]:
+              - generic [ref=e2744] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 194" [ref=e2746] [cursor=pointer]
+        - button "View details for Pokemon 195" [ref=e2749] [cursor=pointer]:
+          - generic [ref=e2751] [cursor=pointer]:
+            - generic [ref=e2753] [cursor=pointer]: "#195"
+            - generic [ref=e2755] [cursor=pointer]:
+              - generic [ref=e2758] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 195" [ref=e2760] [cursor=pointer]
+        - button "View details for Pokemon 196" [ref=e2763] [cursor=pointer]:
+          - generic [ref=e2765] [cursor=pointer]:
+            - generic [ref=e2767] [cursor=pointer]: "#196"
+            - generic [ref=e2769] [cursor=pointer]:
+              - generic [ref=e2772] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 196" [ref=e2774] [cursor=pointer]
+        - button "View details for Pokemon 197" [ref=e2777] [cursor=pointer]:
+          - generic [ref=e2779] [cursor=pointer]:
+            - generic [ref=e2781] [cursor=pointer]: "#197"
+            - generic [ref=e2783] [cursor=pointer]:
+              - generic [ref=e2786] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 197" [ref=e2788] [cursor=pointer]
+        - button "View details for Pokemon 198" [ref=e2791] [cursor=pointer]:
+          - generic [ref=e2793] [cursor=pointer]:
+            - generic [ref=e2795] [cursor=pointer]: "#198"
+            - generic [ref=e2797] [cursor=pointer]:
+              - generic [ref=e2800] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 198" [ref=e2802] [cursor=pointer]
+        - button "View details for Pokemon 199" [ref=e2805] [cursor=pointer]:
+          - generic [ref=e2807] [cursor=pointer]:
+            - generic [ref=e2809] [cursor=pointer]: "#199"
+            - generic [ref=e2811] [cursor=pointer]:
+              - generic [ref=e2814] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 199" [ref=e2816] [cursor=pointer]
+        - button "View details for Pokemon 200" [ref=e2819] [cursor=pointer]:
+          - generic [ref=e2821] [cursor=pointer]:
+            - generic [ref=e2823] [cursor=pointer]: "#200"
+            - generic [ref=e2825] [cursor=pointer]:
+              - generic [ref=e2828] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 200" [ref=e2830] [cursor=pointer]
+        - button "View details for Pokemon 201" [ref=e2833] [cursor=pointer]:
+          - generic [ref=e2835] [cursor=pointer]:
+            - generic [ref=e2837] [cursor=pointer]: "#201"
+            - generic [ref=e2839] [cursor=pointer]:
+              - generic [ref=e2842] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 201" [ref=e2844] [cursor=pointer]
+        - button "View details for Pokemon 202" [ref=e2847] [cursor=pointer]:
+          - generic [ref=e2849] [cursor=pointer]:
+            - generic [ref=e2851] [cursor=pointer]: "#202"
+            - generic [ref=e2853] [cursor=pointer]:
+              - generic [ref=e2856] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 202" [ref=e2858] [cursor=pointer]
+        - button "View details for Pokemon 203" [ref=e2861] [cursor=pointer]:
+          - generic [ref=e2863] [cursor=pointer]:
+            - generic [ref=e2865] [cursor=pointer]: "#203"
+            - generic [ref=e2867] [cursor=pointer]:
+              - generic [ref=e2870] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 203" [ref=e2872] [cursor=pointer]
+        - button "View details for Pokemon 204" [ref=e2875] [cursor=pointer]:
+          - generic [ref=e2877] [cursor=pointer]:
+            - generic [ref=e2879] [cursor=pointer]: "#204"
+            - generic [ref=e2881] [cursor=pointer]:
+              - generic [ref=e2884] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 204" [ref=e2886] [cursor=pointer]
+        - button "View details for Pokemon 205" [ref=e2889] [cursor=pointer]:
+          - generic [ref=e2891] [cursor=pointer]:
+            - generic [ref=e2893] [cursor=pointer]: "#205"
+            - generic [ref=e2895] [cursor=pointer]:
+              - generic [ref=e2898] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 205" [ref=e2900] [cursor=pointer]
+        - button "View details for Pokemon 206" [ref=e2903] [cursor=pointer]:
+          - generic [ref=e2905] [cursor=pointer]:
+            - generic [ref=e2907] [cursor=pointer]: "#206"
+            - generic [ref=e2909] [cursor=pointer]:
+              - generic [ref=e2912] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 206" [ref=e2914] [cursor=pointer]
+        - button "View details for Pokemon 207" [ref=e2917] [cursor=pointer]:
+          - generic [ref=e2919] [cursor=pointer]:
+            - generic [ref=e2921] [cursor=pointer]: "#207"
+            - generic [ref=e2923] [cursor=pointer]:
+              - generic [ref=e2926] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 207" [ref=e2928] [cursor=pointer]
+        - button "View details for Pokemon 208" [ref=e2931] [cursor=pointer]:
+          - generic [ref=e2933] [cursor=pointer]:
+            - generic [ref=e2935] [cursor=pointer]: "#208"
+            - generic [ref=e2937] [cursor=pointer]:
+              - generic [ref=e2940] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 208" [ref=e2942] [cursor=pointer]
+        - button "View details for Pokemon 209" [ref=e2945] [cursor=pointer]:
+          - generic [ref=e2947] [cursor=pointer]:
+            - generic [ref=e2949] [cursor=pointer]: "#209"
+            - generic [ref=e2951] [cursor=pointer]:
+              - generic [ref=e2954] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 209" [ref=e2956] [cursor=pointer]
+        - button "View details for Pokemon 210" [ref=e2959] [cursor=pointer]:
+          - generic [ref=e2961] [cursor=pointer]:
+            - generic [ref=e2963] [cursor=pointer]: "#210"
+            - generic [ref=e2965] [cursor=pointer]:
+              - generic [ref=e2968] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 210" [ref=e2970] [cursor=pointer]
+        - button "View details for Pokemon 211" [ref=e2973] [cursor=pointer]:
+          - generic [ref=e2975] [cursor=pointer]:
+            - generic [ref=e2977] [cursor=pointer]: "#211"
+            - generic [ref=e2979] [cursor=pointer]:
+              - generic [ref=e2982] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 211" [ref=e2984] [cursor=pointer]
+        - button "View details for Pokemon 212" [ref=e2987] [cursor=pointer]:
+          - generic [ref=e2989] [cursor=pointer]:
+            - generic [ref=e2991] [cursor=pointer]: "#212"
+            - generic [ref=e2993] [cursor=pointer]:
+              - generic [ref=e2996] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 212" [ref=e2998] [cursor=pointer]
+        - button "View details for Pokemon 213" [ref=e3001] [cursor=pointer]:
+          - generic [ref=e3003] [cursor=pointer]:
+            - generic [ref=e3005] [cursor=pointer]: "#213"
+            - generic [ref=e3007] [cursor=pointer]:
+              - generic [ref=e3010] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 213" [ref=e3012] [cursor=pointer]
+        - button "View details for Pokemon 214" [ref=e3015] [cursor=pointer]:
+          - generic [ref=e3017] [cursor=pointer]:
+            - generic [ref=e3019] [cursor=pointer]: "#214"
+            - generic [ref=e3021] [cursor=pointer]:
+              - generic [ref=e3024] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 214" [ref=e3026] [cursor=pointer]
+        - button "View details for Pokemon 215" [ref=e3029] [cursor=pointer]:
+          - generic [ref=e3031] [cursor=pointer]:
+            - generic [ref=e3033] [cursor=pointer]: "#215"
+            - generic [ref=e3035] [cursor=pointer]:
+              - generic [ref=e3038] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 215" [ref=e3040] [cursor=pointer]
+        - button "View details for Pokemon 216" [ref=e3043] [cursor=pointer]:
+          - generic [ref=e3045] [cursor=pointer]:
+            - generic [ref=e3047] [cursor=pointer]: "#216"
+            - generic [ref=e3049] [cursor=pointer]:
+              - generic [ref=e3052] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 216" [ref=e3054] [cursor=pointer]
+        - button "View details for Pokemon 217" [ref=e3057] [cursor=pointer]:
+          - generic [ref=e3059] [cursor=pointer]:
+            - generic [ref=e3061] [cursor=pointer]: "#217"
+            - generic [ref=e3063] [cursor=pointer]:
+              - generic [ref=e3066] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 217" [ref=e3068] [cursor=pointer]
+        - button "View details for Pokemon 218" [ref=e3071] [cursor=pointer]:
+          - generic [ref=e3073] [cursor=pointer]:
+            - generic [ref=e3075] [cursor=pointer]: "#218"
+            - generic [ref=e3077] [cursor=pointer]:
+              - generic [ref=e3080] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 218" [ref=e3082] [cursor=pointer]
+        - button "View details for Pokemon 219" [ref=e3085] [cursor=pointer]:
+          - generic [ref=e3087] [cursor=pointer]:
+            - generic [ref=e3089] [cursor=pointer]: "#219"
+            - generic [ref=e3091] [cursor=pointer]:
+              - generic [ref=e3094] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 219" [ref=e3096] [cursor=pointer]
+        - button "View details for Pokemon 220" [ref=e3099] [cursor=pointer]:
+          - generic [ref=e3101] [cursor=pointer]:
+            - generic [ref=e3103] [cursor=pointer]: "#220"
+            - generic [ref=e3105] [cursor=pointer]:
+              - generic [ref=e3108] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 220" [ref=e3110] [cursor=pointer]
+        - button "View details for Pokemon 221" [ref=e3113] [cursor=pointer]:
+          - generic [ref=e3115] [cursor=pointer]:
+            - generic [ref=e3117] [cursor=pointer]: "#221"
+            - generic [ref=e3119] [cursor=pointer]:
+              - generic [ref=e3122] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 221" [ref=e3124] [cursor=pointer]
+        - button "View details for Pokemon 222" [ref=e3127] [cursor=pointer]:
+          - generic [ref=e3129] [cursor=pointer]:
+            - generic [ref=e3131] [cursor=pointer]: "#222"
+            - generic [ref=e3133] [cursor=pointer]:
+              - generic [ref=e3136] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 222" [ref=e3138] [cursor=pointer]
+        - button "View details for Pokemon 223" [ref=e3141] [cursor=pointer]:
+          - generic [ref=e3143] [cursor=pointer]:
+            - generic [ref=e3145] [cursor=pointer]: "#223"
+            - generic [ref=e3147] [cursor=pointer]:
+              - generic [ref=e3150] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 223" [ref=e3152] [cursor=pointer]
+        - button "View details for Pokemon 224" [ref=e3155] [cursor=pointer]:
+          - generic [ref=e3157] [cursor=pointer]:
+            - generic [ref=e3159] [cursor=pointer]: "#224"
+            - generic [ref=e3161] [cursor=pointer]:
+              - generic [ref=e3164] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 224" [ref=e3166] [cursor=pointer]
+        - button "View details for Pokemon 225" [ref=e3169] [cursor=pointer]:
+          - generic [ref=e3171] [cursor=pointer]:
+            - generic [ref=e3173] [cursor=pointer]: "#225"
+            - generic [ref=e3175] [cursor=pointer]:
+              - generic [ref=e3178] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 225" [ref=e3180] [cursor=pointer]
+        - button "View details for Pokemon 226" [ref=e3183] [cursor=pointer]:
+          - generic [ref=e3185] [cursor=pointer]:
+            - generic [ref=e3187] [cursor=pointer]: "#226"
+            - generic [ref=e3189] [cursor=pointer]:
+              - generic [ref=e3192] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 226" [ref=e3194] [cursor=pointer]
+        - button "View details for Pokemon 227" [ref=e3197] [cursor=pointer]:
+          - generic [ref=e3199] [cursor=pointer]:
+            - generic [ref=e3201] [cursor=pointer]: "#227"
+            - generic [ref=e3203] [cursor=pointer]:
+              - generic [ref=e3206] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 227" [ref=e3208] [cursor=pointer]
+        - button "View details for Pokemon 228" [ref=e3211] [cursor=pointer]:
+          - generic [ref=e3213] [cursor=pointer]:
+            - generic [ref=e3215] [cursor=pointer]: "#228"
+            - generic [ref=e3217] [cursor=pointer]:
+              - generic [ref=e3220] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 228" [ref=e3222] [cursor=pointer]
+        - button "View details for Pokemon 229" [ref=e3225] [cursor=pointer]:
+          - generic [ref=e3227] [cursor=pointer]:
+            - generic [ref=e3229] [cursor=pointer]: "#229"
+            - generic [ref=e3231] [cursor=pointer]:
+              - generic [ref=e3234] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 229" [ref=e3236] [cursor=pointer]
+        - button "View details for Pokemon 230" [ref=e3239] [cursor=pointer]:
+          - generic [ref=e3241] [cursor=pointer]:
+            - generic [ref=e3243] [cursor=pointer]: "#230"
+            - generic [ref=e3245] [cursor=pointer]:
+              - generic [ref=e3248] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 230" [ref=e3250] [cursor=pointer]
+        - button "View details for Pokemon 231" [ref=e3253] [cursor=pointer]:
+          - generic [ref=e3255] [cursor=pointer]:
+            - generic [ref=e3257] [cursor=pointer]: "#231"
+            - generic [ref=e3259] [cursor=pointer]:
+              - generic [ref=e3262] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 231" [ref=e3264] [cursor=pointer]
+        - button "View details for Pokemon 232" [ref=e3267] [cursor=pointer]:
+          - generic [ref=e3269] [cursor=pointer]:
+            - generic [ref=e3271] [cursor=pointer]: "#232"
+            - generic [ref=e3273] [cursor=pointer]:
+              - generic [ref=e3276] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 232" [ref=e3278] [cursor=pointer]
+        - button "View details for Pokemon 233" [ref=e3281] [cursor=pointer]:
+          - generic [ref=e3283] [cursor=pointer]:
+            - generic [ref=e3285] [cursor=pointer]: "#233"
+            - generic [ref=e3287] [cursor=pointer]:
+              - generic [ref=e3290] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 233" [ref=e3292] [cursor=pointer]
+        - button "View details for Pokemon 234" [ref=e3295] [cursor=pointer]:
+          - generic [ref=e3297] [cursor=pointer]:
+            - generic [ref=e3299] [cursor=pointer]: "#234"
+            - generic [ref=e3301] [cursor=pointer]:
+              - generic [ref=e3304] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 234" [ref=e3306] [cursor=pointer]
+        - button "View details for Pokemon 235" [ref=e3309] [cursor=pointer]:
+          - generic [ref=e3311] [cursor=pointer]:
+            - generic [ref=e3313] [cursor=pointer]: "#235"
+            - generic [ref=e3315] [cursor=pointer]:
+              - generic [ref=e3318] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 235" [ref=e3320] [cursor=pointer]
+        - button "View details for Pokemon 236" [ref=e3323] [cursor=pointer]:
+          - generic [ref=e3325] [cursor=pointer]:
+            - generic [ref=e3327] [cursor=pointer]: "#236"
+            - generic [ref=e3329] [cursor=pointer]:
+              - generic [ref=e3332] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 236" [ref=e3334] [cursor=pointer]
+        - button "View details for Pokemon 237" [ref=e3337] [cursor=pointer]:
+          - generic [ref=e3339] [cursor=pointer]:
+            - generic [ref=e3341] [cursor=pointer]: "#237"
+            - generic [ref=e3343] [cursor=pointer]:
+              - generic [ref=e3346] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 237" [ref=e3348] [cursor=pointer]
+        - button "View details for Pokemon 238" [ref=e3351] [cursor=pointer]:
+          - generic [ref=e3353] [cursor=pointer]:
+            - generic [ref=e3355] [cursor=pointer]: "#238"
+            - generic [ref=e3357] [cursor=pointer]:
+              - generic [ref=e3360] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 238" [ref=e3362] [cursor=pointer]
+        - button "View details for Pokemon 239" [ref=e3365] [cursor=pointer]:
+          - generic [ref=e3367] [cursor=pointer]:
+            - generic [ref=e3369] [cursor=pointer]: "#239"
+            - generic [ref=e3371] [cursor=pointer]:
+              - generic [ref=e3374] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 239" [ref=e3376] [cursor=pointer]
+        - button "View details for Pokemon 240" [ref=e3379] [cursor=pointer]:
+          - generic [ref=e3381] [cursor=pointer]:
+            - generic [ref=e3383] [cursor=pointer]: "#240"
+            - generic [ref=e3385] [cursor=pointer]:
+              - generic [ref=e3388] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 240" [ref=e3390] [cursor=pointer]
+        - button "View details for Pokemon 241" [ref=e3393] [cursor=pointer]:
+          - generic [ref=e3395] [cursor=pointer]:
+            - generic [ref=e3397] [cursor=pointer]: "#241"
+            - generic [ref=e3399] [cursor=pointer]:
+              - generic [ref=e3402] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 241" [ref=e3404] [cursor=pointer]
+        - button "View details for Pokemon 242" [ref=e3407] [cursor=pointer]:
+          - generic [ref=e3409] [cursor=pointer]:
+            - generic [ref=e3411] [cursor=pointer]: "#242"
+            - generic [ref=e3413] [cursor=pointer]:
+              - generic [ref=e3416] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 242" [ref=e3418] [cursor=pointer]
+        - button "View details for Pokemon 243" [ref=e3421] [cursor=pointer]:
+          - generic [ref=e3423] [cursor=pointer]:
+            - generic [ref=e3425] [cursor=pointer]: "#243"
+            - generic [ref=e3427] [cursor=pointer]:
+              - generic [ref=e3430] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 243" [ref=e3432] [cursor=pointer]
+        - button "View details for Pokemon 244" [ref=e3435] [cursor=pointer]:
+          - generic [ref=e3437] [cursor=pointer]:
+            - generic [ref=e3439] [cursor=pointer]: "#244"
+            - generic [ref=e3441] [cursor=pointer]:
+              - generic [ref=e3444] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 244" [ref=e3446] [cursor=pointer]
+        - button "View details for Pokemon 245" [ref=e3449] [cursor=pointer]:
+          - generic [ref=e3451] [cursor=pointer]:
+            - generic [ref=e3453] [cursor=pointer]: "#245"
+            - generic [ref=e3455] [cursor=pointer]:
+              - generic [ref=e3458] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 245" [ref=e3460] [cursor=pointer]
+        - button "View details for Pokemon 246" [ref=e3463] [cursor=pointer]:
+          - generic [ref=e3465] [cursor=pointer]:
+            - generic [ref=e3467] [cursor=pointer]: "#246"
+            - generic [ref=e3469] [cursor=pointer]:
+              - generic [ref=e3472] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 246" [ref=e3474] [cursor=pointer]
+        - button "View details for Pokemon 247" [ref=e3477] [cursor=pointer]:
+          - generic [ref=e3479] [cursor=pointer]:
+            - generic [ref=e3481] [cursor=pointer]: "#247"
+            - generic [ref=e3483] [cursor=pointer]:
+              - generic [ref=e3486] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 247" [ref=e3488] [cursor=pointer]
+        - button "View details for Pokemon 248" [ref=e3491] [cursor=pointer]:
+          - generic [ref=e3493] [cursor=pointer]:
+            - generic [ref=e3495] [cursor=pointer]: "#248"
+            - generic [ref=e3497] [cursor=pointer]:
+              - generic [ref=e3500] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 248" [ref=e3502] [cursor=pointer]
+        - button "View details for Pokemon 249" [ref=e3505] [cursor=pointer]:
+          - generic [ref=e3507] [cursor=pointer]:
+            - generic [ref=e3509] [cursor=pointer]: "#249"
+            - generic [ref=e3511] [cursor=pointer]:
+              - generic [ref=e3514] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 249" [ref=e3516] [cursor=pointer]
+        - button "View details for Pokemon 250" [ref=e3519] [cursor=pointer]:
+          - generic [ref=e3521] [cursor=pointer]:
+            - generic [ref=e3523] [cursor=pointer]: "#250"
+            - generic [ref=e3525] [cursor=pointer]:
+              - generic [ref=e3528] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 250" [ref=e3530] [cursor=pointer]
+        - button "View details for Pokemon 251" [ref=e3533] [cursor=pointer]:
+          - generic [ref=e3535] [cursor=pointer]:
+            - generic [ref=e3537] [cursor=pointer]: "#251"
+            - generic [ref=e3539] [cursor=pointer]:
+              - generic [ref=e3542] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 251" [ref=e3544] [cursor=pointer]
+        - button "View details for Pokemon 252" [ref=e3547] [cursor=pointer]:
+          - generic [ref=e3549] [cursor=pointer]:
+            - generic [ref=e3551] [cursor=pointer]: "#252"
+            - generic [ref=e3553] [cursor=pointer]:
+              - generic [ref=e3556] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 252" [ref=e3558] [cursor=pointer]
+        - button "View details for Pokemon 253" [ref=e3561] [cursor=pointer]:
+          - generic [ref=e3563] [cursor=pointer]:
+            - generic [ref=e3565] [cursor=pointer]: "#253"
+            - generic [ref=e3567] [cursor=pointer]:
+              - generic [ref=e3570] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 253" [ref=e3572] [cursor=pointer]
+        - button "View details for Pokemon 254" [ref=e3575] [cursor=pointer]:
+          - generic [ref=e3577] [cursor=pointer]:
+            - generic [ref=e3579] [cursor=pointer]: "#254"
+            - generic [ref=e3581] [cursor=pointer]:
+              - generic [ref=e3584] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 254" [ref=e3586] [cursor=pointer]
+        - button "View details for Pokemon 255" [ref=e3589] [cursor=pointer]:
+          - generic [ref=e3591] [cursor=pointer]:
+            - generic [ref=e3593] [cursor=pointer]: "#255"
+            - generic [ref=e3595] [cursor=pointer]:
+              - generic [ref=e3598] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 255" [ref=e3600] [cursor=pointer]
+        - button "View details for Pokemon 256" [ref=e3603] [cursor=pointer]:
+          - generic [ref=e3605] [cursor=pointer]:
+            - generic [ref=e3607] [cursor=pointer]: "#256"
+            - generic [ref=e3609] [cursor=pointer]:
+              - generic [ref=e3612] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 256" [ref=e3614] [cursor=pointer]
+        - button "View details for Pokemon 257" [ref=e3617] [cursor=pointer]:
+          - generic [ref=e3619] [cursor=pointer]:
+            - generic [ref=e3621] [cursor=pointer]: "#257"
+            - generic [ref=e3623] [cursor=pointer]:
+              - generic [ref=e3626] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 257" [ref=e3628] [cursor=pointer]
+        - button "View details for Pokemon 258" [ref=e3631] [cursor=pointer]:
+          - generic [ref=e3633] [cursor=pointer]:
+            - generic [ref=e3635] [cursor=pointer]: "#258"
+            - generic [ref=e3637] [cursor=pointer]:
+              - generic [ref=e3640] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 258" [ref=e3642] [cursor=pointer]
+        - button "View details for Pokemon 259" [ref=e3645] [cursor=pointer]:
+          - generic [ref=e3647] [cursor=pointer]:
+            - generic [ref=e3649] [cursor=pointer]: "#259"
+            - generic [ref=e3651] [cursor=pointer]:
+              - generic [ref=e3654] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 259" [ref=e3656] [cursor=pointer]
+        - button "View details for Pokemon 260" [ref=e3659] [cursor=pointer]:
+          - generic [ref=e3661] [cursor=pointer]:
+            - generic [ref=e3663] [cursor=pointer]: "#260"
+            - generic [ref=e3665] [cursor=pointer]:
+              - generic [ref=e3668] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 260" [ref=e3670] [cursor=pointer]
+        - button "View details for Pokemon 261" [ref=e3673] [cursor=pointer]:
+          - generic [ref=e3675] [cursor=pointer]:
+            - generic [ref=e3677] [cursor=pointer]: "#261"
+            - generic [ref=e3679] [cursor=pointer]:
+              - generic [ref=e3682] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 261" [ref=e3684] [cursor=pointer]
+        - button "View details for Pokemon 262" [ref=e3687] [cursor=pointer]:
+          - generic [ref=e3689] [cursor=pointer]:
+            - generic [ref=e3691] [cursor=pointer]: "#262"
+            - generic [ref=e3693] [cursor=pointer]:
+              - generic [ref=e3696] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 262" [ref=e3698] [cursor=pointer]
+        - button "View details for Pokemon 263" [ref=e3701] [cursor=pointer]:
+          - generic [ref=e3703] [cursor=pointer]:
+            - generic [ref=e3705] [cursor=pointer]: "#263"
+            - generic [ref=e3707] [cursor=pointer]:
+              - generic [ref=e3710] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 263" [ref=e3712] [cursor=pointer]
+        - button "View details for Pokemon 264" [ref=e3715] [cursor=pointer]:
+          - generic [ref=e3717] [cursor=pointer]:
+            - generic [ref=e3719] [cursor=pointer]: "#264"
+            - generic [ref=e3721] [cursor=pointer]:
+              - generic [ref=e3724] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 264" [ref=e3726] [cursor=pointer]
+        - button "View details for Pokemon 265" [ref=e3729] [cursor=pointer]:
+          - generic [ref=e3731] [cursor=pointer]:
+            - generic [ref=e3733] [cursor=pointer]: "#265"
+            - generic [ref=e3735] [cursor=pointer]:
+              - generic [ref=e3738] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 265" [ref=e3740] [cursor=pointer]
+        - button "View details for Pokemon 266" [ref=e3743] [cursor=pointer]:
+          - generic [ref=e3745] [cursor=pointer]:
+            - generic [ref=e3747] [cursor=pointer]: "#266"
+            - generic [ref=e3749] [cursor=pointer]:
+              - generic [ref=e3752] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 266" [ref=e3754] [cursor=pointer]
+        - button "View details for Pokemon 267" [ref=e3757] [cursor=pointer]:
+          - generic [ref=e3759] [cursor=pointer]:
+            - generic [ref=e3761] [cursor=pointer]: "#267"
+            - generic [ref=e3763] [cursor=pointer]:
+              - generic [ref=e3766] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 267" [ref=e3768] [cursor=pointer]
+        - button "View details for Pokemon 268" [ref=e3771] [cursor=pointer]:
+          - generic [ref=e3773] [cursor=pointer]:
+            - generic [ref=e3775] [cursor=pointer]: "#268"
+            - generic [ref=e3777] [cursor=pointer]:
+              - generic [ref=e3780] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 268" [ref=e3782] [cursor=pointer]
+        - button "View details for Pokemon 269" [ref=e3785] [cursor=pointer]:
+          - generic [ref=e3787] [cursor=pointer]:
+            - generic [ref=e3789] [cursor=pointer]: "#269"
+            - generic [ref=e3791] [cursor=pointer]:
+              - generic [ref=e3794] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 269" [ref=e3796] [cursor=pointer]
+        - button "View details for Pokemon 270" [ref=e3799] [cursor=pointer]:
+          - generic [ref=e3801] [cursor=pointer]:
+            - generic [ref=e3803] [cursor=pointer]: "#270"
+            - generic [ref=e3805] [cursor=pointer]:
+              - generic [ref=e3808] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 270" [ref=e3810] [cursor=pointer]
+        - button "View details for Pokemon 271" [ref=e3813] [cursor=pointer]:
+          - generic [ref=e3815] [cursor=pointer]:
+            - generic [ref=e3817] [cursor=pointer]: "#271"
+            - generic [ref=e3819] [cursor=pointer]:
+              - generic [ref=e3822] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 271" [ref=e3824] [cursor=pointer]
+        - button "View details for Pokemon 272" [ref=e3827] [cursor=pointer]:
+          - generic [ref=e3829] [cursor=pointer]:
+            - generic [ref=e3831] [cursor=pointer]: "#272"
+            - generic [ref=e3833] [cursor=pointer]:
+              - generic [ref=e3836] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 272" [ref=e3838] [cursor=pointer]
+        - button "View details for Pokemon 273" [ref=e3841] [cursor=pointer]:
+          - generic [ref=e3843] [cursor=pointer]:
+            - generic [ref=e3845] [cursor=pointer]: "#273"
+            - generic [ref=e3847] [cursor=pointer]:
+              - generic [ref=e3850] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 273" [ref=e3852] [cursor=pointer]
+        - button "View details for Pokemon 274" [ref=e3855] [cursor=pointer]:
+          - generic [ref=e3857] [cursor=pointer]:
+            - generic [ref=e3859] [cursor=pointer]: "#274"
+            - generic [ref=e3861] [cursor=pointer]:
+              - generic [ref=e3864] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 274" [ref=e3866] [cursor=pointer]
+        - button "View details for Pokemon 275" [ref=e3869] [cursor=pointer]:
+          - generic [ref=e3871] [cursor=pointer]:
+            - generic [ref=e3873] [cursor=pointer]: "#275"
+            - generic [ref=e3875] [cursor=pointer]:
+              - generic [ref=e3878] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 275" [ref=e3880] [cursor=pointer]
+        - button "View details for Pokemon 276" [ref=e3883] [cursor=pointer]:
+          - generic [ref=e3885] [cursor=pointer]:
+            - generic [ref=e3887] [cursor=pointer]: "#276"
+            - generic [ref=e3889] [cursor=pointer]:
+              - generic [ref=e3892] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 276" [ref=e3894] [cursor=pointer]
+        - button "View details for Pokemon 277" [ref=e3897] [cursor=pointer]:
+          - generic [ref=e3899] [cursor=pointer]:
+            - generic [ref=e3901] [cursor=pointer]: "#277"
+            - generic [ref=e3903] [cursor=pointer]:
+              - generic [ref=e3906] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 277" [ref=e3908] [cursor=pointer]
+        - button "View details for Pokemon 278" [ref=e3911] [cursor=pointer]:
+          - generic [ref=e3913] [cursor=pointer]:
+            - generic [ref=e3915] [cursor=pointer]: "#278"
+            - generic [ref=e3917] [cursor=pointer]:
+              - generic [ref=e3920] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 278" [ref=e3922] [cursor=pointer]
+        - button "View details for Pokemon 279" [ref=e3925] [cursor=pointer]:
+          - generic [ref=e3927] [cursor=pointer]:
+            - generic [ref=e3929] [cursor=pointer]: "#279"
+            - generic [ref=e3931] [cursor=pointer]:
+              - generic [ref=e3934] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 279" [ref=e3936] [cursor=pointer]
+        - button "View details for Pokemon 280" [ref=e3939] [cursor=pointer]:
+          - generic [ref=e3941] [cursor=pointer]:
+            - generic [ref=e3943] [cursor=pointer]: "#280"
+            - generic [ref=e3945] [cursor=pointer]:
+              - generic [ref=e3948] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 280" [ref=e3950] [cursor=pointer]
+        - button "View details for Pokemon 281" [ref=e3953] [cursor=pointer]:
+          - generic [ref=e3955] [cursor=pointer]:
+            - generic [ref=e3957] [cursor=pointer]: "#281"
+            - generic [ref=e3959] [cursor=pointer]:
+              - generic [ref=e3962] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 281" [ref=e3964] [cursor=pointer]
+        - button "View details for Pokemon 282" [ref=e3967] [cursor=pointer]:
+          - generic [ref=e3969] [cursor=pointer]:
+            - generic [ref=e3971] [cursor=pointer]: "#282"
+            - generic [ref=e3973] [cursor=pointer]:
+              - generic [ref=e3976] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 282" [ref=e3978] [cursor=pointer]
+        - button "View details for Pokemon 283" [ref=e3981] [cursor=pointer]:
+          - generic [ref=e3983] [cursor=pointer]:
+            - generic [ref=e3985] [cursor=pointer]: "#283"
+            - generic [ref=e3987] [cursor=pointer]:
+              - generic [ref=e3990] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 283" [ref=e3992] [cursor=pointer]
+        - button "View details for Pokemon 284" [ref=e3995] [cursor=pointer]:
+          - generic [ref=e3997] [cursor=pointer]:
+            - generic [ref=e3999] [cursor=pointer]: "#284"
+            - generic [ref=e4001] [cursor=pointer]:
+              - generic [ref=e4004] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 284" [ref=e4006] [cursor=pointer]
+        - button "View details for Pokemon 285" [ref=e4009] [cursor=pointer]:
+          - generic [ref=e4011] [cursor=pointer]:
+            - generic [ref=e4013] [cursor=pointer]: "#285"
+            - generic [ref=e4015] [cursor=pointer]:
+              - generic [ref=e4018] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 285" [ref=e4020] [cursor=pointer]
+        - button "View details for Pokemon 286" [ref=e4023] [cursor=pointer]:
+          - generic [ref=e4025] [cursor=pointer]:
+            - generic [ref=e4027] [cursor=pointer]: "#286"
+            - generic [ref=e4029] [cursor=pointer]:
+              - generic [ref=e4032] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 286" [ref=e4034] [cursor=pointer]
+        - button "View details for Pokemon 287" [ref=e4037] [cursor=pointer]:
+          - generic [ref=e4039] [cursor=pointer]:
+            - generic [ref=e4041] [cursor=pointer]: "#287"
+            - generic [ref=e4043] [cursor=pointer]:
+              - generic [ref=e4046] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 287" [ref=e4048] [cursor=pointer]
+        - button "View details for Pokemon 288" [ref=e4051] [cursor=pointer]:
+          - generic [ref=e4053] [cursor=pointer]:
+            - generic [ref=e4055] [cursor=pointer]: "#288"
+            - generic [ref=e4057] [cursor=pointer]:
+              - generic [ref=e4060] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 288" [ref=e4062] [cursor=pointer]
+        - button "View details for Pokemon 289" [ref=e4065] [cursor=pointer]:
+          - generic [ref=e4067] [cursor=pointer]:
+            - generic [ref=e4069] [cursor=pointer]: "#289"
+            - generic [ref=e4071] [cursor=pointer]:
+              - generic [ref=e4074] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 289" [ref=e4076] [cursor=pointer]
+        - button "View details for Pokemon 290" [ref=e4079] [cursor=pointer]:
+          - generic [ref=e4081] [cursor=pointer]:
+            - generic [ref=e4083] [cursor=pointer]: "#290"
+            - generic [ref=e4085] [cursor=pointer]:
+              - generic [ref=e4088] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 290" [ref=e4090] [cursor=pointer]
+        - button "View details for Pokemon 291" [ref=e4093] [cursor=pointer]:
+          - generic [ref=e4095] [cursor=pointer]:
+            - generic [ref=e4097] [cursor=pointer]: "#291"
+            - generic [ref=e4099] [cursor=pointer]:
+              - generic [ref=e4102] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 291" [ref=e4104] [cursor=pointer]
+        - button "View details for Pokemon 292" [ref=e4107] [cursor=pointer]:
+          - generic [ref=e4109] [cursor=pointer]:
+            - generic [ref=e4111] [cursor=pointer]: "#292"
+            - generic [ref=e4113] [cursor=pointer]:
+              - generic [ref=e4116] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 292" [ref=e4118] [cursor=pointer]
+        - button "View details for Pokemon 293" [ref=e4121] [cursor=pointer]:
+          - generic [ref=e4123] [cursor=pointer]:
+            - generic [ref=e4125] [cursor=pointer]: "#293"
+            - generic [ref=e4127] [cursor=pointer]:
+              - generic [ref=e4130] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 293" [ref=e4132] [cursor=pointer]
+        - button "View details for Pokemon 294" [ref=e4135] [cursor=pointer]:
+          - generic [ref=e4137] [cursor=pointer]:
+            - generic [ref=e4139] [cursor=pointer]: "#294"
+            - generic [ref=e4141] [cursor=pointer]:
+              - generic [ref=e4144] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 294" [ref=e4146] [cursor=pointer]
+        - button "View details for Pokemon 295" [ref=e4149] [cursor=pointer]:
+          - generic [ref=e4151] [cursor=pointer]:
+            - generic [ref=e4153] [cursor=pointer]: "#295"
+            - generic [ref=e4155] [cursor=pointer]:
+              - generic [ref=e4158] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 295" [ref=e4160] [cursor=pointer]
+        - button "View details for Pokemon 296" [ref=e4163] [cursor=pointer]:
+          - generic [ref=e4165] [cursor=pointer]:
+            - generic [ref=e4167] [cursor=pointer]: "#296"
+            - generic [ref=e4169] [cursor=pointer]:
+              - generic [ref=e4172] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 296" [ref=e4174] [cursor=pointer]
+        - button "View details for Pokemon 297" [ref=e4177] [cursor=pointer]:
+          - generic [ref=e4179] [cursor=pointer]:
+            - generic [ref=e4181] [cursor=pointer]: "#297"
+            - generic [ref=e4183] [cursor=pointer]:
+              - generic [ref=e4186] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 297" [ref=e4188] [cursor=pointer]
+        - button "View details for Pokemon 298" [ref=e4191] [cursor=pointer]:
+          - generic [ref=e4193] [cursor=pointer]:
+            - generic [ref=e4195] [cursor=pointer]: "#298"
+            - generic [ref=e4197] [cursor=pointer]:
+              - generic [ref=e4200] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 298" [ref=e4202] [cursor=pointer]
+        - button "View details for Pokemon 299" [ref=e4205] [cursor=pointer]:
+          - generic [ref=e4207] [cursor=pointer]:
+            - generic [ref=e4209] [cursor=pointer]: "#299"
+            - generic [ref=e4211] [cursor=pointer]:
+              - generic [ref=e4214] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 299" [ref=e4216] [cursor=pointer]
+        - button "View details for Pokemon 300" [ref=e4219] [cursor=pointer]:
+          - generic [ref=e4221] [cursor=pointer]:
+            - generic [ref=e4223] [cursor=pointer]: "#300"
+            - generic [ref=e4225] [cursor=pointer]:
+              - generic [ref=e4228] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 300" [ref=e4230] [cursor=pointer]
+        - button "View details for Pokemon 301" [ref=e4233] [cursor=pointer]:
+          - generic [ref=e4235] [cursor=pointer]:
+            - generic [ref=e4237] [cursor=pointer]: "#301"
+            - generic [ref=e4239] [cursor=pointer]:
+              - generic [ref=e4242] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 301" [ref=e4244] [cursor=pointer]
+        - button "View details for Pokemon 302" [ref=e4247] [cursor=pointer]:
+          - generic [ref=e4249] [cursor=pointer]:
+            - generic [ref=e4251] [cursor=pointer]: "#302"
+            - generic [ref=e4253] [cursor=pointer]:
+              - generic [ref=e4256] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 302" [ref=e4258] [cursor=pointer]
+        - button "View details for Pokemon 303" [ref=e4261] [cursor=pointer]:
+          - generic [ref=e4263] [cursor=pointer]:
+            - generic [ref=e4265] [cursor=pointer]: "#303"
+            - generic [ref=e4267] [cursor=pointer]:
+              - generic [ref=e4270] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 303" [ref=e4272] [cursor=pointer]
+        - button "View details for Pokemon 304" [ref=e4275] [cursor=pointer]:
+          - generic [ref=e4277] [cursor=pointer]:
+            - generic [ref=e4279] [cursor=pointer]: "#304"
+            - generic [ref=e4281] [cursor=pointer]:
+              - generic [ref=e4284] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 304" [ref=e4286] [cursor=pointer]
+        - button "View details for Pokemon 305" [ref=e4289] [cursor=pointer]:
+          - generic [ref=e4291] [cursor=pointer]:
+            - generic [ref=e4293] [cursor=pointer]: "#305"
+            - generic [ref=e4295] [cursor=pointer]:
+              - generic [ref=e4298] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 305" [ref=e4300] [cursor=pointer]
+        - button "View details for Pokemon 306" [ref=e4303] [cursor=pointer]:
+          - generic [ref=e4305] [cursor=pointer]:
+            - generic [ref=e4307] [cursor=pointer]: "#306"
+            - generic [ref=e4309] [cursor=pointer]:
+              - generic [ref=e4312] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 306" [ref=e4314] [cursor=pointer]
+        - button "View details for Pokemon 307" [ref=e4317] [cursor=pointer]:
+          - generic [ref=e4319] [cursor=pointer]:
+            - generic [ref=e4321] [cursor=pointer]: "#307"
+            - generic [ref=e4323] [cursor=pointer]:
+              - generic [ref=e4326] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 307" [ref=e4328] [cursor=pointer]
+        - button "View details for Pokemon 308" [ref=e4331] [cursor=pointer]:
+          - generic [ref=e4333] [cursor=pointer]:
+            - generic [ref=e4335] [cursor=pointer]: "#308"
+            - generic [ref=e4337] [cursor=pointer]:
+              - generic [ref=e4340] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 308" [ref=e4342] [cursor=pointer]
+        - button "View details for Pokemon 309" [ref=e4345] [cursor=pointer]:
+          - generic [ref=e4347] [cursor=pointer]:
+            - generic [ref=e4349] [cursor=pointer]: "#309"
+            - generic [ref=e4351] [cursor=pointer]:
+              - generic [ref=e4354] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 309" [ref=e4356] [cursor=pointer]
+        - button "View details for Pokemon 310" [ref=e4359] [cursor=pointer]:
+          - generic [ref=e4361] [cursor=pointer]:
+            - generic [ref=e4363] [cursor=pointer]: "#310"
+            - generic [ref=e4365] [cursor=pointer]:
+              - generic [ref=e4368] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 310" [ref=e4370] [cursor=pointer]
+        - button "View details for Pokemon 311" [ref=e4373] [cursor=pointer]:
+          - generic [ref=e4375] [cursor=pointer]:
+            - generic [ref=e4377] [cursor=pointer]: "#311"
+            - generic [ref=e4379] [cursor=pointer]:
+              - generic [ref=e4382] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 311" [ref=e4384] [cursor=pointer]
+        - button "View details for Pokemon 312" [ref=e4387] [cursor=pointer]:
+          - generic [ref=e4389] [cursor=pointer]:
+            - generic [ref=e4391] [cursor=pointer]: "#312"
+            - generic [ref=e4393] [cursor=pointer]:
+              - generic [ref=e4396] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 312" [ref=e4398] [cursor=pointer]
+        - button "View details for Pokemon 313" [ref=e4401] [cursor=pointer]:
+          - generic [ref=e4403] [cursor=pointer]:
+            - generic [ref=e4405] [cursor=pointer]: "#313"
+            - generic [ref=e4407] [cursor=pointer]:
+              - generic [ref=e4410] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 313" [ref=e4412] [cursor=pointer]
+        - button "View details for Pokemon 314" [ref=e4415] [cursor=pointer]:
+          - generic [ref=e4417] [cursor=pointer]:
+            - generic [ref=e4419] [cursor=pointer]: "#314"
+            - generic [ref=e4421] [cursor=pointer]:
+              - generic [ref=e4424] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 314" [ref=e4426] [cursor=pointer]
+        - button "View details for Pokemon 315" [ref=e4429] [cursor=pointer]:
+          - generic [ref=e4431] [cursor=pointer]:
+            - generic [ref=e4433] [cursor=pointer]: "#315"
+            - generic [ref=e4435] [cursor=pointer]:
+              - generic [ref=e4438] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 315" [ref=e4440] [cursor=pointer]
+        - button "View details for Pokemon 316" [ref=e4443] [cursor=pointer]:
+          - generic [ref=e4445] [cursor=pointer]:
+            - generic [ref=e4447] [cursor=pointer]: "#316"
+            - generic [ref=e4449] [cursor=pointer]:
+              - generic [ref=e4452] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 316" [ref=e4454] [cursor=pointer]
+        - button "View details for Pokemon 317" [ref=e4457] [cursor=pointer]:
+          - generic [ref=e4459] [cursor=pointer]:
+            - generic [ref=e4461] [cursor=pointer]: "#317"
+            - generic [ref=e4463] [cursor=pointer]:
+              - generic [ref=e4466] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 317" [ref=e4468] [cursor=pointer]
+        - button "View details for Pokemon 318" [ref=e4471] [cursor=pointer]:
+          - generic [ref=e4473] [cursor=pointer]:
+            - generic [ref=e4475] [cursor=pointer]: "#318"
+            - generic [ref=e4477] [cursor=pointer]:
+              - generic [ref=e4480] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 318" [ref=e4482] [cursor=pointer]
+        - button "View details for Pokemon 319" [ref=e4485] [cursor=pointer]:
+          - generic [ref=e4487] [cursor=pointer]:
+            - generic [ref=e4489] [cursor=pointer]: "#319"
+            - generic [ref=e4491] [cursor=pointer]:
+              - generic [ref=e4494] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 319" [ref=e4496] [cursor=pointer]
+        - button "View details for Pokemon 320" [ref=e4499] [cursor=pointer]:
+          - generic [ref=e4501] [cursor=pointer]:
+            - generic [ref=e4503] [cursor=pointer]: "#320"
+            - generic [ref=e4505] [cursor=pointer]:
+              - generic [ref=e4508] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 320" [ref=e4510] [cursor=pointer]
+        - button "View details for Pokemon 321" [ref=e4513] [cursor=pointer]:
+          - generic [ref=e4515] [cursor=pointer]:
+            - generic [ref=e4517] [cursor=pointer]: "#321"
+            - generic [ref=e4519] [cursor=pointer]:
+              - generic [ref=e4522] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 321" [ref=e4524] [cursor=pointer]
+        - button "View details for Pokemon 322" [ref=e4527] [cursor=pointer]:
+          - generic [ref=e4529] [cursor=pointer]:
+            - generic [ref=e4531] [cursor=pointer]: "#322"
+            - generic [ref=e4533] [cursor=pointer]:
+              - generic [ref=e4536] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 322" [ref=e4538] [cursor=pointer]
+        - button "View details for Pokemon 323" [ref=e4541] [cursor=pointer]:
+          - generic [ref=e4543] [cursor=pointer]:
+            - generic [ref=e4545] [cursor=pointer]: "#323"
+            - generic [ref=e4547] [cursor=pointer]:
+              - generic [ref=e4550] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 323" [ref=e4552] [cursor=pointer]
+        - button "View details for Pokemon 324" [ref=e4555] [cursor=pointer]:
+          - generic [ref=e4557] [cursor=pointer]:
+            - generic [ref=e4559] [cursor=pointer]: "#324"
+            - generic [ref=e4561] [cursor=pointer]:
+              - generic [ref=e4564] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 324" [ref=e4566] [cursor=pointer]
+        - button "View details for Pokemon 325" [ref=e4569] [cursor=pointer]:
+          - generic [ref=e4571] [cursor=pointer]:
+            - generic [ref=e4573] [cursor=pointer]: "#325"
+            - generic [ref=e4575] [cursor=pointer]:
+              - generic [ref=e4578] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 325" [ref=e4580] [cursor=pointer]
+        - button "View details for Pokemon 326" [ref=e4583] [cursor=pointer]:
+          - generic [ref=e4585] [cursor=pointer]:
+            - generic [ref=e4587] [cursor=pointer]: "#326"
+            - generic [ref=e4589] [cursor=pointer]:
+              - generic [ref=e4592] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 326" [ref=e4594] [cursor=pointer]
+        - button "View details for Pokemon 327" [ref=e4597] [cursor=pointer]:
+          - generic [ref=e4599] [cursor=pointer]:
+            - generic [ref=e4601] [cursor=pointer]: "#327"
+            - generic [ref=e4603] [cursor=pointer]:
+              - generic [ref=e4606] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 327" [ref=e4608] [cursor=pointer]
+        - button "View details for Pokemon 328" [ref=e4611] [cursor=pointer]:
+          - generic [ref=e4613] [cursor=pointer]:
+            - generic [ref=e4615] [cursor=pointer]: "#328"
+            - generic [ref=e4617] [cursor=pointer]:
+              - generic [ref=e4620] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 328" [ref=e4622] [cursor=pointer]
+        - button "View details for Pokemon 329" [ref=e4625] [cursor=pointer]:
+          - generic [ref=e4627] [cursor=pointer]:
+            - generic [ref=e4629] [cursor=pointer]: "#329"
+            - generic [ref=e4631] [cursor=pointer]:
+              - generic [ref=e4634] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 329" [ref=e4636] [cursor=pointer]
+        - button "View details for Pokemon 330" [ref=e4639] [cursor=pointer]:
+          - generic [ref=e4641] [cursor=pointer]:
+            - generic [ref=e4643] [cursor=pointer]: "#330"
+            - generic [ref=e4645] [cursor=pointer]:
+              - generic [ref=e4648] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 330" [ref=e4650] [cursor=pointer]
+        - button "View details for Pokemon 331" [ref=e4653] [cursor=pointer]:
+          - generic [ref=e4655] [cursor=pointer]:
+            - generic [ref=e4657] [cursor=pointer]: "#331"
+            - generic [ref=e4659] [cursor=pointer]:
+              - generic [ref=e4662] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 331" [ref=e4664] [cursor=pointer]
+        - button "View details for Pokemon 332" [ref=e4667] [cursor=pointer]:
+          - generic [ref=e4669] [cursor=pointer]:
+            - generic [ref=e4671] [cursor=pointer]: "#332"
+            - generic [ref=e4673] [cursor=pointer]:
+              - generic [ref=e4676] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 332" [ref=e4678] [cursor=pointer]
+        - button "View details for Pokemon 333" [ref=e4681] [cursor=pointer]:
+          - generic [ref=e4683] [cursor=pointer]:
+            - generic [ref=e4685] [cursor=pointer]: "#333"
+            - generic [ref=e4687] [cursor=pointer]:
+              - generic [ref=e4690] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 333" [ref=e4692] [cursor=pointer]
+        - button "View details for Pokemon 334" [ref=e4695] [cursor=pointer]:
+          - generic [ref=e4697] [cursor=pointer]:
+            - generic [ref=e4699] [cursor=pointer]: "#334"
+            - generic [ref=e4701] [cursor=pointer]:
+              - generic [ref=e4704] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 334" [ref=e4706] [cursor=pointer]
+        - button "View details for Pokemon 335" [ref=e4709] [cursor=pointer]:
+          - generic [ref=e4711] [cursor=pointer]:
+            - generic [ref=e4713] [cursor=pointer]: "#335"
+            - generic [ref=e4715] [cursor=pointer]:
+              - generic [ref=e4718] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 335" [ref=e4720] [cursor=pointer]
+        - button "View details for Pokemon 336" [ref=e4723] [cursor=pointer]:
+          - generic [ref=e4725] [cursor=pointer]:
+            - generic [ref=e4727] [cursor=pointer]: "#336"
+            - generic [ref=e4729] [cursor=pointer]:
+              - generic [ref=e4732] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 336" [ref=e4734] [cursor=pointer]
+        - button "View details for Pokemon 337" [ref=e4737] [cursor=pointer]:
+          - generic [ref=e4739] [cursor=pointer]:
+            - generic [ref=e4741] [cursor=pointer]: "#337"
+            - generic [ref=e4743] [cursor=pointer]:
+              - generic [ref=e4746] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 337" [ref=e4748] [cursor=pointer]
+        - button "View details for Pokemon 338" [ref=e4751] [cursor=pointer]:
+          - generic [ref=e4753] [cursor=pointer]:
+            - generic [ref=e4755] [cursor=pointer]: "#338"
+            - generic [ref=e4757] [cursor=pointer]:
+              - generic [ref=e4760] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 338" [ref=e4762] [cursor=pointer]
+        - button "View details for Pokemon 339" [ref=e4765] [cursor=pointer]:
+          - generic [ref=e4767] [cursor=pointer]:
+            - generic [ref=e4769] [cursor=pointer]: "#339"
+            - generic [ref=e4771] [cursor=pointer]:
+              - generic [ref=e4774] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 339" [ref=e4776] [cursor=pointer]
+        - button "View details for Pokemon 340" [ref=e4779] [cursor=pointer]:
+          - generic [ref=e4781] [cursor=pointer]:
+            - generic [ref=e4783] [cursor=pointer]: "#340"
+            - generic [ref=e4785] [cursor=pointer]:
+              - generic [ref=e4788] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 340" [ref=e4790] [cursor=pointer]
+        - button "View details for Pokemon 341" [ref=e4793] [cursor=pointer]:
+          - generic [ref=e4795] [cursor=pointer]:
+            - generic [ref=e4797] [cursor=pointer]: "#341"
+            - generic [ref=e4799] [cursor=pointer]:
+              - generic [ref=e4802] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 341" [ref=e4804] [cursor=pointer]
+        - button "View details for Pokemon 342" [ref=e4807] [cursor=pointer]:
+          - generic [ref=e4809] [cursor=pointer]:
+            - generic [ref=e4811] [cursor=pointer]: "#342"
+            - generic [ref=e4813] [cursor=pointer]:
+              - generic [ref=e4816] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 342" [ref=e4818] [cursor=pointer]
+        - button "View details for Pokemon 343" [ref=e4821] [cursor=pointer]:
+          - generic [ref=e4823] [cursor=pointer]:
+            - generic [ref=e4825] [cursor=pointer]: "#343"
+            - generic [ref=e4827] [cursor=pointer]:
+              - generic [ref=e4830] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 343" [ref=e4832] [cursor=pointer]
+        - button "View details for Pokemon 344" [ref=e4835] [cursor=pointer]:
+          - generic [ref=e4837] [cursor=pointer]:
+            - generic [ref=e4839] [cursor=pointer]: "#344"
+            - generic [ref=e4841] [cursor=pointer]:
+              - generic [ref=e4844] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 344" [ref=e4846] [cursor=pointer]
+        - button "View details for Pokemon 345" [ref=e4849] [cursor=pointer]:
+          - generic [ref=e4851] [cursor=pointer]:
+            - generic [ref=e4853] [cursor=pointer]: "#345"
+            - generic [ref=e4855] [cursor=pointer]:
+              - generic [ref=e4858] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 345" [ref=e4860] [cursor=pointer]
+        - button "View details for Pokemon 346" [ref=e4863] [cursor=pointer]:
+          - generic [ref=e4865] [cursor=pointer]:
+            - generic [ref=e4867] [cursor=pointer]: "#346"
+            - generic [ref=e4869] [cursor=pointer]:
+              - generic [ref=e4872] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 346" [ref=e4874] [cursor=pointer]
+        - button "View details for Pokemon 347" [ref=e4877] [cursor=pointer]:
+          - generic [ref=e4879] [cursor=pointer]:
+            - generic [ref=e4881] [cursor=pointer]: "#347"
+            - generic [ref=e4883] [cursor=pointer]:
+              - generic [ref=e4886] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 347" [ref=e4888] [cursor=pointer]
+        - button "View details for Pokemon 348" [ref=e4891] [cursor=pointer]:
+          - generic [ref=e4893] [cursor=pointer]:
+            - generic [ref=e4895] [cursor=pointer]: "#348"
+            - generic [ref=e4897] [cursor=pointer]:
+              - generic [ref=e4900] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 348" [ref=e4902] [cursor=pointer]
+        - button "View details for Pokemon 349" [ref=e4905] [cursor=pointer]:
+          - generic [ref=e4907] [cursor=pointer]:
+            - generic [ref=e4909] [cursor=pointer]: "#349"
+            - generic [ref=e4911] [cursor=pointer]:
+              - generic [ref=e4914] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 349" [ref=e4916] [cursor=pointer]
+        - button "View details for Pokemon 350" [ref=e4919] [cursor=pointer]:
+          - generic [ref=e4921] [cursor=pointer]:
+            - generic [ref=e4923] [cursor=pointer]: "#350"
+            - generic [ref=e4925] [cursor=pointer]:
+              - generic [ref=e4928] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 350" [ref=e4930] [cursor=pointer]
+        - button "View details for Pokemon 351" [ref=e4933] [cursor=pointer]:
+          - generic [ref=e4935] [cursor=pointer]:
+            - generic [ref=e4937] [cursor=pointer]: "#351"
+            - generic [ref=e4939] [cursor=pointer]:
+              - generic [ref=e4942] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 351" [ref=e4944] [cursor=pointer]
+        - button "View details for Pokemon 352" [ref=e4947] [cursor=pointer]:
+          - generic [ref=e4949] [cursor=pointer]:
+            - generic [ref=e4951] [cursor=pointer]: "#352"
+            - generic [ref=e4953] [cursor=pointer]:
+              - generic [ref=e4956] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 352" [ref=e4958] [cursor=pointer]
+        - button "View details for Pokemon 353" [ref=e4961] [cursor=pointer]:
+          - generic [ref=e4963] [cursor=pointer]:
+            - generic [ref=e4965] [cursor=pointer]: "#353"
+            - generic [ref=e4967] [cursor=pointer]:
+              - generic [ref=e4970] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 353" [ref=e4972] [cursor=pointer]
+        - button "View details for Pokemon 354" [ref=e4975] [cursor=pointer]:
+          - generic [ref=e4977] [cursor=pointer]:
+            - generic [ref=e4979] [cursor=pointer]: "#354"
+            - generic [ref=e4981] [cursor=pointer]:
+              - generic [ref=e4984] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 354" [ref=e4986] [cursor=pointer]
+        - button "View details for Pokemon 355" [ref=e4989] [cursor=pointer]:
+          - generic [ref=e4991] [cursor=pointer]:
+            - generic [ref=e4993] [cursor=pointer]: "#355"
+            - generic [ref=e4995] [cursor=pointer]:
+              - generic [ref=e4998] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 355" [ref=e5000] [cursor=pointer]
+        - button "View details for Pokemon 356" [ref=e5003] [cursor=pointer]:
+          - generic [ref=e5005] [cursor=pointer]:
+            - generic [ref=e5007] [cursor=pointer]: "#356"
+            - generic [ref=e5009] [cursor=pointer]:
+              - generic [ref=e5012] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 356" [ref=e5014] [cursor=pointer]
+        - button "View details for Pokemon 357" [ref=e5017] [cursor=pointer]:
+          - generic [ref=e5019] [cursor=pointer]:
+            - generic [ref=e5021] [cursor=pointer]: "#357"
+            - generic [ref=e5023] [cursor=pointer]:
+              - generic [ref=e5026] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 357" [ref=e5028] [cursor=pointer]
+        - button "View details for Pokemon 358" [ref=e5031] [cursor=pointer]:
+          - generic [ref=e5033] [cursor=pointer]:
+            - generic [ref=e5035] [cursor=pointer]: "#358"
+            - generic [ref=e5037] [cursor=pointer]:
+              - generic [ref=e5040] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 358" [ref=e5042] [cursor=pointer]
+        - button "View details for Pokemon 359" [ref=e5045] [cursor=pointer]:
+          - generic [ref=e5047] [cursor=pointer]:
+            - generic [ref=e5049] [cursor=pointer]: "#359"
+            - generic [ref=e5051] [cursor=pointer]:
+              - generic [ref=e5054] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 359" [ref=e5056] [cursor=pointer]
+        - button "View details for Pokemon 360" [ref=e5059] [cursor=pointer]:
+          - generic [ref=e5061] [cursor=pointer]:
+            - generic [ref=e5063] [cursor=pointer]: "#360"
+            - generic [ref=e5065] [cursor=pointer]:
+              - generic [ref=e5068] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 360" [ref=e5070] [cursor=pointer]
+        - button "View details for Pokemon 361" [ref=e5073] [cursor=pointer]:
+          - generic [ref=e5075] [cursor=pointer]:
+            - generic [ref=e5077] [cursor=pointer]: "#361"
+            - generic [ref=e5079] [cursor=pointer]:
+              - generic [ref=e5082] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 361" [ref=e5084] [cursor=pointer]
+        - button "View details for Pokemon 362" [ref=e5087] [cursor=pointer]:
+          - generic [ref=e5089] [cursor=pointer]:
+            - generic [ref=e5091] [cursor=pointer]: "#362"
+            - generic [ref=e5093] [cursor=pointer]:
+              - generic [ref=e5096] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 362" [ref=e5098] [cursor=pointer]
+        - button "View details for Pokemon 363" [ref=e5101] [cursor=pointer]:
+          - generic [ref=e5103] [cursor=pointer]:
+            - generic [ref=e5105] [cursor=pointer]: "#363"
+            - generic [ref=e5107] [cursor=pointer]:
+              - generic [ref=e5110] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 363" [ref=e5112] [cursor=pointer]
+        - button "View details for Pokemon 364" [ref=e5115] [cursor=pointer]:
+          - generic [ref=e5117] [cursor=pointer]:
+            - generic [ref=e5119] [cursor=pointer]: "#364"
+            - generic [ref=e5121] [cursor=pointer]:
+              - generic [ref=e5124] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 364" [ref=e5126] [cursor=pointer]
+        - button "View details for Pokemon 365" [ref=e5129] [cursor=pointer]:
+          - generic [ref=e5131] [cursor=pointer]:
+            - generic [ref=e5133] [cursor=pointer]: "#365"
+            - generic [ref=e5135] [cursor=pointer]:
+              - generic [ref=e5138] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 365" [ref=e5140] [cursor=pointer]
+        - button "View details for Pokemon 366" [ref=e5143] [cursor=pointer]:
+          - generic [ref=e5145] [cursor=pointer]:
+            - generic [ref=e5147] [cursor=pointer]: "#366"
+            - generic [ref=e5149] [cursor=pointer]:
+              - generic [ref=e5152] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 366" [ref=e5154] [cursor=pointer]
+        - button "View details for Pokemon 367" [ref=e5157] [cursor=pointer]:
+          - generic [ref=e5159] [cursor=pointer]:
+            - generic [ref=e5161] [cursor=pointer]: "#367"
+            - generic [ref=e5163] [cursor=pointer]:
+              - generic [ref=e5166] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 367" [ref=e5168] [cursor=pointer]
+        - button "View details for Pokemon 368" [ref=e5171] [cursor=pointer]:
+          - generic [ref=e5173] [cursor=pointer]:
+            - generic [ref=e5175] [cursor=pointer]: "#368"
+            - generic [ref=e5177] [cursor=pointer]:
+              - generic [ref=e5180] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 368" [ref=e5182] [cursor=pointer]
+        - button "View details for Pokemon 369" [ref=e5185] [cursor=pointer]:
+          - generic [ref=e5187] [cursor=pointer]:
+            - generic [ref=e5189] [cursor=pointer]: "#369"
+            - generic [ref=e5191] [cursor=pointer]:
+              - generic [ref=e5194] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 369" [ref=e5196] [cursor=pointer]
+        - button "View details for Pokemon 370" [ref=e5199] [cursor=pointer]:
+          - generic [ref=e5201] [cursor=pointer]:
+            - generic [ref=e5203] [cursor=pointer]: "#370"
+            - generic [ref=e5205] [cursor=pointer]:
+              - generic [ref=e5208] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 370" [ref=e5210] [cursor=pointer]
+        - button "View details for Pokemon 371" [ref=e5213] [cursor=pointer]:
+          - generic [ref=e5215] [cursor=pointer]:
+            - generic [ref=e5217] [cursor=pointer]: "#371"
+            - generic [ref=e5219] [cursor=pointer]:
+              - generic [ref=e5222] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 371" [ref=e5224] [cursor=pointer]
+        - button "View details for Pokemon 372" [ref=e5227] [cursor=pointer]:
+          - generic [ref=e5229] [cursor=pointer]:
+            - generic [ref=e5231] [cursor=pointer]: "#372"
+            - generic [ref=e5233] [cursor=pointer]:
+              - generic [ref=e5236] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 372" [ref=e5238] [cursor=pointer]
+        - button "View details for Pokemon 373" [ref=e5241] [cursor=pointer]:
+          - generic [ref=e5243] [cursor=pointer]:
+            - generic [ref=e5245] [cursor=pointer]: "#373"
+            - generic [ref=e5247] [cursor=pointer]:
+              - generic [ref=e5250] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 373" [ref=e5252] [cursor=pointer]
+        - button "View details for Pokemon 374" [ref=e5255] [cursor=pointer]:
+          - generic [ref=e5257] [cursor=pointer]:
+            - generic [ref=e5259] [cursor=pointer]: "#374"
+            - generic [ref=e5261] [cursor=pointer]:
+              - generic [ref=e5264] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 374" [ref=e5266] [cursor=pointer]
+        - button "View details for Pokemon 375" [ref=e5269] [cursor=pointer]:
+          - generic [ref=e5271] [cursor=pointer]:
+            - generic [ref=e5273] [cursor=pointer]: "#375"
+            - generic [ref=e5275] [cursor=pointer]:
+              - generic [ref=e5278] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 375" [ref=e5280] [cursor=pointer]
+        - button "View details for Pokemon 376" [ref=e5283] [cursor=pointer]:
+          - generic [ref=e5285] [cursor=pointer]:
+            - generic [ref=e5287] [cursor=pointer]: "#376"
+            - generic [ref=e5289] [cursor=pointer]:
+              - generic [ref=e5292] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 376" [ref=e5294] [cursor=pointer]
+        - button "View details for Pokemon 377" [ref=e5297] [cursor=pointer]:
+          - generic [ref=e5299] [cursor=pointer]:
+            - generic [ref=e5301] [cursor=pointer]: "#377"
+            - generic [ref=e5303] [cursor=pointer]:
+              - generic [ref=e5306] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 377" [ref=e5308] [cursor=pointer]
+        - button "View details for Pokemon 378" [ref=e5311] [cursor=pointer]:
+          - generic [ref=e5313] [cursor=pointer]:
+            - generic [ref=e5315] [cursor=pointer]: "#378"
+            - generic [ref=e5317] [cursor=pointer]:
+              - generic [ref=e5320] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 378" [ref=e5322] [cursor=pointer]
+        - button "View details for Pokemon 379" [ref=e5325] [cursor=pointer]:
+          - generic [ref=e5327] [cursor=pointer]:
+            - generic [ref=e5329] [cursor=pointer]: "#379"
+            - generic [ref=e5331] [cursor=pointer]:
+              - generic [ref=e5334] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 379" [ref=e5336] [cursor=pointer]
+        - button "View details for Pokemon 380" [ref=e5339] [cursor=pointer]:
+          - generic [ref=e5341] [cursor=pointer]:
+            - generic [ref=e5343] [cursor=pointer]: "#380"
+            - generic [ref=e5345] [cursor=pointer]:
+              - generic [ref=e5348] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 380" [ref=e5350] [cursor=pointer]
+        - button "View details for Pokemon 381" [ref=e5353] [cursor=pointer]:
+          - generic [ref=e5355] [cursor=pointer]:
+            - generic [ref=e5357] [cursor=pointer]: "#381"
+            - generic [ref=e5359] [cursor=pointer]:
+              - generic [ref=e5362] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 381" [ref=e5364] [cursor=pointer]
+        - button "View details for Pokemon 382" [ref=e5367] [cursor=pointer]:
+          - generic [ref=e5369] [cursor=pointer]:
+            - generic [ref=e5371] [cursor=pointer]: "#382"
+            - generic [ref=e5373] [cursor=pointer]:
+              - generic [ref=e5376] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 382" [ref=e5378] [cursor=pointer]
+        - button "View details for Pokemon 383" [ref=e5381] [cursor=pointer]:
+          - generic [ref=e5383] [cursor=pointer]:
+            - generic [ref=e5385] [cursor=pointer]: "#383"
+            - generic [ref=e5387] [cursor=pointer]:
+              - generic [ref=e5390] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 383" [ref=e5392] [cursor=pointer]
+        - button "View details for Pokemon 384" [ref=e5395] [cursor=pointer]:
+          - generic [ref=e5397] [cursor=pointer]:
+            - generic [ref=e5399] [cursor=pointer]: "#384"
+            - generic [ref=e5401] [cursor=pointer]:
+              - generic [ref=e5404] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 384" [ref=e5406] [cursor=pointer]
+        - button "View details for Pokemon 385" [ref=e5409] [cursor=pointer]:
+          - generic [ref=e5411] [cursor=pointer]:
+            - generic [ref=e5413] [cursor=pointer]: "#385"
+            - generic [ref=e5415] [cursor=pointer]:
+              - generic [ref=e5418] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 385" [ref=e5420] [cursor=pointer]
+        - button "View details for Pokemon 386" [ref=e5423] [cursor=pointer]:
+          - generic [ref=e5425] [cursor=pointer]:
+            - generic [ref=e5427] [cursor=pointer]: "#386"
+            - generic [ref=e5429] [cursor=pointer]:
+              - generic [ref=e5432] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 386" [ref=e5434] [cursor=pointer]
+        - button "View details for Pokemon 387" [ref=e5437] [cursor=pointer]:
+          - generic [ref=e5439] [cursor=pointer]:
+            - generic [ref=e5441] [cursor=pointer]: "#387"
+            - generic [ref=e5443] [cursor=pointer]:
+              - generic [ref=e5446] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 387" [ref=e5448] [cursor=pointer]
+        - button "View details for Pokemon 388" [ref=e5451] [cursor=pointer]:
+          - generic [ref=e5453] [cursor=pointer]:
+            - generic [ref=e5455] [cursor=pointer]: "#388"
+            - generic [ref=e5457] [cursor=pointer]:
+              - generic [ref=e5460] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 388" [ref=e5462] [cursor=pointer]
+        - button "View details for Pokemon 389" [ref=e5465] [cursor=pointer]:
+          - generic [ref=e5467] [cursor=pointer]:
+            - generic [ref=e5469] [cursor=pointer]: "#389"
+            - generic [ref=e5471] [cursor=pointer]:
+              - generic [ref=e5474] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 389" [ref=e5476] [cursor=pointer]
+        - button "View details for Pokemon 390" [ref=e5479] [cursor=pointer]:
+          - generic [ref=e5481] [cursor=pointer]:
+            - generic [ref=e5483] [cursor=pointer]: "#390"
+            - generic [ref=e5485] [cursor=pointer]:
+              - generic [ref=e5488] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 390" [ref=e5490] [cursor=pointer]
+        - button "View details for Pokemon 391" [ref=e5493] [cursor=pointer]:
+          - generic [ref=e5495] [cursor=pointer]:
+            - generic [ref=e5497] [cursor=pointer]: "#391"
+            - generic [ref=e5499] [cursor=pointer]:
+              - generic [ref=e5502] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 391" [ref=e5504] [cursor=pointer]
+        - button "View details for Pokemon 392" [ref=e5507] [cursor=pointer]:
+          - generic [ref=e5509] [cursor=pointer]:
+            - generic [ref=e5511] [cursor=pointer]: "#392"
+            - generic [ref=e5513] [cursor=pointer]:
+              - generic [ref=e5516] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 392" [ref=e5518] [cursor=pointer]
+        - button "View details for Pokemon 393" [ref=e5521] [cursor=pointer]:
+          - generic [ref=e5523] [cursor=pointer]:
+            - generic [ref=e5525] [cursor=pointer]: "#393"
+            - generic [ref=e5527] [cursor=pointer]:
+              - generic [ref=e5530] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 393" [ref=e5532] [cursor=pointer]
+        - button "View details for Pokemon 394" [ref=e5535] [cursor=pointer]:
+          - generic [ref=e5537] [cursor=pointer]:
+            - generic [ref=e5539] [cursor=pointer]: "#394"
+            - generic [ref=e5541] [cursor=pointer]:
+              - generic [ref=e5544] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 394" [ref=e5546] [cursor=pointer]
+        - button "View details for Pokemon 395" [ref=e5549] [cursor=pointer]:
+          - generic [ref=e5551] [cursor=pointer]:
+            - generic [ref=e5553] [cursor=pointer]: "#395"
+            - generic [ref=e5555] [cursor=pointer]:
+              - generic [ref=e5558] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 395" [ref=e5560] [cursor=pointer]
+        - button "View details for Pokemon 396" [ref=e5563] [cursor=pointer]:
+          - generic [ref=e5565] [cursor=pointer]:
+            - generic [ref=e5567] [cursor=pointer]: "#396"
+            - generic [ref=e5569] [cursor=pointer]:
+              - generic [ref=e5572] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 396" [ref=e5574] [cursor=pointer]
+        - button "View details for Pokemon 397" [ref=e5577] [cursor=pointer]:
+          - generic [ref=e5579] [cursor=pointer]:
+            - generic [ref=e5581] [cursor=pointer]: "#397"
+            - generic [ref=e5583] [cursor=pointer]:
+              - generic [ref=e5586] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 397" [ref=e5588] [cursor=pointer]
+        - button "View details for Pokemon 398" [ref=e5591] [cursor=pointer]:
+          - generic [ref=e5593] [cursor=pointer]:
+            - generic [ref=e5595] [cursor=pointer]: "#398"
+            - generic [ref=e5597] [cursor=pointer]:
+              - generic [ref=e5600] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 398" [ref=e5602] [cursor=pointer]
+        - button "View details for Pokemon 399" [ref=e5605] [cursor=pointer]:
+          - generic [ref=e5607] [cursor=pointer]:
+            - generic [ref=e5609] [cursor=pointer]: "#399"
+            - generic [ref=e5611] [cursor=pointer]:
+              - generic [ref=e5614] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 399" [ref=e5616] [cursor=pointer]
+        - button "View details for Pokemon 400" [ref=e5619] [cursor=pointer]:
+          - generic [ref=e5621] [cursor=pointer]:
+            - generic [ref=e5623] [cursor=pointer]: "#400"
+            - generic [ref=e5625] [cursor=pointer]:
+              - generic [ref=e5628] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 400" [ref=e5630] [cursor=pointer]
+        - button "View details for Pokemon 401" [ref=e5633] [cursor=pointer]:
+          - generic [ref=e5635] [cursor=pointer]:
+            - generic [ref=e5637] [cursor=pointer]: "#401"
+            - generic [ref=e5639] [cursor=pointer]:
+              - generic [ref=e5642] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 401" [ref=e5644] [cursor=pointer]
+        - button "View details for Pokemon 402" [ref=e5647] [cursor=pointer]:
+          - generic [ref=e5649] [cursor=pointer]:
+            - generic [ref=e5651] [cursor=pointer]: "#402"
+            - generic [ref=e5653] [cursor=pointer]:
+              - generic [ref=e5656] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 402" [ref=e5658] [cursor=pointer]
+        - button "View details for Pokemon 403" [ref=e5661] [cursor=pointer]:
+          - generic [ref=e5663] [cursor=pointer]:
+            - generic [ref=e5665] [cursor=pointer]: "#403"
+            - generic [ref=e5667] [cursor=pointer]:
+              - generic [ref=e5670] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 403" [ref=e5672] [cursor=pointer]
+        - button "View details for Pokemon 404" [ref=e5675] [cursor=pointer]:
+          - generic [ref=e5677] [cursor=pointer]:
+            - generic [ref=e5679] [cursor=pointer]: "#404"
+            - generic [ref=e5681] [cursor=pointer]:
+              - generic [ref=e5684] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 404" [ref=e5686] [cursor=pointer]
+        - button "View details for Pokemon 405" [ref=e5689] [cursor=pointer]:
+          - generic [ref=e5691] [cursor=pointer]:
+            - generic [ref=e5693] [cursor=pointer]: "#405"
+            - generic [ref=e5695] [cursor=pointer]:
+              - generic [ref=e5698] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 405" [ref=e5700] [cursor=pointer]
+        - button "View details for Pokemon 406" [ref=e5703] [cursor=pointer]:
+          - generic [ref=e5705] [cursor=pointer]:
+            - generic [ref=e5707] [cursor=pointer]: "#406"
+            - generic [ref=e5709] [cursor=pointer]:
+              - generic [ref=e5712] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 406" [ref=e5714] [cursor=pointer]
+        - button "View details for Pokemon 407" [ref=e5717] [cursor=pointer]:
+          - generic [ref=e5719] [cursor=pointer]:
+            - generic [ref=e5721] [cursor=pointer]: "#407"
+            - generic [ref=e5723] [cursor=pointer]:
+              - generic [ref=e5726] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 407" [ref=e5728] [cursor=pointer]
+        - button "View details for Pokemon 408" [ref=e5731] [cursor=pointer]:
+          - generic [ref=e5733] [cursor=pointer]:
+            - generic [ref=e5735] [cursor=pointer]: "#408"
+            - generic [ref=e5737] [cursor=pointer]:
+              - generic [ref=e5740] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 408" [ref=e5742] [cursor=pointer]
+        - button "View details for Pokemon 409" [ref=e5745] [cursor=pointer]:
+          - generic [ref=e5747] [cursor=pointer]:
+            - generic [ref=e5749] [cursor=pointer]: "#409"
+            - generic [ref=e5751] [cursor=pointer]:
+              - generic [ref=e5754] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 409" [ref=e5756] [cursor=pointer]
+        - button "View details for Pokemon 410" [ref=e5759] [cursor=pointer]:
+          - generic [ref=e5761] [cursor=pointer]:
+            - generic [ref=e5763] [cursor=pointer]: "#410"
+            - generic [ref=e5765] [cursor=pointer]:
+              - generic [ref=e5768] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 410" [ref=e5770] [cursor=pointer]
+        - button "View details for Pokemon 411" [ref=e5773] [cursor=pointer]:
+          - generic [ref=e5775] [cursor=pointer]:
+            - generic [ref=e5777] [cursor=pointer]: "#411"
+            - generic [ref=e5779] [cursor=pointer]:
+              - generic [ref=e5782] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 411" [ref=e5784] [cursor=pointer]
+        - button "View details for Pokemon 412" [ref=e5787] [cursor=pointer]:
+          - generic [ref=e5789] [cursor=pointer]:
+            - generic [ref=e5791] [cursor=pointer]: "#412"
+            - generic [ref=e5793] [cursor=pointer]:
+              - generic [ref=e5796] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 412" [ref=e5798] [cursor=pointer]
+        - button "View details for Pokemon 413" [ref=e5801] [cursor=pointer]:
+          - generic [ref=e5803] [cursor=pointer]:
+            - generic [ref=e5805] [cursor=pointer]: "#413"
+            - generic [ref=e5807] [cursor=pointer]:
+              - generic [ref=e5810] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 413" [ref=e5812] [cursor=pointer]
+        - button "View details for Pokemon 414" [ref=e5815] [cursor=pointer]:
+          - generic [ref=e5817] [cursor=pointer]:
+            - generic [ref=e5819] [cursor=pointer]: "#414"
+            - generic [ref=e5821] [cursor=pointer]:
+              - generic [ref=e5824] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 414" [ref=e5826] [cursor=pointer]
+        - button "View details for Pokemon 415" [ref=e5829] [cursor=pointer]:
+          - generic [ref=e5831] [cursor=pointer]:
+            - generic [ref=e5833] [cursor=pointer]: "#415"
+            - generic [ref=e5835] [cursor=pointer]:
+              - generic [ref=e5838] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 415" [ref=e5840] [cursor=pointer]
+        - button "View details for Pokemon 416" [ref=e5843] [cursor=pointer]:
+          - generic [ref=e5845] [cursor=pointer]:
+            - generic [ref=e5847] [cursor=pointer]: "#416"
+            - generic [ref=e5849] [cursor=pointer]:
+              - generic [ref=e5852] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 416" [ref=e5854] [cursor=pointer]
+        - button "View details for Pokemon 417" [ref=e5857] [cursor=pointer]:
+          - generic [ref=e5859] [cursor=pointer]:
+            - generic [ref=e5861] [cursor=pointer]: "#417"
+            - generic [ref=e5863] [cursor=pointer]:
+              - generic [ref=e5866] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 417" [ref=e5868] [cursor=pointer]
+        - button "View details for Pokemon 418" [ref=e5871] [cursor=pointer]:
+          - generic [ref=e5873] [cursor=pointer]:
+            - generic [ref=e5875] [cursor=pointer]: "#418"
+            - generic [ref=e5877] [cursor=pointer]:
+              - generic [ref=e5880] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 418" [ref=e5882] [cursor=pointer]
+        - button "View details for Pokemon 419" [ref=e5885] [cursor=pointer]:
+          - generic [ref=e5887] [cursor=pointer]:
+            - generic [ref=e5889] [cursor=pointer]: "#419"
+            - generic [ref=e5891] [cursor=pointer]:
+              - generic [ref=e5894] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 419" [ref=e5896] [cursor=pointer]
+        - button "View details for Pokemon 420" [ref=e5899] [cursor=pointer]:
+          - generic [ref=e5901] [cursor=pointer]:
+            - generic [ref=e5903] [cursor=pointer]: "#420"
+            - generic [ref=e5905] [cursor=pointer]:
+              - generic [ref=e5908] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 420" [ref=e5910] [cursor=pointer]
+        - button "View details for Pokemon 421" [ref=e5913] [cursor=pointer]:
+          - generic [ref=e5915] [cursor=pointer]:
+            - generic [ref=e5917] [cursor=pointer]: "#421"
+            - generic [ref=e5919] [cursor=pointer]:
+              - generic [ref=e5922] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 421" [ref=e5924] [cursor=pointer]
+        - button "View details for Pokemon 422" [ref=e5927] [cursor=pointer]:
+          - generic [ref=e5929] [cursor=pointer]:
+            - generic [ref=e5931] [cursor=pointer]: "#422"
+            - generic [ref=e5933] [cursor=pointer]:
+              - generic [ref=e5936] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 422" [ref=e5938] [cursor=pointer]
+        - button "View details for Pokemon 423" [ref=e5941] [cursor=pointer]:
+          - generic [ref=e5943] [cursor=pointer]:
+            - generic [ref=e5945] [cursor=pointer]: "#423"
+            - generic [ref=e5947] [cursor=pointer]:
+              - generic [ref=e5950] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 423" [ref=e5952] [cursor=pointer]
+        - button "View details for Pokemon 424" [ref=e5955] [cursor=pointer]:
+          - generic [ref=e5957] [cursor=pointer]:
+            - generic [ref=e5959] [cursor=pointer]: "#424"
+            - generic [ref=e5961] [cursor=pointer]:
+              - generic [ref=e5964] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 424" [ref=e5966] [cursor=pointer]
+        - button "View details for Pokemon 425" [ref=e5969] [cursor=pointer]:
+          - generic [ref=e5971] [cursor=pointer]:
+            - generic [ref=e5973] [cursor=pointer]: "#425"
+            - generic [ref=e5975] [cursor=pointer]:
+              - generic [ref=e5978] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 425" [ref=e5980] [cursor=pointer]
+        - button "View details for Pokemon 426" [ref=e5983] [cursor=pointer]:
+          - generic [ref=e5985] [cursor=pointer]:
+            - generic [ref=e5987] [cursor=pointer]: "#426"
+            - generic [ref=e5989] [cursor=pointer]:
+              - generic [ref=e5992] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 426" [ref=e5994] [cursor=pointer]
+        - button "View details for Pokemon 427" [ref=e5997] [cursor=pointer]:
+          - generic [ref=e5999] [cursor=pointer]:
+            - generic [ref=e6001] [cursor=pointer]: "#427"
+            - generic [ref=e6003] [cursor=pointer]:
+              - generic [ref=e6006] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 427" [ref=e6008] [cursor=pointer]
+        - button "View details for Pokemon 428" [ref=e6011] [cursor=pointer]:
+          - generic [ref=e6013] [cursor=pointer]:
+            - generic [ref=e6015] [cursor=pointer]: "#428"
+            - generic [ref=e6017] [cursor=pointer]:
+              - generic [ref=e6020] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 428" [ref=e6022] [cursor=pointer]
+        - button "View details for Pokemon 429" [ref=e6025] [cursor=pointer]:
+          - generic [ref=e6027] [cursor=pointer]:
+            - generic [ref=e6029] [cursor=pointer]: "#429"
+            - generic [ref=e6031] [cursor=pointer]:
+              - generic [ref=e6034] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 429" [ref=e6036] [cursor=pointer]
+        - button "View details for Pokemon 430" [ref=e6039] [cursor=pointer]:
+          - generic [ref=e6041] [cursor=pointer]:
+            - generic [ref=e6043] [cursor=pointer]: "#430"
+            - generic [ref=e6045] [cursor=pointer]:
+              - generic [ref=e6048] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 430" [ref=e6050] [cursor=pointer]
+        - button "View details for Pokemon 431" [ref=e6053] [cursor=pointer]:
+          - generic [ref=e6055] [cursor=pointer]:
+            - generic [ref=e6057] [cursor=pointer]: "#431"
+            - generic [ref=e6059] [cursor=pointer]:
+              - generic [ref=e6062] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 431" [ref=e6064] [cursor=pointer]
+        - button "View details for Pokemon 432" [ref=e6067] [cursor=pointer]:
+          - generic [ref=e6069] [cursor=pointer]:
+            - generic [ref=e6071] [cursor=pointer]: "#432"
+            - generic [ref=e6073] [cursor=pointer]:
+              - generic [ref=e6076] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 432" [ref=e6078] [cursor=pointer]
+        - button "View details for Pokemon 433" [ref=e6081] [cursor=pointer]:
+          - generic [ref=e6083] [cursor=pointer]:
+            - generic [ref=e6085] [cursor=pointer]: "#433"
+            - generic [ref=e6087] [cursor=pointer]:
+              - generic [ref=e6090] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 433" [ref=e6092] [cursor=pointer]
+        - button "View details for Pokemon 434" [ref=e6095] [cursor=pointer]:
+          - generic [ref=e6097] [cursor=pointer]:
+            - generic [ref=e6099] [cursor=pointer]: "#434"
+            - generic [ref=e6101] [cursor=pointer]:
+              - generic [ref=e6104] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 434" [ref=e6106] [cursor=pointer]
+        - button "View details for Pokemon 435" [ref=e6109] [cursor=pointer]:
+          - generic [ref=e6111] [cursor=pointer]:
+            - generic [ref=e6113] [cursor=pointer]: "#435"
+            - generic [ref=e6115] [cursor=pointer]:
+              - generic [ref=e6118] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 435" [ref=e6120] [cursor=pointer]
+        - button "View details for Pokemon 436" [ref=e6123] [cursor=pointer]:
+          - generic [ref=e6125] [cursor=pointer]:
+            - generic [ref=e6127] [cursor=pointer]: "#436"
+            - generic [ref=e6129] [cursor=pointer]:
+              - generic [ref=e6132] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 436" [ref=e6134] [cursor=pointer]
+        - button "View details for Pokemon 437" [ref=e6137] [cursor=pointer]:
+          - generic [ref=e6139] [cursor=pointer]:
+            - generic [ref=e6141] [cursor=pointer]: "#437"
+            - generic [ref=e6143] [cursor=pointer]:
+              - generic [ref=e6146] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 437" [ref=e6148] [cursor=pointer]
+        - button "View details for Pokemon 438" [ref=e6151] [cursor=pointer]:
+          - generic [ref=e6153] [cursor=pointer]:
+            - generic [ref=e6155] [cursor=pointer]: "#438"
+            - generic [ref=e6157] [cursor=pointer]:
+              - generic [ref=e6160] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 438" [ref=e6162] [cursor=pointer]
+        - button "View details for Pokemon 439" [ref=e6165] [cursor=pointer]:
+          - generic [ref=e6167] [cursor=pointer]:
+            - generic [ref=e6169] [cursor=pointer]: "#439"
+            - generic [ref=e6171] [cursor=pointer]:
+              - generic [ref=e6174] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 439" [ref=e6176] [cursor=pointer]
+        - button "View details for Pokemon 440" [ref=e6179] [cursor=pointer]:
+          - generic [ref=e6181] [cursor=pointer]:
+            - generic [ref=e6183] [cursor=pointer]: "#440"
+            - generic [ref=e6185] [cursor=pointer]:
+              - generic [ref=e6188] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 440" [ref=e6190] [cursor=pointer]
+        - button "View details for Pokemon 441" [ref=e6193] [cursor=pointer]:
+          - generic [ref=e6195] [cursor=pointer]:
+            - generic [ref=e6197] [cursor=pointer]: "#441"
+            - generic [ref=e6199] [cursor=pointer]:
+              - generic [ref=e6202] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 441" [ref=e6204] [cursor=pointer]
+        - button "View details for Pokemon 442" [ref=e6207] [cursor=pointer]:
+          - generic [ref=e6209] [cursor=pointer]:
+            - generic [ref=e6211] [cursor=pointer]: "#442"
+            - generic [ref=e6213] [cursor=pointer]:
+              - generic [ref=e6216] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 442" [ref=e6218] [cursor=pointer]
+        - button "View details for Pokemon 443" [ref=e6221] [cursor=pointer]:
+          - generic [ref=e6223] [cursor=pointer]:
+            - generic [ref=e6225] [cursor=pointer]: "#443"
+            - generic [ref=e6227] [cursor=pointer]:
+              - generic [ref=e6230] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 443" [ref=e6232] [cursor=pointer]
+        - button "View details for Pokemon 444" [ref=e6235] [cursor=pointer]:
+          - generic [ref=e6237] [cursor=pointer]:
+            - generic [ref=e6239] [cursor=pointer]: "#444"
+            - generic [ref=e6241] [cursor=pointer]:
+              - generic [ref=e6244] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 444" [ref=e6246] [cursor=pointer]
+        - button "View details for Pokemon 445" [ref=e6249] [cursor=pointer]:
+          - generic [ref=e6251] [cursor=pointer]:
+            - generic [ref=e6253] [cursor=pointer]: "#445"
+            - generic [ref=e6255] [cursor=pointer]:
+              - generic [ref=e6258] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 445" [ref=e6260] [cursor=pointer]
+        - button "View details for Pokemon 446" [ref=e6263] [cursor=pointer]:
+          - generic [ref=e6265] [cursor=pointer]:
+            - generic [ref=e6267] [cursor=pointer]: "#446"
+            - generic [ref=e6269] [cursor=pointer]:
+              - generic [ref=e6272] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 446" [ref=e6274] [cursor=pointer]
+        - button "View details for Pokemon 447" [ref=e6277] [cursor=pointer]:
+          - generic [ref=e6279] [cursor=pointer]:
+            - generic [ref=e6281] [cursor=pointer]: "#447"
+            - generic [ref=e6283] [cursor=pointer]:
+              - generic [ref=e6286] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 447" [ref=e6288] [cursor=pointer]
+        - button "View details for Pokemon 448" [ref=e6291] [cursor=pointer]:
+          - generic [ref=e6293] [cursor=pointer]:
+            - generic [ref=e6295] [cursor=pointer]: "#448"
+            - generic [ref=e6297] [cursor=pointer]:
+              - generic [ref=e6300] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 448" [ref=e6302] [cursor=pointer]
+        - button "View details for Pokemon 449" [ref=e6305] [cursor=pointer]:
+          - generic [ref=e6307] [cursor=pointer]:
+            - generic [ref=e6309] [cursor=pointer]: "#449"
+            - generic [ref=e6311] [cursor=pointer]:
+              - generic [ref=e6314] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 449" [ref=e6316] [cursor=pointer]
+        - button "View details for Pokemon 450" [ref=e6319] [cursor=pointer]:
+          - generic [ref=e6321] [cursor=pointer]:
+            - generic [ref=e6323] [cursor=pointer]: "#450"
+            - generic [ref=e6325] [cursor=pointer]:
+              - generic [ref=e6328] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 450" [ref=e6330] [cursor=pointer]
+        - button "View details for Pokemon 451" [ref=e6333] [cursor=pointer]:
+          - generic [ref=e6335] [cursor=pointer]:
+            - generic [ref=e6337] [cursor=pointer]: "#451"
+            - generic [ref=e6339] [cursor=pointer]:
+              - generic [ref=e6342] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 451" [ref=e6344] [cursor=pointer]
+        - button "View details for Pokemon 452" [ref=e6347] [cursor=pointer]:
+          - generic [ref=e6349] [cursor=pointer]:
+            - generic [ref=e6351] [cursor=pointer]: "#452"
+            - generic [ref=e6353] [cursor=pointer]:
+              - generic [ref=e6356] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 452" [ref=e6358] [cursor=pointer]
+        - button "View details for Pokemon 453" [ref=e6361] [cursor=pointer]:
+          - generic [ref=e6363] [cursor=pointer]:
+            - generic [ref=e6365] [cursor=pointer]: "#453"
+            - generic [ref=e6367] [cursor=pointer]:
+              - generic [ref=e6370] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 453" [ref=e6372] [cursor=pointer]
+        - button "View details for Pokemon 454" [ref=e6375] [cursor=pointer]:
+          - generic [ref=e6377] [cursor=pointer]:
+            - generic [ref=e6379] [cursor=pointer]: "#454"
+            - generic [ref=e6381] [cursor=pointer]:
+              - generic [ref=e6384] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 454" [ref=e6386] [cursor=pointer]
+        - button "View details for Pokemon 455" [ref=e6389] [cursor=pointer]:
+          - generic [ref=e6391] [cursor=pointer]:
+            - generic [ref=e6393] [cursor=pointer]: "#455"
+            - generic [ref=e6395] [cursor=pointer]:
+              - generic [ref=e6398] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 455" [ref=e6400] [cursor=pointer]
+        - button "View details for Pokemon 456" [ref=e6403] [cursor=pointer]:
+          - generic [ref=e6405] [cursor=pointer]:
+            - generic [ref=e6407] [cursor=pointer]: "#456"
+            - generic [ref=e6409] [cursor=pointer]:
+              - generic [ref=e6412] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 456" [ref=e6414] [cursor=pointer]
+        - button "View details for Pokemon 457" [ref=e6417] [cursor=pointer]:
+          - generic [ref=e6419] [cursor=pointer]:
+            - generic [ref=e6421] [cursor=pointer]: "#457"
+            - generic [ref=e6423] [cursor=pointer]:
+              - generic [ref=e6426] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 457" [ref=e6428] [cursor=pointer]
+        - button "View details for Pokemon 458" [ref=e6431] [cursor=pointer]:
+          - generic [ref=e6433] [cursor=pointer]:
+            - generic [ref=e6435] [cursor=pointer]: "#458"
+            - generic [ref=e6437] [cursor=pointer]:
+              - generic [ref=e6440] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 458" [ref=e6442] [cursor=pointer]
+        - button "View details for Pokemon 459" [ref=e6445] [cursor=pointer]:
+          - generic [ref=e6447] [cursor=pointer]:
+            - generic [ref=e6449] [cursor=pointer]: "#459"
+            - generic [ref=e6451] [cursor=pointer]:
+              - generic [ref=e6454] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 459" [ref=e6456] [cursor=pointer]
+        - button "View details for Pokemon 460" [ref=e6459] [cursor=pointer]:
+          - generic [ref=e6461] [cursor=pointer]:
+            - generic [ref=e6463] [cursor=pointer]: "#460"
+            - generic [ref=e6465] [cursor=pointer]:
+              - generic [ref=e6468] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 460" [ref=e6470] [cursor=pointer]
+        - button "View details for Pokemon 461" [ref=e6473] [cursor=pointer]:
+          - generic [ref=e6475] [cursor=pointer]:
+            - generic [ref=e6477] [cursor=pointer]: "#461"
+            - generic [ref=e6479] [cursor=pointer]:
+              - generic [ref=e6482] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 461" [ref=e6484] [cursor=pointer]
+        - button "View details for Pokemon 462" [ref=e6487] [cursor=pointer]:
+          - generic [ref=e6489] [cursor=pointer]:
+            - generic [ref=e6491] [cursor=pointer]: "#462"
+            - generic [ref=e6493] [cursor=pointer]:
+              - generic [ref=e6496] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 462" [ref=e6498] [cursor=pointer]
+        - button "View details for Pokemon 463" [ref=e6501] [cursor=pointer]:
+          - generic [ref=e6503] [cursor=pointer]:
+            - generic [ref=e6505] [cursor=pointer]: "#463"
+            - generic [ref=e6507] [cursor=pointer]:
+              - generic [ref=e6510] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 463" [ref=e6512] [cursor=pointer]
+        - button "View details for Pokemon 464" [ref=e6515] [cursor=pointer]:
+          - generic [ref=e6517] [cursor=pointer]:
+            - generic [ref=e6519] [cursor=pointer]: "#464"
+            - generic [ref=e6521] [cursor=pointer]:
+              - generic [ref=e6524] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 464" [ref=e6526] [cursor=pointer]
+        - button "View details for Pokemon 465" [ref=e6529] [cursor=pointer]:
+          - generic [ref=e6531] [cursor=pointer]:
+            - generic [ref=e6533] [cursor=pointer]: "#465"
+            - generic [ref=e6535] [cursor=pointer]:
+              - generic [ref=e6538] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 465" [ref=e6540] [cursor=pointer]
+        - button "View details for Pokemon 466" [ref=e6543] [cursor=pointer]:
+          - generic [ref=e6545] [cursor=pointer]:
+            - generic [ref=e6547] [cursor=pointer]: "#466"
+            - generic [ref=e6549] [cursor=pointer]:
+              - generic [ref=e6552] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 466" [ref=e6554] [cursor=pointer]
+        - button "View details for Pokemon 467" [ref=e6557] [cursor=pointer]:
+          - generic [ref=e6559] [cursor=pointer]:
+            - generic [ref=e6561] [cursor=pointer]: "#467"
+            - generic [ref=e6563] [cursor=pointer]:
+              - generic [ref=e6566] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 467" [ref=e6568] [cursor=pointer]
+        - button "View details for Pokemon 468" [ref=e6571] [cursor=pointer]:
+          - generic [ref=e6573] [cursor=pointer]:
+            - generic [ref=e6575] [cursor=pointer]: "#468"
+            - generic [ref=e6577] [cursor=pointer]:
+              - generic [ref=e6580] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 468" [ref=e6582] [cursor=pointer]
+        - button "View details for Pokemon 469" [ref=e6585] [cursor=pointer]:
+          - generic [ref=e6587] [cursor=pointer]:
+            - generic [ref=e6589] [cursor=pointer]: "#469"
+            - generic [ref=e6591] [cursor=pointer]:
+              - generic [ref=e6594] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 469" [ref=e6596] [cursor=pointer]
+        - button "View details for Pokemon 470" [ref=e6599] [cursor=pointer]:
+          - generic [ref=e6601] [cursor=pointer]:
+            - generic [ref=e6603] [cursor=pointer]: "#470"
+            - generic [ref=e6605] [cursor=pointer]:
+              - generic [ref=e6608] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 470" [ref=e6610] [cursor=pointer]
+        - button "View details for Pokemon 471" [ref=e6613] [cursor=pointer]:
+          - generic [ref=e6615] [cursor=pointer]:
+            - generic [ref=e6617] [cursor=pointer]: "#471"
+            - generic [ref=e6619] [cursor=pointer]:
+              - generic [ref=e6622] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 471" [ref=e6624] [cursor=pointer]
+        - button "View details for Pokemon 472" [ref=e6627] [cursor=pointer]:
+          - generic [ref=e6629] [cursor=pointer]:
+            - generic [ref=e6631] [cursor=pointer]: "#472"
+            - generic [ref=e6633] [cursor=pointer]:
+              - generic [ref=e6636] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 472" [ref=e6638] [cursor=pointer]
+        - button "View details for Pokemon 473" [ref=e6641] [cursor=pointer]:
+          - generic [ref=e6643] [cursor=pointer]:
+            - generic [ref=e6645] [cursor=pointer]: "#473"
+            - generic [ref=e6647] [cursor=pointer]:
+              - generic [ref=e6650] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 473" [ref=e6652] [cursor=pointer]
+        - button "View details for Pokemon 474" [ref=e6655] [cursor=pointer]:
+          - generic [ref=e6657] [cursor=pointer]:
+            - generic [ref=e6659] [cursor=pointer]: "#474"
+            - generic [ref=e6661] [cursor=pointer]:
+              - generic [ref=e6664] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 474" [ref=e6666] [cursor=pointer]
+        - button "View details for Pokemon 475" [ref=e6669] [cursor=pointer]:
+          - generic [ref=e6671] [cursor=pointer]:
+            - generic [ref=e6673] [cursor=pointer]: "#475"
+            - generic [ref=e6675] [cursor=pointer]:
+              - generic [ref=e6678] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 475" [ref=e6680] [cursor=pointer]
+        - button "View details for Pokemon 476" [ref=e6683] [cursor=pointer]:
+          - generic [ref=e6685] [cursor=pointer]:
+            - generic [ref=e6687] [cursor=pointer]: "#476"
+            - generic [ref=e6689] [cursor=pointer]:
+              - generic [ref=e6692] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 476" [ref=e6694] [cursor=pointer]
+        - button "View details for Pokemon 477" [ref=e6697] [cursor=pointer]:
+          - generic [ref=e6699] [cursor=pointer]:
+            - generic [ref=e6701] [cursor=pointer]: "#477"
+            - generic [ref=e6703] [cursor=pointer]:
+              - generic [ref=e6706] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 477" [ref=e6708] [cursor=pointer]
+        - button "View details for Pokemon 478" [ref=e6711] [cursor=pointer]:
+          - generic [ref=e6713] [cursor=pointer]:
+            - generic [ref=e6715] [cursor=pointer]: "#478"
+            - generic [ref=e6717] [cursor=pointer]:
+              - generic [ref=e6720] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 478" [ref=e6722] [cursor=pointer]
+        - button "View details for Pokemon 479" [ref=e6725] [cursor=pointer]:
+          - generic [ref=e6727] [cursor=pointer]:
+            - generic [ref=e6729] [cursor=pointer]: "#479"
+            - generic [ref=e6731] [cursor=pointer]:
+              - generic [ref=e6734] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 479" [ref=e6736] [cursor=pointer]
+        - button "View details for Pokemon 480" [ref=e6739] [cursor=pointer]:
+          - generic [ref=e6741] [cursor=pointer]:
+            - generic [ref=e6743] [cursor=pointer]: "#480"
+            - generic [ref=e6745] [cursor=pointer]:
+              - generic [ref=e6748] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 480" [ref=e6750] [cursor=pointer]
+        - button "View details for Pokemon 481" [ref=e6753] [cursor=pointer]:
+          - generic [ref=e6755] [cursor=pointer]:
+            - generic [ref=e6757] [cursor=pointer]: "#481"
+            - generic [ref=e6759] [cursor=pointer]:
+              - generic [ref=e6762] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 481" [ref=e6764] [cursor=pointer]
+        - button "View details for Pokemon 482" [ref=e6767] [cursor=pointer]:
+          - generic [ref=e6769] [cursor=pointer]:
+            - generic [ref=e6771] [cursor=pointer]: "#482"
+            - generic [ref=e6773] [cursor=pointer]:
+              - generic [ref=e6776] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 482" [ref=e6778] [cursor=pointer]
+        - button "View details for Pokemon 483" [ref=e6781] [cursor=pointer]:
+          - generic [ref=e6783] [cursor=pointer]:
+            - generic [ref=e6785] [cursor=pointer]: "#483"
+            - generic [ref=e6787] [cursor=pointer]:
+              - generic [ref=e6790] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 483" [ref=e6792] [cursor=pointer]
+        - button "View details for Pokemon 484" [ref=e6795] [cursor=pointer]:
+          - generic [ref=e6797] [cursor=pointer]:
+            - generic [ref=e6799] [cursor=pointer]: "#484"
+            - generic [ref=e6801] [cursor=pointer]:
+              - generic [ref=e6804] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 484" [ref=e6806] [cursor=pointer]
+        - button "View details for Pokemon 485" [ref=e6809] [cursor=pointer]:
+          - generic [ref=e6811] [cursor=pointer]:
+            - generic [ref=e6813] [cursor=pointer]: "#485"
+            - generic [ref=e6815] [cursor=pointer]:
+              - generic [ref=e6818] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 485" [ref=e6820] [cursor=pointer]
+        - button "View details for Pokemon 486" [ref=e6823] [cursor=pointer]:
+          - generic [ref=e6825] [cursor=pointer]:
+            - generic [ref=e6827] [cursor=pointer]: "#486"
+            - generic [ref=e6829] [cursor=pointer]:
+              - generic [ref=e6832] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 486" [ref=e6834] [cursor=pointer]
+        - button "View details for Pokemon 487" [ref=e6837] [cursor=pointer]:
+          - generic [ref=e6839] [cursor=pointer]:
+            - generic [ref=e6841] [cursor=pointer]: "#487"
+            - generic [ref=e6843] [cursor=pointer]:
+              - generic [ref=e6846] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 487" [ref=e6848] [cursor=pointer]
+        - button "View details for Pokemon 488" [ref=e6851] [cursor=pointer]:
+          - generic [ref=e6853] [cursor=pointer]:
+            - generic [ref=e6855] [cursor=pointer]: "#488"
+            - generic [ref=e6857] [cursor=pointer]:
+              - generic [ref=e6860] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 488" [ref=e6862] [cursor=pointer]
+        - button "View details for Pokemon 489" [ref=e6865] [cursor=pointer]:
+          - generic [ref=e6867] [cursor=pointer]:
+            - generic [ref=e6869] [cursor=pointer]: "#489"
+            - generic [ref=e6871] [cursor=pointer]:
+              - generic [ref=e6874] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 489" [ref=e6876] [cursor=pointer]
+        - button "View details for Pokemon 490" [ref=e6879] [cursor=pointer]:
+          - generic [ref=e6881] [cursor=pointer]:
+            - generic [ref=e6883] [cursor=pointer]: "#490"
+            - generic [ref=e6885] [cursor=pointer]:
+              - generic [ref=e6888] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 490" [ref=e6890] [cursor=pointer]
+        - button "View details for Pokemon 491" [ref=e6893] [cursor=pointer]:
+          - generic [ref=e6895] [cursor=pointer]:
+            - generic [ref=e6897] [cursor=pointer]: "#491"
+            - generic [ref=e6899] [cursor=pointer]:
+              - generic [ref=e6902] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 491" [ref=e6904] [cursor=pointer]
+        - button "View details for Pokemon 492" [ref=e6907] [cursor=pointer]:
+          - generic [ref=e6909] [cursor=pointer]:
+            - generic [ref=e6911] [cursor=pointer]: "#492"
+            - generic [ref=e6913] [cursor=pointer]:
+              - generic [ref=e6916] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 492" [ref=e6918] [cursor=pointer]
+        - button "View details for Pokemon 493" [ref=e6921] [cursor=pointer]:
+          - generic [ref=e6923] [cursor=pointer]:
+            - generic [ref=e6925] [cursor=pointer]: "#493"
+            - generic [ref=e6927] [cursor=pointer]:
+              - generic [ref=e6930] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 493" [ref=e6932] [cursor=pointer]
+        - button "View details for Pokemon 494" [ref=e6935] [cursor=pointer]:
+          - generic [ref=e6937] [cursor=pointer]:
+            - generic [ref=e6939] [cursor=pointer]: "#494"
+            - generic [ref=e6941] [cursor=pointer]:
+              - generic [ref=e6944] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 494" [ref=e6946] [cursor=pointer]
+        - button "View details for Pokemon 495" [ref=e6949] [cursor=pointer]:
+          - generic [ref=e6951] [cursor=pointer]:
+            - generic [ref=e6953] [cursor=pointer]: "#495"
+            - generic [ref=e6955] [cursor=pointer]:
+              - generic [ref=e6958] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 495" [ref=e6960] [cursor=pointer]
+        - button "View details for Pokemon 496" [ref=e6963] [cursor=pointer]:
+          - generic [ref=e6965] [cursor=pointer]:
+            - generic [ref=e6967] [cursor=pointer]: "#496"
+            - generic [ref=e6969] [cursor=pointer]:
+              - generic [ref=e6972] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 496" [ref=e6974] [cursor=pointer]
+        - button "View details for Pokemon 497" [ref=e6977] [cursor=pointer]:
+          - generic [ref=e6979] [cursor=pointer]:
+            - generic [ref=e6981] [cursor=pointer]: "#497"
+            - generic [ref=e6983] [cursor=pointer]:
+              - generic [ref=e6986] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 497" [ref=e6988] [cursor=pointer]
+        - button "View details for Pokemon 498" [ref=e6991] [cursor=pointer]:
+          - generic [ref=e6993] [cursor=pointer]:
+            - generic [ref=e6995] [cursor=pointer]: "#498"
+            - generic [ref=e6997] [cursor=pointer]:
+              - generic [ref=e7000] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 498" [ref=e7002] [cursor=pointer]
+        - button "View details for Pokemon 499" [ref=e7005] [cursor=pointer]:
+          - generic [ref=e7007] [cursor=pointer]:
+            - generic [ref=e7009] [cursor=pointer]: "#499"
+            - generic [ref=e7011] [cursor=pointer]:
+              - generic [ref=e7014] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 499" [ref=e7016] [cursor=pointer]
+        - button "View details for Pokemon 500" [ref=e7019] [cursor=pointer]:
+          - generic [ref=e7021] [cursor=pointer]:
+            - generic [ref=e7023] [cursor=pointer]: "#500"
+            - generic [ref=e7025] [cursor=pointer]:
+              - generic [ref=e7028] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 500" [ref=e7030] [cursor=pointer]
+        - button "View details for Pokemon 501" [ref=e7033] [cursor=pointer]:
+          - generic [ref=e7035] [cursor=pointer]:
+            - generic [ref=e7037] [cursor=pointer]: "#501"
+            - generic [ref=e7039] [cursor=pointer]:
+              - generic [ref=e7042] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 501" [ref=e7044] [cursor=pointer]
+        - button "View details for Pokemon 502" [ref=e7047] [cursor=pointer]:
+          - generic [ref=e7049] [cursor=pointer]:
+            - generic [ref=e7051] [cursor=pointer]: "#502"
+            - generic [ref=e7053] [cursor=pointer]:
+              - generic [ref=e7056] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 502" [ref=e7058] [cursor=pointer]
+        - button "View details for Pokemon 503" [ref=e7061] [cursor=pointer]:
+          - generic [ref=e7063] [cursor=pointer]:
+            - generic [ref=e7065] [cursor=pointer]: "#503"
+            - generic [ref=e7067] [cursor=pointer]:
+              - generic [ref=e7070] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 503" [ref=e7072] [cursor=pointer]
+        - button "View details for Pokemon 504" [ref=e7075] [cursor=pointer]:
+          - generic [ref=e7077] [cursor=pointer]:
+            - generic [ref=e7079] [cursor=pointer]: "#504"
+            - generic [ref=e7081] [cursor=pointer]:
+              - generic [ref=e7084] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 504" [ref=e7086] [cursor=pointer]
+        - button "View details for Pokemon 505" [ref=e7089] [cursor=pointer]:
+          - generic [ref=e7091] [cursor=pointer]:
+            - generic [ref=e7093] [cursor=pointer]: "#505"
+            - generic [ref=e7095] [cursor=pointer]:
+              - generic [ref=e7098] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 505" [ref=e7100] [cursor=pointer]
+        - button "View details for Pokemon 506" [ref=e7103] [cursor=pointer]:
+          - generic [ref=e7105] [cursor=pointer]:
+            - generic [ref=e7107] [cursor=pointer]: "#506"
+            - generic [ref=e7109] [cursor=pointer]:
+              - generic [ref=e7112] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 506" [ref=e7114] [cursor=pointer]
+        - button "View details for Pokemon 507" [ref=e7117] [cursor=pointer]:
+          - generic [ref=e7119] [cursor=pointer]:
+            - generic [ref=e7121] [cursor=pointer]: "#507"
+            - generic [ref=e7123] [cursor=pointer]:
+              - generic [ref=e7126] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 507" [ref=e7128] [cursor=pointer]
+        - button "View details for Pokemon 508" [ref=e7131] [cursor=pointer]:
+          - generic [ref=e7133] [cursor=pointer]:
+            - generic [ref=e7135] [cursor=pointer]: "#508"
+            - generic [ref=e7137] [cursor=pointer]:
+              - generic [ref=e7140] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 508" [ref=e7142] [cursor=pointer]
+        - button "View details for Pokemon 509" [ref=e7145] [cursor=pointer]:
+          - generic [ref=e7147] [cursor=pointer]:
+            - generic [ref=e7149] [cursor=pointer]: "#509"
+            - generic [ref=e7151] [cursor=pointer]:
+              - generic [ref=e7154] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 509" [ref=e7156] [cursor=pointer]
+        - button "View details for Pokemon 510" [ref=e7159] [cursor=pointer]:
+          - generic [ref=e7161] [cursor=pointer]:
+            - generic [ref=e7163] [cursor=pointer]: "#510"
+            - generic [ref=e7165] [cursor=pointer]:
+              - generic [ref=e7168] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 510" [ref=e7170] [cursor=pointer]
+        - button "View details for Pokemon 511" [ref=e7173] [cursor=pointer]:
+          - generic [ref=e7175] [cursor=pointer]:
+            - generic [ref=e7177] [cursor=pointer]: "#511"
+            - generic [ref=e7179] [cursor=pointer]:
+              - generic [ref=e7182] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 511" [ref=e7184] [cursor=pointer]
+        - button "View details for Pokemon 512" [ref=e7187] [cursor=pointer]:
+          - generic [ref=e7189] [cursor=pointer]:
+            - generic [ref=e7191] [cursor=pointer]: "#512"
+            - generic [ref=e7193] [cursor=pointer]:
+              - generic [ref=e7196] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 512" [ref=e7198] [cursor=pointer]
+        - button "View details for Pokemon 513" [ref=e7201] [cursor=pointer]:
+          - generic [ref=e7203] [cursor=pointer]:
+            - generic [ref=e7205] [cursor=pointer]: "#513"
+            - generic [ref=e7207] [cursor=pointer]:
+              - generic [ref=e7210] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 513" [ref=e7212] [cursor=pointer]
+        - button "View details for Pokemon 514" [ref=e7215] [cursor=pointer]:
+          - generic [ref=e7217] [cursor=pointer]:
+            - generic [ref=e7219] [cursor=pointer]: "#514"
+            - generic [ref=e7221] [cursor=pointer]:
+              - generic [ref=e7224] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 514" [ref=e7226] [cursor=pointer]
+        - button "View details for Pokemon 515" [ref=e7229] [cursor=pointer]:
+          - generic [ref=e7231] [cursor=pointer]:
+            - generic [ref=e7233] [cursor=pointer]: "#515"
+            - generic [ref=e7235] [cursor=pointer]:
+              - generic [ref=e7238] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 515" [ref=e7240] [cursor=pointer]
+        - button "View details for Pokemon 516" [ref=e7243] [cursor=pointer]:
+          - generic [ref=e7245] [cursor=pointer]:
+            - generic [ref=e7247] [cursor=pointer]: "#516"
+            - generic [ref=e7249] [cursor=pointer]:
+              - generic [ref=e7252] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 516" [ref=e7254] [cursor=pointer]
+        - button "View details for Pokemon 517" [ref=e7257] [cursor=pointer]:
+          - generic [ref=e7259] [cursor=pointer]:
+            - generic [ref=e7261] [cursor=pointer]: "#517"
+            - generic [ref=e7263] [cursor=pointer]:
+              - generic [ref=e7266] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 517" [ref=e7268] [cursor=pointer]
+        - button "View details for Pokemon 518" [ref=e7271] [cursor=pointer]:
+          - generic [ref=e7273] [cursor=pointer]:
+            - generic [ref=e7275] [cursor=pointer]: "#518"
+            - generic [ref=e7277] [cursor=pointer]:
+              - generic [ref=e7280] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 518" [ref=e7282] [cursor=pointer]
+        - button "View details for Pokemon 519" [ref=e7285] [cursor=pointer]:
+          - generic [ref=e7287] [cursor=pointer]:
+            - generic [ref=e7289] [cursor=pointer]: "#519"
+            - generic [ref=e7291] [cursor=pointer]:
+              - generic [ref=e7294] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 519" [ref=e7296] [cursor=pointer]
+        - button "View details for Pokemon 520" [ref=e7299] [cursor=pointer]:
+          - generic [ref=e7301] [cursor=pointer]:
+            - generic [ref=e7303] [cursor=pointer]: "#520"
+            - generic [ref=e7305] [cursor=pointer]:
+              - generic [ref=e7308] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 520" [ref=e7310] [cursor=pointer]
+        - button "View details for Pokemon 521" [ref=e7313] [cursor=pointer]:
+          - generic [ref=e7315] [cursor=pointer]:
+            - generic [ref=e7317] [cursor=pointer]: "#521"
+            - generic [ref=e7319] [cursor=pointer]:
+              - generic [ref=e7322] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 521" [ref=e7324] [cursor=pointer]
+        - button "View details for Pokemon 522" [ref=e7327] [cursor=pointer]:
+          - generic [ref=e7329] [cursor=pointer]:
+            - generic [ref=e7331] [cursor=pointer]: "#522"
+            - generic [ref=e7333] [cursor=pointer]:
+              - generic [ref=e7336] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 522" [ref=e7338] [cursor=pointer]
+        - button "View details for Pokemon 523" [ref=e7341] [cursor=pointer]:
+          - generic [ref=e7343] [cursor=pointer]:
+            - generic [ref=e7345] [cursor=pointer]: "#523"
+            - generic [ref=e7347] [cursor=pointer]:
+              - generic [ref=e7350] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 523" [ref=e7352] [cursor=pointer]
+        - button "View details for Pokemon 524" [ref=e7355] [cursor=pointer]:
+          - generic [ref=e7357] [cursor=pointer]:
+            - generic [ref=e7359] [cursor=pointer]: "#524"
+            - generic [ref=e7361] [cursor=pointer]:
+              - generic [ref=e7364] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 524" [ref=e7366] [cursor=pointer]
+        - button "View details for Pokemon 525" [ref=e7369] [cursor=pointer]:
+          - generic [ref=e7371] [cursor=pointer]:
+            - generic [ref=e7373] [cursor=pointer]: "#525"
+            - generic [ref=e7375] [cursor=pointer]:
+              - generic [ref=e7378] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 525" [ref=e7380] [cursor=pointer]
+        - button "View details for Pokemon 526" [ref=e7383] [cursor=pointer]:
+          - generic [ref=e7385] [cursor=pointer]:
+            - generic [ref=e7387] [cursor=pointer]: "#526"
+            - generic [ref=e7389] [cursor=pointer]:
+              - generic [ref=e7392] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 526" [ref=e7394] [cursor=pointer]
+        - button "View details for Pokemon 527" [ref=e7397] [cursor=pointer]:
+          - generic [ref=e7399] [cursor=pointer]:
+            - generic [ref=e7401] [cursor=pointer]: "#527"
+            - generic [ref=e7403] [cursor=pointer]:
+              - generic [ref=e7406] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 527" [ref=e7408] [cursor=pointer]
+        - button "View details for Pokemon 528" [ref=e7411] [cursor=pointer]:
+          - generic [ref=e7413] [cursor=pointer]:
+            - generic [ref=e7415] [cursor=pointer]: "#528"
+            - generic [ref=e7417] [cursor=pointer]:
+              - generic [ref=e7420] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 528" [ref=e7422] [cursor=pointer]
+        - button "View details for Pokemon 529" [ref=e7425] [cursor=pointer]:
+          - generic [ref=e7427] [cursor=pointer]:
+            - generic [ref=e7429] [cursor=pointer]: "#529"
+            - generic [ref=e7431] [cursor=pointer]:
+              - generic [ref=e7434] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 529" [ref=e7436] [cursor=pointer]
+        - button "View details for Pokemon 530" [ref=e7439] [cursor=pointer]:
+          - generic [ref=e7441] [cursor=pointer]:
+            - generic [ref=e7443] [cursor=pointer]: "#530"
+            - generic [ref=e7445] [cursor=pointer]:
+              - generic [ref=e7448] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 530" [ref=e7450] [cursor=pointer]
+        - button "View details for Pokemon 531" [ref=e7453] [cursor=pointer]:
+          - generic [ref=e7455] [cursor=pointer]:
+            - generic [ref=e7457] [cursor=pointer]: "#531"
+            - generic [ref=e7459] [cursor=pointer]:
+              - generic [ref=e7462] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 531" [ref=e7464] [cursor=pointer]
+        - button "View details for Pokemon 532" [ref=e7467] [cursor=pointer]:
+          - generic [ref=e7469] [cursor=pointer]:
+            - generic [ref=e7471] [cursor=pointer]: "#532"
+            - generic [ref=e7473] [cursor=pointer]:
+              - generic [ref=e7476] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 532" [ref=e7478] [cursor=pointer]
+        - button "View details for Pokemon 533" [ref=e7481] [cursor=pointer]:
+          - generic [ref=e7483] [cursor=pointer]:
+            - generic [ref=e7485] [cursor=pointer]: "#533"
+            - generic [ref=e7487] [cursor=pointer]:
+              - generic [ref=e7490] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 533" [ref=e7492] [cursor=pointer]
+        - button "View details for Pokemon 534" [ref=e7495] [cursor=pointer]:
+          - generic [ref=e7497] [cursor=pointer]:
+            - generic [ref=e7499] [cursor=pointer]: "#534"
+            - generic [ref=e7501] [cursor=pointer]:
+              - generic [ref=e7504] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 534" [ref=e7506] [cursor=pointer]
+        - button "View details for Pokemon 535" [ref=e7509] [cursor=pointer]:
+          - generic [ref=e7511] [cursor=pointer]:
+            - generic [ref=e7513] [cursor=pointer]: "#535"
+            - generic [ref=e7515] [cursor=pointer]:
+              - generic [ref=e7518] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 535" [ref=e7520] [cursor=pointer]
+        - button "View details for Pokemon 536" [ref=e7523] [cursor=pointer]:
+          - generic [ref=e7525] [cursor=pointer]:
+            - generic [ref=e7527] [cursor=pointer]: "#536"
+            - generic [ref=e7529] [cursor=pointer]:
+              - generic [ref=e7532] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 536" [ref=e7534] [cursor=pointer]
+        - button "View details for Pokemon 537" [ref=e7537] [cursor=pointer]:
+          - generic [ref=e7539] [cursor=pointer]:
+            - generic [ref=e7541] [cursor=pointer]: "#537"
+            - generic [ref=e7543] [cursor=pointer]:
+              - generic [ref=e7546] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 537" [ref=e7548] [cursor=pointer]
+        - button "View details for Pokemon 538" [ref=e7551] [cursor=pointer]:
+          - generic [ref=e7553] [cursor=pointer]:
+            - generic [ref=e7555] [cursor=pointer]: "#538"
+            - generic [ref=e7557] [cursor=pointer]:
+              - generic [ref=e7560] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 538" [ref=e7562] [cursor=pointer]
+        - button "View details for Pokemon 539" [ref=e7565] [cursor=pointer]:
+          - generic [ref=e7567] [cursor=pointer]:
+            - generic [ref=e7569] [cursor=pointer]: "#539"
+            - generic [ref=e7571] [cursor=pointer]:
+              - generic [ref=e7574] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 539" [ref=e7576] [cursor=pointer]
+        - button "View details for Pokemon 540" [ref=e7579] [cursor=pointer]:
+          - generic [ref=e7581] [cursor=pointer]:
+            - generic [ref=e7583] [cursor=pointer]: "#540"
+            - generic [ref=e7585] [cursor=pointer]:
+              - generic [ref=e7588] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 540" [ref=e7590] [cursor=pointer]
+        - button "View details for Pokemon 541" [ref=e7593] [cursor=pointer]:
+          - generic [ref=e7595] [cursor=pointer]:
+            - generic [ref=e7597] [cursor=pointer]: "#541"
+            - generic [ref=e7599] [cursor=pointer]:
+              - generic [ref=e7602] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 541" [ref=e7604] [cursor=pointer]
+        - button "View details for Pokemon 542" [ref=e7607] [cursor=pointer]:
+          - generic [ref=e7609] [cursor=pointer]:
+            - generic [ref=e7611] [cursor=pointer]: "#542"
+            - generic [ref=e7613] [cursor=pointer]:
+              - generic [ref=e7616] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 542" [ref=e7618] [cursor=pointer]
+        - button "View details for Pokemon 543" [ref=e7621] [cursor=pointer]:
+          - generic [ref=e7623] [cursor=pointer]:
+            - generic [ref=e7625] [cursor=pointer]: "#543"
+            - generic [ref=e7627] [cursor=pointer]:
+              - generic [ref=e7630] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 543" [ref=e7632] [cursor=pointer]
+        - button "View details for Pokemon 544" [ref=e7635] [cursor=pointer]:
+          - generic [ref=e7637] [cursor=pointer]:
+            - generic [ref=e7639] [cursor=pointer]: "#544"
+            - generic [ref=e7641] [cursor=pointer]:
+              - generic [ref=e7644] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 544" [ref=e7646] [cursor=pointer]
+        - button "View details for Pokemon 545" [ref=e7649] [cursor=pointer]:
+          - generic [ref=e7651] [cursor=pointer]:
+            - generic [ref=e7653] [cursor=pointer]: "#545"
+            - generic [ref=e7655] [cursor=pointer]:
+              - generic [ref=e7658] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 545" [ref=e7660] [cursor=pointer]
+        - button "View details for Pokemon 546" [ref=e7663] [cursor=pointer]:
+          - generic [ref=e7665] [cursor=pointer]:
+            - generic [ref=e7667] [cursor=pointer]: "#546"
+            - generic [ref=e7669] [cursor=pointer]:
+              - generic [ref=e7672] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 546" [ref=e7674] [cursor=pointer]
+        - button "View details for Pokemon 547" [ref=e7677] [cursor=pointer]:
+          - generic [ref=e7679] [cursor=pointer]:
+            - generic [ref=e7681] [cursor=pointer]: "#547"
+            - generic [ref=e7683] [cursor=pointer]:
+              - generic [ref=e7686] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 547" [ref=e7688] [cursor=pointer]
+        - button "View details for Pokemon 548" [ref=e7691] [cursor=pointer]:
+          - generic [ref=e7693] [cursor=pointer]:
+            - generic [ref=e7695] [cursor=pointer]: "#548"
+            - generic [ref=e7697] [cursor=pointer]:
+              - generic [ref=e7700] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 548" [ref=e7702] [cursor=pointer]
+        - button "View details for Pokemon 549" [ref=e7705] [cursor=pointer]:
+          - generic [ref=e7707] [cursor=pointer]:
+            - generic [ref=e7709] [cursor=pointer]: "#549"
+            - generic [ref=e7711] [cursor=pointer]:
+              - generic [ref=e7714] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 549" [ref=e7716] [cursor=pointer]
+        - button "View details for Pokemon 550" [ref=e7719] [cursor=pointer]:
+          - generic [ref=e7721] [cursor=pointer]:
+            - generic [ref=e7723] [cursor=pointer]: "#550"
+            - generic [ref=e7725] [cursor=pointer]:
+              - generic [ref=e7728] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 550" [ref=e7730] [cursor=pointer]
+        - button "View details for Pokemon 551" [ref=e7733] [cursor=pointer]:
+          - generic [ref=e7735] [cursor=pointer]:
+            - generic [ref=e7737] [cursor=pointer]: "#551"
+            - generic [ref=e7739] [cursor=pointer]:
+              - generic [ref=e7742] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 551" [ref=e7744] [cursor=pointer]
+        - button "View details for Pokemon 552" [ref=e7747] [cursor=pointer]:
+          - generic [ref=e7749] [cursor=pointer]:
+            - generic [ref=e7751] [cursor=pointer]: "#552"
+            - generic [ref=e7753] [cursor=pointer]:
+              - generic [ref=e7756] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 552" [ref=e7758] [cursor=pointer]
+        - button "View details for Pokemon 553" [ref=e7761] [cursor=pointer]:
+          - generic [ref=e7763] [cursor=pointer]:
+            - generic [ref=e7765] [cursor=pointer]: "#553"
+            - generic [ref=e7767] [cursor=pointer]:
+              - generic [ref=e7770] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 553" [ref=e7772] [cursor=pointer]
+        - button "View details for Pokemon 554" [ref=e7775] [cursor=pointer]:
+          - generic [ref=e7777] [cursor=pointer]:
+            - generic [ref=e7779] [cursor=pointer]: "#554"
+            - generic [ref=e7781] [cursor=pointer]:
+              - generic [ref=e7784] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 554" [ref=e7786] [cursor=pointer]
+        - button "View details for Pokemon 555" [ref=e7789] [cursor=pointer]:
+          - generic [ref=e7791] [cursor=pointer]:
+            - generic [ref=e7793] [cursor=pointer]: "#555"
+            - generic [ref=e7795] [cursor=pointer]:
+              - generic [ref=e7798] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 555" [ref=e7800] [cursor=pointer]
+        - button "View details for Pokemon 556" [ref=e7803] [cursor=pointer]:
+          - generic [ref=e7805] [cursor=pointer]:
+            - generic [ref=e7807] [cursor=pointer]: "#556"
+            - generic [ref=e7809] [cursor=pointer]:
+              - generic [ref=e7812] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 556" [ref=e7814] [cursor=pointer]
+        - button "View details for Pokemon 557" [ref=e7817] [cursor=pointer]:
+          - generic [ref=e7819] [cursor=pointer]:
+            - generic [ref=e7821] [cursor=pointer]: "#557"
+            - generic [ref=e7823] [cursor=pointer]:
+              - generic [ref=e7826] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 557" [ref=e7828] [cursor=pointer]
+        - button "View details for Pokemon 558" [ref=e7831] [cursor=pointer]:
+          - generic [ref=e7833] [cursor=pointer]:
+            - generic [ref=e7835] [cursor=pointer]: "#558"
+            - generic [ref=e7837] [cursor=pointer]:
+              - generic [ref=e7840] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 558" [ref=e7842] [cursor=pointer]
+        - button "View details for Pokemon 559" [ref=e7845] [cursor=pointer]:
+          - generic [ref=e7847] [cursor=pointer]:
+            - generic [ref=e7849] [cursor=pointer]: "#559"
+            - generic [ref=e7851] [cursor=pointer]:
+              - generic [ref=e7854] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 559" [ref=e7856] [cursor=pointer]
+        - button "View details for Pokemon 560" [ref=e7859] [cursor=pointer]:
+          - generic [ref=e7861] [cursor=pointer]:
+            - generic [ref=e7863] [cursor=pointer]: "#560"
+            - generic [ref=e7865] [cursor=pointer]:
+              - generic [ref=e7868] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 560" [ref=e7870] [cursor=pointer]
+        - button "View details for Pokemon 561" [ref=e7873] [cursor=pointer]:
+          - generic [ref=e7875] [cursor=pointer]:
+            - generic [ref=e7877] [cursor=pointer]: "#561"
+            - generic [ref=e7879] [cursor=pointer]:
+              - generic [ref=e7882] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 561" [ref=e7884] [cursor=pointer]
+        - button "View details for Pokemon 562" [ref=e7887] [cursor=pointer]:
+          - generic [ref=e7889] [cursor=pointer]:
+            - generic [ref=e7891] [cursor=pointer]: "#562"
+            - generic [ref=e7893] [cursor=pointer]:
+              - generic [ref=e7896] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 562" [ref=e7898] [cursor=pointer]
+        - button "View details for Pokemon 563" [ref=e7901] [cursor=pointer]:
+          - generic [ref=e7903] [cursor=pointer]:
+            - generic [ref=e7905] [cursor=pointer]: "#563"
+            - generic [ref=e7907] [cursor=pointer]:
+              - generic [ref=e7910] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 563" [ref=e7912] [cursor=pointer]
+        - button "View details for Pokemon 564" [ref=e7915] [cursor=pointer]:
+          - generic [ref=e7917] [cursor=pointer]:
+            - generic [ref=e7919] [cursor=pointer]: "#564"
+            - generic [ref=e7921] [cursor=pointer]:
+              - generic [ref=e7924] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 564" [ref=e7926] [cursor=pointer]
+        - button "View details for Pokemon 565" [ref=e7929] [cursor=pointer]:
+          - generic [ref=e7931] [cursor=pointer]:
+            - generic [ref=e7933] [cursor=pointer]: "#565"
+            - generic [ref=e7935] [cursor=pointer]:
+              - generic [ref=e7938] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 565" [ref=e7940] [cursor=pointer]
+        - button "View details for Pokemon 566" [ref=e7943] [cursor=pointer]:
+          - generic [ref=e7945] [cursor=pointer]:
+            - generic [ref=e7947] [cursor=pointer]: "#566"
+            - generic [ref=e7949] [cursor=pointer]:
+              - generic [ref=e7952] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 566" [ref=e7954] [cursor=pointer]
+        - button "View details for Pokemon 567" [ref=e7957] [cursor=pointer]:
+          - generic [ref=e7959] [cursor=pointer]:
+            - generic [ref=e7961] [cursor=pointer]: "#567"
+            - generic [ref=e7963] [cursor=pointer]:
+              - generic [ref=e7966] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 567" [ref=e7968] [cursor=pointer]
+        - button "View details for Pokemon 568" [ref=e7971] [cursor=pointer]:
+          - generic [ref=e7973] [cursor=pointer]:
+            - generic [ref=e7975] [cursor=pointer]: "#568"
+            - generic [ref=e7977] [cursor=pointer]:
+              - generic [ref=e7980] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 568" [ref=e7982] [cursor=pointer]
+        - button "View details for Pokemon 569" [ref=e7985] [cursor=pointer]:
+          - generic [ref=e7987] [cursor=pointer]:
+            - generic [ref=e7989] [cursor=pointer]: "#569"
+            - generic [ref=e7991] [cursor=pointer]:
+              - generic [ref=e7994] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 569" [ref=e7996] [cursor=pointer]
+        - button "View details for Pokemon 570" [ref=e7999] [cursor=pointer]:
+          - generic [ref=e8001] [cursor=pointer]:
+            - generic [ref=e8003] [cursor=pointer]: "#570"
+            - generic [ref=e8005] [cursor=pointer]:
+              - generic [ref=e8008] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 570" [ref=e8010] [cursor=pointer]
+        - button "View details for Pokemon 571" [ref=e8013] [cursor=pointer]:
+          - generic [ref=e8015] [cursor=pointer]:
+            - generic [ref=e8017] [cursor=pointer]: "#571"
+            - generic [ref=e8019] [cursor=pointer]:
+              - generic [ref=e8022] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 571" [ref=e8024] [cursor=pointer]
+        - button "View details for Pokemon 572" [ref=e8027] [cursor=pointer]:
+          - generic [ref=e8029] [cursor=pointer]:
+            - generic [ref=e8031] [cursor=pointer]: "#572"
+            - generic [ref=e8033] [cursor=pointer]:
+              - generic [ref=e8036] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 572" [ref=e8038] [cursor=pointer]
+        - button "View details for Pokemon 573" [ref=e8041] [cursor=pointer]:
+          - generic [ref=e8043] [cursor=pointer]:
+            - generic [ref=e8045] [cursor=pointer]: "#573"
+            - generic [ref=e8047] [cursor=pointer]:
+              - generic [ref=e8050] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 573" [ref=e8052] [cursor=pointer]
+        - button "View details for Pokemon 574" [ref=e8055] [cursor=pointer]:
+          - generic [ref=e8057] [cursor=pointer]:
+            - generic [ref=e8059] [cursor=pointer]: "#574"
+            - generic [ref=e8061] [cursor=pointer]:
+              - generic [ref=e8064] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 574" [ref=e8066] [cursor=pointer]
+        - button "View details for Pokemon 575" [ref=e8069] [cursor=pointer]:
+          - generic [ref=e8071] [cursor=pointer]:
+            - generic [ref=e8073] [cursor=pointer]: "#575"
+            - generic [ref=e8075] [cursor=pointer]:
+              - generic [ref=e8078] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 575" [ref=e8080] [cursor=pointer]
+        - button "View details for Pokemon 576" [ref=e8083] [cursor=pointer]:
+          - generic [ref=e8085] [cursor=pointer]:
+            - generic [ref=e8087] [cursor=pointer]: "#576"
+            - generic [ref=e8089] [cursor=pointer]:
+              - generic [ref=e8092] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 576" [ref=e8094] [cursor=pointer]
+        - button "View details for Pokemon 577" [ref=e8097] [cursor=pointer]:
+          - generic [ref=e8099] [cursor=pointer]:
+            - generic [ref=e8101] [cursor=pointer]: "#577"
+            - generic [ref=e8103] [cursor=pointer]:
+              - generic [ref=e8106] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 577" [ref=e8108] [cursor=pointer]
+        - button "View details for Pokemon 578" [ref=e8111] [cursor=pointer]:
+          - generic [ref=e8113] [cursor=pointer]:
+            - generic [ref=e8115] [cursor=pointer]: "#578"
+            - generic [ref=e8117] [cursor=pointer]:
+              - generic [ref=e8120] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 578" [ref=e8122] [cursor=pointer]
+        - button "View details for Pokemon 579" [ref=e8125] [cursor=pointer]:
+          - generic [ref=e8127] [cursor=pointer]:
+            - generic [ref=e8129] [cursor=pointer]: "#579"
+            - generic [ref=e8131] [cursor=pointer]:
+              - generic [ref=e8134] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 579" [ref=e8136] [cursor=pointer]
+        - button "View details for Pokemon 580" [ref=e8139] [cursor=pointer]:
+          - generic [ref=e8141] [cursor=pointer]:
+            - generic [ref=e8143] [cursor=pointer]: "#580"
+            - generic [ref=e8145] [cursor=pointer]:
+              - generic [ref=e8148] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 580" [ref=e8150] [cursor=pointer]
+        - button "View details for Pokemon 581" [ref=e8153] [cursor=pointer]:
+          - generic [ref=e8155] [cursor=pointer]:
+            - generic [ref=e8157] [cursor=pointer]: "#581"
+            - generic [ref=e8159] [cursor=pointer]:
+              - generic [ref=e8162] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 581" [ref=e8164] [cursor=pointer]
+        - button "View details for Pokemon 582" [ref=e8167] [cursor=pointer]:
+          - generic [ref=e8169] [cursor=pointer]:
+            - generic [ref=e8171] [cursor=pointer]: "#582"
+            - generic [ref=e8173] [cursor=pointer]:
+              - generic [ref=e8176] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 582" [ref=e8178] [cursor=pointer]
+        - button "View details for Pokemon 583" [ref=e8181] [cursor=pointer]:
+          - generic [ref=e8183] [cursor=pointer]:
+            - generic [ref=e8185] [cursor=pointer]: "#583"
+            - generic [ref=e8187] [cursor=pointer]:
+              - generic [ref=e8190] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 583" [ref=e8192] [cursor=pointer]
+        - button "View details for Pokemon 584" [ref=e8195] [cursor=pointer]:
+          - generic [ref=e8197] [cursor=pointer]:
+            - generic [ref=e8199] [cursor=pointer]: "#584"
+            - generic [ref=e8201] [cursor=pointer]:
+              - generic [ref=e8204] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 584" [ref=e8206] [cursor=pointer]
+        - button "View details for Pokemon 585" [ref=e8209] [cursor=pointer]:
+          - generic [ref=e8211] [cursor=pointer]:
+            - generic [ref=e8213] [cursor=pointer]: "#585"
+            - generic [ref=e8215] [cursor=pointer]:
+              - generic [ref=e8218] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 585" [ref=e8220] [cursor=pointer]
+        - button "View details for Pokemon 586" [ref=e8223] [cursor=pointer]:
+          - generic [ref=e8225] [cursor=pointer]:
+            - generic [ref=e8227] [cursor=pointer]: "#586"
+            - generic [ref=e8229] [cursor=pointer]:
+              - generic [ref=e8232] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 586" [ref=e8234] [cursor=pointer]
+        - button "View details for Pokemon 587" [ref=e8237] [cursor=pointer]:
+          - generic [ref=e8239] [cursor=pointer]:
+            - generic [ref=e8241] [cursor=pointer]: "#587"
+            - generic [ref=e8243] [cursor=pointer]:
+              - generic [ref=e8246] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 587" [ref=e8248] [cursor=pointer]
+        - button "View details for Pokemon 588" [ref=e8251] [cursor=pointer]:
+          - generic [ref=e8253] [cursor=pointer]:
+            - generic [ref=e8255] [cursor=pointer]: "#588"
+            - generic [ref=e8257] [cursor=pointer]:
+              - generic [ref=e8260] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 588" [ref=e8262] [cursor=pointer]
+        - button "View details for Pokemon 589" [ref=e8265] [cursor=pointer]:
+          - generic [ref=e8267] [cursor=pointer]:
+            - generic [ref=e8269] [cursor=pointer]: "#589"
+            - generic [ref=e8271] [cursor=pointer]:
+              - generic [ref=e8274] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 589" [ref=e8276] [cursor=pointer]
+        - button "View details for Pokemon 590" [ref=e8279] [cursor=pointer]:
+          - generic [ref=e8281] [cursor=pointer]:
+            - generic [ref=e8283] [cursor=pointer]: "#590"
+            - generic [ref=e8285] [cursor=pointer]:
+              - generic [ref=e8288] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 590" [ref=e8290] [cursor=pointer]
+        - button "View details for Pokemon 591" [ref=e8293] [cursor=pointer]:
+          - generic [ref=e8295] [cursor=pointer]:
+            - generic [ref=e8297] [cursor=pointer]: "#591"
+            - generic [ref=e8299] [cursor=pointer]:
+              - generic [ref=e8302] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 591" [ref=e8304] [cursor=pointer]
+        - button "View details for Pokemon 592" [ref=e8307] [cursor=pointer]:
+          - generic [ref=e8309] [cursor=pointer]:
+            - generic [ref=e8311] [cursor=pointer]: "#592"
+            - generic [ref=e8313] [cursor=pointer]:
+              - generic [ref=e8316] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 592" [ref=e8318] [cursor=pointer]
+        - button "View details for Pokemon 593" [ref=e8321] [cursor=pointer]:
+          - generic [ref=e8323] [cursor=pointer]:
+            - generic [ref=e8325] [cursor=pointer]: "#593"
+            - generic [ref=e8327] [cursor=pointer]:
+              - generic [ref=e8330] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 593" [ref=e8332] [cursor=pointer]
+        - button "View details for Pokemon 594" [ref=e8335] [cursor=pointer]:
+          - generic [ref=e8337] [cursor=pointer]:
+            - generic [ref=e8339] [cursor=pointer]: "#594"
+            - generic [ref=e8341] [cursor=pointer]:
+              - generic [ref=e8344] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 594" [ref=e8346] [cursor=pointer]
+        - button "View details for Pokemon 595" [ref=e8349] [cursor=pointer]:
+          - generic [ref=e8351] [cursor=pointer]:
+            - generic [ref=e8353] [cursor=pointer]: "#595"
+            - generic [ref=e8355] [cursor=pointer]:
+              - generic [ref=e8358] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 595" [ref=e8360] [cursor=pointer]
+        - button "View details for Pokemon 596" [ref=e8363] [cursor=pointer]:
+          - generic [ref=e8365] [cursor=pointer]:
+            - generic [ref=e8367] [cursor=pointer]: "#596"
+            - generic [ref=e8369] [cursor=pointer]:
+              - generic [ref=e8372] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 596" [ref=e8374] [cursor=pointer]
+        - button "View details for Pokemon 597" [ref=e8377] [cursor=pointer]:
+          - generic [ref=e8379] [cursor=pointer]:
+            - generic [ref=e8381] [cursor=pointer]: "#597"
+            - generic [ref=e8383] [cursor=pointer]:
+              - generic [ref=e8386] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 597" [ref=e8388] [cursor=pointer]
+        - button "View details for Pokemon 598" [ref=e8391] [cursor=pointer]:
+          - generic [ref=e8393] [cursor=pointer]:
+            - generic [ref=e8395] [cursor=pointer]: "#598"
+            - generic [ref=e8397] [cursor=pointer]:
+              - generic [ref=e8400] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 598" [ref=e8402] [cursor=pointer]
+        - button "View details for Pokemon 599" [ref=e8405] [cursor=pointer]:
+          - generic [ref=e8407] [cursor=pointer]:
+            - generic [ref=e8409] [cursor=pointer]: "#599"
+            - generic [ref=e8411] [cursor=pointer]:
+              - generic [ref=e8414] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 599" [ref=e8416] [cursor=pointer]
+        - button "View details for Pokemon 600" [ref=e8419] [cursor=pointer]:
+          - generic [ref=e8421] [cursor=pointer]:
+            - generic [ref=e8423] [cursor=pointer]: "#600"
+            - generic [ref=e8425] [cursor=pointer]:
+              - generic [ref=e8428] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 600" [ref=e8430] [cursor=pointer]
+        - button "View details for Pokemon 601" [ref=e8433] [cursor=pointer]:
+          - generic [ref=e8435] [cursor=pointer]:
+            - generic [ref=e8437] [cursor=pointer]: "#601"
+            - generic [ref=e8439] [cursor=pointer]:
+              - generic [ref=e8442] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 601" [ref=e8444] [cursor=pointer]
+        - button "View details for Pokemon 602" [ref=e8447] [cursor=pointer]:
+          - generic [ref=e8449] [cursor=pointer]:
+            - generic [ref=e8451] [cursor=pointer]: "#602"
+            - generic [ref=e8453] [cursor=pointer]:
+              - generic [ref=e8456] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 602" [ref=e8458] [cursor=pointer]
+        - button "View details for Pokemon 603" [ref=e8461] [cursor=pointer]:
+          - generic [ref=e8463] [cursor=pointer]:
+            - generic [ref=e8465] [cursor=pointer]: "#603"
+            - generic [ref=e8467] [cursor=pointer]:
+              - generic [ref=e8470] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 603" [ref=e8472] [cursor=pointer]
+        - button "View details for Pokemon 604" [ref=e8475] [cursor=pointer]:
+          - generic [ref=e8477] [cursor=pointer]:
+            - generic [ref=e8479] [cursor=pointer]: "#604"
+            - generic [ref=e8481] [cursor=pointer]:
+              - generic [ref=e8484] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 604" [ref=e8486] [cursor=pointer]
+        - button "View details for Pokemon 605" [ref=e8489] [cursor=pointer]:
+          - generic [ref=e8491] [cursor=pointer]:
+            - generic [ref=e8493] [cursor=pointer]: "#605"
+            - generic [ref=e8495] [cursor=pointer]:
+              - generic [ref=e8498] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 605" [ref=e8500] [cursor=pointer]
+        - button "View details for Pokemon 606" [ref=e8503] [cursor=pointer]:
+          - generic [ref=e8505] [cursor=pointer]:
+            - generic [ref=e8507] [cursor=pointer]: "#606"
+            - generic [ref=e8509] [cursor=pointer]:
+              - generic [ref=e8512] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 606" [ref=e8514] [cursor=pointer]
+        - button "View details for Pokemon 607" [ref=e8517] [cursor=pointer]:
+          - generic [ref=e8519] [cursor=pointer]:
+            - generic [ref=e8521] [cursor=pointer]: "#607"
+            - generic [ref=e8523] [cursor=pointer]:
+              - generic [ref=e8526] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 607" [ref=e8528] [cursor=pointer]
+        - button "View details for Pokemon 608" [ref=e8531] [cursor=pointer]:
+          - generic [ref=e8533] [cursor=pointer]:
+            - generic [ref=e8535] [cursor=pointer]: "#608"
+            - generic [ref=e8537] [cursor=pointer]:
+              - generic [ref=e8540] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 608" [ref=e8542] [cursor=pointer]
+        - button "View details for Pokemon 609" [ref=e8545] [cursor=pointer]:
+          - generic [ref=e8547] [cursor=pointer]:
+            - generic [ref=e8549] [cursor=pointer]: "#609"
+            - generic [ref=e8551] [cursor=pointer]:
+              - generic [ref=e8554] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 609" [ref=e8556] [cursor=pointer]
+        - button "View details for Pokemon 610" [ref=e8559] [cursor=pointer]:
+          - generic [ref=e8561] [cursor=pointer]:
+            - generic [ref=e8563] [cursor=pointer]: "#610"
+            - generic [ref=e8565] [cursor=pointer]:
+              - generic [ref=e8568] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 610" [ref=e8570] [cursor=pointer]
+        - button "View details for Pokemon 611" [ref=e8573] [cursor=pointer]:
+          - generic [ref=e8575] [cursor=pointer]:
+            - generic [ref=e8577] [cursor=pointer]: "#611"
+            - generic [ref=e8579] [cursor=pointer]:
+              - generic [ref=e8582] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 611" [ref=e8584] [cursor=pointer]
+        - button "View details for Pokemon 612" [ref=e8587] [cursor=pointer]:
+          - generic [ref=e8589] [cursor=pointer]:
+            - generic [ref=e8591] [cursor=pointer]: "#612"
+            - generic [ref=e8593] [cursor=pointer]:
+              - generic [ref=e8596] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 612" [ref=e8598] [cursor=pointer]
+        - button "View details for Pokemon 613" [ref=e8601] [cursor=pointer]:
+          - generic [ref=e8603] [cursor=pointer]:
+            - generic [ref=e8605] [cursor=pointer]: "#613"
+            - generic [ref=e8607] [cursor=pointer]:
+              - generic [ref=e8610] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 613" [ref=e8612] [cursor=pointer]
+        - button "View details for Pokemon 614" [ref=e8615] [cursor=pointer]:
+          - generic [ref=e8617] [cursor=pointer]:
+            - generic [ref=e8619] [cursor=pointer]: "#614"
+            - generic [ref=e8621] [cursor=pointer]:
+              - generic [ref=e8624] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 614" [ref=e8626] [cursor=pointer]
+        - button "View details for Pokemon 615" [ref=e8629] [cursor=pointer]:
+          - generic [ref=e8631] [cursor=pointer]:
+            - generic [ref=e8633] [cursor=pointer]: "#615"
+            - generic [ref=e8635] [cursor=pointer]:
+              - generic [ref=e8638] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 615" [ref=e8640] [cursor=pointer]
+        - button "View details for Pokemon 616" [ref=e8643] [cursor=pointer]:
+          - generic [ref=e8645] [cursor=pointer]:
+            - generic [ref=e8647] [cursor=pointer]: "#616"
+            - generic [ref=e8649] [cursor=pointer]:
+              - generic [ref=e8652] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 616" [ref=e8654] [cursor=pointer]
+        - button "View details for Pokemon 617" [ref=e8657] [cursor=pointer]:
+          - generic [ref=e8659] [cursor=pointer]:
+            - generic [ref=e8661] [cursor=pointer]: "#617"
+            - generic [ref=e8663] [cursor=pointer]:
+              - generic [ref=e8666] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 617" [ref=e8668] [cursor=pointer]
+        - button "View details for Pokemon 618" [ref=e8671] [cursor=pointer]:
+          - generic [ref=e8673] [cursor=pointer]:
+            - generic [ref=e8675] [cursor=pointer]: "#618"
+            - generic [ref=e8677] [cursor=pointer]:
+              - generic [ref=e8680] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 618" [ref=e8682] [cursor=pointer]
+        - button "View details for Pokemon 619" [ref=e8685] [cursor=pointer]:
+          - generic [ref=e8687] [cursor=pointer]:
+            - generic [ref=e8689] [cursor=pointer]: "#619"
+            - generic [ref=e8691] [cursor=pointer]:
+              - generic [ref=e8694] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 619" [ref=e8696] [cursor=pointer]
+        - button "View details for Pokemon 620" [ref=e8699] [cursor=pointer]:
+          - generic [ref=e8701] [cursor=pointer]:
+            - generic [ref=e8703] [cursor=pointer]: "#620"
+            - generic [ref=e8705] [cursor=pointer]:
+              - generic [ref=e8708] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 620" [ref=e8710] [cursor=pointer]
+        - button "View details for Pokemon 621" [ref=e8713] [cursor=pointer]:
+          - generic [ref=e8715] [cursor=pointer]:
+            - generic [ref=e8717] [cursor=pointer]: "#621"
+            - generic [ref=e8719] [cursor=pointer]:
+              - generic [ref=e8722] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 621" [ref=e8724] [cursor=pointer]
+        - button "View details for Pokemon 622" [ref=e8727] [cursor=pointer]:
+          - generic [ref=e8729] [cursor=pointer]:
+            - generic [ref=e8731] [cursor=pointer]: "#622"
+            - generic [ref=e8733] [cursor=pointer]:
+              - generic [ref=e8736] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 622" [ref=e8738] [cursor=pointer]
+        - button "View details for Pokemon 623" [ref=e8741] [cursor=pointer]:
+          - generic [ref=e8743] [cursor=pointer]:
+            - generic [ref=e8745] [cursor=pointer]: "#623"
+            - generic [ref=e8747] [cursor=pointer]:
+              - generic [ref=e8750] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 623" [ref=e8752] [cursor=pointer]
+        - button "View details for Pokemon 624" [ref=e8755] [cursor=pointer]:
+          - generic [ref=e8757] [cursor=pointer]:
+            - generic [ref=e8759] [cursor=pointer]: "#624"
+            - generic [ref=e8761] [cursor=pointer]:
+              - generic [ref=e8764] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 624" [ref=e8766] [cursor=pointer]
+        - button "View details for Pokemon 625" [ref=e8769] [cursor=pointer]:
+          - generic [ref=e8771] [cursor=pointer]:
+            - generic [ref=e8773] [cursor=pointer]: "#625"
+            - generic [ref=e8775] [cursor=pointer]:
+              - generic [ref=e8778] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 625" [ref=e8780] [cursor=pointer]
+        - button "View details for Pokemon 626" [ref=e8783] [cursor=pointer]:
+          - generic [ref=e8785] [cursor=pointer]:
+            - generic [ref=e8787] [cursor=pointer]: "#626"
+            - generic [ref=e8789] [cursor=pointer]:
+              - generic [ref=e8792] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 626" [ref=e8794] [cursor=pointer]
+        - button "View details for Pokemon 627" [ref=e8797] [cursor=pointer]:
+          - generic [ref=e8799] [cursor=pointer]:
+            - generic [ref=e8801] [cursor=pointer]: "#627"
+            - generic [ref=e8803] [cursor=pointer]:
+              - generic [ref=e8806] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 627" [ref=e8808] [cursor=pointer]
+        - button "View details for Pokemon 628" [ref=e8811] [cursor=pointer]:
+          - generic [ref=e8813] [cursor=pointer]:
+            - generic [ref=e8815] [cursor=pointer]: "#628"
+            - generic [ref=e8817] [cursor=pointer]:
+              - generic [ref=e8820] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 628" [ref=e8822] [cursor=pointer]
+        - button "View details for Pokemon 629" [ref=e8825] [cursor=pointer]:
+          - generic [ref=e8827] [cursor=pointer]:
+            - generic [ref=e8829] [cursor=pointer]: "#629"
+            - generic [ref=e8831] [cursor=pointer]:
+              - generic [ref=e8834] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 629" [ref=e8836] [cursor=pointer]
+        - button "View details for Pokemon 630" [ref=e8839] [cursor=pointer]:
+          - generic [ref=e8841] [cursor=pointer]:
+            - generic [ref=e8843] [cursor=pointer]: "#630"
+            - generic [ref=e8845] [cursor=pointer]:
+              - generic [ref=e8848] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 630" [ref=e8850] [cursor=pointer]
+        - button "View details for Pokemon 631" [ref=e8853] [cursor=pointer]:
+          - generic [ref=e8855] [cursor=pointer]:
+            - generic [ref=e8857] [cursor=pointer]: "#631"
+            - generic [ref=e8859] [cursor=pointer]:
+              - generic [ref=e8862] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 631" [ref=e8864] [cursor=pointer]
+        - button "View details for Pokemon 632" [ref=e8867] [cursor=pointer]:
+          - generic [ref=e8869] [cursor=pointer]:
+            - generic [ref=e8871] [cursor=pointer]: "#632"
+            - generic [ref=e8873] [cursor=pointer]:
+              - generic [ref=e8876] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 632" [ref=e8878] [cursor=pointer]
+        - button "View details for Pokemon 633" [ref=e8881] [cursor=pointer]:
+          - generic [ref=e8883] [cursor=pointer]:
+            - generic [ref=e8885] [cursor=pointer]: "#633"
+            - generic [ref=e8887] [cursor=pointer]:
+              - generic [ref=e8890] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 633" [ref=e8892] [cursor=pointer]
+        - button "View details for Pokemon 634" [ref=e8895] [cursor=pointer]:
+          - generic [ref=e8897] [cursor=pointer]:
+            - generic [ref=e8899] [cursor=pointer]: "#634"
+            - generic [ref=e8901] [cursor=pointer]:
+              - generic [ref=e8904] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 634" [ref=e8906] [cursor=pointer]
+        - button "View details for Pokemon 635" [ref=e8909] [cursor=pointer]:
+          - generic [ref=e8911] [cursor=pointer]:
+            - generic [ref=e8913] [cursor=pointer]: "#635"
+            - generic [ref=e8915] [cursor=pointer]:
+              - generic [ref=e8918] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 635" [ref=e8920] [cursor=pointer]
+        - button "View details for Pokemon 636" [ref=e8923] [cursor=pointer]:
+          - generic [ref=e8925] [cursor=pointer]:
+            - generic [ref=e8927] [cursor=pointer]: "#636"
+            - generic [ref=e8929] [cursor=pointer]:
+              - generic [ref=e8932] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 636" [ref=e8934] [cursor=pointer]
+        - button "View details for Pokemon 637" [ref=e8937] [cursor=pointer]:
+          - generic [ref=e8939] [cursor=pointer]:
+            - generic [ref=e8941] [cursor=pointer]: "#637"
+            - generic [ref=e8943] [cursor=pointer]:
+              - generic [ref=e8946] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 637" [ref=e8948] [cursor=pointer]
+        - button "View details for Pokemon 638" [ref=e8951] [cursor=pointer]:
+          - generic [ref=e8953] [cursor=pointer]:
+            - generic [ref=e8955] [cursor=pointer]: "#638"
+            - generic [ref=e8957] [cursor=pointer]:
+              - generic [ref=e8960] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 638" [ref=e8962] [cursor=pointer]
+        - button "View details for Pokemon 639" [ref=e8965] [cursor=pointer]:
+          - generic [ref=e8967] [cursor=pointer]:
+            - generic [ref=e8969] [cursor=pointer]: "#639"
+            - generic [ref=e8971] [cursor=pointer]:
+              - generic [ref=e8974] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 639" [ref=e8976] [cursor=pointer]
+        - button "View details for Pokemon 640" [ref=e8979] [cursor=pointer]:
+          - generic [ref=e8981] [cursor=pointer]:
+            - generic [ref=e8983] [cursor=pointer]: "#640"
+            - generic [ref=e8985] [cursor=pointer]:
+              - generic [ref=e8988] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 640" [ref=e8990] [cursor=pointer]
+        - button "View details for Pokemon 641" [ref=e8993] [cursor=pointer]:
+          - generic [ref=e8995] [cursor=pointer]:
+            - generic [ref=e8997] [cursor=pointer]: "#641"
+            - generic [ref=e8999] [cursor=pointer]:
+              - generic [ref=e9002] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 641" [ref=e9004] [cursor=pointer]
+        - button "View details for Pokemon 642" [ref=e9007] [cursor=pointer]:
+          - generic [ref=e9009] [cursor=pointer]:
+            - generic [ref=e9011] [cursor=pointer]: "#642"
+            - generic [ref=e9013] [cursor=pointer]:
+              - generic [ref=e9016] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 642" [ref=e9018] [cursor=pointer]
+        - button "View details for Pokemon 643" [ref=e9021] [cursor=pointer]:
+          - generic [ref=e9023] [cursor=pointer]:
+            - generic [ref=e9025] [cursor=pointer]: "#643"
+            - generic [ref=e9027] [cursor=pointer]:
+              - generic [ref=e9030] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 643" [ref=e9032] [cursor=pointer]
+        - button "View details for Pokemon 644" [ref=e9035] [cursor=pointer]:
+          - generic [ref=e9037] [cursor=pointer]:
+            - generic [ref=e9039] [cursor=pointer]: "#644"
+            - generic [ref=e9041] [cursor=pointer]:
+              - generic [ref=e9044] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 644" [ref=e9046] [cursor=pointer]
+        - button "View details for Pokemon 645" [ref=e9049] [cursor=pointer]:
+          - generic [ref=e9051] [cursor=pointer]:
+            - generic [ref=e9053] [cursor=pointer]: "#645"
+            - generic [ref=e9055] [cursor=pointer]:
+              - generic [ref=e9058] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 645" [ref=e9060] [cursor=pointer]
+        - button "View details for Pokemon 646" [ref=e9063] [cursor=pointer]:
+          - generic [ref=e9065] [cursor=pointer]:
+            - generic [ref=e9067] [cursor=pointer]: "#646"
+            - generic [ref=e9069] [cursor=pointer]:
+              - generic [ref=e9072] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 646" [ref=e9074] [cursor=pointer]
+        - button "View details for Pokemon 647" [ref=e9077] [cursor=pointer]:
+          - generic [ref=e9079] [cursor=pointer]:
+            - generic [ref=e9081] [cursor=pointer]: "#647"
+            - generic [ref=e9083] [cursor=pointer]:
+              - generic [ref=e9086] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 647" [ref=e9088] [cursor=pointer]
+        - button "View details for Pokemon 648" [ref=e9091] [cursor=pointer]:
+          - generic [ref=e9093] [cursor=pointer]:
+            - generic [ref=e9095] [cursor=pointer]: "#648"
+            - generic [ref=e9097] [cursor=pointer]:
+              - generic [ref=e9100] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 648" [ref=e9102] [cursor=pointer]
+        - button "View details for Pokemon 649" [ref=e9105] [cursor=pointer]:
+          - generic [ref=e9107] [cursor=pointer]:
+            - generic [ref=e9109] [cursor=pointer]: "#649"
+            - generic [ref=e9111] [cursor=pointer]:
+              - generic [ref=e9114] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 649" [ref=e9116] [cursor=pointer]
+        - button "View details for Pokemon 650" [ref=e9119] [cursor=pointer]:
+          - generic [ref=e9121] [cursor=pointer]:
+            - generic [ref=e9123] [cursor=pointer]: "#650"
+            - generic [ref=e9125] [cursor=pointer]:
+              - generic [ref=e9128] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 650" [ref=e9130] [cursor=pointer]
+        - button "View details for Pokemon 651" [ref=e9133] [cursor=pointer]:
+          - generic [ref=e9135] [cursor=pointer]:
+            - generic [ref=e9137] [cursor=pointer]: "#651"
+            - generic [ref=e9139] [cursor=pointer]:
+              - generic [ref=e9142] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 651" [ref=e9144] [cursor=pointer]
+        - button "View details for Pokemon 652" [ref=e9147] [cursor=pointer]:
+          - generic [ref=e9149] [cursor=pointer]:
+            - generic [ref=e9151] [cursor=pointer]: "#652"
+            - generic [ref=e9153] [cursor=pointer]:
+              - generic [ref=e9156] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 652" [ref=e9158] [cursor=pointer]
+        - button "View details for Pokemon 653" [ref=e9161] [cursor=pointer]:
+          - generic [ref=e9163] [cursor=pointer]:
+            - generic [ref=e9165] [cursor=pointer]: "#653"
+            - generic [ref=e9167] [cursor=pointer]:
+              - generic [ref=e9170] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 653" [ref=e9172] [cursor=pointer]
+        - button "View details for Pokemon 654" [ref=e9175] [cursor=pointer]:
+          - generic [ref=e9177] [cursor=pointer]:
+            - generic [ref=e9179] [cursor=pointer]: "#654"
+            - generic [ref=e9181] [cursor=pointer]:
+              - generic [ref=e9184] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 654" [ref=e9186] [cursor=pointer]
+        - button "View details for Pokemon 655" [ref=e9189] [cursor=pointer]:
+          - generic [ref=e9191] [cursor=pointer]:
+            - generic [ref=e9193] [cursor=pointer]: "#655"
+            - generic [ref=e9195] [cursor=pointer]:
+              - generic [ref=e9198] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 655" [ref=e9200] [cursor=pointer]
+        - button "View details for Pokemon 656" [ref=e9203] [cursor=pointer]:
+          - generic [ref=e9205] [cursor=pointer]:
+            - generic [ref=e9207] [cursor=pointer]: "#656"
+            - generic [ref=e9209] [cursor=pointer]:
+              - generic [ref=e9212] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 656" [ref=e9214] [cursor=pointer]
+        - button "View details for Pokemon 657" [ref=e9217] [cursor=pointer]:
+          - generic [ref=e9219] [cursor=pointer]:
+            - generic [ref=e9221] [cursor=pointer]: "#657"
+            - generic [ref=e9223] [cursor=pointer]:
+              - generic [ref=e9226] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 657" [ref=e9228] [cursor=pointer]
+        - button "View details for Pokemon 658" [ref=e9231] [cursor=pointer]:
+          - generic [ref=e9233] [cursor=pointer]:
+            - generic [ref=e9235] [cursor=pointer]: "#658"
+            - generic [ref=e9237] [cursor=pointer]:
+              - generic [ref=e9240] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 658" [ref=e9242] [cursor=pointer]
+        - button "View details for Pokemon 659" [ref=e9245] [cursor=pointer]:
+          - generic [ref=e9247] [cursor=pointer]:
+            - generic [ref=e9249] [cursor=pointer]: "#659"
+            - generic [ref=e9251] [cursor=pointer]:
+              - generic [ref=e9254] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 659" [ref=e9256] [cursor=pointer]
+        - button "View details for Pokemon 660" [ref=e9259] [cursor=pointer]:
+          - generic [ref=e9261] [cursor=pointer]:
+            - generic [ref=e9263] [cursor=pointer]: "#660"
+            - generic [ref=e9265] [cursor=pointer]:
+              - generic [ref=e9268] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 660" [ref=e9270] [cursor=pointer]
+        - button "View details for Pokemon 661" [ref=e9273] [cursor=pointer]:
+          - generic [ref=e9275] [cursor=pointer]:
+            - generic [ref=e9277] [cursor=pointer]: "#661"
+            - generic [ref=e9279] [cursor=pointer]:
+              - generic [ref=e9282] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 661" [ref=e9284] [cursor=pointer]
+        - button "View details for Pokemon 662" [ref=e9287] [cursor=pointer]:
+          - generic [ref=e9289] [cursor=pointer]:
+            - generic [ref=e9291] [cursor=pointer]: "#662"
+            - generic [ref=e9293] [cursor=pointer]:
+              - generic [ref=e9296] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 662" [ref=e9298] [cursor=pointer]
+        - button "View details for Pokemon 663" [ref=e9301] [cursor=pointer]:
+          - generic [ref=e9303] [cursor=pointer]:
+            - generic [ref=e9305] [cursor=pointer]: "#663"
+            - generic [ref=e9307] [cursor=pointer]:
+              - generic [ref=e9310] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 663" [ref=e9312] [cursor=pointer]
+        - button "View details for Pokemon 664" [ref=e9315] [cursor=pointer]:
+          - generic [ref=e9317] [cursor=pointer]:
+            - generic [ref=e9319] [cursor=pointer]: "#664"
+            - generic [ref=e9321] [cursor=pointer]:
+              - generic [ref=e9324] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 664" [ref=e9326] [cursor=pointer]
+        - button "View details for Pokemon 665" [ref=e9329] [cursor=pointer]:
+          - generic [ref=e9331] [cursor=pointer]:
+            - generic [ref=e9333] [cursor=pointer]: "#665"
+            - generic [ref=e9335] [cursor=pointer]:
+              - generic [ref=e9338] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 665" [ref=e9340] [cursor=pointer]
+        - button "View details for Pokemon 666" [ref=e9343] [cursor=pointer]:
+          - generic [ref=e9345] [cursor=pointer]:
+            - generic [ref=e9347] [cursor=pointer]: "#666"
+            - generic [ref=e9349] [cursor=pointer]:
+              - generic [ref=e9352] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 666" [ref=e9354] [cursor=pointer]
+        - button "View details for Pokemon 667" [ref=e9357] [cursor=pointer]:
+          - generic [ref=e9359] [cursor=pointer]:
+            - generic [ref=e9361] [cursor=pointer]: "#667"
+            - generic [ref=e9363] [cursor=pointer]:
+              - generic [ref=e9366] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 667" [ref=e9368] [cursor=pointer]
+        - button "View details for Pokemon 668" [ref=e9371] [cursor=pointer]:
+          - generic [ref=e9373] [cursor=pointer]:
+            - generic [ref=e9375] [cursor=pointer]: "#668"
+            - generic [ref=e9377] [cursor=pointer]:
+              - generic [ref=e9380] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 668" [ref=e9382] [cursor=pointer]
+        - button "View details for Pokemon 669" [ref=e9385] [cursor=pointer]:
+          - generic [ref=e9387] [cursor=pointer]:
+            - generic [ref=e9389] [cursor=pointer]: "#669"
+            - generic [ref=e9391] [cursor=pointer]:
+              - generic [ref=e9394] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 669" [ref=e9396] [cursor=pointer]
+        - button "View details for Pokemon 670" [ref=e9399] [cursor=pointer]:
+          - generic [ref=e9401] [cursor=pointer]:
+            - generic [ref=e9403] [cursor=pointer]: "#670"
+            - generic [ref=e9405] [cursor=pointer]:
+              - generic [ref=e9408] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 670" [ref=e9410] [cursor=pointer]
+        - button "View details for Pokemon 671" [ref=e9413] [cursor=pointer]:
+          - generic [ref=e9415] [cursor=pointer]:
+            - generic [ref=e9417] [cursor=pointer]: "#671"
+            - generic [ref=e9419] [cursor=pointer]:
+              - generic [ref=e9422] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 671" [ref=e9424] [cursor=pointer]
+        - button "View details for Pokemon 672" [ref=e9427] [cursor=pointer]:
+          - generic [ref=e9429] [cursor=pointer]:
+            - generic [ref=e9431] [cursor=pointer]: "#672"
+            - generic [ref=e9433] [cursor=pointer]:
+              - generic [ref=e9436] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 672" [ref=e9438] [cursor=pointer]
+        - button "View details for Pokemon 673" [ref=e9441] [cursor=pointer]:
+          - generic [ref=e9443] [cursor=pointer]:
+            - generic [ref=e9445] [cursor=pointer]: "#673"
+            - generic [ref=e9447] [cursor=pointer]:
+              - generic [ref=e9450] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 673" [ref=e9452] [cursor=pointer]
+        - button "View details for Pokemon 674" [ref=e9455] [cursor=pointer]:
+          - generic [ref=e9457] [cursor=pointer]:
+            - generic [ref=e9459] [cursor=pointer]: "#674"
+            - generic [ref=e9461] [cursor=pointer]:
+              - generic [ref=e9464] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 674" [ref=e9466] [cursor=pointer]
+        - button "View details for Pokemon 675" [ref=e9469] [cursor=pointer]:
+          - generic [ref=e9471] [cursor=pointer]:
+            - generic [ref=e9473] [cursor=pointer]: "#675"
+            - generic [ref=e9475] [cursor=pointer]:
+              - generic [ref=e9478] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 675" [ref=e9480] [cursor=pointer]
+        - button "View details for Pokemon 676" [ref=e9483] [cursor=pointer]:
+          - generic [ref=e9485] [cursor=pointer]:
+            - generic [ref=e9487] [cursor=pointer]: "#676"
+            - generic [ref=e9489] [cursor=pointer]:
+              - generic [ref=e9492] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 676" [ref=e9494] [cursor=pointer]
+        - button "View details for Pokemon 677" [ref=e9497] [cursor=pointer]:
+          - generic [ref=e9499] [cursor=pointer]:
+            - generic [ref=e9501] [cursor=pointer]: "#677"
+            - generic [ref=e9503] [cursor=pointer]:
+              - generic [ref=e9506] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 677" [ref=e9508] [cursor=pointer]
+        - button "View details for Pokemon 678" [ref=e9511] [cursor=pointer]:
+          - generic [ref=e9513] [cursor=pointer]:
+            - generic [ref=e9515] [cursor=pointer]: "#678"
+            - generic [ref=e9517] [cursor=pointer]:
+              - generic [ref=e9520] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 678" [ref=e9522] [cursor=pointer]
+        - button "View details for Pokemon 679" [ref=e9525] [cursor=pointer]:
+          - generic [ref=e9527] [cursor=pointer]:
+            - generic [ref=e9529] [cursor=pointer]: "#679"
+            - generic [ref=e9531] [cursor=pointer]:
+              - generic [ref=e9534] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 679" [ref=e9536] [cursor=pointer]
+        - button "View details for Pokemon 680" [ref=e9539] [cursor=pointer]:
+          - generic [ref=e9541] [cursor=pointer]:
+            - generic [ref=e9543] [cursor=pointer]: "#680"
+            - generic [ref=e9545] [cursor=pointer]:
+              - generic [ref=e9548] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 680" [ref=e9550] [cursor=pointer]
+        - button "View details for Pokemon 681" [ref=e9553] [cursor=pointer]:
+          - generic [ref=e9555] [cursor=pointer]:
+            - generic [ref=e9557] [cursor=pointer]: "#681"
+            - generic [ref=e9559] [cursor=pointer]:
+              - generic [ref=e9562] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 681" [ref=e9564] [cursor=pointer]
+        - button "View details for Pokemon 682" [ref=e9567] [cursor=pointer]:
+          - generic [ref=e9569] [cursor=pointer]:
+            - generic [ref=e9571] [cursor=pointer]: "#682"
+            - generic [ref=e9573] [cursor=pointer]:
+              - generic [ref=e9576] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 682" [ref=e9578] [cursor=pointer]
+        - button "View details for Pokemon 683" [ref=e9581] [cursor=pointer]:
+          - generic [ref=e9583] [cursor=pointer]:
+            - generic [ref=e9585] [cursor=pointer]: "#683"
+            - generic [ref=e9587] [cursor=pointer]:
+              - generic [ref=e9590] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 683" [ref=e9592] [cursor=pointer]
+        - button "View details for Pokemon 684" [ref=e9595] [cursor=pointer]:
+          - generic [ref=e9597] [cursor=pointer]:
+            - generic [ref=e9599] [cursor=pointer]: "#684"
+            - generic [ref=e9601] [cursor=pointer]:
+              - generic [ref=e9604] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 684" [ref=e9606] [cursor=pointer]
+        - button "View details for Pokemon 685" [ref=e9609] [cursor=pointer]:
+          - generic [ref=e9611] [cursor=pointer]:
+            - generic [ref=e9613] [cursor=pointer]: "#685"
+            - generic [ref=e9615] [cursor=pointer]:
+              - generic [ref=e9618] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 685" [ref=e9620] [cursor=pointer]
+        - button "View details for Pokemon 686" [ref=e9623] [cursor=pointer]:
+          - generic [ref=e9625] [cursor=pointer]:
+            - generic [ref=e9627] [cursor=pointer]: "#686"
+            - generic [ref=e9629] [cursor=pointer]:
+              - generic [ref=e9632] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 686" [ref=e9634] [cursor=pointer]
+        - button "View details for Pokemon 687" [ref=e9637] [cursor=pointer]:
+          - generic [ref=e9639] [cursor=pointer]:
+            - generic [ref=e9641] [cursor=pointer]: "#687"
+            - generic [ref=e9643] [cursor=pointer]:
+              - generic [ref=e9646] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 687" [ref=e9648] [cursor=pointer]
+        - button "View details for Pokemon 688" [ref=e9651] [cursor=pointer]:
+          - generic [ref=e9653] [cursor=pointer]:
+            - generic [ref=e9655] [cursor=pointer]: "#688"
+            - generic [ref=e9657] [cursor=pointer]:
+              - generic [ref=e9660] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 688" [ref=e9662] [cursor=pointer]
+        - button "View details for Pokemon 689" [ref=e9665] [cursor=pointer]:
+          - generic [ref=e9667] [cursor=pointer]:
+            - generic [ref=e9669] [cursor=pointer]: "#689"
+            - generic [ref=e9671] [cursor=pointer]:
+              - generic [ref=e9674] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 689" [ref=e9676] [cursor=pointer]
+        - button "View details for Pokemon 690" [ref=e9679] [cursor=pointer]:
+          - generic [ref=e9681] [cursor=pointer]:
+            - generic [ref=e9683] [cursor=pointer]: "#690"
+            - generic [ref=e9685] [cursor=pointer]:
+              - generic [ref=e9688] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 690" [ref=e9690] [cursor=pointer]
+        - button "View details for Pokemon 691" [ref=e9693] [cursor=pointer]:
+          - generic [ref=e9695] [cursor=pointer]:
+            - generic [ref=e9697] [cursor=pointer]: "#691"
+            - generic [ref=e9699] [cursor=pointer]:
+              - generic [ref=e9702] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 691" [ref=e9704] [cursor=pointer]
+        - button "View details for Pokemon 692" [ref=e9707] [cursor=pointer]:
+          - generic [ref=e9709] [cursor=pointer]:
+            - generic [ref=e9711] [cursor=pointer]: "#692"
+            - generic [ref=e9713] [cursor=pointer]:
+              - generic [ref=e9716] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 692" [ref=e9718] [cursor=pointer]
+        - button "View details for Pokemon 693" [ref=e9721] [cursor=pointer]:
+          - generic [ref=e9723] [cursor=pointer]:
+            - generic [ref=e9725] [cursor=pointer]: "#693"
+            - generic [ref=e9727] [cursor=pointer]:
+              - generic [ref=e9730] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 693" [ref=e9732] [cursor=pointer]
+        - button "View details for Pokemon 694" [ref=e9735] [cursor=pointer]:
+          - generic [ref=e9737] [cursor=pointer]:
+            - generic [ref=e9739] [cursor=pointer]: "#694"
+            - generic [ref=e9741] [cursor=pointer]:
+              - generic [ref=e9744] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 694" [ref=e9746] [cursor=pointer]
+        - button "View details for Pokemon 695" [ref=e9749] [cursor=pointer]:
+          - generic [ref=e9751] [cursor=pointer]:
+            - generic [ref=e9753] [cursor=pointer]: "#695"
+            - generic [ref=e9755] [cursor=pointer]:
+              - generic [ref=e9758] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 695" [ref=e9760] [cursor=pointer]
+        - button "View details for Pokemon 696" [ref=e9763] [cursor=pointer]:
+          - generic [ref=e9765] [cursor=pointer]:
+            - generic [ref=e9767] [cursor=pointer]: "#696"
+            - generic [ref=e9769] [cursor=pointer]:
+              - generic [ref=e9772] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 696" [ref=e9774] [cursor=pointer]
+        - button "View details for Pokemon 697" [ref=e9777] [cursor=pointer]:
+          - generic [ref=e9779] [cursor=pointer]:
+            - generic [ref=e9781] [cursor=pointer]: "#697"
+            - generic [ref=e9783] [cursor=pointer]:
+              - generic [ref=e9786] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 697" [ref=e9788] [cursor=pointer]
+        - button "View details for Pokemon 698" [ref=e9791] [cursor=pointer]:
+          - generic [ref=e9793] [cursor=pointer]:
+            - generic [ref=e9795] [cursor=pointer]: "#698"
+            - generic [ref=e9797] [cursor=pointer]:
+              - generic [ref=e9800] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 698" [ref=e9802] [cursor=pointer]
+        - button "View details for Pokemon 699" [ref=e9805] [cursor=pointer]:
+          - generic [ref=e9807] [cursor=pointer]:
+            - generic [ref=e9809] [cursor=pointer]: "#699"
+            - generic [ref=e9811] [cursor=pointer]:
+              - generic [ref=e9814] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 699" [ref=e9816] [cursor=pointer]
+        - button "View details for Pokemon 700" [ref=e9819] [cursor=pointer]:
+          - generic [ref=e9821] [cursor=pointer]:
+            - generic [ref=e9823] [cursor=pointer]: "#700"
+            - generic [ref=e9825] [cursor=pointer]:
+              - generic [ref=e9828] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 700" [ref=e9830] [cursor=pointer]
+        - button "View details for Pokemon 701" [ref=e9833] [cursor=pointer]:
+          - generic [ref=e9835] [cursor=pointer]:
+            - generic [ref=e9837] [cursor=pointer]: "#701"
+            - generic [ref=e9839] [cursor=pointer]:
+              - generic [ref=e9842] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 701" [ref=e9844] [cursor=pointer]
+        - button "View details for Pokemon 702" [ref=e9847] [cursor=pointer]:
+          - generic [ref=e9849] [cursor=pointer]:
+            - generic [ref=e9851] [cursor=pointer]: "#702"
+            - generic [ref=e9853] [cursor=pointer]:
+              - generic [ref=e9856] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 702" [ref=e9858] [cursor=pointer]
+        - button "View details for Pokemon 703" [ref=e9861] [cursor=pointer]:
+          - generic [ref=e9863] [cursor=pointer]:
+            - generic [ref=e9865] [cursor=pointer]: "#703"
+            - generic [ref=e9867] [cursor=pointer]:
+              - generic [ref=e9870] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 703" [ref=e9872] [cursor=pointer]
+        - button "View details for Pokemon 704" [ref=e9875] [cursor=pointer]:
+          - generic [ref=e9877] [cursor=pointer]:
+            - generic [ref=e9879] [cursor=pointer]: "#704"
+            - generic [ref=e9881] [cursor=pointer]:
+              - generic [ref=e9884] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 704" [ref=e9886] [cursor=pointer]
+        - button "View details for Pokemon 705" [ref=e9889] [cursor=pointer]:
+          - generic [ref=e9891] [cursor=pointer]:
+            - generic [ref=e9893] [cursor=pointer]: "#705"
+            - generic [ref=e9895] [cursor=pointer]:
+              - generic [ref=e9898] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 705" [ref=e9900] [cursor=pointer]
+        - button "View details for Pokemon 706" [ref=e9903] [cursor=pointer]:
+          - generic [ref=e9905] [cursor=pointer]:
+            - generic [ref=e9907] [cursor=pointer]: "#706"
+            - generic [ref=e9909] [cursor=pointer]:
+              - generic [ref=e9912] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 706" [ref=e9914] [cursor=pointer]
+        - button "View details for Pokemon 707" [ref=e9917] [cursor=pointer]:
+          - generic [ref=e9919] [cursor=pointer]:
+            - generic [ref=e9921] [cursor=pointer]: "#707"
+            - generic [ref=e9923] [cursor=pointer]:
+              - generic [ref=e9926] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 707" [ref=e9928] [cursor=pointer]
+        - button "View details for Pokemon 708" [ref=e9931] [cursor=pointer]:
+          - generic [ref=e9933] [cursor=pointer]:
+            - generic [ref=e9935] [cursor=pointer]: "#708"
+            - generic [ref=e9937] [cursor=pointer]:
+              - generic [ref=e9940] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 708" [ref=e9942] [cursor=pointer]
+        - button "View details for Pokemon 709" [ref=e9945] [cursor=pointer]:
+          - generic [ref=e9947] [cursor=pointer]:
+            - generic [ref=e9949] [cursor=pointer]: "#709"
+            - generic [ref=e9951] [cursor=pointer]:
+              - generic [ref=e9954] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 709" [ref=e9956] [cursor=pointer]
+        - button "View details for Pokemon 710" [ref=e9959] [cursor=pointer]:
+          - generic [ref=e9961] [cursor=pointer]:
+            - generic [ref=e9963] [cursor=pointer]: "#710"
+            - generic [ref=e9965] [cursor=pointer]:
+              - generic [ref=e9968] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 710" [ref=e9970] [cursor=pointer]
+        - button "View details for Pokemon 711" [ref=e9973] [cursor=pointer]:
+          - generic [ref=e9975] [cursor=pointer]:
+            - generic [ref=e9977] [cursor=pointer]: "#711"
+            - generic [ref=e9979] [cursor=pointer]:
+              - generic [ref=e9982] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 711" [ref=e9984] [cursor=pointer]
+        - button "View details for Pokemon 712" [ref=e9987] [cursor=pointer]:
+          - generic [ref=e9989] [cursor=pointer]:
+            - generic [ref=e9991] [cursor=pointer]: "#712"
+            - generic [ref=e9993] [cursor=pointer]:
+              - generic [ref=e9996] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 712" [ref=e9998] [cursor=pointer]
+        - button "View details for Pokemon 713" [ref=e10001] [cursor=pointer]:
+          - generic [ref=e10003] [cursor=pointer]:
+            - generic [ref=e10005] [cursor=pointer]: "#713"
+            - generic [ref=e10007] [cursor=pointer]:
+              - generic [ref=e10010] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 713" [ref=e10012] [cursor=pointer]
+        - button "View details for Pokemon 714" [ref=e10015] [cursor=pointer]:
+          - generic [ref=e10017] [cursor=pointer]:
+            - generic [ref=e10019] [cursor=pointer]: "#714"
+            - generic [ref=e10021] [cursor=pointer]:
+              - generic [ref=e10024] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 714" [ref=e10026] [cursor=pointer]
+        - button "View details for Pokemon 715" [ref=e10029] [cursor=pointer]:
+          - generic [ref=e10031] [cursor=pointer]:
+            - generic [ref=e10033] [cursor=pointer]: "#715"
+            - generic [ref=e10035] [cursor=pointer]:
+              - generic [ref=e10038] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 715" [ref=e10040] [cursor=pointer]
+        - button "View details for Pokemon 716" [ref=e10043] [cursor=pointer]:
+          - generic [ref=e10045] [cursor=pointer]:
+            - generic [ref=e10047] [cursor=pointer]: "#716"
+            - generic [ref=e10049] [cursor=pointer]:
+              - generic [ref=e10052] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 716" [ref=e10054] [cursor=pointer]
+        - button "View details for Pokemon 717" [ref=e10057] [cursor=pointer]:
+          - generic [ref=e10059] [cursor=pointer]:
+            - generic [ref=e10061] [cursor=pointer]: "#717"
+            - generic [ref=e10063] [cursor=pointer]:
+              - generic [ref=e10066] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 717" [ref=e10068] [cursor=pointer]
+        - button "View details for Pokemon 718" [ref=e10071] [cursor=pointer]:
+          - generic [ref=e10073] [cursor=pointer]:
+            - generic [ref=e10075] [cursor=pointer]: "#718"
+            - generic [ref=e10077] [cursor=pointer]:
+              - generic [ref=e10080] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 718" [ref=e10082] [cursor=pointer]
+        - button "View details for Pokemon 719" [ref=e10085] [cursor=pointer]:
+          - generic [ref=e10087] [cursor=pointer]:
+            - generic [ref=e10089] [cursor=pointer]: "#719"
+            - generic [ref=e10091] [cursor=pointer]:
+              - generic [ref=e10094] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 719" [ref=e10096] [cursor=pointer]
+        - button "View details for Pokemon 720" [ref=e10099] [cursor=pointer]:
+          - generic [ref=e10101] [cursor=pointer]:
+            - generic [ref=e10103] [cursor=pointer]: "#720"
+            - generic [ref=e10105] [cursor=pointer]:
+              - generic [ref=e10108] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 720" [ref=e10110] [cursor=pointer]
+        - button "View details for Pokemon 721" [ref=e10113] [cursor=pointer]:
+          - generic [ref=e10115] [cursor=pointer]:
+            - generic [ref=e10117] [cursor=pointer]: "#721"
+            - generic [ref=e10119] [cursor=pointer]:
+              - generic [ref=e10122] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 721" [ref=e10124] [cursor=pointer]
+        - button "View details for Pokemon 722" [ref=e10127] [cursor=pointer]:
+          - generic [ref=e10129] [cursor=pointer]:
+            - generic [ref=e10131] [cursor=pointer]: "#722"
+            - generic [ref=e10133] [cursor=pointer]:
+              - generic [ref=e10136] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 722" [ref=e10138] [cursor=pointer]
+        - button "View details for Pokemon 723" [ref=e10141] [cursor=pointer]:
+          - generic [ref=e10143] [cursor=pointer]:
+            - generic [ref=e10145] [cursor=pointer]: "#723"
+            - generic [ref=e10147] [cursor=pointer]:
+              - generic [ref=e10150] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 723" [ref=e10152] [cursor=pointer]
+        - button "View details for Pokemon 724" [ref=e10155] [cursor=pointer]:
+          - generic [ref=e10157] [cursor=pointer]:
+            - generic [ref=e10159] [cursor=pointer]: "#724"
+            - generic [ref=e10161] [cursor=pointer]:
+              - generic [ref=e10164] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 724" [ref=e10166] [cursor=pointer]
+        - button "View details for Pokemon 725" [ref=e10169] [cursor=pointer]:
+          - generic [ref=e10171] [cursor=pointer]:
+            - generic [ref=e10173] [cursor=pointer]: "#725"
+            - generic [ref=e10175] [cursor=pointer]:
+              - generic [ref=e10178] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 725" [ref=e10180] [cursor=pointer]
+        - button "View details for Pokemon 726" [ref=e10183] [cursor=pointer]:
+          - generic [ref=e10185] [cursor=pointer]:
+            - generic [ref=e10187] [cursor=pointer]: "#726"
+            - generic [ref=e10189] [cursor=pointer]:
+              - generic [ref=e10192] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 726" [ref=e10194] [cursor=pointer]
+        - button "View details for Pokemon 727" [ref=e10197] [cursor=pointer]:
+          - generic [ref=e10199] [cursor=pointer]:
+            - generic [ref=e10201] [cursor=pointer]: "#727"
+            - generic [ref=e10203] [cursor=pointer]:
+              - generic [ref=e10206] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 727" [ref=e10208] [cursor=pointer]
+        - button "View details for Pokemon 728" [ref=e10211] [cursor=pointer]:
+          - generic [ref=e10213] [cursor=pointer]:
+            - generic [ref=e10215] [cursor=pointer]: "#728"
+            - generic [ref=e10217] [cursor=pointer]:
+              - generic [ref=e10220] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 728" [ref=e10222] [cursor=pointer]
+        - button "View details for Pokemon 729" [ref=e10225] [cursor=pointer]:
+          - generic [ref=e10227] [cursor=pointer]:
+            - generic [ref=e10229] [cursor=pointer]: "#729"
+            - generic [ref=e10231] [cursor=pointer]:
+              - generic [ref=e10234] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 729" [ref=e10236] [cursor=pointer]
+        - button "View details for Pokemon 730" [ref=e10239] [cursor=pointer]:
+          - generic [ref=e10241] [cursor=pointer]:
+            - generic [ref=e10243] [cursor=pointer]: "#730"
+            - generic [ref=e10245] [cursor=pointer]:
+              - generic [ref=e10248] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 730" [ref=e10250] [cursor=pointer]
+        - button "View details for Pokemon 731" [ref=e10253] [cursor=pointer]:
+          - generic [ref=e10255] [cursor=pointer]:
+            - generic [ref=e10257] [cursor=pointer]: "#731"
+            - generic [ref=e10259] [cursor=pointer]:
+              - generic [ref=e10262] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 731" [ref=e10264] [cursor=pointer]
+        - button "View details for Pokemon 732" [ref=e10267] [cursor=pointer]:
+          - generic [ref=e10269] [cursor=pointer]:
+            - generic [ref=e10271] [cursor=pointer]: "#732"
+            - generic [ref=e10273] [cursor=pointer]:
+              - generic [ref=e10276] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 732" [ref=e10278] [cursor=pointer]
+        - button "View details for Pokemon 733" [ref=e10281] [cursor=pointer]:
+          - generic [ref=e10283] [cursor=pointer]:
+            - generic [ref=e10285] [cursor=pointer]: "#733"
+            - generic [ref=e10287] [cursor=pointer]:
+              - generic [ref=e10290] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 733" [ref=e10292] [cursor=pointer]
+        - button "View details for Pokemon 734" [ref=e10295] [cursor=pointer]:
+          - generic [ref=e10297] [cursor=pointer]:
+            - generic [ref=e10299] [cursor=pointer]: "#734"
+            - generic [ref=e10301] [cursor=pointer]:
+              - generic [ref=e10304] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 734" [ref=e10306] [cursor=pointer]
+        - button "View details for Pokemon 735" [ref=e10309] [cursor=pointer]:
+          - generic [ref=e10311] [cursor=pointer]:
+            - generic [ref=e10313] [cursor=pointer]: "#735"
+            - generic [ref=e10315] [cursor=pointer]:
+              - generic [ref=e10318] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 735" [ref=e10320] [cursor=pointer]
+        - button "View details for Pokemon 736" [ref=e10323] [cursor=pointer]:
+          - generic [ref=e10325] [cursor=pointer]:
+            - generic [ref=e10327] [cursor=pointer]: "#736"
+            - generic [ref=e10329] [cursor=pointer]:
+              - generic [ref=e10332] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 736" [ref=e10334] [cursor=pointer]
+        - button "View details for Pokemon 737" [ref=e10337] [cursor=pointer]:
+          - generic [ref=e10339] [cursor=pointer]:
+            - generic [ref=e10341] [cursor=pointer]: "#737"
+            - generic [ref=e10343] [cursor=pointer]:
+              - generic [ref=e10346] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 737" [ref=e10348] [cursor=pointer]
+        - button "View details for Pokemon 738" [ref=e10351] [cursor=pointer]:
+          - generic [ref=e10353] [cursor=pointer]:
+            - generic [ref=e10355] [cursor=pointer]: "#738"
+            - generic [ref=e10357] [cursor=pointer]:
+              - generic [ref=e10360] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 738" [ref=e10362] [cursor=pointer]
+        - button "View details for Pokemon 739" [ref=e10365] [cursor=pointer]:
+          - generic [ref=e10367] [cursor=pointer]:
+            - generic [ref=e10369] [cursor=pointer]: "#739"
+            - generic [ref=e10371] [cursor=pointer]:
+              - generic [ref=e10374] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 739" [ref=e10376] [cursor=pointer]
+        - button "View details for Pokemon 740" [ref=e10379] [cursor=pointer]:
+          - generic [ref=e10381] [cursor=pointer]:
+            - generic [ref=e10383] [cursor=pointer]: "#740"
+            - generic [ref=e10385] [cursor=pointer]:
+              - generic [ref=e10388] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 740" [ref=e10390] [cursor=pointer]
+        - button "View details for Pokemon 741" [ref=e10393] [cursor=pointer]:
+          - generic [ref=e10395] [cursor=pointer]:
+            - generic [ref=e10397] [cursor=pointer]: "#741"
+            - generic [ref=e10399] [cursor=pointer]:
+              - generic [ref=e10402] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 741" [ref=e10404] [cursor=pointer]
+        - button "View details for Pokemon 742" [ref=e10407] [cursor=pointer]:
+          - generic [ref=e10409] [cursor=pointer]:
+            - generic [ref=e10411] [cursor=pointer]: "#742"
+            - generic [ref=e10413] [cursor=pointer]:
+              - generic [ref=e10416] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 742" [ref=e10418] [cursor=pointer]
+        - button "View details for Pokemon 743" [ref=e10421] [cursor=pointer]:
+          - generic [ref=e10423] [cursor=pointer]:
+            - generic [ref=e10425] [cursor=pointer]: "#743"
+            - generic [ref=e10427] [cursor=pointer]:
+              - generic [ref=e10430] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 743" [ref=e10432] [cursor=pointer]
+        - button "View details for Pokemon 744" [ref=e10435] [cursor=pointer]:
+          - generic [ref=e10437] [cursor=pointer]:
+            - generic [ref=e10439] [cursor=pointer]: "#744"
+            - generic [ref=e10441] [cursor=pointer]:
+              - generic [ref=e10444] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 744" [ref=e10446] [cursor=pointer]
+        - button "View details for Pokemon 745" [ref=e10449] [cursor=pointer]:
+          - generic [ref=e10451] [cursor=pointer]:
+            - generic [ref=e10453] [cursor=pointer]: "#745"
+            - generic [ref=e10455] [cursor=pointer]:
+              - generic [ref=e10458] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 745" [ref=e10460] [cursor=pointer]
+        - button "View details for Pokemon 746" [ref=e10463] [cursor=pointer]:
+          - generic [ref=e10465] [cursor=pointer]:
+            - generic [ref=e10467] [cursor=pointer]: "#746"
+            - generic [ref=e10469] [cursor=pointer]:
+              - generic [ref=e10472] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 746" [ref=e10474] [cursor=pointer]
+        - button "View details for Pokemon 747" [ref=e10477] [cursor=pointer]:
+          - generic [ref=e10479] [cursor=pointer]:
+            - generic [ref=e10481] [cursor=pointer]: "#747"
+            - generic [ref=e10483] [cursor=pointer]:
+              - generic [ref=e10486] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 747" [ref=e10488] [cursor=pointer]
+        - button "View details for Pokemon 748" [ref=e10491] [cursor=pointer]:
+          - generic [ref=e10493] [cursor=pointer]:
+            - generic [ref=e10495] [cursor=pointer]: "#748"
+            - generic [ref=e10497] [cursor=pointer]:
+              - generic [ref=e10500] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 748" [ref=e10502] [cursor=pointer]
+        - button "View details for Pokemon 749" [ref=e10505] [cursor=pointer]:
+          - generic [ref=e10507] [cursor=pointer]:
+            - generic [ref=e10509] [cursor=pointer]: "#749"
+            - generic [ref=e10511] [cursor=pointer]:
+              - generic [ref=e10514] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 749" [ref=e10516] [cursor=pointer]
+        - button "View details for Pokemon 750" [ref=e10519] [cursor=pointer]:
+          - generic [ref=e10521] [cursor=pointer]:
+            - generic [ref=e10523] [cursor=pointer]: "#750"
+            - generic [ref=e10525] [cursor=pointer]:
+              - generic [ref=e10528] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 750" [ref=e10530] [cursor=pointer]
+        - button "View details for Pokemon 751" [ref=e10533] [cursor=pointer]:
+          - generic [ref=e10535] [cursor=pointer]:
+            - generic [ref=e10537] [cursor=pointer]: "#751"
+            - generic [ref=e10539] [cursor=pointer]:
+              - generic [ref=e10542] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 751" [ref=e10544] [cursor=pointer]
+        - button "View details for Pokemon 752" [ref=e10547] [cursor=pointer]:
+          - generic [ref=e10549] [cursor=pointer]:
+            - generic [ref=e10551] [cursor=pointer]: "#752"
+            - generic [ref=e10553] [cursor=pointer]:
+              - generic [ref=e10556] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 752" [ref=e10558] [cursor=pointer]
+        - button "View details for Pokemon 753" [ref=e10561] [cursor=pointer]:
+          - generic [ref=e10563] [cursor=pointer]:
+            - generic [ref=e10565] [cursor=pointer]: "#753"
+            - generic [ref=e10567] [cursor=pointer]:
+              - generic [ref=e10570] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 753" [ref=e10572] [cursor=pointer]
+        - button "View details for Pokemon 754" [ref=e10575] [cursor=pointer]:
+          - generic [ref=e10577] [cursor=pointer]:
+            - generic [ref=e10579] [cursor=pointer]: "#754"
+            - generic [ref=e10581] [cursor=pointer]:
+              - generic [ref=e10584] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 754" [ref=e10586] [cursor=pointer]
+        - button "View details for Pokemon 755" [ref=e10589] [cursor=pointer]:
+          - generic [ref=e10591] [cursor=pointer]:
+            - generic [ref=e10593] [cursor=pointer]: "#755"
+            - generic [ref=e10595] [cursor=pointer]:
+              - generic [ref=e10598] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 755" [ref=e10600] [cursor=pointer]
+        - button "View details for Pokemon 756" [ref=e10603] [cursor=pointer]:
+          - generic [ref=e10605] [cursor=pointer]:
+            - generic [ref=e10607] [cursor=pointer]: "#756"
+            - generic [ref=e10609] [cursor=pointer]:
+              - generic [ref=e10612] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 756" [ref=e10614] [cursor=pointer]
+        - button "View details for Pokemon 757" [ref=e10617] [cursor=pointer]:
+          - generic [ref=e10619] [cursor=pointer]:
+            - generic [ref=e10621] [cursor=pointer]: "#757"
+            - generic [ref=e10623] [cursor=pointer]:
+              - generic [ref=e10626] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 757" [ref=e10628] [cursor=pointer]
+        - button "View details for Pokemon 758" [ref=e10631] [cursor=pointer]:
+          - generic [ref=e10633] [cursor=pointer]:
+            - generic [ref=e10635] [cursor=pointer]: "#758"
+            - generic [ref=e10637] [cursor=pointer]:
+              - generic [ref=e10640] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 758" [ref=e10642] [cursor=pointer]
+        - button "View details for Pokemon 759" [ref=e10645] [cursor=pointer]:
+          - generic [ref=e10647] [cursor=pointer]:
+            - generic [ref=e10649] [cursor=pointer]: "#759"
+            - generic [ref=e10651] [cursor=pointer]:
+              - generic [ref=e10654] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 759" [ref=e10656] [cursor=pointer]
+        - button "View details for Pokemon 760" [ref=e10659] [cursor=pointer]:
+          - generic [ref=e10661] [cursor=pointer]:
+            - generic [ref=e10663] [cursor=pointer]: "#760"
+            - generic [ref=e10665] [cursor=pointer]:
+              - generic [ref=e10668] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 760" [ref=e10670] [cursor=pointer]
+        - button "View details for Pokemon 761" [ref=e10673] [cursor=pointer]:
+          - generic [ref=e10675] [cursor=pointer]:
+            - generic [ref=e10677] [cursor=pointer]: "#761"
+            - generic [ref=e10679] [cursor=pointer]:
+              - generic [ref=e10682] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 761" [ref=e10684] [cursor=pointer]
+        - button "View details for Pokemon 762" [ref=e10687] [cursor=pointer]:
+          - generic [ref=e10689] [cursor=pointer]:
+            - generic [ref=e10691] [cursor=pointer]: "#762"
+            - generic [ref=e10693] [cursor=pointer]:
+              - generic [ref=e10696] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 762" [ref=e10698] [cursor=pointer]
+        - button "View details for Pokemon 763" [ref=e10701] [cursor=pointer]:
+          - generic [ref=e10703] [cursor=pointer]:
+            - generic [ref=e10705] [cursor=pointer]: "#763"
+            - generic [ref=e10707] [cursor=pointer]:
+              - generic [ref=e10710] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 763" [ref=e10712] [cursor=pointer]
+        - button "View details for Pokemon 764" [ref=e10715] [cursor=pointer]:
+          - generic [ref=e10717] [cursor=pointer]:
+            - generic [ref=e10719] [cursor=pointer]: "#764"
+            - generic [ref=e10721] [cursor=pointer]:
+              - generic [ref=e10724] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 764" [ref=e10726] [cursor=pointer]
+        - button "View details for Pokemon 765" [ref=e10729] [cursor=pointer]:
+          - generic [ref=e10731] [cursor=pointer]:
+            - generic [ref=e10733] [cursor=pointer]: "#765"
+            - generic [ref=e10735] [cursor=pointer]:
+              - generic [ref=e10738] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 765" [ref=e10740] [cursor=pointer]
+        - button "View details for Pokemon 766" [ref=e10743] [cursor=pointer]:
+          - generic [ref=e10745] [cursor=pointer]:
+            - generic [ref=e10747] [cursor=pointer]: "#766"
+            - generic [ref=e10749] [cursor=pointer]:
+              - generic [ref=e10752] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 766" [ref=e10754] [cursor=pointer]
+        - button "View details for Pokemon 767" [ref=e10757] [cursor=pointer]:
+          - generic [ref=e10759] [cursor=pointer]:
+            - generic [ref=e10761] [cursor=pointer]: "#767"
+            - generic [ref=e10763] [cursor=pointer]:
+              - generic [ref=e10766] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 767" [ref=e10768] [cursor=pointer]
+        - button "View details for Pokemon 768" [ref=e10771] [cursor=pointer]:
+          - generic [ref=e10773] [cursor=pointer]:
+            - generic [ref=e10775] [cursor=pointer]: "#768"
+            - generic [ref=e10777] [cursor=pointer]:
+              - generic [ref=e10780] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 768" [ref=e10782] [cursor=pointer]
+        - button "View details for Pokemon 769" [ref=e10785] [cursor=pointer]:
+          - generic [ref=e10787] [cursor=pointer]:
+            - generic [ref=e10789] [cursor=pointer]: "#769"
+            - generic [ref=e10791] [cursor=pointer]:
+              - generic [ref=e10794] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 769" [ref=e10796] [cursor=pointer]
+        - button "View details for Pokemon 770" [ref=e10799] [cursor=pointer]:
+          - generic [ref=e10801] [cursor=pointer]:
+            - generic [ref=e10803] [cursor=pointer]: "#770"
+            - generic [ref=e10805] [cursor=pointer]:
+              - generic [ref=e10808] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 770" [ref=e10810] [cursor=pointer]
+        - button "View details for Pokemon 771" [ref=e10813] [cursor=pointer]:
+          - generic [ref=e10815] [cursor=pointer]:
+            - generic [ref=e10817] [cursor=pointer]: "#771"
+            - generic [ref=e10819] [cursor=pointer]:
+              - generic [ref=e10822] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 771" [ref=e10824] [cursor=pointer]
+        - button "View details for Pokemon 772" [ref=e10827] [cursor=pointer]:
+          - generic [ref=e10829] [cursor=pointer]:
+            - generic [ref=e10831] [cursor=pointer]: "#772"
+            - generic [ref=e10833] [cursor=pointer]:
+              - generic [ref=e10836] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 772" [ref=e10838] [cursor=pointer]
+        - button "View details for Pokemon 773" [ref=e10841] [cursor=pointer]:
+          - generic [ref=e10843] [cursor=pointer]:
+            - generic [ref=e10845] [cursor=pointer]: "#773"
+            - generic [ref=e10847] [cursor=pointer]:
+              - generic [ref=e10850] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 773" [ref=e10852] [cursor=pointer]
+        - button "View details for Pokemon 774" [ref=e10855] [cursor=pointer]:
+          - generic [ref=e10857] [cursor=pointer]:
+            - generic [ref=e10859] [cursor=pointer]: "#774"
+            - generic [ref=e10861] [cursor=pointer]:
+              - generic [ref=e10864] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 774" [ref=e10866] [cursor=pointer]
+        - button "View details for Pokemon 775" [ref=e10869] [cursor=pointer]:
+          - generic [ref=e10871] [cursor=pointer]:
+            - generic [ref=e10873] [cursor=pointer]: "#775"
+            - generic [ref=e10875] [cursor=pointer]:
+              - generic [ref=e10878] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 775" [ref=e10880] [cursor=pointer]
+        - button "View details for Pokemon 776" [ref=e10883] [cursor=pointer]:
+          - generic [ref=e10885] [cursor=pointer]:
+            - generic [ref=e10887] [cursor=pointer]: "#776"
+            - generic [ref=e10889] [cursor=pointer]:
+              - generic [ref=e10892] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 776" [ref=e10894] [cursor=pointer]
+        - button "View details for Pokemon 777" [ref=e10897] [cursor=pointer]:
+          - generic [ref=e10899] [cursor=pointer]:
+            - generic [ref=e10901] [cursor=pointer]: "#777"
+            - generic [ref=e10903] [cursor=pointer]:
+              - generic [ref=e10906] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 777" [ref=e10908] [cursor=pointer]
+        - button "View details for Pokemon 778" [ref=e10911] [cursor=pointer]:
+          - generic [ref=e10913] [cursor=pointer]:
+            - generic [ref=e10915] [cursor=pointer]: "#778"
+            - generic [ref=e10917] [cursor=pointer]:
+              - generic [ref=e10920] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 778" [ref=e10922] [cursor=pointer]
+        - button "View details for Pokemon 779" [ref=e10925] [cursor=pointer]:
+          - generic [ref=e10927] [cursor=pointer]:
+            - generic [ref=e10929] [cursor=pointer]: "#779"
+            - generic [ref=e10931] [cursor=pointer]:
+              - generic [ref=e10934] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 779" [ref=e10936] [cursor=pointer]
+        - button "View details for Pokemon 780" [ref=e10939] [cursor=pointer]:
+          - generic [ref=e10941] [cursor=pointer]:
+            - generic [ref=e10943] [cursor=pointer]: "#780"
+            - generic [ref=e10945] [cursor=pointer]:
+              - generic [ref=e10948] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 780" [ref=e10950] [cursor=pointer]
+        - button "View details for Pokemon 781" [ref=e10953] [cursor=pointer]:
+          - generic [ref=e10955] [cursor=pointer]:
+            - generic [ref=e10957] [cursor=pointer]: "#781"
+            - generic [ref=e10959] [cursor=pointer]:
+              - generic [ref=e10962] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 781" [ref=e10964] [cursor=pointer]
+        - button "View details for Pokemon 782" [ref=e10967] [cursor=pointer]:
+          - generic [ref=e10969] [cursor=pointer]:
+            - generic [ref=e10971] [cursor=pointer]: "#782"
+            - generic [ref=e10973] [cursor=pointer]:
+              - generic [ref=e10976] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 782" [ref=e10978] [cursor=pointer]
+        - button "View details for Pokemon 783" [ref=e10981] [cursor=pointer]:
+          - generic [ref=e10983] [cursor=pointer]:
+            - generic [ref=e10985] [cursor=pointer]: "#783"
+            - generic [ref=e10987] [cursor=pointer]:
+              - generic [ref=e10990] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 783" [ref=e10992] [cursor=pointer]
+        - button "View details for Pokemon 784" [ref=e10995] [cursor=pointer]:
+          - generic [ref=e10997] [cursor=pointer]:
+            - generic [ref=e10999] [cursor=pointer]: "#784"
+            - generic [ref=e11001] [cursor=pointer]:
+              - generic [ref=e11004] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 784" [ref=e11006] [cursor=pointer]
+        - button "View details for Pokemon 785" [ref=e11009] [cursor=pointer]:
+          - generic [ref=e11011] [cursor=pointer]:
+            - generic [ref=e11013] [cursor=pointer]: "#785"
+            - generic [ref=e11015] [cursor=pointer]:
+              - generic [ref=e11018] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 785" [ref=e11020] [cursor=pointer]
+        - button "View details for Pokemon 786" [ref=e11023] [cursor=pointer]:
+          - generic [ref=e11025] [cursor=pointer]:
+            - generic [ref=e11027] [cursor=pointer]: "#786"
+            - generic [ref=e11029] [cursor=pointer]:
+              - generic [ref=e11032] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 786" [ref=e11034] [cursor=pointer]
+        - button "View details for Pokemon 787" [ref=e11037] [cursor=pointer]:
+          - generic [ref=e11039] [cursor=pointer]:
+            - generic [ref=e11041] [cursor=pointer]: "#787"
+            - generic [ref=e11043] [cursor=pointer]:
+              - generic [ref=e11046] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 787" [ref=e11048] [cursor=pointer]
+        - button "View details for Pokemon 788" [ref=e11051] [cursor=pointer]:
+          - generic [ref=e11053] [cursor=pointer]:
+            - generic [ref=e11055] [cursor=pointer]: "#788"
+            - generic [ref=e11057] [cursor=pointer]:
+              - generic [ref=e11060] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 788" [ref=e11062] [cursor=pointer]
+        - button "View details for Pokemon 789" [ref=e11065] [cursor=pointer]:
+          - generic [ref=e11067] [cursor=pointer]:
+            - generic [ref=e11069] [cursor=pointer]: "#789"
+            - generic [ref=e11071] [cursor=pointer]:
+              - generic [ref=e11074] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 789" [ref=e11076] [cursor=pointer]
+        - button "View details for Pokemon 790" [ref=e11079] [cursor=pointer]:
+          - generic [ref=e11081] [cursor=pointer]:
+            - generic [ref=e11083] [cursor=pointer]: "#790"
+            - generic [ref=e11085] [cursor=pointer]:
+              - generic [ref=e11088] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 790" [ref=e11090] [cursor=pointer]
+        - button "View details for Pokemon 791" [ref=e11093] [cursor=pointer]:
+          - generic [ref=e11095] [cursor=pointer]:
+            - generic [ref=e11097] [cursor=pointer]: "#791"
+            - generic [ref=e11099] [cursor=pointer]:
+              - generic [ref=e11102] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 791" [ref=e11104] [cursor=pointer]
+        - button "View details for Pokemon 792" [ref=e11107] [cursor=pointer]:
+          - generic [ref=e11109] [cursor=pointer]:
+            - generic [ref=e11111] [cursor=pointer]: "#792"
+            - generic [ref=e11113] [cursor=pointer]:
+              - generic [ref=e11116] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 792" [ref=e11118] [cursor=pointer]
+        - button "View details for Pokemon 793" [ref=e11121] [cursor=pointer]:
+          - generic [ref=e11123] [cursor=pointer]:
+            - generic [ref=e11125] [cursor=pointer]: "#793"
+            - generic [ref=e11127] [cursor=pointer]:
+              - generic [ref=e11130] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 793" [ref=e11132] [cursor=pointer]
+        - button "View details for Pokemon 794" [ref=e11135] [cursor=pointer]:
+          - generic [ref=e11137] [cursor=pointer]:
+            - generic [ref=e11139] [cursor=pointer]: "#794"
+            - generic [ref=e11141] [cursor=pointer]:
+              - generic [ref=e11144] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 794" [ref=e11146] [cursor=pointer]
+        - button "View details for Pokemon 795" [ref=e11149] [cursor=pointer]:
+          - generic [ref=e11151] [cursor=pointer]:
+            - generic [ref=e11153] [cursor=pointer]: "#795"
+            - generic [ref=e11155] [cursor=pointer]:
+              - generic [ref=e11158] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 795" [ref=e11160] [cursor=pointer]
+        - button "View details for Pokemon 796" [ref=e11163] [cursor=pointer]:
+          - generic [ref=e11165] [cursor=pointer]:
+            - generic [ref=e11167] [cursor=pointer]: "#796"
+            - generic [ref=e11169] [cursor=pointer]:
+              - generic [ref=e11172] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 796" [ref=e11174] [cursor=pointer]
+        - button "View details for Pokemon 797" [ref=e11177] [cursor=pointer]:
+          - generic [ref=e11179] [cursor=pointer]:
+            - generic [ref=e11181] [cursor=pointer]: "#797"
+            - generic [ref=e11183] [cursor=pointer]:
+              - generic [ref=e11186] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 797" [ref=e11188] [cursor=pointer]
+        - button "View details for Pokemon 798" [ref=e11191] [cursor=pointer]:
+          - generic [ref=e11193] [cursor=pointer]:
+            - generic [ref=e11195] [cursor=pointer]: "#798"
+            - generic [ref=e11197] [cursor=pointer]:
+              - generic [ref=e11200] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 798" [ref=e11202] [cursor=pointer]
+        - button "View details for Pokemon 799" [ref=e11205] [cursor=pointer]:
+          - generic [ref=e11207] [cursor=pointer]:
+            - generic [ref=e11209] [cursor=pointer]: "#799"
+            - generic [ref=e11211] [cursor=pointer]:
+              - generic [ref=e11214] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 799" [ref=e11216] [cursor=pointer]
+        - button "View details for Pokemon 800" [ref=e11219] [cursor=pointer]:
+          - generic [ref=e11221] [cursor=pointer]:
+            - generic [ref=e11223] [cursor=pointer]: "#800"
+            - generic [ref=e11225] [cursor=pointer]:
+              - generic [ref=e11228] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 800" [ref=e11230] [cursor=pointer]
+        - button "View details for Pokemon 801" [ref=e11233] [cursor=pointer]:
+          - generic [ref=e11235] [cursor=pointer]:
+            - generic [ref=e11237] [cursor=pointer]: "#801"
+            - generic [ref=e11239] [cursor=pointer]:
+              - generic [ref=e11242] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 801" [ref=e11244] [cursor=pointer]
+        - button "View details for Pokemon 802" [ref=e11247] [cursor=pointer]:
+          - generic [ref=e11249] [cursor=pointer]:
+            - generic [ref=e11251] [cursor=pointer]: "#802"
+            - generic [ref=e11253] [cursor=pointer]:
+              - generic [ref=e11256] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 802" [ref=e11258] [cursor=pointer]
+        - button "View details for Pokemon 803" [ref=e11261] [cursor=pointer]:
+          - generic [ref=e11263] [cursor=pointer]:
+            - generic [ref=e11265] [cursor=pointer]: "#803"
+            - generic [ref=e11267] [cursor=pointer]:
+              - generic [ref=e11270] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 803" [ref=e11272] [cursor=pointer]
+        - button "View details for Pokemon 804" [ref=e11275] [cursor=pointer]:
+          - generic [ref=e11277] [cursor=pointer]:
+            - generic [ref=e11279] [cursor=pointer]: "#804"
+            - generic [ref=e11281] [cursor=pointer]:
+              - generic [ref=e11284] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 804" [ref=e11286] [cursor=pointer]
+        - button "View details for Pokemon 805" [ref=e11289] [cursor=pointer]:
+          - generic [ref=e11291] [cursor=pointer]:
+            - generic [ref=e11293] [cursor=pointer]: "#805"
+            - generic [ref=e11295] [cursor=pointer]:
+              - generic [ref=e11298] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 805" [ref=e11300] [cursor=pointer]
+        - button "View details for Pokemon 806" [ref=e11303] [cursor=pointer]:
+          - generic [ref=e11305] [cursor=pointer]:
+            - generic [ref=e11307] [cursor=pointer]: "#806"
+            - generic [ref=e11309] [cursor=pointer]:
+              - generic [ref=e11312] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 806" [ref=e11314] [cursor=pointer]
+        - button "View details for Pokemon 807" [ref=e11317] [cursor=pointer]:
+          - generic [ref=e11319] [cursor=pointer]:
+            - generic [ref=e11321] [cursor=pointer]: "#807"
+            - generic [ref=e11323] [cursor=pointer]:
+              - generic [ref=e11326] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 807" [ref=e11328] [cursor=pointer]
+        - button "View details for Pokemon 808" [ref=e11331] [cursor=pointer]:
+          - generic [ref=e11333] [cursor=pointer]:
+            - generic [ref=e11335] [cursor=pointer]: "#808"
+            - generic [ref=e11337] [cursor=pointer]:
+              - generic [ref=e11340] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 808" [ref=e11342] [cursor=pointer]
+        - button "View details for Pokemon 809" [ref=e11345] [cursor=pointer]:
+          - generic [ref=e11347] [cursor=pointer]:
+            - generic [ref=e11349] [cursor=pointer]: "#809"
+            - generic [ref=e11351] [cursor=pointer]:
+              - generic [ref=e11354] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 809" [ref=e11356] [cursor=pointer]
+        - button "View details for Pokemon 810" [ref=e11359] [cursor=pointer]:
+          - generic [ref=e11361] [cursor=pointer]:
+            - generic [ref=e11363] [cursor=pointer]: "#810"
+            - generic [ref=e11365] [cursor=pointer]:
+              - generic [ref=e11368] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 810" [ref=e11370] [cursor=pointer]
+        - button "View details for Pokemon 811" [ref=e11373] [cursor=pointer]:
+          - generic [ref=e11375] [cursor=pointer]:
+            - generic [ref=e11377] [cursor=pointer]: "#811"
+            - generic [ref=e11379] [cursor=pointer]:
+              - generic [ref=e11382] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 811" [ref=e11384] [cursor=pointer]
+        - button "View details for Pokemon 812" [ref=e11387] [cursor=pointer]:
+          - generic [ref=e11389] [cursor=pointer]:
+            - generic [ref=e11391] [cursor=pointer]: "#812"
+            - generic [ref=e11393] [cursor=pointer]:
+              - generic [ref=e11396] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 812" [ref=e11398] [cursor=pointer]
+        - button "View details for Pokemon 813" [ref=e11401] [cursor=pointer]:
+          - generic [ref=e11403] [cursor=pointer]:
+            - generic [ref=e11405] [cursor=pointer]: "#813"
+            - generic [ref=e11407] [cursor=pointer]:
+              - generic [ref=e11410] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 813" [ref=e11412] [cursor=pointer]
+        - button "View details for Pokemon 814" [ref=e11415] [cursor=pointer]:
+          - generic [ref=e11417] [cursor=pointer]:
+            - generic [ref=e11419] [cursor=pointer]: "#814"
+            - generic [ref=e11421] [cursor=pointer]:
+              - generic [ref=e11424] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 814" [ref=e11426] [cursor=pointer]
+        - button "View details for Pokemon 815" [ref=e11429] [cursor=pointer]:
+          - generic [ref=e11431] [cursor=pointer]:
+            - generic [ref=e11433] [cursor=pointer]: "#815"
+            - generic [ref=e11435] [cursor=pointer]:
+              - generic [ref=e11438] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 815" [ref=e11440] [cursor=pointer]
+        - button "View details for Pokemon 816" [ref=e11443] [cursor=pointer]:
+          - generic [ref=e11445] [cursor=pointer]:
+            - generic [ref=e11447] [cursor=pointer]: "#816"
+            - generic [ref=e11449] [cursor=pointer]:
+              - generic [ref=e11452] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 816" [ref=e11454] [cursor=pointer]
+        - button "View details for Pokemon 817" [ref=e11457] [cursor=pointer]:
+          - generic [ref=e11459] [cursor=pointer]:
+            - generic [ref=e11461] [cursor=pointer]: "#817"
+            - generic [ref=e11463] [cursor=pointer]:
+              - generic [ref=e11466] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 817" [ref=e11468] [cursor=pointer]
+        - button "View details for Pokemon 818" [ref=e11471] [cursor=pointer]:
+          - generic [ref=e11473] [cursor=pointer]:
+            - generic [ref=e11475] [cursor=pointer]: "#818"
+            - generic [ref=e11477] [cursor=pointer]:
+              - generic [ref=e11480] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 818" [ref=e11482] [cursor=pointer]
+        - button "View details for Pokemon 819" [ref=e11485] [cursor=pointer]:
+          - generic [ref=e11487] [cursor=pointer]:
+            - generic [ref=e11489] [cursor=pointer]: "#819"
+            - generic [ref=e11491] [cursor=pointer]:
+              - generic [ref=e11494] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 819" [ref=e11496] [cursor=pointer]
+        - button "View details for Pokemon 820" [ref=e11499] [cursor=pointer]:
+          - generic [ref=e11501] [cursor=pointer]:
+            - generic [ref=e11503] [cursor=pointer]: "#820"
+            - generic [ref=e11505] [cursor=pointer]:
+              - generic [ref=e11508] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 820" [ref=e11510] [cursor=pointer]
+        - button "View details for Pokemon 821" [ref=e11513] [cursor=pointer]:
+          - generic [ref=e11515] [cursor=pointer]:
+            - generic [ref=e11517] [cursor=pointer]: "#821"
+            - generic [ref=e11519] [cursor=pointer]:
+              - generic [ref=e11522] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 821" [ref=e11524] [cursor=pointer]
+        - button "View details for Pokemon 822" [ref=e11527] [cursor=pointer]:
+          - generic [ref=e11529] [cursor=pointer]:
+            - generic [ref=e11531] [cursor=pointer]: "#822"
+            - generic [ref=e11533] [cursor=pointer]:
+              - generic [ref=e11536] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 822" [ref=e11538] [cursor=pointer]
+        - button "View details for Pokemon 823" [ref=e11541] [cursor=pointer]:
+          - generic [ref=e11543] [cursor=pointer]:
+            - generic [ref=e11545] [cursor=pointer]: "#823"
+            - generic [ref=e11547] [cursor=pointer]:
+              - generic [ref=e11550] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 823" [ref=e11552] [cursor=pointer]
+        - button "View details for Pokemon 824" [ref=e11555] [cursor=pointer]:
+          - generic [ref=e11557] [cursor=pointer]:
+            - generic [ref=e11559] [cursor=pointer]: "#824"
+            - generic [ref=e11561] [cursor=pointer]:
+              - generic [ref=e11564] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 824" [ref=e11566] [cursor=pointer]
+        - button "View details for Pokemon 825" [ref=e11569] [cursor=pointer]:
+          - generic [ref=e11571] [cursor=pointer]:
+            - generic [ref=e11573] [cursor=pointer]: "#825"
+            - generic [ref=e11575] [cursor=pointer]:
+              - generic [ref=e11578] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 825" [ref=e11580] [cursor=pointer]
+        - button "View details for Pokemon 826" [ref=e11583] [cursor=pointer]:
+          - generic [ref=e11585] [cursor=pointer]:
+            - generic [ref=e11587] [cursor=pointer]: "#826"
+            - generic [ref=e11589] [cursor=pointer]:
+              - generic [ref=e11592] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 826" [ref=e11594] [cursor=pointer]
+        - button "View details for Pokemon 827" [ref=e11597] [cursor=pointer]:
+          - generic [ref=e11599] [cursor=pointer]:
+            - generic [ref=e11601] [cursor=pointer]: "#827"
+            - generic [ref=e11603] [cursor=pointer]:
+              - generic [ref=e11606] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 827" [ref=e11608] [cursor=pointer]
+        - button "View details for Pokemon 828" [ref=e11611] [cursor=pointer]:
+          - generic [ref=e11613] [cursor=pointer]:
+            - generic [ref=e11615] [cursor=pointer]: "#828"
+            - generic [ref=e11617] [cursor=pointer]:
+              - generic [ref=e11620] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 828" [ref=e11622] [cursor=pointer]
+        - button "View details for Pokemon 829" [ref=e11625] [cursor=pointer]:
+          - generic [ref=e11627] [cursor=pointer]:
+            - generic [ref=e11629] [cursor=pointer]: "#829"
+            - generic [ref=e11631] [cursor=pointer]:
+              - generic [ref=e11634] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 829" [ref=e11636] [cursor=pointer]
+        - button "View details for Pokemon 830" [ref=e11639] [cursor=pointer]:
+          - generic [ref=e11641] [cursor=pointer]:
+            - generic [ref=e11643] [cursor=pointer]: "#830"
+            - generic [ref=e11645] [cursor=pointer]:
+              - generic [ref=e11648] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 830" [ref=e11650] [cursor=pointer]
+        - button "View details for Pokemon 831" [ref=e11653] [cursor=pointer]:
+          - generic [ref=e11655] [cursor=pointer]:
+            - generic [ref=e11657] [cursor=pointer]: "#831"
+            - generic [ref=e11659] [cursor=pointer]:
+              - generic [ref=e11662] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 831" [ref=e11664] [cursor=pointer]
+        - button "View details for Pokemon 832" [ref=e11667] [cursor=pointer]:
+          - generic [ref=e11669] [cursor=pointer]:
+            - generic [ref=e11671] [cursor=pointer]: "#832"
+            - generic [ref=e11673] [cursor=pointer]:
+              - generic [ref=e11676] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 832" [ref=e11678] [cursor=pointer]
+        - button "View details for Pokemon 833" [ref=e11681] [cursor=pointer]:
+          - generic [ref=e11683] [cursor=pointer]:
+            - generic [ref=e11685] [cursor=pointer]: "#833"
+            - generic [ref=e11687] [cursor=pointer]:
+              - generic [ref=e11690] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 833" [ref=e11692] [cursor=pointer]
+        - button "View details for Pokemon 834" [ref=e11695] [cursor=pointer]:
+          - generic [ref=e11697] [cursor=pointer]:
+            - generic [ref=e11699] [cursor=pointer]: "#834"
+            - generic [ref=e11701] [cursor=pointer]:
+              - generic [ref=e11704] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 834" [ref=e11706] [cursor=pointer]
+        - button "View details for Pokemon 835" [ref=e11709] [cursor=pointer]:
+          - generic [ref=e11711] [cursor=pointer]:
+            - generic [ref=e11713] [cursor=pointer]: "#835"
+            - generic [ref=e11715] [cursor=pointer]:
+              - generic [ref=e11718] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 835" [ref=e11720] [cursor=pointer]
+        - button "View details for Pokemon 836" [ref=e11723] [cursor=pointer]:
+          - generic [ref=e11725] [cursor=pointer]:
+            - generic [ref=e11727] [cursor=pointer]: "#836"
+            - generic [ref=e11729] [cursor=pointer]:
+              - generic [ref=e11732] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 836" [ref=e11734] [cursor=pointer]
+        - button "View details for Pokemon 837" [ref=e11737] [cursor=pointer]:
+          - generic [ref=e11739] [cursor=pointer]:
+            - generic [ref=e11741] [cursor=pointer]: "#837"
+            - generic [ref=e11743] [cursor=pointer]:
+              - generic [ref=e11746] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 837" [ref=e11748] [cursor=pointer]
+        - button "View details for Pokemon 838" [ref=e11751] [cursor=pointer]:
+          - generic [ref=e11753] [cursor=pointer]:
+            - generic [ref=e11755] [cursor=pointer]: "#838"
+            - generic [ref=e11757] [cursor=pointer]:
+              - generic [ref=e11760] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 838" [ref=e11762] [cursor=pointer]
+        - button "View details for Pokemon 839" [ref=e11765] [cursor=pointer]:
+          - generic [ref=e11767] [cursor=pointer]:
+            - generic [ref=e11769] [cursor=pointer]: "#839"
+            - generic [ref=e11771] [cursor=pointer]:
+              - generic [ref=e11774] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 839" [ref=e11776] [cursor=pointer]
+        - button "View details for Pokemon 840" [ref=e11779] [cursor=pointer]:
+          - generic [ref=e11781] [cursor=pointer]:
+            - generic [ref=e11783] [cursor=pointer]: "#840"
+            - generic [ref=e11785] [cursor=pointer]:
+              - generic [ref=e11788] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 840" [ref=e11790] [cursor=pointer]
+        - button "View details for Pokemon 841" [ref=e11793] [cursor=pointer]:
+          - generic [ref=e11795] [cursor=pointer]:
+            - generic [ref=e11797] [cursor=pointer]: "#841"
+            - generic [ref=e11799] [cursor=pointer]:
+              - generic [ref=e11802] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 841" [ref=e11804] [cursor=pointer]
+        - button "View details for Pokemon 842" [ref=e11807] [cursor=pointer]:
+          - generic [ref=e11809] [cursor=pointer]:
+            - generic [ref=e11811] [cursor=pointer]: "#842"
+            - generic [ref=e11813] [cursor=pointer]:
+              - generic [ref=e11816] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 842" [ref=e11818] [cursor=pointer]
+        - button "View details for Pokemon 843" [ref=e11821] [cursor=pointer]:
+          - generic [ref=e11823] [cursor=pointer]:
+            - generic [ref=e11825] [cursor=pointer]: "#843"
+            - generic [ref=e11827] [cursor=pointer]:
+              - generic [ref=e11830] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 843" [ref=e11832] [cursor=pointer]
+        - button "View details for Pokemon 844" [ref=e11835] [cursor=pointer]:
+          - generic [ref=e11837] [cursor=pointer]:
+            - generic [ref=e11839] [cursor=pointer]: "#844"
+            - generic [ref=e11841] [cursor=pointer]:
+              - generic [ref=e11844] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 844" [ref=e11846] [cursor=pointer]
+        - button "View details for Pokemon 845" [ref=e11849] [cursor=pointer]:
+          - generic [ref=e11851] [cursor=pointer]:
+            - generic [ref=e11853] [cursor=pointer]: "#845"
+            - generic [ref=e11855] [cursor=pointer]:
+              - generic [ref=e11858] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 845" [ref=e11860] [cursor=pointer]
+        - button "View details for Pokemon 846" [ref=e11863] [cursor=pointer]:
+          - generic [ref=e11865] [cursor=pointer]:
+            - generic [ref=e11867] [cursor=pointer]: "#846"
+            - generic [ref=e11869] [cursor=pointer]:
+              - generic [ref=e11872] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 846" [ref=e11874] [cursor=pointer]
+        - button "View details for Pokemon 847" [ref=e11877] [cursor=pointer]:
+          - generic [ref=e11879] [cursor=pointer]:
+            - generic [ref=e11881] [cursor=pointer]: "#847"
+            - generic [ref=e11883] [cursor=pointer]:
+              - generic [ref=e11886] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 847" [ref=e11888] [cursor=pointer]
+        - button "View details for Pokemon 848" [ref=e11891] [cursor=pointer]:
+          - generic [ref=e11893] [cursor=pointer]:
+            - generic [ref=e11895] [cursor=pointer]: "#848"
+            - generic [ref=e11897] [cursor=pointer]:
+              - generic [ref=e11900] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 848" [ref=e11902] [cursor=pointer]
+        - button "View details for Pokemon 849" [ref=e11905] [cursor=pointer]:
+          - generic [ref=e11907] [cursor=pointer]:
+            - generic [ref=e11909] [cursor=pointer]: "#849"
+            - generic [ref=e11911] [cursor=pointer]:
+              - generic [ref=e11914] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 849" [ref=e11916] [cursor=pointer]
+        - button "View details for Pokemon 850" [ref=e11919] [cursor=pointer]:
+          - generic [ref=e11921] [cursor=pointer]:
+            - generic [ref=e11923] [cursor=pointer]: "#850"
+            - generic [ref=e11925] [cursor=pointer]:
+              - generic [ref=e11928] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 850" [ref=e11930] [cursor=pointer]
+        - button "View details for Pokemon 851" [ref=e11933] [cursor=pointer]:
+          - generic [ref=e11935] [cursor=pointer]:
+            - generic [ref=e11937] [cursor=pointer]: "#851"
+            - generic [ref=e11939] [cursor=pointer]:
+              - generic [ref=e11942] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 851" [ref=e11944] [cursor=pointer]
+        - button "View details for Pokemon 852" [ref=e11947] [cursor=pointer]:
+          - generic [ref=e11949] [cursor=pointer]:
+            - generic [ref=e11951] [cursor=pointer]: "#852"
+            - generic [ref=e11953] [cursor=pointer]:
+              - generic [ref=e11956] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 852" [ref=e11958] [cursor=pointer]
+        - button "View details for Pokemon 853" [ref=e11961] [cursor=pointer]:
+          - generic [ref=e11963] [cursor=pointer]:
+            - generic [ref=e11965] [cursor=pointer]: "#853"
+            - generic [ref=e11967] [cursor=pointer]:
+              - generic [ref=e11970] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 853" [ref=e11972] [cursor=pointer]
+        - button "View details for Pokemon 854" [ref=e11975] [cursor=pointer]:
+          - generic [ref=e11977] [cursor=pointer]:
+            - generic [ref=e11979] [cursor=pointer]: "#854"
+            - generic [ref=e11981] [cursor=pointer]:
+              - generic [ref=e11984] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 854" [ref=e11986] [cursor=pointer]
+        - button "View details for Pokemon 855" [ref=e11989] [cursor=pointer]:
+          - generic [ref=e11991] [cursor=pointer]:
+            - generic [ref=e11993] [cursor=pointer]: "#855"
+            - generic [ref=e11995] [cursor=pointer]:
+              - generic [ref=e11998] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 855" [ref=e12000] [cursor=pointer]
+        - button "View details for Pokemon 856" [ref=e12003] [cursor=pointer]:
+          - generic [ref=e12005] [cursor=pointer]:
+            - generic [ref=e12007] [cursor=pointer]: "#856"
+            - generic [ref=e12009] [cursor=pointer]:
+              - generic [ref=e12012] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 856" [ref=e12014] [cursor=pointer]
+        - button "View details for Pokemon 857" [ref=e12017] [cursor=pointer]:
+          - generic [ref=e12019] [cursor=pointer]:
+            - generic [ref=e12021] [cursor=pointer]: "#857"
+            - generic [ref=e12023] [cursor=pointer]:
+              - generic [ref=e12026] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 857" [ref=e12028] [cursor=pointer]
+        - button "View details for Pokemon 858" [ref=e12031] [cursor=pointer]:
+          - generic [ref=e12033] [cursor=pointer]:
+            - generic [ref=e12035] [cursor=pointer]: "#858"
+            - generic [ref=e12037] [cursor=pointer]:
+              - generic [ref=e12040] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 858" [ref=e12042] [cursor=pointer]
+        - button "View details for Pokemon 859" [ref=e12045] [cursor=pointer]:
+          - generic [ref=e12047] [cursor=pointer]:
+            - generic [ref=e12049] [cursor=pointer]: "#859"
+            - generic [ref=e12051] [cursor=pointer]:
+              - generic [ref=e12054] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 859" [ref=e12056] [cursor=pointer]
+        - button "View details for Pokemon 860" [ref=e12059] [cursor=pointer]:
+          - generic [ref=e12061] [cursor=pointer]:
+            - generic [ref=e12063] [cursor=pointer]: "#860"
+            - generic [ref=e12065] [cursor=pointer]:
+              - generic [ref=e12068] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 860" [ref=e12070] [cursor=pointer]
+        - button "View details for Pokemon 861" [ref=e12073] [cursor=pointer]:
+          - generic [ref=e12075] [cursor=pointer]:
+            - generic [ref=e12077] [cursor=pointer]: "#861"
+            - generic [ref=e12079] [cursor=pointer]:
+              - generic [ref=e12082] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 861" [ref=e12084] [cursor=pointer]
+        - button "View details for Pokemon 862" [ref=e12087] [cursor=pointer]:
+          - generic [ref=e12089] [cursor=pointer]:
+            - generic [ref=e12091] [cursor=pointer]: "#862"
+            - generic [ref=e12093] [cursor=pointer]:
+              - generic [ref=e12096] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 862" [ref=e12098] [cursor=pointer]
+        - button "View details for Pokemon 863" [ref=e12101] [cursor=pointer]:
+          - generic [ref=e12103] [cursor=pointer]:
+            - generic [ref=e12105] [cursor=pointer]: "#863"
+            - generic [ref=e12107] [cursor=pointer]:
+              - generic [ref=e12110] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 863" [ref=e12112] [cursor=pointer]
+        - button "View details for Pokemon 864" [ref=e12115] [cursor=pointer]:
+          - generic [ref=e12117] [cursor=pointer]:
+            - generic [ref=e12119] [cursor=pointer]: "#864"
+            - generic [ref=e12121] [cursor=pointer]:
+              - generic [ref=e12124] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 864" [ref=e12126] [cursor=pointer]
+        - button "View details for Pokemon 865" [ref=e12129] [cursor=pointer]:
+          - generic [ref=e12131] [cursor=pointer]:
+            - generic [ref=e12133] [cursor=pointer]: "#865"
+            - generic [ref=e12135] [cursor=pointer]:
+              - generic [ref=e12138] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 865" [ref=e12140] [cursor=pointer]
+        - button "View details for Pokemon 866" [ref=e12143] [cursor=pointer]:
+          - generic [ref=e12145] [cursor=pointer]:
+            - generic [ref=e12147] [cursor=pointer]: "#866"
+            - generic [ref=e12149] [cursor=pointer]:
+              - generic [ref=e12152] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 866" [ref=e12154] [cursor=pointer]
+        - button "View details for Pokemon 867" [ref=e12157] [cursor=pointer]:
+          - generic [ref=e12159] [cursor=pointer]:
+            - generic [ref=e12161] [cursor=pointer]: "#867"
+            - generic [ref=e12163] [cursor=pointer]:
+              - generic [ref=e12166] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 867" [ref=e12168] [cursor=pointer]
+        - button "View details for Pokemon 868" [ref=e12171] [cursor=pointer]:
+          - generic [ref=e12173] [cursor=pointer]:
+            - generic [ref=e12175] [cursor=pointer]: "#868"
+            - generic [ref=e12177] [cursor=pointer]:
+              - generic [ref=e12180] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 868" [ref=e12182] [cursor=pointer]
+        - button "View details for Pokemon 869" [ref=e12185] [cursor=pointer]:
+          - generic [ref=e12187] [cursor=pointer]:
+            - generic [ref=e12189] [cursor=pointer]: "#869"
+            - generic [ref=e12191] [cursor=pointer]:
+              - generic [ref=e12194] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 869" [ref=e12196] [cursor=pointer]
+        - button "View details for Pokemon 870" [ref=e12199] [cursor=pointer]:
+          - generic [ref=e12201] [cursor=pointer]:
+            - generic [ref=e12203] [cursor=pointer]: "#870"
+            - generic [ref=e12205] [cursor=pointer]:
+              - generic [ref=e12208] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 870" [ref=e12210] [cursor=pointer]
+        - button "View details for Pokemon 871" [ref=e12213] [cursor=pointer]:
+          - generic [ref=e12215] [cursor=pointer]:
+            - generic [ref=e12217] [cursor=pointer]: "#871"
+            - generic [ref=e12219] [cursor=pointer]:
+              - generic [ref=e12222] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 871" [ref=e12224] [cursor=pointer]
+        - button "View details for Pokemon 872" [ref=e12227] [cursor=pointer]:
+          - generic [ref=e12229] [cursor=pointer]:
+            - generic [ref=e12231] [cursor=pointer]: "#872"
+            - generic [ref=e12233] [cursor=pointer]:
+              - generic [ref=e12236] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 872" [ref=e12238] [cursor=pointer]
+        - button "View details for Pokemon 873" [ref=e12241] [cursor=pointer]:
+          - generic [ref=e12243] [cursor=pointer]:
+            - generic [ref=e12245] [cursor=pointer]: "#873"
+            - generic [ref=e12247] [cursor=pointer]:
+              - generic [ref=e12250] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 873" [ref=e12252] [cursor=pointer]
+        - button "View details for Pokemon 874" [ref=e12255] [cursor=pointer]:
+          - generic [ref=e12257] [cursor=pointer]:
+            - generic [ref=e12259] [cursor=pointer]: "#874"
+            - generic [ref=e12261] [cursor=pointer]:
+              - generic [ref=e12264] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 874" [ref=e12266] [cursor=pointer]
+        - button "View details for Pokemon 875" [ref=e12269] [cursor=pointer]:
+          - generic [ref=e12271] [cursor=pointer]:
+            - generic [ref=e12273] [cursor=pointer]: "#875"
+            - generic [ref=e12275] [cursor=pointer]:
+              - generic [ref=e12278] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 875" [ref=e12280] [cursor=pointer]
+        - button "View details for Pokemon 876" [ref=e12283] [cursor=pointer]:
+          - generic [ref=e12285] [cursor=pointer]:
+            - generic [ref=e12287] [cursor=pointer]: "#876"
+            - generic [ref=e12289] [cursor=pointer]:
+              - generic [ref=e12292] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 876" [ref=e12294] [cursor=pointer]
+        - button "View details for Pokemon 877" [ref=e12297] [cursor=pointer]:
+          - generic [ref=e12299] [cursor=pointer]:
+            - generic [ref=e12301] [cursor=pointer]: "#877"
+            - generic [ref=e12303] [cursor=pointer]:
+              - generic [ref=e12306] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 877" [ref=e12308] [cursor=pointer]
+        - button "View details for Pokemon 878" [ref=e12311] [cursor=pointer]:
+          - generic [ref=e12313] [cursor=pointer]:
+            - generic [ref=e12315] [cursor=pointer]: "#878"
+            - generic [ref=e12317] [cursor=pointer]:
+              - generic [ref=e12320] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 878" [ref=e12322] [cursor=pointer]
+        - button "View details for Pokemon 879" [ref=e12325] [cursor=pointer]:
+          - generic [ref=e12327] [cursor=pointer]:
+            - generic [ref=e12329] [cursor=pointer]: "#879"
+            - generic [ref=e12331] [cursor=pointer]:
+              - generic [ref=e12334] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 879" [ref=e12336] [cursor=pointer]
+        - button "View details for Pokemon 880" [ref=e12339] [cursor=pointer]:
+          - generic [ref=e12341] [cursor=pointer]:
+            - generic [ref=e12343] [cursor=pointer]: "#880"
+            - generic [ref=e12345] [cursor=pointer]:
+              - generic [ref=e12348] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 880" [ref=e12350] [cursor=pointer]
+        - button "View details for Pokemon 881" [ref=e12353] [cursor=pointer]:
+          - generic [ref=e12355] [cursor=pointer]:
+            - generic [ref=e12357] [cursor=pointer]: "#881"
+            - generic [ref=e12359] [cursor=pointer]:
+              - generic [ref=e12362] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 881" [ref=e12364] [cursor=pointer]
+        - button "View details for Pokemon 882" [ref=e12367] [cursor=pointer]:
+          - generic [ref=e12369] [cursor=pointer]:
+            - generic [ref=e12371] [cursor=pointer]: "#882"
+            - generic [ref=e12373] [cursor=pointer]:
+              - generic [ref=e12376] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 882" [ref=e12378] [cursor=pointer]
+        - button "View details for Pokemon 883" [ref=e12381] [cursor=pointer]:
+          - generic [ref=e12383] [cursor=pointer]:
+            - generic [ref=e12385] [cursor=pointer]: "#883"
+            - generic [ref=e12387] [cursor=pointer]:
+              - generic [ref=e12390] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 883" [ref=e12392] [cursor=pointer]
+        - button "View details for Pokemon 884" [ref=e12395] [cursor=pointer]:
+          - generic [ref=e12397] [cursor=pointer]:
+            - generic [ref=e12399] [cursor=pointer]: "#884"
+            - generic [ref=e12401] [cursor=pointer]:
+              - generic [ref=e12404] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 884" [ref=e12406] [cursor=pointer]
+        - button "View details for Pokemon 885" [ref=e12409] [cursor=pointer]:
+          - generic [ref=e12411] [cursor=pointer]:
+            - generic [ref=e12413] [cursor=pointer]: "#885"
+            - generic [ref=e12415] [cursor=pointer]:
+              - generic [ref=e12418] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 885" [ref=e12420] [cursor=pointer]
+        - button "View details for Pokemon 886" [ref=e12423] [cursor=pointer]:
+          - generic [ref=e12425] [cursor=pointer]:
+            - generic [ref=e12427] [cursor=pointer]: "#886"
+            - generic [ref=e12429] [cursor=pointer]:
+              - generic [ref=e12432] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 886" [ref=e12434] [cursor=pointer]
+        - button "View details for Pokemon 887" [ref=e12437] [cursor=pointer]:
+          - generic [ref=e12439] [cursor=pointer]:
+            - generic [ref=e12441] [cursor=pointer]: "#887"
+            - generic [ref=e12443] [cursor=pointer]:
+              - generic [ref=e12446] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 887" [ref=e12448] [cursor=pointer]
+        - button "View details for Pokemon 888" [ref=e12451] [cursor=pointer]:
+          - generic [ref=e12453] [cursor=pointer]:
+            - generic [ref=e12455] [cursor=pointer]: "#888"
+            - generic [ref=e12457] [cursor=pointer]:
+              - generic [ref=e12460] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 888" [ref=e12462] [cursor=pointer]
+        - button "View details for Pokemon 889" [ref=e12465] [cursor=pointer]:
+          - generic [ref=e12467] [cursor=pointer]:
+            - generic [ref=e12469] [cursor=pointer]: "#889"
+            - generic [ref=e12471] [cursor=pointer]:
+              - generic [ref=e12474] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 889" [ref=e12476] [cursor=pointer]
+        - button "View details for Pokemon 890" [ref=e12479] [cursor=pointer]:
+          - generic [ref=e12481] [cursor=pointer]:
+            - generic [ref=e12483] [cursor=pointer]: "#890"
+            - generic [ref=e12485] [cursor=pointer]:
+              - generic [ref=e12488] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 890" [ref=e12490] [cursor=pointer]
+        - button "View details for Pokemon 891" [ref=e12493] [cursor=pointer]:
+          - generic [ref=e12495] [cursor=pointer]:
+            - generic [ref=e12497] [cursor=pointer]: "#891"
+            - generic [ref=e12499] [cursor=pointer]:
+              - generic [ref=e12502] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 891" [ref=e12504] [cursor=pointer]
+        - button "View details for Pokemon 892" [ref=e12507] [cursor=pointer]:
+          - generic [ref=e12509] [cursor=pointer]:
+            - generic [ref=e12511] [cursor=pointer]: "#892"
+            - generic [ref=e12513] [cursor=pointer]:
+              - generic [ref=e12516] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 892" [ref=e12518] [cursor=pointer]
+        - button "View details for Pokemon 893" [ref=e12521] [cursor=pointer]:
+          - generic [ref=e12523] [cursor=pointer]:
+            - generic [ref=e12525] [cursor=pointer]: "#893"
+            - generic [ref=e12527] [cursor=pointer]:
+              - generic [ref=e12530] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 893" [ref=e12532] [cursor=pointer]
+        - button "View details for Pokemon 894" [ref=e12535] [cursor=pointer]:
+          - generic [ref=e12537] [cursor=pointer]:
+            - generic [ref=e12539] [cursor=pointer]: "#894"
+            - generic [ref=e12541] [cursor=pointer]:
+              - generic [ref=e12544] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 894" [ref=e12546] [cursor=pointer]
+        - button "View details for Pokemon 895" [ref=e12549] [cursor=pointer]:
+          - generic [ref=e12551] [cursor=pointer]:
+            - generic [ref=e12553] [cursor=pointer]: "#895"
+            - generic [ref=e12555] [cursor=pointer]:
+              - generic [ref=e12558] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 895" [ref=e12560] [cursor=pointer]
+        - button "View details for Pokemon 896" [ref=e12563] [cursor=pointer]:
+          - generic [ref=e12565] [cursor=pointer]:
+            - generic [ref=e12567] [cursor=pointer]: "#896"
+            - generic [ref=e12569] [cursor=pointer]:
+              - generic [ref=e12572] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 896" [ref=e12574] [cursor=pointer]
+        - button "View details for Pokemon 897" [ref=e12577] [cursor=pointer]:
+          - generic [ref=e12579] [cursor=pointer]:
+            - generic [ref=e12581] [cursor=pointer]: "#897"
+            - generic [ref=e12583] [cursor=pointer]:
+              - generic [ref=e12586] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 897" [ref=e12588] [cursor=pointer]
+        - button "View details for Pokemon 898" [ref=e12591] [cursor=pointer]:
+          - generic [ref=e12593] [cursor=pointer]:
+            - generic [ref=e12595] [cursor=pointer]: "#898"
+            - generic [ref=e12597] [cursor=pointer]:
+              - generic [ref=e12600] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 898" [ref=e12602] [cursor=pointer]
+        - button "View details for Pokemon 899" [ref=e12605] [cursor=pointer]:
+          - generic [ref=e12607] [cursor=pointer]:
+            - generic [ref=e12609] [cursor=pointer]: "#899"
+            - generic [ref=e12611] [cursor=pointer]:
+              - generic [ref=e12614] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 899" [ref=e12616] [cursor=pointer]
+        - button "View details for Pokemon 900" [ref=e12619] [cursor=pointer]:
+          - generic [ref=e12621] [cursor=pointer]:
+            - generic [ref=e12623] [cursor=pointer]: "#900"
+            - generic [ref=e12625] [cursor=pointer]:
+              - generic [ref=e12628] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 900" [ref=e12630] [cursor=pointer]
+        - button "View details for Pokemon 901" [ref=e12633] [cursor=pointer]:
+          - generic [ref=e12635] [cursor=pointer]:
+            - generic [ref=e12637] [cursor=pointer]: "#901"
+            - generic [ref=e12639] [cursor=pointer]:
+              - generic [ref=e12642] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 901" [ref=e12644] [cursor=pointer]
+        - button "View details for Pokemon 902" [ref=e12647] [cursor=pointer]:
+          - generic [ref=e12649] [cursor=pointer]:
+            - generic [ref=e12651] [cursor=pointer]: "#902"
+            - generic [ref=e12653] [cursor=pointer]:
+              - generic [ref=e12656] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 902" [ref=e12658] [cursor=pointer]
+        - button "View details for Pokemon 903" [ref=e12661] [cursor=pointer]:
+          - generic [ref=e12663] [cursor=pointer]:
+            - generic [ref=e12665] [cursor=pointer]: "#903"
+            - generic [ref=e12667] [cursor=pointer]:
+              - generic [ref=e12670] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 903" [ref=e12672] [cursor=pointer]
+        - button "View details for Pokemon 904" [ref=e12675] [cursor=pointer]:
+          - generic [ref=e12677] [cursor=pointer]:
+            - generic [ref=e12679] [cursor=pointer]: "#904"
+            - generic [ref=e12681] [cursor=pointer]:
+              - generic [ref=e12684] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 904" [ref=e12686] [cursor=pointer]
+        - button "View details for Pokemon 905" [ref=e12689] [cursor=pointer]:
+          - generic [ref=e12691] [cursor=pointer]:
+            - generic [ref=e12693] [cursor=pointer]: "#905"
+            - generic [ref=e12695] [cursor=pointer]:
+              - generic [ref=e12698] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 905" [ref=e12700] [cursor=pointer]
+        - button "View details for Pokemon 906" [ref=e12703] [cursor=pointer]:
+          - generic [ref=e12705] [cursor=pointer]:
+            - generic [ref=e12707] [cursor=pointer]: "#906"
+            - generic [ref=e12709] [cursor=pointer]:
+              - generic [ref=e12712] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 906" [ref=e12714] [cursor=pointer]
+        - button "View details for Pokemon 907" [ref=e12717] [cursor=pointer]:
+          - generic [ref=e12719] [cursor=pointer]:
+            - generic [ref=e12721] [cursor=pointer]: "#907"
+            - generic [ref=e12723] [cursor=pointer]:
+              - generic [ref=e12726] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 907" [ref=e12728] [cursor=pointer]
+        - button "View details for Pokemon 908" [ref=e12731] [cursor=pointer]:
+          - generic [ref=e12733] [cursor=pointer]:
+            - generic [ref=e12735] [cursor=pointer]: "#908"
+            - generic [ref=e12737] [cursor=pointer]:
+              - generic [ref=e12740] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 908" [ref=e12742] [cursor=pointer]
+        - button "View details for Pokemon 909" [ref=e12745] [cursor=pointer]:
+          - generic [ref=e12747] [cursor=pointer]:
+            - generic [ref=e12749] [cursor=pointer]: "#909"
+            - generic [ref=e12751] [cursor=pointer]:
+              - generic [ref=e12754] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 909" [ref=e12756] [cursor=pointer]
+        - button "View details for Pokemon 910" [ref=e12759] [cursor=pointer]:
+          - generic [ref=e12761] [cursor=pointer]:
+            - generic [ref=e12763] [cursor=pointer]: "#910"
+            - generic [ref=e12765] [cursor=pointer]:
+              - generic [ref=e12768] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 910" [ref=e12770] [cursor=pointer]
+        - button "View details for Pokemon 911" [ref=e12773] [cursor=pointer]:
+          - generic [ref=e12775] [cursor=pointer]:
+            - generic [ref=e12777] [cursor=pointer]: "#911"
+            - generic [ref=e12779] [cursor=pointer]:
+              - generic [ref=e12782] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 911" [ref=e12784] [cursor=pointer]
+        - button "View details for Pokemon 912" [ref=e12787] [cursor=pointer]:
+          - generic [ref=e12789] [cursor=pointer]:
+            - generic [ref=e12791] [cursor=pointer]: "#912"
+            - generic [ref=e12793] [cursor=pointer]:
+              - generic [ref=e12796] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 912" [ref=e12798] [cursor=pointer]
+        - button "View details for Pokemon 913" [ref=e12801] [cursor=pointer]:
+          - generic [ref=e12803] [cursor=pointer]:
+            - generic [ref=e12805] [cursor=pointer]: "#913"
+            - generic [ref=e12807] [cursor=pointer]:
+              - generic [ref=e12810] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 913" [ref=e12812] [cursor=pointer]
+        - button "View details for Pokemon 914" [ref=e12815] [cursor=pointer]:
+          - generic [ref=e12817] [cursor=pointer]:
+            - generic [ref=e12819] [cursor=pointer]: "#914"
+            - generic [ref=e12821] [cursor=pointer]:
+              - generic [ref=e12824] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 914" [ref=e12826] [cursor=pointer]
+        - button "View details for Pokemon 915" [ref=e12829] [cursor=pointer]:
+          - generic [ref=e12831] [cursor=pointer]:
+            - generic [ref=e12833] [cursor=pointer]: "#915"
+            - generic [ref=e12835] [cursor=pointer]:
+              - generic [ref=e12838] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 915" [ref=e12840] [cursor=pointer]
+        - button "View details for Pokemon 916" [ref=e12843] [cursor=pointer]:
+          - generic [ref=e12845] [cursor=pointer]:
+            - generic [ref=e12847] [cursor=pointer]: "#916"
+            - generic [ref=e12849] [cursor=pointer]:
+              - generic [ref=e12852] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 916" [ref=e12854] [cursor=pointer]
+        - button "View details for Pokemon 917" [ref=e12857] [cursor=pointer]:
+          - generic [ref=e12859] [cursor=pointer]:
+            - generic [ref=e12861] [cursor=pointer]: "#917"
+            - generic [ref=e12863] [cursor=pointer]:
+              - generic [ref=e12866] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 917" [ref=e12868] [cursor=pointer]
+        - button "View details for Pokemon 918" [ref=e12871] [cursor=pointer]:
+          - generic [ref=e12873] [cursor=pointer]:
+            - generic [ref=e12875] [cursor=pointer]: "#918"
+            - generic [ref=e12877] [cursor=pointer]:
+              - generic [ref=e12880] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 918" [ref=e12882] [cursor=pointer]
+        - button "View details for Pokemon 919" [ref=e12885] [cursor=pointer]:
+          - generic [ref=e12887] [cursor=pointer]:
+            - generic [ref=e12889] [cursor=pointer]: "#919"
+            - generic [ref=e12891] [cursor=pointer]:
+              - generic [ref=e12894] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 919" [ref=e12896] [cursor=pointer]
+        - button "View details for Pokemon 920" [ref=e12899] [cursor=pointer]:
+          - generic [ref=e12901] [cursor=pointer]:
+            - generic [ref=e12903] [cursor=pointer]: "#920"
+            - generic [ref=e12905] [cursor=pointer]:
+              - generic [ref=e12908] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 920" [ref=e12910] [cursor=pointer]
+        - button "View details for Pokemon 921" [ref=e12913] [cursor=pointer]:
+          - generic [ref=e12915] [cursor=pointer]:
+            - generic [ref=e12917] [cursor=pointer]: "#921"
+            - generic [ref=e12919] [cursor=pointer]:
+              - generic [ref=e12922] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 921" [ref=e12924] [cursor=pointer]
+        - button "View details for Pokemon 922" [ref=e12927] [cursor=pointer]:
+          - generic [ref=e12929] [cursor=pointer]:
+            - generic [ref=e12931] [cursor=pointer]: "#922"
+            - generic [ref=e12933] [cursor=pointer]:
+              - generic [ref=e12936] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 922" [ref=e12938] [cursor=pointer]
+        - button "View details for Pokemon 923" [ref=e12941] [cursor=pointer]:
+          - generic [ref=e12943] [cursor=pointer]:
+            - generic [ref=e12945] [cursor=pointer]: "#923"
+            - generic [ref=e12947] [cursor=pointer]:
+              - generic [ref=e12950] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 923" [ref=e12952] [cursor=pointer]
+        - button "View details for Pokemon 924" [ref=e12955] [cursor=pointer]:
+          - generic [ref=e12957] [cursor=pointer]:
+            - generic [ref=e12959] [cursor=pointer]: "#924"
+            - generic [ref=e12961] [cursor=pointer]:
+              - generic [ref=e12964] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 924" [ref=e12966] [cursor=pointer]
+        - button "View details for Pokemon 925" [ref=e12969] [cursor=pointer]:
+          - generic [ref=e12971] [cursor=pointer]:
+            - generic [ref=e12973] [cursor=pointer]: "#925"
+            - generic [ref=e12975] [cursor=pointer]:
+              - generic [ref=e12978] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 925" [ref=e12980] [cursor=pointer]
+        - button "View details for Pokemon 926" [ref=e12983] [cursor=pointer]:
+          - generic [ref=e12985] [cursor=pointer]:
+            - generic [ref=e12987] [cursor=pointer]: "#926"
+            - generic [ref=e12989] [cursor=pointer]:
+              - generic [ref=e12992] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 926" [ref=e12994] [cursor=pointer]
+        - button "View details for Pokemon 927" [ref=e12997] [cursor=pointer]:
+          - generic [ref=e12999] [cursor=pointer]:
+            - generic [ref=e13001] [cursor=pointer]: "#927"
+            - generic [ref=e13003] [cursor=pointer]:
+              - generic [ref=e13006] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 927" [ref=e13008] [cursor=pointer]
+        - button "View details for Pokemon 928" [ref=e13011] [cursor=pointer]:
+          - generic [ref=e13013] [cursor=pointer]:
+            - generic [ref=e13015] [cursor=pointer]: "#928"
+            - generic [ref=e13017] [cursor=pointer]:
+              - generic [ref=e13020] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 928" [ref=e13022] [cursor=pointer]
+        - button "View details for Pokemon 929" [ref=e13025] [cursor=pointer]:
+          - generic [ref=e13027] [cursor=pointer]:
+            - generic [ref=e13029] [cursor=pointer]: "#929"
+            - generic [ref=e13031] [cursor=pointer]:
+              - generic [ref=e13034] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 929" [ref=e13036] [cursor=pointer]
+        - button "View details for Pokemon 930" [ref=e13039] [cursor=pointer]:
+          - generic [ref=e13041] [cursor=pointer]:
+            - generic [ref=e13043] [cursor=pointer]: "#930"
+            - generic [ref=e13045] [cursor=pointer]:
+              - generic [ref=e13048] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 930" [ref=e13050] [cursor=pointer]
+        - button "View details for Pokemon 931" [ref=e13053] [cursor=pointer]:
+          - generic [ref=e13055] [cursor=pointer]:
+            - generic [ref=e13057] [cursor=pointer]: "#931"
+            - generic [ref=e13059] [cursor=pointer]:
+              - generic [ref=e13062] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 931" [ref=e13064] [cursor=pointer]
+        - button "View details for Pokemon 932" [ref=e13067] [cursor=pointer]:
+          - generic [ref=e13069] [cursor=pointer]:
+            - generic [ref=e13071] [cursor=pointer]: "#932"
+            - generic [ref=e13073] [cursor=pointer]:
+              - generic [ref=e13076] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 932" [ref=e13078] [cursor=pointer]
+        - button "View details for Pokemon 933" [ref=e13081] [cursor=pointer]:
+          - generic [ref=e13083] [cursor=pointer]:
+            - generic [ref=e13085] [cursor=pointer]: "#933"
+            - generic [ref=e13087] [cursor=pointer]:
+              - generic [ref=e13090] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 933" [ref=e13092] [cursor=pointer]
+        - button "View details for Pokemon 934" [ref=e13095] [cursor=pointer]:
+          - generic [ref=e13097] [cursor=pointer]:
+            - generic [ref=e13099] [cursor=pointer]: "#934"
+            - generic [ref=e13101] [cursor=pointer]:
+              - generic [ref=e13104] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 934" [ref=e13106] [cursor=pointer]
+        - button "View details for Pokemon 935" [ref=e13109] [cursor=pointer]:
+          - generic [ref=e13111] [cursor=pointer]:
+            - generic [ref=e13113] [cursor=pointer]: "#935"
+            - generic [ref=e13115] [cursor=pointer]:
+              - generic [ref=e13118] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 935" [ref=e13120] [cursor=pointer]
+        - button "View details for Pokemon 936" [ref=e13123] [cursor=pointer]:
+          - generic [ref=e13125] [cursor=pointer]:
+            - generic [ref=e13127] [cursor=pointer]: "#936"
+            - generic [ref=e13129] [cursor=pointer]:
+              - generic [ref=e13132] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 936" [ref=e13134] [cursor=pointer]
+        - button "View details for Pokemon 937" [ref=e13137] [cursor=pointer]:
+          - generic [ref=e13139] [cursor=pointer]:
+            - generic [ref=e13141] [cursor=pointer]: "#937"
+            - generic [ref=e13143] [cursor=pointer]:
+              - generic [ref=e13146] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 937" [ref=e13148] [cursor=pointer]
+        - button "View details for Pokemon 938" [ref=e13151] [cursor=pointer]:
+          - generic [ref=e13153] [cursor=pointer]:
+            - generic [ref=e13155] [cursor=pointer]: "#938"
+            - generic [ref=e13157] [cursor=pointer]:
+              - generic [ref=e13160] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 938" [ref=e13162] [cursor=pointer]
+        - button "View details for Pokemon 939" [ref=e13165] [cursor=pointer]:
+          - generic [ref=e13167] [cursor=pointer]:
+            - generic [ref=e13169] [cursor=pointer]: "#939"
+            - generic [ref=e13171] [cursor=pointer]:
+              - generic [ref=e13174] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 939" [ref=e13176] [cursor=pointer]
+        - button "View details for Pokemon 940" [ref=e13179] [cursor=pointer]:
+          - generic [ref=e13181] [cursor=pointer]:
+            - generic [ref=e13183] [cursor=pointer]: "#940"
+            - generic [ref=e13185] [cursor=pointer]:
+              - generic [ref=e13188] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 940" [ref=e13190] [cursor=pointer]
+        - button "View details for Pokemon 941" [ref=e13193] [cursor=pointer]:
+          - generic [ref=e13195] [cursor=pointer]:
+            - generic [ref=e13197] [cursor=pointer]: "#941"
+            - generic [ref=e13199] [cursor=pointer]:
+              - generic [ref=e13202] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 941" [ref=e13204] [cursor=pointer]
+        - button "View details for Pokemon 942" [ref=e13207] [cursor=pointer]:
+          - generic [ref=e13209] [cursor=pointer]:
+            - generic [ref=e13211] [cursor=pointer]: "#942"
+            - generic [ref=e13213] [cursor=pointer]:
+              - generic [ref=e13216] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 942" [ref=e13218] [cursor=pointer]
+        - button "View details for Pokemon 943" [ref=e13221] [cursor=pointer]:
+          - generic [ref=e13223] [cursor=pointer]:
+            - generic [ref=e13225] [cursor=pointer]: "#943"
+            - generic [ref=e13227] [cursor=pointer]:
+              - generic [ref=e13230] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 943" [ref=e13232] [cursor=pointer]
+        - button "View details for Pokemon 944" [ref=e13235] [cursor=pointer]:
+          - generic [ref=e13237] [cursor=pointer]:
+            - generic [ref=e13239] [cursor=pointer]: "#944"
+            - generic [ref=e13241] [cursor=pointer]:
+              - generic [ref=e13244] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 944" [ref=e13246] [cursor=pointer]
+        - button "View details for Pokemon 945" [ref=e13249] [cursor=pointer]:
+          - generic [ref=e13251] [cursor=pointer]:
+            - generic [ref=e13253] [cursor=pointer]: "#945"
+            - generic [ref=e13255] [cursor=pointer]:
+              - generic [ref=e13258] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 945" [ref=e13260] [cursor=pointer]
+        - button "View details for Pokemon 946" [ref=e13263] [cursor=pointer]:
+          - generic [ref=e13265] [cursor=pointer]:
+            - generic [ref=e13267] [cursor=pointer]: "#946"
+            - generic [ref=e13269] [cursor=pointer]:
+              - generic [ref=e13272] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 946" [ref=e13274] [cursor=pointer]
+        - button "View details for Pokemon 947" [ref=e13277] [cursor=pointer]:
+          - generic [ref=e13279] [cursor=pointer]:
+            - generic [ref=e13281] [cursor=pointer]: "#947"
+            - generic [ref=e13283] [cursor=pointer]:
+              - generic [ref=e13286] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 947" [ref=e13288] [cursor=pointer]
+        - button "View details for Pokemon 948" [ref=e13291] [cursor=pointer]:
+          - generic [ref=e13293] [cursor=pointer]:
+            - generic [ref=e13295] [cursor=pointer]: "#948"
+            - generic [ref=e13297] [cursor=pointer]:
+              - generic [ref=e13300] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 948" [ref=e13302] [cursor=pointer]
+        - button "View details for Pokemon 949" [ref=e13305] [cursor=pointer]:
+          - generic [ref=e13307] [cursor=pointer]:
+            - generic [ref=e13309] [cursor=pointer]: "#949"
+            - generic [ref=e13311] [cursor=pointer]:
+              - generic [ref=e13314] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 949" [ref=e13316] [cursor=pointer]
+        - button "View details for Pokemon 950" [ref=e13319] [cursor=pointer]:
+          - generic [ref=e13321] [cursor=pointer]:
+            - generic [ref=e13323] [cursor=pointer]: "#950"
+            - generic [ref=e13325] [cursor=pointer]:
+              - generic [ref=e13328] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 950" [ref=e13330] [cursor=pointer]
+        - button "View details for Pokemon 951" [ref=e13333] [cursor=pointer]:
+          - generic [ref=e13335] [cursor=pointer]:
+            - generic [ref=e13337] [cursor=pointer]: "#951"
+            - generic [ref=e13339] [cursor=pointer]:
+              - generic [ref=e13342] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 951" [ref=e13344] [cursor=pointer]
+        - button "View details for Pokemon 952" [ref=e13347] [cursor=pointer]:
+          - generic [ref=e13349] [cursor=pointer]:
+            - generic [ref=e13351] [cursor=pointer]: "#952"
+            - generic [ref=e13353] [cursor=pointer]:
+              - generic [ref=e13356] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 952" [ref=e13358] [cursor=pointer]
+        - button "View details for Pokemon 953" [ref=e13361] [cursor=pointer]:
+          - generic [ref=e13363] [cursor=pointer]:
+            - generic [ref=e13365] [cursor=pointer]: "#953"
+            - generic [ref=e13367] [cursor=pointer]:
+              - generic [ref=e13370] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 953" [ref=e13372] [cursor=pointer]
+        - button "View details for Pokemon 954" [ref=e13375] [cursor=pointer]:
+          - generic [ref=e13377] [cursor=pointer]:
+            - generic [ref=e13379] [cursor=pointer]: "#954"
+            - generic [ref=e13381] [cursor=pointer]:
+              - generic [ref=e13384] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 954" [ref=e13386] [cursor=pointer]
+        - button "View details for Pokemon 955" [ref=e13389] [cursor=pointer]:
+          - generic [ref=e13391] [cursor=pointer]:
+            - generic [ref=e13393] [cursor=pointer]: "#955"
+            - generic [ref=e13395] [cursor=pointer]:
+              - generic [ref=e13398] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 955" [ref=e13400] [cursor=pointer]
+        - button "View details for Pokemon 956" [ref=e13403] [cursor=pointer]:
+          - generic [ref=e13405] [cursor=pointer]:
+            - generic [ref=e13407] [cursor=pointer]: "#956"
+            - generic [ref=e13409] [cursor=pointer]:
+              - generic [ref=e13412] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 956" [ref=e13414] [cursor=pointer]
+        - button "View details for Pokemon 957" [ref=e13417] [cursor=pointer]:
+          - generic [ref=e13419] [cursor=pointer]:
+            - generic [ref=e13421] [cursor=pointer]: "#957"
+            - generic [ref=e13423] [cursor=pointer]:
+              - generic [ref=e13426] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 957" [ref=e13428] [cursor=pointer]
+        - button "View details for Pokemon 958" [ref=e13431] [cursor=pointer]:
+          - generic [ref=e13433] [cursor=pointer]:
+            - generic [ref=e13435] [cursor=pointer]: "#958"
+            - generic [ref=e13437] [cursor=pointer]:
+              - generic [ref=e13440] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 958" [ref=e13442] [cursor=pointer]
+        - button "View details for Pokemon 959" [ref=e13445] [cursor=pointer]:
+          - generic [ref=e13447] [cursor=pointer]:
+            - generic [ref=e13449] [cursor=pointer]: "#959"
+            - generic [ref=e13451] [cursor=pointer]:
+              - generic [ref=e13454] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 959" [ref=e13456] [cursor=pointer]
+        - button "View details for Pokemon 960" [ref=e13459] [cursor=pointer]:
+          - generic [ref=e13461] [cursor=pointer]:
+            - generic [ref=e13463] [cursor=pointer]: "#960"
+            - generic [ref=e13465] [cursor=pointer]:
+              - generic [ref=e13468] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 960" [ref=e13470] [cursor=pointer]
+        - button "View details for Pokemon 961" [ref=e13473] [cursor=pointer]:
+          - generic [ref=e13475] [cursor=pointer]:
+            - generic [ref=e13477] [cursor=pointer]: "#961"
+            - generic [ref=e13479] [cursor=pointer]:
+              - generic [ref=e13482] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 961" [ref=e13484] [cursor=pointer]
+        - button "View details for Pokemon 962" [ref=e13487] [cursor=pointer]:
+          - generic [ref=e13489] [cursor=pointer]:
+            - generic [ref=e13491] [cursor=pointer]: "#962"
+            - generic [ref=e13493] [cursor=pointer]:
+              - generic [ref=e13496] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 962" [ref=e13498] [cursor=pointer]
+        - button "View details for Pokemon 963" [ref=e13501] [cursor=pointer]:
+          - generic [ref=e13503] [cursor=pointer]:
+            - generic [ref=e13505] [cursor=pointer]: "#963"
+            - generic [ref=e13507] [cursor=pointer]:
+              - generic [ref=e13510] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 963" [ref=e13512] [cursor=pointer]
+        - button "View details for Pokemon 964" [ref=e13515] [cursor=pointer]:
+          - generic [ref=e13517] [cursor=pointer]:
+            - generic [ref=e13519] [cursor=pointer]: "#964"
+            - generic [ref=e13521] [cursor=pointer]:
+              - generic [ref=e13524] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 964" [ref=e13526] [cursor=pointer]
+        - button "View details for Pokemon 965" [ref=e13529] [cursor=pointer]:
+          - generic [ref=e13531] [cursor=pointer]:
+            - generic [ref=e13533] [cursor=pointer]: "#965"
+            - generic [ref=e13535] [cursor=pointer]:
+              - generic [ref=e13538] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 965" [ref=e13540] [cursor=pointer]
+        - button "View details for Pokemon 966" [ref=e13543] [cursor=pointer]:
+          - generic [ref=e13545] [cursor=pointer]:
+            - generic [ref=e13547] [cursor=pointer]: "#966"
+            - generic [ref=e13549] [cursor=pointer]:
+              - generic [ref=e13552] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 966" [ref=e13554] [cursor=pointer]
+        - button "View details for Pokemon 967" [ref=e13557] [cursor=pointer]:
+          - generic [ref=e13559] [cursor=pointer]:
+            - generic [ref=e13561] [cursor=pointer]: "#967"
+            - generic [ref=e13563] [cursor=pointer]:
+              - generic [ref=e13566] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 967" [ref=e13568] [cursor=pointer]
+        - button "View details for Pokemon 968" [ref=e13571] [cursor=pointer]:
+          - generic [ref=e13573] [cursor=pointer]:
+            - generic [ref=e13575] [cursor=pointer]: "#968"
+            - generic [ref=e13577] [cursor=pointer]:
+              - generic [ref=e13580] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 968" [ref=e13582] [cursor=pointer]
+        - button "View details for Pokemon 969" [ref=e13585] [cursor=pointer]:
+          - generic [ref=e13587] [cursor=pointer]:
+            - generic [ref=e13589] [cursor=pointer]: "#969"
+            - generic [ref=e13591] [cursor=pointer]:
+              - generic [ref=e13594] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 969" [ref=e13596] [cursor=pointer]
+        - button "View details for Pokemon 970" [ref=e13599] [cursor=pointer]:
+          - generic [ref=e13601] [cursor=pointer]:
+            - generic [ref=e13603] [cursor=pointer]: "#970"
+            - generic [ref=e13605] [cursor=pointer]:
+              - generic [ref=e13608] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 970" [ref=e13610] [cursor=pointer]
+        - button "View details for Pokemon 971" [ref=e13613] [cursor=pointer]:
+          - generic [ref=e13615] [cursor=pointer]:
+            - generic [ref=e13617] [cursor=pointer]: "#971"
+            - generic [ref=e13619] [cursor=pointer]:
+              - generic [ref=e13622] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 971" [ref=e13624] [cursor=pointer]
+        - button "View details for Pokemon 972" [ref=e13627] [cursor=pointer]:
+          - generic [ref=e13629] [cursor=pointer]:
+            - generic [ref=e13631] [cursor=pointer]: "#972"
+            - generic [ref=e13633] [cursor=pointer]:
+              - generic [ref=e13636] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 972" [ref=e13638] [cursor=pointer]
+        - button "View details for Pokemon 973" [ref=e13641] [cursor=pointer]:
+          - generic [ref=e13643] [cursor=pointer]:
+            - generic [ref=e13645] [cursor=pointer]: "#973"
+            - generic [ref=e13647] [cursor=pointer]:
+              - generic [ref=e13650] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 973" [ref=e13652] [cursor=pointer]
+        - button "View details for Pokemon 974" [ref=e13655] [cursor=pointer]:
+          - generic [ref=e13657] [cursor=pointer]:
+            - generic [ref=e13659] [cursor=pointer]: "#974"
+            - generic [ref=e13661] [cursor=pointer]:
+              - generic [ref=e13664] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 974" [ref=e13666] [cursor=pointer]
+        - button "View details for Pokemon 975" [ref=e13669] [cursor=pointer]:
+          - generic [ref=e13671] [cursor=pointer]:
+            - generic [ref=e13673] [cursor=pointer]: "#975"
+            - generic [ref=e13675] [cursor=pointer]:
+              - generic [ref=e13678] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 975" [ref=e13680] [cursor=pointer]
+        - button "View details for Pokemon 976" [ref=e13683] [cursor=pointer]:
+          - generic [ref=e13685] [cursor=pointer]:
+            - generic [ref=e13687] [cursor=pointer]: "#976"
+            - generic [ref=e13689] [cursor=pointer]:
+              - generic [ref=e13692] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 976" [ref=e13694] [cursor=pointer]
+        - button "View details for Pokemon 977" [ref=e13697] [cursor=pointer]:
+          - generic [ref=e13699] [cursor=pointer]:
+            - generic [ref=e13701] [cursor=pointer]: "#977"
+            - generic [ref=e13703] [cursor=pointer]:
+              - generic [ref=e13706] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 977" [ref=e13708] [cursor=pointer]
+        - button "View details for Pokemon 978" [ref=e13711] [cursor=pointer]:
+          - generic [ref=e13713] [cursor=pointer]:
+            - generic [ref=e13715] [cursor=pointer]: "#978"
+            - generic [ref=e13717] [cursor=pointer]:
+              - generic [ref=e13720] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 978" [ref=e13722] [cursor=pointer]
+        - button "View details for Pokemon 979" [ref=e13725] [cursor=pointer]:
+          - generic [ref=e13727] [cursor=pointer]:
+            - generic [ref=e13729] [cursor=pointer]: "#979"
+            - generic [ref=e13731] [cursor=pointer]:
+              - generic [ref=e13734] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 979" [ref=e13736] [cursor=pointer]
+        - button "View details for Pokemon 980" [ref=e13739] [cursor=pointer]:
+          - generic [ref=e13741] [cursor=pointer]:
+            - generic [ref=e13743] [cursor=pointer]: "#980"
+            - generic [ref=e13745] [cursor=pointer]:
+              - generic [ref=e13748] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 980" [ref=e13750] [cursor=pointer]
+        - button "View details for Pokemon 981" [ref=e13753] [cursor=pointer]:
+          - generic [ref=e13755] [cursor=pointer]:
+            - generic [ref=e13757] [cursor=pointer]: "#981"
+            - generic [ref=e13759] [cursor=pointer]:
+              - generic [ref=e13762] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 981" [ref=e13764] [cursor=pointer]
+        - button "View details for Pokemon 982" [ref=e13767] [cursor=pointer]:
+          - generic [ref=e13769] [cursor=pointer]:
+            - generic [ref=e13771] [cursor=pointer]: "#982"
+            - generic [ref=e13773] [cursor=pointer]:
+              - generic [ref=e13776] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 982" [ref=e13778] [cursor=pointer]
+        - button "View details for Pokemon 983" [ref=e13781] [cursor=pointer]:
+          - generic [ref=e13783] [cursor=pointer]:
+            - generic [ref=e13785] [cursor=pointer]: "#983"
+            - generic [ref=e13787] [cursor=pointer]:
+              - generic [ref=e13790] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 983" [ref=e13792] [cursor=pointer]
+        - button "View details for Pokemon 984" [ref=e13795] [cursor=pointer]:
+          - generic [ref=e13797] [cursor=pointer]:
+            - generic [ref=e13799] [cursor=pointer]: "#984"
+            - generic [ref=e13801] [cursor=pointer]:
+              - generic [ref=e13804] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 984" [ref=e13806] [cursor=pointer]
+        - button "View details for Pokemon 985" [ref=e13809] [cursor=pointer]:
+          - generic [ref=e13811] [cursor=pointer]:
+            - generic [ref=e13813] [cursor=pointer]: "#985"
+            - generic [ref=e13815] [cursor=pointer]:
+              - generic [ref=e13818] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 985" [ref=e13820] [cursor=pointer]
+        - button "View details for Pokemon 986" [ref=e13823] [cursor=pointer]:
+          - generic [ref=e13825] [cursor=pointer]:
+            - generic [ref=e13827] [cursor=pointer]: "#986"
+            - generic [ref=e13829] [cursor=pointer]:
+              - generic [ref=e13832] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 986" [ref=e13834] [cursor=pointer]
+        - button "View details for Pokemon 987" [ref=e13837] [cursor=pointer]:
+          - generic [ref=e13839] [cursor=pointer]:
+            - generic [ref=e13841] [cursor=pointer]: "#987"
+            - generic [ref=e13843] [cursor=pointer]:
+              - generic [ref=e13846] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 987" [ref=e13848] [cursor=pointer]
+        - button "View details for Pokemon 988" [ref=e13851] [cursor=pointer]:
+          - generic [ref=e13853] [cursor=pointer]:
+            - generic [ref=e13855] [cursor=pointer]: "#988"
+            - generic [ref=e13857] [cursor=pointer]:
+              - generic [ref=e13860] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 988" [ref=e13862] [cursor=pointer]
+        - button "View details for Pokemon 989" [ref=e13865] [cursor=pointer]:
+          - generic [ref=e13867] [cursor=pointer]:
+            - generic [ref=e13869] [cursor=pointer]: "#989"
+            - generic [ref=e13871] [cursor=pointer]:
+              - generic [ref=e13874] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 989" [ref=e13876] [cursor=pointer]
+        - button "View details for Pokemon 990" [ref=e13879] [cursor=pointer]:
+          - generic [ref=e13881] [cursor=pointer]:
+            - generic [ref=e13883] [cursor=pointer]: "#990"
+            - generic [ref=e13885] [cursor=pointer]:
+              - generic [ref=e13888] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 990" [ref=e13890] [cursor=pointer]
+        - button "View details for Pokemon 991" [ref=e13893] [cursor=pointer]:
+          - generic [ref=e13895] [cursor=pointer]:
+            - generic [ref=e13897] [cursor=pointer]: "#991"
+            - generic [ref=e13899] [cursor=pointer]:
+              - generic [ref=e13902] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 991" [ref=e13904] [cursor=pointer]
+        - button "View details for Pokemon 992" [ref=e13907] [cursor=pointer]:
+          - generic [ref=e13909] [cursor=pointer]:
+            - generic [ref=e13911] [cursor=pointer]: "#992"
+            - generic [ref=e13913] [cursor=pointer]:
+              - generic [ref=e13916] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 992" [ref=e13918] [cursor=pointer]
+        - button "View details for Pokemon 993" [ref=e13921] [cursor=pointer]:
+          - generic [ref=e13923] [cursor=pointer]:
+            - generic [ref=e13925] [cursor=pointer]: "#993"
+            - generic [ref=e13927] [cursor=pointer]:
+              - generic [ref=e13930] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 993" [ref=e13932] [cursor=pointer]
+        - button "View details for Pokemon 994" [ref=e13935] [cursor=pointer]:
+          - generic [ref=e13937] [cursor=pointer]:
+            - generic [ref=e13939] [cursor=pointer]: "#994"
+            - generic [ref=e13941] [cursor=pointer]:
+              - generic [ref=e13944] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 994" [ref=e13946] [cursor=pointer]
+        - button "View details for Pokemon 995" [ref=e13949] [cursor=pointer]:
+          - generic [ref=e13951] [cursor=pointer]:
+            - generic [ref=e13953] [cursor=pointer]: "#995"
+            - generic [ref=e13955] [cursor=pointer]:
+              - generic [ref=e13958] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 995" [ref=e13960] [cursor=pointer]
+        - button "View details for Pokemon 996" [ref=e13963] [cursor=pointer]:
+          - generic [ref=e13965] [cursor=pointer]:
+            - generic [ref=e13967] [cursor=pointer]: "#996"
+            - generic [ref=e13969] [cursor=pointer]:
+              - generic [ref=e13972] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 996" [ref=e13974] [cursor=pointer]
+        - button "View details for Pokemon 997" [ref=e13977] [cursor=pointer]:
+          - generic [ref=e13979] [cursor=pointer]:
+            - generic [ref=e13981] [cursor=pointer]: "#997"
+            - generic [ref=e13983] [cursor=pointer]:
+              - generic [ref=e13986] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 997" [ref=e13988] [cursor=pointer]
+        - button "View details for Pokemon 998" [ref=e13991] [cursor=pointer]:
+          - generic [ref=e13993] [cursor=pointer]:
+            - generic [ref=e13995] [cursor=pointer]: "#998"
+            - generic [ref=e13997] [cursor=pointer]:
+              - generic [ref=e14000] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 998" [ref=e14002] [cursor=pointer]
+        - button "View details for Pokemon 999" [ref=e14005] [cursor=pointer]:
+          - generic [ref=e14007] [cursor=pointer]:
+            - generic [ref=e14009] [cursor=pointer]: "#999"
+            - generic [ref=e14011] [cursor=pointer]:
+              - generic [ref=e14014] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 999" [ref=e14016] [cursor=pointer]
+        - button "View details for Pokemon 1000" [ref=e14019] [cursor=pointer]:
+          - generic [ref=e14021] [cursor=pointer]:
+            - generic [ref=e14023] [cursor=pointer]: "#1000"
+            - generic [ref=e14025] [cursor=pointer]:
+              - generic [ref=e14028] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 1000" [ref=e14030] [cursor=pointer]
+        - button "View details for Pokemon 1001" [ref=e14033] [cursor=pointer]:
+          - generic [ref=e14035] [cursor=pointer]:
+            - generic [ref=e14037] [cursor=pointer]: "#1001"
+            - generic [ref=e14039] [cursor=pointer]:
+              - generic [ref=e14042] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 1001" [ref=e14044] [cursor=pointer]
+        - button "View details for Pokemon 1002" [ref=e14047] [cursor=pointer]:
+          - generic [ref=e14049] [cursor=pointer]:
+            - generic [ref=e14051] [cursor=pointer]: "#1002"
+            - generic [ref=e14053] [cursor=pointer]:
+              - generic [ref=e14056] [cursor=pointer]: Loading Pokémon artwork
+              - img "Pokemon 1002" [ref=e14058] [cursor=pointer]
+    - button "Open Pikachu help assistant" [ref=e14062] [cursor=pointer]:
+      - img "Pikachu Help Assistant" [ref=e14063] [cursor=pointer]
+      - generic [ref=e14064] [cursor=pointer]: "!"
+  - button "Open Next.js Dev Tools" [ref=e14071] [cursor=pointer]:
+    - img [ref=e14072] [cursor=pointer]
+  - alert [ref=e14075]
+  - iframe [ref=e14076]:
+    
+```
