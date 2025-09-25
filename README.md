@@ -175,10 +175,22 @@ A comprehensive, high-performance Pokémon web application built with Next.js, T
 
 ### Available Scripts
 
-- `npm run dev` - Start development server
+- `npm run dev` - Start development server with Turbopack
+- `npm run dev:safe` - Start development server (safe mode)
+- `npm run dev:no-turbo` - Start development server without Turbopack
 - `npm run build` - Build for production
 - `npm run start` - Start production server
 - `npm run lint` - Run ESLint
+- `npm run test` - Run Vitest tests
+- `npm run test:unit` - Run unit tests
+- `npm run test:integration` - Run integration tests
+- `npm run test:coverage` - Run tests with coverage
+- `npm run test:ui` - Run tests with UI
+- `npm run test:rtdb` - Run Firebase RTDB tests
+- `npm run assets:pmd:top50` - Download PMD Top 50 assets
+- `npm run ingest` - Ingest usage data
+- `npm run seed-usage` - Seed usage data
+- `npm run test-real-data` - Test with real data
 
 ### Firebase Real-Time Battles
 
@@ -449,6 +461,27 @@ src/
 - **Git Hooks**: Pre-commit quality checks
 
 ## 📈 Recent Enhancements
+
+### Battle System
+- **Real-Time Multiplayer**: Firebase-powered battles with automatic synchronization
+- **Gym Champion Battles**: Battle against iconic trainers from all generations
+- **Team Building**: Create and save custom teams with move customization
+- **Battle Animations**: Smooth transitions and visual effects
+- **Online Lobby**: Create and join battle rooms with friends
+
+### Usage Meta Dashboard
+- **Competitive Statistics**: Track Pokémon usage across multiple platforms
+- **Interactive 3D Interface**: Popup book phases with smooth transitions
+- **Multi-Platform Support**: Smogon Singles, VGC Official, BSS Official
+- **Trend Analysis**: Usage patterns and rank changes over time
+- **Top 50 Focus**: Optimized for competitive relevance
+
+### Pokédex Checklist
+- **Progress Tracking**: Mark Pokémon as caught/seen with visual indicators
+- **Cloud Sync**: Firebase synchronization for signed-in users
+- **Offline Support**: Local storage with offline persistence
+- **Share System**: Create shareable progress snapshots
+- **Achievement System**: Streak tracking and badges
 
 ### Header Redesign
 - **Modern Glassmorphism**: Backdrop blur effects and gradient overlays
