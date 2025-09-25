@@ -1,10 +1,37 @@
-# PokéDex - Modern Pokémon Database
+# PokéDex - Modern Pokémon Database & Battle Platform
 
-A high-performance, modern Pokémon web application built with Next.js, TypeScript, and Tailwind CSS. Features a beautiful, responsive interface with multiple theme modes, advanced filtering, comprehensive Pokémon data from PokeAPI, and a redesigned modern header with enhanced mobile experience.
+A comprehensive, high-performance Pokémon web application built with Next.js, TypeScript, and Tailwind CSS. Features a beautiful, responsive interface with multiple theme modes, advanced filtering, comprehensive Pokémon data from PokeAPI, real-time multiplayer battles, competitive usage statistics, and a personal Pokédex checklist system.
 
 ## 🚀 Features
 
 ### ✅ **Core Features**
+
+#### 🎮 **Battle System**
+- **Real-Time Multiplayer Battles**: Firebase-powered real-time battles with automatic synchronization
+- **Turn-Based Combat**: Authentic Pokémon battle mechanics with move selection and timing
+- **Team Building**: Create and save custom teams with level and move customization
+- **Gym Champions**: Battle against iconic gym leaders and champions from all generations
+- **Battle Animations**: Smooth battle transitions and visual effects
+- **Online Lobby**: Create and join battle rooms with friends
+- **Battle History**: Track your battle performance and statistics
+
+#### 📊 **Usage Meta Dashboard**
+- **Competitive Statistics**: Track Pokémon usage across Smogon Singles, VGC Official, and BSS
+- **Multi-Generation Support**: Coverage for Generations 5-9 with extensible format support
+- **Interactive 3D Interface**: Popup book phases with smooth transitions
+- **Trend Analysis**: Usage patterns and rank changes over time
+- **Top 50 Focus**: Optimized for tracking the most relevant competitive Pokémon
+- **Source Attribution**: Full traceability with clickable source links
+- **Real-Time Data**: Monthly usage statistics with trend analysis
+
+#### 📝 **Pokédex Checklist**
+- **Personal Progress Tracking**: Mark Pokémon as caught/seen with visual progress indicators
+- **Firebase Sync**: Cloud synchronization for signed-in users with conflict-free merging
+- **Offline Support**: Local storage with offline persistence
+- **Generation Filtering**: Filter by Pokémon generations and types
+- **Progress Statistics**: Overall completion rates and generation-specific progress
+- **Share System**: Create shareable snapshots of your progress
+- **Streak Tracking**: Daily catch streaks and achievement badges
 
 #### 🎯 **Modern UI/UX**
 - **Redesigned Modern Header**: Glassmorphism design with gradient branding, improved search bar, and streamlined controls
@@ -244,6 +271,29 @@ Deploy to Vercel or Firebase Hosting - no additional servers needed!
 - **Ability Badges**: Color-coded ability badges based on type associations
 - **Evolution Display**: Correct types and consistent image sizing
 
+### Battle System (`/battle`)
+- **Team Selection**: Choose from saved teams or create new ones
+- **Gym Champion Battles**: Battle against iconic trainers from all generations
+- **Real-Time Combat**: Turn-based battles with move selection and animations
+- **Battle Lobby**: Create and join online battle rooms
+- **Team Builder**: Create and customize Pokémon teams with moves and levels
+
+### Usage Meta Dashboard (`/usage`)
+- **Competitive Statistics**: Track Pokémon usage across multiple platforms
+- **Interactive Phases**: 3D popup book interface with 5 distinct phases
+- **Trend Analysis**: Usage patterns and rank changes over time
+- **Multi-Platform Support**: Smogon Singles, VGC Official, BSS Official
+- **Generation Coverage**: Support for Generations 5-9
+- **Top 50 Focus**: Optimized for competitive relevance
+
+### Pokédex Checklist (`/checklist`)
+- **Progress Tracking**: Mark Pokémon as caught/seen with visual indicators
+- **Cloud Sync**: Firebase synchronization for signed-in users
+- **Offline Support**: Local storage with offline persistence
+- **Generation Filtering**: Filter by generations and types
+- **Progress Statistics**: Completion rates and achievement tracking
+- **Share System**: Create shareable progress snapshots
+
 ### Comparison Tool (`/compare`)
 - **Multi-Pokémon Comparison**: Compare up to 6 Pokémon simultaneously
 - **Radar Chart Overlay**: Interactive radar chart with multiple Pokémon overlaid
@@ -254,41 +304,89 @@ Deploy to Vercel or Firebase Hosting - no additional servers needed!
 - **Basic Info Comparison**: Height, weight, base experience
 - **Swap Functionality**: Easy Pokémon swapping
 
+### Additional Features
+- **Evolution Chains** (`/evolutions`): Visual evolution progression
+- **Type Matchups** (`/type-matchups`): Interactive type effectiveness charts
+- **Top 50** (`/top50`): Most popular competitive Pokémon
+- **Trends** (`/trends`): Usage trend analysis
+- **Team Builder** (`/team-builder`): Create and manage Pokémon teams
+
 ## 🔧 Technical Implementation
 
 ### File Structure
 ```
 src/
 ├── app/
-│   ├── page.tsx              # Main discovery page
-│   ├── pokemon/[id]/page.tsx # Detailed Pokémon page
-│   ├── compare/page.tsx      # Comparison tool
-│   ├── layout.tsx            # Root layout
+│   ├── page.tsx                    # Main discovery page
+│   ├── pokemon/[id]/page.tsx       # Detailed Pokémon page
+│   ├── compare/page.tsx            # Comparison tool
+│   ├── battle/page.tsx             # Battle system
+│   ├── battle/runtime/              # Real-time battle components
+│   ├── checklist/page.tsx           # Pokédex checklist
+│   ├── usage/page.tsx              # Usage meta dashboard
+│   ├── evolutions/page.tsx         # Evolution chains
+│   ├── type-matchups/page.tsx      # Type effectiveness
+│   ├── top50/page.tsx              # Top 50 competitive Pokémon
+│   ├── trends/page.tsx             # Usage trends
+│   ├── team-builder/page.tsx       # Team building
+│   ├── lobby/                      # Battle lobby system
+│   ├── api/                        # API routes
+│   │   ├── usage/                  # Usage statistics APIs
+│   │   ├── evolutions/             # Evolution data APIs
+│   │   ├── meta/                   # Meta data APIs
+│   │   └── share/                  # Sharing APIs
 │   └── styles/
-│       └── tokens.css        # CSS custom properties
+│       └── tokens.css              # CSS custom properties
 ├── components/
-│   ├── ModernPokedexLayout.tsx    # Modern UI layout with redesigned header
-│   ├── RedPokedexLayout.tsx       # Pokémon Red theme
-│   ├── GoldPokedexLayout.tsx      # Pokémon Gold theme
-│   ├── RubyPokedexLayout.tsx      # Pokémon Ruby theme
-│   ├── ModernPokemonCard.tsx      # Modern card component
-│   ├── VirtualizedPokemonGrid.tsx # Grid layout component
-│   ├── RadarChart.tsx             # Stat visualization
-│   ├── PokemonComparison.tsx      # Comparison component
-│   ├── ThemeProvider.tsx          # Theme management
-│   ├── ThemeToggle.tsx            # Theme switching
-│   ├── TypeBadge.tsx              # Consistent type badge component
-│   ├── AbilityBadge.tsx           # Color-coded ability badges
-│   ├── StatsSlider.tsx            # Enhanced stats display
-│   ├── Tabs.tsx                   # Improved tab navigation
-│   └── OverviewSection.tsx        # Enhanced overview display
-├── hooks/
-│   └── useSearch.ts              # Search functionality
+│   ├── battle/                     # Battle system components
+│   │   ├── RTDBBattleComponent.tsx # Real-time battle component
+│   │   ├── BattleStartDialog.tsx   # Battle initialization
+│   │   ├── HealthBar.tsx           # Health display
+│   │   └── [30+ battle components]
+│   ├── checklist/                  # Checklist system components
+│   │   ├── AuthGate.tsx            # Authentication
+│   │   ├── DexGrid.tsx             # Pokémon grid
+│   │   ├── ProgressBar.tsx         # Progress tracking
+│   │   └── [8 checklist components]
+│   ├── usage/                      # Usage meta components
+│   │   ├── UsagePhaseBook.tsx      # 3D interface
+│   │   ├── UsageFilters.tsx        # Filter controls
+│   │   └── [10 usage components]
+│   ├── ModernPokedexLayout.tsx     # Modern UI layout
+│   ├── RedPokedexLayout.tsx        # Pokémon Red theme
+│   ├── GoldPokedexLayout.tsx       # Pokémon Gold theme
+│   ├── RubyPokedexLayout.tsx       # Pokémon Ruby theme
+│   ├── ModernPokemonCard.tsx       # Modern card component
+│   ├── VirtualizedPokemonGrid.tsx  # Grid layout component
+│   ├── RadarChart.tsx              # Stat visualization
+│   ├── PokemonComparison.tsx        # Comparison component
+│   ├── ThemeProvider.tsx            # Theme management
+│   ├── ThemeToggle.tsx             # Theme switching
+│   ├── TypeBadge.tsx                # Consistent type badge component
+│   ├── AbilityBadge.tsx             # Color-coded ability badges
+│   ├── StatsSlider.tsx              # Enhanced stats display
+│   ├── Tabs.tsx                     # Improved tab navigation
+│   └── OverviewSection.tsx         # Enhanced overview display
 ├── lib/
-│   ├── api.ts               # API service layer
-│   └── utils.ts             # Utility functions
-└── types/
-    └── pokemon.ts           # TypeScript type definitions
+│   ├── battle/                      # Battle system logic
+│   ├── usage/                       # Usage meta system
+│   ├── checklist/                   # Checklist system
+│   ├── firebase/                    # Firebase integration
+│   ├── api.ts                       # API service layer
+│   └── utils.ts                     # Utility functions
+├── hooks/
+│   ├── useSearch.ts                 # Search functionality
+│   ├── useBattle.ts                 # Battle state management
+│   ├── useChecklist.ts              # Checklist state management
+│   └── [14 additional hooks]
+├── types/
+│   ├── pokemon.ts                   # Pokémon type definitions
+│   ├── battle.ts                    # Battle type definitions
+│   └── usage.ts                     # Usage meta type definitions
+└── data/
+    ├── top50.json                   # Top 50 competitive Pokémon
+    ├── enhanced-trends.json         # Usage trend data
+    └── evolutions.sample.json       # Evolution chain data
 ```
 
 ### Key Components
@@ -299,6 +397,10 @@ src/
 - **Type System**: Comprehensive TypeScript types for all Pokémon data
 - **Enhanced Header**: Modern glassmorphism design with improved mobile experience
 - **Comparison System**: Integrated comparison functionality with radar charts
+- **Battle System**: Real-time multiplayer battles with Firebase integration
+- **Usage Meta System**: Competitive statistics tracking and analysis
+- **Checklist System**: Personal Pokédex progress tracking with cloud sync
+- **Firebase Integration**: Authentication, real-time data, and cloud storage
 
 ## 🚀 Performance Optimizations
 
