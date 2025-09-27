@@ -187,6 +187,21 @@ class FirebaseRTDBService {
       version: 1
     });
 
+    // Record participant list for security rules and quick lookups
+    const participantsRef = ref(this.db, `battles/${battleId}/participants`);
+    await update(participantsRef, {
+      [p1Uid]: {
+        role: 'p1',
+        name: p1Name,
+        joinedAt: serverTimestamp()
+      },
+      [p2Uid]: {
+        role: 'p2',
+        name: p2Name,
+        joinedAt: serverTimestamp()
+      }
+    });
+
     // Create public state (masked info)
     const publicRef = ref(this.db, `battles/${battleId}/public`);
     await set(publicRef, {
@@ -202,19 +217,11 @@ class FirebaseRTDBService {
       },
       p1: {
         active: this.createPublicPokemonData(p1Team[0]),
-        benchPublic: p1Team.slice(1).map((pokemon: any) => ({
-          species: pokemon.pokemon.name,
-          fainted: false,
-          revealedMoves: []
-        }))
+        benchPublic: p1Team.slice(1).map((pokemon: any) => this.createBenchPublic(pokemon))
       },
       p2: {
         active: this.createPublicPokemonData(p2Team[0]),
-        benchPublic: p2Team.slice(1).map((pokemon: any) => ({
-          species: pokemon.pokemon.name,
-          fainted: false,
-          revealedMoves: []
-        }))
+        benchPublic: p2Team.slice(1).map((pokemon: any) => this.createBenchPublic(pokemon))
       },
       lastResultSummary: ''
     });
@@ -234,17 +241,31 @@ class FirebaseRTDBService {
   }
 
   private createPublicPokemonData(pokemon: any) {
+    if (!pokemon) {
+      return {
+        species: 'unknown',
+        level: 1,
+        types: ['normal'],
+        hp: { cur: 1, max: 1 },
+        status: null,
+        boosts: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0, acc: 0, eva: 0 },
+        itemKnown: false,
+        abilityKnown: false
+      };
+    }
+
+    const speciesName = this.extractSpeciesName(pokemon);
+    const level = typeof pokemon.level === 'number' ? pokemon.level : 50;
+    const types = this.extractTypes(pokemon);
+    const maxHp = typeof pokemon.maxHp === 'number' ? pokemon.maxHp : 100;
+    const currentHp = typeof pokemon.currentHp === 'number' ? pokemon.currentHp : maxHp;
+
     return {
-      species: pokemon.pokemon.name,
-      level: pokemon.level,
-      types: pokemon.pokemon.types.map((t: any) => 
-        typeof t === 'string' ? t : t.type?.name || 'normal'
-      ),
-      hp: { 
-        cur: pokemon.currentHp || pokemon.maxHp, 
-        max: pokemon.maxHp 
-      },
-      status: pokemon.status,
+      species: speciesName,
+      level,
+      types,
+      hp: { cur: currentHp, max: maxHp },
+      status: pokemon.status || null,
       boosts: {
         atk: pokemon.statModifiers?.attack || 0,
         def: pokemon.statModifiers?.defense || 0,
@@ -257,6 +278,38 @@ class FirebaseRTDBService {
       itemKnown: false,
       abilityKnown: false
     };
+  }
+
+  private createBenchPublic(pokemon: any) {
+    const species = this.extractSpeciesName(pokemon);
+    return {
+      species,
+      fainted: Boolean(pokemon?.fainted),
+      revealedMoves: Array.isArray(pokemon?.moves)
+        ? pokemon.moves.slice(0, 4).map((m: any) => (typeof m === 'string' ? m : m?.name || m?.id)).filter(Boolean)
+        : []
+    };
+  }
+
+  private extractSpeciesName(pokemon: any): string {
+    if (!pokemon) return 'unknown';
+    if (typeof pokemon.species === 'string') return pokemon.species;
+    if (pokemon.pokemon?.name) return pokemon.pokemon.name;
+    if (typeof pokemon.id === 'number') {
+      return `pokemon-${pokemon.id}`;
+    }
+    return 'unknown';
+  }
+
+  private extractTypes(pokemon: any): string[] {
+    if (!pokemon) return ['normal'];
+    if (Array.isArray(pokemon.types)) {
+      return pokemon.types.map((t: any) => (typeof t === 'string' ? t : t?.type?.name)).filter(Boolean);
+    }
+    if (Array.isArray(pokemon.pokemon?.types)) {
+      return pokemon.pokemon.types.map((t: any) => (typeof t === 'string' ? t : t?.type?.name)).filter(Boolean);
+    }
+    return ['normal'];
   }
 
   // Choice submission (clients can only write here)

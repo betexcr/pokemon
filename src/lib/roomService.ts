@@ -18,6 +18,7 @@ import {
 } from 'firebase/firestore';
 import { getDb as getClientDb, hasFirebaseClientConfig } from './firebase/client';
 import { battleService } from './battleService';
+import { rtdbService } from './firebase-rtdb-service';
 import { firebaseErrorLogger, PermissionErrorDetails } from './firebaseErrorLogger';
 
 export interface RoomData {
@@ -966,14 +967,14 @@ class RoomService {
     const normalizedHostTeam = normalizeTeam(roomData.hostTeam);
     const normalizedGuestTeam = normalizeTeam(roomData.guestTeam);
     const teamsAreIdentical = JSON.stringify(normalizedHostTeam) === JSON.stringify(normalizedGuestTeam);
-    
+
     if (teamsAreIdentical) {
       console.error('🚨 PREVENTION: Both players selected identical teams');
       console.error('Host team:', normalizedHostTeam);
       console.error('Guest team:', normalizedGuestTeam);
       throw new Error('Both players cannot use the same team. Please select different teams.');
     }
-    
+
     // Use existing battle document or create new one if needed
     let actualBattleId = roomData.battleId;
     
@@ -1000,7 +1001,26 @@ class RoomService {
       console.log('⏳ Waiting for battle document consistency...');
       await new Promise(resolve => setTimeout(resolve, 500));
     }
-    
+
+    // Ensure RTDB mirrors the battle so realtime listeners can attach
+    if (actualBattleId) {
+      try {
+        const hostRtdbTeam = this.normalizeTeamForRTDB(roomData.hostTeam);
+        const guestRtdbTeam = this.normalizeTeamForRTDB(roomData.guestTeam);
+        await rtdbService.createBattle(
+          actualBattleId,
+          roomData.hostId,
+          roomData.hostName || 'Host Trainer',
+          hostRtdbTeam,
+          roomData.guestId,
+          roomData.guestName || 'Guest Trainer',
+          guestRtdbTeam
+        );
+      } catch (rtdbError) {
+        console.warn('⚠️ Failed to prime RTDB battle state:', rtdbError);
+      }
+    }
+
     await updateDoc(roomRef, {
       status: 'battling',
       battleId: actualBattleId,
@@ -1100,6 +1120,59 @@ class RoomService {
         });
       }
     });
+  }
+
+  private normalizeTeamForRTDB(teamData: unknown): Array<Record<string, unknown>> {
+    if (!teamData) return [];
+    const slots = Array.isArray(teamData)
+      ? teamData
+      : typeof teamData === 'object' && (teamData as any).slots
+        ? (teamData as any).slots
+        : [];
+
+    if (!Array.isArray(slots)) return [];
+
+    return slots
+      .filter((slot: any) => slot && (slot.id ?? null) !== null)
+      .map((slot: any, index: number) => {
+        const id = typeof slot.id === 'number' ? slot.id : parseInt(String(slot.id ?? 0), 10) || index + 1;
+        const species = typeof slot.species === 'string'
+          ? slot.species
+          : slot.name || `pokemon-${id}`;
+        const level = typeof slot.level === 'number' ? slot.level : 50;
+        const moveNames = Array.isArray(slot.moves)
+          ? slot.moves
+              .map((move: any) => {
+                if (typeof move === 'string') return move;
+                if (move && typeof move === 'object') {
+                  return move.name || move.id || null;
+                }
+                return null;
+              })
+              .filter((name): name is string => Boolean(name))
+              .slice(0, 4)
+          : [];
+
+        return {
+          pokemon: {
+            id,
+            name: species,
+            types: Array.isArray(slot.types)
+              ? slot.types
+                  .map((t: any) => (typeof t === 'string' ? t : t?.type?.name))
+                  .filter(Boolean)
+              : [],
+          },
+          level,
+          moves: moveNames,
+          currentHp: typeof slot.currentHp === 'number' ? slot.currentHp : 100,
+          maxHp: typeof slot.maxHp === 'number' ? slot.maxHp : 100,
+          nature: typeof slot.nature === 'string' ? slot.nature : 'hardy',
+          statModifiers: slot.statModifiers || {},
+          status: slot.status || null,
+          originalIndex: index
+        };
+      });
   }
 
   // Track user presence in a room

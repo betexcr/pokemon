@@ -23,16 +23,19 @@
 
     "battles": {
       "$battleId": {
-        ".read": "auth != null && (auth.uid === root.child('battles/' + $battleId + '/meta/players/p1/uid').val() || auth.uid === root.child('battles/' + $battleId + '/meta/players/p2/uid').val())",
-        ".write": "auth != null && (auth.uid === root.child('battles/' + $battleId + '/meta/players/p1/uid').val() || auth.uid === root.child('battles/' + $battleId + '/meta/players/p2/uid').val())",
+        ".read": "auth != null && (
+          data.child('participants/' + auth.uid).exists() ||
+          data.child('meta/players/p1/uid').val() === auth.uid ||
+          data.child('meta/players/p2/uid').val() === auth.uid
+        )",
+        ".write": "auth != null && (
+          newData.child('participants/' + auth.uid).exists() ||
+          newData.child('meta/players/p1/uid').val() === auth.uid ||
+          newData.child('meta/players/p2/uid').val() === auth.uid
+        )",
 
-        "meta": {
-          ".write": false
-        },
-
-        "public": {
-          ".write": false
-        },
+        "meta": { ".write": false },
+        "public": { ".write": false },
 
         "private": {
           "$uid": {
@@ -45,12 +48,20 @@
           "$turn": {
             "choices": {
               "$uid": {
-                ".read": "auth != null && (auth.uid === root.child('battles/' + $battleId + '/meta/players/p1/uid').val() || auth.uid === root.child('battles/' + $battleId + '/meta/players/p2/uid').val())",
+                ".read": "auth != null && (
+                  data.parent().parent().child('participants/' + auth.uid).exists() ||
+                  data.parent().parent().child('meta/players/p1/uid').val() === auth.uid ||
+                  data.parent().parent().child('meta/players/p2/uid').val() === auth.uid
+                )",
                 ".write": "auth != null && auth.uid === $uid"
               }
             },
             "resolution": {
-              ".read": "auth != null && (auth.uid === root.child('battles/' + $battleId + '/meta/players/p1/uid').val() || auth.uid === root.child('battles/' + $battleId + '/meta/players/p2/uid').val())",
+              ".read": "auth != null && (
+                data.parent().parent().parent().child('participants/' + auth.uid).exists() ||
+                data.parent().parent().parent().child('meta/players/p1/uid').val() === auth.uid ||
+                data.parent().parent().parent().child('meta/players/p2/uid').val() === auth.uid
+              )",
               ".write": false
             }
           }

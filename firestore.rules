@@ -7,11 +7,12 @@ service cloud.firestore {
     // Public lobby rooms
     match /battle_rooms/{roomId} {
       allow read: if request.auth != null && (
-        // Everyone can see waiting/ready rooms
-        resource.data.status in ['waiting', 'ready'] ||
+        // Everyone can see active lobby rooms
+        resource != null && resource.data.status in ['waiting', 'ready', 'battling', 'finished', 'unresolved'] ||
+        // Allow listeners to stay alive while a room is being deleted
+        resource == null ||
         // Host or guest always keep access to their room
-        resource.data.hostId == request.auth.uid ||
-        resource.data.guestId == request.auth.uid
+        (resource != null && (resource.data.hostId == request.auth.uid || resource.data.guestId == request.auth.uid))
       );
 
       allow create: if request.auth != null &&

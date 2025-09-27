@@ -6,6 +6,7 @@ import { getPokemonList, getPokemon, getMove, getPokemonTotalCount } from '@/lib
 import { formatPokemonName, getShowdownAnimatedSprite } from '@/lib/utils'
 import Image from 'next/image'
 import TypeBadge from '@/components/TypeBadge'
+import TypeBadgeWithTooltip from '@/components/TypeBadgeWithTooltip'
 import Tooltip from '@/components/Tooltip'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, ChevronDown, ChevronRight, Cloud, CloudOff, Save, Loader2, Wifi } from 'lucide-react'
@@ -89,6 +90,8 @@ export default function TeamBuilderPage() {
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [levelMovesOnly, setLevelMovesOnly] = useState(true)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [isWeaknessMatrixCollapsed, setIsWeaknessMatrixCollapsed] = useState(true)
+  const [isOffenseMatrixCollapsed, setIsOffenseMatrixCollapsed] = useState(true)
   
   // Virtualized scrolling state
   const [pokemonOffset, setPokemonOffset] = useState(0)
@@ -1135,11 +1138,7 @@ export default function TeamBuilderPage() {
                                   lastPokemon.types.map((typeObj) => {
                                     const typeName = typeof typeObj === 'string' ? typeObj : typeObj.type?.name
                                     return typeName ? (
-                                      <Tooltip content={`Type: ${typeName}`} position="top">
-                                        <span>
-                                          <TypeBadge key={`${lastPokemon.id}-${typeName}`} type={typeName} variant="span" />
-                                        </span>
-                                      </Tooltip>
+                                      <TypeBadgeWithTooltip key={`${lastPokemon.id}-${typeName}`} type={typeName} />
                                     ) : null
                                   })
                                 ) : (
@@ -1204,11 +1203,7 @@ export default function TeamBuilderPage() {
                               // Handle both object format { type: { name: "fire" } } and string format "fire"
                               const typeName = typeof typeObj === 'string' ? typeObj : typeObj.type?.name
                               return typeName ? (
-                                <Tooltip content={`Type: ${typeName}`} position="top">
-                                  <span>
-                                    <TypeBadge key={`${pokemon.id}-${typeName}`} type={typeName} variant="span" />
-                                  </span>
-                                </Tooltip>
+                                <TypeBadgeWithTooltip key={`${pokemon.id}-${typeName}`} type={typeName} />
                               ) : null
                             })
                           ) : (
@@ -1371,11 +1366,7 @@ export default function TeamBuilderPage() {
                         <div className="text-sm font-medium text-text">#{poke.id} {formatPokemonName(poke.name)}</div>
                         <div className="flex flex-wrap gap-1 mt-1">
                           {poke.types?.length > 0 ? poke.types.map(t => (
-                            <Tooltip key={t.type.name} content={`Type: ${t.type.name}`} position="top">
-                              <span>
-                                <TypeBadge type={t.type.name} variant="span" />
-                              </span>
-                            </Tooltip>
+                            <TypeBadgeWithTooltip key={t.type.name} type={t.type.name} />
                           )) : null}
                         </div>
                       </div>
@@ -1458,7 +1449,7 @@ export default function TeamBuilderPage() {
                                       </button>
                                     </div>
                                   </td>
-                                  <td><TypeBadge type={move.type} variant="span" /></td>
+                                  <td><TypeBadgeWithTooltip type={move.type} /></td>
                                   <td className="capitalize">{move.damage_class}</td>
                                   <td>{move.power ?? '—'}</td>
                                   <td>{move.accuracy ?? '—'}</td>
@@ -1553,7 +1544,7 @@ export default function TeamBuilderPage() {
                                           <span>{move.name}</span>
                                         )}
                                       </td>
-                                      <td><TypeBadge type={move.type} variant="span" /></td>
+                                      <td><TypeBadgeWithTooltip type={move.type} /></td>
                                       <td className="capitalize">{move.damage_class}</td>
                                       <td>{move.power ?? '—'}</td>
                                       <td>{move.accuracy ?? '—'}</td>
@@ -1730,8 +1721,16 @@ export default function TeamBuilderPage() {
           {teamSlots.some(s => s.id !== null) && (
           <div className="space-y-6">
             <TypeRadar analysis={teamAnalysis} />
-            <WeaknessMatrix analysis={teamAnalysis} />
-            <OffenseMatrix team={convertTeamSlotsToSimple(teamSlots, allPokemon, displayPokemonById)} />
+            <WeaknessMatrix 
+              analysis={teamAnalysis} 
+              isCollapsed={isWeaknessMatrixCollapsed}
+              onToggleCollapse={() => setIsWeaknessMatrixCollapsed(!isWeaknessMatrixCollapsed)}
+            />
+            <OffenseMatrix 
+              team={convertTeamSlotsToSimple(teamSlots, allPokemon, displayPokemonById)} 
+              isCollapsed={isOffenseMatrixCollapsed}
+              onToggleCollapse={() => setIsOffenseMatrixCollapsed(!isOffenseMatrixCollapsed)}
+            />
             <Suggestions analysis={teamAnalysis} />
           </div>
           )}

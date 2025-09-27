@@ -22,24 +22,3 @@
   "dir": "ltr",
   "prefer_related_applications": false
 }
-
-{
-  "name": "PokéDex - Modern Pokémon Database",
-  "short_name": "PokéDex",
-  "description": "Explore the world of Pokémon with our modern, high-performance PokéDex application",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#3B4CCA",
-  "theme_color": "#3B4CCA",
-  "orientation": "portrait-primary",
-  "icons": [
-    {
-      "src": "/favicon.ico",
-      "sizes": "any",
-      "type": "image/x-icon"
-    }
-  ],
-  "categories": ["games", "entertainment", "education"],
-  "lang": "en",
-  "dir": "ltr"
-}

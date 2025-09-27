@@ -507,6 +507,45 @@ export async function searchPokemonByName(query: string): Promise<Pokemon[]> {
       console.debug(`Species varieties lookup failed for "${trimmedQuery}":`, error instanceof Error ? error.message : 'Unknown error')
     }
 
+    // 4) For partial matches, also check if any of the found Pokemon have varieties
+    // This ensures queries like "pika" also return all Pikachu variants
+    if (listMatches.length > 0) {
+      const varietyPromises = listMatches.slice(0, 5).map(async (pokemon) => {
+        try {
+          const species = await getPokemonSpecies(pokemon.name)
+          if (species && Array.isArray(species.varieties) && species.varieties.length > 1) {
+            const varietyDetails = await Promise.all(
+              species.varieties.slice(0, 20).map(async (v: any) => {
+                const url = v.pokemon?.url as string | undefined
+                if (!url) return null
+                const idStr = url.split('/').slice(-2)[0]
+                const id = parseInt(idStr)
+                if (!Number.isFinite(id)) return null
+                try {
+                  return await getPokemon(id)
+                } catch (_) {
+                  return null
+                }
+              })
+            )
+            return varietyDetails.filter(p => p !== null)
+          }
+          return []
+        } catch (error) {
+          // ignore errors for variety lookup
+          console.debug(`Variety lookup failed for "${pokemon.name}":`, error instanceof Error ? error.message : 'Unknown error')
+          return []
+        }
+      })
+      
+      const varietyResults = await Promise.all(varietyPromises)
+      for (const varietyList of varietyResults) {
+        for (const p of varietyList) {
+          if (p) results.push(p)
+        }
+      }
+    }
+
     // Deduplicate by id and cap to 20 for performance
     const uniqueById = new Map<number, Pokemon>()
     for (const p of results) {

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { createPortal } from "react-dom";
 import TypeBadge from "./TypeBadge";
 import { calculateTypeEffectiveness } from "@/lib/api";
 
@@ -14,6 +15,8 @@ export default function TypeBadgeWithTooltip({ type, className }: TypeBadgeWithT
   const [showTooltip, setShowTooltip] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState<'top' | 'bottom'>('top');
   const [tooltipAlignment, setTooltipAlignment] = useState<'left' | 'center' | 'right'>('center');
+  const [tooltipCoords, setTooltipCoords] = useState({ x: 0, y: 0 });
+  const badgeRef = useRef<HTMLDivElement>(null);
   
   // Get type effectiveness for the specific hovered type
   const getTypeEffectivenessForType = (attackingType: string) => {
@@ -40,44 +43,42 @@ export default function TypeBadgeWithTooltip({ type, className }: TypeBadgeWithT
   const immune = typeEffectiveness.filter(e => e.effectiveness === 0);
   
   return (
-    <div className="relative inline-block">
-      <div
+    <>
+      <div 
+        ref={badgeRef}
         onMouseEnter={(e) => {
           const rect = e.currentTarget.getBoundingClientRect();
           const tooltipHeight = 200; // Approximate tooltip height
           const tooltipWidth = 256; // w-64 = 16rem = 256px
           const margin = 16; // 1rem margin from edge
           
+          // Calculate fixed coordinates relative to viewport
+          let x = rect.left + rect.width / 2;
+          let y = rect.top;
+          
           // Check vertical positioning
           if (rect.top < tooltipHeight + 20) {
             setTooltipPosition('bottom');
+            y = rect.bottom;
           } else {
             setTooltipPosition('top');
+            y = rect.top;
           }
-          
-          // Find the actual content container bounds - try multiple selectors
-          let contentContainer = e.currentTarget.closest('.max-w-7xl, .container, main, [class*="max-w"]');
-          
-          // If no container found, try to find the main content area
-          if (!contentContainer) {
-            contentContainer = document.body;
-          }
-          
-          const containerRect = contentContainer.getBoundingClientRect();
-          const tooltipLeft = rect.left - containerRect.left;
-          const tooltipRight = tooltipLeft + tooltipWidth;
-          const containerWidth = containerRect.width;
           
           // Check horizontal positioning
-          if (tooltipRight > containerWidth - margin) {
+          const viewportWidth = window.innerWidth;
+          if (x + tooltipWidth / 2 > viewportWidth - margin) {
             setTooltipAlignment('right');
-          } else if (tooltipLeft < margin) {
+            x = rect.right;
+          } else if (x - tooltipWidth / 2 < margin) {
             setTooltipAlignment('left');
+            x = rect.left;
           } else {
-            // Center is fine
             setTooltipAlignment('center');
+            // x is already centered
           }
           
+          setTooltipCoords({ x, y });
           setShowTooltip(true);
         }}
         onMouseLeave={() => setShowTooltip(false)}
@@ -86,22 +87,18 @@ export default function TypeBadgeWithTooltip({ type, className }: TypeBadgeWithT
         <TypeBadge type={type} className={className} />
       </div>
       
-      {showTooltip && (
+      {showTooltip && createPortal(
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
-          className={`absolute z-50 max-w-[min(16rem,calc(100vw-4rem))] ${
-            tooltipPosition === 'top' 
-              ? 'bottom-full mb-2' 
-              : 'top-full mt-2'
-          } ${
-            tooltipAlignment === 'left'
-              ? 'left-0'
-              : tooltipAlignment === 'right'
-              ? 'right-0'
-              : 'left-1/2 transform -translate-x-1/2'
-          }`}
+          className="fixed z-[9999] max-w-[min(16rem,calc(100vw-4rem))] pointer-events-none"
+          style={{
+            left: tooltipAlignment === 'left' ? tooltipCoords.x : 
+                  tooltipAlignment === 'right' ? tooltipCoords.x - 256 : 
+                  tooltipCoords.x - 128, // Center: half of tooltip width
+            top: tooltipPosition === 'top' ? tooltipCoords.y - 210 : tooltipCoords.y + 8
+          }}
         >
           <div className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-xs rounded-lg p-2 shadow-xl border border-gray-200 dark:border-gray-600 w-64 max-w-[min(16rem,calc(100vw-4rem))]">
             {/* Header */}
@@ -164,8 +161,9 @@ export default function TypeBadgeWithTooltip({ type, className }: TypeBadgeWithT
               </div>
             </div>
           </div>
-        </motion.div>
+        </motion.div>,
+        document.body
       )}
-    </div>
+    </>
   );
 }

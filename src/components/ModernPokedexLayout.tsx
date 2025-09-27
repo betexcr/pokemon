@@ -11,7 +11,7 @@ import VirtualizedPokemonGrid from './VirtualizedPokemonGrid'
 import PokedexListView from './PokedexListView'
 import AdvancedFilters from './AdvancedFilters'
 import { useViewportDataLoading } from '@/hooks/useViewportDataLoading'
-import { Search, X, List, Grid3X3, Grid2X2, LayoutGridIcon } from 'lucide-react'
+import { Search, X, List, Grid3X3, Grid2X2, LayoutGridIcon, ChevronUp, ChevronDown } from 'lucide-react'
 import UserDropdown from './UserDropdown'
 import AuthModal from './auth/AuthModal'
 import { useAuth } from '@/contexts/AuthContext'
@@ -355,8 +355,28 @@ export default function ModernPokedexLayout({
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login')
   
+  // Collapsible sections state with localStorage persistence
+  const [isFiltersCollapsed, setIsFiltersCollapsed] = useState(true)
+  const [isFiltersHydrated, setIsFiltersHydrated] = useState(false)
+  
   // Always use lazy loading
   const [isInitialLoading, setIsInitialLoading] = useState(true)
+
+  // Handle hydration and load from localStorage
+  useEffect(() => {
+    setIsFiltersHydrated(true)
+    const saved = localStorage.getItem('pokemon-filters-collapsed')
+    if (saved) {
+      setIsFiltersCollapsed(JSON.parse(saved))
+    }
+  }, [])
+
+  // Persist collapsible state to localStorage
+  useEffect(() => {
+    if (isFiltersHydrated) {
+      localStorage.setItem('pokemon-filters-collapsed', JSON.stringify(isFiltersCollapsed))
+    }
+  }, [isFiltersCollapsed, isFiltersHydrated])
 
   // Heuristics-driven render-only cap and moving window
   const storage = typeof window !== 'undefined' ? new LocalStorageAdapter() : new MemoryStorage()
@@ -1763,25 +1783,47 @@ export default function ModernPokedexLayout({
 
       {/* Desktop Menu Drawer disabled: header has inline controls */}
 
-      {/* Search Bar - Visible on all viewports */}
+      {/* Collapsible Search and Filters Section */}
       <div className="border-b border-border bg-surface">
-        <div className="w-full px-4 py-3">
-          <div className="flex items-center gap-3 relative">
-            <SearchInput
-              onSearchChange={handleSearchChange}
-              placeholder="Search Pokémon..."
-            />
-            {searchLoading && (
-              <div className="absolute right-6 top-1/2 transform -translate-y-1/2">
-                <img src="/loading.gif" alt="Loading" width={20} height={20} className="opacity-80" />
-              </div>
+        {/* Toggle Button */}
+        <div className="w-full px-4 py-2">
+          <button
+            onClick={() => setIsFiltersCollapsed(!isFiltersCollapsed)}
+            className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium text-text hover:bg-surface/50 rounded-lg transition-all duration-200 hover:shadow-sm"
+          >
+            <span className="flex items-center gap-2">
+              <Search className="w-4 h-4" />
+              Search & Filters
+            </span>
+            {isFiltersCollapsed ? (
+              <ChevronDown className="w-4 h-4 text-muted" />
+            ) : (
+              <ChevronUp className="w-4 h-4 text-muted" />
             )}
-          </div>
+          </button>
         </div>
-      </div>
 
-      {/* Enhanced Type Filter Ribbon */}
-      <div className="border-b border-border bg-gradient-to-r from-surface via-surface to-surface">
+        {/* Collapsible Content */}
+        <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
+          isFiltersCollapsed ? 'max-h-0 opacity-0' : 'max-h-[500px] opacity-100'
+        }`}>
+          {/* Search Bar */}
+          <div className="px-4 py-3">
+            <div className="flex items-center gap-3 relative">
+              <SearchInput
+                onSearchChange={handleSearchChange}
+                placeholder="Search Pokémon..."
+              />
+              {searchLoading && (
+                <div className="absolute right-6 top-1/2 transform -translate-y-1/2">
+                  <img src="/loading.gif" alt="Loading" width={20} height={20} className="opacity-80" />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Enhanced Type Filter Ribbon */}
+          <div className="border-t border-border bg-gradient-to-r from-surface via-surface to-surface">
         <div className="w-full max-w-full pl-0 pr-4 sm:pl-0 sm:pr-6 lg:pl-0 lg:pr-8 py-4">
           <div className="flex items-center justify-between">
             {/* Type Filter Buttons */}
@@ -1840,10 +1882,10 @@ export default function ModernPokedexLayout({
             </div>
           </div>
         </div>
-      </div>
+          </div>
 
-      {/* Size & Sort Controls - Visible on all viewports */}
-      <div className="border-b border-border bg-surface/60">
+          {/* Size & Sort Controls */}
+          <div className="border-t border-border bg-surface/60">
         <div className="w-full max-w-full px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex flex-row items-center justify-between gap-4">
             {/* Filters trigger placed left of Size selectors */}
@@ -1939,6 +1981,8 @@ export default function ModernPokedexLayout({
               </div>
             </div>
 
+          </div>
+        </div>
           </div>
         </div>
       </div>
