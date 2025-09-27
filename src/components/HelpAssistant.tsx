@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { usePathname } from 'next/navigation'
 import { ChevronLeft, ChevronRight, X, HelpCircle } from 'lucide-react'
+import { useError } from '@/contexts/ErrorContext'
+import { getPokemon } from '@/lib/api'
 
 interface HelpTip {
   id: string
@@ -16,46 +18,15 @@ interface HelpAssistantProps {
   className?: string
 }
 
-// Popular Pokémon for the help assistant (with PMD assets available)
-const HELP_POKEMON = [
-  { id: '0025', name: 'Pikachu' },
-  { id: '0006', name: 'Charizard' },
-  { id: '0009', name: 'Blastoise' },
-  { id: '0094', name: 'Gengar' },
-  { id: '0143', name: 'Snorlax' },
-  { id: '0149', name: 'Dragonite' },
-  { id: '0150', name: 'Mewtwo' },
-  { id: '0196', name: 'Espeon' },
-  { id: '0197', name: 'Umbreon' },
-  { id: '0249', name: 'Lugia' },
-  { id: '0257', name: 'Blaziken' },
-  { id: '0282', name: 'Gardevoir' },
-  { id: '0359', name: 'Absol' },
-  { id: '0384', name: 'Rayquaza' },
-  { id: '0445', name: 'Garchomp' },
-  { id: '0448', name: 'Lucario' },
-  { id: '0471', name: 'Glaceon' },
-  { id: '0500', name: 'Emboar' },
-  { id: '0635', name: 'Hydreigon' },
-  { id: '0658', name: 'Greninja' },
-  { id: '0700', name: 'Sylveon' },
-  { id: '0724', name: 'Decidueye' },
-  { id: '0727', name: 'Incineroar' },
-  { id: '0778', name: 'Mimikyu' },
-  { id: '0807', name: 'Zeraora' },
-  { id: '0809', name: 'Melmetal' },
-  { id: '0823', name: 'Corviknight' },
-  { id: '0887', name: 'Dragapult' },
-  { id: '0892', name: 'Urshifu' },
-  { id: '0893', name: 'Zarude' },
-  { id: '0897', name: 'Regieleki' },
-  { id: '0905', name: 'Enamorus' },
-  { id: '0908', name: 'Skeledirge' },
-  { id: '1002', name: 'Koraidon' },
-  { id: '1008', name: 'Miraidon' },
-  { id: '1009', name: 'Walking Wake' },
-  { id: '1010', name: 'Iron Leaves' }
-]
+// All Pokémon available in PMD Sprite Repository (1025 Pokemon)
+// Generate all Pokemon IDs from 1 to 1025 with real names
+const HELP_POKEMON = Array.from({ length: 1025 }, (_, i) => {
+  const pokemonId = i + 1;
+  return {
+    id: String(pokemonId).padStart(4, '0'),
+    name: `Pokemon #${pokemonId}` // Will be updated with real names dynamically
+  };
+})
 
 // Seven playful assistant styles (randomly applied)
 const CLIPPY_STYLES = [
@@ -226,6 +197,227 @@ const POKE_QUOTES: string[] = [
   'Educational fact: Pokémon stats teach about different strengths!',
   'Learning insight: Move selection teaches resource management!',
   'Educational tip: Team composition teaches balance and diversity!',
+
+  // Pro Tips & Strategy
+  'Pro tip: Always lead with a Pokémon that can set up entry hazards like Stealth Rock or Spikes!',
+  'Strategy tip: Use Protect to scout your opponent\'s moves and gain valuable information!',
+  'Pro tip: Weather teams can be devastating—Rain Dance + Swift Swim = unstoppable speed!',
+  'Strategy tip: Don\'t just focus on offense—defensive pivots like Toxapex can win games!',
+  'Pro tip: Priority moves like Quick Attack can save you when you\'re slower than your opponent!',
+  'Strategy tip: Status conditions win long games—paralysis and sleep are game-changers!',
+  'Pro tip: Type immunity is free momentum—use Ground immunity to switch in safely!',
+  'Strategy tip: Entry hazards stack up damage over time—Stealth Rock + Spikes = death by a thousand cuts!',
+  'Pro tip: Choice items lock you into one move but give massive power boosts!',
+  'Strategy tip: Baton Pass chains can be broken by phazing moves like Roar or Whirlwind!',
+  'Pro tip: Focus Sash guarantees you survive one hit—perfect for setup sweepers!',
+  'Strategy tip: Dual-type Pokémon have complex weaknesses—Fire/Flying is 4x weak to Rock!',
+  'Pro tip: Speed control is everything—Trick Room reverses the speed order!',
+  'Strategy tip: Hazards removal is crucial—Defog and Rapid Spin keep your team healthy!',
+  'Pro tip: Fake Out gives you a free turn to set up or switch safely!',
+  'Strategy tip: Intimidate lowers Attack on switch-in—use it to weaken physical threats!',
+  'Pro tip: Substitute protects you from status and gives you setup opportunities!',
+  'Strategy tip: Weather abilities like Drought and Drizzle change the entire battlefield!',
+  'Pro tip: Critical hits ignore stat changes—sometimes luck beats strategy!',
+  'Strategy tip: Team preview lets you plan your lead—choose wisely!',
+  'Pro tip: Mega Evolution changes type and ability—plan your mega timing carefully!',
+  'Strategy tip: Z-Moves are one-time nukes—save them for crucial moments!',
+  'Pro tip: Dynamax lasts 3 turns and doubles HP—use it to tank hits and deal damage!',
+  'Strategy tip: Terastallization changes your type—use it to surprise opponents!',
+  'Pro tip: Hidden Abilities can be game-changing—some are only available through special means!',
+  'Strategy tip: Egg moves are inherited from breeding—plan your breeding chains!',
+  'Pro tip: Nature affects stat growth—Adamant boosts Attack, Modest boosts Special Attack!',
+  'Strategy tip: IVs range from 0-31—perfect IVs (31) give maximum stat potential!',
+  'Pro tip: EVs cap at 252 per stat, 510 total—distribute them wisely!',
+  'Strategy tip: Move tutors teach exclusive moves—some moves are only available this way!',
+  'Pro tip: TM moves can be forgotten and relearned—experiment with different sets!',
+  'Strategy tip: Held items can be stolen by Thief or Covet—protect your valuable items!',
+  'Pro tip: Weather affects more than just moves—some abilities only work in specific weather!',
+  'Strategy tip: Terrain affects grounded Pokémon—Electric Terrain prevents sleep!',
+  'Pro tip: Trick Room reverses speed order—slow Pokémon become fast!',
+  'Strategy tip: Gravity makes Flying types vulnerable to Ground moves!',
+  'Pro tip: Magic Room disables held items—use it to counter item-reliant strategies!',
+  'Strategy tip: Wonder Room swaps Defense and Special Defense—confuse your opponent!',
+  'Pro tip: Skill Swap exchanges abilities—use it to steal powerful abilities!',
+
+  // Etymology & Fun Facts
+  'Etymology: Pikachu\'s name comes from "pika" (electric spark sound) + "chu" (mouse sound)!',
+  'Fun fact: Charizard\'s Japanese name "Lizardon" combines "lizard" + "don" (dragon sound)!',
+  'Etymology: Blastoise comes from "blast" + "tortoise"—it\'s a turtle that blasts water!',
+  'Fun fact: Gengar\'s name is based on "doppelgänger" because it\'s Clefable\'s shadow!',
+  'Etymology: Mewtwo\'s name means "Mew" + "two" because it\'s the second Mew (a clone)!',
+  'Fun fact: Dragonite combines "dragon" + "knight"—it\'s a noble dragon warrior!',
+  'Etymology: Snorlax = "snore" + "lax" (relaxed)—it sleeps and eats all day!',
+  'Fun fact: Ditto means "the same" because it transforms into any Pokémon!',
+  'Etymology: Eevee sounds like "E.V." which stands for "Evolution"—it has many forms!',
+  'Fun fact: Arceus comes from "arche" (beginning) + "deus" (god)—the original Pokémon!',
+  'Etymology: Lugia\'s name combines "lutra" (otter) + "leviathan" (sea monster)!',
+  'Fun fact: Ho-Oh means "phoenix" in Japanese—it\'s based on the mythical bird!',
+  'Etymology: Celebi = "celestial" + "being"—it\'s a time-traveling mythical creature!',
+  'Fun fact: Rayquaza combines "ray" (light) + "quasar" (celestial object)!',
+  'Etymology: Lucario is an anagram of "oracle"—it can sense auras and predict the future!',
+  'Fun fact: Garchomp = "gar" (fish) + "chomp" (bite)—it\'s a land shark!',
+  'Etymology: Dialga comes from "diamond" + "ga" (dragon)—the diamond dragon!',
+  'Fun fact: Palkia = "pearl" + "kia" (dragon)—the pearl dragon of space!',
+  'Etymology: Giratina combines "girasol" (opal) + "tina" (suffix)—the opal dragon!',
+  'Fun fact: Zekrom = "kuro" (black) + "zek" (strength)—the black dragon of ideals!',
+  'Etymology: Reshiram = "shiro" (white) + "ram" (male sheep)—the white dragon of truth!',
+  'Fun fact: Kyurem = "kyū" (nine) + "rem" (remnant)—the remnant of the original dragon!',
+  'Etymology: Deoxys comes from "DNA" (deoxyribonucleic acid)—it\'s an alien virus!',
+  'Fun fact: Mew\'s name means "mystery" or "mirage"—it\'s the ancestor of all Pokémon!',
+  'Etymology: Bulbasaur = "bulb" + "saur" (lizard)—it\'s a plant dinosaur!',
+  'Fun fact: Squirtle = "squirt" + "turtle"—it\'s a water-spouting turtle!',
+  'Etymology: Charmander = "char" (burn) + "salamander"—it\'s a fire lizard!',
+  'Fun fact: Treecko = "tree" + "gecko"—it\'s a tree-climbing lizard!',
+  'Etymology: Torchic = "torch" + "chick"—it\'s a fire bird!',
+  'Fun fact: Mudkip = "mud" + "kip" (fish)—it\'s a mud fish!',
+  'Etymology: Snivy = "snake" + "ivy"—it\'s a grass snake!',
+  'Fun fact: Tepig = "tepid" (lukewarm) + "pig"—it\'s a warm pig!',
+  'Etymology: Oshawott = "ocean" + "wotter" (otter)—it\'s a sea otter!',
+  'Fun fact: Chespin = "chestnut" + "pin" (spike)—it\'s a spiky chestnut!',
+  'Etymology: Fennekin = "fennec" (fox) + "kin" (family)—it\'s a fennec fox!',
+  'Fun fact: Froakie = "frog" + "croakie" (croaking sound)—it\'s a croaking frog!',
+  'Etymology: Rowlet = "row" (line) + "owlet" (baby owl)—it\'s a baby owl!',
+  'Fun fact: Litten = "lit" (lighted) + "kitten"—it\'s a fire kitten!',
+  'Etymology: Popplio = "pop" (sound) + "lio" (lion)—it\'s a sea lion!',
+  'Fun fact: Grookey = "groove" + "monkey"—it\'s a musical monkey!',
+  'Etymology: Scorbunny = "score" (goal) + "bunny"—it\'s a soccer bunny!',
+  'Fun fact: Sobble = "sob" (cry) + "bubble"—it\'s a crying water bubble!',
+  'Etymology: Sprigatito = "sprig" (twig) + "gatito" (kitten)—it\'s a grass kitten!',
+  'Fun fact: Fuecoco = "fuego" (fire) + "coco" (crocodile)—it\'s a fire crocodile!',
+  'Etymology: Quaxly = "quack" + "axly" (water)—it\'s a quacking duck!',
+  'Fun fact: Magikarp = "magic" + "carp"—it\'s a magical fish that becomes a dragon!',
+  'Etymology: Gyarados = "gyakuryū" (countercurrent) + "dos" (two)—it\'s a turbulent dragon!',
+  'Fun fact: Onix = "onyx" (mineral)—it\'s a living rock made of onyx!',
+  'Etymology: Lapras = "lap" (wave motion) + "transport"—it\'s a ferry Pokémon!',
+  'Fun fact: Machop = "macho" (strong) + "chop" (martial arts)—it\'s a strong fighter!',
+  'Etymology: Machamp = "macho" + "champ" (champion)—it\'s the champion fighter!',
+  'Fun fact: Gastly = "ghastly" (frightening)—it\'s a scary ghost!',
+  'Etymology: Haunter = "haunt" + "er" (one who haunts)—it\'s a haunting spirit!',
+  'Fun fact: Gengar = "doppelgänger" (double)—it\'s Clefable\'s shadow twin!',
+  'Etymology: Voltorb = "volt" (electricity) + "orb" (ball)—it\'s an electric ball!',
+  'Fun fact: Electrode = "electrode" (electrical conductor)—it\'s a living battery!',
+  'Etymology: Exeggcute = "egg" + "execute"—it\'s eggs that execute attacks!',
+  'Fun fact: Exeggutor = "egg" + "executor"—it\'s the executor of egg attacks!',
+  'Etymology: Cubone = "cube" + "bone"—it\'s a cub that wears a skull!',
+  'Fun fact: Marowak = "marrow" + "whack"—it\'s a bone-whacking warrior!',
+  'Etymology: Hitmonlee = "hit" + "mon" + "Lee" (Bruce Lee)—it\'s a kicking fighter!',
+  'Fun fact: Hitmonchan = "hit" + "mon" + "Chan" (Jackie Chan)—it\'s a punching fighter!',
+  'Etymology: Lickitung = "lick" + "tongue"—it\'s a licking Pokémon!',
+  'Fun fact: Koffing = "cough" + "ing"—it\'s a coughing poison gas Pokémon!',
+  'Etymology: Weezing = "wheeze" + "ing"—it\'s a wheezing poison gas Pokémon!',
+  'Fun fact: Rhyhorn = "rhino" + "horn"—it\'s a rhinoceros with a horn!',
+  'Etymology: Rhydon = "rhino" + "don" (dragon sound)—it\'s a dragon rhinoceros!',
+  'Fun fact: Chansey = "chance" + "ey"—it\'s a lucky Pokémon that brings good fortune!',
+  'Etymology: Tangela = "tangle" + "a"—it\'s a tangled mess of vines!',
+  'Fun fact: Kangaskhan = "kangaroo" + "Genghis Khan"—it\'s a kangaroo warrior!',
+  'Etymology: Horsea = "horse" + "sea"—it\'s a sea horse!',
+  'Fun fact: Seadra = "sea" + "dragon"—it\'s a sea dragon!',
+  'Etymology: Goldeen = "gold" + "deen" (fish)—it\'s a golden fish!',
+  'Fun fact: Seaking = "sea" + "king"—it\'s the king of the sea!',
+  'Etymology: Staryu = "star" + "yu" (you)—it\'s a star that\'s you!',
+  'Fun fact: Starmie = "star" + "me"—it\'s a star that\'s me!',
+  'Etymology: Mr. Mime = "mister" + "mime"—it\'s a mime performer!',
+  'Fun fact: Scyther = "scythe" + "er"—it\'s a scythe-wielding mantis!',
+  'Etymology: Jynx = "jinx" (bad luck)—it\'s a jinx Pokémon!',
+  'Fun fact: Electabuzz = "electric" + "buzz"—it\'s a buzzing electric Pokémon!',
+  'Etymology: Magmar = "magma" + "ar"—it\'s a magma Pokémon!',
+  'Fun fact: Pinsir = "pincer" (claw)—it\'s a pincer-wielding beetle!',
+  'Etymology: Tauros = "taurus" (bull)—it\'s a bull Pokémon!',
+  'Fun fact: Magikarp\'s Japanese name "Koiking" = "koi" (carp) + "king"—it\'s the carp king!',
+  'Etymology: Gyarados\'s Japanese name "Gyaradosu" = "gyarari" (frown) + "dosu"—it\'s a frowning dragon!',
+  'Fun fact: Lapras\'s Japanese name "Laplace" = "Laplace" (mathematician)—it\'s a mathematical Pokémon!',
+  'Etymology: Ditto\'s Japanese name "Metamon" = "meta" (change) + "mon"—it\'s a changing monster!',
+  'Fun fact: Eevee\'s Japanese name "Eievui" = "evolution" + "ui" (sound)—it\'s the evolution sound!',
+  'Etymology: Vaporeon = "vapor" + "eon"—it\'s a vapor evolution!',
+  'Fun fact: Jolteon = "jolt" + "eon"—it\'s a jolting evolution!',
+  'Etymology: Flareon = "flare" + "eon"—it\'s a flaring evolution!',
+  'Fun fact: Porygon = "polygon" (shape)—it\'s a geometric Pokémon!',
+  'Etymology: Omanyte = "oman" (spiral) + "ite" (fossil)—it\'s a spiral fossil!',
+  'Fun fact: Omastar = "oman" (spiral) + "star"—it\'s a spiral star!',
+  'Etymology: Kabuto = "kabuto" (helmet)—it\'s a helmet Pokémon!',
+  'Fun fact: Kabutops = "kabuto" (helmet) + "tops"—it\'s a helmet with tops!',
+  'Etymology: Aerodactyl = "aero" (air) + "dactyl" (finger)—it\'s an air finger!',
+  'Fun fact: Snorlax\'s Japanese name "Kabigon" = "kabi" (mold) + "gon"—it\'s a moldy Pokémon!',
+  'Etymology: Articuno = "arctic" + "uno" (one)—it\'s the first ice bird!',
+  'Fun fact: Zapdos = "zap" + "dos" (two)—it\'s the second electric bird!',
+  'Etymology: Moltres = "molten" + "tres" (three)—it\'s the third fire bird!',
+  'Fun fact: Dratini = "dragon" + "tiny"—it\'s a tiny dragon!',
+  'Etymology: Dragonair = "dragon" + "air"—it\'s an air dragon!',
+  'Fun fact: Dragonite = "dragon" + "knight"—it\'s a dragon knight!',
+  'Etymology: Mewtwo\'s Japanese name "Myūtsū" = "Mew" + "tsū" (two)—it\'s the second Mew!',
+  'Fun fact: Mew\'s Japanese name "Myū" = "mew" (cat sound)—it\'s a mewing cat!',
+  
+  // Fun Facts & Trivia
+  'Fun fact: Rhydon was the first Pokémon ever designed, even though it\'s #112 in the Pokédex!',
+  'Trivia: Pikachu wasn\'t originally meant to be the mascot—Clefairy was considered first!',
+  'Fun fact: Koffing and Weezing were originally going to be named "Ny" and "La" after New York and Los Angeles smog!',
+  'Trivia: The Poké Ball design was inspired by Campbell\'s soup cans!',
+  'Fun fact: Professor Oak was programmed to be the final boss, but the battle was removed before release!',
+  'Trivia: Mew was added to the original games at the last minute using leftover cartridge space!',
+  'Fun fact: Arcanine was originally intended to be a Legendary Pokémon!',
+  'Trivia: Ekans and Arbok are "snake" and "cobra" spelled backwards!',
+  'Fun fact: Pikachu\'s tail shape reveals its gender—females have heart-shaped indents!',
+  'Trivia: The Kanto region is based on the real Kanto region in Japan (including Tokyo)!',
+  'Fun fact: Ditto and Mew share identical weight and the Transform ability—leading to clone theories!',
+  'Trivia: The Legendary Birds\' names end with Spanish numbers—uno, dos, tres!',
+  'Fun fact: Spinda has over 4 billion possible spot pattern combinations!',
+  'Trivia: Azurill has a 25% chance of changing gender when evolving into Marill!',
+  'Fun fact: Wailord and Diglett can breed despite their massive size difference!',
+  'Trivia: Pikachu (#25) and Meowth (#52) have reversed Pokédex numbers, reflecting their rivalry!',
+  'Fun fact: Poliwag\'s belly swirl is inspired by real tadpole intestines!',
+  'Trivia: Mr. Mime can be female despite having "Mr." in its name!',
+  'Fun fact: The "Electric Soldier Porygon" episode caused seizures and was banned!',
+  'Trivia: The rarest Pokémon card is "Pikachu Illustrator"—only 39 copies exist!',
+  'Fun fact: Ash Ketchum has been 10 years old for over 20 years in the anime!',
+  'Trivia: Niue issued legal tender coins featuring Pikachu in 2001!',
+  'Fun fact: Gengar\'s design closely resembles Clefable, supporting shadow theories!',
+  'Trivia: Hypno\'s Pokédex entries mention it kidnapping children!',
+  'Fun fact: Yamask carries a mask representing its human face from when it was alive!',
+  'Trivia: Kadabra\'s Pokédex suggests a boy with psychic powers became one!',
+  'Fun fact: Banette is a discarded plush doll that came to life seeking revenge!',
+  'Trivia: Genesect might be a modified version of ancient Kabutops!',
+  'Fun fact: The rival\'s Raticate might have died after the S.S. Anne battle!',
+  'Trivia: Lavender Town\'s music was rumored to cause adverse effects (debunked)!',
+  'Fun fact: Hitmonlee and Hitmonchan are named after Bruce Lee and Jackie Chan!',
+  'Trivia: The Pokémon name comes from "Pocket Monsters" in Japanese!',
+  'Fun fact: Mewtwo\'s creation involved genetic engineering and cloning experiments!',
+  'Trivia: Some Pokémon are based on real animals, others on objects and concepts!',
+  'Fun fact: The first shiny Pokémon was a red Gyarados in the games!',
+  'Trivia: Pokémon can learn moves that don\'t match their type!',
+  'Fun fact: Some Pokémon have hidden abilities that are very rare!',
+  'Trivia: The Pokédex was inspired by a real-life encyclopedia!',
+  'Fun fact: Some Pokémon can only be caught at certain times of day!',
+  'Trivia: Legendary Pokémon are often based on mythology from different cultures!',
+  'Fun fact: The first Pokémon ever created was Rhydon, not Bulbasaur!',
+  'Trivia: Pikachu was originally going to be a different color!',
+  'Fun fact: Some Pokémon names are puns in multiple languages!',
+  'Trivia: The franchise has sold over 380 million games worldwide!',
+  'Fun fact: Pokémon GO became the fastest mobile game to earn $500 million!',
+  'Trivia: The anime has over 1,200 episodes and counting!',
+  'Fun fact: Some Pokémon are based on food items and household objects!',
+  'Trivia: The games have been translated into over 30 languages!',
+  'Fun fact: Some Pokémon names are just sounds or onomatopoeia!',
+  'Trivia: The franchise includes games, anime, movies, and trading cards!',
+  'Fun fact: Some Pokémon are based on mythical creatures from various cultures!',
+  'Trivia: The games teach strategy, critical thinking, and resource management!',
+  'Fun fact: Some Pokémon have multiple forms or regional variants!',
+  'Trivia: The franchise has inspired countless spin-offs and merchandise!',
+  'Fun fact: Some Pokémon are based on plants and natural phenomena!',
+  'Trivia: The games have evolved from simple RPGs to complex competitive systems!',
+  'Fun fact: Some Pokémon are based on technology and futuristic concepts!',
+  'Trivia: The franchise has created a global community of trainers!',
+  'Fun fact: Some Pokémon are based on historical figures and events!',
+  'Trivia: The games have introduced new mechanics in each generation!',
+  'Fun fact: Some Pokémon are based on art, music, and cultural expressions!',
+  'Trivia: The franchise has won numerous awards and recognition!',
+  'Fun fact: Some Pokémon are based on emotions and psychological concepts!',
+  'Trivia: The games have created a rich lore and mythology!',
+  'Fun fact: Some Pokémon are based on space, time, and cosmic concepts!',
+  'Trivia: The franchise has influenced popular culture worldwide!',
+  'Fun fact: Some Pokémon are based on dreams, nightmares, and subconscious!',
+  'Trivia: The games have created memorable characters and stories!',
+  'Fun fact: Some Pokémon are based on elements, forces, and natural laws!',
+  'Trivia: The franchise has created a lasting legacy in gaming history!',
   
   // Seasonal & Special
   '🎄 Holiday challenge: Build a team using only red and green Pokémon!',
@@ -766,11 +958,24 @@ const DEFAULT_TIPS: HelpTip[] = [
   }
 ]
 
+// Cache for Pokemon names to avoid repeated API calls
+const pokemonNameCache = new Map<number, string>()
+
+// Function to capitalize Pokemon names properly
+function capitalizePokemonName(name: string): string {
+  return name
+    .split('-')
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join('-')
+}
+
 export default function HelpAssistant({ className = '' }: HelpAssistantProps) {
   const pathname = usePathname()
+  const { hasErrors, hasCriticalErrors, errors } = useError()
   const [isVisible, setIsVisible] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
   const [currentTipIndex, setCurrentTipIndex] = useState(0)
+  const [pokemonNames, setPokemonNames] = useState<Map<number, string>>(new Map())
   const [hasSeenTips, setHasSeenTips] = useState<Set<string>>(new Set())
   const [isDismissed, setIsDismissed] = useState(false)
   const [hideForever, setHideForever] = useState(false)
@@ -778,6 +983,38 @@ export default function HelpAssistant({ className = '' }: HelpAssistantProps) {
   const [currentPokemon, setCurrentPokemon] = useState<{ id: string; name: string }>(() => 
     HELP_POKEMON[Math.floor(Math.random() * HELP_POKEMON.length)]
   )
+
+  // Function to fetch Pokemon name by ID
+  const fetchPokemonName = useCallback(async (pokemonId: number): Promise<string> => {
+    // Check cache first
+    if (pokemonNameCache.has(pokemonId)) {
+      return pokemonNameCache.get(pokemonId)!
+    }
+
+    try {
+      const pokemon = await getPokemon(pokemonId)
+      const name = capitalizePokemonName(pokemon.name)
+      pokemonNameCache.set(pokemonId, name)
+      setPokemonNames(prev => new Map(prev).set(pokemonId, name))
+      return name
+    } catch (error) {
+      console.warn(`Failed to fetch Pokemon ${pokemonId}:`, error)
+      return `Pokemon #${pokemonId}`
+    }
+  }, [])
+
+  // Update current Pokemon name when it changes
+  useEffect(() => {
+    const pokemonId = parseInt(currentPokemon.id)
+    if (!pokemonNames.has(pokemonId)) {
+      fetchPokemonName(pokemonId)
+    } else {
+      setCurrentPokemon(prev => ({
+        ...prev,
+        name: pokemonNames.get(pokemonId) || prev.name
+      }))
+    }
+  }, [currentPokemon.id, pokemonNames, fetchPokemonName])
   const [clippyStyle, setClippyStyle] = useState(CLIPPY_STYLES[Math.floor(Math.random() * CLIPPY_STYLES.length)])
   const [quotesForPage, setQuotesForPage] = useState<string[]>(() => {
     // Shuffle the quotes array once per page load
@@ -788,6 +1025,58 @@ export default function HelpAssistant({ className = '' }: HelpAssistantProps) {
   // Get tips for current page or default tips
   const getCurrentTips = useCallback(() => {
     let tips: HelpTip[] = []
+    
+    // If there are errors, prioritize error-related tips
+    if (hasErrors) {
+      const errorTips: HelpTip[] = []
+      
+      if (hasCriticalErrors) {
+        errorTips.push({
+          id: 'critical_error',
+          title: '🚨 Critical Error Detected',
+          content: 'There are critical errors that need immediate attention. Check the error details and try refreshing the page.',
+          type: 'helpful',
+          duration: 5
+        })
+      }
+      
+      const dataLoadingErrors = errors.filter(e => e.type === 'data_loading')
+      if (dataLoadingErrors.length > 0) {
+        errorTips.push({
+          id: 'data_loading_error',
+          title: '📊 Data Loading Issues',
+          content: 'Some Pokémon data failed to load. This might be due to network issues or server problems. Try refreshing the page.',
+          type: 'helpful',
+          duration: 4
+        })
+      }
+      
+      const apiErrors = errors.filter(e => e.type === 'api_error')
+      if (apiErrors.length > 0) {
+        errorTips.push({
+          id: 'api_error',
+          title: '🔌 API Connection Problem',
+          content: 'Unable to connect to the Pokémon database. The servers might be busy or temporarily unavailable.',
+          type: 'helpful',
+          duration: 4
+        })
+      }
+      
+      const networkErrors = errors.filter(e => e.type === 'network_error')
+      if (networkErrors.length > 0) {
+        errorTips.push({
+          id: 'network_error',
+          title: '🌐 Network Connection Issue',
+          content: 'There seems to be a network connectivity problem. Check your internet connection and try again.',
+          type: 'helpful',
+          duration: 4
+        })
+      }
+      
+      if (errorTips.length > 0) {
+        return errorTips
+      }
+    }
     
     // Check for exact path match first
     if (HELP_TIPS[pathname]) {
@@ -813,7 +1102,7 @@ export default function HelpAssistant({ className = '' }: HelpAssistantProps) {
     // Return all tips in their original order - no random mixing
     // This ensures the tip set remains stable during navigation
     return tips
-  }, [pathname, clippyStyle, quotesForPage])
+  }, [pathname, clippyStyle, quotesForPage, hasErrors, hasCriticalErrors, errors])
 
   const currentTips = getCurrentTips()
   
@@ -838,16 +1127,22 @@ export default function HelpAssistant({ className = '' }: HelpAssistantProps) {
     } catch {}
   }, [pathname])
 
-  // Show help assistant after a delay
+  // Show help assistant after a delay, or immediately if there are errors
   useEffect(() => {
     if (isDismissed || hideForever || hideThisPath) return
+    
+    // Show immediately if there are critical errors
+    if (hasCriticalErrors) {
+      setIsVisible(true)
+      return
+    }
     
     const timer = setTimeout(() => {
       setIsVisible(true)
     }, 3000) // Show after 3 seconds
 
     return () => clearTimeout(timer)
-  }, [pathname, isDismissed, hideForever, hideThisPath])
+  }, [pathname, isDismissed, hideForever, hideThisPath, hasCriticalErrors])
 
   // Listen for poke-tips reset events to show immediately
   useEffect(() => {
@@ -958,16 +1253,23 @@ export default function HelpAssistant({ className = '' }: HelpAssistantProps) {
           aria-label={`Open ${currentPokemon.name} help assistant`}
         >
           <img
-            src={`/assets/pmd/${currentPokemon.id}/portrait/Normal.png`}
+            src={`https://raw.githubusercontent.com/PMDCollab/SpriteCollab/master/portrait/${currentPokemon.id}/${hasErrors ? 'Crying' : 'Normal'}.png`}
             alt={`${currentPokemon.name} Help Assistant`}
             className="w-12 h-12 object-contain"
             onError={(e) => {
               const target = e.target as HTMLImageElement
-              target.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${currentPokemon.id.replace(/^0+/, '') || currentPokemon.id}.png`
+              // Try local assets first, then PokeAPI as final fallback
+              if (target.src.includes('PMDCollab')) {
+                target.src = `/assets/pmd/${currentPokemon.id}/portrait/${hasErrors ? 'Crying' : 'Normal'}.png`
+              } else {
+                target.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${currentPokemon.id.replace(/^0+/, '') || currentPokemon.id}.png`
+              }
             }}
           />
-          <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold animate-pulse">
-            !
+          <div className={`absolute -top-2 -right-2 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold animate-pulse ${
+            hasCriticalErrors ? 'bg-red-600' : hasErrors ? 'bg-orange-500' : 'bg-red-500'
+          }`}>
+            {hasCriticalErrors ? '!' : hasErrors ? '⚠' : '!'}
           </div>
           <div className="absolute inset-0 rounded-full border-2 border-yellow-400 animate-ping opacity-20"></div>
         </button>
@@ -980,12 +1282,17 @@ export default function HelpAssistant({ className = '' }: HelpAssistantProps) {
           <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-3">
               <img
-                src={`/assets/pmd/${currentPokemon.id}/portrait/Happy.png`}
+                src={`https://raw.githubusercontent.com/PMDCollab/SpriteCollab/master/portrait/${currentPokemon.id}/${hasErrors ? 'Crying' : 'Happy'}.png`}
                 alt={currentPokemon.name}
                 className="w-8 h-8 object-contain"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement
-                  target.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${currentPokemon.id.replace(/^0+/, '') || currentPokemon.id}.png`
+                  // Try local assets first, then PokeAPI as final fallback
+                  if (target.src.includes('PMDCollab')) {
+                    target.src = `/assets/pmd/${currentPokemon.id}/portrait/${hasErrors ? 'Crying' : 'Happy'}.png`
+                  } else {
+                    target.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${currentPokemon.id.replace(/^0+/, '') || currentPokemon.id}.png`
+                  }
                 }}
               />
               <div>

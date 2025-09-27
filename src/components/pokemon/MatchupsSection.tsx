@@ -13,7 +13,7 @@ export default function MatchupsSection({ groups }: { groups: Group[] }) {
   return (
     <section id="matchups" className="mx-auto w-full px-4 py-4 space-y-6 text-center">
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {groups.map((g)=>(
+        {groups && groups.map((g)=>(
           <div key={g.title} className={`rounded-2xl p-6 ${toneBg(g.tone)}`}>
             <div className="font-semibold mb-4 text-center">{g.title}</div>
             <div className="flex flex-wrap justify-center gap-3">

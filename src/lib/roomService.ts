@@ -16,7 +16,7 @@ import {
   type Unsubscribe,
   FirestoreError
 } from 'firebase/firestore';
-import { db } from './firebase';
+import { getDb as getClientDb, hasFirebaseClientConfig } from './firebase/client';
 import { battleService } from './battleService';
 import { firebaseErrorLogger, PermissionErrorDetails } from './firebaseErrorLogger';
 
@@ -68,17 +68,28 @@ export interface RoomUpdate {
 
 class RoomService {
   private roomsCollection = 'battle_rooms';
+  
+  private getDb() {
+    try {
+      return getClientDb();
+    } catch (error) {
+      const message = hasFirebaseClientConfig
+        ? (error instanceof Error ? error.message : 'Failed to initialize Firestore client')
+        : 'Firestore configuration missing';
+      throw new Error(message);
+    }
+  }
 
   // Delete a room (host only)
   async deleteRoom(roomId: string): Promise<void> {
-    if (!db) throw new Error('Firebase not initialized');
+    const db = this.getDb();
     const roomRef = doc(db, this.roomsCollection, roomId);
     await deleteDoc(roomRef);
   }
 
   // Close all existing rooms for a user
   async closeExistingRoomsForUser(userId: string): Promise<void> {
-    if (!db) throw new Error('Firebase not initialized');
+    const db = this.getDb();
     
     try {
       // Find all rooms where the user is the host
@@ -109,7 +120,7 @@ class RoomService {
 
   // Create a new room
   async createRoom(hostId: string, hostName: string, hostPhotoURL?: string | null, hostTeam?: unknown): Promise<string> {
-    if (!db) throw new Error('Firebase not initialized');
+    const db = this.getDb();
     
     try {
       // Close any existing rooms for this user first
@@ -181,8 +192,7 @@ class RoomService {
 
   // Get room by ID
   async getRoom(roomId: string): Promise<RoomData | null> {
-    if (!db) throw new Error('Firebase not initialized');
-    
+    const db = this.getDb();
     const docRef = doc(db, this.roomsCollection, roomId);
     const docSnap = await getDoc(docRef);
     
@@ -224,7 +234,7 @@ class RoomService {
 
   // Join a room
   async joinRoom(roomId: string, guestId: string, guestName: string, guestPhotoURL?: string | null, guestTeam?: unknown): Promise<boolean> {
-    if (!db) throw new Error('Firebase not initialized');
+    const db = this.getDb();
     
     // Enhanced authentication check
     const { auth } = await import('@/lib/firebase');
@@ -431,8 +441,7 @@ class RoomService {
 
   // Leave a room
   async leaveRoom(roomId: string, userId: string): Promise<void> {
-    if (!db) throw new Error('Firebase not initialized');
-    
+    const db = this.getDb();
     const roomRef = doc(db, this.roomsCollection, roomId);
     const roomSnap = await getDoc(roomRef);
     
@@ -495,8 +504,7 @@ class RoomService {
 
   // Update room status
   async updateRoom(roomId: string, updates: RoomUpdate): Promise<void> {
-    if (!db) throw new Error('Firebase not initialized');
-    
+    const db = this.getDb();
     console.log('roomService.updateRoom called with:', { roomId, updates });
     
     // Special debugging for team updates
@@ -522,8 +530,7 @@ class RoomService {
 
   // Fix currentPlayers count for existing rooms
   async fixCurrentPlayersCount(roomId: string): Promise<void> {
-    if (!db) throw new Error('Firebase not initialized');
-    
+    const db = this.getDb();
     // Check authentication state
     const { auth } = await import('@/lib/firebase');
     if (!auth || !auth.currentUser) {
@@ -549,8 +556,7 @@ class RoomService {
 
   // Initialize animation fields for existing rooms that don't have them
   async initializeAnimationFields(roomId: string): Promise<void> {
-    if (!db) throw new Error('Firebase not initialized');
-    
+    const db = this.getDb();
     const roomRef = doc(db, this.roomsCollection, roomId);
     const roomDoc = await getDoc(roomRef);
     
@@ -585,8 +591,7 @@ class RoomService {
 
   // Update ball animation state
   async updateBallAnimation(roomId: string, playerType: 'host' | 'guest', animatingBalls: Set<number>, releasedBalls: Set<number>): Promise<void> {
-    if (!db) throw new Error('Firebase not initialized');
-    
+    const db = this.getDb();
     console.log('roomService.updateBallAnimation called with:', { roomId, playerType, animatingBalls: Array.from(animatingBalls), releasedBalls: Array.from(releasedBalls) });
     
     // Check authentication state
@@ -639,8 +644,7 @@ class RoomService {
 
   // Update ready status for a player
   async updateReadyStatus(roomId: string, userId: string, isReady: boolean): Promise<void> {
-    if (!db) throw new Error('Firebase not initialized');
-    
+    const db = this.getDb();
     const roomRef = doc(db, this.roomsCollection, roomId);
     const roomSnap = await getDoc(roomRef);
     
@@ -680,8 +684,7 @@ class RoomService {
 
   // Secure battle data by creating battle document when both players are ready
   async secureBattleData(roomId: string, roomData: any): Promise<void> {
-    if (!db) throw new Error('Firebase not initialized');
-    
+    const db = this.getDb();
     try {
       // Check if battle document already exists
       if (roomData.battleId) {
@@ -707,7 +710,6 @@ class RoomService {
       console.log('🔒 Securing battle data - creating battle document early');
       
       // Create battle document with secured data
-      const { battleService } = await import('@/lib/battleService');
       const battleId = await battleService.createBattle(
         roomId,
         roomData.hostId,
@@ -753,8 +755,7 @@ class RoomService {
 
   // Check if battle is ready to start (without actually starting it)
   async checkBattleReadiness(roomId: string, allowBattlingStatus: boolean = false): Promise<{ isReady: boolean; errors: string[] }> {
-    if (!db) throw new Error('Firebase not initialized');
-    
+    const db = this.getDb();
     const roomRef = doc(db, this.roomsCollection, roomId);
     const roomSnap = await getDoc(roomRef);
     
@@ -918,8 +919,7 @@ class RoomService {
 
   // Start battle
   async startBattle(roomId: string, _battleId: string): Promise<void> {
-    if (!db) throw new Error('Firebase not initialized');
-    
+    const db = this.getDb();
     // First check if battle is ready to start
     const readinessCheck = await this.checkBattleReadiness(roomId);
     if (!readinessCheck.isReady) {
@@ -986,7 +986,6 @@ class RoomService {
       console.log('Teams are identical:', teamsAreIdentical);
       
       // Fallback: create battle document if it doesn't exist
-      const { battleService } = await import('@/lib/battleService');
       actualBattleId = await battleService.createBattle(
         roomId,
         roomData.hostId,
@@ -1014,9 +1013,13 @@ class RoomService {
 
   // Listen to room changes
   onRoomChange(roomId: string, callback: (room: RoomData | null) => void): Unsubscribe {
-    if (!db) {
-      callback(null);
-      return () => {};
+    let db
+    try {
+      db = this.getDb()
+    } catch (error) {
+      console.warn('roomService.onRoomChange missing Firestore instance', error)
+      callback(null)
+      return () => {}
     }
     
     console.log('roomService.onRoomChange setting up listener for room:', roomId);
@@ -1101,8 +1104,7 @@ class RoomService {
 
   // Track user presence in a room
   async trackUserPresence(roomId: string, userId: string, isActive: boolean): Promise<void> {
-    if (!db) throw new Error('Firebase not initialized');
-    
+    const db = this.getDb();
     const roomRef = doc(db, this.roomsCollection, roomId);
     const roomSnap = await getDoc(roomRef);
     
@@ -1165,9 +1167,13 @@ class RoomService {
 
   // Listen to all rooms
   onRoomsChange(callback: (rooms: RoomData[]) => void): Unsubscribe {
-    if (!db) {
-      callback([]);
-      return () => {};
+    let db
+    try {
+      db = this.getDb()
+    } catch (error) {
+      console.warn('roomService.onRoomsChange missing Firestore instance', error)
+      callback([])
+      return () => {}
     }
     
     // Show only 'waiting' and 'ready' rooms in lobby listings (exclude 'finished' and 'battling' rooms)

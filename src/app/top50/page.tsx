@@ -1,9 +1,8 @@
 import type { Metadata } from 'next'
-import AppHeader from '@/components/AppHeader'
-import Top50Experience from '@/components/top50/Top50Experience'
-import { top50Pokemon } from '@/data/top50Pokemon'
 import Script from 'next/script'
+import { Suspense } from 'react'
 import Top50PageClient from './Top50PageClient'
+import { top50Pokemon } from '@/data/top50Pokemon'
 
 export const metadata: Metadata = {
   title: 'Pokémon Top 50 Popularity Popup Book',
@@ -17,14 +16,7 @@ export const metadata: Metadata = {
   }
 }
 
-export default async function Top50Page({ searchParams }: { searchParams?: Promise<Record<string, string | string[] | undefined>> }) {
-  const sp = (await searchParams) || {}
-  const rankParam = sp.rank || sp.r
-  const initialRank = Array.isArray(rankParam)
-    ? parseInt(rankParam[0] as string, 10)
-    : rankParam
-      ? parseInt(rankParam as string, 10)
-      : undefined
+export default function Top50Page() {
   return (
     <div className="min-h-screen bg-bg text-text">
       <Script
@@ -51,7 +43,9 @@ export default async function Top50Page({ searchParams }: { searchParams?: Promi
           })
         }}
       />
-      <Top50PageClient initialRank={Number.isFinite(initialRank as number) ? (initialRank as number) : undefined} />
+      <Suspense fallback={<div>Loading...</div>}>
+        <Top50PageClient />
+      </Suspense>
     </div>
   )
 }

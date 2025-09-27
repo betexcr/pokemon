@@ -19,7 +19,7 @@ interface UseSearchOptions {
 
 export function useSearch(options: UseSearchOptions = {}) {
   const {
-    debounceMs = 300,
+    debounceMs = 800,
     cacheTtl = 5 * 60 * 1000, // 5 minutes
     throttleMs = 100
   } = options
@@ -56,6 +56,7 @@ export function useSearch(options: UseSearchOptions = {}) {
     if (!term.trim()) {
       setResults([])
       setIsLoading(false)
+      setError(null)
       return
     }
 
@@ -111,25 +112,32 @@ export function useSearch(options: UseSearchOptions = {}) {
 
   // Handle search term changes
   const handleSearchChange = useCallback((newTerm: string) => {
+    // Update search term immediately for responsive typing - this should be the first thing
     setSearchTerm(newTerm)
     
-    if (!newTerm.trim()) {
-      setResults([])
-      setIsLoading(false)
-      setError(null)
-      return
-    }
+    // Defer other state updates to prevent blocking the UI thread
+    setTimeout(() => {
+      if (!newTerm.trim()) {
+        // Clear results immediately for empty search
+        setResults([])
+        setIsLoading(false)
+        setError(null)
+        debouncedSearch('')
+        return
+      }
 
-    // Check cache immediately for instant results
-    const cached = getCachedResults(newTerm)
-    if (cached) {
-      setResults(cached)
-      setIsLoading(false)
-      setError(null)
-    } else {
-      setIsLoading(true)
-      debouncedSearch(newTerm)
-    }
+      // Check cache immediately for instant results
+      const cached = getCachedResults(newTerm)
+      if (cached) {
+        setResults(cached)
+        setIsLoading(false)
+        setError(null)
+      } else {
+        // Only set loading if we're not already loading to prevent unnecessary re-renders
+        setIsLoading(prev => prev ? prev : true)
+        debouncedSearch(newTerm)
+      }
+    }, 0)
   }, [debouncedSearch, getCachedResults])
 
   // Clear search

@@ -1,20 +1,29 @@
 'use client'
 
-import { useState, useCallback, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useCallback, useRef, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import AppHeader from '@/components/AppHeader'
 import Top50Experience from '@/components/top50/Top50Experience'
 import { top50Pokemon } from '@/data/top50Pokemon'
 import { useSmartBackNavigation, useReferrerStorage } from '@/hooks/useSmartBackNavigation'
 
-interface Top50PageClientProps {
-  initialRank?: number
-}
-
-export default function Top50PageClient({ initialRank }: Top50PageClientProps) {
+export default function Top50PageClient() {
+  const searchParams = useSearchParams()
+  const [initialRank, setInitialRank] = useState<number | undefined>(undefined)
   const router = useRouter()
   const [hasInteracted, setHasInteracted] = useState(false)
   const top50Ref = useRef<{ resetToCover: () => void } | null>(null)
+
+  // Parse search parameters on client side
+  useEffect(() => {
+    const rankParam = searchParams.get('rank') || searchParams.get('r')
+    if (rankParam) {
+      const rank = parseInt(rankParam, 10)
+      if (Number.isFinite(rank) && rank >= 1 && rank <= 50) {
+        setInitialRank(rank)
+      }
+    }
+  }, [searchParams])
 
   // Store current page as referrer for smart back navigation
   useReferrerStorage()

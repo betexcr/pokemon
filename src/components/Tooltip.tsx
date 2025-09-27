@@ -10,12 +10,15 @@ interface TooltipProps {
   position?: 'top' | 'bottom' | 'left' | 'right'
   maxWidth?: string
   type?: string // For type-based styling
-  variant?: 'default' | 'ability' | 'move' | 'stat'
+  variant?: 'default' | 'ability' | 'move' | 'stat' | 'japanese'
   containViewport?: boolean
   damageClass?: 'physical' | 'special' | 'status'
   followCursor?: boolean
   cursorOffset?: { x?: number; y?: number }
   title?: string
+  romaji?: string
+  meaning?: string
+  explanation?: string
 }
 
 export default function Tooltip({ 
@@ -30,7 +33,10 @@ export default function Tooltip({
   damageClass,
   followCursor = false,
   cursorOffset,
-  title
+  title,
+  romaji,
+  meaning,
+  explanation
 }: TooltipProps) {
   const positionClasses = {
     top: 'bottom-full mb-2 left-1/2 transform -translate-x-1/2',
@@ -116,6 +122,9 @@ export default function Tooltip({
     if (variant === 'default') {
       return isDarkMode ? 'bg-gray-900/95 backdrop-blur-sm' : 'bg-white/95 backdrop-blur-sm'
     }
+    if (variant === 'japanese') {
+      return isDarkMode ? 'bg-blue-900/95 border border-blue-700 backdrop-blur-sm' : 'bg-blue-50/95 border border-blue-200 backdrop-blur-sm'
+    }
     if (isDarkMode) return 'bg-gray-900/95 border border-gray-700 backdrop-blur-sm'
     return 'bg-white border border-gray-200/50'
   }
@@ -124,6 +133,9 @@ export default function Tooltip({
     if (variant === 'default') {
       return isDarkMode ? 'border-gray-700' : 'border-gray-200/50'
     }
+    if (variant === 'japanese') {
+      return isDarkMode ? 'border-blue-700' : 'border-blue-200/50'
+    }
     return isDarkMode ? 'border-gray-700' : 'border-gray-200/50'
   }
 
@@ -131,12 +143,18 @@ export default function Tooltip({
     if (variant === 'default') {
       return isDarkMode ? 'text-white' : 'text-gray-900'
     }
+    if (variant === 'japanese') {
+      return isDarkMode ? 'text-blue-100' : 'text-blue-900'
+    }
     return isDarkMode ? 'text-gray-100' : 'text-gray-800'
   }
 
   const getRingColor = () => {
     if (variant === 'default') {
       return isDarkMode ? 'ring-white/10' : 'ring-gray-200/50'
+    }
+    if (variant === 'japanese') {
+      return isDarkMode ? 'ring-blue-500/20' : 'ring-blue-300/50'
     }
     return isDarkMode ? 'ring-white/10' : 'ring-gray-200/50'
   }
@@ -166,6 +184,31 @@ export default function Tooltip({
           )}
         </span>
       ))
+    }
+    if (variant === 'japanese') {
+      return (
+        <div className="space-y-3">
+          <div className="text-lg font-semibold text-center">{text}</div>
+          {romaji && (
+            <div className="text-center">
+              <div className="text-sm font-medium opacity-80">Romaji</div>
+              <div className="text-base font-mono">{romaji}</div>
+            </div>
+          )}
+          {meaning && (
+            <div className="text-center">
+              <div className="text-sm font-medium opacity-80">Meaning</div>
+              <div className="text-base font-medium">{meaning}</div>
+            </div>
+          )}
+          {explanation && (
+            <div className="text-center">
+              <div className="text-sm font-medium opacity-80">Explanation</div>
+              <div className="text-sm leading-relaxed">{explanation}</div>
+            </div>
+          )}
+        </div>
+      )
     }
     return text
   }
@@ -281,7 +324,7 @@ export default function Tooltip({
         }}
       >
         <div className="space-y-3">
-          {variant !== 'default' && (
+          {variant !== 'default' && variant !== 'japanese' && (
             <div className={`flex items-center gap-3 pb-2 border-b border-gray-100`}
             >
               {type && (
@@ -302,7 +345,14 @@ export default function Tooltip({
               )}
             </div>
           )}
-          <div className={`text-sm leading-relaxed ${variant === 'default' ? (isDarkMode ? 'text-gray-100' : 'text-gray-900') : 'text-gray-800'}`}>
+          {variant === 'japanese' && (
+            <div className="text-center pb-2 border-b border-blue-200/50 dark:border-blue-700/50">
+              <span className="text-sm font-semibold text-blue-700 dark:text-blue-300">
+                {title || 'Japanese Name'}
+              </span>
+            </div>
+          )}
+          <div className={`text-sm leading-relaxed ${variant === 'default' ? (isDarkMode ? 'text-gray-100' : 'text-gray-900') : variant === 'japanese' ? (isDarkMode ? 'text-blue-100' : 'text-blue-900') : 'text-gray-800'}`}>
             {formatContent(content)}
           </div>
         </div>
@@ -311,7 +361,9 @@ export default function Tooltip({
                            resolvedPosition === 'left' ? 'left-full top-1/2 transform -translate-y-1/2' :
                            'right-full top-1/2 transform -translate-y-1/2'} 
                     w-3 h-3 rotate-45 ${
-                      variant === 'default' ? (isDarkMode ? 'bg-gray-900' : 'bg-white') : (isDarkMode ? 'bg-gray-900' : 'bg-white')
+                      variant === 'default' ? (isDarkMode ? 'bg-gray-900' : 'bg-white') : 
+                      variant === 'japanese' ? (isDarkMode ? 'bg-blue-900' : 'bg-blue-50') : 
+                      (isDarkMode ? 'bg-gray-900' : 'bg-white')
                     } shadow-lg`} />
       </div>
   )

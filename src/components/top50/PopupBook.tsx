@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import Image from 'next/image'
+import Link from 'next/link'
 import { ArrowLeft, ArrowRight, Flame, LineChart, HelpCircle } from 'lucide-react'
 import { getPokemonImageWithFallbacks, getShowdownAnimatedSprite } from '@/lib/utils'
 import type { PopularPokemon } from '@/data/top50Pokemon'
@@ -614,7 +615,11 @@ function PhaseContent({
           </div>
           <div className="grid gap-5 p-6 sm:p-8">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-              <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-2xl border border-border bg-surface shadow-sm flex items-center justify-center">
+              <Link 
+                href={`/pokemon/${selectedPokemon.nationalNumber}`}
+                className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-2xl border border-border bg-surface shadow-sm flex items-center justify-center hover:shadow-lg hover:border-poke-blue transition-all duration-200 group"
+                title={`View ${selectedPokemon.name} details`}
+              >
                 {/* Prefer PMD Collab portrait (Normal) when available; fall back to PokeAPI sprite */}
                 {(() => {
                   const id = selectedPokemon.nationalNumber
@@ -631,7 +636,7 @@ function PhaseContent({
                       height={96}
                       loading="lazy"
                       decoding="async"
-                      className="w-24 h-24 object-contain"
+                      className="w-24 h-24 object-contain group-hover:scale-105 transition-transform duration-200"
                       data-index={0}
                       onError={(e) => {
                         const el = e.currentTarget as HTMLImageElement
@@ -647,7 +652,7 @@ function PhaseContent({
                     />
                   )
                 })()}
-              </div>
+              </Link>
               <div>
                 <p className="text-xs uppercase tracking-[0.3em] text-muted">Rank {selectedPokemon.rank}</p>
                 <h2 id="top50-spotlight-name" className="text-3xl font-black text-text" style={{ fontFamily: 'Pokemon X and Y, sans-serif' }}>{selectedPokemon.name}</h2>
@@ -877,10 +882,9 @@ function PhaseContent({
                     = [
                       { key: 'official', label: 'Official', url: officialUrl },
                       { key: 'gif', label: 'GIF', url: gifUrl },
-                      { key: '3d', label: '3D', url: homeUrl },
+                      { key: '3d', label: 'Gen 6-9', url: homeUrl },
                       { key: 'sprite', label: 'Sprite', url: spriteUrl },
-                      { key: 'pixel', label: 'Pixel', url: pixelUrl, pixelated: true },
-                      { key: 'portrait', label: 'Portrait', url: portraitUrl }
+                      { key: 'pixel', label: 'Gen 1-5', url: pixelUrl, pixelated: true }
                     ]
 
                   return (
@@ -961,8 +965,6 @@ function PhaseContent({
                                   if (item.key === 'gif') {
                                     el.src = spriteUrl
                                   } else if (item.key === '3d') {
-                                    el.src = officialUrl
-                                  } else if (item.key === 'portrait') {
                                     el.src = officialUrl
                                   } else {
                                     el.src = officialUrl

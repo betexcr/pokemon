@@ -8,6 +8,8 @@ import { Pokemon } from "@/types/pokemon";
 import TypeBadge from "@/components/TypeBadge";
 import AbilityBadge from "@/components/AbilityBadge";
 import { useReducedMotionPref } from "@/hooks/useReducedMotionPref";
+import Tooltip from './Tooltip'
+import { generateBasicRomaji, getPokemonJapaneseName, getJapaneseNameInfo } from '@/lib/japaneseNames'
 import { calculateTypeEffectiveness } from "@/lib/api";
 import TypeBadgeWithTooltip from "@/components/TypeBadgeWithTooltip";
 import { getBestPokemonDBSprite, getPokemonDBFallbackURLs, hasPokemonDBShinySprite } from "@/lib/pokemonDbSprites";
@@ -1077,9 +1079,32 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
               {pokemon.name}
             </h1>
             {pokemon.id !== 0 && (
-              <p className="text-muted text-base sm:text-lg lg:text-xl mt-1">
-                #{String(pokemon.id).padStart(4, "0")}
-              </p>
+              <div className="flex items-center gap-2 justify-center lg:justify-start mt-1">
+                <p className="text-muted text-base sm:text-lg lg:text-xl">
+                  #{String(pokemon.id).padStart(4, "0")}
+                </p>
+                {(() => {
+                  const pokemonJapaneseName = getPokemonJapaneseName(pokemon.id)
+                  if (pokemonJapaneseName) {
+                    return (
+                      <Tooltip
+                        variant="japanese"
+                        content={pokemonJapaneseName.japanese}
+                        title="Japanese Name"
+                        romaji={pokemonJapaneseName.romaji}
+                        meaning={pokemonJapaneseName.meaning}
+                        explanation={pokemonJapaneseName.explanation}
+                        className="cursor-help"
+                      >
+                        <span className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 transition-colors">
+                          {pokemonJapaneseName.japanese}
+                        </span>
+                      </Tooltip>
+                    )
+                  }
+                  return null
+                })()}
+              </div>
             )}
             
             <div className="mt-3 flex gap-2 flex-wrap justify-center lg:justify-start">

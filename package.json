@@ -15,7 +15,7 @@
     "build:prod": "NODE_ENV=production next build",
     "build:background": "NODE_ENV=production next build > build.log 2>&1 &",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint . --max-warnings=0",
     "test": "vitest",
     "test:unit": "vitest run src/lib/__tests__/firebase-rtdb-service.test.ts src/lib/__tests__/battle-engine-rtdb.test.ts src/lib/__tests__/battle-state-conversion.test.ts",
     "test:component": "vitest run src/components/__tests__/RTDBBattleComponent.test.tsx",

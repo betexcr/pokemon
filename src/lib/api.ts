@@ -2,6 +2,7 @@
 // This module provides all the API functions needed by the application
 
 import { Pokemon } from '@/types/pokemon'
+import { reportApiError, reportNetworkError, reportDataLoadingError } from '@/lib/errorReporting'
 
 // Cache configuration
 const CACHE_TTL = {
@@ -76,6 +77,11 @@ async function fetchFromAPI<T>(url: string): Promise<T> {
       // Only log non-404 errors as they might be unexpected
       if (!error?.message?.includes('404')) {
         console.error('API fetch error:', error)
+        reportApiError(`API request failed: ${error?.message || 'Unknown error'}`, {
+          url,
+          attempt,
+          maxAttempts
+        })
       }
       throw error
     }
@@ -197,6 +203,10 @@ export async function getPokemon(id: number | string): Promise<Pokemon> {
   return data
 }
 
+export async function getPokemonById(id: number | string): Promise<Pokemon> {
+  return getPokemon(id)
+}
+
 export async function getPokemonSpecies(id: number | string): Promise<any> {
   const cacheKey = getCacheKey('pokemon-species', { id })
   const cached = getCache(cacheKey)
@@ -218,6 +228,81 @@ export async function getEvolutionChain(id: number | string): Promise<any> {
   const data = await fetchFromAPI(url)
   setCache(cacheKey, data, CACHE_TTL.EVOLUTION_CHAIN)
   return data
+}
+
+// Transform evolution chain data into the format expected by EvolutionSection
+export async function getEvolutionChainNodes(pokemonId: number | string): Promise<Array<{ id: number; name: string; types: string[]; condition?: string }>> {
+  try {
+    // Get the species data first to find the evolution chain ID
+    const species = await getPokemonSpecies(pokemonId)
+    if (!species.evolution_chain?.url) {
+      return []
+    }
+
+    // Extract evolution chain ID from URL
+    const evolutionChainId = species.evolution_chain.url.split('/').slice(-2, -1)[0]
+    
+    // Get the evolution chain data
+    const evolutionChain = await getEvolutionChain(evolutionChainId)
+    
+    // Transform the chain data into nodes
+    const nodes: Array<{ id: number; name: string; types: string[]; condition?: string }> = []
+    
+    const processChain = async (chain: any, condition?: string) => {
+      if (!chain?.species) return
+      
+      // Get Pokemon ID from species URL
+      const pokemonId = parseInt(chain.species.url.split('/').slice(-2, -1)[0])
+      
+      // Get Pokemon data to get types
+      const pokemon = await getPokemon(pokemonId)
+      const types = pokemon.types.map((t: any) => t.type.name)
+      
+      nodes.push({
+        id: pokemonId,
+        name: chain.species.name,
+        types,
+        condition
+      })
+      
+      // Process evolution details for conditions
+      if (chain.evolves_to && chain.evolves_to.length > 0) {
+        for (const evolution of chain.evolves_to) {
+          let evolutionCondition = undefined
+          
+          // Extract evolution conditions
+          if (evolution.evolution_details && evolution.evolution_details.length > 0) {
+            const details = evolution.evolution_details[0]
+            const conditions = []
+            
+            if (details.min_level) conditions.push(`Lv. ${details.min_level}`)
+            if (details.item) conditions.push(`Item: ${details.item.name.replace('-', ' ')}`)
+            if (details.time_of_day) conditions.push(details.time_of_day)
+            if (details.known_move) conditions.push(`Knows ${details.known_move.name.replace('-', ' ')}`)
+            if (details.known_move_type) conditions.push(`Knows ${details.known_move_type.name}-type move`)
+            if (details.min_happiness) conditions.push(`Friendship: ${details.min_happiness}`)
+            if (details.min_beauty) conditions.push(`Beauty: ${details.min_beauty}`)
+            if (details.trigger?.name === 'trade') {
+              if (details.held_item) conditions.push(`Trade with ${details.held_item.name.replace('-', ' ')}`)
+              else conditions.push('Trade')
+            }
+            if (details.trigger?.name === 'level-up' && !details.min_level) conditions.push('Level up')
+            
+            evolutionCondition = conditions.join(', ') || 'Level up'
+          }
+          
+          await processChain(evolution, evolutionCondition)
+        }
+      }
+    }
+    
+    await processChain(evolutionChain.chain)
+    return nodes
+    
+  } catch (error) {
+    console.error('Failed to get evolution chain nodes:', error)
+    return []
+  }
 }
 
 // Type functions
@@ -242,6 +327,90 @@ export async function getAbility(id: number | string): Promise<any> {
   const data = await fetchFromAPI(url)
   setCache(cacheKey, data, CACHE_TTL.ABILITY)
   return data
+}
+
+export async function getPokemonAbilities(id: number | string): Promise<Array<{ name: string; is_hidden?: boolean; description?: string | null }>> {
+  try {
+    const pokemon = await getPokemon(id)
+    const abilities = pokemon.abilities || []
+
+    const abilityDetails = await Promise.all(
+      abilities.map(async (entry) => {
+        try {
+          const abilityData = await getAbility(entry.ability.name)
+          const effectEntry = abilityData?.effect_entries?.find((entry: any) => entry.language?.name === 'en')
+          return {
+            name: entry.ability.name,
+            is_hidden: entry.is_hidden,
+            description: effectEntry?.short_effect || effectEntry?.effect || null,
+          }
+        } catch (error) {
+          console.debug('Failed to load ability details', error)
+          return {
+            name: entry.ability.name,
+            is_hidden: entry.is_hidden,
+            description: null,
+          }
+        }
+      })
+    )
+
+    return abilityDetails
+  } catch (error) {
+    console.error('getPokemonAbilities error:', error)
+    reportDataLoadingError('Failed to load Pokemon abilities', {
+      pokemonId: id,
+      error: error instanceof Error ? error.message : String(error),
+    })
+    return []
+  }
+}
+
+export async function getPokemonMoves(id: number | string): Promise<Array<{ name: string; type: string; damage_class: 'physical' | 'special' | 'status'; power: number | null; accuracy: number | null; pp: number | null; level_learned_at: number | null; short_effect: string | null }>> {
+  try {
+    const pokemon = await getPokemon(id)
+    const moves = pokemon.moves || []
+
+    const moveDetails = await Promise.all(
+      moves.slice(0, 50).map(async (entry) => { // Limit to first 50 moves for performance
+        try {
+          const moveData = await getMove(entry.move.name)
+          const effectEntry = moveData?.effect_entries?.find((entry: any) => entry.language?.name === 'en')
+          return {
+            name: entry.move.name,
+            type: moveData.type?.name || 'unknown',
+            damage_class: moveData.damage_class?.name || 'status',
+            power: moveData.power,
+            accuracy: moveData.accuracy,
+            pp: moveData.pp,
+            level_learned_at: entry.version_group_details?.[0]?.level_learned_at || null,
+            short_effect: effectEntry?.short_effect || effectEntry?.effect || null,
+          }
+        } catch (error) {
+          console.debug('Failed to load move details', error)
+          return {
+            name: entry.move.name,
+            type: 'unknown',
+            damage_class: 'status',
+            power: null,
+            accuracy: null,
+            pp: null,
+            level_learned_at: null,
+            short_effect: null,
+          }
+        }
+      })
+    )
+
+    return moveDetails
+  } catch (error) {
+    console.error('getPokemonMoves error:', error)
+    reportDataLoadingError('Failed to load Pokemon moves', {
+      pokemonId: id,
+      error: error instanceof Error ? error.message : String(error),
+    })
+    return []
+  }
 }
 
 // Move functions
@@ -349,6 +518,10 @@ export async function searchPokemonByName(query: string): Promise<Pokemon[]> {
     return finalResults
   } catch (error) {
     console.error('Search error for query "' + query + '":', error)
+    reportDataLoadingError(`Search failed for query: ${query}`, {
+      query,
+      error: error instanceof Error ? error.message : String(error)
+    })
     return []
   }
 }
@@ -393,6 +566,10 @@ export async function getPokemonByGeneration(generation: number): Promise<Pokemo
     return pokemonList
   } catch (error) {
     console.error('Generation fetch error:', error)
+    reportDataLoadingError(`Failed to load generation ${generation}`, {
+      generation,
+      error: error instanceof Error ? error.message : String(error)
+    })
     return []
   }
 }
@@ -417,6 +594,10 @@ export async function getPokemonByType(type: string): Promise<Pokemon[]> {
     return validPokemon
   } catch (error) {
     console.error('Type fetch error:', error)
+    reportDataLoadingError(`Failed to load Pokémon of type: ${type}`, {
+      type,
+      error: error instanceof Error ? error.message : String(error)
+    })
     return []
   }
 }
@@ -441,6 +622,11 @@ export async function getPokemonWithPagination(limit = 100, offset = 0): Promise
     return validPokemon
   } catch (error) {
     console.error('Pagination fetch error:', error)
+    reportDataLoadingError(`Failed to load Pokémon pagination (limit: ${limit}, offset: ${offset})`, {
+      limit,
+      offset,
+      error: error instanceof Error ? error.message : String(error)
+    })
     return []
   }
 }
@@ -555,6 +741,9 @@ export async function getPokemonSkeletonsWithPagination(limit = 100, offset = 0)
     return skeletonPokemon
   } catch (error) {
     console.error('Error fetching skeleton Pokemon:', error)
+    reportDataLoadingError(`Failed to load skeleton Pokémon data`, {
+      error: error instanceof Error ? error.message : String(error)
+    })
     return []
   }
 }

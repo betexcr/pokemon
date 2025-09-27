@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import UserDropdown from '@/components/UserDropdown';
 import { roomService, type RoomData } from '@/lib/roomService';
+import { hasFirebaseClientConfig } from '@/lib/firebase/client';
 import { cleanupAllRooms } from '@/lib/cleanupRooms';
 
 export default function LobbyPage() {
@@ -14,10 +15,11 @@ export default function LobbyPage() {
   const [loading, setLoading] = useState(true);
   const [creatingRoom, setCreatingRoom] = useState(false);
   const [cleaningUp, setCleaningUp] = useState(false);
+  const firebaseAvailable = hasFirebaseClientConfig;
 
   // Load rooms from Firebase
   useEffect(() => {
-    if (!user) {
+    if (!user || !firebaseAvailable) {
       setLoading(false);
       return;
     }
@@ -36,6 +38,10 @@ export default function LobbyPage() {
   }, []);
 
   const createRoom = async () => {
+    if (!firebaseAvailable) {
+      alert('Multiplayer battles require Firebase configuration.');
+      return;
+    }
     if (!user) return;
     
     setCreatingRoom(true);
@@ -60,11 +66,19 @@ export default function LobbyPage() {
   };
 
   const joinRoom = (roomId: string) => {
+    if (!firebaseAvailable) {
+      alert('Multiplayer battles require Firebase configuration.');
+      return;
+    }
     if (!user) return;
     router.push(`/lobby/${roomId}`);
   };
 
   const handleCleanup = async () => {
+    if (!firebaseAvailable) {
+      alert('Multiplayer battles require Firebase configuration.');
+      return;
+    }
     if (!user) return;
     
     setCleaningUp(true);
@@ -98,6 +112,18 @@ export default function LobbyPage() {
       default: return 'text-gray-600 bg-gray-100';
     }
   };
+
+  if (!firebaseAvailable) {
+    return (
+      <div className="flex min-h-[400px] flex-col items-center justify-center space-y-4 text-center">
+        <div className="text-5xl">⚠️</div>
+        <p className="text-lg font-semibold text-text">Multiplayer lobby unavailable</p>
+        <p className="max-w-md text-sm text-muted-foreground">
+          Firebase credentials are missing. Add your project keys to the environment to enable online battles.
+        </p>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

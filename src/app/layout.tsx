@@ -1,14 +1,15 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
 import './globals.css'
 import ThemeProvider from '@/components/ThemeProvider'
 import { AuthProvider } from '@/contexts/AuthContext'
+import { ErrorProvider } from '@/contexts/ErrorContext'
 import HelpAssistant from '@/components/HelpAssistant'
+import ErrorTip from '@/components/ErrorTip'
+import GlobalErrorCatcher from '@/components/GlobalErrorCatcher'
 import RoutePreloader from '@/components/RoutePreloader'
 import PerformanceMonitor from '@/components/PerformanceMonitor'
 import { ToastProvider } from '@/components/ToastProvider'
 
-const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://pokemon.ultharcr.com'),
@@ -118,19 +119,23 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body suppressHydrationWarning className={`${inter.className} min-h-screen bg-bg text-text pokeball-bg site-gradient`}>
-        <AuthProvider>
-          <ThemeProvider>
-            <ToastProvider>
-              <RoutePreloader />
-              <PerformanceMonitor />
-              <div className="min-h-screen">
-                {children}
-                <HelpAssistant />
-              </div>
-            </ToastProvider>
-          </ThemeProvider>
-        </AuthProvider>
+      <body suppressHydrationWarning className="min-h-screen bg-bg text-text pokeball-bg site-gradient font-sans">
+        <ErrorProvider>
+          <AuthProvider>
+            <ThemeProvider>
+              <ToastProvider>
+                <RoutePreloader />
+                <PerformanceMonitor />
+                <div className="min-h-screen">
+                  {children}
+                  <GlobalErrorCatcher />
+                  <HelpAssistant />
+                  <ErrorTip />
+                </div>
+              </ToastProvider>
+            </ThemeProvider>
+          </AuthProvider>
+        </ErrorProvider>
       </body>
     </html>
   )

@@ -1,21 +1,24 @@
-import { 
-  collection, 
-  doc, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  getDocs, 
+import {
+  collection,
+  doc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  getDocs,
   getDoc,
-  query, 
-  where, 
+  query,
+  where,
   orderBy,
   serverTimestamp,
   type DocumentData,
   type QueryDocumentSnapshot,
-  type Timestamp
-} from 'firebase/firestore';
-import { DEFAULT_NATURE, NatureName } from '@/data/natures';
-import { db } from './firebase';
+  type Timestamp,
+  FirestoreError
+} from 'firebase/firestore'
+import { DEFAULT_NATURE, NatureName } from '@/data/natures'
+import { getDb as getClientDb, hasFirebaseClientConfig } from './firebase/client'
+import { firebaseErrorLogger } from './firebaseErrorLogger'
+import { reportApiError } from './errorReporting'
 
 export interface MoveData {
   name: string;
@@ -84,13 +87,32 @@ function docToSavedTeam(doc: QueryDocumentSnapshot<DocumentData>): SavedTeam {
 }
 
 // Save a team to Firestore
+function tryGetDb() {
+  if (!hasFirebaseClientConfig) {
+    return null
+  }
+
+  try {
+    return getClientDb()
+  } catch (error) {
+    console.warn('Failed to initialize Firestore client', error)
+    return null
+  }
+}
+
+function ensureDb() {
+  const db = tryGetDb()
+  if (!db) {
+    throw new Error('Firebase not configured')
+  }
+  return db
+}
+
 export async function saveTeamToFirebase(
   userId: string, 
   team: Omit<SavedTeam, 'id' | 'userId' | 'createdAt' | 'updatedAt'>
 ): Promise<string> {
-  if (!db) {
-    throw new Error('Firebase not configured');
-  }
+  const db = ensureDb()
 
   try {
     const teamData: Omit<TeamDocument, 'createdAt' | 'updatedAt'> = {
@@ -105,12 +127,12 @@ export async function saveTeamToFirebase(
       ...teamData,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
-    });
+    })
 
-    return docRef.id;
+    return docRef.id
   } catch (error) {
-    console.error('Error saving team to Firebase:', error);
-    throw new Error('Failed to save team');
+    console.error('Error saving team to Firebase:', error)
+    throw new Error('Failed to save team')
   }
 }
 
@@ -120,32 +142,30 @@ export async function updateTeamInFirebase(
   userId: string,
   updates: Partial<Omit<SavedTeam, 'id' | 'userId' | 'createdAt' | 'updatedAt'>>
 ): Promise<void> {
-  if (!db) {
-    throw new Error('Firebase not configured');
-  }
+  const db = ensureDb()
 
   try {
-    const teamRef = doc(db, 'userTeams', teamId);
+    const teamRef = doc(db, 'userTeams', teamId)
     
     // Verify the team belongs to the user
     const teamDoc = await getDoc(teamRef);
     if (!teamDoc.exists()) {
-      throw new Error('Team not found');
+      throw new Error('Team not found')
     }
     
-    const teamData = teamDoc.data() as TeamDocument;
+    const teamData = teamDoc.data() as TeamDocument
     if (teamData.userId !== userId) {
-      throw new Error('Unauthorized: Team does not belong to user');
+      throw new Error('Unauthorized: Team does not belong to user')
     }
 
     await updateDoc(teamRef, {
       ...updates,
       ...(updates.slots ? { slots: updates.slots.map(normalizeSlot) } : {}),
-      updatedAt: serverTimestamp(),
-    });
+      updatedAt: serverTimestamp()
+    })
   } catch (error) {
-    console.error('Error updating team in Firebase:', error);
-    throw new Error('Failed to update team');
+    console.error('Error updating team in Firebase:', error)
+    throw new Error('Failed to update team')
   }
 }
 
@@ -154,27 +174,25 @@ export async function deleteTeamFromFirebase(
   teamId: string,
   userId: string
 ): Promise<void> {
-  if (!db) {
-    throw new Error('Firebase not configured');
-  }
+  const db = ensureDb()
 
   try {
-    const teamRef = doc(db, 'userTeams', teamId);
+    const teamRef = doc(db, 'userTeams', teamId)
     
     // Verify the team belongs to the user
     const teamDoc = await getDoc(teamRef);
     if (!teamDoc.exists()) {
-      throw new Error('Team not found');
+      throw new Error('Team not found')
     }
     
-    const teamData = teamDoc.data() as TeamDocument;
+    const teamData = teamDoc.data() as TeamDocument
     if (teamData.userId !== userId) {
-      throw new Error('Unauthorized: Team does not belong to user');
+      throw new Error('Unauthorized: Team does not belong to user')
     }
 
-    await deleteDoc(teamRef);
+    await deleteDoc(teamRef)
   } catch (error) {
-    console.error('Error deleting team from Firebase:', error);
+    console.error('Error deleting team from Firebase:', error)
     
     // Provide more specific error messages
     if (error instanceof Error) {
@@ -193,75 +211,108 @@ export async function deleteTeamFromFirebase(
 
 // Get all teams for a user
 export async function getUserTeams(userId: string): Promise<SavedTeam[]> {
-  if (!db) {
-    throw new Error('Firebase not configured');
-  }
+  const db = ensureDb()
 
   try {
-    console.log('getUserTeams: Fetching teams for userId:', userId);
-    const teamsQuery = query(
-      collection(db, 'userTeams'),
+    console.log('getUserTeams: Fetching teams for userId:', userId)
+
+    const collectionRef = collection(db, 'userTeams')
+    const baseQuery = query(
+      collectionRef,
       where('userId', '==', userId),
       orderBy('updatedAt', 'desc')
-    );
+    )
 
-    const querySnapshot = await getDocs(teamsQuery);
-    console.log('getUserTeams: Query snapshot size:', querySnapshot.docs.length);
-    const teams = querySnapshot.docs.map(docToSavedTeam);
-    console.log('getUserTeams: Mapped teams:', teams);
-    return teams;
+    try {
+      const snapshot = await getDocs(baseQuery)
+      console.log('getUserTeams: Query snapshot size:', snapshot.docs.length)
+      return snapshot.docs.map(docToSavedTeam)
+    } catch (error) {
+      const firestoreError = error as FirestoreError
+      console.error('Error fetching user teams from Firebase:', firestoreError)
+
+      firebaseErrorLogger.logError(firestoreError, 'get_user_teams', {
+        collection: 'userTeams',
+        userId,
+        query: 'where(userId == uid) orderBy(updatedAt desc)'
+      })
+
+      if (firestoreError.code === 'failed-precondition') {
+        console.warn('Falling back to unordered userTeams query due to missing index or field')
+        const fallbackSnapshot = await getDocs(query(collectionRef, where('userId', '==', userId)))
+        return fallbackSnapshot.docs.map(docToSavedTeam)
+      }
+
+      if (firestoreError.code === 'permission-denied') {
+        const friendlyMessage = 'Permission denied while loading your saved teams. Please verify Firestore security rules and ensure you are signed in.'
+        reportApiError(friendlyMessage, {
+          component: 'TeamSelector',
+          page: 'battle-firestore',
+          firebaseCode: firestoreError.code
+        })
+        throw new Error(friendlyMessage)
+      }
+
+      reportApiError('Error fetching user teams from Firebase', {
+        component: 'TeamSelector',
+        page: 'battle-firestore',
+        firebaseCode: firestoreError.code
+      })
+
+      throw new Error('Failed to load your saved teams from the cloud. Please try again.')
+    }
   } catch (error) {
-    console.error('Error fetching user teams from Firebase:', error);
-    throw new Error('Failed to fetch teams');
+    console.error('Error fetching user teams from Firebase:', error)
+    if (error instanceof Error) {
+      throw error
+    }
+
+    throw new Error('Failed to load your saved teams from the cloud. Please try again.')
   }
 }
 
 // Get a specific team by ID
 export async function getTeamById(teamId: string, userId: string): Promise<SavedTeam | null> {
-  if (!db) {
-    throw new Error('Firebase not configured');
-  }
+  const db = ensureDb()
 
   try {
-    const teamRef = doc(db, 'userTeams', teamId);
-    const teamDoc = await getDoc(teamRef);
-    
+    const teamRef = doc(db, 'userTeams', teamId)
+    const teamDoc = await getDoc(teamRef)
+
     if (!teamDoc.exists()) {
-      return null;
-    }
-    
-    const teamData = teamDoc.data() as TeamDocument;
-    
-    // Verify the team belongs to the user (or is public)
-    if (teamData.userId !== userId && !teamData.isPublic) {
-      throw new Error('Unauthorized: Team does not belong to user');
+      return null
     }
 
-    return docToSavedTeam(teamDoc as QueryDocumentSnapshot<DocumentData>);
+    const teamData = teamDoc.data() as TeamDocument
+
+    // Verify the team belongs to the user (or is public)
+    if (teamData.userId !== userId && !teamData.isPublic) {
+      throw new Error('Unauthorized: Team does not belong to user')
+    }
+
+    return docToSavedTeam(teamDoc as QueryDocumentSnapshot<DocumentData>)
   } catch (error) {
-    console.error('Error fetching team from Firebase:', error);
-    throw new Error('Failed to fetch team');
+    console.error('Error fetching team from Firebase:', error)
+    throw new Error('Failed to fetch team')
   }
 }
 
 // Get public teams (for sharing/community features)
 export async function getPublicTeams(limit: number = 20): Promise<SavedTeam[]> {
-  if (!db) {
-    throw new Error('Firebase not configured');
-  }
+  const db = ensureDb()
 
   try {
     const publicTeamsQuery = query(
       collection(db, 'userTeams'),
       where('isPublic', '==', true),
       orderBy('updatedAt', 'desc')
-    );
+    )
 
-    const querySnapshot = await getDocs(publicTeamsQuery);
-    return querySnapshot.docs.slice(0, limit).map(docToSavedTeam);
+    const querySnapshot = await getDocs(publicTeamsQuery)
+    return querySnapshot.docs.slice(0, limit).map(docToSavedTeam)
   } catch (error) {
-    console.error('Error fetching public teams from Firebase:', error);
-    throw new Error('Failed to fetch public teams');
+    console.error('Error fetching public teams from Firebase:', error)
+    throw new Error('Failed to fetch public teams')
   }
 }
 
@@ -270,57 +321,57 @@ export async function syncTeamsWithFirebase(
   userId: string,
   localTeams: SavedTeam[]
 ): Promise<SavedTeam[]> {
-  if (!db) {
+  if (!tryGetDb()) {
     // If Firebase is not configured, return local teams
-    return localTeams;
+    return localTeams
   }
 
   try {
     // Get teams from Firebase
-    const firebaseTeams = await getUserTeams(userId);
-    
+    const firebaseTeams = await getUserTeams(userId)
+
     // Merge local teams with Firebase teams
     // Local teams take precedence for conflicts
-    const mergedTeams = new Map<string, SavedTeam>();
-    
+    const mergedTeams = new Map<string, SavedTeam>()
+
     // Add Firebase teams first
     firebaseTeams.forEach(team => {
-      mergedTeams.set(team.name, team);
-    });
-    
+      mergedTeams.set(team.name, team)
+    })
+
     // Add/update with local teams
     localTeams.forEach(localTeam => {
       // Check if there's a Firebase team with the same name
-      const existingTeam = mergedTeams.get(localTeam.name);
+      const existingTeam = mergedTeams.get(localTeam.name)
       if (existingTeam) {
         // Update Firebase team with local data if local is newer
         if (localTeam.updatedAt > existingTeam.updatedAt) {
-          mergedTeams.set(localTeam.name, localTeam);
+          mergedTeams.set(localTeam.name, localTeam)
         }
       } else {
         // New team, add to Firebase
-        mergedTeams.set(localTeam.name, localTeam);
+        mergedTeams.set(localTeam.name, localTeam)
       }
-    });
-    
+    })
+
     // Save any new/updated teams to Firebase
-    const teamsToSave = Array.from(mergedTeams.values());
+    const teamsToSave = Array.from(mergedTeams.values())
     for (const team of teamsToSave) {
       if (!team.id || team.id.startsWith('local_')) {
         // This is a local team, save to Firebase
         try {
-          const firebaseId = await saveTeamToFirebase(userId, team);
-          team.id = firebaseId;
+          const firebaseId = await saveTeamToFirebase(userId, team)
+          team.id = firebaseId
         } catch (error) {
-          console.error('Failed to sync team to Firebase:', error);
+          console.error('Failed to sync team to Firebase:', error)
         }
       }
     }
-    
-    return teamsToSave;
+
+    return teamsToSave
   } catch (error) {
-    console.error('Error syncing teams with Firebase:', error);
+    console.error('Error syncing teams with Firebase:', error)
     // Return local teams if sync fails
-    return localTeams;
+    return localTeams
   }
 }

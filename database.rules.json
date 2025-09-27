@@ -3,78 +3,10 @@
     ".read": false,
     ".write": false,
 
-    "users": {
-      "$uid": {
-        ".read": "auth != null && auth.uid == $uid",
-        ".write": "auth != null && auth.uid == $uid"
-      }
-    },
-
-  "battles": {
-    "$bid": {
-      "meta": {
-        ".read": "auth != null && (
-          root.child('battles/'+$bid+'/meta/players/p1/uid').val() == auth.uid ||
-          root.child('battles/'+$bid+'/meta/players/p2/uid').val() == auth.uid
-        )",
-        ".write": false
-      },
-      "public": {
-        ".read": "auth != null && (
-          root.child('battles/'+$bid+'/meta/players/p1/uid').val() == auth.uid ||
-          root.child('battles/'+$bid+'/meta/players/p2/uid').val() == auth.uid
-        )",
-        ".write": false
-      },
-        "private": {
-          "$uid": {
-            ".read": "auth != null && auth.uid == $uid",
-            ".write": false
-          }
-        },
-        "turns": {
-          "$turn": {
-            "choices": {
-              "$uid": {
-                ".read": "auth != null && auth.uid == $uid",
-                ".write": "
-                  auth != null &&
-                  auth.uid == $uid &&
-                  root.child('battles/'+$bid+'/meta/phase').val() == 'choosing' &&
-                  !data.exists() &&
-                  newData.hasChildren(['action','payload','clientVersion','committedAt']) &&
-                  (newData.child('action').val() == 'move' || newData.child('action').val() == 'switch' || newData.child('action').val() == 'forfeit') &&
-                  (newData.child('action').val() == 'move' ? newData.child('payload').hasChild('moveId') : true) &&
-                  (newData.child('action').val() == 'switch' ? newData.child('payload').hasChild('switchToIndex') : true) &&
-                  newData.child('clientVersion').val() == root.child('battles/'+$bid+'/meta/version').val()
-                "
-              }
-            },
-            "resolution": {
-              ".read": "auth != null",
-              ".write": false
-            },
-            "replacements": {
-              "$uid": {
-                ".read": "auth != null && auth.uid == $uid",
-                ".write": "
-                  auth != null &&
-                  auth.uid == $uid &&
-                  root.child('battles/'+$bid+'/meta/phase').val() == 'replacing' &&
-                  !data.exists() &&
-                  newData.hasChildren(['switchToIndex','committedAt'])
-                "
-              }
-            }
-          }
-        }
-      }
-    },
-
     "presence": {
       "$uid": {
-        ".read": "auth != null && auth.uid == $uid",
-        ".write": "auth != null && auth.uid == $uid && newData.hasChildren(['connected','lastActiveAt'])"
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
       }
     },
 
@@ -82,8 +14,45 @@
       "$region": {
         "queue": {
           "$uid": {
-            ".read": "auth != null && auth.uid == $uid",
-            ".write": "auth != null && auth.uid == $uid && (newData.exists() ? newData.hasChildren(['joinedAt','prefs']) : true)"
+            ".read": "auth != null && auth.uid === $uid",
+            ".write": "auth != null && auth.uid === $uid"
+          }
+        }
+      }
+    },
+
+    "battles": {
+      "$battleId": {
+        ".read": "auth != null && (auth.uid === root.child('battles/' + $battleId + '/meta/players/p1/uid').val() || auth.uid === root.child('battles/' + $battleId + '/meta/players/p2/uid').val())",
+        ".write": "auth != null && (auth.uid === root.child('battles/' + $battleId + '/meta/players/p1/uid').val() || auth.uid === root.child('battles/' + $battleId + '/meta/players/p2/uid').val())",
+
+        "meta": {
+          ".write": false
+        },
+
+        "public": {
+          ".write": false
+        },
+
+        "private": {
+          "$uid": {
+            ".read": "auth != null && auth.uid === $uid",
+            ".write": "auth != null && auth.uid === $uid"
+          }
+        },
+
+        "turns": {
+          "$turn": {
+            "choices": {
+              "$uid": {
+                ".read": "auth != null && (auth.uid === root.child('battles/' + $battleId + '/meta/players/p1/uid').val() || auth.uid === root.child('battles/' + $battleId + '/meta/players/p2/uid').val())",
+                ".write": "auth != null && auth.uid === $uid"
+              }
+            },
+            "resolution": {
+              ".read": "auth != null && (auth.uid === root.child('battles/' + $battleId + '/meta/players/p1/uid').val() || auth.uid === root.child('battles/' + $battleId + '/meta/players/p2/uid').val())",
+              ".write": false
+            }
           }
         }
       }

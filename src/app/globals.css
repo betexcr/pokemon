@@ -282,6 +282,15 @@ body {
   color: #A1A7B3 !important; /* Better contrast for gray-400 text */
 }
 
+/* Smooth transitions for Pokemon grid to reduce flashing */
+.pokemon-grid {
+  transition: opacity 0.2s ease-in-out;
+}
+
+.pokemon-grid-updating {
+  opacity: 0.8;
+}
+
 /* Improved input styling for dark mode */
 .dark input[type="text"],
 .dark input[type="search"],

@@ -9,8 +9,6 @@ import { getTrainerSpriteUrl } from "@/lib/trainerSprites";
 import AppHeader from "@/components/AppHeader";
 import TrainerRoster from "@/components/battle/TrainerRoster";
 import TeamSelector from "@/components/TeamSelector";
-// Removed LoadingSprite in favor of static /loading.gif
-import BattleStartFlash from "@/components/battle/BattleStartFlash";
 
 // Saved teams storage key reused from team builder
 // const STORAGE_KEY = "pokemon-team-builder";
@@ -28,9 +26,7 @@ function BattlePage() {
   const [isMobile, setIsMobile] = useState(false);
   const [showTooltip, setShowTooltip] = useState<string | null>(null);
   const [lastTapTime, setLastTapTime] = useState<number>(0);
-  const [introDone, setIntroDone] = useState(false);
   const [isStartingBattle, setIsStartingBattle] = useState(false);
-  const [showStartOverlay, setShowStartOverlay] = useState(false);
   const [teamSelectorReady, setTeamSelectorReady] = useState(false);
 
   // Check if mobile on mount and resize
@@ -116,8 +112,6 @@ function BattlePage() {
     });
 
     setIsStartingBattle(true);
-    setShowStartOverlay(true);
-
     const opponent = champion.team;
     
     if (!playerTeam || !opponent) {
@@ -173,7 +167,7 @@ function BattlePage() {
       console.error('Failed to navigate to battle:', error);
       alert("Error starting battle. Please try again.");
       setIsStartingBattle(false);
-      setShowStartOverlay(false);
+      
     }
   };
 
@@ -211,9 +205,6 @@ function BattlePage() {
 
   return (
     <div className="h-screen bg-bg text-text flex flex-col overflow-hidden relative">
-      {/* Battle Start Flash */}
-      {!introDone && <BattleStartFlash onDone={() => setIntroDone(true)} />}
-      
       <AppHeader
         title="AI Battle"
         backLink="/"
@@ -270,7 +261,7 @@ function BattlePage() {
               <div className="text-center py-2">
                 <div className="mb-2 p-2 bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700 rounded-lg">
                   <p className="text-sm font-medium text-green-800 dark:text-green-200">
-                    ✓ Team "{selectedPlayerTeam.name}" selected
+                    ✓ Team &quot;{selectedPlayerTeam.name}&quot; selected
                   </p>
                   <p className="text-xs text-green-600 dark:text-green-400">
                     {selectedPlayerTeam.slots.filter(slot => slot.id !== null).length}/6 Pokémon
@@ -362,16 +353,6 @@ function BattlePage() {
           </div>
         )}
         </div>
-        {showStartOverlay && (
-          <div className="absolute inset-0 bg-bg/80 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="text-center">
-              <div className="mx-auto mb-3">
-                <img src="/loading.gif" alt="Starting battle" width={128} height={128} className="mx-auto" />
-              </div>
-              <div className="text-sm text-muted">Starting battle…</div>
-            </div>
-          </div>
-        )}
       </main>
     </div>
   );

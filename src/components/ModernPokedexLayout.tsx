@@ -21,6 +21,7 @@ import Image from 'next/image'
 import HeaderIcons, { HamburgerMenu } from '@/components/HeaderIcons'
 import AppHeader from '@/components/AppHeader'
 import Tooltip from '@/components/Tooltip'
+import SearchInput from '@/components/SearchInput'
 
 // Legendary and Mythical Pokémon lists
 const LEGENDARY_POKEMON = new Set([
@@ -410,8 +411,18 @@ export default function ModernPokedexLayout({
   // Initialize filteredPokemon with pokemonList on first load
   useEffect(() => {
     if (pokemonList.length > 0 && !isInFilteredState) {
-      setFilteredPokemon(pokemonList)
-      setDisplayPokemon(pokemonList)
+      setFilteredPokemon(prev => {
+        if (prev.length === pokemonList.length && prev.every((p, i) => p.id === pokemonList[i]?.id)) {
+          return prev // No change, prevent re-render
+        }
+        return pokemonList
+      })
+      setDisplayPokemon(prev => {
+        if (prev.length === pokemonList.length && prev.every((p, i) => p.id === pokemonList[i]?.id)) {
+          return prev // No change, prevent re-render
+        }
+        return pokemonList
+      })
     }
   }, [pokemonList, isInFilteredState])
 
@@ -498,25 +509,50 @@ export default function ModernPokedexLayout({
     handleSearchChange,
     clearSearch
   } = useSearch({
-    debounceMs: 300,
+    debounceMs: 800,
     cacheTtl: 5 * 60 * 1000,
     throttleMs: 100
   })
 
-  // Create a hash of current filter state to detect actual changes
+  // Create a hash of current filter state to detect actual changes (excluding search results)
   const getFilterHash = useCallback(() => {
     return JSON.stringify({
-      searchResults: searchResults.length,
+      // Removed searchResults.length to prevent filtering on every search change
       advancedFilters,
       debouncedHeightRange,
       debouncedWeightRange,
       sortBy,
       sortOrder
     })
-  }, [searchResults.length, advancedFilters, debouncedHeightRange, debouncedWeightRange, sortBy, sortOrder])
+  }, [advancedFilters, debouncedHeightRange, debouncedWeightRange, sortBy, sortOrder])
 
   // Memoize the current filter hash to prevent unnecessary recalculations
   const currentFilterHash = useMemo(() => getFilterHash(), [getFilterHash])
+
+  // Handle search results separately to avoid triggering heavy filtering
+  useEffect(() => {
+    if (searchResults.length > 0) {
+      // Directly set search results without triggering the main filtering effect
+      setFilteredPokemon(prev => {
+        if (prev.length === searchResults.length && prev.every((p, i) => p.id === searchResults[i]?.id)) {
+          return prev // No change, prevent re-render
+        }
+        return searchResults
+      })
+      setDisplayPokemon(prev => {
+        if (prev.length === searchResults.length && prev.every((p, i) => p.id === searchResults[i]?.id)) {
+          return prev // No change, prevent re-render
+        }
+        return searchResults
+      })
+      setIsInFilteredState(true)
+    } else if (searchTerm === '') {
+      // Only clear results if search term is completely empty
+      setFilteredPokemon(pokemonList)
+      setDisplayPokemon(pokemonList)
+      setIsInFilteredState(false)
+    }
+  }, [searchResults, searchTerm, pokemonList])
 
 
   // URL state management
@@ -568,19 +604,16 @@ export default function ModernPokedexLayout({
            debouncedWeightRange[0] > 0 || debouncedWeightRange[1] < 1000 ||
            sortBy !== 'id' || sortOrder !== 'asc')
 
-        // Check if we have any active filters
+        // Check if we have any active filters (excluding search results - handled separately)
         const hasActiveFilters = advancedFilters.types.length > 0 || 
-                                 searchResults.length > 0 || 
                                  (advancedFilters.generation && advancedFilters.generation !== 'all') ||
                                  advancedFilters.legendary || 
                                  advancedFilters.mythical ||
                                  debouncedHeightRange[0] > 0 || debouncedHeightRange[1] < 20 ||
                                  debouncedWeightRange[0] > 0 || debouncedWeightRange[1] < 1000
 
-        // If we have search results, use those as base
-        if (searchResults.length > 0) {
-          results = searchResults
-        } else if (advancedFilters.generation && advancedFilters.generation !== 'all' && advancedFilters.generation !== '') {
+        // Skip search results handling - they're handled by the separate effect above
+        if (advancedFilters.generation && advancedFilters.generation !== 'all' && advancedFilters.generation !== '') {
           // Fetch by generation only if not "all" and not empty (All Generations)
           setIsAllGenerations(false)
           results = await getPokemonByGeneration(parseInt(advancedFilters.generation))
@@ -792,15 +825,37 @@ export default function ModernPokedexLayout({
 
 
 
-        // Update both states together to prevent conflicts
-        setFilteredPokemon(results)
-        setDisplayPokemon(results)
+        // Update both states together to prevent conflicts and reduce flashing
+        // Only update if the results actually changed to prevent unnecessary re-renders
+        setFilteredPokemon(prev => {
+          if (prev.length === results.length && prev.every((p, i) => p.id === results[i]?.id)) {
+            return prev // No change, prevent re-render
+          }
+          return results
+        })
+        setDisplayPokemon(prev => {
+          if (prev.length === results.length && prev.every((p, i) => p.id === results[i]?.id)) {
+            return prev // No change, prevent re-render
+          }
+          return results
+        })
         setIsInFilteredState(true)
       } catch (error) {
         
         // On error, fallback to pokemonList instead of empty array
-        setFilteredPokemon(pokemonList)
-        setDisplayPokemon(pokemonList)
+        // Only update if different to prevent unnecessary re-renders
+        setFilteredPokemon(prev => {
+          if (prev.length === pokemonList.length && prev.every((p, i) => p.id === pokemonList[i]?.id)) {
+            return prev // No change, prevent re-render
+          }
+          return pokemonList
+        })
+        setDisplayPokemon(prev => {
+          if (prev.length === pokemonList.length && prev.every((p, i) => p.id === pokemonList[i]?.id)) {
+            return prev // No change, prevent re-render
+          }
+          return pokemonList
+        })
         setIsInFilteredState(false)
         
       } finally {
@@ -1711,37 +1766,16 @@ export default function ModernPokedexLayout({
       {/* Search Bar - Visible on all viewports */}
       <div className="border-b border-border bg-surface">
         <div className="w-full px-4 py-3">
-          <div className="flex items-center gap-3">
-            <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-text pointer-events-none z-10" />
-            <input
-              type="text"
+          <div className="flex items-center gap-3 relative">
+            <SearchInput
+              onSearchChange={handleSearchChange}
               placeholder="Search Pokémon..."
-              value={searchTerm}
-              onChange={(e) => {
-                handleSearchChange(e.target.value)
-              }}
-              className="w-full pl-11 pr-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-poke-blue focus:border-poke-blue focus:outline-none transition-all duration-200"
-              style={{ 
-                backgroundColor: 'var(--color-input-bg)', 
-                color: 'var(--color-input-text)',
-                paddingLeft: '2.75rem !important'
-              }}
             />
             {searchLoading && (
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+              <div className="absolute right-6 top-1/2 transform -translate-y-1/2">
                 <img src="/loading.gif" alt="Loading" width={20} height={20} className="opacity-80" />
               </div>
             )}
-            {searchTerm && (
-              <button
-                onClick={() => handleSearchChange('')}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 transition-colors"
-              >
-                <X className="h-4 w-4 text-text hover:text-poke-blue" />
-              </button>
-            )}
-            </div>
           </div>
         </div>
       </div>
@@ -1941,42 +1975,46 @@ export default function ModernPokedexLayout({
           <>
             {isAllGenerations && advancedFilters.generation === 'all' && advancedFilters.types.length === 0 && !searchTerm ? (
               // Always use lazy loading with viewport-based loading
-              <VirtualizedPokemonGrid
-                pokemonList={hydratedSortedPokemon}
-                onToggleComparison={(id) => onToggleComparison(id, setShowSidebar)}
-                onSelectPokemon={undefined}
-                selectedPokemon={null}
-                comparisonList={comparisonList}
-                density={cardDensity}
-                showSpecialForms={true}
-                isLoadingMore={false}
-                hasMorePokemon={false}
-                onLoadMore={() => {}}
-              />
+              <div className={`pokemon-grid ${isFiltering ? 'pokemon-grid-updating' : ''}`}>
+                <VirtualizedPokemonGrid
+                  pokemonList={hydratedSortedPokemon}
+                  onToggleComparison={(id) => onToggleComparison(id, setShowSidebar)}
+                  onSelectPokemon={undefined}
+                  selectedPokemon={null}
+                  comparisonList={comparisonList}
+                  density={cardDensity}
+                  showSpecialForms={true}
+                  isLoadingMore={false}
+                  hasMorePokemon={false}
+                  onLoadMore={() => {}}
+                />
+              </div>
             ) : sortedPokemon.length > 0 ? (
               <>
-                {cardDensity === 'list' ? (
-                  <PokedexListView
-                    pokemonList={hydratedSortedPokemon}
-                    onToggleComparison={(id) => onToggleComparison(id, setShowSidebar)}
-                    onSelectPokemon={undefined}
-                    comparisonList={comparisonList}
-                    isLoadingMore={isLoadingMore}
-                    hasMorePokemon={hasMorePokemon}
-                    onLoadMore={loadMorePokemon}
-                  />
-                ) : (
-                  <VirtualizedPokemonGrid
-                    pokemonList={hydratedSortedPokemon}
-                    onToggleComparison={(id) => onToggleComparison(id, setShowSidebar)}
-                    onSelectPokemon={undefined}
-                    selectedPokemon={null}
-                    comparisonList={comparisonList}
-                    density={cardDensity}
-                    enableVirtualization={false}
-                    showSpecialForms={isAllGenerations || (advancedFilters.generation !== 'all' && advancedFilters.generation !== '')}
-                  />
-                )}
+                <div className={`pokemon-grid ${isFiltering ? 'pokemon-grid-updating' : ''}`}>
+                  {cardDensity === 'list' ? (
+                    <PokedexListView
+                      pokemonList={hydratedSortedPokemon}
+                      onToggleComparison={(id) => onToggleComparison(id, setShowSidebar)}
+                      onSelectPokemon={undefined}
+                      comparisonList={comparisonList}
+                      isLoadingMore={isLoadingMore}
+                      hasMorePokemon={hasMorePokemon}
+                      onLoadMore={loadMorePokemon}
+                    />
+                  ) : (
+                    <VirtualizedPokemonGrid
+                      pokemonList={hydratedSortedPokemon}
+                      onToggleComparison={(id) => onToggleComparison(id, setShowSidebar)}
+                      onSelectPokemon={undefined}
+                      selectedPokemon={null}
+                      comparisonList={comparisonList}
+                      density={cardDensity}
+                      enableVirtualization={false}
+                      showSpecialForms={isAllGenerations || (advancedFilters.generation !== 'all' && advancedFilters.generation !== '')}
+                    />
+                  )}
+                </div>
 
                 {/* Infinite scroll loading indicator - only for grid view */}
                 {cardDensity !== 'list' && isAllGenerations && isLoadingMore && (

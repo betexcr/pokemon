@@ -22,6 +22,7 @@ export default function StatsSection({ stats, name }: { stats: Stat[]; name?: st
 
   // Get stat abbreviations like in the image
   const getStatLabel = (statName: string) => {
+    if (!statName) return 'UNK';
     switch (statName.toLowerCase()) {
       case 'hp': return 'HP';
       case 'attack': return 'ATK';
@@ -68,7 +69,7 @@ export default function StatsSection({ stats, name }: { stats: Stat[]; name?: st
 
       {/* Stat bars below */}
       <div className="space-y-6">
-        {stats.map(s => (
+        {stats.filter(s => s && s.name).map(s => (
           <StatsSlider
             key={s.name}
             label={getStatLabel(s.name)}

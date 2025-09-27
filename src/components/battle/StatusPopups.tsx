@@ -1,118 +1,78 @@
-"use client";
+'use client'
 
-import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
-import { useReducedMotionPref } from "@/hooks/useReducedMotionPref";
+import { useEffect, useState } from 'react'
 
-export type StatusCode = "PAR" | "BRN" | "PSN" | "SLP" | "FRZ" | "CONF" | "ATK⬆" | "DEF⬇";
-export type StatusEvent = {
-  id?: string | number;
-  code: StatusCode;
-  text?: string;      // optional custom text; defaults to code
-  side?: "ally" | "foe";
-  /** ms to stay visible */
-  ttl?: number;       // default 1400
-};
+export interface StatusEvent {
+  id?: string | number
+  message?: string
+  tone?: 'info' | 'success' | 'warning' | 'danger'
+  durationMs?: number
+  code?: string
+  side?: 'ally' | 'foe'
+}
 
-type Props = {
-  anchorAlly?: { x: number; y: number }; // 0..1 relative to arena
-  anchorFoe?: { x: number; y: number };
-  events: StatusEvent[];  // push new events by changing array identity (e.g., key by turn)
-};
+interface StatusPopupsProps {
+  events: StatusEvent[]
+  anchorAlly?: { x: number; y: number }
+  anchorFoe?: { x: number; y: number }
+}
 
-const colorFor: Record<StatusCode, string> = {
-  PAR: "bg-yellow-300 text-yellow-950",
-  BRN: "bg-orange-400 text-orange-950",
-  PSN: "bg-violet-400 text-violet-950",
-  SLP: "bg-blue-300 text-blue-950",
-  FRZ: "bg-sky-300 text-sky-950",
-  CONF: "bg-pink-300 text-pink-950",
-  "ATK⬆": "bg-emerald-400 text-emerald-950",
-  "DEF⬇": "bg-rose-400 text-rose-950",
-};
+export default function StatusPopups({ events }: StatusPopupsProps) {
+  const [visibleEvents, setVisibleEvents] = useState(events)
 
-export default function StatusPopups({
-  anchorAlly = { x: 0.18, y: 0.62 },
-  anchorFoe = { x: 0.82, y: 0.22 },
-  events,
-}: Props) {
-  const reduce = useReducedMotionPref();
-  const [queue, setQueue] = useState<Array<Required<StatusEvent>>>([]);
-  const idCounter = useRef(0);
-
-  // Normalize incoming events into timed queue entries
   useEffect(() => {
-    const stamped = events.map((e) => ({
-      id: e.id ?? ++idCounter.current,
-      code: e.code,
-      text: e.text ?? e.code,
-      side: e.side ?? "ally",
-      ttl: e.ttl ?? 1400,
-    }));
-    setQueue((prev) => [...prev, ...stamped]);
-  }, [events]);
+    if (events.length === 0) {
+      setVisibleEvents([])
+      return
+    }
 
-  // Auto-remove after TTL
-  useEffect(() => {
-    const timers = queue.map((evt) =>
-      setTimeout(
-        () => setQueue((q) => q.filter((x) => x.id !== evt.id)),
-        evt.ttl
-      )
-    );
-    return () => timers.forEach(clearTimeout);
-  }, [queue]);
+    const timestamp = Date.now()
+    const enriched = events.map((event, index) => {
+      const generatedId = `${timestamp}-${index}`
+      return {
+        ...event,
+        id: event.id ?? generatedId,
+      }
+    })
 
-  const groupAlly = queue.filter((q) => q.side === "ally");
-  const groupFoe  = queue.filter((q) => q.side === "foe");
+    setVisibleEvents(enriched)
 
-  const anchorStyle = (a: { x: number; y: number }) => ({
-    left: `${a.x * 100}%`,
-    top: `${a.y * 100}%`,
-    transform: "translate(-50%, -50%)",
-  });
+    const timers = enriched.map((event) => {
+      const timeout = window.setTimeout(() => {
+        setVisibleEvents((current) => current.filter((item) => item.id !== event.id))
+      }, event.durationMs ?? 2000)
+      return timeout
+    })
 
-  const motionProps = reduce
-    ? { initial: false, animate: { opacity: 1, y: 0 }, exit: { opacity: 0 } }
-    : {
-        initial: { opacity: 0, y: 8, scale: 0.96 },
-        animate: { opacity: 1, y: -8, scale: 1 },
-        exit: { opacity: 0, y: -16, scale: 0.98 },
-        transition: { type: "spring" as const, stiffness: 420, damping: 24, mass: 0.4 },
-      };
+    return () => {
+      timers.forEach((timer) => window.clearTimeout(timer))
+    }
+  }, [events])
+
+  if (visibleEvents.length === 0) return null
 
   return (
-    <>
-      {/* ARIA live region */}
-      <div className="sr-only" aria-live="polite">
-        {queue.map((e) => `${e.side} ${e.text}`).join(". ")}
-      </div>
-
-      {/* Ally popups */}
-      <div className="pointer-events-none absolute z-[45]" style={anchorStyle(anchorAlly)}>
-        <div className="relative -translate-y-2 space-y-1">
-          <AnimatePresence initial={false}>
-            {groupAlly.map((e) => (
-              <motion.div key={e.id} {...motionProps} className={`rounded-full px-2 py-1 text-xs font-bold shadow ${colorFor[e.code]} bg-opacity-95`}>
-                {e.text}
-              </motion.div>
-            ))}
-          </AnimatePresence>
+    <div className="pointer-events-none absolute inset-x-0 top-4 z-40 flex flex-col items-center gap-2">
+      {visibleEvents.map((event, index) => (
+        <div
+          key={event.id ?? index}
+          className={`min-w-[220px] max-w-[320px] rounded-lg border px-4 py-2 text-sm shadow-lg backdrop-blur ${toneStyles[event.tone ?? 'info']}`}
+        >
+          {event.message || formatStatus(event)}
         </div>
-      </div>
+      ))}
+    </div>
+  )
+}
 
-      {/* Foe popups */}
-      <div className="pointer-events-none absolute z-[45]" style={anchorStyle(anchorFoe)}>
-        <div className="relative -translate-y-2 space-y-1">
-          <AnimatePresence initial={false}>
-            {groupFoe.map((e) => (
-              <motion.div key={e.id} {...motionProps} className={`rounded-full px-2 py-1 text-xs font-bold shadow ${colorFor[e.code]} bg-opacity-95`}>
-                {e.text}
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
-      </div>
-    </>
-  );
+const toneStyles: Record<string, string> = {
+  info: 'bg-sky-500/15 border-sky-500/40 text-sky-100',
+  success: 'bg-emerald-500/15 border-emerald-500/40 text-emerald-100',
+  warning: 'bg-amber-500/15 border-amber-500/40 text-amber-100',
+  danger: 'bg-red-500/15 border-red-500/40 text-red-100',
+}
+
+function formatStatus(event: StatusEvent) {
+  const target = event.side === 'ally' ? 'Your side' : event.side === 'foe' ? 'Foe' : 'Battle'
+  return `${target}: ${event.code ?? 'Status changed'}`
 }
