@@ -1,22 +1,30 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import PokemonPageClient from './PokemonPageClient'
-import { getPokemonById } from '@/lib/api'
+import { getPokemonById, getAllValidPokemonIds } from '@/lib/api'
 
 export async function generateStaticParams() {
-  // Generate static params for ALL Pokemon (1-1010+)
-  // This ensures all Pokemon pages work properly
-  const pokemonIds = Array.from({ length: 1010 }, (_, i) => i + 1)
-  return pokemonIds.map(id => ({ 
-    id: id.toString() 
-  }))
+  try {
+    // Get all valid Pokemon IDs from the API
+    const validPokemonIds = await getAllValidPokemonIds()
+    return validPokemonIds.map(id => ({ 
+      id: id.toString() 
+    }))
+  } catch (error) {
+    console.error('Failed to generate static params:', error)
+    // Fallback to a reasonable range if the API fails
+    const fallbackIds = Array.from({ length: 1000 }, (_, i) => i + 1)
+    return fallbackIds.map(id => ({ 
+      id: id.toString() 
+    }))
+  }
 }
 
 export async function generateMetadata(props: any): Promise<Metadata> {
   const params = await props.params
   const pokemonId = parseInt(params?.id ?? '', 10)
   
-  if (isNaN(pokemonId) || pokemonId < 1 || pokemonId > 1010) {
+  if (isNaN(pokemonId) || pokemonId < 1) {
     return {
       title: 'Pokémon Not Found',
       description: 'The requested Pokémon could not be found.'
@@ -63,7 +71,7 @@ export default async function PokemonPage(props: any) {
   const params = await props.params
   const pokemonId = parseInt(params?.id ?? '', 10)
   
-  if (isNaN(pokemonId) || pokemonId < 1 || pokemonId > 1010) {
+  if (isNaN(pokemonId) || pokemonId < 1) {
     notFound()
   }
 

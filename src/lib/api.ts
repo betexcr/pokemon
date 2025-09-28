@@ -191,6 +191,43 @@ export async function getPokemonTotalCount(): Promise<number> {
   return data.count
 }
 
+// Get all valid Pokemon IDs for static generation
+export async function getAllValidPokemonIds(): Promise<number[]> {
+  const cacheKey = 'all-valid-pokemon-ids'
+  const cached = getCache(cacheKey)
+  if (cached) return cached
+
+  try {
+    // Get the total count first
+    const totalCount = await getPokemonTotalCount()
+    
+    // Fetch all Pokemon in batches to get their IDs
+    const allPokemonIds: number[] = []
+    const batchSize = 100
+    const totalBatches = Math.ceil(totalCount / batchSize)
+    
+    for (let i = 0; i < totalBatches; i++) {
+      const offset = i * batchSize
+      const limit = Math.min(batchSize, totalCount - offset)
+      
+      const pokemonList = await getPokemonList(limit, offset)
+      const ids = pokemonList.results.map(pokemon => {
+        const id = pokemon.url.split('/').slice(-2)[0]
+        return parseInt(id)
+      })
+      
+      allPokemonIds.push(...ids)
+    }
+    
+    setCache(cacheKey, allPokemonIds, CACHE_TTL.POKEMON_LIST)
+    return allPokemonIds
+  } catch (error) {
+    console.error('Failed to get all valid Pokemon IDs:', error)
+    // Fallback to a reasonable range if the API fails
+    return Array.from({ length: 1000 }, (_, i) => i + 1)
+  }
+}
+
 // Individual Pokémon functions
 export async function getPokemon(id: number | string): Promise<Pokemon> {
   const cacheKey = getCacheKey('pokemon', { id })
@@ -198,9 +235,17 @@ export async function getPokemon(id: number | string): Promise<Pokemon> {
   if (cached) return cached
 
   const url = `${API_BASE_URL}/pokemon/${id}`
-  const data = await fetchFromAPI<Pokemon>(url)
-  setCache(cacheKey, data, CACHE_TTL.POKEMON_DETAIL)
-  return data
+  try {
+    const data = await fetchFromAPI<Pokemon>(url)
+    setCache(cacheKey, data, CACHE_TTL.POKEMON_DETAIL)
+    return data
+  } catch (error: any) {
+    // Handle 404 errors specifically for non-existent Pokemon
+    if (error?.message?.includes('404')) {
+      throw new Error(`Pokemon with ID ${id} does not exist`)
+    }
+    throw error
+  }
 }
 
 export async function getPokemonById(id: number | string): Promise<Pokemon> {
@@ -213,9 +258,28 @@ export async function getPokemonSpecies(id: number | string): Promise<any> {
   if (cached) return cached
 
   const url = `${API_BASE_URL}/pokemon-species/${id}`
-  const data = await fetchFromAPI(url)
-  setCache(cacheKey, data, CACHE_TTL.POKEMON_SPECIES)
-  return data
+  try {
+    const data = await fetchFromAPI(url)
+    setCache(cacheKey, data, CACHE_TTL.POKEMON_SPECIES)
+    return data
+  } catch (error: any) {
+    // Handle 404 errors specifically for non-existent Pokemon species
+    if (error?.message?.includes('404')) {
+      // For regional variants and special forms, try to get the base species
+      try {
+        const pokemon = await getPokemon(id)
+        if (pokemon.species?.url) {
+          const speciesId = pokemon.species.url.split('/').slice(-2, -1)[0]
+          console.log(`Pokemon ${id} has no direct species, using base species ${speciesId}`)
+          return await getPokemonSpecies(speciesId)
+        }
+      } catch (pokemonError) {
+        console.warn(`Failed to get base species for Pokemon ${id}:`, pokemonError)
+      }
+      throw new Error(`Pokemon species with ID ${id} does not exist`)
+    }
+    throw error
+  }
 }
 
 // Evolution chain functions
@@ -236,6 +300,7 @@ export async function getEvolutionChainNodes(pokemonId: number | string): Promis
     // Get the species data first to find the evolution chain ID
     const species = await getPokemonSpecies(pokemonId)
     if (!species.evolution_chain?.url) {
+      console.warn(`No evolution chain found for Pokemon ${pokemonId}`)
       return []
     }
 
@@ -251,19 +316,30 @@ export async function getEvolutionChainNodes(pokemonId: number | string): Promis
     const processChain = async (chain: any, condition?: string) => {
       if (!chain?.species) return
       
-      // Get Pokemon ID from species URL
-      const pokemonId = parseInt(chain.species.url.split('/').slice(-2, -1)[0])
-      
-      // Get Pokemon data to get types
-      const pokemon = await getPokemon(pokemonId)
-      const types = pokemon.types.map((t: any) => t.type.name)
-      
-      nodes.push({
-        id: pokemonId,
-        name: chain.species.name,
-        types,
-        condition
-      })
+      try {
+        // Get Pokemon ID from species URL
+        const speciesPokemonId = parseInt(chain.species.url.split('/').slice(-2, -1)[0])
+        
+        // Get Pokemon data to get types
+        const pokemon = await getPokemon(speciesPokemonId)
+        const types = pokemon.types.map((t: any) => t.type.name)
+        
+        nodes.push({
+          id: speciesPokemonId,
+          name: chain.species.name,
+          types,
+          condition
+        })
+      } catch (pokemonError) {
+        console.warn(`Failed to get Pokemon data for species ${chain.species.name}:`, pokemonError)
+        // Add a fallback entry with basic info
+        nodes.push({
+          id: 0,
+          name: chain.species.name,
+          types: ['unknown'],
+          condition
+        })
+      }
       
       // Process evolution details for conditions
       if (chain.evolves_to && chain.evolves_to.length > 0) {
@@ -301,6 +377,7 @@ export async function getEvolutionChainNodes(pokemonId: number | string): Promis
     
   } catch (error) {
     console.error('Failed to get evolution chain nodes:', error)
+    // Return empty array instead of throwing to prevent breaking the UI
     return []
   }
 }
@@ -434,10 +511,10 @@ export async function searchPokemonByName(query: string): Promise<Pokemon[]> {
   try {
     const trimmedQuery = query.toLowerCase().trim()
     
-    // Check for exact ID match (1-500 range) - prioritize exact matches
+    // Check for exact ID match (1-1302+ range) - prioritize exact matches
     if (/^\d+$/.test(trimmedQuery)) {
       const id = parseInt(trimmedQuery)
-      if (id >= 1 && id <= 1000) { // Extended range to cover more generations
+      if (id >= 1 && id <= 1302) { // Extended range to cover all generations including special forms
         try {
           const exactMatch = await getPokemon(id)
           setCache(cacheKey, [exactMatch], CACHE_TTL.POKEMON_LIST)

@@ -211,8 +211,8 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
   };
 
   const goToNext = () => {
-    // Assuming there are 1010 Pokémon (current total)
-    if (pokemon.id < 1010) {
+    // Assuming there are 1302+ Pokémon (current total including special forms)
+    if (pokemon.id < 1302) {
       navigateToPokemon(pokemon.id + 1);
     }
   };
@@ -1334,7 +1334,7 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
           <div className="hidden lg:flex items-center gap-4 order-4">
             <button
               onClick={goToNext}
-              disabled={pokemon.id >= 1010}
+              disabled={pokemon.id >= 1302}
               className="group flex items-center justify-center w-12 h-12 rounded-full border border-border bg-surface hover:bg-surface/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-105 disabled:hover:scale-100"
               title={`Next Pokémon (#${String(pokemon.id + 1).padStart(4, "0")})`}
             >

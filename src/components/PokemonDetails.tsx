@@ -36,25 +36,48 @@ export default function PokemonDetails({ pokemon, showHeader = true, className =
         setError(null)
         
         // Load all data in parallel for better performance
-        const [species, abilitiesData, movesData, evolutionData] = await Promise.all([
+        const [species, abilitiesData, movesData, evolutionData] = await Promise.allSettled([
           getPokemonSpecies(pokemon.id),
           getPokemonAbilities(pokemon.id),
           getPokemonMoves(pokemon.id),
           getEvolutionChainNodes(pokemon.id)
         ])
         
-        // Set species data - get English flavor text specifically
-        const englishFlavorText = species.flavor_text_entries?.find((entry: any) => entry.language.name === 'en')?.flavor_text || ''
-        setFlavorText(englishFlavorText)
-        // Get English genus specifically
-        const englishGenus = species.genera?.find((genus: any) => genus.language.name === 'en')?.genus || ''
-        setGenus(englishGenus)
-        setHasGenderDifferences(species.has_gender_differences || false)
+        // Handle species data
+        if (species.status === 'fulfilled') {
+          const speciesData = species.value
+          const englishFlavorText = speciesData.flavor_text_entries?.find((entry: any) => entry.language.name === 'en')?.flavor_text || ''
+          setFlavorText(englishFlavorText)
+          const englishGenus = speciesData.genera?.find((genus: any) => genus.language.name === 'en')?.genus || ''
+          setGenus(englishGenus)
+          setHasGenderDifferences(speciesData.has_gender_differences || false)
+        } else {
+          console.warn('Failed to load species data:', species.reason)
+        }
         
-        // Set other data
-        setAbilities(abilitiesData)
-        setMoves(movesData)
-        setEvolutionChain(evolutionData)
+        // Handle abilities data
+        if (abilitiesData.status === 'fulfilled') {
+          setAbilities(abilitiesData.value)
+        } else {
+          console.warn('Failed to load abilities data:', abilitiesData.reason)
+          setAbilities([])
+        }
+        
+        // Handle moves data
+        if (movesData.status === 'fulfilled') {
+          setMoves(movesData.value)
+        } else {
+          console.warn('Failed to load moves data:', movesData.reason)
+          setMoves([])
+        }
+        
+        // Handle evolution data
+        if (evolutionData.status === 'fulfilled') {
+          setEvolutionChain(evolutionData.value)
+        } else {
+          console.warn('Failed to load evolution data:', evolutionData.reason)
+          setEvolutionChain([])
+        }
         
         // Calculate type matchups
         const pokemonTypes = pokemon.types.map(t => t.type.name)
@@ -84,7 +107,12 @@ export default function PokemonDetails({ pokemon, showHeader = true, className =
         
       } catch (error) {
         console.error('Failed to load Pokemon details:', error)
-        setError('Failed to load Pokemon details. Please try again.')
+        // Only set error if it's a critical failure, not just missing optional data
+        if (error instanceof Error && error.message.includes('does not exist')) {
+          setError('This Pokemon does not exist.')
+        } else {
+          setError('Failed to load some Pokemon details. Some information may be missing.')
+        }
       } finally {
         setLoading(false)
       }

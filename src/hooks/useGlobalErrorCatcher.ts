@@ -47,6 +47,11 @@ export function useGlobalErrorCatcher(options: GlobalErrorCatcherOptions = {}) {
           let type: 'data_loading' | 'api_error' | 'network_error' | 'validation_error' | 'unknown' = 'unknown'
           let severity: 'low' | 'medium' | 'high' | 'critical' = 'medium'
           
+          // Skip reporting expected 404 errors for regional variants
+          if (message.includes('404') && (message.includes('pokemon-species') || message.includes('10172'))) {
+            return // Skip reporting expected 404s
+          }
+          
           if (message.includes('fetch') || message.includes('API') || message.includes('HTTP')) {
             type = 'api_error'
             severity = 'high'
@@ -152,6 +157,37 @@ export function useGlobalErrorCatcher(options: GlobalErrorCatcherOptions = {}) {
           const isPokemonApi = url.includes('pokeapi.co') || url.includes('pokemon')
           
           if (isPokemonApi) {
+            // Only report 404s for Pokemon that should exist (IDs 1-1302)
+            // Skip reporting 404s for species endpoints as they're expected for regional variants
+            const shouldReport404 = () => {
+              // Don't report 404s for species endpoints - these are expected for regional variants
+              if (url.includes('/pokemon-species/')) {
+                return false
+              }
+              
+              // Don't report 404s for GitHub API (PMD portraits)
+              if (url.includes('api.github.com')) {
+                return false
+              }
+              
+              // Don't report 404s for Pokemon IDs that are known to be regional variants
+              const pokemonIdMatch = url.match(/\/pokemon\/(\d+)/)
+              if (pokemonIdMatch) {
+                const pokemonId = parseInt(pokemonIdMatch[1])
+                // Regional variants and special forms often don't have direct species entries
+                if (pokemonId > 10000) {
+                  return false
+                }
+              }
+              
+              return true
+            }
+            
+            if (response.status === 404 && !shouldReport404()) {
+              // Skip reporting expected 404s
+              return response
+            }
+            
             // Defer error reporting to avoid setState during render
             setTimeout(() => {
               reportApiError(
