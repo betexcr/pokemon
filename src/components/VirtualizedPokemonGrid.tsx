@@ -264,7 +264,8 @@ export default function VirtualizedPokemonGrid({
         const pokemon = regularPokemon[rowIndex]
         if (!pokemon) return null
 
-        if ((pokemon.types?.length || 0) === 0) {
+        const hasLoadedData = (pokemon.types?.length || 0) > 0
+        if (!hasLoadedData) {
           shouldCache = false
         }
 
@@ -273,15 +274,46 @@ export default function VirtualizedPokemonGrid({
             key={pokemon.id}
             className="w-full"
           >
-            <ModernPokemonCard
-              key={pokemon.id}
-              pokemon={pokemon}
-              isInComparison={comparisonList.includes(pokemon.id)}
-              onToggleComparison={onToggleComparison}
-              onSelect={undefined}
-              isSelected={selectedPokemon?.id === pokemon.id}
-              density={density}
-            />
+            {hasLoadedData ? (
+              <ModernPokemonCard
+                key={pokemon.id}
+                pokemon={pokemon}
+                isInComparison={comparisonList.includes(pokemon.id)}
+                onToggleComparison={onToggleComparison}
+                onSelect={undefined}
+                isSelected={selectedPokemon?.id === pokemon.id}
+                density={density}
+              />
+            ) : (
+              <div
+                data-pokemon-id={pokemon.id}
+                className="relative overflow-hidden rounded-2xl border border-border bg-slate-100/80 shadow-sm dark:bg-slate-900/40"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-white/10 to-transparent dark:from-white/10 dark:via-white/5 pointer-events-none" />
+                <div className="relative">
+                  <div className="h-1.5 w-full rounded-t-2xl bg-slate-300/80 dark:bg-slate-700/70" />
+                  <div className="aspect-square bg-slate-200/70 dark:bg-slate-800/60 flex items-center justify-center">
+                    <div className="w-16 h-16 bg-slate-300/60 dark:bg-slate-700/60 rounded-full animate-pulse" />
+                  </div>
+                  <div className={`space-y-3 ${density === 'list' ? 'p-3' : 'p-4'}`}>
+                    <div className="flex items-baseline justify-between">
+                      <h3 className={`font-semibold text-gray-800 dark:text-gray-200 ${
+                        density === 'list' ? 'text-sm' : 'text-base'
+                      }`}>
+                        {pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1).replace('-', ' ')}
+                      </h3>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">
+                        #{String(pokemon.id).padStart(3, "0")}
+                      </span>
+                    </div>
+                    <div className="flex gap-1.5 justify-center">
+                      <div className="h-6 w-16 rounded-full bg-slate-200/80 dark:bg-slate-800/60 animate-pulse" />
+                      <div className="h-6 w-12 rounded-full bg-slate-200/80 dark:bg-slate-800/60 animate-pulse" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )
       }
@@ -306,38 +338,73 @@ export default function VirtualizedPokemonGrid({
           >
             {rowPokemon.map((pokemon) => {
               const key = pokemon.id
-              const hasTypes = (pokemon.types?.length || 0) > 0
+              const hasLoadedData = (pokemon.types?.length || 0) > 0
 
-              if (!hasTypes) {
+              if (!hasLoadedData) {
                 shouldCache = false
               }
 
-              if (density === '9cols') {
+              if (hasLoadedData) {
+                if (density === '9cols') {
+                  return (
+                    <PokemonCard
+                      key={key}
+                      pokemon={pokemon}
+                      isFavorite={false}
+                      onToggleFavorite={() => {}}
+                      isInComparison={comparisonList.includes(pokemon.id)}
+                      onToggleComparison={onToggleComparison}
+                      cardSize="compact"
+                      mode="grid"
+                    />
+                  )
+                }
+
                 return (
-                  <PokemonCard
+                  <ModernPokemonCard
                     key={key}
                     pokemon={pokemon}
-                    isFavorite={false}
-                    onToggleFavorite={() => {}}
                     isInComparison={comparisonList.includes(pokemon.id)}
                     onToggleComparison={onToggleComparison}
-                    cardSize="compact"
-                    mode="grid"
+                    onSelect={undefined}
+                    isSelected={selectedPokemon?.id === pokemon.id}
+                    density={density}
                   />
                 )
+              } else {
+                // Render skeleton card
+                return (
+                  <div
+                    key={key}
+                    data-pokemon-id={pokemon.id}
+                    className="relative overflow-hidden rounded-2xl border border-border bg-slate-100/80 shadow-sm dark:bg-slate-900/40"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-white/10 to-transparent dark:from-white/10 dark:via-white/5 pointer-events-none" />
+                    <div className="relative">
+                      <div className="h-1.5 w-full rounded-t-2xl bg-slate-300/80 dark:bg-slate-700/70" />
+                      <div className="aspect-square bg-slate-200/70 dark:bg-slate-800/60 flex items-center justify-center">
+                        <div className="w-16 h-16 bg-slate-300/60 dark:bg-slate-700/60 rounded-full animate-pulse" />
+                      </div>
+                      <div className={`space-y-3 ${density === 'list' ? 'p-3' : 'p-4'}`}>
+                        <div className="flex items-baseline justify-between">
+                          <h3 className={`font-semibold text-gray-800 dark:text-gray-200 ${
+                            density === 'list' ? 'text-sm' : 'text-base'
+                          }`}>
+                            {pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1).replace('-', ' ')}
+                          </h3>
+                          <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">
+                            #{String(pokemon.id).padStart(3, "0")}
+                          </span>
+                        </div>
+                        <div className="flex gap-1.5 justify-center">
+                          <div className="h-6 w-16 rounded-full bg-slate-200/80 dark:bg-slate-800/60 animate-pulse" />
+                          <div className="h-6 w-12 rounded-full bg-slate-200/80 dark:bg-slate-800/60 animate-pulse" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
               }
-
-              return (
-                <ModernPokemonCard
-                  key={key}
-                  pokemon={pokemon}
-                  isInComparison={comparisonList.includes(pokemon.id)}
-                  onToggleComparison={onToggleComparison}
-                  onSelect={undefined}
-                  isSelected={selectedPokemon?.id === pokemon.id}
-                  density={density}
-                />
-              )
             })}
           </div>
         )
@@ -353,7 +420,8 @@ export default function VirtualizedPokemonGrid({
         const pokemon = specialFormsPokemon[specialFormsRowIndex]
         if (!pokemon) return null
 
-        if ((pokemon.types?.length || 0) === 0) {
+        const hasLoadedData = (pokemon.types?.length || 0) > 0
+        if (!hasLoadedData) {
           shouldCache = false
         }
 
@@ -362,15 +430,46 @@ export default function VirtualizedPokemonGrid({
             key={pokemon.id}
             className="w-full"
           >
-            <ModernPokemonCard
-              key={pokemon.id}
-              pokemon={pokemon}
-              isInComparison={comparisonList.includes(pokemon.id)}
-              onToggleComparison={onToggleComparison}
-              onSelect={undefined}
-              isSelected={selectedPokemon?.id === pokemon.id}
-              density={density}
-            />
+            {hasLoadedData ? (
+              <ModernPokemonCard
+                key={pokemon.id}
+                pokemon={pokemon}
+                isInComparison={comparisonList.includes(pokemon.id)}
+                onToggleComparison={onToggleComparison}
+                onSelect={undefined}
+                isSelected={selectedPokemon?.id === pokemon.id}
+                density={density}
+              />
+            ) : (
+              <div
+                data-pokemon-id={pokemon.id}
+                className="relative overflow-hidden rounded-2xl border border-border bg-slate-100/80 shadow-sm dark:bg-slate-900/40"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-white/10 to-transparent dark:from-white/10 dark:via-white/5 pointer-events-none" />
+                <div className="relative">
+                  <div className="h-1.5 w-full rounded-t-2xl bg-slate-300/80 dark:bg-slate-700/70" />
+                  <div className="aspect-square bg-slate-200/70 dark:bg-slate-800/60 flex items-center justify-center">
+                    <div className="w-16 h-16 bg-slate-300/60 dark:bg-slate-700/60 rounded-full animate-pulse" />
+                  </div>
+                  <div className={`space-y-3 ${density === 'list' ? 'p-3' : 'p-4'}`}>
+                    <div className="flex items-baseline justify-between">
+                      <h3 className={`font-semibold text-gray-800 dark:text-gray-200 ${
+                        density === 'list' ? 'text-sm' : 'text-base'
+                      }`}>
+                        {pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1).replace('-', ' ')}
+                      </h3>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">
+                        #{String(pokemon.id).padStart(3, "0")}
+                      </span>
+                    </div>
+                    <div className="flex gap-1.5 justify-center">
+                      <div className="h-6 w-16 rounded-full bg-slate-200/80 dark:bg-slate-800/60 animate-pulse" />
+                      <div className="h-6 w-12 rounded-full bg-slate-200/80 dark:bg-slate-800/60 animate-pulse" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )
       }
@@ -395,38 +494,73 @@ export default function VirtualizedPokemonGrid({
           >
             {rowPokemon.map((pokemon) => {
               const key = pokemon.id
-              const hasTypes = (pokemon.types?.length || 0) > 0
+              const hasLoadedData = (pokemon.types?.length || 0) > 0
 
-              if (!hasTypes) {
+              if (!hasLoadedData) {
                 shouldCache = false
               }
 
-              if (density === '9cols') {
+              if (hasLoadedData) {
+                if (density === '9cols') {
+                  return (
+                    <PokemonCard
+                      key={key}
+                      pokemon={pokemon}
+                      isFavorite={false}
+                      onToggleFavorite={() => {}}
+                      isInComparison={comparisonList.includes(pokemon.id)}
+                      onToggleComparison={onToggleComparison}
+                      cardSize="ultra"
+                      mode="grid"
+                    />
+                  )
+                }
+
                 return (
-                  <PokemonCard
+                  <ModernPokemonCard
                     key={key}
                     pokemon={pokemon}
-                    isFavorite={false}
-                    onToggleFavorite={() => {}}
                     isInComparison={comparisonList.includes(pokemon.id)}
                     onToggleComparison={onToggleComparison}
-                    cardSize="ultra"
-                    mode="grid"
+                    onSelect={undefined}
+                    isSelected={selectedPokemon?.id === pokemon.id}
+                    density={density}
                   />
                 )
+              } else {
+                // Render skeleton card
+                return (
+                  <div
+                    key={key}
+                    data-pokemon-id={pokemon.id}
+                    className="relative overflow-hidden rounded-2xl border border-border bg-slate-100/80 shadow-sm dark:bg-slate-900/40"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-white/10 to-transparent dark:from-white/10 dark:via-white/5 pointer-events-none" />
+                    <div className="relative">
+                      <div className="h-1.5 w-full rounded-t-2xl bg-slate-300/80 dark:bg-slate-700/70" />
+                      <div className="aspect-square bg-slate-200/70 dark:bg-slate-800/60 flex items-center justify-center">
+                        <div className="w-16 h-16 bg-slate-300/60 dark:bg-slate-700/60 rounded-full animate-pulse" />
+                      </div>
+                      <div className={`space-y-3 ${density === 'list' ? 'p-3' : 'p-4'}`}>
+                        <div className="flex items-baseline justify-between">
+                          <h3 className={`font-semibold text-gray-800 dark:text-gray-200 ${
+                            density === 'list' ? 'text-sm' : 'text-base'
+                          }`}>
+                            {pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1).replace('-', ' ')}
+                          </h3>
+                          <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">
+                            #{String(pokemon.id).padStart(3, "0")}
+                          </span>
+                        </div>
+                        <div className="flex gap-1.5 justify-center">
+                          <div className="h-6 w-16 rounded-full bg-slate-200/80 dark:bg-slate-800/60 animate-pulse" />
+                          <div className="h-6 w-12 rounded-full bg-slate-200/80 dark:bg-slate-800/60 animate-pulse" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
               }
-
-              return (
-                <ModernPokemonCard
-                  key={key}
-                  pokemon={pokemon}
-                  isInComparison={comparisonList.includes(pokemon.id)}
-                  onToggleComparison={onToggleComparison}
-                  onSelect={undefined}
-                  isSelected={selectedPokemon?.id === pokemon.id}
-                  density={density}
-                />
-              )
             })}
           </div>
         )
@@ -555,26 +689,63 @@ export default function VirtualizedPokemonGrid({
           }}
         >
           <AnimatePresence initial={false}>
-            {uniqueRegularPokemon.map((pokemon, index) => (
-              <motion.div
-                key={pokemon.id}
-                variants={cardVariants}
-                custom={index}
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-                layout
-              >
-                <ModernPokemonCard
-                  pokemon={pokemon}
-                  isInComparison={comparisonList.includes(pokemon.id)}
-                  onToggleComparison={onToggleComparison}
-                  onSelect={undefined}
-                  isSelected={selectedPokemon?.id === pokemon.id}
-                  density={density}
-                />
-              </motion.div>
-            ))}
+            {uniqueRegularPokemon.map((pokemon, index) => {
+              // Check if Pokemon has loaded data (types available)
+              const hasLoadedData = (pokemon.types?.length || 0) > 0
+              
+              return (
+                <motion.div
+                  key={pokemon.id}
+                  variants={cardVariants}
+                  custom={index}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  layout
+                >
+                  {hasLoadedData ? (
+                    <ModernPokemonCard
+                      pokemon={pokemon}
+                      isInComparison={comparisonList.includes(pokemon.id)}
+                      onToggleComparison={onToggleComparison}
+                      onSelect={undefined}
+                      isSelected={selectedPokemon?.id === pokemon.id}
+                      density={density}
+                    />
+                  ) : (
+                    // Render skeleton card with Pokemon ID and name
+                    <div
+                      data-pokemon-id={pokemon.id}
+                      className="relative overflow-hidden rounded-2xl border border-border bg-slate-100/80 shadow-sm dark:bg-slate-900/40"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-white/10 to-transparent dark:from-white/10 dark:via-white/5 pointer-events-none" />
+                      <div className="relative">
+                        <div className="h-1.5 w-full rounded-t-2xl bg-slate-300/80 dark:bg-slate-700/70" />
+                        <div className="aspect-square bg-slate-200/70 dark:bg-slate-800/60 flex items-center justify-center">
+                          <div className="w-16 h-16 bg-slate-300/60 dark:bg-slate-700/60 rounded-full animate-pulse" />
+                        </div>
+                        <div className={`space-y-3 ${density === 'list' ? 'p-3' : 'p-4'}`}>
+                          <div className="flex items-baseline justify-between">
+                            <h3 className={`font-semibold text-gray-800 dark:text-gray-200 ${
+                              density === 'list' ? 'text-sm' : 'text-base'
+                            }`}>
+                              {pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1).replace('-', ' ')}
+                            </h3>
+                            <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">
+                              #{String(pokemon.id).padStart(3, "0")}
+                            </span>
+                          </div>
+                          <div className="flex gap-1.5 justify-center">
+                            <div className="h-6 w-16 rounded-full bg-slate-200/80 dark:bg-slate-800/60 animate-pulse" />
+                            <div className="h-6 w-12 rounded-full bg-slate-200/80 dark:bg-slate-800/60 animate-pulse" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+              )
+            })}
           </AnimatePresence>
         </motion.div>
       )}
@@ -611,26 +782,63 @@ export default function VirtualizedPokemonGrid({
           }}
         >
           <AnimatePresence initial={false}>
-            {specialFormsPokemon.map((pokemon, index) => (
-              <motion.div
-                key={pokemon.id}
-                variants={cardVariants}
-                custom={index}
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-                layout
-              >
-                <ModernPokemonCard
-                  pokemon={pokemon}
-                  isInComparison={comparisonList.includes(pokemon.id)}
-                  onToggleComparison={onToggleComparison}
-                  onSelect={undefined}
-                  isSelected={selectedPokemon?.id === pokemon.id}
-                  density={density}
-                />
-              </motion.div>
-            ))}
+            {specialFormsPokemon.map((pokemon, index) => {
+              // Check if Pokemon has loaded data (types available)
+              const hasLoadedData = (pokemon.types?.length || 0) > 0
+              
+              return (
+                <motion.div
+                  key={pokemon.id}
+                  variants={cardVariants}
+                  custom={index}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  layout
+                >
+                  {hasLoadedData ? (
+                    <ModernPokemonCard
+                      pokemon={pokemon}
+                      isInComparison={comparisonList.includes(pokemon.id)}
+                      onToggleComparison={onToggleComparison}
+                      onSelect={undefined}
+                      isSelected={selectedPokemon?.id === pokemon.id}
+                      density={density}
+                    />
+                  ) : (
+                    // Render skeleton card with Pokemon ID and name
+                    <div
+                      data-pokemon-id={pokemon.id}
+                      className="relative overflow-hidden rounded-2xl border border-border bg-slate-100/80 shadow-sm dark:bg-slate-900/40"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-white/10 to-transparent dark:from-white/10 dark:via-white/5 pointer-events-none" />
+                      <div className="relative">
+                        <div className="h-1.5 w-full rounded-t-2xl bg-slate-300/80 dark:bg-slate-700/70" />
+                        <div className="aspect-square bg-slate-200/70 dark:bg-slate-800/60 flex items-center justify-center">
+                          <div className="w-16 h-16 bg-slate-300/60 dark:bg-slate-700/60 rounded-full animate-pulse" />
+                        </div>
+                        <div className={`space-y-3 ${density === 'list' ? 'p-3' : 'p-4'}`}>
+                          <div className="flex items-baseline justify-between">
+                            <h3 className={`font-semibold text-gray-800 dark:text-gray-200 ${
+                              density === 'list' ? 'text-sm' : 'text-base'
+                            }`}>
+                              {pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1).replace('-', ' ')}
+                            </h3>
+                            <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">
+                              #{String(pokemon.id).padStart(3, "0")}
+                            </span>
+                          </div>
+                          <div className="flex gap-1.5 justify-center">
+                            <div className="h-6 w-16 rounded-full bg-slate-200/80 dark:bg-slate-800/60 animate-pulse" />
+                            <div className="h-6 w-12 rounded-full bg-slate-200/80 dark:bg-slate-800/60 animate-pulse" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+              )
+            })}
           </AnimatePresence>
         </motion.div>
       )}
