@@ -42,7 +42,7 @@ const NATURE_STAT_LABEL: Record<NatureStat, string> = {
   speed: 'Spe'
 }
 
-const createEmptySlot = (): TeamSlot => ({ id: null, level: 50, moves: [] as MoveData[], nature: DEFAULT_NATURE })
+const createEmptySlot = (): TeamSlot => ({ id: null, level: 50, moves: [] as MoveData[], nature: DEFAULT_NATURE, isShiny: false })
 
 const normalizeTeamSlots = (slots?: Array<Partial<TeamSlot>> | null): TeamSlot[] => {
   const source = Array.isArray(slots) ? slots : []
@@ -56,7 +56,8 @@ const normalizeTeamSlots = (slots?: Array<Partial<TeamSlot>> | null): TeamSlot[]
       id: typeof slot.id === 'number' ? slot.id : null,
       level: clampedLevel,
       moves,
-      nature: slot.nature ?? DEFAULT_NATURE
+      nature: slot.nature ?? DEFAULT_NATURE,
+      isShiny: slot.isShiny ?? false
     }
   })
 }
@@ -1344,7 +1345,7 @@ export default function TeamBuilderPage() {
                     <div className="flex items-center gap-3 mb-3">
                       <div className="relative w-16 h-16 flex-shrink-0 overflow-hidden bg-white rounded">
                         <img
-                          src={getShowdownAnimatedSprite(poke.name)}
+                          src={getShowdownAnimatedSprite(poke.name, 'front', slot.isShiny || false)}
                           alt={poke.name}
                           width={64}
                           height={64}
@@ -1396,9 +1397,24 @@ export default function TeamBuilderPage() {
                     </div>
                   )}
                   
-                  <div className="flex items-center gap-2 mb-3">
-                    <label className="text-xs">Level</label>
-                    <input type="number" min={1} max={100} value={slot.level} onChange={(e) => setSlot(idx, { level: Math.max(1, Math.min(100, Number(e.target.value) || 50)) })} className="w-20 px-2 py-1 border border-border rounded" style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }} />
+                  <div className="flex items-center gap-4 mb-3">
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs">Level</label>
+                      <input type="number" min={1} max={100} value={slot.level} onChange={(e) => setSlot(idx, { level: Math.max(1, Math.min(100, Number(e.target.value) || 50)) })} className="w-20 px-2 py-1 border border-border rounded" style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }} />
+                    </div>
+                    {poke && (
+                      <div className="flex items-center gap-2">
+                        <label className="text-xs flex items-center gap-1">
+                          <input 
+                            type="checkbox" 
+                            checked={slot.isShiny || false} 
+                            onChange={(e) => setSlot(idx, { isShiny: e.target.checked })}
+                            className="rounded border-gray-300"
+                          />
+                          <span className="text-yellow-600">✨ Shiny</span>
+                        </label>
+                      </div>
+                    )}
                   </div>
                   
                   {/* Moveset Selector */}
@@ -1690,7 +1706,7 @@ export default function TeamBuilderPage() {
                         return poke ? (
                           <div key={idx} className="relative w-8 h-8" title={`${formatPokemonName(poke.name)} Lv.${slot.level}`}>
                             <Image
-                              src={getShowdownAnimatedSprite(poke.name)}
+                              src={getShowdownAnimatedSprite(poke.name, 'front', slot.isShiny || false)}
                               alt={poke.name}
                               width={32}
                               height={32}

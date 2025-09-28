@@ -36,6 +36,7 @@ export interface TeamSlot {
   level: number;
   moves: MoveData[];
   nature: NatureName;
+  isShiny?: boolean;
 }
 
 export type StoredTeamSlot = Omit<TeamSlot, 'nature'> & { nature?: NatureName };
@@ -68,6 +69,7 @@ function normalizeSlot(slot: StoredTeamSlot | null | undefined): TeamSlot {
     level: normalized.level ?? 50,
     moves: Array.isArray(normalized.moves) ? normalized.moves : [],
     nature: normalized.nature ?? DEFAULT_NATURE,
+    isShiny: normalized.isShiny ?? false,
   };
 }
 

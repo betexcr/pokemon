@@ -34,6 +34,15 @@ export async function generateMetadata(props: any): Promise<Metadata> {
       }
     }
   } catch (error) {
+    console.error('Failed to generate metadata for Pokemon:', pokemonId, error)
+    // Log the error for debugging in production
+    if (process.env.NODE_ENV === 'production') {
+      console.error('Production metadata error details:', {
+        pokemonId,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      })
+    }
     return {
       title: 'Pokémon Not Found',
       description: 'The requested Pokémon could not be found.'
@@ -53,6 +62,15 @@ export default async function PokemonPage(props: any) {
     const pokemon = await getPokemonById(pokemonId)
     return <PokemonPageClient pokemon={pokemon} />
   } catch (error) {
+    console.error('Failed to load Pokemon:', pokemonId, error)
+    // Log the error for debugging in production
+    if (process.env.NODE_ENV === 'production') {
+      console.error('Production error details:', {
+        pokemonId,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      })
+    }
     notFound()
   }
 }

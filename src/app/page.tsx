@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { usePathname } from 'next/navigation'
 import { Pokemon, FilterState } from '@/types/pokemon'
-import { getPokemonTotalCount, generateAllPokemonSkeletons } from '@/lib/api'
+import { getPokemonTotalCount, generateAllPokemonSkeletons, getPokemonList, getPokemonSkeletonsWithPagination } from '@/lib/api'
 // import { } from '@/lib/utils' // Empty import removed
 import { useTheme } from '@/components/ThemeProvider'
 import RedPokedexLayout from '@/components/RedPokedexLayout'
@@ -65,34 +65,46 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Load Pokemon skeletons in batches for better performance
+  // Load Pokemon skeletons including all variants and forms (10### IDs)
   useEffect(() => {
     const loadPokemonSkeletons = async () => {
       try {
         setLoading(true)
-        // Load a smaller initial batch for faster initial render
-        const initialCount = 300 // Load first 300 Pokemon initially
-        console.log('Loading initial Pokemon skeletons for', initialCount, 'Pokemon')
-        const skeletons = generateAllPokemonSkeletons(initialCount)
-        console.log('Generated', skeletons.length, 'skeleton Pokemon')
-        setPokemonList(skeletons)
-        setError(null)
+        console.log('Loading Pokemon skeletons with all variants and forms...')
         
-        // Load remaining Pokemon in background
-        setTimeout(() => {
-          const totalCount = 1302
-          const remainingCount = totalCount - initialCount
-          console.log('Loading remaining', remainingCount, 'Pokemon skeletons')
-          const remainingSkeletons = generateAllPokemonSkeletons(remainingCount)
-          setPokemonList(prev => [...prev, ...remainingSkeletons])
-        }, 100)
+        // Get the total count from the API
+        const totalCount = await getPokemonTotalCount()
+        console.log('Total Pokemon count:', totalCount)
+        
+        // Load Pokemon skeletons in batches to include all variants
+        const allSkeletons: Pokemon[] = []
+        const batchSize = 100
+        let offset = 0
+        
+        while (offset < totalCount) {
+          console.log(`Loading skeleton batch: offset=${offset}, batchSize=${batchSize}`)
+          const batch = await getPokemonSkeletonsWithPagination(batchSize, offset)
+          if (batch.length === 0) break
+          allSkeletons.push(...batch)
+          offset += batchSize
+          
+          // Update the Pokemon list progressively for better UX
+          if (allSkeletons.length % 200 === 0 || offset >= totalCount) {
+            console.log(`Loaded ${allSkeletons.length} Pokemon skeletons so far...`)
+            setPokemonList([...allSkeletons])
+          }
+        }
+        
+        console.log('Completed loading', allSkeletons.length, 'Pokemon skeletons including variants')
+        setPokemonList(allSkeletons)
+        setError(null)
       } catch (err) {
         console.error('Error loading Pokemon skeletons:', err)
-        // Fallback to a reasonable count if generation fails
+        setError('Failed to load Pokemon list')
+        // Fallback to a smaller count if loading fails
         const fallbackCount = 300
         const skeletons = generateAllPokemonSkeletons(fallbackCount)
         setPokemonList(skeletons)
-        setError(null)
       } finally {
         setLoading(false)
       }

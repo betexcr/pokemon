@@ -1,8 +1,8 @@
 'use client'
 
-import { forwardRef, useImperativeHandle } from 'react'
+import { forwardRef, useImperativeHandle, useMemo } from 'react'
 import Image from 'next/image'
-import { getPokemonBattleImageWithFallback, formatPokemonName, getPokemonIdFromSpecies } from '@/lib/utils'
+import { getPokemonBattleImageWithFallback, formatPokemonName, getPokemonIdFromSpecies, getShowdownAnimatedSprite } from '@/lib/utils'
 
 export interface BattleSpriteRef {
   shake?: () => void
@@ -19,16 +19,21 @@ interface BattleSpriteProps {
   field?: Record<string, unknown>
   className?: string
   spriteMode?: 'animated' | 'static'
+  shiny?: boolean
 }
 
 export const BattleSprite = forwardRef<BattleSpriteRef, BattleSpriteProps>(function BattleSprite(
-  { species, level, hp, status, types = [], side = 'player', className = '', spriteMode = 'static' },
+  { species, level, hp, status, types = [], side = 'player', className = '', spriteMode = 'static', shiny = false },
   ref
 ) {
   useImperativeHandle(ref, () => ({ shake: () => {} }), [])
 
   const speciesId = getPokemonIdFromSpecies(species) ?? 1
-  const sprite = getPokemonBattleImageWithFallback(speciesId, side === 'player' ? 'back' : 'front', spriteMode === 'animated')
+  const variant: 'front' | 'back' = side === 'player' ? 'back' : 'front'
+  const staticSprite = useMemo(() => getPokemonBattleImageWithFallback(speciesId, variant, shiny), [speciesId, variant, shiny])
+  const animatedSprite = useMemo(() => spriteMode === 'animated'
+    ? getShowdownAnimatedSprite(species, variant, shiny)
+    : null, [species, variant, shiny, spriteMode])
 
   const hpPercentage = Math.max(0, Math.min(100, Math.round((hp.cur / Math.max(1, hp.max)) * 100)))
 
@@ -36,15 +41,18 @@ export const BattleSprite = forwardRef<BattleSpriteRef, BattleSpriteProps>(funct
     <div className={`flex w-full max-w-xs flex-col items-center gap-3 rounded-2xl border border-border bg-card/80 p-4 shadow-lg ${className}`}>
       <div className="relative h-28 w-28 overflow-hidden rounded-xl bg-gradient-to-b from-white/10 to-black/20">
         <Image
-          src={sprite.primary}
+          src={animatedSprite || staticSprite.primary}
           alt={formatPokemonName(species)}
           width={160}
           height={160}
           className="h-full w-full object-contain"
           onError={(event) => {
             const target = event.currentTarget
-            if (target.src !== sprite.fallback) {
-              target.src = sprite.fallback
+            const fallbacks = [staticSprite.primary, staticSprite.fallback].filter(Boolean)
+            const currentIndex = Number(target.dataset.fallbackIndex || '0')
+            if (currentIndex < fallbacks.length) {
+              target.dataset.fallbackIndex = String(currentIndex + 1)
+              target.src = fallbacks[currentIndex]
             }
           }}
         />

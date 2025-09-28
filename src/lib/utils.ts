@@ -38,8 +38,38 @@ export const statColors: Record<string, string> = {
 }
 
 // Format Pokémon name
-export function formatPokemonName(name: string): string {
-  return name.charAt(0).toUpperCase() + name.slice(1).replace('-', ' ');
+export function formatPokemonName(name?: string | null): string {
+  if (!name) return 'Unknown Pokémon';
+  const trimmed = name.trim();
+  if (!trimmed) return 'Unknown Pokémon';
+
+  const normalized = trimmed.toLowerCase();
+  const slugish = normalized
+    .replace(/[\u2019']/g, '')
+    .replace(/[^a-z0-9-\s]+/g, '-')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+  if (!slugish) return 'Unknown Pokémon';
+  const idMatch = slugish.match(/^pokemon-0*(\d{1,4})$/);
+  if (idMatch) {
+    const id = Number(idMatch[1]);
+    const mappedSlug = POKEMON_ID_TO_SPECIES[id];
+    if (mappedSlug) {
+      return mappedSlug
+        .split(/[-_\s]+/)
+        .filter(Boolean)
+        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ');
+    }
+    return `Pokemon ${id}`;
+  }
+
+  return slugish
+    .split(/[-_\s]+/)
+    .filter(Boolean)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
 }
 
 // Format Pokémon number
@@ -292,9 +322,31 @@ const POKEMON_SPECIES_TO_ID: Record<string, number> = {
   'mewtwo': 150, 'mew': 151
 };
 
+const POKEMON_ID_TO_SPECIES: Record<number, string> = Object.entries(POKEMON_SPECIES_TO_ID).reduce((acc, [slug, id]) => {
+  acc[id] = slug;
+  return acc;
+}, {} as Record<number, string>);
+
 // Convert Pokemon species name to ID
-export function getPokemonIdFromSpecies(species: string): number | null {
-  const normalizedSpecies = species.toLowerCase().replace(/\s+/g, '-');
+export function getPokemonIdFromSpecies(species?: string | null): number | null {
+  if (!species) return null;
+
+  const normalizedSpecies = species
+    .trim()
+    .toLowerCase()
+    .replace(/[\u2019']/g, '')
+    .replace(/[^a-z0-9-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+
+  if (!normalizedSpecies) {
+    return null;
+  }
+
+  const directMatch = normalizedSpecies.match(/^pokemon-0*(\d{1,4})$/);
+  if (directMatch) {
+    return Number(directMatch[1]);
+  }
   
   // First check our hardcoded mapping for Gen 1
   if (POKEMON_SPECIES_TO_ID[normalizedSpecies]) {
@@ -340,7 +392,7 @@ export function getPokemonBattleImageWithFallback(pokemonId: number | null, vari
 }
 
 // Get Pokemon image with comprehensive fallback chain
-export function getPokemonImageWithFallbacks(pokemonId: number | null, species: string, variant: 'front' | 'back' = 'front', shiny: boolean = false): {
+export function getPokemonImageWithFallbacks(pokemonId: number | null, species: string | null | undefined, variant: 'front' | 'back' = 'front', shiny: boolean = false): {
   primary: string;
   fallbacks: string[];
 } {
@@ -360,14 +412,16 @@ export function getPokemonImageWithFallbacks(pokemonId: number | null, species: 
     );
   } else {
     // If no pokemonId, try to use species name for Showdown sprites and generic fallbacks
-    const normalizedSpecies = species.toLowerCase().replace(/\s+/g, '-');
-    fallbacks.push(
-      // Try different Showdown sprite variations
-      `https://play.pokemonshowdown.com/sprites/${variant === 'back' ? 'ani-back' : 'ani'}/${normalizedSpecies}.gif`,
-      `https://play.pokemonshowdown.com/sprites/${variant === 'back' ? 'ani-back' : 'ani'}/${normalizedSpecies.replace(/-/g, '')}.gif`,
-      // Generic placeholder as last resort
-      '/placeholder-pokemon.png'
-    );
+    const normalizedSpecies = normalizeSpeciesForSprite(species);
+    if (normalizedSpecies) {
+      const showdownFolder = variant === 'back' ? 'ani-back' : 'ani';
+      fallbacks.push(
+        `https://play.pokemonshowdown.com/sprites/${showdownFolder}/${normalizedSpecies}.gif`,
+        `https://play.pokemonshowdown.com/sprites/${showdownFolder}/${normalizedSpecies.replace(/-/g, '')}.gif`
+      );
+    }
+    // Generic placeholder as last resort
+    fallbacks.push('/placeholder-pokemon.png');
   }
   
   return {
@@ -376,10 +430,30 @@ export function getPokemonImageWithFallbacks(pokemonId: number | null, species: 
   };
 }
 
+function normalizeSpeciesForSprite(species?: string | null): string | null {
+  if (!species) return null;
+  const trimmed = species.trim().toLowerCase();
+  if (!trimmed) return null;
+  const directMatch = trimmed.match(/^pokemon-0*(\d{1,4})$/);
+  if (directMatch) {
+    const id = Number(directMatch[1]);
+    const slug = POKEMON_ID_TO_SPECIES[id];
+    if (slug) return slug;
+  }
+  return trimmed.replace(/[\u2019']/g, '')
+    .replace(/[^a-z0-9-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
 // Pokemon Showdown animated sprites by species name
-export function getShowdownAnimatedSprite(species: string, variant: 'front' | 'back' = 'front', shiny: boolean = false): string {
+export function getShowdownAnimatedSprite(species?: string | null, variant: 'front' | 'back' = 'front', shiny: boolean = false): string {
   // Normalize species name to Showdown sprite filename with special-case fixes
-  const base = species.toLowerCase().trim();
+  const normalized = normalizeSpeciesForSprite(species);
+  if (!normalized) {
+    return '/placeholder-pokemon.png';
+  }
+  const base = normalized;
   const exceptions: Record<string, string> = {
     // Showdown uses a dot for Mr. Mime
     'mr-mime': 'mr.mime',
@@ -404,7 +478,6 @@ export function getShowdownAnimatedSprite(species: string, variant: 'front' | 'b
   const hyphenated = base.replace(/\s+/g, '-');
   const mapped = exceptions[hyphenated] || hyphenated;
   const folder = variant === 'back' ? 'ani-back' : 'ani';
-  const shinySegment = shiny ? 'shiny' : '';
   // Showdown uses separate folders for shiny: ani-shiny and ani-back-shiny
   const folderWithShiny = shiny ? `${folder}-shiny` : folder;
   return `https://play.pokemonshowdown.com/sprites/${folderWithShiny}/${mapped}.gif`;

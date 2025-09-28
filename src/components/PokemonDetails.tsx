@@ -43,8 +43,9 @@ export default function PokemonDetails({ pokemon, showHeader = true, className =
           getEvolutionChainNodes(pokemon.id)
         ])
         
-        // Set species data
-        setFlavorText(species.flavor_text_entries?.[0]?.flavor_text || '')
+        // Set species data - get English flavor text specifically
+        const englishFlavorText = species.flavor_text_entries?.find((entry: any) => entry.language.name === 'en')?.flavor_text || ''
+        setFlavorText(englishFlavorText)
         // Get English genus specifically
         const englishGenus = species.genera?.find((genus: any) => genus.language.name === 'en')?.genus || ''
         setGenus(englishGenus)

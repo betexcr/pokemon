@@ -2,16 +2,23 @@ import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { useBattleState } from '@/hooks/useBattleState';
 import Tooltip from '@/components/Tooltip';
 import { getMove } from '@/lib/moveCache';
-import { getAbility } from '@/lib/api';
-import { getPokemonIdFromSpecies, getPokemonBattleImageWithFallback, getPokemonImageWithFallbacks, formatPokemonName, getShowdownAnimatedSprite } from '@/lib/utils';
+import { getPokemonIdFromSpecies, getPokemonBattleImageWithFallback, formatPokemonName, getShowdownAnimatedSprite } from '@/lib/utils';
 import HitShake from '@/components/battle/HitShake';
-import HPBar from '@/components/battle/HPBar';
 import StatusPopups, { StatusEvent } from '@/components/battle/StatusPopups';
 import AttackAnimator from '@/components/battle/AttackAnimator';
 import { FxKind } from '@/components/battle/fx/MoveFX.types';
 import { BattleSprite, BattleSpriteRef } from '@/components/battle/BattleSprite';
 import { rtdbService } from '@/lib/firebase-rtdb-service';
 import Image from 'next/image';
+
+const formatMoveLabel = (rawId: string): string => {
+  if (!rawId) return 'Unknown Move';
+  return rawId
+    .split(/[-_\s]+/)
+    .filter(Boolean)
+    .map(segment => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(' ');
+};
 
 interface RTDBBattleComponentProps {
   battleId: string;
@@ -45,14 +52,37 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
 
   // duplicate state/effects removed (using direct imports below)
 
-  const [moveInfo, setMoveInfo] = useState<Record<string, { type: string; damage_class?: 'physical'|'special'|'status'; short_effect?: string }>>({});
-  const [myAbilityInfo, setMyAbilityInfo] = useState<{ name: string; short_effect?: string } | null>(null);
+  const [moveInfo, setMoveInfo] = useState<Record<string, {
+    displayName: string;
+    type: string;
+    damage_class?: 'physical'|'special'|'status';
+    short_effect?: string;
+    power?: number | null;
+    accuracy?: number | null;
+    pp?: number | null;
+  }>>({});
   
   // Transition effects state
   const [playerShakeKey, setPlayerShakeKey] = useState(0);
   const [opponentShakeKey, setOpponentShakeKey] = useState(0);
   const [statusEvents, setStatusEvents] = useState<StatusEvent[]>([]);
   const [activeMoveFX, setActiveMoveFX] = useState<{ kind: FxKind; key: number } | null>(null);
+  const [pendingAction, setPendingAction] = useState<{ turn: number; type: 'move' | 'switch'; id: string | number } | null>(null);
+
+  const waitingForResolution = useMemo(() => {
+    if (!meta) return false;
+    if (pendingAction && pendingAction.turn === meta.turn) return true;
+    return meta.phase === 'resolving';
+  }, [meta?.phase, meta?.turn, pendingAction]);
+
+  const activePhase: 'choosing' | 'resolving' = waitingForResolution ? 'resolving' : 'choosing';
+
+  useEffect(() => {
+    if (!pendingAction) return;
+    if (!meta || meta.phase === 'ended' || meta.turn !== pendingAction.turn) {
+      setPendingAction(null);
+    }
+  }, [meta?.turn, meta?.phase, pendingAction]);
 
   useEffect(() => {
     let cancelled = false;
@@ -62,14 +92,33 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
           try {
             const mv: any = await getMove(m.id);
             const english = (mv.effect_entries || []).find((e: any) => e.language?.name === 'en');
-            return [m.id, { type: mv.type?.name || 'normal', damage_class: mv.damage_class?.name || undefined, short_effect: english?.short_effect || english?.effect }];
+            return [
+              m.id,
+              {
+                displayName: typeof mv.name === 'string' ? mv.name : m.id,
+                type: mv.type?.name || 'normal',
+                damage_class: mv.damage_class?.name || undefined,
+                short_effect: english?.short_effect || english?.effect,
+                power: typeof mv.power === 'number' ? mv.power : null,
+                accuracy: typeof mv.accuracy === 'number' ? mv.accuracy : null,
+                pp: typeof mv.pp === 'number' ? mv.pp : null
+              }
+            ];
           } catch {
-            return [m.id, { type: 'normal' }];
+            return [m.id, { displayName: m.id, type: 'normal', power: null, accuracy: null, pp: null }];
           }
         })
       );
       if (!cancelled) {
-        const next: Record<string, { type: string; damage_class?: 'physical'|'special'|'status'; short_effect?: string }> = {};
+        const next: Record<string, {
+          displayName: string;
+          type: string;
+          damage_class?: 'physical'|'special'|'status';
+          short_effect?: string;
+          power?: number | null;
+          accuracy?: number | null;
+          pp?: number | null;
+        }> = {};
         for (const [k, v] of entries) next[k as string] = v as any;
         setMoveInfo(next);
       }
@@ -78,21 +127,6 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
     return () => { cancelled = true; };
   }, [legalMoves]);
 
-  useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
-      const abilityId = (me?.team?.[0]?.ability as any) || null;
-      if (!abilityId) { setMyAbilityInfo(null); return; }
-      try {
-        const ab: any = await getAbility(abilityId);
-        const english = (ab.effect_entries || []).find((e: any) => e.language?.name === 'en');
-        if (!cancelled) setMyAbilityInfo({ name: ab.name, short_effect: english?.short_effect || english?.effect });
-      } catch { if (!cancelled) setMyAbilityInfo({ name: String(abilityId) }); }
-    };
-    load();
-    return () => { cancelled = true; };
-  }, [me?.team?.[0]?.ability]);
-
   // Handle battle completion
   useEffect(() => {
     if (meta?.phase === 'ended' && meta.winnerUid && onBattleComplete) {
@@ -100,9 +134,22 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
     }
   }, [meta?.phase, meta?.winnerUid, onBattleComplete]);
 
-  const handleMoveSelection = async (moveId: string, target?: 'p1' | 'p2') => {
+const handleMoveSelection = async (moveId: string, target?: 'p1' | 'p2') => {
   console.log('🎮 handleMoveSelection called:', { moveId, target, hasPub: !!pub, hasMyActive: !!(meUid && (pub as any)?.[meUid]?.active) });
     try {
+      if (!meta) {
+        console.warn('No battle meta available; cannot select move.');
+        return;
+      }
+      if (meta.phase !== 'choosing') {
+        console.warn('Battle not in selection phase; ignoring move input.');
+        return;
+      }
+      if (waitingForResolution && pendingAction && pendingAction.turn === meta.turn) {
+        console.warn('Move already selected for this turn; awaiting resolution.');
+        return;
+      }
+      setPendingAction({ turn: meta.turn, type: 'move', id: moveId });
       // Classic view: give immediate feedback on action
       playAnim(playerAnimRef, 'animate-bounce');
       
@@ -136,6 +183,7 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
       await chooseMove(moveId, target);
     } catch (err) {
       console.error('Failed to submit move:', err);
+      setPendingAction(null);
     }
   };
 
@@ -160,9 +208,23 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
 
   const handlePokemonSwitch = async (pokemonIndex: number) => {
     try {
+      if (!meta) {
+        console.warn('No battle meta available; cannot switch.');
+        return;
+      }
+      if (meta.phase !== 'choosing') {
+        console.warn('Battle not in selection phase; ignoring switch input.');
+        return;
+      }
+      if (waitingForResolution && pendingAction && pendingAction.turn === meta.turn) {
+        console.warn('Action already submitted; awaiting resolution.');
+        return;
+      }
+      setPendingAction({ turn: meta.turn, type: 'switch', id: pokemonIndex });
       await chooseSwitch(pokemonIndex);
     } catch (err) {
       console.error('Failed to switch Pokemon:', err);
+      setPendingAction(null);
     }
   };
 
@@ -250,6 +312,46 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
     }
   }, [pub?.[oppUid!]?.active?.hp?.cur, oppUid, pub]);
 
+  const renderSpriteImage = useCallback(
+    (
+      species: string | null | undefined,
+      {
+        variant,
+        shiny = false,
+        animatedPreferred = false,
+        size = 48,
+        className
+      }: { variant: 'front' | 'back'; shiny?: boolean; animatedPreferred?: boolean; size?: number; className?: string }
+    ) => {
+      const normalizedShiny = !!shiny;
+      const speciesId = getPokemonIdFromSpecies(species || '') ?? null;
+      const staticSprite = getPokemonBattleImageWithFallback(speciesId, variant, normalizedShiny);
+      const shouldAnimate = animatedPreferred && viewMode === 'animated';
+      const animatedSprite = shouldAnimate ? getShowdownAnimatedSprite(species || undefined, variant, normalizedShiny) : null;
+      const sources = [animatedSprite, staticSprite.primary, staticSprite.fallback, '/placeholder-pokemon.png']
+        .filter((src): src is string => !!src && src.length > 0);
+
+      return (
+        <Image
+          src={sources[0]}
+          alt={formatPokemonName(species)}
+          width={size}
+          height={size}
+          className={className ?? 'object-contain'}
+          onError={(event) => {
+            const target = event.currentTarget;
+            const fallbackIndex = Number(target.dataset.fallbackIndex || '0') + 1;
+            if (fallbackIndex < sources.length) {
+              target.dataset.fallbackIndex = String(fallbackIndex);
+              target.src = sources[fallbackIndex];
+            }
+          }}
+        />
+      );
+    },
+    [viewMode]
+  );
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -283,6 +385,19 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
   const oppActive = oppSide && (pub as any)?.[oppSide]?.active ? (pub as any)[oppSide].active : null;
   const myTeam = me?.team || [];
 
+  const resolveTeamSpecies = (pokemon: any): string | null => {
+    if (!pokemon) return null;
+    if (typeof pokemon.species === 'string' && pokemon.species.trim()) return pokemon.species;
+    if (typeof pokemon.name === 'string' && pokemon.name.trim()) return pokemon.name;
+    if (pokemon.pokemon) {
+      const nested = pokemon.pokemon;
+      if (typeof nested.species === 'string' && nested.species.trim()) return nested.species;
+      if (typeof nested.name === 'string' && nested.name.trim()) return nested.name;
+    }
+    if (typeof pokemon.id === 'number') return `pokemon-${String(pokemon.id).padStart(3, '0')}`;
+    return null;
+  };
+
   // (refs declared above)
 
   return (
@@ -304,66 +419,16 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
         </div>
       </div>
 
-      {/* Active Pokemon Overview (mirrors offline battle top panels) */}
-      {(myActive || oppActive) && (
-        <div className="border-b border-border bg-surface/80">
-          <div className="max-w-6xl mx-auto px-4 py-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {/* Your Active */}
-            {myActive && (
-              <div className="flex items-center gap-3 rounded-lg border border-border bg-surface p-3">
-                <div className="flex-shrink-0">
-                  <Image
-                    src={getPokemonImageWithFallbacks(getPokemonIdFromSpecies(myActive.species) || 1, myActive.species, 'front').primary}
-                    alt={formatPokemonName(myActive.species)}
-                    width={48}
-                    height={48}
-                    className="w-12 h-12 object-contain"
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <div className="font-semibold capitalize truncate">{formatPokemonName(myActive.species)}</div>
-                    <div className="text-xs text-muted">Lv {myActive.level}</div>
-                  </div>
-                  <div className="mt-1">
-                    <HPBar value={myActive.hp.cur} max={myActive.hp.max} />
-                  </div>
-                  {myActive.status && (
-                    <div className="mt-1 text-xs uppercase tracking-wide text-yellow-500">{myActive.status}</div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Opponent Active */}
-            {oppActive && (
-              <div className="flex items-center gap-3 rounded-lg border border-border bg-surface p-3 sm:justify-self-end">
-                <div className="flex-shrink-0">
-                  <Image
-                    src={getPokemonImageWithFallbacks(getPokemonIdFromSpecies(oppActive.species) || 1, oppActive.species, 'front').primary}
-                    alt={formatPokemonName(oppActive.species)}
-                    width={48}
-                    height={48}
-                    className="w-12 h-12 object-contain"
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <div className="font-semibold capitalize truncate">{formatPokemonName(oppActive.species)}</div>
-                    <div className="text-xs text-muted">Lv {oppActive.level}</div>
-                  </div>
-                  <div className="mt-1">
-                    <HPBar value={oppActive.hp.cur} max={oppActive.hp.max} />
-                  </div>
-                  {oppActive.status && (
-                    <div className="mt-1 text-xs uppercase tracking-wide text-yellow-500">{oppActive.status}</div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
+      <div className="border-b border-border bg-surface/80">
+        <div className="max-w-4xl mx-auto px-4 py-2 flex items-center justify-center gap-3">
+          <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold transition-colors ${activePhase === 'choosing' ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'}`}>
+            Selection Phase
+          </span>
+          <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold transition-colors ${activePhase === 'resolving' ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'}`}>
+            Resolution Phase
+          </span>
         </div>
-      )}
+      </div>
 
       {/* Battle Field */}
       <div className="flex-1 p-6">
@@ -386,6 +451,7 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
                 volatiles={myActive.volatiles}
                 types={myActive.types || []}
                 side="player"
+                shiny={Boolean((myActive as any)?.shiny || (myActive as any)?.isShiny)}
                 field={{
                   safeguardTurns: 0,
                   mistTurns: 0,
@@ -416,6 +482,7 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
                 volatiles={oppActive.volatiles}
                 types={oppActive.types || []}
                 side="opponent"
+                shiny={Boolean((oppActive as any)?.shiny || (oppActive as any)?.isShiny)}
                 field={{
                   safeguardTurns: 0,
                   mistTurns: 0,
@@ -430,111 +497,198 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
         </div>
       </div>
 
-      {/* Resolving Phase Indicator */}
-      {meta.phase === 'resolving' && (
-        <div className="border-t border-border bg-surface/90 backdrop-blur p-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="animate-pulse text-muted font-semibold">
-              Resolving moves...
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Action Panel */}
-      {meta.phase === 'choosing' && (
+      {meta.phase !== 'ended' && (
         <div className="border-t border-border bg-surface/90 backdrop-blur p-4">
           <div className="max-w-4xl mx-auto">
             <h3 className="text-lg font-semibold mb-4">Choose Your Action</h3>
-            
-            {/* Move Selection */}
-            <div className="mb-6">
-              <h4 className="font-medium mb-3">Moves</h4>
-              <div className="grid grid-cols-2 gap-3">
-                {legalMoves.map((move, index) => {
-                  console.log('🎮 Rendering move button:', { moveId: move.id, disabled: move.disabled, index });
+
+            {waitingForResolution && (
+              <div className="mb-4 rounded-lg border border-border bg-surface/80 p-3 text-sm text-muted text-center">
+                Waiting for resolution...
+                {pendingAction?.type === 'move' && (
+                  <div className="text-xs text-muted mt-1">
+                    Selected move: {formatMoveLabel(moveInfo[pendingAction.id as string]?.displayName || String(pendingAction.id))}
+                  </div>
+                )}
+                {pendingAction?.type === 'switch' && typeof pendingAction.id === 'number' && (
+                  <div className="text-xs text-muted mt-1">
+                    Switching to: {formatPokemonName(resolveTeamSpecies(myTeam[pendingAction.id]) || '')}
+                  </div>
+                )}
+              </div>
+            )}
+
+          {/* Move Selection */}
+          <div className="mb-6">
+            <h4 className="font-medium mb-3">Moves</h4>
+            <div className="grid grid-cols-2 gap-3">
+              {legalMoves.map((move, index) => {
+                if (!move?.id) {
                   return (
+                    <button
+                      key={`move-placeholder-${index}`}
+                      type="button"
+                      disabled
+                      className="p-3 rounded-lg border border-dashed border-border/60 bg-surface/60 text-muted transition-all duration-200"
+                    >
+                      <div className="font-medium">Move unavailable</div>
+                      <div className="text-sm">PP: —</div>
+                    </button>
+                  );
+                }
+                const info = moveInfo[move.id];
+                const labelSource = info?.displayName || move.id;
+                const prettyLabel = formatMoveLabel(labelSource);
+                const remainingPpValue = typeof move.pp === 'number' ? move.pp : (typeof (move as any)?.remainingPp === 'number' ? (move as any).remainingPp : undefined);
+                const maxPpValue = typeof move.maxPp === 'number' ? move.maxPp : (typeof (move as any)?.maxPp === 'number' ? (move as any).maxPp : undefined);
+                const remainingPp = remainingPpValue ?? maxPpValue ?? '—';
+                const isSelected = pendingAction?.type === 'move' && pendingAction.turn === meta?.turn && pendingAction.id === move.id;
+                const buttonDisabled = !!move.disabled || waitingForResolution;
+                const tooltipContent = info ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold capitalize text-text">{prettyLabel}</span>
+                      <span className="text-[11px] uppercase tracking-wide text-muted">
+                        {(info.damage_class || 'Status').replace(/\b\w/g, c => c.toUpperCase())}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3 text-xs text-muted">
+                      <div>
+                        <div className="uppercase tracking-wide text-[10px]">Power</div>
+                        <div className="text-sm text-text">{info.power ?? '—'}</div>
+                      </div>
+                      <div>
+                        <div className="uppercase tracking-wide text-[10px]">Accuracy</div>
+                        <div className="text-sm text-text">{info.accuracy != null ? `${info.accuracy}%` : '—'}</div>
+                      </div>
+                      <div>
+                        <div className="uppercase tracking-wide text-[10px]">PP</div>
+                        <div className="text-sm text-text">{info.pp ?? '—'}</div>
+                      </div>
+                    </div>
+                    {info.short_effect && (
+                      <p className="text-xs leading-snug text-muted">{info.short_effect}</p>
+                    )}
+                  </div>
+                ) : null;
+                return (
                   <button
                     key={index}
                     onClick={() => handleMoveSelection(move.id)}
-                    disabled={move.disabled}
-                    className="p-3 rounded-lg border border-border bg-surface text-text hover:border-primary/50 hover:bg-primary/5 hover:shadow transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+                    disabled={buttonDisabled}
+                    aria-pressed={isSelected}
+                    className={`p-3 rounded-lg border border-border bg-surface text-text hover:border-primary/50 hover:bg-primary/5 hover:shadow transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-bg ${isSelected ? 'border-primary/80 bg-primary/10' : ''}`}
                     data-testid={`move-${move.id}`}
                   >
                     <div className="font-medium capitalize">
-                      <Tooltip 
-                        content={moveInfo[move.id]?.short_effect || ''} 
-                        type={(moveInfo[move.id]?.type as any) || 'normal'} 
-                        variant="move" 
-                        position="top"
-                        containViewport={false}
-                        maxWidth="w-64"
-                      >
-                        <span className="cursor-help">{move.id}</span>
-                      </Tooltip>
+                      {tooltipContent ? (
+                        <Tooltip
+                          content={tooltipContent}
+                          type={(info?.type as any) || 'normal'}
+                          damageClass={info?.damage_class}
+                          variant="move"
+                          position="top"
+                          containViewport={false}
+                          maxWidth="w-[22rem]"
+                        >
+                          <span className="cursor-help">{prettyLabel}</span>
+                        </Tooltip>
+                      ) : (
+                        <span>{prettyLabel}</span>
+                      )}
                     </div>
-                    <div className="text-sm text-muted">PP: {move.pp}</div>
+                    <div className="text-sm text-muted">
+                      PP: {typeof remainingPp === 'number' ? remainingPp : remainingPp || '—'}
+                      {typeof remainingPp === 'number' && typeof maxPpValue === 'number' ? ` / ${maxPpValue}` : ''}
+                    </div>
                     {move.reason && (
                       <div className="text-xs text-red-500/80">{move.reason}</div>
                     )}
                   </button>
-                  );
-                })}
-              </div>
+                );
+              })}
             </div>
+          </div>
 
-            {/* Pokemon Switch */}
-            <div className="mb-4">
-              <h4 className="font-medium mb-3">Switch Pokemon</h4>
-              <div className="grid grid-cols-3 gap-2">
-                {myTeam.map((pokemon, index) => (
+          {/* Pokemon Switch */}
+          <div className="mb-4">
+            <h4 className="font-medium mb-3">Switch Pokemon</h4>
+            <div className="grid grid-cols-3 gap-2">
+              {myTeam.map((pokemon, index) => {
+                const speciesName = resolveTeamSpecies(pokemon);
+                const currentHp = typeof pokemon?.hp?.cur === 'number'
+                  ? pokemon.hp.cur
+                  : typeof (pokemon as any)?.currentHp === 'number'
+                    ? (pokemon as any).currentHp
+                    : undefined;
+                const maxHp = typeof pokemon?.hp?.max === 'number'
+                  ? pokemon.hp.max
+                  : typeof (pokemon as any)?.maxHp === 'number'
+                    ? (pokemon as any).maxHp
+                    : typeof pokemon?.stats?.hp === 'number'
+                      ? pokemon.stats.hp
+                      : undefined;
+                const hpLabel = currentHp != null && maxHp != null
+                  ? `${currentHp} / ${maxHp}`
+                  : currentHp != null
+                    ? String(currentHp)
+                    : maxHp != null
+                      ? `${maxHp}`
+                      : '—';
+                const isPendingSwitch = pendingAction?.type === 'switch' && pendingAction.turn === meta?.turn && pendingAction.id === index;
+                const switchDisabled = pokemon?.fainted || index === 0 || !legalSwitchIndexes.includes(index) || waitingForResolution;
+
+                return (
                   <button
                     key={index}
                     onClick={() => handlePokemonSwitch(index)}
-                    disabled={pokemon.fainted || index === 0 || !legalSwitchIndexes.includes(index)}
+                    disabled={switchDisabled}
+                    aria-pressed={isPendingSwitch}
                     className={`p-2 rounded-lg border transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-bg ${
-                      pokemon.fainted || index === 0 || !legalSwitchIndexes.includes(index)
+                      switchDisabled
                         ? 'border-border bg-surface cursor-not-allowed opacity-60'
                         : 'border-border bg-surface hover:border-primary/50 hover:bg-primary/5'
-                    }`}
-                    data-testid={`switch-${pokemon.species}-${index}`}
+                    } ${isPendingSwitch ? 'border-primary/80 bg-primary/10' : ''}`}
+                    data-testid={`switch-${speciesName || 'unknown'}-${index}`}
                   >
                     <div className="flex items-center gap-2">
-                      <Image
-                        src={getPokemonImageWithFallbacks(getPokemonIdFromSpecies(pokemon.species) || 1, pokemon.species, 'front').primary}
-                        alt={formatPokemonName(pokemon.species)}
-                        width={32}
-                        height={32}
-                        className="object-contain"
-                      />
+                      {renderSpriteImage(speciesName, {
+                        variant: 'front',
+                        shiny: Boolean((pokemon as any)?.shiny || (pokemon as any)?.isShiny),
+                        animatedPreferred: false,
+                        size: 32,
+                        className: 'w-8 h-8 object-contain'
+                      })}
                       <div className="text-sm font-medium capitalize truncate">
-                        {formatPokemonName(pokemon.species)}
+                        {formatPokemonName(speciesName)}
                       </div>
                     </div>
                     <div className="text-xs text-muted">
-                      HP: {pokemon.stats.hp}
+                      HP: {hpLabel}
                     </div>
-                    {pokemon.fainted && (
+                    {pokemon?.fainted && (
                       <div className="text-xs text-red-500">Fainted</div>
                     )}
                     {index === 0 && (
                       <div className="text-xs text-muted">Active</div>
                     )}
                   </button>
-                ))}
-              </div>
+                );
+              })}
             </div>
+          </div>
 
-            {/* Forfeit Button */}
-            <div className="text-center">
-              <button
-                onClick={forfeit}
-                className="inline-flex items-center justify-center rounded-md border border-red-600/60 bg-red-600/10 px-4 py-2 text-sm font-semibold text-red-400 hover:bg-red-600/15 hover:text-red-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
-                data-testid="forfeit-button"
-              >
-                Forfeit Battle
-              </button>
-            </div>
+          {/* Forfeit Button */}
+          <div className="text-center">
+            <button
+              onClick={forfeit}
+              className="inline-flex items-center justify-center rounded-md border border-red-600/60 bg-red-600/10 px-4 py-2 text-sm font-semibold text-red-400 hover:bg-red-600/15 hover:text-red-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+              data-testid="forfeit-button"
+            >
+              Forfeit Battle
+            </button>
+          </div>
           </div>
         </div>
       )}

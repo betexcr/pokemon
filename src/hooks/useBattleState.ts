@@ -285,9 +285,47 @@ export function useBattleState(battleId: string): UseBattleState {
   const myPrivateActive = useMemo(() => activePrivate(me), [me]);
 
   // UI legality (server still authoritative)
+  const parseNumeric = (value: unknown): number | undefined => {
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+    if (typeof value === 'string' && value.trim() !== '') {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : undefined;
+    }
+    return undefined;
+  };
+
+  const normalizeMoveEntry = (entry: unknown) => {
+    if (!entry) return null;
+
+    if (typeof entry === 'string') {
+      const id = entry.trim();
+      if (!id) return null;
+      return { id, pp: 20, maxPp: 20 };
+    }
+
+    if (typeof entry === 'object') {
+      const moveObj = entry as { id?: string; name?: string; pp?: number | string; maxPp?: number | string; remainingPp?: number | string; disabled?: boolean; reason?: string };
+      const id = (moveObj.id || moveObj.name || '').toString().trim();
+      if (!id) return null;
+      const maxPp = parseNumeric(moveObj.maxPp);
+      const remaining = parseNumeric(moveObj.pp) ?? parseNumeric(moveObj.remainingPp) ?? maxPp ?? 20;
+      return {
+        id,
+        pp: remaining,
+        maxPp: maxPp ?? remaining ?? 20,
+        disabled: moveObj.disabled,
+        reason: moveObj.reason
+      };
+    }
+
+    return null;
+  };
+
   const legalMoves = useMemo(() => {
     if (!myPrivateActive) return [];
-    let list = myPrivateActive.moves ?? [];
+    let list = (myPrivateActive.moves ?? [])
+      .map(normalizeMoveEntry)
+      .filter((m): m is ReturnType<typeof normalizeMoveEntry> & { id: string; pp: number; maxPp: number } => Boolean(m));
 
     // Multiplayer fallback: If moves look uninitialized (e.g., all 'tackle' or empty),
     // try to hydrate from local current team so the UI shows correct moves without
@@ -303,14 +341,14 @@ export function useBattleState(battleId: string): UseBattleState {
             try {
               // lazy import to avoid cycles
               // eslint-disable-next-line @typescript-eslint/no-var-requires
-              const utils = require('@/lib/utils') as { getPokemonIdFromSpecies: (s: string)=>number|null };
+              const utils = require('@/lib/utils') as { getPokemonIdFromSpecies: (s?: string | null)=>number|null };
               return utils.getPokemonIdFromSpecies(name) || null;
             } catch { return null; }
           };
           const activeId = getId(myPrivateActive.species || '');
           const candidate = activeId ? saved.find(s => s.id === activeId) : saved[0];
           if (candidate?.moves?.length) {
-            list = candidate.moves.slice(0, 4).map(m => ({ id: m.name, pp: 20 }));
+            list = candidate.moves.slice(0, 4).map(normalizeMoveEntry).filter(Boolean) as typeof list;
           }
         }
         // Secondary fallback: first saved team in team-builder storage
@@ -320,14 +358,14 @@ export function useBattleState(battleId: string): UseBattleState {
             const teams = JSON.parse(savedTeamsRaw) as Array<{ slots: Array<{ id: number; moves?: Array<{ name: string }> }> }>;
             const activeId = (() => {
               try {
-                const utils = require('@/lib/utils') as { getPokemonIdFromSpecies: (s: string)=>number|null };
+                const utils = require('@/lib/utils') as { getPokemonIdFromSpecies: (s?: string | null)=>number|null };
                 return utils.getPokemonIdFromSpecies(myPrivateActive.species || '') || null;
               } catch { return null; }
             })();
             const firstTeam = teams?.[0];
             const slot = activeId && firstTeam ? firstTeam.slots.find(s => s.id === activeId) : undefined;
             if (slot?.moves?.length) {
-              list = slot.moves.slice(0, 4).map(m => ({ id: m.name, pp: 20 }));
+              list = slot.moves.slice(0, 4).map(normalizeMoveEntry).filter(Boolean) as typeof list;
             }
           }
         }
@@ -342,8 +380,8 @@ export function useBattleState(battleId: string): UseBattleState {
     const recharging = !!myPublicV.recharge;
 
     return list.map(m => {
-      let disabled = false;
-      let reason = "";
+      let disabled = !!m.disabled;
+      let reason = m.reason || "";
       if (m.pp <= 0) { disabled = true; reason = "No PP"; }
       if (!disabled && recharging) { disabled = true; reason = "Recharge"; }
       if (!disabled && choiceLockMoveId && m.id !== choiceLockMoveId) { disabled = true; reason = "Choice-lock"; }
@@ -362,7 +400,10 @@ export function useBattleState(battleId: string): UseBattleState {
     const team = me?.team ?? [];
     const res: number[] = [];
     for (let i = 1; i < team.length; i++) {
-      if (!team[i].fainted && team[i].stats.hp > 0) res.push(i);
+      const slot = team[i];
+      if (!slot) continue;
+      const hasHp = typeof slot.stats?.hp === 'number' ? slot.stats.hp > 0 : true;
+      if (!slot.fainted && hasHp) res.push(i);
     }
     return res;
   }, [me?.team]);
