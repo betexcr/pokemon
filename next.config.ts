@@ -14,6 +14,13 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   ...(isDev ? { distDir: '.next' } : {}),
+  output: 'export',
+  trailingSlash: true,
+  distDir: 'out',
+  // Exclude API routes from static export
+  outputFileTracingExcludes: {
+    '*': ['./src/app/api_backup/**/*']
+  },
   images: {
     unoptimized: true,
     remotePatterns: [

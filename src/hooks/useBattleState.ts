@@ -408,28 +408,39 @@ export function useBattleState(battleId: string): UseBattleState {
     return res;
   }, [me?.team]);
 
+  const getIdTokenHeader = useCallback(async (): Promise<string> => {
+    if (auth?.currentUser) {
+      const token = await auth.currentUser.getIdToken();
+      return `Bearer ${token}`;
+    }
+    return '';
+  }, []);
+
   const writeChoice = useCallback(async (choice: ChoicePayload) => {
     if (!meUid || !meta) throw new Error("No auth or meta");
     if (!isChoosing(meta)) throw new Error("Not in choosing phase");
 
-    // Enhanced permission check: Verify user is a participant in this battle
-    const isParticipant = meta.players?.p1?.uid === meUid || meta.players?.p2?.uid === meUid;
-    if (!isParticipant) {
-      throw new Error("You are not a participant in this battle");
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    const tokenHeader = await getIdTokenHeader();
+    if (!tokenHeader) {
+      throw new Error('User not authenticated');
     }
+    headers.Authorization = tokenHeader;
 
-    // Submit choice directly to RTDB so server can resolve the turn
-    const { rtdbService } = await import('@/lib/firebase-rtdb-service');
-    const cleanedPayload: any = {
-      action: choice.action,
-      payload: {
-        moveId: choice.action === 'move' ? choice.payload.moveId : undefined,
-        target: choice.action === 'move' ? choice.payload.target : undefined,
-        switchToIndex: choice.action === 'switch' ? choice.payload.switchToIndex : undefined
-      }
-    };
-    cleanedPayload.payload = Object.fromEntries(Object.entries(cleanedPayload.payload).filter(([, v]) => v !== undefined));
-    await rtdbService.submitChoice(battleId, meta.turn, meUid, cleanedPayload);
+    const response = await fetch(`/api/battles/${battleId}/submit`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(
+        choice.action === 'move'
+          ? { action: 'move', moveId: choice.payload.moveId, target: choice.payload.target }
+          : { action: 'switch', switchToIndex: choice.payload.switchToIndex }
+      ),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error?.error || 'Failed to submit move');
+    }
   }, [battleId, meUid, meta]);
 
   // Expose writeChoice to global scope for E2E testing

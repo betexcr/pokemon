@@ -3,6 +3,15 @@ import { notFound } from 'next/navigation'
 import PokemonPageClient from './PokemonPageClient'
 import { getPokemonById } from '@/lib/api'
 
+export async function generateStaticParams() {
+  // Generate static params for ALL Pokemon (1-1010+)
+  // This ensures all Pokemon pages work properly
+  const pokemonIds = Array.from({ length: 1010 }, (_, i) => i + 1)
+  return pokemonIds.map(id => ({ 
+    id: id.toString() 
+  }))
+}
+
 export async function generateMetadata(props: any): Promise<Metadata> {
   const params = await props.params
   const pokemonId = parseInt(params?.id ?? '', 10)

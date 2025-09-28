@@ -28,17 +28,11 @@ export const revalidate = 3600; // 1 hour
 
 type SearchParams = { [key: string]: string | string[] | undefined };
 
-export default async function EvolutionsPage({ searchParams }: { searchParams?: Promise<SearchParams> }) {
-  const sp = (await searchParams) || {};
-  const genParam = typeof sp.gen === 'string' ? sp.gen : '';
-  const methodParam = typeof sp.method === 'string' ? sp.method : '';
-  const isDev = process.env.NODE_ENV === 'development';
-  
-  const gens = genParam ? genParam.split(',').map((g) => Number(g)).filter((n) => Number.isFinite(n)) : undefined;
-  const methods = methodParam ? methodParam.split(',').filter(Boolean) : undefined;
-  // When generation or method filter is applied, load more data to show all families for that filter
-  // Otherwise, load only a small initial batch for faster page load
-  const limit = (gens && gens.length > 0) || (methods && methods.length > 0) ? 300 : 20;
+export default async function EvolutionsPage() {
+  // Default values for static export
+  const gens = undefined;
+  const methods = undefined;
+  const limit = 20;
   const offset = 0;
   
   // Build directly on the server to avoid an internal network roundtrip
@@ -54,11 +48,11 @@ export default async function EvolutionsPage({ searchParams }: { searchParams?: 
     } : null
   });
 
-  const initialSearch = (sp.search as string) || '';
-  const initialGen = typeof sp.gen === 'string' ? sp.gen.split(',').map((g) => Number(g).toString()) : [];
-  const initialMethod = typeof sp.method === 'string' ? sp.method.split(',') : [];
-  const initialOpen = typeof sp.open === 'string' ? sp.open.split(',').map((s) => Number(s)) : [];
-  const branchingOnly = sp.branchingOnly === '1' || sp.branchingOnly === 'true' || false;
+  const initialSearch = '';
+  const initialGen: string[] = [];
+  const initialMethod: string[] = [];
+  const initialOpen: number[] = [];
+  const branchingOnly = false;
 
   // No-JS progressive enhancement fallback: list base forms with evolution counts
   const serverList = normalized.families.map((fam) => {

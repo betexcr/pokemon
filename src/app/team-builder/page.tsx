@@ -9,9 +9,9 @@ export const metadata: Metadata = {
 
 type SearchParams = { [k: string]: string | string[] | undefined };
 
-export default async function Page({ searchParams }: { searchParams?: Promise<SearchParams> }) {
-  const sp = (await searchParams) || {};
-  const initialNames = typeof sp.team === 'string' ? (sp.team as string).split(',').filter(Boolean) : [];
+export default function Page() {
+  // Default empty team for static export
+  const initialNames: string[] = [];
   return (
     <>
       <AppHeader title="Team Builder" backLink="/" backLabel="Back to PokéDex" showToolbar={false} />

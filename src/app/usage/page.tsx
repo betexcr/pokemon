@@ -35,33 +35,19 @@ type SearchParams = {
   top50Only?: string;
 };
 
-export default async function UsagePage({ 
-  searchParams 
-}: { 
-  searchParams?: Promise<SearchParams> 
-}) {
-  const params = searchParams ? await searchParams : {};
-  
-  // Parse search parameters
-  const platform = Array.isArray(params.platform) ? params.platform : 
-    (params.platform ? [params.platform] : []);
-  const generation = Array.isArray(params.generation) ? params.generation : 
-    (params.generation ? [params.generation] : []);
-  const format = Array.isArray(params.format) ? params.format : 
-    (params.format ? [params.format] : []);
-  const month = params.month || '';
-  const phase = params.phase || 'snapshot';
-  const top50Only = params.top50Only === 'true';
-  
+export default function UsagePage() {
+  // Default filters for static export
   const filters: UsageFilters = {
-    platforms: platform.length > 0 ? platform as any : ['SMOGON_SINGLES'],
-    generations: generation.length > 0 ? generation as any : ['GEN9'],
-    formats: format.length > 0 ? format as any : ['OU'],
-    month: month || new Date().toISOString().slice(0, 7),
-    top50Only: top50Only,
+    platforms: ['SMOGON_SINGLES'],
+    generations: ['GEN9'],
+    formats: ['OU'],
+    month: new Date().toISOString().slice(0, 7),
+    top50Only: false,
     sortBy: 'rank',
     sortOrder: 'asc'
   };
+  
+  const phase = 'snapshot';
 
   return (
     <>
