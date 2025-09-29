@@ -10,10 +10,11 @@ import AbilityBadge from "@/components/AbilityBadge";
 import { useReducedMotionPref } from "@/hooks/useReducedMotionPref";
 import Tooltip from './Tooltip'
 import { generateBasicRomaji, getPokemonJapaneseName, getJapaneseNameInfo } from '@/lib/japaneseNames'
-import { calculateTypeEffectiveness } from "@/lib/api";
+import { getMatchup } from "@/lib/getMatchup";
 import TypeBadgeWithTooltip from "@/components/TypeBadgeWithTooltip";
 import { getBestPokemonDBSprite, getPokemonDBFallbackURLs, hasPokemonDBShinySprite } from "@/lib/pokemonDbSprites";
 import { getAvailablePortraits, getPortraitURL, PortraitExpression } from "@/lib/pmdPortraits";
+import { isSpecialForm, getSpecialFormInfo } from '@/lib/specialForms';
 
 interface PokemonHeroProps {
   pokemon: Pokemon;
@@ -211,25 +212,37 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
   };
 
   const goToNext = () => {
-    // Assuming there are 1302+ Pokémon (current total including special forms)
-    if (pokemon.id < 1302) {
-      navigateToPokemon(pokemon.id + 1);
+    // Handle navigation for special forms and regular Pokemon
+    if (isSpecialForm(pokemon.id)) {
+      // If we're at the last special form (10082), go to next regular Pokemon
+      if (pokemon.id >= 10082) {
+        navigateToPokemon(1026); // Go to next regular Pokemon after special forms
+      } else {
+        navigateToPokemon(pokemon.id + 1);
+      }
+    } else {
+      // Regular Pokemon navigation
+      if (pokemon.id < 1025) {
+        navigateToPokemon(pokemon.id + 1);
+      }
     }
   };
 
   // Function to get type effectiveness for all types against the Pokemon's types
   const getTypeEffectiveness = () => {
-    const allTypes = ['normal','fire','water','electric','grass','ice','fighting','poison','ground','flying','psychic','bug','rock','ghost','dragon','dark','steel','fairy'];
-    const pokemonTypes = pokemon.types.map(t => t.type.name);
+    const pokemonTypes = pokemon.types.map(t => t.type.name.charAt(0).toUpperCase() + t.type.name.slice(1));
+    const matchups = getMatchup(pokemonTypes);
     
-    return allTypes.map(attackingType => {
-      const effectiveness = calculateTypeEffectiveness([attackingType], pokemonTypes);
-      return {
-        type: attackingType,
-        effectiveness,
-        multiplier: effectiveness === 0 ? 'x0' : effectiveness === 0.5 ? 'x0.5' : effectiveness === 1 ? 'x1' : effectiveness === 2 ? 'x2' : effectiveness === 4 ? 'x4' : `x${effectiveness}`
-      };
-    });
+    // Combine all effectiveness data
+    const allEffectiveness = [
+      ...matchups.x4.map(t => ({ type: t.toLowerCase(), effectiveness: 4, multiplier: 'x4' })),
+      ...matchups.x2.map(t => ({ type: t.toLowerCase(), effectiveness: 2, multiplier: 'x2' })),
+      ...matchups.x0_5.map(t => ({ type: t.toLowerCase(), effectiveness: 0.5, multiplier: 'x0.5' })),
+      ...matchups.x0_25.map(t => ({ type: t.toLowerCase(), effectiveness: 0.25, multiplier: 'x0.25' })),
+      ...matchups.x0.map(t => ({ type: t.toLowerCase(), effectiveness: 0, multiplier: 'x0' }))
+    ];
+    
+    return allEffectiveness;
   };
 
   // TypeBadge with tooltip component
@@ -238,29 +251,14 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
     const [tooltipPosition, setTooltipPosition] = useState<'top' | 'bottom'>('top');
     const [tooltipAlignment, setTooltipAlignment] = useState<'left' | 'center' | 'right'>('center');
     
-    // Get type effectiveness for the specific hovered type
-    const getTypeEffectivenessForType = (attackingType: string) => {
-      const allTypes = [
-        'normal', 'fire', 'water', 'electric', 'grass', 'ice', 'fighting', 'poison',
-        'ground', 'flying', 'psychic', 'bug', 'rock', 'ghost', 'dragon', 'dark', 'steel', 'fairy'
-      ];
-      
-      return allTypes.map(defendingType => {
-        const effectiveness = calculateTypeEffectiveness([attackingType], [defendingType]);
-        return {
-          type: defendingType,
-          effectiveness,
-          multiplier: effectiveness === 0 ? '0x' : effectiveness === 0.5 ? '0.5x' : effectiveness === 1 ? '1x' : '2x'
-        };
-      });
-    };
+    // Get type weaknesses using the getMatchup function
+    const matchups = getMatchup([type.charAt(0).toUpperCase() + type.slice(1)]);
     
-    const typeEffectiveness = getTypeEffectivenessForType(type);
-    
-    // Categorize effectiveness
-    const weakTo = typeEffectiveness.filter(e => e.effectiveness >= 2);
-    const resists = typeEffectiveness.filter(e => e.effectiveness === 0.5);
-    const immune = typeEffectiveness.filter(e => e.effectiveness === 0);
+    // Categorize what types are effective against this type
+    const weakTo = matchups.x4.concat(matchups.x2).map(t => ({ type: t.toLowerCase(), multiplier: matchups.x4.includes(t) ? '4x' : '2x' }));
+    const resists = matchups.x0_5.map(t => ({ type: t.toLowerCase(), multiplier: '0.5x' }));
+    const quarterResists = matchups.x0_25.map(t => ({ type: t.toLowerCase(), multiplier: '0.25x' }));
+    const immune = matchups.x0.map(t => ({ type: t.toLowerCase(), multiplier: '0x' }));
     
     return (
       <div className="relative inline-block">
@@ -337,20 +335,37 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
               {/* Header */}
               <div className="flex items-center gap-2 mb-3">
                 <TypeBadge type={type} className="text-sm px-2 py-1" />
-                <span className="text-gray-600 dark:text-gray-400 text-xs font-medium">Type Effectiveness</span>
+                <span className="text-gray-600 dark:text-gray-400 text-xs font-medium">Type Weaknesses</span>
               </div>
               
-              {/* Three panels layout */}
-              <div className="grid grid-cols-3 gap-1">
-                {/* Weak to (2x+) */}
+              {/* Four panels layout */}
+              <div className="grid grid-cols-4 gap-1">
+                {/* Double Weak (4x) */}
                 <div className="bg-red-50 dark:bg-red-900/20 rounded p-1.5">
-                  <h4 className="font-semibold text-xs mb-1 text-red-800 dark:text-red-200">Weak to (2x+)</h4>
+                  <h4 className="font-semibold text-xs mb-1 text-red-800 dark:text-red-200">Double Weak (4x)</h4>
                   <div className="space-y-0.5">
-                    {weakTo.length > 0 ? (
-                      weakTo.map((effect) => (
-                        <div key={effect.type} className="flex items-center justify-between">
-                          <TypeBadge type={effect.type} className="text-xs px-1 py-0.5" />
-                          <span className="text-xs font-bold text-red-600 dark:text-red-400">{effect.multiplier}</span>
+                    {matchups.x4.length > 0 ? (
+                      matchups.x4.map((type) => (
+                        <div key={type} className="flex items-center justify-between">
+                          <TypeBadge type={type.toLowerCase()} className="text-xs px-1 py-0.5" />
+                          <span className="text-xs font-bold text-red-600 dark:text-red-400">4x</span>
+                        </div>
+                      ))
+                    ) : (
+                      <span className="text-xs text-gray-500 dark:text-gray-400">None</span>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Weak to (2x) */}
+                <div className="bg-orange-50 dark:bg-orange-900/20 rounded p-1.5">
+                  <h4 className="font-semibold text-xs mb-1 text-orange-800 dark:text-orange-200">Weak to (2x)</h4>
+                  <div className="space-y-0.5">
+                    {matchups.x2.length > 0 ? (
+                      matchups.x2.map((type) => (
+                        <div key={type} className="flex items-center justify-between">
+                          <TypeBadge type={type.toLowerCase()} className="text-xs px-1 py-0.5" />
+                          <span className="text-xs font-bold text-orange-600 dark:text-orange-400">2x</span>
                         </div>
                       ))
                     ) : (
@@ -363,11 +378,28 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
                 <div className="bg-green-50 dark:bg-green-900/20 rounded p-1.5">
                   <h4 className="font-semibold text-xs mb-1 text-green-800 dark:text-green-200">Resists (0.5x)</h4>
                   <div className="space-y-0.5">
-                    {resists.length > 0 ? (
-                      resists.map((effect) => (
-                        <div key={effect.type} className="flex items-center justify-between">
-                          <TypeBadge type={effect.type} className="text-xs px-1 py-0.5" />
-                          <span className="text-xs font-bold text-green-600 dark:text-green-400">{effect.multiplier}</span>
+                    {matchups.x0_5.length > 0 ? (
+                      matchups.x0_5.map((type) => (
+                        <div key={type} className="flex items-center justify-between">
+                          <TypeBadge type={type.toLowerCase()} className="text-xs px-1 py-0.5" />
+                          <span className="text-xs font-bold text-green-600 dark:text-green-400">0.5x</span>
+                        </div>
+                      ))
+                    ) : (
+                      <span className="text-xs text-gray-500 dark:text-gray-400">None</span>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Quarter Resists (0.25x) */}
+                <div className="bg-blue-50 dark:bg-blue-900/20 rounded p-1.5">
+                  <h4 className="font-semibold text-xs mb-1 text-blue-800 dark:text-blue-200">Quarter Resists (0.25x)</h4>
+                  <div className="space-y-0.5">
+                    {matchups.x0_25.length > 0 ? (
+                      matchups.x0_25.map((type) => (
+                        <div key={type} className="flex items-center justify-between">
+                          <TypeBadge type={type.toLowerCase()} className="text-xs px-1 py-0.5" />
+                          <span className="text-xs font-bold text-blue-600 dark:text-blue-400">0.25x</span>
                         </div>
                       ))
                     ) : (
@@ -380,11 +412,11 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
                 <div className="bg-gray-50 dark:bg-gray-700/50 rounded p-1.5">
                   <h4 className="font-semibold text-xs mb-1 text-gray-800 dark:text-gray-200">Immune (0x)</h4>
                   <div className="space-y-0.5">
-                    {immune.length > 0 ? (
-                      immune.map((effect) => (
-                        <div key={effect.type} className="flex items-center justify-between">
-                          <TypeBadge type={effect.type} className="text-xs px-1 py-0.5" />
-                          <span className="text-xs font-bold text-gray-600 dark:text-gray-400">{effect.multiplier}</span>
+                    {matchups.x0.length > 0 ? (
+                      matchups.x0.map((type) => (
+                        <div key={type} className="flex items-center justify-between">
+                          <TypeBadge type={type.toLowerCase()} className="text-xs px-1 py-0.5" />
+                          <span className="text-xs font-bold text-gray-600 dark:text-gray-400">0x</span>
                         </div>
                       ))
                     ) : (
@@ -1075,29 +1107,58 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
           
           {/* Pokemon Info - Side Layout on Desktop, Below on Mobile */}
           <div className="min-w-0 flex-1 order-3 lg:order-3 text-center lg:text-left">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight capitalize text-text">
-              {pokemon.name}
-            </h1>
+            <div className="flex flex-col items-center lg:items-start">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight text-text">
+                {pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)}
+              </h1>
+              
+              {/* Special Form Indicators */}
+              {pokemon.special_form && (
+                <div className="mt-2 flex flex-wrap gap-2 justify-center lg:justify-start">
+                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                    pokemon.special_form.type === 'mega' 
+                      ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' 
+                      : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
+                  }`}>
+                    {pokemon.special_form.type === 'mega' ? '⚡ Mega Evolution' : '🔥 Primal Reversion'}
+                    {pokemon.special_form.variant && ` ${pokemon.special_form.variant}`}
+                  </span>
+                  
+                  <Tooltip
+                    variant="info"
+                    content={pokemon.special_form.description}
+                    title="Special Form Description"
+                    className="cursor-help"
+                  >
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                      Base: {pokemon.special_form.base_pokemon_name}
+                    </span>
+                  </Tooltip>
+                </div>
+              )}
+            </div>
+            
             {pokemon.id !== 0 && (
               <div className="flex items-center gap-2 justify-center lg:justify-start mt-1">
                 <p className="text-muted text-base sm:text-lg lg:text-xl">
                   #{String(pokemon.id).padStart(4, "0")}
                 </p>
                 {(() => {
-                  const pokemonJapaneseName = getPokemonJapaneseName(pokemon.id)
-                  if (pokemonJapaneseName) {
+                  // Use special form Japanese name if available, otherwise fall back to regular
+                  const japaneseName = pokemon.special_form?.japanese_name || getPokemonJapaneseName(pokemon.id)
+                  if (japaneseName) {
                     return (
                       <Tooltip
                         variant="japanese"
-                        content={pokemonJapaneseName.japanese}
+                        content={typeof japaneseName === 'string' ? japaneseName : japaneseName.japanese}
                         title="Japanese Name"
-                        romaji={pokemonJapaneseName.romaji}
-                        meaning={pokemonJapaneseName.meaning}
-                        explanation={pokemonJapaneseName.explanation}
+                        romaji={typeof japaneseName === 'string' ? '' : japaneseName.romaji}
+                        meaning={typeof japaneseName === 'string' ? '' : japaneseName.meaning}
+                        explanation={typeof japaneseName === 'string' ? '' : japaneseName.explanation}
                         className="cursor-help"
                       >
                         <span className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 transition-colors">
-                          {pokemonJapaneseName.japanese}
+                          {typeof japaneseName === 'string' ? japaneseName : japaneseName.japanese}
                         </span>
                       </Tooltip>
                     )
@@ -1334,7 +1395,7 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
           <div className="hidden lg:flex items-center gap-4 order-4">
             <button
               onClick={goToNext}
-              disabled={pokemon.id >= 1302}
+              disabled={pokemon.id >= 1025}
               className="group flex items-center justify-center w-12 h-12 rounded-full border border-border bg-surface hover:bg-surface/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-105 disabled:hover:scale-100"
               title={`Next Pokémon (#${String(pokemon.id + 1).padStart(4, "0")})`}
             >
@@ -1393,7 +1454,7 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
           </button>
           <button
             onClick={goToNext}
-            disabled={pokemon.id >= 1010}
+            disabled={pokemon.id >= 1025}
             className="group flex items-center justify-center w-12 h-12 rounded-full border border-border bg-surface hover:bg-surface/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-105 disabled:hover:scale-100"
             title={`Next Pokémon (#${String(pokemon.id + 1).padStart(4, "0")})`}
           >

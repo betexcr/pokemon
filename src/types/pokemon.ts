@@ -126,6 +126,14 @@ export interface Pokemon {
   species: NamedAPIResource;
   stats: PokemonStat[];
   types: PokemonType[];
+  special_form?: {
+    type: 'mega' | 'primal';
+    variant?: string;
+    base_pokemon_id: number;
+    base_pokemon_name: string;
+    japanese_name: string;
+    description: string;
+  };
 }
 
 // Type information

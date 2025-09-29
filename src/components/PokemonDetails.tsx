@@ -8,7 +8,8 @@ import MovesSection from '@/components/pokemon/MovesSection'
 import EvolutionSection from '@/components/pokemon/EvolutionSection'
 import MatchupsSection from '@/components/pokemon/MatchupsSection'
 import { Pokemon } from '@/types/pokemon'
-import { getPokemonSpecies, getPokemonAbilities, getPokemonMoves, getEvolutionChainNodes, calculateTypeEffectiveness } from '@/lib/api'
+import { getPokemonSpecies, getPokemonAbilities, getPokemonMoves, getEvolutionChainNodes } from '@/lib/api'
+import { getMatchup } from '@/lib/getMatchup'
 
 interface PokemonDetailsProps {
   pokemon: Pokemon
@@ -79,28 +80,29 @@ export default function PokemonDetails({ pokemon, showHeader = true, className =
           setEvolutionChain([])
         }
         
-        // Calculate type matchups
+        // Calculate type matchups using the new getMatchup function
         const pokemonTypes = pokemon.types.map(t => t.type.name)
-        const allTypes = ['normal','fire','water','electric','grass','ice','fighting','poison','ground','flying','psychic','bug','rock','ghost','dragon','dark','steel','fairy']
         
-        const typeEffectiveness = allTypes.map(attackingType => {
-          const effectiveness = calculateTypeEffectiveness([attackingType], pokemonTypes)
-          return {
-            type: attackingType,
-            effectiveness,
-            multiplier: effectiveness === 0 ? 'x0' : effectiveness === 0.5 ? 'x0.5' : effectiveness === 1 ? 'x1' : effectiveness === 2 ? 'x2' : effectiveness === 4 ? 'x4' : `x${effectiveness}`
-          }
-        })
+        // Convert to proper case for getMatchup function
+        const defendingTypes = pokemonTypes.map(type => 
+          type.charAt(0).toUpperCase() + type.slice(1).toLowerCase()
+        )
         
-        // Group by effectiveness
-        const weakTo = typeEffectiveness.filter(e => e.effectiveness >= 2).map(e => e.type)
-        const resists = typeEffectiveness.filter(e => e.effectiveness === 0.5).map(e => e.type)
-        const immune = typeEffectiveness.filter(e => e.effectiveness === 0).map(e => e.type)
+        const matchups = getMatchup(defendingTypes)
+        
+        // Group by effectiveness with separate categories
+        const doubleWeak = matchups.x4.map(type => type.toLowerCase())
+        const weakTo = matchups.x2.map(type => type.toLowerCase())
+        const resists = matchups.x0_5.map(type => type.toLowerCase())
+        const quarterResists = matchups.x0_25.map(type => type.toLowerCase())
+        const immune = matchups.x0.map(type => type.toLowerCase())
         
         const matchupGroups = [
-          { title: "Weak to (2×+)", types: weakTo, tone: "danger" as const },
-          { title: "Resists (0.5×)", types: resists, tone: "ok" as const },
-          { title: "Immune (0×)", types: immune, tone: "immune" as const }
+          ...(doubleWeak.length > 0 ? [{ title: "Double Weak (4×)", types: doubleWeak, tone: "danger" as const }] : []),
+          ...(weakTo.length > 0 ? [{ title: "Weak to (2×)", types: weakTo, tone: "danger" as const }] : []),
+          ...(resists.length > 0 ? [{ title: "Resists (0.5×)", types: resists, tone: "ok" as const }] : []),
+          ...(quarterResists.length > 0 ? [{ title: "Quarter Resists (0.25×)", types: quarterResists, tone: "ok" as const }] : []),
+          ...(immune.length > 0 ? [{ title: "Immune (0×)", types: immune, tone: "immune" as const }] : [])
         ]
         
         setTypeMatchups(matchupGroups)

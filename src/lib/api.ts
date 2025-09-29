@@ -3,6 +3,7 @@
 
 import { Pokemon } from '@/types/pokemon'
 import { reportApiError, reportNetworkError, reportDataLoadingError } from '@/lib/errorReporting'
+import { isSpecialForm, getSpecialFormInfo, getBasePokemonId } from '@/lib/specialForms'
 
 // Cache configuration
 const CACHE_TTL = {
@@ -219,6 +220,10 @@ export async function getAllValidPokemonIds(): Promise<number[]> {
       allPokemonIds.push(...ids)
     }
     
+    // Add special form IDs (10033-10082)
+    const specialFormIds = Array.from({ length: 50 }, (_, i) => 10033 + i)
+    allPokemonIds.push(...specialFormIds)
+    
     setCache(cacheKey, allPokemonIds, CACHE_TTL.POKEMON_LIST)
     return allPokemonIds
   } catch (error) {
@@ -230,6 +235,37 @@ export async function getAllValidPokemonIds(): Promise<number[]> {
 
 // Individual Pokémon functions
 export async function getPokemon(id: number | string): Promise<Pokemon> {
+  const numericId = typeof id === 'string' ? parseInt(id, 10) : id
+  
+  // Handle special forms (Mega Evolutions, Primal Reversions)
+  if (isSpecialForm(numericId)) {
+    const specialFormInfo = getSpecialFormInfo(numericId)
+    if (!specialFormInfo) {
+      throw new Error(`Special form with ID ${id} does not exist`)
+    }
+    
+    // Get the base Pokemon data
+    const basePokemon = await getPokemon(specialFormInfo.basePokemonId)
+    
+    // Create a modified Pokemon object for the special form
+    const specialFormPokemon: Pokemon = {
+      ...basePokemon,
+      id: numericId,
+      name: specialFormInfo.name,
+      // Add special form metadata
+      special_form: {
+        type: specialFormInfo.formType,
+        variant: specialFormInfo.variant,
+        base_pokemon_id: specialFormInfo.basePokemonId,
+        base_pokemon_name: specialFormInfo.basePokemonName,
+        japanese_name: specialFormInfo.japaneseName,
+        description: specialFormInfo.description
+      }
+    }
+    
+    return specialFormPokemon
+  }
+
   const cacheKey = getCacheKey('pokemon', { id })
   const cached = getCache(cacheKey)
   if (cached) return cached
@@ -909,24 +945,24 @@ export function calculateTypeEffectiveness(attackingTypes: string[], defendingTy
   // Simplified type effectiveness calculation
   // This would need to be implemented with the full type chart
   const typeChart: Record<string, Record<string, number>> = {
-    fire: { grass: 2, water: 0.5, fire: 0.5 },
-    water: { fire: 2, grass: 0.5, water: 0.5 },
-    grass: { water: 2, fire: 0.5, grass: 0.5 },
-    electric: { water: 2, grass: 0.5, ground: 0 },
-    ice: { grass: 2, fire: 0.5, water: 0.5 },
-    fighting: { normal: 2, rock: 2, flying: 0.5, psychic: 0.5 },
-    poison: { grass: 2, ground: 0.5, rock: 0.5, ghost: 0.5 },
-    ground: { fire: 2, electric: 2, grass: 0.5, bug: 0.5, flying: 0 },
-    flying: { grass: 2, fighting: 2, bug: 2, electric: 0.5, rock: 0.5 },
-    psychic: { fighting: 2, poison: 2, dark: 0 },
-    bug: { grass: 2, psychic: 2, fire: 0.5, fighting: 0.5, poison: 0.5, flying: 0.5, ghost: 0.5 },
-    rock: { fire: 2, ice: 2, flying: 2, bug: 2, fighting: 0.5, ground: 0.5 },
-    ghost: { psychic: 0, normal: 0 },
-    dragon: { dragon: 2 },
-    dark: { psychic: 2, ghost: 2, fighting: 0.5, dark: 0.5 },
-    steel: { ice: 2, rock: 2, steel: 0.5, fire: 0.5, water: 0.5, electric: 0.5 },
-    fairy: { fighting: 2, dragon: 2, dark: 2, fire: 0.5, poison: 0.5, steel: 0.5 },
-    normal: { rock: 0.5, ghost: 0 }
+    normal: { rock: 0.5, ghost: 0, steel: 0.5 },
+    fire: { fire: 0.5, water: 0.5, grass: 2, ice: 2, bug: 2, rock: 0.5, dragon: 0.5, steel: 2 },
+    water: { fire: 2, water: 0.5, grass: 0.5, ground: 2, rock: 2, dragon: 0.5 },
+    electric: { water: 2, electric: 0.5, grass: 0.5, ground: 0, flying: 2, dragon: 0.5 },
+    grass: { fire: 0.5, water: 2, grass: 0.5, poison: 0.5, ground: 2, flying: 0.5, bug: 0.5, rock: 2, dragon: 0.5, steel: 0.5 },
+    ice: { fire: 0.5, water: 0.5, grass: 2, ice: 0.5, ground: 2, flying: 2, dragon: 2, steel: 0.5 },
+    fighting: { normal: 2, ice: 2, poison: 0.5, flying: 0.5, psychic: 0.5, bug: 1, rock: 2, ghost: 0, dark: 2, steel: 2, fairy: 0.5 },
+    poison: { grass: 2, poison: 0.5, ground: 0.5, rock: 0.5, ghost: 0.5, steel: 0, fairy: 2 },
+    ground: { fire: 2, electric: 2, grass: 0.5, poison: 2, flying: 0, bug: 1, rock: 2, steel: 2 },
+    flying: { electric: 0.5, grass: 2, fighting: 2, bug: 2, rock: 0.5, steel: 0.5 },
+    psychic: { fighting: 2, poison: 2, psychic: 0.5, dark: 0, steel: 0.5 },
+    bug: { fire: 0.5, grass: 2, fighting: 0.5, poison: 0.5, flying: 0.5, psychic: 2, ghost: 0.5, dark: 2, steel: 0.5, fairy: 0.5 },
+    rock: { fire: 2, ice: 2, fighting: 0.5, ground: 0.5, flying: 2, bug: 2, steel: 0.5 },
+    ghost: { normal: 0, psychic: 2, ghost: 2, dark: 0.5 },
+    dragon: { dragon: 2, steel: 0.5, fairy: 0 },
+    dark: { fighting: 0.5, psychic: 2, ghost: 2, dark: 0.5, fairy: 0.5 },
+    steel: { fire: 0.5, water: 0.5, electric: 0.5, ice: 2, rock: 2, fairy: 2, steel: 0.5 },
+    fairy: { fire: 0.5, fighting: 2, poison: 0.5, dragon: 2, dark: 2, steel: 0.5 }
   }
 
   let effectiveness = 1

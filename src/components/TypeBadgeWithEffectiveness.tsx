@@ -4,28 +4,28 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createPortal } from "react-dom";
 import TypeBadge from "./TypeBadge";
-import { getMatchup } from "@/lib/getMatchup";
+import { getEffectiveness } from "@/lib/getEffectiveness";
 
-interface TypeBadgeWithTooltipProps {
+interface TypeBadgeWithEffectivenessProps {
   type: string;
   className?: string;
 }
 
-export default function TypeBadgeWithTooltip({ type, className }: TypeBadgeWithTooltipProps) {
+export default function TypeBadgeWithEffectiveness({ type, className }: TypeBadgeWithEffectivenessProps) {
   const [showTooltip, setShowTooltip] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState<'top' | 'bottom'>('top');
   const [tooltipAlignment, setTooltipAlignment] = useState<'left' | 'center' | 'right'>('center');
   const [tooltipCoords, setTooltipCoords] = useState({ x: 0, y: 0 });
   const badgeRef = useRef<HTMLDivElement>(null);
   
-  // Get type weaknesses using the getMatchup function
-  const matchups = getMatchup([type.charAt(0).toUpperCase() + type.slice(1)]);
+  // Get type effectiveness using the new getEffectiveness function
+  const effectiveness = getEffectiveness(type.charAt(0).toUpperCase() + type.slice(1));
   
-  // Categorize what types are effective against this type
-  const weakTo = matchups.x4.concat(matchups.x2).map(t => ({ type: t.toLowerCase(), multiplier: matchups.x4.includes(t) ? '4x' : '2x' }));
-  const resists = matchups.x0_5.map(t => ({ type: t.toLowerCase(), multiplier: '0.5x' }));
-  const quarterResists = matchups.x0_25.map(t => ({ type: t.toLowerCase(), multiplier: '0.25x' }));
-  const immune = matchups.x0.map(t => ({ type: t.toLowerCase(), multiplier: '0x' }));
+  // Categorize effectiveness
+  const weakTo = effectiveness.x2.map(t => ({ type: t.toLowerCase(), multiplier: '2x' }));
+  const resists = effectiveness.x0_5.map(t => ({ type: t.toLowerCase(), multiplier: '0.5x' }));
+  const quarterResists = effectiveness.x0_25.map(t => ({ type: t.toLowerCase(), multiplier: '0.25x' }));
+  const immune = effectiveness.x0.map(t => ({ type: t.toLowerCase(), multiplier: '0x' }));
   
   return (
     <>
@@ -89,20 +89,20 @@ export default function TypeBadgeWithTooltip({ type, className }: TypeBadgeWithT
             {/* Header */}
             <div className="flex items-center gap-2 mb-3">
               <TypeBadge type={type} className="text-sm px-2 py-1" />
-              <span className="text-gray-600 dark:text-gray-400 text-xs font-medium">Type Weaknesses</span>
+              <span className="text-gray-600 dark:text-gray-400 text-xs font-medium">Type Effectiveness</span>
             </div>
             
             {/* Four panels layout */}
             <div className="grid grid-cols-4 gap-1">
-              {/* Double Weak (4x) */}
+              {/* Super Effective (2x+) */}
               <div className="bg-red-50 dark:bg-red-900/20 rounded p-1.5">
-                <h4 className="font-semibold text-xs mb-1 text-red-800 dark:text-red-200">Double Weak (4x)</h4>
+                <h4 className="font-semibold text-xs mb-1 text-red-800 dark:text-red-200">Super Effective (2x+)</h4>
                 <div className="space-y-0.5">
-                  {matchups.x4.length > 0 ? (
-                    matchups.x4.map((type) => (
-                      <div key={type} className="flex items-center justify-between">
-                        <TypeBadge type={type.toLowerCase()} className="text-xs px-1 py-0.5" />
-                        <span className="text-xs font-bold text-red-600 dark:text-red-400">4x</span>
+                  {weakTo.length > 0 ? (
+                    weakTo.map((effect) => (
+                      <div key={effect.type} className="flex items-center justify-between">
+                        <TypeBadge type={effect.type} className="text-xs px-1 py-0.5" />
+                        <span className="text-xs font-bold text-red-600 dark:text-red-400">{effect.multiplier}</span>
                       </div>
                     ))
                   ) : (
@@ -111,32 +111,15 @@ export default function TypeBadgeWithTooltip({ type, className }: TypeBadgeWithT
                 </div>
               </div>
               
-              {/* Weak to (2x) */}
-              <div className="bg-orange-50 dark:bg-orange-900/20 rounded p-1.5">
-                <h4 className="font-semibold text-xs mb-1 text-orange-800 dark:text-orange-200">Weak to (2x)</h4>
-                <div className="space-y-0.5">
-                  {matchups.x2.length > 0 ? (
-                    matchups.x2.map((type) => (
-                      <div key={type} className="flex items-center justify-between">
-                        <TypeBadge type={type.toLowerCase()} className="text-xs px-1 py-0.5" />
-                        <span className="text-xs font-bold text-orange-600 dark:text-orange-400">2x</span>
-                      </div>
-                    ))
-                  ) : (
-                    <span className="text-xs text-gray-500 dark:text-gray-400">None</span>
-                  )}
-                </div>
-              </div>
-              
-              {/* Resists (0.5x) */}
+              {/* Not Very Effective (0.5x) */}
               <div className="bg-green-50 dark:bg-green-900/20 rounded p-1.5">
-                <h4 className="font-semibold text-xs mb-1 text-green-800 dark:text-green-200">Resists (0.5x)</h4>
+                <h4 className="font-semibold text-xs mb-1 text-green-800 dark:text-green-200">Not Very Effective (0.5x)</h4>
                 <div className="space-y-0.5">
-                  {matchups.x0_5.length > 0 ? (
-                    matchups.x0_5.map((type) => (
-                      <div key={type} className="flex items-center justify-between">
-                        <TypeBadge type={type.toLowerCase()} className="text-xs px-1 py-0.5" />
-                        <span className="text-xs font-bold text-green-600 dark:text-green-400">0.5x</span>
+                  {resists.length > 0 ? (
+                    resists.map((effect) => (
+                      <div key={effect.type} className="flex items-center justify-between">
+                        <TypeBadge type={effect.type} className="text-xs px-1 py-0.5" />
+                        <span className="text-xs font-bold text-green-600 dark:text-green-400">{effect.multiplier}</span>
                       </div>
                     ))
                   ) : (
@@ -145,15 +128,15 @@ export default function TypeBadgeWithTooltip({ type, className }: TypeBadgeWithT
                 </div>
               </div>
               
-              {/* Quarter Resists (0.25x) */}
+              {/* Quarter Effective (0.25x) */}
               <div className="bg-blue-50 dark:bg-blue-900/20 rounded p-1.5">
-                <h4 className="font-semibold text-xs mb-1 text-blue-800 dark:text-blue-200">Quarter Resists (0.25x)</h4>
+                <h4 className="font-semibold text-xs mb-1 text-blue-800 dark:text-blue-200">Quarter Effective (0.25x)</h4>
                 <div className="space-y-0.5">
-                  {matchups.x0_25.length > 0 ? (
-                    matchups.x0_25.map((type) => (
-                      <div key={type} className="flex items-center justify-between">
-                        <TypeBadge type={type.toLowerCase()} className="text-xs px-1 py-0.5" />
-                        <span className="text-xs font-bold text-blue-600 dark:text-blue-400">0.25x</span>
+                  {quarterResists.length > 0 ? (
+                    quarterResists.map((effect) => (
+                      <div key={effect.type} className="flex items-center justify-between">
+                        <TypeBadge type={effect.type} className="text-xs px-1 py-0.5" />
+                        <span className="text-xs font-bold text-blue-600 dark:text-blue-400">{effect.multiplier}</span>
                       </div>
                     ))
                   ) : (
@@ -162,15 +145,15 @@ export default function TypeBadgeWithTooltip({ type, className }: TypeBadgeWithT
                 </div>
               </div>
               
-              {/* Immune (0x) */}
+              {/* No Effect (0x) */}
               <div className="bg-gray-50 dark:bg-gray-700/50 rounded p-1.5">
-                <h4 className="font-semibold text-xs mb-1 text-gray-800 dark:text-gray-200">Immune (0x)</h4>
+                <h4 className="font-semibold text-xs mb-1 text-gray-800 dark:text-gray-200">No Effect (0x)</h4>
                 <div className="space-y-0.5">
-                  {matchups.x0.length > 0 ? (
-                    matchups.x0.map((type) => (
-                      <div key={type} className="flex items-center justify-between">
-                        <TypeBadge type={type.toLowerCase()} className="text-xs px-1 py-0.5" />
-                        <span className="text-xs font-bold text-gray-600 dark:text-gray-400">0x</span>
+                  {immune.length > 0 ? (
+                    immune.map((effect) => (
+                      <div key={effect.type} className="flex items-center justify-between">
+                        <TypeBadge type={effect.type} className="text-xs px-1 py-0.5" />
+                        <span className="text-xs font-bold text-gray-600 dark:text-gray-400">{effect.multiplier}</span>
                       </div>
                     ))
                   ) : (

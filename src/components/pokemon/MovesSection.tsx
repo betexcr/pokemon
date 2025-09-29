@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import TypeBadgeWithTooltip from "@/components/TypeBadgeWithTooltip";
+import TypeBadgeWithEffectiveness from "@/components/TypeBadgeWithEffectiveness";
 import Tooltip from "@/components/Tooltip";
 
 type Move = {
@@ -81,7 +81,7 @@ export default function MovesSection({ moves, pokemonTypes = [] }: { moves: Move
                     <span>{m.name}</span>
                   )}
                 </td>
-                <td><TypeBadgeWithTooltip type={m.type} /></td>
+                <td><TypeBadgeWithEffectiveness type={m.type} /></td>
                 <td className="capitalize">{m.damage_class}</td>
                 <td>{m.power ?? "—"}</td>
                 <td>{m.accuracy ?? "—"}</td>
