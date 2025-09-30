@@ -72,6 +72,26 @@ export default function RootLayout({
         
         {/* Viewport for mobile responsiveness */}
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        {/* Early theme application to avoid flash of incorrect theme */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(() => { try {
+  const doc = document.documentElement;
+  const saved = localStorage.getItem('theme');
+  const allowed = ['light','dark','gold','red','ruby'];
+  let theme = (saved && allowed.includes(saved)) ? saved : null;
+  if (!theme) {
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    theme = prefersDark ? 'dark' : 'light';
+  }
+  doc.classList.remove('dark','theme-gold','theme-red','theme-ruby');
+  if (theme === 'dark') doc.classList.add('dark');
+  else if (theme === 'gold') doc.classList.add('theme-gold');
+  else if (theme === 'red') doc.classList.add('theme-red');
+  else if (theme === 'ruby') doc.classList.add('theme-ruby');
+} catch(_) {} })();`
+          }}
+        />
         
         {/* Additional SEO */}
         <meta name="theme-color" content="#3B4CCA" />

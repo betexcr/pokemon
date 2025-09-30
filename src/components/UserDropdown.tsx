@@ -18,7 +18,7 @@ export default function UserDropdown({ isMobile = false }: UserDropdownProps) {
   const [mounted, setMounted] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
   const { addToast } = useToastContext();
 
   // Ensure component is mounted before hydrating
@@ -179,7 +179,31 @@ export default function UserDropdown({ isMobile = false }: UserDropdownProps) {
     );
   }
 
-  // Show offline placeholder when no user
+  // During auth loading, render a neutral placeholder to avoid "logged off" flash
+  if (loading) {
+    return (
+      <div className="relative inline-block text-left user-dropdown-container">
+        <button 
+          className="w-8 h-8 sm:w-12 sm:h-12 md:w-12 md:h-12 lg:w-14 lg:h-14 xl:w-16 xl:h-16 rounded-full overflow-hidden border-2 border-gray-300 transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 touch-manipulation dark:border-gray-600 bg-white/60 dark:bg-gray-800/60"
+          style={{ borderRadius: '50%' } as React.CSSProperties}
+          aria-label="Loading account"
+          title=""
+        >
+          <Image 
+            src="/profile-placeholder.png" 
+            alt="" 
+            width={64}
+            height={64}
+            className="w-full h-full rounded-full object-cover opacity-70"
+            style={{ borderRadius: '50%' }}
+            referrerPolicy="no-referrer"
+          />
+        </button>
+      </div>
+    );
+  }
+
+  // Show offline placeholder when no user (only after loading finished)
   if (!user) {
     return (
       <div 

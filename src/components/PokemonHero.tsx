@@ -15,6 +15,8 @@ import TypeBadgeWithTooltip from "@/components/TypeBadgeWithTooltip";
 import { getBestPokemonDBSprite, getPokemonDBFallbackURLs, hasPokemonDBShinySprite } from "@/lib/pokemonDbSprites";
 import { getAvailablePortraits, getPortraitURL, PortraitExpression } from "@/lib/pmdPortraits";
 import { isSpecialForm, getSpecialFormInfo } from '@/lib/specialForms';
+import { usePmdAnimations } from '@/components/HeroPmdSprite';
+import HeroPmdSprite from '@/components/HeroPmdSprite';
 
 interface PokemonHeroProps {
   pokemon: Pokemon;
@@ -31,12 +33,18 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
   const [showAura, setShowAura] = useState(false);
   const [isShiny, setIsShiny] = useState(false);
   const [gender, setGender] = useState<'male' | 'female'>('male');
-  const [style, setStyle] = useState<'official' | 'sprite' | 'portrait' | 'fallback'>('official');
+  const [style, setStyle] = useState<'official' | 'sprite' | 'portrait' | 'pmd' | 'fallback'>('official');
   const [orientation, setOrientation] = useState<'front' | 'back'>('front');
   const [selectedPortrait, setSelectedPortrait] = useState<string>('Normal.png');
   const [availablePortraits, setAvailablePortraits] = useState<PortraitExpression[]>([]);
   const [showPortraitDropdown, setShowPortraitDropdown] = useState(false);
   const portraitDropdownRef = useRef<HTMLDivElement>(null);
+  
+  // PMD state
+  const { anims: pmdAnims, error: pmdError } = usePmdAnimations(pokemon.id);
+  const [selectedPmdAnim, setSelectedPmdAnim] = useState<string>('');
+  const [showPmdDropdown, setShowPmdDropdown] = useState(false);
+  const pmdDropdownRef = useRef<HTMLDivElement>(null);
   // Helper function to get the appropriate default generation for a Pokemon
   const getDefaultGeneration = (pokemonId: number): 'gen1' | 'gen1rb' | 'gen1rg' | 'gen1frlg' | 'gen2' | 'gen2g' | 'gen2s' | 'gen3' | 'gen3rs' | 'gen3frlg' | 'gen4' | 'gen4dp' | 'gen5' | 'gen5ani' | 'gen6' | 'gen6ani' | 'gen7' | 'gen8' | 'gen9' | 'home' | 'go' => {
     // Select the highest generation available for this Pokemon
@@ -146,6 +154,11 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
         newSrc = getPortraitURL(pokemon.id, selectedPortrait);
         break;
       }
+      case 'pmd': {
+        // PMD animations are handled by HeroPmdSprite component
+        newSrc = '';
+        break;
+      }
       case 'fallback': {
         // Use PokeAPI fallback sprite
         newSrc = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`;
@@ -181,21 +194,31 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
     fetchPortraits();
   }, [pokemon.id]);
 
-  // Handle click outside to close portrait dropdown
+  // Initialize PMD animation when available
+  useEffect(() => {
+    if (pmdAnims && pmdAnims.length > 0 && !selectedPmdAnim) {
+      setSelectedPmdAnim(pmdAnims[0].name);
+    }
+  }, [pmdAnims, selectedPmdAnim]);
+
+  // Handle click outside to close dropdowns
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (portraitDropdownRef.current && !portraitDropdownRef.current.contains(event.target as Node)) {
         setShowPortraitDropdown(false);
       }
+      if (pmdDropdownRef.current && !pmdDropdownRef.current.contains(event.target as Node)) {
+        setShowPmdDropdown(false);
+      }
     };
 
-    if (showPortraitDropdown) {
+    if (showPortraitDropdown || showPmdDropdown) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => {
         document.removeEventListener('mousedown', handleClickOutside);
       };
     }
-  }, [showPortraitDropdown]);
+  }, [showPortraitDropdown, showPmdDropdown]);
 
   // Get primary type for background color
   const primaryType = pokemon.types[0]?.type.name || 'normal';
@@ -346,9 +369,8 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
                   <div className="space-y-0.5">
                     {matchups.x4.length > 0 ? (
                       matchups.x4.map((type) => (
-                        <div key={type} className="flex items-center justify-between">
+                        <div key={type} className="flex items-center">
                           <TypeBadge type={type.toLowerCase()} className="text-xs px-1 py-0.5" />
-                          <span className="text-xs font-bold text-red-600 dark:text-red-400">4x</span>
                         </div>
                       ))
                     ) : (
@@ -363,9 +385,8 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
                   <div className="space-y-0.5">
                     {matchups.x2.length > 0 ? (
                       matchups.x2.map((type) => (
-                        <div key={type} className="flex items-center justify-between">
+                        <div key={type} className="flex items-center">
                           <TypeBadge type={type.toLowerCase()} className="text-xs px-1 py-0.5" />
-                          <span className="text-xs font-bold text-orange-600 dark:text-orange-400">2x</span>
                         </div>
                       ))
                     ) : (
@@ -380,9 +401,8 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
                   <div className="space-y-0.5">
                     {matchups.x0_5.length > 0 ? (
                       matchups.x0_5.map((type) => (
-                        <div key={type} className="flex items-center justify-between">
+                        <div key={type} className="flex items-center">
                           <TypeBadge type={type.toLowerCase()} className="text-xs px-1 py-0.5" />
-                          <span className="text-xs font-bold text-green-600 dark:text-green-400">0.5x</span>
                         </div>
                       ))
                     ) : (
@@ -397,9 +417,8 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
                   <div className="space-y-0.5">
                     {matchups.x0_25.length > 0 ? (
                       matchups.x0_25.map((type) => (
-                        <div key={type} className="flex items-center justify-between">
+                        <div key={type} className="flex items-center">
                           <TypeBadge type={type.toLowerCase()} className="text-xs px-1 py-0.5" />
-                          <span className="text-xs font-bold text-blue-600 dark:text-blue-400">0.25x</span>
                         </div>
                       ))
                     ) : (
@@ -414,9 +433,8 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
                   <div className="space-y-0.5">
                     {matchups.x0.length > 0 ? (
                       matchups.x0.map((type) => (
-                        <div key={type} className="flex items-center justify-between">
+                        <div key={type} className="flex items-center">
                           <TypeBadge type={type.toLowerCase()} className="text-xs px-1 py-0.5" />
-                          <span className="text-xs font-bold text-gray-600 dark:text-gray-400">0x</span>
                         </div>
                       ))
                     ) : (
@@ -1087,14 +1105,14 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
             style={{ viewTransitionName: vtName } as React.CSSProperties}
             className="rounded-xl bg-white/70 dark:bg-zinc-800/70 p-3 flex-shrink-0 order-2 lg:order-2"
           >
-            {imageSrc && (
-            <Image 
+            {style !== 'pmd' && imageSrc && (
+              <Image 
                 src={imageSrc}
-              alt={pokemon.name}
-              width={140} 
-              height={140} 
-              className={`h-32 w-32 sm:h-36 sm:w-36 lg:h-40 lg:w-40 object-contain`} 
-              priority 
+                alt={pokemon.name}
+                width={140} 
+                height={140} 
+                className={`h-32 w-32 sm:h-36 sm:w-36 lg:h-40 lg:w-40 object-contain`} 
+                priority 
                 onError={() => {
                   // Fallback to PokeAPI sprite if PokemonDB sprite fails
                   // Respect the current shiny state
@@ -1102,6 +1120,11 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
                   setImageSrc(`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${fallbackPath}.png`);
                 }}
               />
+            )}
+            {style === 'pmd' && selectedPmdAnim && (
+              <div className="h-32 w-32 sm:h-36 sm:w-36 lg:h-40 lg:w-40 flex items-center justify-center">
+                <HeroPmdSprite pokemonId={pokemon.id} animName={selectedPmdAnim} scale={2} />
+              </div>
             )}
           </div>
           
@@ -1185,6 +1208,7 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
                 {[
                   { key: 'official', label: 'Official' },
                   { key: 'portrait', label: 'Portrait', hasDropdown: true },
+                  { key: 'pmd', label: 'Animation', hasDropdown: true },
                   { key: 'sprite', label: 'Sprite' }
                 ].map(opt => (
                   <button
@@ -1194,9 +1218,15 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
                       if (opt.key === 'portrait' && opt.hasDropdown) {
                         setStyle('portrait');
                         setShowPortraitDropdown(!showPortraitDropdown);
+                        setShowPmdDropdown(false);
+                      } else if (opt.key === 'pmd' && opt.hasDropdown) {
+                        setStyle('pmd');
+                        setShowPmdDropdown(!showPmdDropdown);
+                        setShowPortraitDropdown(false);
                       } else {
                         setStyle(opt.key as typeof style);
                         setShowPortraitDropdown(false);
+                        setShowPmdDropdown(false);
                       }
                     }}
                     className={`px-3 py-1 text-sm flex items-center gap-1 relative ${style === opt.key ? 'bg-surface text-text' : 'bg-transparent text-muted'}`}
@@ -1228,12 +1258,40 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
                           setShowPortraitDropdown(false);
                         }}
                         className={`w-full px-4 py-2 text-sm text-left first:rounded-t-lg last:rounded-b-lg hover:bg-surface-hover transition-colors ${
-                          selectedPortrait === portrait.filename ? 'bg-surface-hover font-medium' : ''
+                          selectedPortrait === portrait.filename ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 font-medium' : ''
                         }`}
                       >
                         {portrait.displayName}
                       </button>
                     ))}
+                  </div>
+                )}
+                
+                {/* PMD dropdown menu - positioned outside of buttons */}
+                {showPmdDropdown && style === 'pmd' && (
+                  <div className="absolute top-full left-0 mt-2 bg-surface border border-border rounded-lg shadow-xl z-[100] min-w-[140px] max-h-60 overflow-y-auto">
+                    {pmdAnims && pmdAnims.length > 0 ? (
+                      pmdAnims.map((anim) => (
+                        <button
+                          key={anim.name}
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedPmdAnim(anim.name);
+                            setShowPmdDropdown(false);
+                          }}
+                          className={`w-full px-4 py-2 text-sm text-left first:rounded-t-lg last:rounded-b-lg hover:bg-surface-hover transition-colors ${
+                            selectedPmdAnim === anim.name ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 font-medium' : ''
+                          }`}
+                        >
+                          {anim.name}
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-4 py-2 text-sm text-muted">
+                        {pmdError ? 'Error loading animations' : 'No PMD sprites found'}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -1242,7 +1300,7 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
             {/* Always-available appearance selectors (Normal/Shiny) */}
             <div className="mt-2 flex items-center justify-center lg:justify-start gap-3 flex-wrap">
               <AnimatePresence initial={false}>
-              {style !== 'portrait' && (
+              {style !== 'portrait' && style !== 'pmd' && (
               <motion.div
                 key="shiny-controls"
                 initial={{ opacity: 0, height: 0, y: -8 }}

@@ -479,7 +479,7 @@ export async function getPokemonAbilities(id: number | string): Promise<Array<{ 
   }
 }
 
-export async function getPokemonMoves(id: number | string): Promise<Array<{ name: string; type: string; damage_class: 'physical' | 'special' | 'status'; power: number | null; accuracy: number | null; pp: number | null; level_learned_at: number | null; short_effect: string | null }>> {
+export async function getPokemonMoves(id: number | string): Promise<Array<{ name: string; type: string; damage_class: 'physical' | 'special' | 'status'; power: number | null; accuracy: number | null; pp: number | null; level_learned_at: number | null; learn_method: string; short_effect: string | null }>> {
   try {
     const pokemon = await getPokemon(id)
     const moves = pokemon.moves || []
@@ -489,6 +489,11 @@ export async function getPokemonMoves(id: number | string): Promise<Array<{ name
         try {
           const moveData = await getMove(entry.move.name)
           const effectEntry = moveData?.effect_entries?.find((entry: any) => entry.language?.name === 'en')
+          
+          // Get the most recent learn method and level
+          const versionDetails = entry.version_group_details || []
+          const latestVersion = versionDetails[versionDetails.length - 1]
+          
           return {
             name: entry.move.name,
             type: moveData.type?.name || 'unknown',
@@ -496,7 +501,8 @@ export async function getPokemonMoves(id: number | string): Promise<Array<{ name
             power: moveData.power,
             accuracy: moveData.accuracy,
             pp: moveData.pp,
-            level_learned_at: entry.version_group_details?.[0]?.level_learned_at || null,
+            level_learned_at: latestVersion?.level_learned_at || null,
+            learn_method: latestVersion?.move_learn_method?.name || 'unknown',
             short_effect: effectEntry?.short_effect || effectEntry?.effect || null,
           }
         } catch (error) {
@@ -509,6 +515,7 @@ export async function getPokemonMoves(id: number | string): Promise<Array<{ name
             accuracy: null,
             pp: null,
             level_learned_at: null,
+            learn_method: 'unknown',
             short_effect: null,
           }
         }
@@ -565,12 +572,18 @@ export async function searchPokemonByName(query: string): Promise<Pokemon[]> {
     const results: Pokemon[] = []
 
     // 1) Try direct name match (covers forms like "calyrex-shadow")
-    try {
-      const direct = await getPokemon(trimmedQuery)
-      if (direct) results.push(direct)
-    } catch (error) {
-      // ignore if not a direct pokemon id/name - this is expected for many searches
-      console.debug(`Direct name match failed for "${trimmedQuery}":`, error instanceof Error ? error.message : 'Unknown error')
+    // Note: We skip direct name matching for regular Pokemon names since PokeAPI
+    // doesn't reliably support name-based lookups in the /pokemon endpoint
+    // Instead, we rely on the pokemon list filtering below
+    if (trimmedQuery.includes('-')) {
+      // Only try direct lookup for forms with hyphens (like "calyrex-shadow")
+      try {
+        const direct = await getPokemon(trimmedQuery)
+        if (direct) results.push(direct)
+      } catch (error) {
+        // ignore if not a direct pokemon id/name - this is expected for many searches
+        console.debug(`Direct name match failed for "${trimmedQuery}":`, error instanceof Error ? error.message : 'Unknown error')
+      }
     }
 
     // 2) Fetch list of default Pokémon for partial matches by name/id
@@ -584,20 +597,24 @@ export async function searchPokemonByName(query: string): Promise<Pokemon[]> {
     })
 
     const limitedMatches = listMatches.slice(0, 20)
-    const listDetails = await Promise.all(
+    const listDetails = await Promise.allSettled(
       limitedMatches.map(async (pokemon) => {
         const id = pokemon.url.split('/').slice(-2)[0]
         return await getPokemon(parseInt(id))
       })
     )
-    results.push(...listDetails)
+    // Filter out failed requests and only add successful results
+    const successfulResults = listDetails
+      .filter((result): result is PromiseFulfilledResult<Pokemon> => result.status === 'fulfilled')
+      .map(result => result.value)
+    results.push(...successfulResults)
 
     // 3) If the query looks like a base species name, include its varieties (forms)
     // This ensures queries like "calyrex" also return "calyrex-shadow" and "calyrex-ice"
     try {
       const species = await getPokemonSpecies(trimmedQuery)
       if (species && Array.isArray(species.varieties)) {
-        const varietyDetails = await Promise.all(
+        const varietyDetails = await Promise.allSettled(
           species.varieties.slice(0, 20).map(async (v: any) => {
             const url = v.pokemon?.url as string | undefined
             if (!url) return null
@@ -611,9 +628,13 @@ export async function searchPokemonByName(query: string): Promise<Pokemon[]> {
             }
           })
         )
-        for (const p of varietyDetails) {
-          if (p) results.push(p)
-        }
+        // Filter out failed requests and null values
+        const successfulVarieties = varietyDetails
+          .filter((result): result is PromiseFulfilledResult<Pokemon | null> => 
+            result.status === 'fulfilled' && result.value !== null
+          )
+          .map(result => result.value)
+        results.push(...successfulVarieties)
       }
     } catch (error) {
       // not a species or network hiccup; safe to ignore
@@ -627,7 +648,7 @@ export async function searchPokemonByName(query: string): Promise<Pokemon[]> {
         try {
           const species = await getPokemonSpecies(pokemon.name)
           if (species && Array.isArray(species.varieties) && species.varieties.length > 1) {
-            const varietyDetails = await Promise.all(
+            const varietyDetails = await Promise.allSettled(
               species.varieties.slice(0, 20).map(async (v: any) => {
                 const url = v.pokemon?.url as string | undefined
                 if (!url) return null
@@ -641,7 +662,11 @@ export async function searchPokemonByName(query: string): Promise<Pokemon[]> {
                 }
               })
             )
-            return varietyDetails.filter(p => p !== null)
+            return varietyDetails
+              .filter((result): result is PromiseFulfilledResult<Pokemon | null> => 
+                result.status === 'fulfilled' && result.value !== null
+              )
+              .map(result => result.value)
           }
           return []
         } catch (error) {
@@ -670,10 +695,9 @@ export async function searchPokemonByName(query: string): Promise<Pokemon[]> {
     return finalResults
   } catch (error) {
     console.error('Search error for query "' + query + '":', error)
-    reportDataLoadingError(`Search failed for query: ${query}`, {
-      query,
-      error: error instanceof Error ? error.message : String(error)
-    })
+    // Don't report search errors as data loading errors since they're expected
+    // when the API is temporarily unavailable
+    console.debug('Search failed, returning empty results for graceful degradation')
     return []
   }
 }

@@ -38,7 +38,9 @@
     "assets:pmd:top50": "node scripts/download-pmd-top50.js",
     "ingest": "node scripts/ingest.js",
     "seed-usage": "node scripts/seed-usage-data.js",
-    "test-real-data": "node scripts/test-real-data.js"
+    "test-real-data": "node scripts/test-real-data.js",
+    "assets:pmd": "node scripts/download-pmd-assets.js",
+    "assets:pmd:id": "node scripts/download-pmd-assets.js $PMD_ID"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.0.0",
@@ -56,6 +58,7 @@
     "react": "^18",
     "react-dom": "^18",
     "recharts": "^2.8.0",
+    "spritejs": "^3.8.3",
     "tailwind-merge": "^3.3.1",
     "uuid": "^13.0.0"
   },

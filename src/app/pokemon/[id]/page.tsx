@@ -34,12 +34,14 @@ export async function generateMetadata(props: any): Promise<Metadata> {
   try {
     const pokemon = await getPokemonById(pokemonId)
     
+    const capitalizedName = pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)
+    
     return {
-      title: `${pokemon.name} - Pokémon Details`,
-      description: `Learn about ${pokemon.name}, a ${pokemon.types.map(t => t.type.name).join('/')} type Pokémon.`,
+      title: `${capitalizedName} - Pokémon Details`,
+      description: `Learn about ${capitalizedName}, a ${pokemon.types.map(t => t.type.name).join('/')} type Pokémon.`,
       openGraph: {
-        title: `${pokemon.name} - Pokémon Details`,
-        description: `Learn about ${pokemon.name}, a ${pokemon.types.map(t => t.type.name).join('/')} type Pokémon.`,
+        title: `${capitalizedName} - Pokémon Details`,
+        description: `Learn about ${capitalizedName}, a ${pokemon.types.map(t => t.type.name).join('/')} type Pokémon.`,
         images: [
           {
             url: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.id}.png`,

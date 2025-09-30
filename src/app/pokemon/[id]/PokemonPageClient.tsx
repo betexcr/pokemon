@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 import AppHeader from '@/components/AppHeader'
 import PokemonDetails from '@/components/PokemonDetails'
 import { Pokemon } from '@/types/pokemon'
@@ -13,6 +14,12 @@ interface PokemonPageClientProps {
 
 export default function PokemonPageClient({ pokemon }: PokemonPageClientProps) {
   const router = useRouter()
+
+  // Set document title with capitalized Pokémon name
+  useEffect(() => {
+    const capitalizedName = pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)
+    document.title = `${capitalizedName} - Pokémon Details`
+  }, [pokemon.name])
 
   // Use smart back navigation
   const { backLink, backLabel } = useSmartBackNavigation({

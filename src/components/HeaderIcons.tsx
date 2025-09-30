@@ -114,6 +114,9 @@ export default function HeaderIcons({
             <Tooltip content="View competitive usage statistics and tier rankings for different battle formats" position="right">
               <OptimizedLink role="menuitem" href="/usage" className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-800 dark:text-gray-100 whitespace-nowrap rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/30" onClick={() => setOpenInsights(false)}>Usage Meta</OptimizedLink>
             </Tooltip>
+            <Tooltip content="Experience Pokémon Contests with kawaii design, Pokéblock feeding, and talent rounds" position="right">
+              <OptimizedLink role="menuitem" href="/contests" className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-800 dark:text-gray-100 whitespace-nowrap rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/30" onClick={() => setOpenInsights(false)}>Contests</OptimizedLink>
+            </Tooltip>
           </div>
         </div>
         )}
@@ -190,6 +193,7 @@ export default function HeaderIcons({
         />
         </OptimizedLink>
       </Tooltip>
+      
     </>
   )
 }
