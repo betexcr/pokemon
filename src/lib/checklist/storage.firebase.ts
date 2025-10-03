@@ -4,6 +4,10 @@ import type { ProgressState } from "./types";
 
 export async function loadCloud(uid: string): Promise<ProgressState | null> {
   const db = getDb();
+  if (!db) {
+    console.warn('Firebase not available - cannot load cloud data');
+    return null;
+  }
   const ref = doc(db, "users", uid, "dex", "default");
   const snap = await getDoc(ref);
   if (!snap.exists()) return null;
@@ -17,6 +21,10 @@ export async function loadCloud(uid: string): Promise<ProgressState | null> {
 
 export async function saveCloud(uid: string, state: ProgressState) {
   const db = getDb();
+  if (!db) {
+    console.warn('Firebase not available - cannot save cloud data');
+    return;
+  }
   const ref = doc(db, "users", uid, "dex", "default");
   await setDoc(
     ref,

@@ -20,7 +20,8 @@ let cachedApp: FirebaseApp | null = null;
 
 function ensureApp(): FirebaseApp | null {
   if (!hasFirebaseClientConfig) {
-    throw new Error('Firebase client config missing');
+    console.warn('Firebase client config missing - running in fallback mode');
+    return null;
   }
 
   if (cachedApp) {
@@ -44,6 +45,10 @@ export function firebaseClient() {
 // that do not use Firestore (e.g., checklist when offline or in SSR contexts).
 export function getDb() {
   const app = ensureApp();
+  if (!app) {
+    console.warn('Firebase app not available - returning null');
+    return null;
+  }
   // Importing from firebase/firestore is safe; creating the instance only when called.
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { getFirestore } = require("firebase/firestore") as typeof import("firebase/firestore");

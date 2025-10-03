@@ -10,6 +10,13 @@ export default function AuthGate() {
   const [email, setEmail] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!auth) {
+      // Firebase not available, use local storage only
+      setUid(null);
+      setEmail(null);
+      return;
+    }
+    
     const unsub = onAuthStateChanged(auth, (user) => {
       if (user) {
         setUid(user.uid);
@@ -23,17 +30,27 @@ export default function AuthGate() {
   }, [auth, setUid]);
 
   async function handleSignIn() {
+    if (!auth) {
+      console.warn('Firebase auth not available');
+      return;
+    }
     const provider = new GoogleAuthProvider();
     await signInWithPopup(auth, provider);
   }
 
   async function handleSignOut() {
+    if (!auth) {
+      console.warn('Firebase auth not available');
+      return;
+    }
     await signOut(auth);
   }
 
   return (
     <div className="flex items-center gap-3">
-      {email ? (
+      {!auth ? (
+        <span className="text-sm text-gray-500 dark:text-gray-400">Local mode only</span>
+      ) : email ? (
         <>
           <span className="text-sm text-gray-600 dark:text-gray-300">{email}</span>
           <span className="inline-flex items-center gap-1 text-green-600 text-sm" aria-label="Sync on">

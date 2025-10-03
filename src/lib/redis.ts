@@ -1,10 +1,12 @@
 import { Redis } from '@upstash/redis'
 
-// Redis client configuration
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL!,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-})
+// Redis client configuration with fallback
+const redis = process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+  ? new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    })
+  : null
 
 // Cache configuration - Daily TTL (24 hours)
 export const CACHE_TTL = {
@@ -26,13 +28,14 @@ export function getCacheKey(prefix: string, params: Record<string, any>): string
 
 // Redis cache operations
 export class RedisCache {
-  private redis: Redis
+  private redis: Redis | null
 
-  constructor(redisClient: Redis) {
+  constructor(redisClient: Redis | null) {
     this.redis = redisClient
   }
 
   async get<T>(key: string): Promise<T | null> {
+    if (!this.redis) return null
     try {
       const result = await this.redis.get(key)
       // Upstash Redis returns objects directly, no need to parse JSON
@@ -44,6 +47,7 @@ export class RedisCache {
   }
 
   async set(key: string, value: any, ttlSeconds?: number): Promise<boolean> {
+    if (!this.redis) return false
     try {
       if (ttlSeconds) {
         await this.redis.setex(key, ttlSeconds, value)
@@ -58,6 +62,7 @@ export class RedisCache {
   }
 
   async del(key: string): Promise<boolean> {
+    if (!this.redis) return false
     try {
       await this.redis.del(key)
       return true
@@ -68,6 +73,7 @@ export class RedisCache {
   }
 
   async exists(key: string): Promise<boolean> {
+    if (!this.redis) return false
     try {
       const result = await this.redis.exists(key)
       return result === 1
@@ -78,6 +84,7 @@ export class RedisCache {
   }
 
   async mget<T>(keys: string[]): Promise<(T | null)[]> {
+    if (!this.redis) return keys.map(() => null)
     try {
       const results = await this.redis.mget(...keys)
       return results.map(result => result as T | null)
@@ -88,6 +95,7 @@ export class RedisCache {
   }
 
   async mset(keyValuePairs: Record<string, any>, ttlSeconds?: number): Promise<boolean> {
+    if (!this.redis) return false
     try {
       if (ttlSeconds) {
         // Use pipeline for atomic operations with TTL
@@ -132,6 +140,7 @@ export class RedisCache {
 
   // Clear cache patterns
   async clearPattern(pattern: string): Promise<boolean> {
+    if (!this.redis) return false
     try {
       const keys = await this.redis.keys(pattern)
       if (keys.length > 0) {
@@ -146,6 +155,7 @@ export class RedisCache {
 
   // Health check
   async ping(): Promise<boolean> {
+    if (!this.redis) return false
     try {
       const result = await this.redis.ping()
       return result === 'PONG'
