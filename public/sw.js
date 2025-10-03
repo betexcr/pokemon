@@ -1,10 +1,10 @@
 // Service Worker for Pokemon Pokedex
 // Implements modern caching strategies for optimal performance
 
-const CACHE_NAME = 'pokemon-pokedex-v1.0.0'
-const STATIC_CACHE = 'pokemon-static-v1.0.0'
-const DYNAMIC_CACHE = 'pokemon-dynamic-v1.0.0'
-const IMAGE_CACHE = 'pokemon-images-v1.0.0'
+const CACHE_NAME = 'pokemon-pokedex-v1.0.1'
+const STATIC_CACHE = 'pokemon-static-v1.0.1'
+const DYNAMIC_CACHE = 'pokemon-dynamic-v1.0.1'
+const IMAGE_CACHE = 'pokemon-images-v1.0.1'
 
 // Cache strategies
 const CACHE_STRATEGIES = {
@@ -49,7 +49,19 @@ self.addEventListener('install', (event) => {
   console.log('Service Worker installing...')
   
   event.waitUntil(
-    caches.open(STATIC_CACHE)
+    // Clear all old caches first
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          if (cacheName.startsWith('pokemon-') && !cacheName.includes('v1.0.1')) {
+            console.log('Deleting old cache:', cacheName)
+            return caches.delete(cacheName)
+          }
+        })
+      )
+    }).then(() => {
+      return caches.open(STATIC_CACHE)
+    })
       .then((cache) => {
         console.log('Caching static assets...')
         return cache.addAll(STATIC_ASSETS)
@@ -73,10 +85,7 @@ self.addEventListener('activate', (event) => {
       .then((cacheNames) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
-            if (cacheName !== CACHE_NAME && 
-                cacheName !== STATIC_CACHE && 
-                cacheName !== DYNAMIC_CACHE && 
-                cacheName !== IMAGE_CACHE) {
+            if (cacheName.startsWith('pokemon-') && !cacheName.includes('v1.0.1')) {
               console.log('Deleting old cache:', cacheName)
               return caches.delete(cacheName)
             }
