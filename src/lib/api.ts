@@ -78,12 +78,16 @@ async function fetchFromAPI<T>(url: string): Promise<T> {
     } catch (error: any) {
       clearTimeout(timeout)
       
-      // Report network errors
-      if (error?.name === 'AbortError' || error instanceof TypeError) {
-        reportNetworkError(`Network request failed: ${error.message}`)
-      } else {
-        reportApiError(`API request failed: ${error.message}`)
-      }
+          // Report network errors only for actual network issues, not timeouts or aborts
+          if (error?.name === 'AbortError') {
+            // Don't report abort errors as they're usually intentional timeouts
+            console.warn('Request aborted:', error.message)
+          } else if (error instanceof TypeError && error.message.includes('fetch')) {
+            // Only report actual network errors, not other TypeErrors
+            reportNetworkError(`Network request failed: ${error.message}`)
+          } else {
+            reportApiError(`API request failed: ${error.message}`)
+          }
       
       // Retry on network/abort errors if attempts remain
       const isAbort = error?.name === 'AbortError'
@@ -93,15 +97,18 @@ async function fetchFromAPI<T>(url: string): Promise<T> {
         await new Promise(res => setTimeout(res, backoff + jitter))
         continue
       }
-      // Only log non-404 errors as they might be unexpected
-      if (!error?.message?.includes('404')) {
-        console.error('API fetch error:', error)
-        reportApiError(`API request failed: ${error?.message || 'Unknown error'}`, {
-          url,
-          attempt,
-          maxAttempts
-        })
-      }
+          // Only log non-404 errors as they might be unexpected
+          if (!error?.message?.includes('404')) {
+            console.error('API fetch error:', error)
+            // Don't report API errors for network issues that are already handled
+            if (!(error instanceof TypeError && error.message.includes('fetch'))) {
+              reportApiError(`API request failed: ${error?.message || 'Unknown error'}`, {
+                url,
+                attempt,
+                maxAttempts
+              })
+            }
+          }
       throw error
     }
   }
@@ -648,7 +655,7 @@ export async function searchPokemonByName(query: string): Promise<Pokemon[]> {
         )
         // Filter out failed requests and null values
         const successfulVarieties = varietyDetails
-          .filter((result): result is PromiseFulfilledResult<Pokemon | null> => 
+          .filter((result): result is PromiseFulfilledResult<Pokemon> => 
             result.status === 'fulfilled' && result.value !== null
           )
           .map(result => result.value)

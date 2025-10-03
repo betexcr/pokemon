@@ -93,11 +93,17 @@ class OfflineManager {
         this.lastOnlineTime = Date.now()
         this.notifyListeners()
         this.processRetryQueue()
+      } else if (response.status >= 500 || response.status === 0) {
+        // Only mark as offline for server errors, not client errors
+        this.isOnline = false
+        this.notifyListeners()
       }
     } catch (error) {
-      // Confirmed offline
-      this.isOnline = false
-      this.notifyListeners()
+      // Only mark as offline for actual network errors
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        this.isOnline = false
+        this.notifyListeners()
+      }
     }
   }
 
@@ -120,15 +126,18 @@ class OfflineManager {
         this.notifyListeners()
         this.processRetryQueue()
       } else if (!response.ok && this.isOnline) {
-        // We're actually offline, update state
-        console.log('Connectivity check: Offline')
-        this.isOnline = false
-        this.notifyListeners()
+        // Only mark as offline if we get a definitive network error
+        // Don't mark offline for 4xx errors (client errors)
+        if (response.status >= 500 || response.status === 0) {
+          console.log('Connectivity check: Offline (server error)')
+          this.isOnline = false
+          this.notifyListeners()
+        }
       }
     } catch (error) {
-      if (this.isOnline) {
-        // We're actually offline, update state
-        console.log('Connectivity check: Offline (error)')
+      // Only mark as offline for actual network errors, not timeouts or other issues
+      if (this.isOnline && (error instanceof TypeError && error.message.includes('fetch'))) {
+        console.log('Connectivity check: Offline (network error)')
         this.isOnline = false
         this.notifyListeners()
       }
