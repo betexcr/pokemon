@@ -150,6 +150,87 @@ async function cacheFirst(request, cacheName, maxAge = 24 * 60 * 60 * 1000) {
     return networkResponse
   } catch (error) {
     console.error('Cache first strategy failed:', error)
+    
+    // For HTML requests, return a proper offline page instead of just "Offline"
+    if (request.headers.get('accept')?.includes('text/html')) {
+      return new Response(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Offline - PokéDex</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <style>
+              body { 
+                font-family: system-ui, sans-serif; 
+                text-align: center; 
+                padding: 50px; 
+                background: #f0f0f0;
+              }
+              .offline-container {
+                max-width: 400px;
+                margin: 0 auto;
+                background: white;
+                padding: 30px;
+                border-radius: 10px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+              }
+              .pokeball {
+                width: 60px;
+                height: 60px;
+                margin: 0 auto 20px;
+                background: #ff6b6b;
+                border-radius: 50%;
+                position: relative;
+              }
+              .pokeball::before {
+                content: '';
+                position: absolute;
+                top: 50%;
+                left: 0;
+                right: 0;
+                height: 2px;
+                background: #333;
+              }
+              .pokeball::after {
+                content: '';
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 20px;
+                height: 20px;
+                background: #333;
+                border-radius: 50%;
+              }
+              h1 { color: #333; margin-bottom: 10px; }
+              p { color: #666; margin-bottom: 20px; }
+              button {
+                background: #4CAF50;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 16px;
+              }
+              button:hover { background: #45a049; }
+            </style>
+          </head>
+          <body>
+            <div class="offline-container">
+              <div class="pokeball"></div>
+              <h1>You're Offline</h1>
+              <p>It looks like you're not connected to the internet. Some features may be limited.</p>
+              <button onclick="window.location.reload()">Try Again</button>
+            </div>
+          </body>
+        </html>
+      `, {
+        status: 503,
+        headers: { 'Content-Type': 'text/html' }
+      })
+    }
+    
     return new Response('Offline', { status: 503 })
   }
 }
@@ -172,6 +253,86 @@ async function networkFirst(request, cacheName) {
     
     if (cachedResponse) {
       return cachedResponse
+    }
+    
+    // For HTML requests, return a proper offline page instead of just "Offline"
+    if (request.headers.get('accept')?.includes('text/html')) {
+      return new Response(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Offline - PokéDex</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <style>
+              body { 
+                font-family: system-ui, sans-serif; 
+                text-align: center; 
+                padding: 50px; 
+                background: #f0f0f0;
+              }
+              .offline-container {
+                max-width: 400px;
+                margin: 0 auto;
+                background: white;
+                padding: 30px;
+                border-radius: 10px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+              }
+              .pokeball {
+                width: 60px;
+                height: 60px;
+                margin: 0 auto 20px;
+                background: #ff6b6b;
+                border-radius: 50%;
+                position: relative;
+              }
+              .pokeball::before {
+                content: '';
+                position: absolute;
+                top: 50%;
+                left: 0;
+                right: 0;
+                height: 2px;
+                background: #333;
+              }
+              .pokeball::after {
+                content: '';
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 20px;
+                height: 20px;
+                background: #333;
+                border-radius: 50%;
+              }
+              h1 { color: #333; margin-bottom: 10px; }
+              p { color: #666; margin-bottom: 20px; }
+              button {
+                background: #4CAF50;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 16px;
+              }
+              button:hover { background: #45a049; }
+            </style>
+          </head>
+          <body>
+            <div class="offline-container">
+              <div class="pokeball"></div>
+              <h1>You're Offline</h1>
+              <p>It looks like you're not connected to the internet. Some features may be limited.</p>
+              <button onclick="window.location.reload()">Try Again</button>
+            </div>
+          </body>
+        </html>
+      `, {
+        status: 503,
+        headers: { 'Content-Type': 'text/html' }
+      })
     }
     
     return new Response('Offline', { status: 503 })

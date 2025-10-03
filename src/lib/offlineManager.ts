@@ -26,8 +26,10 @@ class OfflineManager {
       this.setupEventListeners()
       this.detectConnectionType()
       this.startConnectionMonitoring()
-      // Initial connectivity check
-      this.checkConnectivity()
+      // Initial connectivity check with delay to avoid race conditions
+      setTimeout(() => {
+        this.checkConnectivity()
+      }, 3000) // Increased delay to 3 seconds
     }
   }
 
@@ -74,7 +76,7 @@ class OfflineManager {
     // Ping a lightweight endpoint to verify actual connectivity
     this.connectivityCheckInterval = setInterval(() => {
       this.checkConnectivity()
-    }, 30000) // Check every 30 seconds
+    }, 60000) // Check every 60 seconds (less aggressive)
   }
 
   private async verifyConnectivity() {
