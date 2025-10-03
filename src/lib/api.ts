@@ -4,36 +4,38 @@
 import { Pokemon } from '@/types/pokemon'
 import { reportApiError, reportNetworkError, reportDataLoadingError } from '@/lib/errorReporting'
 import { isSpecialForm, getSpecialFormInfo, getBasePokemonId } from '@/lib/specialForms'
+import { redisCache, getCacheKey, CACHE_TTL } from '@/lib/redis'
 
-// Cache configuration
-const CACHE_TTL = {
-  POKEMON_LIST: 5 * 60 * 1000, // 5 minutes
-  POKEMON_DETAIL: 10 * 60 * 1000, // 10 minutes
-  POKEMON_SPECIES: 10 * 60 * 1000, // 10 minutes
-  EVOLUTION_CHAIN: 30 * 60 * 1000, // 30 minutes
-  TYPE: 60 * 60 * 1000, // 1 hour
-  ABILITY: 60 * 60 * 1000, // 1 hour
-  MOVE: 60 * 60 * 1000, // 1 hour
-}
+// Fallback in-memory cache for when Redis is unavailable
+const fallbackCache = new Map<string, { data: any; timestamp: number; ttl: number }>()
 
-// Simple in-memory cache
-const cache = new Map<string, { data: any; timestamp: number; ttl: number }>()
-
-function getCacheKey(prefix: string, params: Record<string, any>): string {
-  return `${prefix}:${JSON.stringify(params)}`
-}
-
-function getCache(key: string): any {
-  const cached = cache.get(key)
+async function getCache(key: string): Promise<any> {
+  try {
+    // Try Redis first
+    const cached = await redisCache.get(key)
+    if (cached) return cached
+  } catch (error) {
+    console.warn('Redis cache unavailable, falling back to memory cache:', error)
+  }
+  
+  // Fallback to in-memory cache
+  const cached = fallbackCache.get(key)
   if (cached && Date.now() - cached.timestamp < cached.ttl) {
     return cached.data
   }
-  cache.delete(key)
+  fallbackCache.delete(key)
   return null
 }
 
-function setCache(key: string, data: any, ttl: number): void {
-  cache.set(key, { data, timestamp: Date.now(), ttl })
+async function setCache(key: string, data: any, ttlSeconds: number): Promise<void> {
+  try {
+    // Try Redis first
+    await redisCache.set(key, data, ttlSeconds)
+  } catch (error) {
+    console.warn('Redis cache unavailable, using memory cache:', error)
+    // Fallback to in-memory cache
+    fallbackCache.set(key, { data, timestamp: Date.now(), ttl: ttlSeconds * 1000 })
+  }
 }
 
 // Base API URL
@@ -173,29 +175,29 @@ export function getPokemonGenerationImage(id: number, generation: number): strin
 // Pokémon list functions
 export async function getPokemonList(limit = 100, offset = 0): Promise<{ results: Array<{ name: string; url: string }>; count: number }> {
   const cacheKey = getCacheKey('pokemon-list', { limit, offset })
-  const cached = getCache(cacheKey)
+  const cached = await getCache(cacheKey)
   if (cached) return cached
 
   const url = `${API_BASE_URL}/pokemon?limit=${limit}&offset=${offset}`
   const data = await fetchFromAPI<{ results: Array<{ name: string; url: string }>; count: number }>(url)
-  setCache(cacheKey, data, CACHE_TTL.POKEMON_LIST)
+  await setCache(cacheKey, data, CACHE_TTL.POKEMON_LIST)
   return data
 }
 
 export async function getPokemonTotalCount(): Promise<number> {
-  const cacheKey = 'pokemon-total-count'
-  const cached = getCache(cacheKey)
+  const cacheKey = getCacheKey('pokemon-total-count', {})
+  const cached = await getCache(cacheKey)
   if (cached) return cached
 
   const data = await getPokemonList(1, 0)
-  setCache(cacheKey, data.count, CACHE_TTL.POKEMON_LIST)
+  await setCache(cacheKey, data.count, CACHE_TTL.POKEMON_TOTAL_COUNT)
   return data.count
 }
 
 // Get all valid Pokemon IDs for static generation
 export async function getAllValidPokemonIds(): Promise<number[]> {
-  const cacheKey = 'all-valid-pokemon-ids'
-  const cached = getCache(cacheKey)
+  const cacheKey = getCacheKey('all-valid-pokemon-ids', {})
+  const cached = await getCache(cacheKey)
   if (cached) return cached
 
   try {
@@ -224,7 +226,7 @@ export async function getAllValidPokemonIds(): Promise<number[]> {
     const specialFormIds = Array.from({ length: 50 }, (_, i) => 10033 + i)
     allPokemonIds.push(...specialFormIds)
     
-    setCache(cacheKey, allPokemonIds, CACHE_TTL.POKEMON_LIST)
+    await setCache(cacheKey, allPokemonIds, CACHE_TTL.POKEMON_LIST)
     return allPokemonIds
   } catch (error) {
     console.error('Failed to get all valid Pokemon IDs:', error)
@@ -267,13 +269,13 @@ export async function getPokemon(id: number | string): Promise<Pokemon> {
   }
 
   const cacheKey = getCacheKey('pokemon', { id })
-  const cached = getCache(cacheKey)
+  const cached = await getCache(cacheKey)
   if (cached) return cached
 
   const url = `${API_BASE_URL}/pokemon/${id}`
   try {
     const data = await fetchFromAPI<Pokemon>(url)
-    setCache(cacheKey, data, CACHE_TTL.POKEMON_DETAIL)
+    await setCache(cacheKey, data, CACHE_TTL.POKEMON_DETAIL)
     return data
   } catch (error: any) {
     // Handle 404 errors specifically for non-existent Pokemon
@@ -290,13 +292,13 @@ export async function getPokemonById(id: number | string): Promise<Pokemon> {
 
 export async function getPokemonSpecies(id: number | string): Promise<any> {
   const cacheKey = getCacheKey('pokemon-species', { id })
-  const cached = getCache(cacheKey)
+  const cached = await getCache(cacheKey)
   if (cached) return cached
 
   const url = `${API_BASE_URL}/pokemon-species/${id}`
   try {
     const data = await fetchFromAPI(url)
-    setCache(cacheKey, data, CACHE_TTL.POKEMON_SPECIES)
+    await setCache(cacheKey, data, CACHE_TTL.POKEMON_SPECIES)
     return data
   } catch (error: any) {
     // Handle 404 errors specifically for non-existent Pokemon species
@@ -321,12 +323,12 @@ export async function getPokemonSpecies(id: number | string): Promise<any> {
 // Evolution chain functions
 export async function getEvolutionChain(id: number | string): Promise<any> {
   const cacheKey = getCacheKey('evolution-chain', { id })
-  const cached = getCache(cacheKey)
+  const cached = await getCache(cacheKey)
   if (cached) return cached
 
   const url = `${API_BASE_URL}/evolution-chain/${id}`
   const data = await fetchFromAPI(url)
-  setCache(cacheKey, data, CACHE_TTL.EVOLUTION_CHAIN)
+  await setCache(cacheKey, data, CACHE_TTL.EVOLUTION_CHAIN)
   return data
 }
 
@@ -421,24 +423,24 @@ export async function getEvolutionChainNodes(pokemonId: number | string): Promis
 // Type functions
 export async function getType(id: number | string): Promise<any> {
   const cacheKey = getCacheKey('type', { id })
-  const cached = getCache(cacheKey)
+  const cached = await getCache(cacheKey)
   if (cached) return cached
 
   const url = `${API_BASE_URL}/type/${id}`
   const data = await fetchFromAPI(url)
-  setCache(cacheKey, data, CACHE_TTL.TYPE)
+  await setCache(cacheKey, data, CACHE_TTL.TYPE)
   return data
 }
 
 // Ability functions
 export async function getAbility(id: number | string): Promise<any> {
   const cacheKey = getCacheKey('ability', { id })
-  const cached = getCache(cacheKey)
+  const cached = await getCache(cacheKey)
   if (cached) return cached
 
   const url = `${API_BASE_URL}/ability/${id}`
   const data = await fetchFromAPI(url)
-  setCache(cacheKey, data, CACHE_TTL.ABILITY)
+  await setCache(cacheKey, data, CACHE_TTL.ABILITY)
   return data
 }
 
@@ -536,19 +538,19 @@ export async function getPokemonMoves(id: number | string): Promise<Array<{ name
 // Move functions
 export async function getMove(id: number | string): Promise<any> {
   const cacheKey = getCacheKey('move', { id })
-  const cached = getCache(cacheKey)
+  const cached = await getCache(cacheKey)
   if (cached) return cached
 
   const url = `${API_BASE_URL}/move/${id}`
   const data = await fetchFromAPI(url)
-  setCache(cacheKey, data, CACHE_TTL.MOVE)
+  await setCache(cacheKey, data, CACHE_TTL.MOVE)
   return data
 }
 
 // Search functions
 export async function searchPokemonByName(query: string): Promise<Pokemon[]> {
   const cacheKey = getCacheKey('search-pokemon', { query })
-  const cached = getCache(cacheKey)
+  const cached = await getCache(cacheKey)
   if (cached) return cached
 
   try {
@@ -560,7 +562,7 @@ export async function searchPokemonByName(query: string): Promise<Pokemon[]> {
       if (id >= 1 && id <= 1302) { // Extended range to cover all generations including special forms
         try {
           const exactMatch = await getPokemon(id)
-          setCache(cacheKey, [exactMatch], CACHE_TTL.POKEMON_LIST)
+          await setCache(cacheKey, [exactMatch], CACHE_TTL.POKEMON_LIST)
           return [exactMatch]
         } catch (error) {
           // If exact ID doesn't exist, fall through to partial matching
@@ -691,7 +693,7 @@ export async function searchPokemonByName(query: string): Promise<Pokemon[]> {
     }
     const finalResults = Array.from(uniqueById.values()).slice(0, 20)
 
-    setCache(cacheKey, finalResults, CACHE_TTL.POKEMON_LIST)
+    await setCache(cacheKey, finalResults, CACHE_TTL.POKEMON_LIST)
     return finalResults
   } catch (error) {
     console.error('Search error for query "' + query + '":', error)
@@ -705,7 +707,7 @@ export async function searchPokemonByName(query: string): Promise<Pokemon[]> {
 // Generation functions
 export async function getPokemonByGeneration(generation: number): Promise<Pokemon[]> {
   const cacheKey = getCacheKey('pokemon-generation', { generation })
-  const cached = getCache(cacheKey)
+  const cached = await getCache(cacheKey)
   if (cached) return cached
 
   try {
@@ -738,7 +740,7 @@ export async function getPokemonByGeneration(generation: number): Promise<Pokemo
       pokemonList.push(...batch.filter(p => p !== null))
     }
 
-    setCache(cacheKey, pokemonList, CACHE_TTL.POKEMON_LIST)
+    await setCache(cacheKey, pokemonList, CACHE_TTL.POKEMON_LIST)
     return pokemonList
   } catch (error) {
     console.error('Generation fetch error:', error)
@@ -753,7 +755,7 @@ export async function getPokemonByGeneration(generation: number): Promise<Pokemo
 // Type filtering functions
 export async function getPokemonByType(type: string): Promise<Pokemon[]> {
   const cacheKey = getCacheKey('pokemon-type', { type })
-  const cached = getCache(cacheKey)
+  const cached = await getCache(cacheKey)
   if (cached) return cached
 
   try {
@@ -766,7 +768,7 @@ export async function getPokemonByType(type: string): Promise<Pokemon[]> {
     )
     
     const validPokemon = pokemonList.filter(p => p !== null)
-    setCache(cacheKey, validPokemon, CACHE_TTL.POKEMON_LIST)
+    await setCache(cacheKey, validPokemon, CACHE_TTL.POKEMON_LIST)
     return validPokemon
   } catch (error) {
     console.error('Type fetch error:', error)
@@ -781,7 +783,7 @@ export async function getPokemonByType(type: string): Promise<Pokemon[]> {
 // Pagination functions
 export async function getPokemonWithPagination(limit = 100, offset = 0): Promise<Pokemon[]> {
   const cacheKey = getCacheKey('pokemon-pagination', { limit, offset })
-  const cached = getCache(cacheKey)
+  const cached = await getCache(cacheKey)
   if (cached) return cached
 
   try {
@@ -794,7 +796,7 @@ export async function getPokemonWithPagination(limit = 100, offset = 0): Promise
     )
     
     const validPokemon = pokemonDetails.filter(p => p !== null)
-    setCache(cacheKey, validPokemon, CACHE_TTL.POKEMON_LIST)
+    await setCache(cacheKey, validPokemon, CACHE_TTL.POKEMON_LIST)
     return validPokemon
   } catch (error) {
     console.error('Pagination fetch error:', error)
@@ -855,7 +857,7 @@ export function generateAllPokemonSkeletons(count: number): Pokemon[] {
 
 export async function getPokemonSkeletonsWithPagination(limit = 100, offset = 0): Promise<Pokemon[]> {
   const cacheKey = getCacheKey('pokemon-skeletons', { limit, offset })
-  const cached = getCache(cacheKey)
+  const cached = await getCache(cacheKey)
   if (cached) return cached
 
   try {
@@ -913,7 +915,7 @@ export async function getPokemonSkeletonsWithPagination(limit = 100, offset = 0)
       }
     })
 
-    setCache(cacheKey, skeletonPokemon, CACHE_TTL.POKEMON_LIST)
+    await setCache(cacheKey, skeletonPokemon, CACHE_TTL.POKEMON_SKELETONS)
     return skeletonPokemon
   } catch (error) {
     console.error('Error fetching skeleton Pokemon:', error)
