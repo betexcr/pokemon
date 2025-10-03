@@ -1,10 +1,10 @@
 // Service Worker for Pokemon Pokedex
 // Implements modern caching strategies for optimal performance
 
-const CACHE_NAME = 'pokemon-pokedex-v1.0.1'
-const STATIC_CACHE = 'pokemon-static-v1.0.1'
-const DYNAMIC_CACHE = 'pokemon-dynamic-v1.0.1'
-const IMAGE_CACHE = 'pokemon-images-v1.0.1'
+const CACHE_NAME = 'pokemon-pokedex-v1.0.2'
+const STATIC_CACHE = 'pokemon-static-v1.0.2'
+const DYNAMIC_CACHE = 'pokemon-dynamic-v1.0.2'
+const IMAGE_CACHE = 'pokemon-images-v1.0.2'
 
 // Cache strategies
 const CACHE_STRATEGIES = {
@@ -52,12 +52,12 @@ self.addEventListener('install', (event) => {
     // Clear all old caches first
     caches.keys().then(cacheNames => {
       return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheName.startsWith('pokemon-') && !cacheName.includes('v1.0.1')) {
-            console.log('Deleting old cache:', cacheName)
-            return caches.delete(cacheName)
-          }
-        })
+            cacheNames.map(cacheName => {
+              if (cacheName.startsWith('pokemon-') && !cacheName.includes('v1.0.2')) {
+                console.log('Deleting old cache:', cacheName)
+                return caches.delete(cacheName)
+              }
+            })
       )
     }).then(() => {
       return caches.open(STATIC_CACHE)
@@ -84,12 +84,12 @@ self.addEventListener('activate', (event) => {
     caches.keys()
       .then((cacheNames) => {
         return Promise.all(
-          cacheNames.map((cacheName) => {
-            if (cacheName.startsWith('pokemon-') && !cacheName.includes('v1.0.1')) {
-              console.log('Deleting old cache:', cacheName)
-              return caches.delete(cacheName)
-            }
-          })
+              cacheNames.map((cacheName) => {
+                if (cacheName.startsWith('pokemon-') && !cacheName.includes('v1.0.2')) {
+                  console.log('Deleting old cache:', cacheName)
+                  return caches.delete(cacheName)
+                }
+              })
         )
       })
       .then(() => {
