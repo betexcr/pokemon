@@ -26,10 +26,8 @@ class OfflineManager {
       this.setupEventListeners()
       this.detectConnectionType()
       this.startConnectionMonitoring()
-      // Initial connectivity check with delay to avoid race conditions
-      setTimeout(() => {
-        this.checkConnectivity()
-      }, 3000) // Increased delay to 3 seconds
+      // No initial connectivity check - trust browser's navigator.onLine
+      // Only check connectivity when browser explicitly reports offline
     }
   }
 
@@ -73,9 +71,11 @@ class OfflineManager {
   private startConnectionMonitoring() {
     if (typeof window === 'undefined') return
     
-    // Ping a lightweight endpoint to verify actual connectivity
+    // Only monitor if browser reports offline - don't proactively check
     this.connectivityCheckInterval = setInterval(() => {
-      this.checkConnectivity()
+      if (!navigator.onLine) {
+        this.checkConnectivity()
+      }
     }, 60000) // Check every 60 seconds (less aggressive)
   }
 
@@ -101,16 +101,22 @@ class OfflineManager {
         this.notifyListeners()
       }
     } catch (error) {
-      // Only mark as offline for actual network errors
+      // Only mark as offline for actual network errors, not timeouts or other issues
       if (error instanceof TypeError && error.message.includes('fetch')) {
         this.isOnline = false
         this.notifyListeners()
       }
+      // Don't mark as offline for other errors like timeouts
     }
   }
 
   private async checkConnectivity() {
     if (typeof window === 'undefined') return
+    
+    // Only check connectivity if browser reports offline
+    if (navigator.onLine) {
+      return // Skip check if browser says we're online
+    }
     
     try {
       // Use a more reliable endpoint for connectivity check
@@ -143,6 +149,7 @@ class OfflineManager {
         this.isOnline = false
         this.notifyListeners()
       }
+      // Don't mark as offline for other errors like timeouts
     }
   }
 

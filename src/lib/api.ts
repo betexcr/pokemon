@@ -4,19 +4,18 @@
 import { Pokemon } from '@/types/pokemon'
 import { reportApiError, reportNetworkError, reportDataLoadingError } from '@/lib/errorReporting'
 import { isSpecialForm, getSpecialFormInfo, getBasePokemonId } from '@/lib/specialForms'
-import { redisCache, getCacheKey, CACHE_TTL } from '@/lib/redis'
-import { networkUtils } from '@/lib/offlineManager'
+import { browserCache, getCacheKey, CACHE_TTL } from '@/lib/memcached'
 
-// Fallback in-memory cache for when Redis is unavailable
+// Fallback in-memory cache for when browser cache is unavailable
 const fallbackCache = new Map<string, { data: any; timestamp: number; ttl: number }>()
 
 async function getCache(key: string): Promise<any> {
   try {
-    // Try Redis first
-    const cached = await redisCache.get(key)
+    // Try browser cache first
+    const cached = await browserCache.get(key)
     if (cached) return cached
   } catch (error) {
-    console.warn('Redis cache unavailable, falling back to memory cache:', error)
+    console.warn('Browser cache unavailable, falling back to memory cache:', error)
   }
   
   // Fallback to in-memory cache
@@ -30,17 +29,17 @@ async function getCache(key: string): Promise<any> {
 
 async function setCache(key: string, data: any, ttlSeconds: number): Promise<void> {
   try {
-    // Try Redis first
-    await redisCache.set(key, data, ttlSeconds)
+    // Try browser cache first
+    await browserCache.set(key, data, ttlSeconds)
   } catch (error) {
-    console.warn('Redis cache unavailable, using memory cache:', error)
+    console.warn('Browser cache unavailable, using memory cache:', error)
     // Fallback to in-memory cache
     fallbackCache.set(key, { data, timestamp: Date.now(), ttl: ttlSeconds * 1000 })
   }
 }
 
-// Base API URL
-const API_BASE_URL = 'https://pokeapi.co/api/v2'
+// Base API URL - now using our internal API routes with Redis caching
+const API_BASE_URL = '/api'
 
 // Generic fetch with retries and exponential backoff to handle transient CDN/errors
 async function fetchFromAPI<T>(url: string): Promise<T> {
@@ -53,8 +52,8 @@ async function fetchFromAPI<T>(url: string): Promise<T> {
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 15000)
     try {
-      // Use enhanced fetch with offline support
-      const response = await networkUtils.fetch(url, { 
+      // Use native fetch for better reliability
+      const response = await fetch(url, { 
         signal: controller.signal,
         headers: {
           'Accept': 'application/json',
@@ -201,7 +200,7 @@ export async function getPokemonList(limit = 100, offset = 0): Promise<{ results
   const cached = await getCache(cacheKey)
   if (cached) return cached
 
-  const url = `${API_BASE_URL}/pokemon?limit=${limit}&offset=${offset}`
+  const url = `${API_BASE_URL}/pokemon-list?limit=${limit}&offset=${offset}`
   const data = await fetchFromAPI<{ results: Array<{ name: string; url: string }>; count: number }>(url)
   await setCache(cacheKey, data, CACHE_TTL.POKEMON_LIST)
   return data
@@ -212,7 +211,7 @@ export async function getPokemonTotalCount(): Promise<number> {
   const cached = await getCache(cacheKey)
   if (cached) return cached
 
-  const data = await getPokemonList(1, 0)
+  const data = await fetchFromAPI<{ count: number }>(`${API_BASE_URL}/pokemon-total-count`)
   await setCache(cacheKey, data.count, CACHE_TTL.POKEMON_TOTAL_COUNT)
   return data.count
 }

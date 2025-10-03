@@ -1,10 +1,10 @@
 // Service Worker for Pokemon Pokedex
 // Implements modern caching strategies for optimal performance
 
-const CACHE_NAME = 'pokemon-pokedex-v1.0.2'
-const STATIC_CACHE = 'pokemon-static-v1.0.2'
-const DYNAMIC_CACHE = 'pokemon-dynamic-v1.0.2'
-const IMAGE_CACHE = 'pokemon-images-v1.0.2'
+const CACHE_NAME = 'pokemon-pokedex-v1.0.3'
+const STATIC_CACHE = 'pokemon-static-v1.0.3'
+const DYNAMIC_CACHE = 'pokemon-dynamic-v1.0.3'
+const IMAGE_CACHE = 'pokemon-images-v1.0.3'
 
 // Cache strategies
 const CACHE_STRATEGIES = {
@@ -53,7 +53,7 @@ self.addEventListener('install', (event) => {
     caches.keys().then(cacheNames => {
       return Promise.all(
             cacheNames.map(cacheName => {
-              if (cacheName.startsWith('pokemon-') && !cacheName.includes('v1.0.2')) {
+              if (cacheName.startsWith('pokemon-') && !cacheName.includes('v1.0.3')) {
                 console.log('Deleting old cache:', cacheName)
                 return caches.delete(cacheName)
               }
@@ -85,7 +85,7 @@ self.addEventListener('activate', (event) => {
       .then((cacheNames) => {
         return Promise.all(
               cacheNames.map((cacheName) => {
-                if (cacheName.startsWith('pokemon-') && !cacheName.includes('v1.0.2')) {
+                if (cacheName.startsWith('pokemon-') && !cacheName.includes('v1.0.3')) {
                   console.log('Deleting old cache:', cacheName)
                   return caches.delete(cacheName)
                 }
@@ -151,8 +151,15 @@ async function cacheFirst(request, cacheName, maxAge = 24 * 60 * 60 * 1000) {
     const networkResponse = await fetch(request)
     if (networkResponse.ok) {
       const responseToCache = networkResponse.clone()
-      responseToCache.headers.set('sw-cache-date', Date.now().toString())
-      await cache.put(request, responseToCache)
+      // Create new headers object to avoid immutable headers error
+      const newHeaders = new Headers(responseToCache.headers)
+      newHeaders.set('sw-cache-date', Date.now().toString())
+      const newResponse = new Response(responseToCache.body, {
+        status: responseToCache.status,
+        statusText: responseToCache.statusText,
+        headers: newHeaders
+      })
+      await cache.put(request, newResponse)
       console.log('Cached new response:', request.url)
     }
     
@@ -160,8 +167,19 @@ async function cacheFirst(request, cacheName, maxAge = 24 * 60 * 60 * 1000) {
   } catch (error) {
     console.error('Cache first strategy failed:', error)
     
-    // For HTML requests, return a proper offline page instead of just "Offline"
+    // For HTML requests, only show offline page if we're actually offline
     if (request.headers.get('accept')?.includes('text/html')) {
+      // Check if we're actually offline by trying a simple fetch
+      try {
+        const testResponse = await fetch('/', { method: 'HEAD', signal: AbortSignal.timeout(2000) })
+        if (testResponse.ok) {
+          // We're actually online, don't show offline page
+          return new Response('', { status: 503 })
+        }
+      } catch (testError) {
+        // Network is actually down, show offline page
+      }
+      
       return new Response(`
         <!DOCTYPE html>
         <html>
@@ -251,8 +269,15 @@ async function networkFirst(request, cacheName) {
     if (networkResponse.ok) {
       const cache = await caches.open(cacheName)
       const responseToCache = networkResponse.clone()
-      responseToCache.headers.set('sw-cache-date', Date.now().toString())
-      await cache.put(request, responseToCache)
+      // Create new headers object to avoid immutable headers error
+      const newHeaders = new Headers(responseToCache.headers)
+      newHeaders.set('sw-cache-date', Date.now().toString())
+      const newResponse = new Response(responseToCache.body, {
+        status: responseToCache.status,
+        statusText: responseToCache.statusText,
+        headers: newHeaders
+      })
+      await cache.put(request, newResponse)
     }
     return networkResponse
   } catch (error) {
@@ -264,8 +289,19 @@ async function networkFirst(request, cacheName) {
       return cachedResponse
     }
     
-    // For HTML requests, return a proper offline page instead of just "Offline"
+    // For HTML requests, only show offline page if we're actually offline
     if (request.headers.get('accept')?.includes('text/html')) {
+      // Check if we're actually offline by trying a simple fetch
+      try {
+        const testResponse = await fetch('/', { method: 'HEAD', signal: AbortSignal.timeout(2000) })
+        if (testResponse.ok) {
+          // We're actually online, don't show offline page
+          return new Response('', { status: 503 })
+        }
+      } catch (testError) {
+        // Network is actually down, show offline page
+      }
+      
       return new Response(`
         <!DOCTYPE html>
         <html>
@@ -357,8 +393,15 @@ async function staleWhileRevalidate(request, cacheName) {
   const fetchPromise = fetch(request).then((networkResponse) => {
     if (networkResponse.ok) {
       const responseToCache = networkResponse.clone()
-      responseToCache.headers.set('sw-cache-date', Date.now().toString())
-      cache.put(request, responseToCache)
+      // Create new headers object to avoid immutable headers error
+      const newHeaders = new Headers(responseToCache.headers)
+      newHeaders.set('sw-cache-date', Date.now().toString())
+      const newResponse = new Response(responseToCache.body, {
+        status: responseToCache.status,
+        statusText: responseToCache.statusText,
+        headers: newHeaders
+      })
+      cache.put(request, newResponse)
     }
     return networkResponse
   }).catch(() => {
@@ -377,8 +420,15 @@ async function handleRSCRequest(request) {
     if (networkResponse.ok) {
       const cache = await caches.open(DYNAMIC_CACHE)
       const responseToCache = networkResponse.clone()
-      responseToCache.headers.set('sw-cache-date', Date.now().toString())
-      await cache.put(request, responseToCache)
+      // Create new headers object to avoid immutable headers error
+      const newHeaders = new Headers(responseToCache.headers)
+      newHeaders.set('sw-cache-date', Date.now().toString())
+      const newResponse = new Response(responseToCache.body, {
+        status: responseToCache.status,
+        statusText: responseToCache.statusText,
+        headers: newHeaders
+      })
+      await cache.put(request, newResponse)
       return networkResponse
     }
   } catch (error) {

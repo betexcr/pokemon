@@ -1,15 +1,13 @@
 import { Redis } from '@upstash/redis'
 
-// Redis client configuration with fallback
-const redis = process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
-  ? new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN,
-    })
-  : null
+// Redis client configuration
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+})
 
 // Cache configuration - Daily TTL (24 hours)
-export const CACHE_TTL = {
+export const REDIS_CACHE_TTL = {
   POKEMON_LIST: 24 * 60 * 60, // 24 hours in seconds
   POKEMON_DETAIL: 24 * 60 * 60, // 24 hours in seconds
   POKEMON_SPECIES: 24 * 60 * 60, // 24 hours in seconds
@@ -22,23 +20,21 @@ export const CACHE_TTL = {
 }
 
 // Cache key generation
-export function getCacheKey(prefix: string, params: Record<string, any>): string {
+export function getRedisCacheKey(prefix: string, params: Record<string, any>): string {
   return `pokemon:${prefix}:${JSON.stringify(params)}`
 }
 
 // Redis cache operations
 export class RedisCache {
-  private redis: Redis | null
+  private redis: Redis
 
-  constructor(redisClient: Redis | null) {
-    this.redis = redisClient
+  constructor() {
+    this.redis = redis
   }
 
   async get<T>(key: string): Promise<T | null> {
-    if (!this.redis) return null
     try {
       const result = await this.redis.get(key)
-      // Upstash Redis returns objects directly, no need to parse JSON
       return result as T | null
     } catch (error) {
       console.error('Redis GET error:', error)
@@ -47,12 +43,11 @@ export class RedisCache {
   }
 
   async set(key: string, value: any, ttlSeconds?: number): Promise<boolean> {
-    if (!this.redis) return false
     try {
       if (ttlSeconds) {
-        await this.redis.setex(key, ttlSeconds, value)
+        await this.redis.setex(key, ttlSeconds, JSON.stringify(value))
       } else {
-        await this.redis.set(key, value)
+        await this.redis.set(key, JSON.stringify(value))
       }
       return true
     } catch (error) {
@@ -62,7 +57,6 @@ export class RedisCache {
   }
 
   async del(key: string): Promise<boolean> {
-    if (!this.redis) return false
     try {
       await this.redis.del(key)
       return true
@@ -73,7 +67,6 @@ export class RedisCache {
   }
 
   async exists(key: string): Promise<boolean> {
-    if (!this.redis) return false
     try {
       const result = await this.redis.exists(key)
       return result === 1
@@ -84,10 +77,9 @@ export class RedisCache {
   }
 
   async mget<T>(keys: string[]): Promise<(T | null)[]> {
-    if (!this.redis) return keys.map(() => null)
     try {
       const results = await this.redis.mget(...keys)
-      return results.map(result => result as T | null)
+      return results.map(result => result ? JSON.parse(result as string) : null)
     } catch (error) {
       console.error('Redis MGET error:', error)
       return keys.map(() => null)
@@ -95,18 +87,18 @@ export class RedisCache {
   }
 
   async mset(keyValuePairs: Record<string, any>, ttlSeconds?: number): Promise<boolean> {
-    if (!this.redis) return false
     try {
-      if (ttlSeconds) {
-        // Use pipeline for atomic operations with TTL
-        const pipeline = this.redis.pipeline()
-        for (const [key, value] of Object.entries(keyValuePairs)) {
-          pipeline.setex(key, ttlSeconds, value)
+      const pipeline = this.redis.pipeline()
+      
+      for (const [key, value] of Object.entries(keyValuePairs)) {
+        if (ttlSeconds) {
+          pipeline.setex(key, ttlSeconds, JSON.stringify(value))
+        } else {
+          pipeline.set(key, JSON.stringify(value))
         }
-        await pipeline.exec()
-      } else {
-        await this.redis.mset(keyValuePairs)
       }
+      
+      await pipeline.exec()
       return true
     } catch (error) {
       console.error('Redis MSET error:', error)
@@ -114,33 +106,7 @@ export class RedisCache {
     }
   }
 
-  // Batch operations for Pokemon data
-  async getPokemonBatch(ids: number[]): Promise<Record<number, any>> {
-    const keys = ids.map(id => getCacheKey('pokemon', { id }))
-    const results = await this.mget(keys)
-    
-    const pokemonData: Record<number, any> = {}
-    ids.forEach((id, index) => {
-      if (results[index]) {
-        pokemonData[id] = results[index]
-      }
-    })
-    
-    return pokemonData
-  }
-
-  async setPokemonBatch(pokemonData: Record<number, any>, ttlSeconds = CACHE_TTL.POKEMON_DETAIL): Promise<boolean> {
-    const keyValuePairs: Record<string, any> = {}
-    Object.entries(pokemonData).forEach(([id, data]) => {
-      keyValuePairs[getCacheKey('pokemon', { id: parseInt(id) })] = data
-    })
-    
-    return this.mset(keyValuePairs, ttlSeconds)
-  }
-
-  // Clear cache patterns
   async clearPattern(pattern: string): Promise<boolean> {
-    if (!this.redis) return false
     try {
       const keys = await this.redis.keys(pattern)
       if (keys.length > 0) {
@@ -153,21 +119,21 @@ export class RedisCache {
     }
   }
 
-  // Health check
   async ping(): Promise<boolean> {
-    if (!this.redis) return false
     try {
       const result = await this.redis.ping()
       return result === 'PONG'
     } catch (error) {
-      console.error('Redis ping error:', error)
+      console.error('Redis PING error:', error)
       return false
     }
+  }
+
+  async close(): Promise<void> {
+    // Upstash Redis doesn't need explicit closing
   }
 }
 
 // Export singleton instance
-export const redisCache = new RedisCache(redis)
+export const redisCache = new RedisCache()
 
-// Export redis client for direct operations if needed
-export { redis }
