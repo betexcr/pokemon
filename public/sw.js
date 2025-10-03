@@ -105,6 +105,12 @@ self.addEventListener('fetch', (event) => {
     return
   }
   
+  // Handle RSC payload requests specifically
+  if (url.pathname.endsWith('/index.txt') || url.pathname.includes('_next/static')) {
+    event.respondWith(handleRSCRequest(request))
+    return
+  }
+  
   // Determine caching strategy based on request type
   if (isStaticAsset(request)) {
     event.respondWith(cacheFirst(request, STATIC_CACHE))
@@ -191,6 +197,40 @@ async function staleWhileRevalidate(request, cacheName) {
   })
   
   return cachedResponse || fetchPromise
+}
+
+// Handle RSC payload requests
+async function handleRSCRequest(request) {
+  try {
+    // Try network first for RSC payloads
+    const networkResponse = await fetch(request)
+    if (networkResponse.ok) {
+      const cache = await caches.open(DYNAMIC_CACHE)
+      const responseToCache = networkResponse.clone()
+      responseToCache.headers.set('sw-cache-date', Date.now().toString())
+      await cache.put(request, responseToCache)
+      return networkResponse
+    }
+  } catch (error) {
+    console.log('RSC network request failed, trying cache:', request.url)
+  }
+  
+  // Fallback to cache
+  const cache = await caches.open(DYNAMIC_CACHE)
+  const cachedResponse = await cache.match(request)
+  
+  if (cachedResponse) {
+    return cachedResponse
+  }
+  
+  // If no cache, return a minimal response to prevent errors
+  return new Response('', {
+    status: 200,
+    headers: {
+      'Content-Type': 'text/plain',
+      'Cache-Control': 'no-cache'
+    }
+  })
 }
 
 // Helper functions to determine request type

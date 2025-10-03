@@ -5,6 +5,7 @@ import { Pokemon } from '@/types/pokemon'
 import { reportApiError, reportNetworkError, reportDataLoadingError } from '@/lib/errorReporting'
 import { isSpecialForm, getSpecialFormInfo, getBasePokemonId } from '@/lib/specialForms'
 import { redisCache, getCacheKey, CACHE_TTL } from '@/lib/redis'
+import { networkUtils } from '@/lib/offlineManager'
 
 // Fallback in-memory cache for when Redis is unavailable
 const fallbackCache = new Map<string, { data: any; timestamp: number; ttl: number }>()
@@ -52,7 +53,14 @@ async function fetchFromAPI<T>(url: string): Promise<T> {
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 15000)
     try {
-      const response = await fetch(url, { signal: controller.signal })
+      // Use enhanced fetch with offline support
+      const response = await networkUtils.fetch(url, { 
+        signal: controller.signal,
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      })
       clearTimeout(timeout)
 
       if (!response.ok) {
@@ -69,6 +77,14 @@ async function fetchFromAPI<T>(url: string): Promise<T> {
       return await response.json()
     } catch (error: any) {
       clearTimeout(timeout)
+      
+      // Report network errors
+      if (error?.name === 'AbortError' || error instanceof TypeError) {
+        reportNetworkError(`Network request failed: ${error.message}`)
+      } else {
+        reportApiError(`API request failed: ${error.message}`)
+      }
+      
       // Retry on network/abort errors if attempts remain
       const isAbort = error?.name === 'AbortError'
       if ((isAbort || error instanceof TypeError) && attempt < maxAttempts) {
