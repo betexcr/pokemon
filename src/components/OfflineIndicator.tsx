@@ -1,10 +1,34 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import { useNetworkState } from '@/lib/offlineManager'
 
 export default function OfflineIndicator() {
   const networkState = useNetworkState()
+  const [isChecking, setIsChecking] = useState(false)
+
+  const handleManualCheck = async () => {
+    setIsChecking(true)
+    try {
+      // Force a connectivity check
+      const response = await fetch('/favicon.ico', {
+        method: 'HEAD',
+        cache: 'no-cache',
+        signal: AbortSignal.timeout(5000)
+      })
+      
+      if (response.ok) {
+        // If we can reach the server, reload to update state
+        window.location.reload()
+      } else {
+        alert('Still offline - please check your internet connection')
+      }
+    } catch (error) {
+      alert('Connection check failed - please check your internet connection')
+    } finally {
+      setIsChecking(false)
+    }
+  }
 
   if (networkState.isOnline) {
     return null
@@ -20,10 +44,17 @@ export default function OfflineIndicator() {
           You're offline. Some features may be limited.
         </span>
         <button
-          onClick={() => window.location.reload()}
-          className="ml-2 text-xs bg-red-700 hover:bg-red-800 px-2 py-1 rounded transition-colors"
+          onClick={handleManualCheck}
+          disabled={isChecking}
+          className="ml-2 text-xs bg-red-700 hover:bg-red-800 disabled:opacity-50 px-2 py-1 rounded transition-colors"
         >
-          Retry
+          {isChecking ? 'Checking...' : 'Check Connection'}
+        </button>
+        <button
+          onClick={() => window.location.reload()}
+          className="ml-1 text-xs bg-red-700 hover:bg-red-800 px-2 py-1 rounded transition-colors"
+        >
+          Reload
         </button>
       </div>
     </div>

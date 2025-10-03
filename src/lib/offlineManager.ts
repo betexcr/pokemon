@@ -11,13 +11,14 @@ export interface NetworkState {
 }
 
 class OfflineManager {
-  private isOnline = navigator.onLine
+  private isOnline = true // Default to online, let connectivity check determine actual state
   private isSlowConnection = false
   private lastOnlineTime = Date.now()
   private connectionType = 'unknown'
   private listeners: Array<(state: NetworkState) => void> = []
   private retryQueue: Array<() => Promise<void>> = []
   private isRetrying = false
+  private connectivityCheckInterval: NodeJS.Timeout | null = null
 
   constructor() {
     // Only initialize in browser environment
@@ -25,6 +26,8 @@ class OfflineManager {
       this.setupEventListeners()
       this.detectConnectionType()
       this.startConnectionMonitoring()
+      // Initial connectivity check
+      this.checkConnectivity()
     }
   }
 
@@ -32,6 +35,7 @@ class OfflineManager {
     if (typeof window === 'undefined') return
     
     window.addEventListener('online', () => {
+      console.log('Browser reported online event')
       this.isOnline = true
       this.lastOnlineTime = Date.now()
       this.notifyListeners()
@@ -39,8 +43,9 @@ class OfflineManager {
     })
 
     window.addEventListener('offline', () => {
-      this.isOnline = false
-      this.notifyListeners()
+      console.log('Browser reported offline event')
+      // Don't immediately set to offline, verify with connectivity check
+      this.verifyConnectivity()
     })
 
     // Monitor connection changes
@@ -67,9 +72,32 @@ class OfflineManager {
     if (typeof window === 'undefined') return
     
     // Ping a lightweight endpoint to verify actual connectivity
-    setInterval(() => {
+    this.connectivityCheckInterval = setInterval(() => {
       this.checkConnectivity()
     }, 30000) // Check every 30 seconds
+  }
+
+  private async verifyConnectivity() {
+    // When browser reports offline, verify with actual network request
+    try {
+      const response = await fetch('/favicon.ico', {
+        method: 'HEAD',
+        cache: 'no-cache',
+        signal: AbortSignal.timeout(3000)
+      })
+      
+      if (response.ok) {
+        // We're actually online despite browser reporting offline
+        this.isOnline = true
+        this.lastOnlineTime = Date.now()
+        this.notifyListeners()
+        this.processRetryQueue()
+      }
+    } catch (error) {
+      // Confirmed offline
+      this.isOnline = false
+      this.notifyListeners()
+    }
   }
 
   private async checkConnectivity() {
@@ -77,27 +105,29 @@ class OfflineManager {
     
     try {
       // Use a lightweight endpoint for connectivity check
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 5000)
-      
       const response = await fetch('/favicon.ico', {
         method: 'HEAD',
         cache: 'no-cache',
-        signal: controller.signal
+        signal: AbortSignal.timeout(5000)
       })
-      
-      clearTimeout(timeoutId)
       
       if (response.ok && !this.isOnline) {
         // We're actually online, update state
+        console.log('Connectivity check: Online')
         this.isOnline = true
         this.lastOnlineTime = Date.now()
         this.notifyListeners()
         this.processRetryQueue()
+      } else if (!response.ok && this.isOnline) {
+        // We're actually offline, update state
+        console.log('Connectivity check: Offline')
+        this.isOnline = false
+        this.notifyListeners()
       }
     } catch (error) {
       if (this.isOnline) {
         // We're actually offline, update state
+        console.log('Connectivity check: Offline (error)')
         this.isOnline = false
         this.notifyListeners()
       }
@@ -228,6 +258,14 @@ class OfflineManager {
     if (!this.isOnline) return 'cache-first'
     if (this.isSlowConnection) return 'stale-while-revalidate'
     return 'network-first'
+  }
+
+  // Cleanup method
+  destroy() {
+    if (this.connectivityCheckInterval) {
+      clearInterval(this.connectivityCheckInterval)
+      this.connectivityCheckInterval = null
+    }
   }
 }
 
