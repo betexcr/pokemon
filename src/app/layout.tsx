@@ -9,6 +9,9 @@ import GlobalErrorCatcher from '@/components/GlobalErrorCatcher'
 import RoutePreloader from '@/components/RoutePreloader'
 import PerformanceMonitor from '@/components/PerformanceMonitor'
 import { ToastProvider } from '@/components/ToastProvider'
+import { ReactQueryProvider } from '@/components/ReactQueryProvider'
+import PWAInstaller from '@/components/PWAInstaller'
+import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration'
 
 
 export const metadata: Metadata = {
@@ -143,16 +146,20 @@ export default function RootLayout({
         <ErrorProvider>
           <AuthProvider>
             <ThemeProvider>
-              <ToastProvider>
-                <RoutePreloader />
-                <PerformanceMonitor />
-                <div className="min-h-screen">
-                  {children}
-                  <GlobalErrorCatcher />
-                  <HelpAssistant />
-                  <ErrorTip />
-                </div>
-              </ToastProvider>
+              <ReactQueryProvider>
+                <ToastProvider>
+                  <RoutePreloader />
+                  <PerformanceMonitor />
+                  <div className="min-h-screen">
+                    {children}
+                    <GlobalErrorCatcher />
+                    <HelpAssistant />
+                    <ErrorTip />
+                    <PWAInstaller />
+                    <ServiceWorkerRegistration />
+                  </div>
+                </ToastProvider>
+              </ReactQueryProvider>
             </ThemeProvider>
           </AuthProvider>
         </ErrorProvider>
