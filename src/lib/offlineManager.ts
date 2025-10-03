@@ -80,7 +80,8 @@ class OfflineManager {
   private async verifyConnectivity() {
     // When browser reports offline, verify with actual network request
     try {
-      const response = await fetch('/favicon.ico', {
+      // Use a more reliable endpoint for connectivity check
+      const response = await fetch('/', {
         method: 'HEAD',
         cache: 'no-cache',
         signal: AbortSignal.timeout(3000)
@@ -104,8 +105,8 @@ class OfflineManager {
     if (typeof window === 'undefined') return
     
     try {
-      // Use a lightweight endpoint for connectivity check
-      const response = await fetch('/favicon.ico', {
+      // Use a more reliable endpoint for connectivity check
+      const response = await fetch('/', {
         method: 'HEAD',
         cache: 'no-cache',
         signal: AbortSignal.timeout(5000)

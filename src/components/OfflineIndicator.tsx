@@ -11,7 +11,7 @@ export default function OfflineIndicator() {
     setIsChecking(true)
     try {
       // Force a connectivity check
-      const response = await fetch('/favicon.ico', {
+      const response = await fetch('/', {
         method: 'HEAD',
         cache: 'no-cache',
         signal: AbortSignal.timeout(5000)

@@ -1,0 +1,20 @@
+# Exclude large PMD assets from Vercel deployment
+public/assets/pmd/
+
+# Exclude build artifacts
+out/
+.next/
+
+# Exclude development files
+*.zip
+*.log
+node_modules/
+
+# Exclude test files
+test_*.js
+*.test.js
+*.spec.js
+
+# Exclude environment files
+.env.local
+.env.*.local
