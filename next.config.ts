@@ -14,8 +14,8 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   ...(isDev ? { distDir: '.next' } : {}),
-  // Only use static export for production builds
-  ...(isDev ? {} : { output: 'export' }),
+  // Use regular Next.js build (not static export) to support API routes
+  // ...(isDev ? {} : { output: 'export' }),
   trailingSlash: true,
   distDir: 'out',
   // Exclude API routes from static export
