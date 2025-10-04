@@ -1245,7 +1245,7 @@ export default function ModernPokedexLayout({
         },
         {
           root: null, // Use viewport as root for better reliability
-          rootMargin: '800px', // Much larger margin for super early detection
+          rootMargin: '400px', // Reduced from 800px to prevent too many requests
           threshold: 0.01 // Lower threshold for more sensitive detection
         }
       );

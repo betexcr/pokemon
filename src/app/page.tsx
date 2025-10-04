@@ -153,20 +153,20 @@ export default function Home() {
     setLoading(false)
   }, [])
 
-  // Ref for infinite scroll sentinel with aggressive preloading
+  // Ref for infinite scroll sentinel with balanced preloading
   const sentinelRef = useCallback((node: HTMLDivElement | null) => {
     if (isLoadingMore) return
     
     const observer = new IntersectionObserver(
       entries => {
         if (entries[0].isIntersecting && hasMorePokemon) {
-          console.log('🚀 Sentinel triggered - loading more Pokemon aggressively')
+          console.log('🚀 Sentinel triggered - loading more Pokemon')
           loadMorePokemon()
         }
       },
       {
         root: null,
-        rootMargin: '1000px', // Very aggressive - trigger 1000px before reaching sentinel
+        rootMargin: '500px', // Reduced from 1000px to prevent too many requests
         threshold: 0.01
       }
     )

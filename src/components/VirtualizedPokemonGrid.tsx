@@ -627,12 +627,12 @@ export default function VirtualizedPokemonGrid({
                   {renderRow(virtualRow.index)}
                 </div>
               ))}
-              {/* Infinite scroll sentinel for virtualized content - triggers much earlier */}
+              {/* Infinite scroll sentinel for virtualized content - triggers earlier */}
               <div
                 ref={sentinelRef}
                 style={{
                   position: 'absolute',
-                  top: virtualizer.getTotalSize() - 1000, // Trigger 1000px before reaching the bottom
+                  top: virtualizer.getTotalSize() - 500, // Reduced from 1000px to prevent too many requests
                   left: 0,
                   width: '100%',
                   height: '100px', // Larger height for better detection
@@ -843,14 +843,14 @@ export default function VirtualizedPokemonGrid({
         </motion.div>
       )}
 
-      {/* Infinite scroll sentinel for non-virtualized content - triggers much earlier */}
+      {/* Infinite scroll sentinel for non-virtualized content - triggers earlier */}
       <div
         ref={sentinelRef}
         style={{
           width: '100%',
           height: '100px', // Larger height for better detection
           backgroundColor: 'transparent',
-          marginTop: '-500px', // Trigger 500px before reaching this element
+          marginTop: '-300px', // Reduced from 500px to prevent too many requests
         }}
         data-infinite-scroll-sentinel="true"
       />

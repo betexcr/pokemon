@@ -9,6 +9,9 @@ import { browserCache, getCacheKey, CACHE_TTL } from '@/lib/memcached'
 // Fallback in-memory cache for when browser cache is unavailable
 const fallbackCache = new Map<string, { data: any; timestamp: number; ttl: number }>()
 
+// Request deduplication to prevent race conditions
+const inFlightRequests = new Map<string, Promise<any>>()
+
 async function getCache(key: string): Promise<any> {
   try {
     // Try browser cache first
@@ -95,9 +98,40 @@ async function fetchFromAPI<T>(url: string): Promise<T> {
     throw new Error('Service temporarily unavailable - too many recent failures. Please try again in a moment.')
   }
 
+  // Check for duplicate in-flight requests to prevent race conditions
+  const requestKey = absoluteUrl
+  if (inFlightRequests.has(requestKey)) {
+    console.log('🔄 Deduplicating request:', requestKey)
+    return inFlightRequests.get(requestKey) as Promise<T>
+  }
+
+  // Create the request promise and store it for deduplication
+  const requestPromise = performFetchWithRetry<T>(absoluteUrl, maxAttempts, baseDelayMs, retryStatuses, is503Error)
+  inFlightRequests.set(requestKey, requestPromise)
+
+  try {
+    const result = await requestPromise
+    return result
+  } finally {
+    // Clean up the in-flight request
+    inFlightRequests.delete(requestKey)
+  }
+}
+
+async function performFetchWithRetry<T>(
+  absoluteUrl: string,
+  maxAttempts: number,
+  baseDelayMs: number,
+  retryStatuses: Set<number>,
+  is503Error: (status: number) => boolean
+): Promise<T> {
+
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 15000)
+    const timeout = setTimeout(() => {
+      controller.abort()
+    }, 15000)
+    
     try {
       // Use native fetch for better reliability
       const response = await fetch(absoluteUrl, { 
@@ -141,10 +175,12 @@ async function fetchFromAPI<T>(url: string): Promise<T> {
     } catch (error: any) {
       clearTimeout(timeout)
       
-          // Report network errors only for actual network issues, not timeouts or aborts
+          // Better error handling for different types of failures
           if (error?.name === 'AbortError') {
             // Don't report abort errors as they're usually intentional timeouts
-            console.warn('Request aborted:', error.message)
+            console.warn('Request aborted (likely timeout):', error.message)
+            // Don't record this as a circuit breaker failure or retry
+            throw error // Re-throw to prevent retry and circuit breaker failure
           } else if (error instanceof TypeError && error.message.includes('fetch')) {
             // Only report actual network errors, not other TypeErrors
             reportNetworkError(`Network request failed: ${error.message}`)
@@ -152,12 +188,12 @@ async function fetchFromAPI<T>(url: string): Promise<T> {
             reportApiError(`API request failed: ${error.message}`)
           }
       
-      // Record failure for circuit breaker
+      // Record failure for circuit breaker (only for non-abort errors)
       circuitBreaker.recordFailure()
       
-      // Retry on network/abort errors if attempts remain
+      // Retry on network errors if attempts remain (but not on aborts)
       const isAbort = error?.name === 'AbortError'
-      if ((isAbort || error instanceof TypeError) && attempt < maxAttempts) {
+      if (!isAbort && error instanceof TypeError && attempt < maxAttempts) {
         const backoff = baseDelayMs * Math.pow(2, attempt - 1)
         const jitter = Math.floor(Math.random() * 200) // Increased jitter
         console.warn(`Network error (attempt ${attempt}/${maxAttempts}), retrying in ${backoff}ms...`)
@@ -170,7 +206,7 @@ async function fetchFromAPI<T>(url: string): Promise<T> {
             // Don't report API errors for network issues that are already handled
             if (!(error instanceof TypeError && error.message.includes('fetch'))) {
               reportApiError(`API request failed: ${error?.message || 'Unknown error'}`, {
-                url,
+                url: absoluteUrl,
                 attempt,
                 maxAttempts
               })
