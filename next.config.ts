@@ -13,11 +13,9 @@ const nextConfig: NextConfig = {
     // your project has type errors.
     ignoreBuildErrors: true,
   },
-  ...(isDev ? { distDir: '.next' } : {}),
   // Use regular Next.js build (not static export) to support API routes
   // ...(isDev ? {} : { output: 'export' }),
   trailingSlash: true,
-  distDir: 'out',
   // Exclude API routes from static export
   outputFileTracingExcludes: {
     '*': ['./src/app/api_backup/**/*']
