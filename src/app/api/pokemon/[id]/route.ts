@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { redisCache, getRedisCacheKey, REDIS_CACHE_TTL } from '@/lib/redis'
 
+export const dynamic = 'force-static'
+export const revalidate = 86400 // 24 hours
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
