@@ -81,6 +81,11 @@ interface ModernPokedexLayoutProps {
   isPokemonLoading?: (pokemonId: number) => boolean
   loadedCount?: number
   totalCount?: number
+  // Infinite scroll props
+  hasMorePokemon?: boolean
+  isLoadingMore?: boolean
+  loadMorePokemon?: () => void
+  sentinelRef?: (node: HTMLDivElement | null) => void
 }
 
 interface AdvancedFilters {
@@ -107,7 +112,12 @@ export default function ModernPokedexLayout({
   isPokemonLoaded,
   isPokemonLoading,
   loadedCount,
-  totalCount
+  totalCount,
+  // Infinite scroll props
+  hasMorePokemon: externalHasMorePokemon,
+  isLoadingMore: externalIsLoadingMore,
+  loadMorePokemon: externalLoadMorePokemon,
+  sentinelRef: externalSentinelRef
 }: ModernPokedexLayoutProps) {
   // console debug removed
   const router = useRouter()
@@ -347,6 +357,10 @@ export default function ModernPokedexLayout({
   const [allGenerationsPokemon, setAllGenerationsPokemon] = useState<Pokemon[]>([])
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [hasMorePokemon, setHasMorePokemon] = useState(true)
+  
+  // Use external infinite scroll state if provided
+  const effectiveIsLoadingMore = externalIsLoadingMore !== undefined ? externalIsLoadingMore : isLoadingMore
+  const effectiveHasMorePokemon = externalHasMorePokemon !== undefined ? externalHasMorePokemon : hasMorePokemon
   const [currentOffset, setCurrentOffset] = useState(0)
   const [isAllGenerations, setIsAllGenerations] = useState(true) // Start in "All Generations" mode by default
   const [totalPokemonCount, setTotalPokemonCount] = useState<number | null>(null)
@@ -450,22 +464,21 @@ export default function ModernPokedexLayout({
   // Load initial Pokemon data when component mounts (always use lazy loading)
   useEffect(() => {
     const loadInitialPokemon = async () => {
-      if (isAllGenerations && allGenerationsPokemon.length === 0) {
+      try {
+        // Fetch total count
         try {
-          // Fetch total count
-          try {
-            const count = await getPokemonTotalCount();
-            setTotalPokemonCount(count || null);
-          } catch (error) {
-            setTotalPokemonCount(1302);
-          }
-          
-          // Always use lazy loading - no initial batch needed
-          console.log('🔄 Starting lazy loading...');
-          setIsInitialLoading(false);
+          const count = await getPokemonTotalCount();
+          setTotalPokemonCount(count || null);
         } catch (error) {
-          console.error('Error in initial Pokemon loading:', error);
+          setTotalPokemonCount(1302);
         }
+        
+        // Always use lazy loading - no initial batch needed
+        console.log('🔄 Starting lazy loading...');
+        setIsInitialLoading(false);
+      } catch (error) {
+        console.error('Error in initial Pokemon loading:', error);
+        setIsInitialLoading(false); // Still set to false even on error
       }
     };
 
@@ -1083,7 +1096,13 @@ export default function ModernPokedexLayout({
 
   // Load more Pokémon for infinite scrolling with improved error handling
   const loadMorePokemon = useCallback(async () => {
-    if (isLoadingMore || !hasMorePokemon) {
+    // Use external loadMorePokemon function if provided
+    if (externalLoadMorePokemon) {
+      externalLoadMorePokemon()
+      return
+    }
+    
+    if (effectiveIsLoadingMore || !effectiveHasMorePokemon) {
       
       return;
     }
@@ -1226,7 +1245,7 @@ export default function ModernPokedexLayout({
         },
         {
           root: null, // Use viewport as root for better reliability
-          rootMargin: '200px', // Increased margin for better detection
+          rootMargin: '800px', // Much larger margin for super early detection
           threshold: 0.01 // Lower threshold for more sensitive detection
         }
       );
@@ -2028,9 +2047,10 @@ export default function ModernPokedexLayout({
                   comparisonList={comparisonList}
                   density={cardDensity}
                   showSpecialForms={true}
-                  isLoadingMore={false}
-                  hasMorePokemon={false}
-                  onLoadMore={() => {}}
+                  isLoadingMore={effectiveIsLoadingMore}
+                  hasMorePokemon={effectiveHasMorePokemon}
+                  onLoadMore={externalLoadMorePokemon || loadMorePokemon}
+                  sentinelRef={externalSentinelRef}
                 />
               </div>
             ) : sortedPokemon.length > 0 ? (
@@ -2056,6 +2076,10 @@ export default function ModernPokedexLayout({
                       density={cardDensity}
                       enableVirtualization={false}
                       showSpecialForms={isAllGenerations || (advancedFilters.generation !== 'all' && advancedFilters.generation !== '')}
+                      isLoadingMore={effectiveIsLoadingMore}
+                      hasMorePokemon={effectiveHasMorePokemon}
+                      onLoadMore={externalLoadMorePokemon || loadMorePokemon}
+                      sentinelRef={externalSentinelRef}
                     />
                   )}
                 </div>

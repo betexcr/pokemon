@@ -13,6 +13,8 @@ import { ReactQueryProvider } from '@/components/ReactQueryProvider'
 import PWAInstaller from '@/components/PWAInstaller'
 import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration'
 import OfflineIndicator from '@/components/OfflineIndicator'
+import CacheWarmingInitializer from '@/components/CacheWarmingInitializer'
+import PokemonPreloader from '@/components/PokemonPreloader'
 
 
 export const metadata: Metadata = {
@@ -159,6 +161,8 @@ export default function RootLayout({
                     <ErrorTip />
                     <PWAInstaller />
                     <ServiceWorkerRegistration />
+                    <CacheWarmingInitializer />
+                    <PokemonPreloader />
                   </div>
                 </ToastProvider>
               </ReactQueryProvider>

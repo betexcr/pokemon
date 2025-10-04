@@ -105,6 +105,13 @@ export default function ModernPokemonCard({
     }
   };
 
+  const handleMouseEnter = () => {
+    // Prefetch the Pokemon detail page on hover for faster navigation
+    if (typeof window !== 'undefined' && !onSelect) {
+      router.prefetch(`/pokemon/${pokemon.id}`);
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
@@ -313,6 +320,7 @@ export default function ModernPokemonCard({
       density={density}
       isSelected={isSelected}
       onKeyDown={handleKeyDown}
+      onMouseEnter={handleMouseEnter}
       aria-label={`View details for ${formatPokemonName(pokemon.name)}`}
       data-pokemon-id={pokemon.id}
       forceSquare={false}

@@ -1,9 +1,10 @@
 import MultiPokemonRadarChart from '../MultiPokemonRadarChart';
 import StatsSlider from './StatsSlider';
+import { StatSkeleton } from '@/components/skeletons/PokemonDetailsSkeleton';
 
 type Stat = { name: string; value: number }; // HP, attack, defense, special-attack, special-defense, speed
 
-export default function StatsSection({ stats, name }: { stats: Stat[]; name?: string }) {
+export default function StatsSection({ stats, name, loading = false }: { stats: Stat[]; name?: string; loading?: boolean }) {
   // Use fixed max stat of 255 for proper scaling
   const maxStat = 255;
   
@@ -69,16 +70,23 @@ export default function StatsSection({ stats, name }: { stats: Stat[]; name?: st
 
       {/* Stat bars below */}
       <div className="space-y-6">
-        {stats.filter(s => s && s.name).map(s => (
-          <StatsSlider
-            key={s.name}
-            label={getStatLabel(s.name)}
-            value={s.value}
-            max={maxStat}
-            className="py-1"
-            colorClass={getStatColor(s.name)}
-          />
-        ))}
+        {loading || stats.length === 0 ? (
+          // Show skeleton stats when loading
+          ['HP', 'ATK', 'DEF', 'SPA', 'SPD', 'SPE'].map((label, index) => (
+            <StatSkeleton key={index} />
+          ))
+        ) : (
+          stats.filter(s => s && s.name).map(s => (
+            <StatsSlider
+              key={s.name}
+              label={getStatLabel(s.name)}
+              value={s.value}
+              max={maxStat}
+              className="py-1"
+              colorClass={getStatColor(s.name)}
+            />
+          ))
+        )}
       </div>
     </section>
   );

@@ -1,10 +1,21 @@
 import { Redis } from '@upstash/redis'
 
-// Redis client configuration
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL!,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-})
+// Redis client configuration - lazy initialization
+let redis: Redis | null = null
+
+function getRedisClient(): Redis {
+  if (!redis) {
+    const url = process.env.UPSTASH_REDIS_REST_URL
+    const token = process.env.UPSTASH_REDIS_REST_TOKEN
+    
+    if (!url || !token) {
+      throw new Error('Redis configuration missing: UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN must be set')
+    }
+    
+    redis = new Redis({ url, token })
+  }
+  return redis
+}
 
 // Cache configuration - Daily TTL (24 hours)
 export const REDIS_CACHE_TTL = {
@@ -26,10 +37,8 @@ export function getRedisCacheKey(prefix: string, params: Record<string, any>): s
 
 // Redis cache operations
 export class RedisCache {
-  private redis: Redis
-
-  constructor() {
-    this.redis = redis
+  private get redis(): Redis {
+    return getRedisClient()
   }
 
   async get<T>(key: string): Promise<T | null> {

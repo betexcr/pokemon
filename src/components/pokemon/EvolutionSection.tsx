@@ -2,10 +2,23 @@ import Link from "next/link";
 import TypeBadge from "@/components/TypeBadge";
 import Image from "next/image";
 import { formatPokemonName } from "@/lib/utils";
+import { EvolutionSkeleton } from "@/components/skeletons/PokemonDetailsSkeleton";
 
 type Node = { id:number; name:string; types:string[]; condition?:string };
 
-export default function EvolutionSection({ chain, selectedSprite = 'default' }: { chain: Node[]; selectedSprite?: 'default' | 'shiny' }) {
+export default function EvolutionSection({ chain, selectedSprite = 'default', loading = false }: { chain: Node[]; selectedSprite?: 'default' | 'shiny'; loading?: boolean }) {
+  if (loading) {
+    return (
+      <section id="evolution" className="mx-auto w-full px-4 py-4 space-y-4 text-center">
+        <div className="flex flex-wrap sm:flex-nowrap justify-center gap-4 overflow-x-auto pb-4 -mx-4 px-4">
+          {[1, 2, 3].map((i) => (
+            <EvolutionSkeleton key={i} />
+          ))}
+        </div>
+      </section>
+    );
+  }
+  
   if (!chain || !chain.length) return null;
   return (
     <section id="evolution" className="mx-auto w-full px-4 py-4 space-y-4 text-center">

@@ -4,8 +4,9 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { usePathname } from 'next/navigation'
 import { Pokemon, FilterState } from '@/types/pokemon'
 import { getPokemonTotalCount, generateAllPokemonSkeletons, getPokemonList, getPokemonSkeletonsWithPagination } from '@/lib/api'
-// import { } from '@/lib/utils' // Empty import removed
 import { useTheme } from '@/components/ThemeProvider'
+// Removed PokemonPreloader import to avoid HMR issues
+// Removed sharedPokemonCache import to avoid HMR issues - implementing cache logic inline
 import RedPokedexLayout from '@/components/RedPokedexLayout'
 import GoldPokedexLayout from '@/components/GoldPokedexLayout'
 import RubyPokedexLayout from '@/components/RubyPokedexLayout'
@@ -17,6 +18,7 @@ import LobbyPage from '@/components/LobbyPage'
 // import MobileHeader from '@/components/MobileHeader'
 
 export default function Home() {
+  console.log('🚀 Home component loaded - NEW VERSION')
   const pathname = usePathname()
   
   // Fallback for static export - get pathname from window.location
@@ -59,68 +61,120 @@ export default function Home() {
 
   const { theme } = useTheme()
 
-  // Use optimized infinite scroll hook for main dex
-  // State for all Pokemon data
+  // State for Pokemon data with infinite scroll
   const [pokemonList, setPokemonList] = useState<Pokemon[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [hasMorePokemon, setHasMorePokemon] = useState(true)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [currentOffset, setCurrentOffset] = useState(0)
+  const [totalCount, setTotalCount] = useState(0)
 
-  // Load Pokemon skeletons including all variants and forms (10### IDs)
+  // Load initial Pokemon data - FAST SCROLL VERSION
   useEffect(() => {
-    const loadPokemonSkeletons = async () => {
+    const loadInitialPokemon = async () => {
       try {
         setLoading(true)
-        console.log('Loading Pokemon skeletons with all variants and forms...')
+        console.log('🚀 Loading initial Pokemon batch - FAST SCROLL...')
         
-        // Get the total count from the API
-        const totalCount = await getPokemonTotalCount()
-        console.log('Total Pokemon count:', totalCount)
+        // Load total count first
+        const total = await getPokemonTotalCount()
+        setTotalCount(total)
         
-        // Load Pokemon skeletons in batches to include all variants
-        const allSkeletons: Pokemon[] = []
-        const batchSize = 100
-        let offset = 0
+        // Load a much larger initial batch of skeletons for smooth scrolling
+        const initialBatch = generateAllPokemonSkeletons(200)
+        setPokemonList(initialBatch)
+        setCurrentOffset(200)
+        setLoading(false)
         
-        while (offset < totalCount) {
-          console.log(`Loading skeleton batch: offset=${offset}, batchSize=${batchSize}`)
-          const batch = await getPokemonSkeletonsWithPagination(batchSize, offset)
-          if (batch.length === 0) break
-          allSkeletons.push(...batch)
-          offset += batchSize
-          
-          // Update the Pokemon list progressively for better UX
-          if (allSkeletons.length % 200 === 0 || offset >= totalCount) {
-            console.log(`Loaded ${allSkeletons.length} Pokemon skeletons so far...`)
-            setPokemonList([...allSkeletons])
-          }
-        }
+        console.log(`✅ Initial batch loaded: ${initialBatch.length} Pokemon (total: ${total})`)
         
-        console.log('Completed loading', allSkeletons.length, 'Pokemon skeletons including variants')
-        setPokemonList(allSkeletons)
         setError(null)
       } catch (err) {
-        console.error('Error loading Pokemon skeletons:', err)
+        console.error('❌ Error loading initial Pokemon:', err)
         setError('Failed to load Pokemon list')
-        // Fallback to a smaller count if loading fails
-        const fallbackCount = 300
-        const skeletons = generateAllPokemonSkeletons(fallbackCount)
+        // Fallback to larger skeleton batch
+        const skeletons = generateAllPokemonSkeletons(200)
         setPokemonList(skeletons)
-      } finally {
+        setTotalCount(1302) // Fallback count
+        setCurrentOffset(200)
         setLoading(false)
       }
     }
 
-    loadPokemonSkeletons()
+    loadInitialPokemon()
   }, [])
 
-  // Pokemon data is now handled by the layout components internally
-  const pokemonWithData = pokemonList
+  // Load more Pokemon function for infinite scroll
+  const loadMorePokemon = useCallback(async () => {
+    if (isLoadingMore || !hasMorePokemon || loading) return
+    
+    setIsLoadingMore(true)
+    
+    try {
+      console.log(`📦 Loading more Pokemon: offset=${currentOffset}`)
+      const batchSize = 100 // Much larger batch size for super smooth scrolling
+      const newBatch = await getPokemonSkeletonsWithPagination(batchSize, currentOffset)
+      
+      if (newBatch.length === 0) {
+        setHasMorePokemon(false)
+        console.log('🛑 No more Pokemon to load')
+      } else {
+        setPokemonList(prev => [...prev, ...newBatch])
+        setCurrentOffset(prev => prev + newBatch.length)
+        
+        // Check if we've reached the end
+        if (currentOffset + newBatch.length >= totalCount) {
+          setHasMorePokemon(false)
+          console.log('🛑 Reached total Pokemon count')
+        }
+        
+        console.log(`✅ Loaded ${newBatch.length} more Pokemon (total: ${currentOffset + newBatch.length}/${totalCount})`)
+      }
+    } catch (err) {
+      console.error('❌ Error loading more Pokemon:', err)
+      setError('Failed to load more Pokemon')
+    } finally {
+      setIsLoadingMore(false)
+    }
+  }, [isLoadingMore, hasMorePokemon, loading, currentOffset, totalCount])
 
-  // No more infinite scroll - all Pokemon are rendered upfront
-  const hasMorePokemon = false
-  const loadMorePokemon = () => {}
-  const resetPokemonList = () => {}
-  const sentinelRef = () => {}
+  // Reset function for error recovery
+  const resetPokemonList = useCallback(() => {
+    setPokemonList([])
+    setCurrentOffset(0)
+    setHasMorePokemon(true)
+    setError(null)
+    setLoading(true)
+    // Reload initial batch with larger size
+    const initialBatch = generateAllPokemonSkeletons(200)
+    setPokemonList(initialBatch)
+    setCurrentOffset(200)
+    setLoading(false)
+  }, [])
+
+  // Ref for infinite scroll sentinel with aggressive preloading
+  const sentinelRef = useCallback((node: HTMLDivElement | null) => {
+    if (isLoadingMore) return
+    
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && hasMorePokemon) {
+          console.log('🚀 Sentinel triggered - loading more Pokemon aggressively')
+          loadMorePokemon()
+        }
+      },
+      {
+        root: null,
+        rootMargin: '1000px', // Very aggressive - trigger 1000px before reaching sentinel
+        threshold: 0.01
+      }
+    )
+    
+    if (node) observer.observe(node)
+    
+    return () => observer.disconnect()
+  }, [isLoadingMore, hasMorePokemon, loadMorePokemon])
 
   // Load comparison list from localStorage
   useEffect(() => {
@@ -134,6 +188,14 @@ export default function Home() {
   const memoizedFilteredPokemon = useMemo(() => {
     return pokemonList
   }, [pokemonList])
+
+  // Preload visible Pokemon for better performance (implemented inline to avoid HMR issues)
+  const visiblePokemonIds = useMemo(() => {
+    return memoizedFilteredPokemon.slice(0, 100).map(p => p.id) // Increased for super smooth scrolling
+  }, [memoizedFilteredPokemon])
+
+  // Preloading is handled by the PokemonPreloader component in layout
+  // Removed inline preloading to avoid HMR issues
 
 
   // Sort Pokémon using pokemonList for better performance
@@ -230,6 +292,12 @@ export default function Home() {
         comparisonList={comparisonList}
         filters={filters}
         setFilters={setFilters}
+        loadedCount={pokemonList.length}
+        totalCount={totalCount}
+        hasMorePokemon={hasMorePokemon}
+        isLoadingMore={isLoadingMore}
+        loadMorePokemon={loadMorePokemon}
+        sentinelRef={sentinelRef}
       />
     );
   }

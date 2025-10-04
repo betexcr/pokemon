@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import PokemonPageClient from './PokemonPageClient'
 import { getPokemonById, getAllValidPokemonIds } from '@/lib/api'
+import { cacheUtils } from '@/lib/sharedPokemonCache'
 
 export async function generateStaticParams() {
   try {
@@ -32,7 +33,15 @@ export async function generateMetadata(props: any): Promise<Metadata> {
   }
 
   try {
-    const pokemon = await getPokemonById(pokemonId)
+    // Use the same cached data that will be used by the main component
+    const pokemon = await cacheUtils.getOrFetchPokemon(pokemonId)
+    
+    if (!pokemon) {
+      return {
+        title: 'Pokémon Not Found',
+        description: 'The requested Pokémon could not be found.'
+      }
+    }
     
     const capitalizedName = pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)
     
@@ -78,7 +87,17 @@ export default async function PokemonPage(props: any) {
   }
 
   try {
-    const pokemon = await getPokemonById(pokemonId)
+    // The Pokemon data should already be cached from generateMetadata
+    // This will be a cache hit, making it much faster
+    const pokemon = await cacheUtils.getOrFetchPokemon(pokemonId)
+    
+    if (!pokemon) {
+      notFound()
+    }
+
+    // Preload surrounding Pokemon for better navigation UX
+    cacheUtils.preloadForDetailPage(pokemonId)
+    
     return <PokemonPageClient pokemon={pokemon} />
   } catch (error) {
     console.error('Failed to load Pokemon:', pokemonId, error)

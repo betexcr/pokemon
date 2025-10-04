@@ -7,6 +7,7 @@ import PokemonDetails from '@/components/PokemonDetails'
 import { Pokemon } from '@/types/pokemon'
 import { useSmartBackNavigation } from '@/hooks/useSmartBackNavigation'
 import { isSpecialForm } from '@/lib/specialForms'
+import { usePreloadAroundId } from '@/components/PokemonPreloader'
 
 interface PokemonPageClientProps {
   pokemon: Pokemon
@@ -14,6 +15,9 @@ interface PokemonPageClientProps {
 
 export default function PokemonPageClient({ pokemon }: PokemonPageClientProps) {
   const router = useRouter()
+
+  // Preload surrounding Pokemon for better navigation
+  usePreloadAroundId(pokemon.id, 10)
 
   // Set document title with capitalized Pokémon name
   useEffect(() => {

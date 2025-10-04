@@ -10,6 +10,7 @@ import MatchupsSection from '@/components/pokemon/MatchupsSection'
 import { Pokemon } from '@/types/pokemon'
 import { getPokemonSpecies, getPokemonAbilities, getPokemonMoves, getEvolutionChainNodes } from '@/lib/api'
 import { getMatchup } from '@/lib/getMatchup'
+import { PokemonDetailsSkeleton } from '@/components/skeletons/PokemonDetailsSkeleton'
 
 interface PokemonDetailsProps {
   pokemon: Pokemon
@@ -132,15 +133,15 @@ export default function PokemonDetails({ pokemon, showHeader = true, className =
 
     switch (activeTab) {
       case 'stats':
-        return <StatsSection stats={transformedStats} name={pokemon.name} />
+        return <StatsSection stats={transformedStats} name={pokemon.name} loading={loading} />
       case 'moves':
-        return <MovesSection pokemon={pokemon} moves={moves} />
+        return <MovesSection moves={moves} pokemonTypes={pokemon.types.map(t => t.type.name)} loading={loading} />
       case 'evolution':
-        return <EvolutionSection chain={evolutionChain} />
+        return <EvolutionSection chain={evolutionChain} loading={loading} />
       case 'matchups':
-        return <MatchupsSection groups={typeMatchups} />
+        return <MatchupsSection groups={typeMatchups} loading={loading} />
       default:
-        return <StatsSection stats={transformedStats} name={pokemon.name} />
+        return <StatsSection stats={transformedStats} name={pokemon.name} loading={loading} />
     }
   }
 
@@ -153,6 +154,7 @@ export default function PokemonDetails({ pokemon, showHeader = true, className =
           flavorText={flavorText}
           genus={genus}
           hasGenderDifferences={hasGenderDifferences}
+          loading={loading}
         />
       )}
       
@@ -164,9 +166,7 @@ export default function PokemonDetails({ pokemon, showHeader = true, className =
         
         <div className="mt-6">
           {(loading || externalLoading) ? (
-            <div className="flex items-center justify-center min-h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-poke-blue"></div>
-            </div>
+            <PokemonDetailsSkeleton />
           ) : error ? (
             <div className="flex flex-col items-center justify-center min-h-64 text-center">
               <div className="text-red-500 text-lg mb-2">⚠️</div>

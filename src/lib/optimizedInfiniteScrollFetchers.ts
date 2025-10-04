@@ -1,12 +1,9 @@
 import { Pokemon } from '@/types/pokemon'
 import { getPokemonWithPagination, getPokemonList, getPokemon, getPokemonPageSkeleton } from '@/lib/api'
 import { ensureTypeCache, applyCachedTypes, cachePokemonTypes } from '@/lib/typeCache'
+import { sharedPokemonCache } from '@/lib/sharedPokemonCache'
 
-// Cache for basic Pokemon data to avoid repeated API calls
-const basicPokemonCache = new Map<number, Pokemon>()
-const cacheTimestamps = new Map<number, number>()
-const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
-
+// Use shared cache instead of separate caches
 const inFlightDetailFetches = new Set<number>()
 
 async function fetchAndCachePokemonDetails(ids: number[], concurrency = 4) {
@@ -21,12 +18,11 @@ async function fetchAndCachePokemonDetails(ids: number[], concurrency = 4) {
       inFlightDetailFetches.add(id)
       try {
         const fullPokemon = await getPokemon(id)
-        basicPokemonCache.set(id, fullPokemon)
+        sharedPokemonCache.set(id, fullPokemon)
         cachePokemonTypes(
           id,
           (fullPokemon.types || []).map(t => t.type?.name).filter(Boolean)
         )
-        cacheTimestamps.set(id, Date.now())
       } catch (error) {
         console.warn(`Failed to fetch full data for Pokémon ${id}:`, error)
       } finally {
@@ -54,14 +50,12 @@ export async function fetchOptimizedPokemonForMainDex(offset: number, limit: num
 
     if (Array.isArray(skeletonData) && skeletonData.length > 0) {
       const enrichedFromCache = skeletonData.map(pokemon => {
-        const cached = basicPokemonCache.get(pokemon.id)
-        const cacheTime = cacheTimestamps.get(pokemon.id)
-        if (cached && cacheTime && Date.now() - cacheTime < CACHE_TTL) {
+        const cached = sharedPokemonCache.get(pokemon.id)
+        if (cached) {
           return applyCachedTypes(cached)
         }
         const withTypes = applyCachedTypes(pokemon)
-        basicPokemonCache.set(pokemon.id, withTypes)
-        cacheTimestamps.set(pokemon.id, Date.now())
+        sharedPokemonCache.set(pokemon.id, withTypes)
         return withTypes
       })
 
@@ -75,7 +69,7 @@ export async function fetchOptimizedPokemonForMainDex(offset: number, limit: num
       }
 
       const finalData = enrichedFromCache.map(pokemon => {
-        const cached = basicPokemonCache.get(pokemon.id)
+        const cached = sharedPokemonCache.get(pokemon.id)
         if (cached) {
           return applyCachedTypes(cached)
         }
@@ -89,12 +83,11 @@ export async function fetchOptimizedPokemonForMainDex(offset: number, limit: num
 
     if (Array.isArray(fallbackData) && fallbackData.length > 0) {
       fallbackData.forEach(pokemon => {
-        basicPokemonCache.set(pokemon.id, pokemon)
+        sharedPokemonCache.set(pokemon.id, pokemon)
         cachePokemonTypes(
           pokemon.id,
           (pokemon.types || []).map(t => t.type?.name).filter(Boolean)
         )
-        cacheTimestamps.set(pokemon.id, Date.now())
       })
 
       return fallbackData.filter(pokemon => pokemon && typeof pokemon.id === 'number' && pokemon.id > 0)
@@ -108,10 +101,8 @@ export async function fetchOptimizedPokemonForMainDex(offset: number, limit: num
 }
 
 export function getCachedPokemon(id: number): Pokemon | undefined {
-  const cached = basicPokemonCache.get(id)
-  const cacheTime = cacheTimestamps.get(id)
-  if (!cached || !cacheTime) return undefined
-  if (Date.now() - cacheTime > CACHE_TTL) return undefined
+  const cached = sharedPokemonCache.get(id)
+  if (!cached) return undefined
   return applyCachedTypes(cached)
 }
 
@@ -180,8 +171,7 @@ export async function fetchInitialPokemon(offset: number, limit: number): Promis
     
     // Cache the minimal data
     minimalPokemon.forEach(pokemon => {
-      basicPokemonCache.set(pokemon.id, pokemon)
-      cacheTimestamps.set(pokemon.id, Date.now())
+      sharedPokemonCache.set(pokemon.id, pokemon)
     })
     
     return minimalPokemon
@@ -217,8 +207,7 @@ export async function fetchProgressivePokemon(offset: number, limit: number): Pr
             try {
               const fullPokemon = await getPokemon(pokemon.id)
               // Update cache with enhanced data
-              basicPokemonCache.set(pokemon.id, fullPokemon)
-              cacheTimestamps.set(pokemon.id, Date.now())
+              sharedPokemonCache.set(pokemon.id, fullPokemon)
               return fullPokemon
             } catch (error) {
               console.warn(`Failed to enhance Pokemon ${pokemon.id}:`, error)
@@ -230,8 +219,7 @@ export async function fetchProgressivePokemon(offset: number, limit: number): Pr
         // Update cache with any successfully enhanced data
         enhancedData.forEach((result) => {
           if (result.status === 'fulfilled' && result.value) {
-            basicPokemonCache.set(result.value.id, result.value)
-            cacheTimestamps.set(result.value.id, Date.now())
+            sharedPokemonCache.set(result.value.id, result.value)
           }
         })
       } catch (error) {
@@ -282,16 +270,12 @@ export async function fetchAdaptivePokemon(offset: number, limit: number, scroll
  * Clear cache function for memory management
  */
 export function clearPokemonCache(): void {
-  basicPokemonCache.clear()
-  cacheTimestamps.clear()
+  sharedPokemonCache.clear()
 }
 
 /**
  * Get cache statistics for debugging
  */
-export function getCacheStats(): { size: number; hitRate: number } {
-  return {
-    size: basicPokemonCache.size,
-    hitRate: 0 // Could be implemented with hit/miss tracking
-  }
+export function getCacheStats() {
+  return sharedPokemonCache.getStats()
 }

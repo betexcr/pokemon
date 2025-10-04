@@ -124,13 +124,63 @@ self.addEventListener('fetch', (event) => {
   if (isStaticAsset(request)) {
     event.respondWith(cacheFirst(request, STATIC_CACHE))
   } else if (isPokemonImage(request)) {
-    event.respondWith(cacheFirst(request, IMAGE_CACHE, 7 * 24 * 60 * 60 * 1000)) // 7 days
+    event.respondWith(enhancedImageCache(request, IMAGE_CACHE, 7 * 24 * 60 * 60 * 1000)) // 7 days
   } else if (isAPIRequest(request)) {
     event.respondWith(staleWhileRevalidate(request, DYNAMIC_CACHE))
   } else {
     event.respondWith(networkFirst(request, DYNAMIC_CACHE))
   }
 })
+
+// Enhanced Image Cache Strategy - optimized for Pokemon images
+async function enhancedImageCache(request, cacheName, maxAge = 7 * 24 * 60 * 60 * 1000) {
+  try {
+    const cache = await caches.open(cacheName)
+    const cachedResponse = await cache.match(request)
+    
+    if (cachedResponse) {
+      // Check if cache is still fresh
+      const cacheDate = cachedResponse.headers.get('sw-cache-date')
+      if (cacheDate && (Date.now() - parseInt(cacheDate)) < maxAge) {
+        console.log('Serving Pokemon image from cache:', request.url)
+        return cachedResponse
+      } else {
+        // Cache expired, delete it
+        await cache.delete(request)
+      }
+    }
+    
+    // Fetch from network and cache
+    const networkResponse = await fetch(request)
+    if (networkResponse.ok) {
+      const responseToCache = networkResponse.clone()
+      // Create new headers object to avoid immutable headers error
+      const newHeaders = new Headers(responseToCache.headers)
+      newHeaders.set('sw-cache-date', Date.now().toString())
+      newHeaders.set('sw-cache-version', '1.0.3')
+      const newResponse = new Response(responseToCache.body, {
+        status: responseToCache.status,
+        statusText: responseToCache.statusText,
+        headers: newHeaders
+      })
+      await cache.put(request, newResponse)
+      console.log('Cached Pokemon image:', request.url)
+    }
+    
+    return networkResponse
+  } catch (error) {
+    console.error('Enhanced image cache strategy failed:', error)
+    
+    // Fallback to cache if available
+    const cache = await caches.open(cacheName)
+    const cachedResponse = await cache.match(request)
+    if (cachedResponse) {
+      return cachedResponse
+    }
+    
+    return new Response('Image unavailable', { status: 503 })
+  }
+}
 
 // Cache First Strategy - for static assets and images
 async function cacheFirst(request, cacheName, maxAge = 24 * 60 * 60 * 1000) {

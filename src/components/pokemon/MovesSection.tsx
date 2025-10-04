@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import TypeBadgeWithEffectiveness from "@/components/TypeBadgeWithEffectiveness";
 import Tooltip from "@/components/Tooltip";
+import { MoveSkeleton } from "@/components/skeletons/PokemonDetailsSkeleton";
 
 type Move = {
   name: string;
@@ -19,7 +20,7 @@ type Move = {
 const categories = ["physical","special","status"] as const;
 
 
-export default function MovesSection({ moves, pokemonTypes = [] }: { moves: Move[]; pokemonTypes?: string[] }) {
+export default function MovesSection({ moves, pokemonTypes = [], loading = false }: { moves: Move[]; pokemonTypes?: string[]; loading?: boolean }) {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<null | Move["damage_class"]>(null);
   const [type, setType] = useState<string>("");
@@ -179,28 +180,60 @@ export default function MovesSection({ moves, pokemonTypes = [] }: { moves: Move
             </tr>
           </thead>
           <tbody className="[&>tr]:border-b [&>tr]:border-border">
-            {filtered.map((m, index) => (
-              <tr key={`${m.name}-${index}`} className="[&>td]:px-3 [&>td]:py-2">
-                <td className="font-medium capitalize">
-                  {m.short_effect ? (
-                    <Tooltip content={m.short_effect} maxWidth="w-[22rem]" variant="move" type={m.type} damageClass={m.damage_class}>
-                      <span className="cursor-help">
-                        {m.name}
-                      </span>
-                    </Tooltip>
-                  ) : (
-                    <span>{m.name}</span>
-                  )}
-                </td>
-                <td><TypeBadgeWithEffectiveness type={m.type} /></td>
-                <td className="capitalize">{m.damage_class}</td>
-                <td>{m.power ?? "—"}</td>
-                <td>{m.accuracy ?? "—"}</td>
-                <td>{m.pp ?? "—"}</td>
-                <td>{m.level_learned_at ?? "—"}</td>
-                <td className="capitalize text-xs">{formatLearnMethod(m.learn_method)}</td>
-              </tr>
-            ))}
+            {loading || filtered.length === 0 ? (
+              // Show skeleton rows when loading
+              [1, 2, 3, 4, 5, 6].map((index) => (
+                <tr key={`skeleton-${index}`} className="[&>td]:px-3 [&>td]:py-2">
+                  <td className="font-medium">
+                    <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-24 animate-pulse"></div>
+                  </td>
+                  <td>
+                    <div className="h-6 bg-gray-300 dark:bg-gray-700 rounded w-16 animate-pulse"></div>
+                  </td>
+                  <td>
+                    <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-12 animate-pulse"></div>
+                  </td>
+                  <td>
+                    <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-8 animate-pulse"></div>
+                  </td>
+                  <td>
+                    <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-8 animate-pulse"></div>
+                  </td>
+                  <td>
+                    <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-8 animate-pulse"></div>
+                  </td>
+                  <td>
+                    <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-8 animate-pulse"></div>
+                  </td>
+                  <td>
+                    <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-12 animate-pulse"></div>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              filtered.map((m, index) => (
+                <tr key={`${m.name}-${index}`} className="[&>td]:px-3 [&>td]:py-2">
+                  <td className="font-medium capitalize">
+                    {m.short_effect ? (
+                      <Tooltip content={m.short_effect} maxWidth="w-[22rem]" variant="move" type={m.type} damageClass={m.damage_class}>
+                        <span className="cursor-help">
+                          {m.name}
+                        </span>
+                      </Tooltip>
+                    ) : (
+                      <span>{m.name}</span>
+                    )}
+                  </td>
+                  <td><TypeBadgeWithEffectiveness type={m.type} /></td>
+                  <td className="capitalize">{m.damage_class}</td>
+                  <td>{m.power ?? "—"}</td>
+                  <td>{m.accuracy ?? "—"}</td>
+                  <td>{m.pp ?? "—"}</td>
+                  <td>{m.level_learned_at ?? "—"}</td>
+                  <td className="capitalize text-xs">{formatLearnMethod(m.learn_method)}</td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

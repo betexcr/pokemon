@@ -41,19 +41,66 @@ async function setCache(key: string, data: any, ttlSeconds: number): Promise<voi
 // Base API URL - now using our internal API routes with Redis caching
 const API_BASE_URL = '/api'
 
+// Circuit breaker for handling 503 errors
+class CircuitBreaker {
+  private failures = 0
+  private lastFailureTime = 0
+  private readonly failureThreshold = 5
+  private readonly recoveryTimeout = 30000 // 30 seconds
+
+  isOpen(): boolean {
+    if (this.failures >= this.failureThreshold) {
+      const timeSinceLastFailure = Date.now() - this.lastFailureTime
+      if (timeSinceLastFailure < this.recoveryTimeout) {
+        return true // Circuit is open
+      } else {
+        // Reset circuit after recovery timeout
+        this.failures = 0
+        console.log('Circuit breaker reset - attempting to recover')
+      }
+    }
+    return false
+  }
+
+  recordSuccess(): void {
+    this.failures = 0
+  }
+
+  recordFailure(): void {
+    this.failures++
+    this.lastFailureTime = Date.now()
+    if (this.failures >= this.failureThreshold) {
+      console.warn(`Circuit breaker opened after ${this.failures} failures`)
+    }
+  }
+}
+
+const circuitBreaker = new CircuitBreaker()
+
 // Generic fetch with retries and exponential backoff to handle transient CDN/errors
 async function fetchFromAPI<T>(url: string): Promise<T> {
-  const maxAttempts = 3
-  const baseDelayMs = 300
+  const maxAttempts = 5 // Increased from 3 to 5 for better resilience
+  const baseDelayMs = 500 // Increased base delay for 503 errors
   // Retry on common transient statuses; include 404 because PokeAPI/CDN can occasionally 404 briefly
   const retryStatuses = new Set([404, 408, 425, 429, 500, 502, 503, 504])
+  
+  // Special handling for 503 errors (Service Unavailable)
+  const is503Error = (status: number) => status === 503
+
+  // Convert relative URLs to absolute URLs
+  const absoluteUrl = url.startsWith('http') ? url : `${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'}${url}`
+
+  // Check circuit breaker before making request
+  if (circuitBreaker.isOpen()) {
+    throw new Error('Service temporarily unavailable - too many recent failures. Please try again in a moment.')
+  }
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 15000)
     try {
       // Use native fetch for better reliability
-      const response = await fetch(url, { 
+      const response = await fetch(absoluteUrl, { 
         signal: controller.signal,
         headers: {
           'Accept': 'application/json',
@@ -65,15 +112,32 @@ async function fetchFromAPI<T>(url: string): Promise<T> {
       if (!response.ok) {
         const shouldRetry = retryStatuses.has(response.status) && attempt < maxAttempts
         if (shouldRetry) {
-          const backoff = baseDelayMs * Math.pow(2, attempt - 1)
-          const jitter = Math.floor(Math.random() * 100)
+          // Special handling for 503 errors with longer delays
+          let backoff = baseDelayMs * Math.pow(2, attempt - 1)
+          if (is503Error(response.status)) {
+            // 503 errors get extra delay (2x multiplier)
+            backoff *= 2
+            console.warn(`503 Service Unavailable (attempt ${attempt}/${maxAttempts}), retrying in ${backoff}ms...`)
+          }
+          
+          const jitter = Math.floor(Math.random() * 200) // Increased jitter for better distribution
           await new Promise(res => setTimeout(res, backoff + jitter))
           continue
         }
+        
+        // Enhanced error reporting for 503 errors
+        if (is503Error(response.status)) {
+          circuitBreaker.recordFailure() // Record 503 failure
+          reportApiError(`API request failed: ${response.status} - Service Unavailable`)
+          throw new Error(`API request failed: ${response.status} - The Pokémon database is temporarily unavailable. Please try again in a moment.`)
+        }
+        
         throw new Error(`HTTP error! status: ${response.status}`)
       }
 
-      return await response.json()
+      const result = await response.json()
+      circuitBreaker.recordSuccess() // Record successful request
+      return result
     } catch (error: any) {
       clearTimeout(timeout)
       
@@ -88,11 +152,15 @@ async function fetchFromAPI<T>(url: string): Promise<T> {
             reportApiError(`API request failed: ${error.message}`)
           }
       
+      // Record failure for circuit breaker
+      circuitBreaker.recordFailure()
+      
       // Retry on network/abort errors if attempts remain
       const isAbort = error?.name === 'AbortError'
       if ((isAbort || error instanceof TypeError) && attempt < maxAttempts) {
         const backoff = baseDelayMs * Math.pow(2, attempt - 1)
-        const jitter = Math.floor(Math.random() * 100)
+        const jitter = Math.floor(Math.random() * 200) // Increased jitter
+        console.warn(`Network error (attempt ${attempt}/${maxAttempts}), retrying in ${backoff}ms...`)
         await new Promise(res => setTimeout(res, backoff + jitter))
         continue
       }

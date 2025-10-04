@@ -73,6 +73,13 @@ export default function PokemonCard({
     }
   };
 
+  const handleMouseEnter = () => {
+    // Prefetch the Pokemon detail page on hover for faster navigation
+    if (typeof window !== 'undefined') {
+      router.prefetch(`/pokemon/${pokemon.id}`);
+    }
+  };
+
   const handleComparisonClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -96,6 +103,7 @@ export default function PokemonCard({
         style={{
           ...gradient
         }}
+        onMouseEnter={handleMouseEnter}
       >
       {/* Type accent bar (top) */}
       <div

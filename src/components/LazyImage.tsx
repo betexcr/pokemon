@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useScrollIdle } from "@/hooks/useScrollIdle";
+import { getCachedImageUrl } from "@/lib/imageCache";
 
 interface LazyImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   /** Ordered list of image sources to try; first successful one is used */
@@ -43,6 +44,7 @@ export default function LazyImage({
   const [loaded, setLoaded] = useState(false);
   const [hadError, setHadError] = useState(false);
   const [loadingAllowed, setLoadingAllowed] = useState(false);
+  const [cachedSrc, setCachedSrc] = useState<string>("");
   const offscreenTimerRef = useRef<number | null>(null);
   const isScrollIdle = useScrollIdle();
 
@@ -103,6 +105,20 @@ export default function LazyImage({
     }
   }, [isInView, isScrollIdle, unloadOffscreen]);
 
+  // Load cached image when currentSrc changes
+  useEffect(() => {
+    if (currentSrc && loadingAllowed) {
+      getCachedImageUrl(currentSrc)
+        .then(cachedUrl => {
+          setCachedSrc(cachedUrl);
+        })
+        .catch(error => {
+          console.warn('Failed to get cached image URL:', error);
+          setCachedSrc(currentSrc); // Fallback to original URL
+        });
+    }
+  }, [currentSrc, loadingAllowed]);
+
   const handleLoad = useCallback<NonNullable<LazyImageProps["onLoad"]>>(
     (e) => {
       setLoaded(true);
@@ -129,7 +145,7 @@ export default function LazyImage({
       <img
         ref={imgRef}
         alt={alt}
-        src={currentSrc || undefined}
+        src={cachedSrc || undefined}
         loading="lazy"
         onLoad={handleLoad}
         onError={handleError}

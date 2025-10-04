@@ -17,6 +17,7 @@ import { getAvailablePortraits, getPortraitURL, PortraitExpression } from "@/lib
 import { isSpecialForm, getSpecialFormInfo } from '@/lib/specialForms';
 import { usePmdAnimations } from '@/components/HeroPmdSprite';
 import HeroPmdSprite from '@/components/HeroPmdSprite';
+import { AbilitySkeleton, DescriptionSkeleton, GenusSkeleton } from '@/components/skeletons/PokemonDetailsSkeleton';
 
 interface PokemonHeroProps {
   pokemon: Pokemon;
@@ -24,9 +25,10 @@ interface PokemonHeroProps {
   flavorText?: string;
   genus?: string;
   hasGenderDifferences?: boolean;
+  loading?: boolean;
 }
 
-export default function PokemonHero({ pokemon, abilities, flavorText, genus, hasGenderDifferences = false }: PokemonHeroProps) {
+export default function PokemonHero({ pokemon, abilities, flavorText, genus, hasGenderDifferences = false, loading = false }: PokemonHeroProps) {
   const router = useRouter();
   const vtName = `pokemon-sprite-${pokemon.id}`;
   const reduce = useReducedMotionPref();
@@ -1486,16 +1488,23 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
         </div>
 
         {/* Abilities */}
-        {abilities && abilities.length > 0 && (
+        {(loading || (abilities && abilities.length > 0)) && (
           <div className="space-y-2 text-center">
             <h3 className="text-lg font-semibold">Abilities</h3>
             <div className="flex flex-wrap gap-2 sm:gap-3 justify-center">
-              {abilities.map((ability, index) => (
-                <AbilityBadge 
-                  key={`${ability.name}-${index}`}
-                  ability={ability}
-                />
-              ))}
+              {loading || !abilities || abilities.length === 0 ? (
+                // Show skeleton abilities when loading
+                [1, 2, 3].map((index) => (
+                  <AbilitySkeleton key={`ability-skeleton-${index}`} />
+                ))
+              ) : (
+                abilities.map((ability, index) => (
+                  <AbilityBadge 
+                    key={`${ability.name}-${index}`}
+                    ability={ability}
+                  />
+                ))
+              )}
             </div>
           </div>
         )}
@@ -1521,15 +1530,25 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
         </div>
 
         {/* Description */}
-        {flavorText && (
+        {(loading || flavorText) && (
           <div className="space-y-2 text-center">
             <h3 className="text-lg font-semibold">Description</h3>
-            <p className="leading-7 text-muted">{flavorText}</p>
-            {genus && (
-              <span className="inline-block rounded-full px-4 py-2 text-sm bg-gray-100 dark:bg-gray-700">
-                {genus}
-              </span>
+            {loading || !flavorText ? (
+              <DescriptionSkeleton />
+            ) : (
+              <p className="leading-7 text-muted">{flavorText}</p>
             )}
+            {loading || genus ? (
+              <div className="flex justify-center">
+                {loading ? (
+                  <GenusSkeleton />
+                ) : (
+                  <span className="inline-block rounded-full px-4 py-2 text-sm bg-gray-100 dark:bg-gray-700">
+                    {genus}
+                  </span>
+                )}
+              </div>
+            ) : null}
           </div>
         )}
       </div>

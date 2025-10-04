@@ -9,6 +9,7 @@ interface PokemonCardFrameProps {
   density?: '3cols' | '6cols' | '9cols' | '10cols' | 'list';
   onClick?: (e: React.MouseEvent) => void;
   onKeyDown?: (e: React.KeyboardEvent) => void;
+  onMouseEnter?: () => void;
   'aria-label'?: string;
   'data-pokemon-id'?: number;
   fullViewport?: boolean;
@@ -22,6 +23,7 @@ export default function PokemonCardFrame({
   density = '6cols',
   onClick,
   onKeyDown,
+  onMouseEnter,
   'aria-label': ariaLabel,
   'data-pokemon-id': pokemonId,
   fullViewport = false,
@@ -73,6 +75,7 @@ export default function PokemonCardFrame({
       role="button"
       tabIndex={0}
       onKeyDown={onKeyDown}
+      onMouseEnter={onMouseEnter}
       data-pokemon-id={pokemonId}
       data-density={density}
     >
