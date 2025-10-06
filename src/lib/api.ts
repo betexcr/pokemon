@@ -74,9 +74,12 @@ function setNegativeCache(key: string, error: string, ttlSeconds: number = 300):
   }
 }
 
-// Base API URL - now using our internal API routes with Redis caching
-// Note: trailingSlash: true in next.config.ts requires trailing slashes for API routes
-const API_BASE_URL = '/api'
+// Base API URL
+// - On the server (SSG/SSR/build), call PokeAPI directly to avoid hitting Next internal API routes during prerender
+// - In the browser, use our internal API routes (benefit from edge caching)
+const API_BASE_URL = typeof window === 'undefined'
+  ? 'https://pokeapi.co/api/v2'
+  : '/api'
 
 // Circuit breaker for handling 503 errors
 class CircuitBreaker {
