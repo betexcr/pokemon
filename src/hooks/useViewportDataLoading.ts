@@ -211,23 +211,23 @@ export function useViewportDataLoading({
 
   // No intersection observer needed - using scroll-based approach instead
 
-  // Trigger initial loading when Pokemon list becomes available
+  // Trigger initial loading when Pokemon list becomes available - DISABLED to prevent off-screen loading
   useEffect(() => {
     if (pokemonList.length > 0 && !initialLoadTriggeredRef.current) {
-      console.log('Pokemon list available, triggering initial batch loading');
+      console.log('Pokemon list available, setting up viewport-only loading (no initial batch)');
       initialLoadTriggeredRef.current = true;
       
-      // Load initial batch immediately
-      loadInitialBatch();
+      // DISABLED: Load initial batch immediately
+      // loadInitialBatch();
       
-      // Also set up viewport-based loading for additional Pokemon
+      // Set up viewport-based loading only when user interacts
       setTimeout(() => {
         hasUserInteractedRef.current = true;
         isScrollIdleRef.current = true;
         loadVisiblePokemonData();
-      }, 50);
+      }, 100); // Slightly longer delay to ensure user interaction
     }
-  }, [pokemonList.length, loadInitialBatch, loadVisiblePokemonData]);
+  }, [pokemonList.length, loadVisiblePokemonData]);
 
   // Periodic catch-up loading to ensure no Pokemon are missed
   useEffect(() => {
