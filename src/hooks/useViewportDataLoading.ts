@@ -111,8 +111,8 @@ export function useViewportDataLoading({
       pokemonCards.forEach(card => {
         const rect = card.getBoundingClientRect();
         
-        // Check if card is visible in the viewport with a larger buffer for fast scrolling
-        const buffer = 200; // Increased buffer for better fast scrolling support
+        // Check if card is visible in the viewport with a smaller buffer
+        const buffer = 100; // Reduced buffer to prevent loading off-screen Pokemon
         const isVisible = rect.bottom > (containerRect.top - buffer) && 
                          rect.top < (containerRect.bottom + buffer);
         
@@ -137,12 +137,12 @@ export function useViewportDataLoading({
     }, 25); // Further reduced debounce to 25ms for even faster response
   }, [loadPokemonData]);
 
-  // Load initial batch of Pokemon immediately (first 20-30 Pokemon)
+  // Load initial batch of Pokemon immediately (only first 6 Pokemon)
   const loadInitialBatch = useCallback(() => {
     console.log('Loading initial batch of Pokemon for immediate display');
     
-    // Load the first 30 Pokemon immediately for better UX
-    const initialBatchSize = 30;
+    // Load only the first 6 Pokemon immediately for better performance
+    const initialBatchSize = 6;
     for (let i = 1; i <= Math.min(initialBatchSize, pokemonList.length); i++) {
       loadPokemonData(i);
     }
@@ -159,7 +159,7 @@ export function useViewportDataLoading({
       { top: 0, bottom: window.innerHeight } : 
       (scrollContainer as Element).getBoundingClientRect();
     
-    const buffer = 300; // Large buffer for catch-up loading
+    const buffer = 150; // Smaller buffer for catch-up loading
     const missedPokemonIds: number[] = [];
     
     pokemonCards.forEach(card => {

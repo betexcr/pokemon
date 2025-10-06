@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 import { Pokemon, FilterState } from '@/types/pokemon'
-import { getPokemonTotalCount, generateAllPokemonSkeletons, getPokemonList, getPokemonSkeletonsWithPagination } from '@/lib/api'
+import { getPokemonTotalCount, generateAllPokemonSkeletons, getPokemonList, getPokemonSkeletonsWithPagination, generateSpecialFormsPokemon, getPokemonFallbackImage, getPokemonMainPageImage, getPokemonShinyImage } from '@/lib/api'
+import { ViewportPriorityLoader } from '@/lib/viewportPriorityLoader'
 import { useTheme } from '@/components/ThemeProvider'
 // Removed PokemonPreloader import to avoid HMR issues
 // Removed sharedPokemonCache import to avoid HMR issues - implementing cache logic inline
@@ -69,6 +70,127 @@ export default function Home() {
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [currentOffset, setCurrentOffset] = useState(0)
   const [totalCount, setTotalCount] = useState(0)
+  
+  // Refs to avoid dependency issues in callbacks
+  const isLoadingMoreRef = useRef(false)
+  const hasMorePokemonRef = useRef(true)
+  const currentOffsetRef = useRef(0)
+  const totalCountRef = useRef(0)
+  const isTriggeredRef = useRef(false) // Prevent multiple intersection observer triggers
+  
+  // Viewport priority loader for smart Pokemon loading
+  const viewportLoaderRef = useRef<ViewportPriorityLoader | null>(null)
+  
+  // Update refs when state changes
+  useEffect(() => {
+    isLoadingMoreRef.current = isLoadingMore
+    hasMorePokemonRef.current = hasMorePokemon
+    currentOffsetRef.current = currentOffset
+    totalCountRef.current = totalCount
+  }, [isLoadingMore, hasMorePokemon, currentOffset, totalCount])
+  
+  // Initialize viewport priority loader
+  useEffect(() => {
+    if (!viewportLoaderRef.current) {
+      viewportLoaderRef.current = new ViewportPriorityLoader((pokemon) => {
+        // Update Pokemon in the list when it's loaded
+        setPokemonList(prev => prev.map(p => p.id === pokemon.id ? pokemon : p))
+      })
+    }
+  }, [])
+
+  // Auto-retry failed Pokemon when API recovers
+  useEffect(() => {
+    const retryInterval = setInterval(() => {
+      if (viewportLoaderRef.current) {
+        viewportLoaderRef.current.retryFailedPokemon().catch(err => 
+          console.warn('Error retrying failed Pokemon:', err)
+        )
+      }
+    }, 30000) // Retry every 30 seconds
+
+    return () => clearInterval(retryInterval)
+  }, [])
+  
+  // Viewport-based loading on scroll - DISABLED to prevent conflicts with useViewportDataLoading
+  // useEffect(() => {
+  //   if (!viewportLoaderRef.current) return
+    
+  //   let lastScrollTop = 0
+  //   let scrollDirection = 'down'
+  //   let lastScrollDirection = 'down'
+  //   let scrollVelocity = 0
+  //   let lastScrollTime = Date.now()
+    
+  //   const handleScroll = () => {
+  //     const scrollContainer = document.querySelector('.flex-1.min-h-0.overflow-y-auto')
+  //     if (!scrollContainer) return
+      
+  //     const currentScrollTop = scrollContainer.scrollTop
+  //     const currentTime = Date.now()
+  //     const timeDelta = currentTime - lastScrollTime
+      
+  //     // Calculate scroll velocity for better direction detection
+  //     if (timeDelta > 0) {
+  //       scrollVelocity = Math.abs(currentScrollTop - lastScrollTop) / timeDelta
+  //     }
+      
+  //     // Determine scroll direction with velocity consideration
+  //     if (currentScrollTop > lastScrollTop + 5) { // Add threshold to avoid micro-movements
+  //       scrollDirection = 'down'
+  //     } else if (currentScrollTop < lastScrollTop - 5) {
+  //       scrollDirection = 'up'
+  //     }
+  //     // If within threshold, keep the same direction
+      
+  //     // Check if scroll direction changed with velocity consideration
+  //     if (scrollDirection !== lastScrollDirection && scrollVelocity > 0.5) {
+  //       console.log(`🔄 Scroll direction changed: ${lastScrollDirection} → ${scrollDirection} (velocity: ${scrollVelocity.toFixed(2)})`)
+  //       // Force viewport update when direction changes
+  //       if (viewportLoaderRef.current && typeof viewportLoaderRef.current.forceViewportUpdate === 'function') {
+  //         viewportLoaderRef.current.forceViewportUpdate()
+  //       } else {
+  //         console.warn('⚠️ forceViewportUpdate method not available on viewport loader')
+  //       }
+  //       lastScrollDirection = scrollDirection
+  //     }
+      
+  //     // Update tracking variables
+  //     lastScrollTop = currentScrollTop
+  //     lastScrollTime = currentTime
+      
+  //     // Get all Pokemon IDs that need loading
+  //     const allPokemonIds = pokemonList
+  //       .filter(p => (p.types?.length || 0) === 0) // Only skeletons
+  //       .map(p => p.id)
+      
+  //     if (allPokemonIds.length > 0) {
+  //       // Load with viewport priority - always call, let the loader handle throttling
+  //       viewportLoaderRef.current?.loadWithPriority(allPokemonIds)
+  //     }
+  //   }
+    
+  //   // Less aggressive throttling for better responsiveness
+  //   let scrollTimeout: NodeJS.Timeout
+  //   const throttledScroll = () => {
+  //     clearTimeout(scrollTimeout)
+  //     // Use requestAnimationFrame for smoother scrolling
+  //     scrollTimeout = setTimeout(handleScroll, 8) // ~120fps for better responsiveness
+  //   }
+    
+  //   const scrollContainer = document.querySelector('.flex-1.min-h-0.overflow-y-auto')
+  //   if (scrollContainer) {
+  //     scrollContainer.addEventListener('scroll', throttledScroll, { passive: true })
+      
+  //     // Initial load
+  //     handleScroll()
+      
+  //     return () => {
+  //       scrollContainer.removeEventListener('scroll', throttledScroll)
+  //       clearTimeout(scrollTimeout)
+  //     }
+  //   }
+  // }, [pokemonList])
 
   // Load initial Pokemon data - FAST SCROLL VERSION
   useEffect(() => {
@@ -107,29 +229,76 @@ export default function Home() {
 
   // Load more Pokemon function for infinite scroll
   const loadMorePokemon = useCallback(async () => {
-    if (isLoadingMore || !hasMorePokemon || loading) return
+    // Use refs to avoid dependency issues
+    if (isLoadingMoreRef.current || !hasMorePokemonRef.current || loading) {
+      console.log(`🚫 Skipping loadMorePokemon - isLoadingMore: ${isLoadingMoreRef.current}, hasMore: ${hasMorePokemonRef.current}, loading: ${loading}`)
+      return
+    }
     
+    console.log(`🚀 Starting loadMorePokemon - offset: ${currentOffsetRef.current}`)
     setIsLoadingMore(true)
     
     try {
-      console.log(`📦 Loading more Pokemon: offset=${currentOffset}`)
-      const batchSize = 100 // Much larger batch size for super smooth scrolling
-      const newBatch = await getPokemonSkeletonsWithPagination(batchSize, currentOffset)
+      const currentOffsetValue = currentOffsetRef.current
+      console.log(`📦 Loading more Pokemon: offset=${currentOffsetValue}`)
+      const batchSize = 100 // 100 skeletons per batch
+      
+      // Generate skeletons instantly without API calls for faster loading
+      const newBatch = generateAllPokemonSkeletons(batchSize).map((pokemon, index) => ({
+        ...pokemon,
+        id: currentOffsetValue + index + 1,
+        name: `pokemon-${currentOffsetValue + index + 1}`,
+        sprites: {
+          ...pokemon.sprites,
+          front_default: getPokemonFallbackImage(currentOffsetValue + index + 1),
+          other: {
+            ...pokemon.sprites.other,
+            'official-artwork': {
+              front_default: getPokemonMainPageImage(currentOffsetValue + index + 1),
+              front_shiny: getPokemonShinyImage(currentOffsetValue + index + 1),
+            }
+          }
+        }
+      }))
+      
+      // Add a minimal delay to make the loading feel more natural
+      await new Promise(resolve => setTimeout(resolve, 10))
       
       if (newBatch.length === 0) {
         setHasMorePokemon(false)
         console.log('🛑 No more Pokemon to load')
       } else {
-        setPokemonList(prev => [...prev, ...newBatch])
-        setCurrentOffset(prev => prev + newBatch.length)
+        console.log(`📥 Adding ${newBatch.length} new Pokemon to list`)
+        setPokemonList(prev => {
+          const newList = [...prev, ...newBatch]
+          console.log(`📊 Pokemon list updated: ${prev.length} -> ${newList.length}`)
+          return newList
+        })
+        const newOffset = currentOffsetValue + newBatch.length
+        setCurrentOffset(newOffset)
         
         // Check if we've reached the end
-        if (currentOffset + newBatch.length >= totalCount) {
+        if (newOffset >= totalCountRef.current) {
           setHasMorePokemon(false)
           console.log('🛑 Reached total Pokemon count')
+          
+          // Load special forms after regular Pokemon are loaded
+          console.log('🎯 Loading special forms...')
+          try {
+            const specialForms = await generateSpecialFormsPokemon()
+            if (specialForms.length > 0) {
+              setPokemonList(prev => {
+                const newList = [...prev, ...specialForms]
+                console.log(`🎯 Added ${specialForms.length} special forms (total: ${newList.length})`)
+                return newList
+              })
+            }
+          } catch (err) {
+            console.error('❌ Error loading special forms:', err)
+          }
         }
         
-        console.log(`✅ Loaded ${newBatch.length} more Pokemon (total: ${currentOffset + newBatch.length}/${totalCount})`)
+        console.log(`✅ Loaded ${newBatch.length} more Pokemon (total: ${newOffset}/${totalCountRef.current})`)
       }
     } catch (err) {
       console.error('❌ Error loading more Pokemon:', err)
@@ -137,7 +306,7 @@ export default function Home() {
     } finally {
       setIsLoadingMore(false)
     }
-  }, [isLoadingMore, hasMorePokemon, loading, currentOffset, totalCount])
+  }, [loading]) // Only depend on loading state
 
   // Reset function for error recovery
   const resetPokemonList = useCallback(() => {
@@ -155,26 +324,58 @@ export default function Home() {
 
   // Ref for infinite scroll sentinel with balanced preloading
   const sentinelRef = useCallback((node: HTMLDivElement | null) => {
-    if (isLoadingMore) return
+    console.log('🔗 Sentinel ref callback called with node:', !!node)
+    if (!node) return
+    
+    console.log('👁️ Setting up intersection observer for sentinel')
+    // Find the correct scroll container
+    const scrollContainer = document.querySelector('.flex-1.min-h-0.overflow-y-auto')
+    console.log('📦 Scroll container found:', !!scrollContainer)
     
     const observer = new IntersectionObserver(
       entries => {
-        if (entries[0].isIntersecting && hasMorePokemon) {
+        const entry = entries[0]
+        console.log('🔍 Intersection observer triggered:', {
+          isIntersecting: entry.isIntersecting,
+          isLoadingMore: isLoadingMoreRef.current,
+          hasMorePokemon: hasMorePokemonRef.current,
+          currentOffset: currentOffsetRef.current,
+          totalCount: totalCountRef.current,
+          isTriggered: isTriggeredRef.current
+        })
+        
+        if (entry.isIntersecting && !isLoadingMoreRef.current && hasMorePokemonRef.current && !isTriggeredRef.current) {
+          isTriggeredRef.current = true
           console.log('🚀 Sentinel triggered - loading more Pokemon')
-          loadMorePokemon()
+          
+          // Temporarily disconnect observer to prevent multiple triggers
+          observer.disconnect()
+          
+          loadMorePokemon().finally(() => {
+            // Reconnect observer after loading completes
+            setTimeout(() => {
+              isTriggeredRef.current = false
+              observer.observe(node)
+              console.log('🔄 Observer reconnected after loading')
+            }, 100) // Reduced delay for faster reconnection
+          })
         }
       },
       {
-        root: null,
-        rootMargin: '500px', // Reduced from 1000px to prevent too many requests
-        threshold: 0.01
+        root: scrollContainer, // Use the correct scroll container
+        rootMargin: '500px', // Increased margin for earlier triggering
+        threshold: 0.1
       }
     )
     
-    if (node) observer.observe(node)
+    observer.observe(node)
+    console.log('✅ Intersection observer attached to sentinel')
     
-    return () => observer.disconnect()
-  }, [isLoadingMore, hasMorePokemon, loadMorePokemon])
+    return () => {
+      console.log('🧹 Cleaning up intersection observer')
+      observer.disconnect()
+    }
+  }, [loadMorePokemon]) // Only depend on loadMorePokemon
 
   // Load comparison list from localStorage
   useEffect(() => {
@@ -297,7 +498,12 @@ export default function Home() {
         hasMorePokemon={hasMorePokemon}
         isLoadingMore={isLoadingMore}
         loadMorePokemon={loadMorePokemon}
-        sentinelRef={sentinelRef}
+        sentinelRef={(node) => {
+          console.log('🔗 Page component sentinelRef called with:', !!node, 'sentinelRef type:', typeof sentinelRef)
+          if (sentinelRef) {
+            sentinelRef(node)
+          }
+        }}
       />
     );
   }
