@@ -5,6 +5,16 @@ import { useEffect } from 'react'
 export default function ServiceWorkerRegistration() {
   useEffect(() => {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      // In development, disable SW and clear caches to avoid stale offline screens
+      if (process.env.NODE_ENV === 'development') {
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+          registrations.forEach(registration => registration.unregister().catch(() => {}))
+        })
+        if ('caches' in window) {
+          caches.keys().then(keys => Promise.all(keys.map(key => caches.delete(key)))).catch(() => {})
+        }
+        return
+      }
       const registerSW = async () => {
         try {
           const registration = await navigator.serviceWorker.register('/sw.js', {
