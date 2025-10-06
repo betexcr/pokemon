@@ -9,8 +9,15 @@ import { browserCache, getCacheKey, CACHE_TTL } from '@/lib/memcached'
 // Fallback in-memory cache for when browser cache is unavailable
 const fallbackCache = new Map<string, { data: any; timestamp: number; ttl: number }>()
 
+// Negative cache for failed requests (prevent repeated failed requests)
+const negativeCache = new Map<string, { error: string; timestamp: number; ttl: number }>()
+
 // Request deduplication to prevent race conditions
 const inFlightRequests = new Map<string, Promise<any>>()
+
+// API call optimization - batch similar requests
+const requestBatcher = new Map<string, { promise: Promise<any>; timestamp: number }>()
+const BATCH_TIMEOUT = 50 // ms
 
 async function getCache(key: string): Promise<any> {
   try {
@@ -19,6 +26,13 @@ async function getCache(key: string): Promise<any> {
     if (cached) return cached
   } catch (error) {
     console.warn('Browser cache unavailable, falling back to memory cache:', error)
+  }
+  
+  // Check negative cache first (failed requests)
+  const negativeCached = negativeCache.get(key)
+  if (negativeCached && Date.now() - negativeCached.timestamp < negativeCached.ttl) {
+    console.log('🚫 Negative cache hit - skipping failed request:', key)
+    throw new Error(`Request failed (cached): ${negativeCached.error}`)
   }
   
   // Fallback to in-memory cache
@@ -39,9 +53,29 @@ async function setCache(key: string, data: any, ttlSeconds: number): Promise<voi
     // Fallback to in-memory cache
     fallbackCache.set(key, { data, timestamp: Date.now(), ttl: ttlSeconds * 1000 })
   }
+  
+  // Clear any negative cache entry for this key
+  negativeCache.delete(key)
+}
+
+// Set negative cache for failed requests
+function setNegativeCache(key: string, error: string, ttlSeconds: number = 300): void {
+  negativeCache.set(key, {
+    error,
+    timestamp: Date.now(),
+    ttl: ttlSeconds * 1000
+  })
+  
+  // Clean up expired negative cache entries
+  for (const [cacheKey, entry] of negativeCache.entries()) {
+    if (Date.now() - entry.timestamp >= entry.ttl) {
+      negativeCache.delete(cacheKey)
+    }
+  }
 }
 
 // Base API URL - now using our internal API routes with Redis caching
+// Note: trailingSlash: true in next.config.ts requires trailing slashes for API routes
 const API_BASE_URL = '/api'
 
 // Circuit breaker for handling 503 errors
@@ -162,11 +196,20 @@ async function performFetchWithRetry<T>(
         // Enhanced error reporting for 503 errors
         if (is503Error(response.status)) {
           circuitBreaker.recordFailure() // Record 503 failure
-          reportApiError(`API request failed: ${response.status} - Service Unavailable`)
+          reportApiError(`API request failed: ${response.status} - Service Unavailable`, {
+            url: absoluteUrl,
+            attempt,
+            maxAttempts,
+            status: response.status
+          })
           throw new Error(`API request failed: ${response.status} - The Pokémon database is temporarily unavailable. Please try again in a moment.`)
         }
         
-        throw new Error(`HTTP error! status: ${response.status}`)
+        // Cache failed requests to prevent repeated attempts
+        const errorMessage = `HTTP error! status: ${response.status}`
+        setNegativeCache(absoluteUrl, errorMessage, response.status === 404 ? 600 : 300) // 404s cached longer
+        
+        throw new Error(errorMessage)
       }
 
       const result = await response.json()
@@ -212,6 +255,10 @@ async function performFetchWithRetry<T>(
               })
             }
           }
+      // Cache network errors to prevent repeated attempts
+      const errorMessage = error instanceof Error ? error.message : 'Network error'
+      setNegativeCache(absoluteUrl, errorMessage, 300)
+      
       throw error
     }
   }
@@ -304,7 +351,7 @@ export async function getPokemonList(limit = 100, offset = 0): Promise<{ results
   const cached = await getCache(cacheKey)
   if (cached) return cached
 
-  const url = `${API_BASE_URL}/pokemon-list?limit=${limit}&offset=${offset}`
+  const url = `${API_BASE_URL}/pokemon-list/?limit=${limit}&offset=${offset}`
   const data = await fetchFromAPI<{ results: Array<{ name: string; url: string }>; count: number }>(url)
   await setCache(cacheKey, data, CACHE_TTL.POKEMON_LIST)
   return data
@@ -315,7 +362,7 @@ export async function getPokemonTotalCount(): Promise<number> {
   const cached = await getCache(cacheKey)
   if (cached) return cached
 
-  const data = await fetchFromAPI<{ count: number }>(`${API_BASE_URL}/pokemon-total-count`)
+  const data = await fetchFromAPI<{ count: number }>(`${API_BASE_URL}/pokemon-total-count/`)
   await setCache(cacheKey, data.count, CACHE_TTL.POKEMON_TOTAL_COUNT)
   return data.count
 }
@@ -364,6 +411,14 @@ export async function getAllValidPokemonIds(): Promise<number[]> {
 // Individual Pokémon functions
 export async function getPokemon(id: number | string): Promise<Pokemon> {
   const numericId = typeof id === 'string' ? parseInt(id, 10) : id
+  const cacheKey = getCacheKey('pokemon', { id: numericId })
+  
+  // Check cache first
+  const cached = await getCache(cacheKey)
+  if (cached) {
+    console.log(`📦 Cache hit for Pokemon ${numericId}`)
+    return cached
+  }
   
   // Handle special forms (Mega Evolutions, Primal Reversions)
   if (isSpecialForm(numericId)) {
@@ -391,22 +446,28 @@ export async function getPokemon(id: number | string): Promise<Pokemon> {
       }
     }
     
+    // Cache the special form Pokemon with longer TTL
+    await setCache(cacheKey, specialFormPokemon, CACHE_TTL.POKEMON_DETAIL * 2)
     return specialFormPokemon
   }
 
-  const cacheKey = getCacheKey('pokemon', { id })
-  const cached = await getCache(cacheKey)
-  if (cached) return cached
-
-  const url = `${API_BASE_URL}/pokemon/${id}`
+  const url = `${API_BASE_URL}/pokemon/${id}/`
   try {
+    console.log(`🌐 Fetching Pokemon ${numericId} from API`)
     const data = await fetchFromAPI<Pokemon>(url)
-    await setCache(cacheKey, data, CACHE_TTL.POKEMON_DETAIL)
+    
+    // Cache with longer TTL for detail pages (24 hours)
+    await setCache(cacheKey, data, CACHE_TTL.POKEMON_DETAIL * 2)
+    console.log(`✅ Cached Pokemon ${numericId} data`)
+    
     return data
   } catch (error: any) {
-    // Handle 404 errors specifically for non-existent Pokemon
-    if (error?.message?.includes('404')) {
-      throw new Error(`Pokemon with ID ${id} does not exist`)
+    // Don't report errors for cached failures (already reported)
+    if (!(error instanceof Error && error.message.includes('Request failed (cached)'))) {
+      // Handle 404 errors specifically for non-existent Pokemon
+      if (error?.message?.includes('404')) {
+        throw new Error(`Pokemon with ID ${id} does not exist`)
+      }
     }
     throw error
   }
@@ -416,15 +477,41 @@ export async function getPokemonById(id: number | string): Promise<Pokemon> {
   return getPokemon(id)
 }
 
-export async function getPokemonSpecies(id: number | string): Promise<any> {
-  const cacheKey = getCacheKey('pokemon-species', { id })
-  const cached = await getCache(cacheKey)
-  if (cached) return cached
+// Generate special forms Pokemon for the main list
+export async function generateSpecialFormsPokemon(): Promise<Pokemon[]> {
+  const specialFormIds = Array.from({ length: 50 }, (_, i) => 10033 + i)
+  const specialFormsPokemon: Pokemon[] = []
+  
+  for (const id of specialFormIds) {
+    try {
+      const pokemon = await getPokemon(id)
+      specialFormsPokemon.push(pokemon)
+    } catch (error) {
+      console.warn(`Failed to load special form Pokemon ${id}:`, error)
+    }
+  }
+  
+  return specialFormsPokemon
+}
 
-  const url = `${API_BASE_URL}/pokemon-species/${id}`
+export async function getPokemonSpecies(id: number | string): Promise<any> {
+  const numericId = typeof id === 'string' ? parseInt(id, 10) : id
+  const cacheKey = getCacheKey('pokemon-species', { id: numericId })
+  const cached = await getCache(cacheKey)
+  if (cached) {
+    console.log(`📦 Cache hit for Pokemon species ${numericId}`)
+    return cached
+  }
+
+  const url = `${API_BASE_URL}/pokemon-species/${id}/`
   try {
+    console.log(`🌐 Fetching Pokemon species ${numericId} from API`)
     const data = await fetchFromAPI(url)
-    await setCache(cacheKey, data, CACHE_TTL.POKEMON_SPECIES)
+    
+    // Cache species data for longer (species data rarely changes)
+    await setCache(cacheKey, data, CACHE_TTL.POKEMON_SPECIES * 2)
+    console.log(`✅ Cached Pokemon species ${numericId} data`)
+    
     return data
   } catch (error: any) {
     // Handle 404 errors specifically for non-existent Pokemon species
@@ -452,7 +539,7 @@ export async function getEvolutionChain(id: number | string): Promise<any> {
   const cached = await getCache(cacheKey)
   if (cached) return cached
 
-  const url = `${API_BASE_URL}/evolution-chain/${id}`
+  const url = `${API_BASE_URL}/evolution-chain/${id}/`
   const data = await fetchFromAPI(url)
   await setCache(cacheKey, data, CACHE_TTL.EVOLUTION_CHAIN)
   return data
@@ -552,7 +639,7 @@ export async function getType(id: number | string): Promise<any> {
   const cached = await getCache(cacheKey)
   if (cached) return cached
 
-  const url = `${API_BASE_URL}/type/${id}`
+  const url = `${API_BASE_URL}/type/${id}/`
   const data = await fetchFromAPI(url)
   await setCache(cacheKey, data, CACHE_TTL.TYPE)
   return data
@@ -564,7 +651,7 @@ export async function getAbility(id: number | string): Promise<any> {
   const cached = await getCache(cacheKey)
   if (cached) return cached
 
-  const url = `${API_BASE_URL}/ability/${id}`
+  const url = `${API_BASE_URL}/ability/${id}/`
   const data = await fetchFromAPI(url)
   await setCache(cacheKey, data, CACHE_TTL.ABILITY)
   return data
@@ -667,14 +754,14 @@ export async function getMove(id: number | string): Promise<any> {
   const cached = await getCache(cacheKey)
   if (cached) return cached
 
-  const url = `${API_BASE_URL}/move/${id}`
+  const url = `${API_BASE_URL}/move/${id}/`
   const data = await fetchFromAPI(url)
   await setCache(cacheKey, data, CACHE_TTL.MOVE)
   return data
 }
 
 // Search functions
-export async function searchPokemonByName(query: string): Promise<Pokemon[]> {
+export async function searchPokemonByName(query: string, signal?: AbortSignal): Promise<Pokemon[]> {
   const cacheKey = getCacheKey('search-pokemon', { query })
   const cached = await getCache(cacheKey)
   if (cached) return cached
@@ -682,146 +769,185 @@ export async function searchPokemonByName(query: string): Promise<Pokemon[]> {
   try {
     const trimmedQuery = query.toLowerCase().trim()
     
+    // Early return for empty queries
+    if (!trimmedQuery) return []
+    
     // Check for exact ID match (1-1302+ range) - prioritize exact matches
     if (/^\d+$/.test(trimmedQuery)) {
       const id = parseInt(trimmedQuery)
-      if (id >= 1 && id <= 1302) { // Extended range to cover all generations including special forms
+      if (id >= 1 && id <= 1302) {
         try {
           const exactMatch = await getPokemon(id)
           await setCache(cacheKey, [exactMatch], CACHE_TTL.POKEMON_LIST)
           return [exactMatch]
         } catch (error) {
           // If exact ID doesn't exist, fall through to partial matching
+          console.debug(`Exact ID match failed for "${trimmedQuery}":`, error instanceof Error ? error.message : 'Unknown error')
         }
       }
     }
 
-    // Aggregate results here to allow enriching with varieties/forms
+    // Check for abort signal
+    if (signal?.aborted) {
+      throw new Error('Search cancelled')
+    }
+
+    // Use a more efficient search strategy
     const results: Pokemon[] = []
 
-    // 1) Try direct name match (covers forms like "calyrex-shadow")
-    // Note: We skip direct name matching for regular Pokemon names since PokeAPI
-    // doesn't reliably support name-based lookups in the /pokemon endpoint
-    // Instead, we rely on the pokemon list filtering below
+    // 1) Try direct name match for forms with hyphens (like "calyrex-shadow")
     if (trimmedQuery.includes('-')) {
-      // Only try direct lookup for forms with hyphens (like "calyrex-shadow")
       try {
         const direct = await getPokemon(trimmedQuery)
-        if (direct) results.push(direct)
+        if (direct) {
+          results.push(direct)
+          // If we found a direct match, return early to avoid expensive list operations
+          await setCache(cacheKey, results, CACHE_TTL.POKEMON_LIST)
+          return results
+        }
       } catch (error) {
-        // ignore if not a direct pokemon id/name - this is expected for many searches
         console.debug(`Direct name match failed for "${trimmedQuery}":`, error instanceof Error ? error.message : 'Unknown error')
       }
     }
 
-    // 2) Fetch list of default Pokémon for partial matches by name/id
-    const allPokemon = await getPokemonList(1000, 0)
-    const listMatches = allPokemon.results.filter(pokemon => {
-      const pokemonName = pokemon.name.toLowerCase()
-      const pokemonId = pokemon.url.split('/').slice(-2)[0]
-      if (pokemonName.includes(trimmedQuery)) return true
-      if (pokemonId.includes(trimmedQuery)) return true
-      return false
-    })
-
-    const limitedMatches = listMatches.slice(0, 20)
-    const listDetails = await Promise.allSettled(
-      limitedMatches.map(async (pokemon) => {
-        const id = pokemon.url.split('/').slice(-2)[0]
-        return await getPokemon(parseInt(id))
-      })
-    )
-    // Filter out failed requests and only add successful results
-    const successfulResults = listDetails
-      .filter((result): result is PromiseFulfilledResult<Pokemon> => result.status === 'fulfilled')
-      .map(result => result.value)
-    results.push(...successfulResults)
-
-    // 3) If the query looks like a base species name, include its varieties (forms)
-    // This ensures queries like "calyrex" also return "calyrex-shadow" and "calyrex-ice"
-    try {
-      const species = await getPokemonSpecies(trimmedQuery)
-      if (species && Array.isArray(species.varieties)) {
-        const varietyDetails = await Promise.allSettled(
-          species.varieties.slice(0, 20).map(async (v: any) => {
-            const url = v.pokemon?.url as string | undefined
-            if (!url) return null
-            const idStr = url.split('/').slice(-2)[0]
-            const id = parseInt(idStr)
-            if (!Number.isFinite(id)) return null
-            try {
-              return await getPokemon(id)
-            } catch (_) {
-              return null
-            }
-          })
-        )
-        // Filter out failed requests and null values
-        const successfulVarieties = varietyDetails
-          .filter((result): result is PromiseFulfilledResult<Pokemon> => 
-            result.status === 'fulfilled' && result.value !== null
-          )
-          .map(result => result.value)
-        results.push(...successfulVarieties)
-      }
-    } catch (error) {
-      // not a species or network hiccup; safe to ignore
-      console.debug(`Species varieties lookup failed for "${trimmedQuery}":`, error instanceof Error ? error.message : 'Unknown error')
+    // Check for abort signal again
+    if (signal?.aborted) {
+      throw new Error('Search cancelled')
     }
 
-    // 4) For partial matches, also check if any of the found Pokemon have varieties
-    // This ensures queries like "pika" also return all Pikachu variants
-    if (listMatches.length > 0) {
-      const varietyPromises = listMatches.slice(0, 5).map(async (pokemon) => {
-        try {
-          const species = await getPokemonSpecies(pokemon.name)
-          if (species && Array.isArray(species.varieties) && species.varieties.length > 1) {
-            const varietyDetails = await Promise.allSettled(
-              species.varieties.slice(0, 20).map(async (v: any) => {
-                const url = v.pokemon?.url as string | undefined
-                if (!url) return null
-                const idStr = url.split('/').slice(-2)[0]
-                const id = parseInt(idStr)
-                if (!Number.isFinite(id)) return null
-                try {
-                  return await getPokemon(id)
-                } catch (_) {
-                  return null
-                }
+    // 2) Use a more efficient pokemon list search with pagination
+    // Instead of fetching all 1000+ pokemon, use smaller batches and stop early
+    const searchBatchSize = 200
+    const maxBatches = 5 // Limit to first 1000 pokemon
+    let foundMatches = 0
+    const maxMatches = 15 // Reduced from 20 to improve performance
+
+    for (let batch = 0; batch < maxBatches && foundMatches < maxMatches; batch++) {
+      // Check for abort signal before each batch
+      if (signal?.aborted) {
+        throw new Error('Search cancelled')
+      }
+
+      try {
+        const offset = batch * searchBatchSize
+        const pokemonBatch = await getPokemonList(searchBatchSize, offset)
+        
+        // Filter matches in this batch
+        const batchMatches = pokemonBatch.results.filter(pokemon => {
+          const pokemonName = pokemon.name.toLowerCase()
+          const pokemonId = pokemon.url.split('/').slice(-2)[0]
+          return pokemonName.includes(trimmedQuery) || pokemonId.includes(trimmedQuery)
+        })
+
+        // Limit matches per batch to prevent excessive API calls
+        const limitedBatchMatches = batchMatches.slice(0, maxMatches - foundMatches)
+        
+        if (limitedBatchMatches.length > 0) {
+          // Fetch details for matches in parallel with concurrency limit
+          const concurrency = 4 // Limit concurrent requests
+          const chunks = []
+          for (let i = 0; i < limitedBatchMatches.length; i += concurrency) {
+            chunks.push(limitedBatchMatches.slice(i, i + concurrency))
+          }
+
+          for (const chunk of chunks) {
+            // Check for abort signal before each chunk
+            if (signal?.aborted) {
+              throw new Error('Search cancelled')
+            }
+
+            const chunkDetails = await Promise.allSettled(
+              chunk.map(async (pokemon) => {
+                const id = pokemon.url.split('/').slice(-2)[0]
+                return await getPokemon(parseInt(id))
               })
             )
-            return varietyDetails
-              .filter((result): result is PromiseFulfilledResult<Pokemon | null> => 
-                result.status === 'fulfilled' && result.value !== null
-              )
+            
+            // Add successful results
+            const successfulResults = chunkDetails
+              .filter((result): result is PromiseFulfilledResult<Pokemon> => result.status === 'fulfilled')
               .map(result => result.value)
+            
+            results.push(...successfulResults)
+            foundMatches += successfulResults.length
+
+            // Stop if we have enough matches
+            if (foundMatches >= maxMatches) break
           }
-          return []
-        } catch (error) {
-          // ignore errors for variety lookup
-          console.debug(`Variety lookup failed for "${pokemon.name}":`, error instanceof Error ? error.message : 'Unknown error')
-          return []
         }
-      })
-      
-      const varietyResults = await Promise.all(varietyPromises)
-      for (const varietyList of varietyResults) {
-        for (const p of varietyList) {
-          if (p) results.push(p)
+
+        // If no matches found in this batch and we've searched enough, break early
+        if (batchMatches.length === 0 && batch >= 2) {
+          break
         }
+
+      } catch (error) {
+        console.debug(`Batch search failed for batch ${batch}:`, error instanceof Error ? error.message : 'Unknown error')
+        // Continue with next batch instead of failing completely
+        continue
       }
     }
 
-    // Deduplicate by id and cap to 20 for performance
+    // 3) Only do variety lookup for exact name matches (not partial matches)
+    // This prevents expensive variety lookups for broad searches
+    if (results.length > 0 && results.length <= 3) {
+      try {
+        const exactNameMatches = results.filter(p => p.name.toLowerCase() === trimmedQuery)
+        for (const match of exactNameMatches.slice(0, 2)) { // Limit to 2 variety lookups
+          if (signal?.aborted) {
+            throw new Error('Search cancelled')
+          }
+
+          try {
+            const species = await getPokemonSpecies(match.name)
+            if (species && Array.isArray(species.varieties) && species.varieties.length > 1) {
+              const varietyDetails = await Promise.allSettled(
+                species.varieties.slice(0, 5).map(async (v: any) => { // Reduced from 20 to 5
+                  const url = v.pokemon?.url as string | undefined
+                  if (!url) return null
+                  const idStr = url.split('/').slice(-2)[0]
+                  const id = parseInt(idStr)
+                  if (!Number.isFinite(id)) return null
+                  try {
+                    return await getPokemon(id)
+                  } catch (_) {
+                    return null
+                  }
+                })
+              )
+              
+              const successfulVarieties = varietyDetails
+                .filter((result): result is PromiseFulfilledResult<Pokemon> => 
+                  result.status === 'fulfilled' && result.value !== null
+                )
+                .map(result => result.value)
+              
+              results.push(...successfulVarieties)
+            }
+          } catch (error) {
+            console.debug(`Variety lookup failed for "${match.name}":`, error instanceof Error ? error.message : 'Unknown error')
+          }
+        }
+      } catch (error) {
+        console.debug(`Species varieties lookup failed for "${trimmedQuery}":`, error instanceof Error ? error.message : 'Unknown error')
+      }
+    }
+
+    // Deduplicate by id and cap to 15 for performance
     const uniqueById = new Map<number, Pokemon>()
     for (const p of results) {
       if (p && !uniqueById.has(p.id)) uniqueById.set(p.id, p)
     }
-    const finalResults = Array.from(uniqueById.values()).slice(0, 20)
+    const finalResults = Array.from(uniqueById.values()).slice(0, 15)
 
-    await setCache(cacheKey, finalResults, CACHE_TTL.POKEMON_LIST)
+    // Cache results for 10 minutes (reduced from default to allow for more frequent updates)
+    await setCache(cacheKey, finalResults, 600)
     return finalResults
   } catch (error) {
+    if (error instanceof Error && error.message === 'Search cancelled') {
+      throw error // Re-throw cancellation errors
+    }
+    
     console.error('Search error for query "' + query + '":', error)
     // Don't report search errors as data loading errors since they're expected
     // when the API is temporarily unavailable

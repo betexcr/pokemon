@@ -64,19 +64,34 @@ export default function PokemonSelector({
     }
 
     let cancelled = false
+    const abortController = new AbortController()
     setSearchLoading(true)
+    
     const handle = setTimeout(async () => {
       try {
-        const results = await searchPokemonByName(term)
-        if (!cancelled) setSearchResults(Array.isArray(results) ? results : [])
+        if (cancelled || abortController.signal.aborted) return
+        
+        const results = await searchPokemonByName(term, abortController.signal)
+        if (!cancelled && !abortController.signal.aborted) {
+          setSearchResults(Array.isArray(results) ? results : [])
+        }
       } catch (e) {
-        if (!cancelled) setSearchResults([])
+        if (!cancelled && !abortController.signal.aborted) {
+          console.debug('Search error:', e instanceof Error ? e.message : 'Unknown error')
+          setSearchResults([])
+        }
       } finally {
-        if (!cancelled) setSearchLoading(false)
+        if (!cancelled && !abortController.signal.aborted) {
+          setSearchLoading(false)
+        }
       }
-    }, 250)
+    }, 300) // Increased debounce time to reduce API calls
 
-    return () => { cancelled = true; clearTimeout(handle) }
+    return () => { 
+      cancelled = true
+      abortController.abort()
+      clearTimeout(handle) 
+    }
   }, [searchTerm])
 
   // Filter Pokemon based on search term

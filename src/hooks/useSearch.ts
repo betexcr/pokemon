@@ -51,7 +51,7 @@ export function useSearch(options: UseSearchOptions = {}) {
     }
   }, [cacheTtl])
 
-  // Throttled search function
+  // Throttled search function with improved cancellation
   const performSearch = useCallback(async (term: string) => {
     if (!term.trim()) {
       setResults([])
@@ -68,7 +68,13 @@ export function useSearch(options: UseSearchOptions = {}) {
       return
     }
 
-    // Throttle requests
+    // Cancel previous request
+    if (abortController.current) {
+      abortController.current.abort()
+    }
+    abortController.current = new AbortController()
+
+    // Throttle requests with improved timing
     const now = Date.now()
     if (now - lastRequestTime.current < throttleMs) {
       const delay = throttleMs - (now - lastRequestTime.current)
@@ -76,28 +82,42 @@ export function useSearch(options: UseSearchOptions = {}) {
     }
     lastRequestTime.current = Date.now()
 
-    // Cancel previous request
-    if (abortController.current) {
-      abortController.current.abort()
+    // Check if request was cancelled during throttle delay
+    if (abortController.current.signal.aborted) {
+      return
     }
-    abortController.current = new AbortController()
 
     try {
       setIsLoading(true)
       setError(null)
       
-      const searchResults = await searchPokemonByName(term)
+      const searchResults = await searchPokemonByName(term, abortController.current.signal)
       
       // Cache the results
       cacheResults(term, searchResults)
       
       setResults(searchResults)
     } catch (err) {
-      if (err instanceof Error && err.name === 'AbortError') {
+      if (err instanceof Error && (err.name === 'AbortError' || err.message === 'Search cancelled')) {
         // Request was cancelled, ignore
         return
       }
-      setError(err instanceof Error ? err.message : 'Search failed')
+      
+      // Provide user-friendly error messages
+      let errorMessage = 'Search failed'
+      if (err instanceof Error) {
+        if (err.message.includes('503') || err.message.includes('Service Unavailable')) {
+          errorMessage = 'The Pokémon database is temporarily unavailable. Please try again in a moment.'
+        } else if (err.message.includes('temporarily unavailable')) {
+          errorMessage = 'Service temporarily unavailable. Please try again in a moment.'
+        } else if (err.message.includes('Network')) {
+          errorMessage = 'Network error. Please check your connection and try again.'
+        } else {
+          errorMessage = err.message
+        }
+      }
+      
+      setError(errorMessage)
       setResults([])
     } finally {
       setIsLoading(false)

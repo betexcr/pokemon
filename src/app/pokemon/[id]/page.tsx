@@ -4,6 +4,27 @@ import PokemonPageClient from './PokemonPageClient'
 import { getPokemonById, getAllValidPokemonIds } from '@/lib/api'
 import { cacheUtils } from '@/lib/sharedPokemonCache'
 
+// Preload evolution chain Pokemon for faster navigation
+async function preloadEvolutionChain(pokemon: any) {
+  try {
+    // This will be called in the background and won't block the page render
+    const { getEvolutionChainNodes } = await import('@/lib/api')
+    const evolutionChain = await getEvolutionChainNodes(pokemon.id)
+    
+    if (evolutionChain && evolutionChain.length > 0) {
+      // Preload Pokemon in the evolution chain
+      const evolutionIds = evolutionChain.map((evo: any) => evo.id).filter(Boolean)
+      if (evolutionIds.length > 0) {
+        console.log(`🔄 Preloading evolution chain Pokemon: ${evolutionIds.join(', ')}`)
+        await cacheUtils.preloadForDetailPage(evolutionIds[0]) // Preload first evolution
+      }
+    }
+  } catch (error) {
+    // Don't let preloading errors affect the main page
+    console.debug('Failed to preload evolution chain:', error)
+  }
+}
+
 export async function generateStaticParams() {
   try {
     // Get all valid Pokemon IDs from the API
@@ -97,6 +118,9 @@ export default async function PokemonPage(props: any) {
 
     // Preload surrounding Pokemon for better navigation UX
     cacheUtils.preloadForDetailPage(pokemonId)
+    
+    // Preload evolution chain Pokemon for faster navigation
+    preloadEvolutionChain(pokemon)
     
     return <PokemonPageClient pokemon={pokemon} />
   } catch (error) {

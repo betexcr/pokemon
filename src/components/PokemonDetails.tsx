@@ -10,7 +10,7 @@ import MatchupsSection from '@/components/pokemon/MatchupsSection'
 import { Pokemon } from '@/types/pokemon'
 import { getPokemonSpecies, getPokemonAbilities, getPokemonMoves, getEvolutionChainNodes } from '@/lib/api'
 import { getMatchup } from '@/lib/getMatchup'
-import { PokemonDetailsSkeleton } from '@/components/skeletons/PokemonDetailsSkeleton'
+import { PokemonDetailsSkeleton, StatsSectionSkeleton, MovesSectionSkeleton, EvolutionSectionSkeleton, MatchupsSectionSkeleton } from '@/components/skeletons/PokemonDetailsSkeleton'
 
 interface PokemonDetailsProps {
   pokemon: Pokemon
@@ -29,6 +29,9 @@ export default function PokemonDetails({ pokemon, showHeader = true, className =
   const [typeMatchups, setTypeMatchups] = useState<any[]>([])
   const [activeTab, setActiveTab] = useState<'stats' | 'moves' | 'evolution' | 'matchups'>('stats')
   const [loading, setLoading] = useState(true)
+  const [loadingMoves, setLoadingMoves] = useState(true)
+  const [loadingEvolution, setLoadingEvolution] = useState(true)
+  const [loadingMatchups, setLoadingMatchups] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -37,51 +40,58 @@ export default function PokemonDetails({ pokemon, showHeader = true, className =
         setLoading(true)
         setError(null)
         
-        // Load all data in parallel for better performance
-        const [species, abilitiesData, movesData, evolutionData] = await Promise.allSettled([
-          getPokemonSpecies(pokemon.id),
-          getPokemonAbilities(pokemon.id),
-          getPokemonMoves(pokemon.id),
-          getEvolutionChainNodes(pokemon.id)
-        ])
-        
-        // Handle species data
-        if (species.status === 'fulfilled') {
-          const speciesData = species.value
+        // Load critical data first (species for flavor text and genus)
+        const speciesPromise = getPokemonSpecies(pokemon.id).then(speciesData => {
           const englishFlavorText = speciesData.flavor_text_entries?.find((entry: any) => entry.language.name === 'en')?.flavor_text || ''
           setFlavorText(englishFlavorText)
           const englishGenus = speciesData.genera?.find((genus: any) => genus.language.name === 'en')?.genus || ''
           setGenus(englishGenus)
           setHasGenderDifferences(speciesData.has_gender_differences || false)
-        } else {
-          console.warn('Failed to load species data:', species.reason)
-        }
-        
-        // Handle abilities data
-        if (abilitiesData.status === 'fulfilled') {
-          setAbilities(abilitiesData.value)
-        } else {
-          console.warn('Failed to load abilities data:', abilitiesData.reason)
+          return speciesData
+        }).catch(error => {
+          console.warn('Failed to load species data:', error)
+          return null
+        })
+
+        // Load abilities data (important for hero section)
+        const abilitiesPromise = getPokemonAbilities(pokemon.id).then(data => {
+          setAbilities(data)
+          return data
+        }).catch(error => {
+          console.warn('Failed to load abilities data:', error)
           setAbilities([])
-        }
+          return []
+        })
+
+        // Wait for critical data to load before showing content
+        await Promise.allSettled([speciesPromise, abilitiesPromise])
         
-        // Handle moves data
-        if (movesData.status === 'fulfilled') {
-          setMoves(movesData.value)
-        } else {
-          console.warn('Failed to load moves data:', movesData.reason)
+        // Allow UI to render with basic data while loading secondary data
+        setLoading(false)
+
+        // Load moves data separately for progressive loading
+        const movesPromise = getPokemonMoves(pokemon.id).then(data => {
+          setMoves(data)
+          setLoadingMoves(false)
+          return data
+        }).catch(error => {
+          console.warn('Failed to load moves data:', error)
           setMoves([])
-        }
-        
-        // Handle evolution data
-        if (evolutionData.status === 'fulfilled') {
-          setEvolutionChain(evolutionData.value)
-        } else {
-          console.warn('Failed to load evolution data:', evolutionData.reason)
+          setLoadingMoves(false)
+        })
+
+        // Load evolution data separately for progressive loading
+        const evolutionPromise = getEvolutionChainNodes(pokemon.id).then(data => {
+          setEvolutionChain(data)
+          setLoadingEvolution(false)
+          return data
+        }).catch(error => {
+          console.warn('Failed to load evolution data:', error)
           setEvolutionChain([])
-        }
-        
-        // Calculate type matchups using the new getMatchup function
+          setLoadingEvolution(false)
+        })
+
+        // Calculate type matchups immediately (no API call needed)
         const pokemonTypes = pokemon.types.map(t => t.type.name)
         
         // Convert to proper case for getMatchup function
@@ -90,6 +100,13 @@ export default function PokemonDetails({ pokemon, showHeader = true, className =
         )
         
         const matchups = getMatchup(defendingTypes)
+        setTypeMatchups(matchups)
+        setLoadingMatchups(false)
+
+        // Don't wait for secondary data - let it load in background
+        Promise.allSettled([movesPromise, evolutionPromise]).catch(error => {
+          console.warn('Failed to load secondary data:', error)
+        })
         
         // Group by effectiveness with separate categories
         const doubleWeak = matchups.x4.map(type => type.toLowerCase())
@@ -133,15 +150,15 @@ export default function PokemonDetails({ pokemon, showHeader = true, className =
 
     switch (activeTab) {
       case 'stats':
-        return <StatsSection stats={transformedStats} name={pokemon.name} loading={loading} />
+        return loading ? <StatsSectionSkeleton /> : <StatsSection stats={transformedStats} name={pokemon.name} />
       case 'moves':
-        return <MovesSection moves={moves} pokemonTypes={pokemon.types.map(t => t.type.name)} loading={loading} />
+        return loadingMoves ? <MovesSectionSkeleton /> : <MovesSection moves={moves} pokemonTypes={pokemon.types.map(t => t.type.name)} />
       case 'evolution':
-        return <EvolutionSection chain={evolutionChain} loading={loading} />
+        return loadingEvolution ? <EvolutionSectionSkeleton /> : <EvolutionSection chain={evolutionChain} />
       case 'matchups':
-        return <MatchupsSection groups={typeMatchups} loading={loading} />
+        return loadingMatchups ? <MatchupsSectionSkeleton /> : <MatchupsSection groups={typeMatchups} />
       default:
-        return <StatsSection stats={transformedStats} name={pokemon.name} loading={loading} />
+        return loading ? <StatsSectionSkeleton /> : <StatsSection stats={transformedStats} name={pokemon.name} />
     }
   }
 

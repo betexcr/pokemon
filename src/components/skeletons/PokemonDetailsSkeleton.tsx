@@ -131,6 +131,70 @@ export function StatSkeleton() {
 }
 
 /**
+ * Skeleton for stats section
+ */
+export function StatsSectionSkeleton() {
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 animate-pulse">
+      <div className="h-6 bg-gray-300 dark:bg-gray-700 rounded w-32 mb-4"></div>
+      <div className="space-y-3">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <StatSkeleton key={i} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Skeleton for moves section
+ */
+export function MovesSectionSkeleton() {
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 animate-pulse">
+      <div className="h-6 bg-gray-300 dark:bg-gray-700 rounded w-24 mb-4"></div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <MoveSkeleton key={i} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Skeleton for evolution section
+ */
+export function EvolutionSectionSkeleton() {
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 animate-pulse">
+      <div className="h-6 bg-gray-300 dark:bg-gray-700 rounded w-32 mb-4"></div>
+      <div className="flex flex-wrap gap-6 justify-center">
+        {[1, 2, 3].map((i) => (
+          <EvolutionSkeleton key={i} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Skeleton for matchups section
+ */
+export function MatchupsSectionSkeleton() {
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 animate-pulse">
+      <div className="h-6 bg-gray-300 dark:bg-gray-700 rounded w-28 mb-4"></div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+          <MatchupSkeleton key={i} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/**
  * Skeleton for move cards
  */
 export function MoveSkeleton() {
