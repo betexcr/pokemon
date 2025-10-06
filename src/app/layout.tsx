@@ -99,6 +99,26 @@ export default function RootLayout({
           }}
         />
         
+        {/* Handle browser extensions that modify DOM (like Dark Reader) */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(() => { 
+  // Suppress hydration warnings for browser extensions
+  const originalError = console.error;
+  console.error = function(...args) {
+    if (args[0] && typeof args[0] === 'string' && 
+        (args[0].includes('Hydration failed') || 
+         args[0].includes('hydration') ||
+         args[0].includes('darkreader') ||
+         args[0].includes('data-darkreader'))) {
+      return; // Suppress these errors
+    }
+    originalError.apply(console, args);
+  };
+})();`
+          }}
+        />
+        
         {/* Additional SEO */}
         <meta name="theme-color" content="#3B4CCA" />
         <meta name="msapplication-TileColor" content="#3B4CCA" />

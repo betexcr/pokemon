@@ -88,7 +88,7 @@ export default function AppHeader({
 
 
   return (
-    <header className="sticky top-0 z-50 bg-gradient-to-r from-surface via-surface to-surface border-b border-border shadow-lg">
+    <header className="sticky top-0 z-50 bg-gradient-to-r from-surface via-surface to-surface border-b border-border shadow-lg" suppressHydrationWarning>
       <div className="w-full max-w-full px-2 sm:px-4 md:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14 sm:h-16 md:h-16 lg:h-18 xl:h-20 py-1 sm:py-2 md:py-3 list-none min-w-0">
           <div className="flex items-center space-x-2 sm:space-x-3 lg:space-x-4 min-w-0 flex-1">
@@ -121,7 +121,7 @@ export default function AppHeader({
                 </Tooltip>
               )}
               <div className="flex flex-col min-w-0 flex-1">
-                <h2 className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-poke-blue dark:bg-gradient-to-r dark:from-poke-blue dark:via-poke-red dark:to-poke-blue dark:bg-clip-text dark:text-transparent truncate" style={{ fontFamily: 'Pokemon Solid, sans-serif' }} suppressHydrationWarning>
+                <h2 className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-poke-blue dark:bg-gradient-to-r dark:from-poke-blue dark:via-poke-red dark:to-poke-blue dark:bg-clip-text dark:text-transparent truncate" style={{ fontFamily: 'Pokemon Solid, sans-serif' }}>
                   {title}
                 </h2>
                 {subtitle ? (
