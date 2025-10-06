@@ -159,7 +159,6 @@ async function performFetchWithRetry<T>(
   retryStatuses: Set<number>,
   is503Error: (status: number) => boolean
 ): Promise<T> {
-
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     const controller = new AbortController()
     const timeout = setTimeout(() => {
@@ -218,18 +217,18 @@ async function performFetchWithRetry<T>(
     } catch (error: any) {
       clearTimeout(timeout)
       
-          // Better error handling for different types of failures
-          if (error?.name === 'AbortError') {
-            // Don't report abort errors as they're usually intentional timeouts
-            console.warn('Request aborted (likely timeout):', error.message)
-            // Don't record this as a circuit breaker failure or retry
-            throw error // Re-throw to prevent retry and circuit breaker failure
-          } else if (error instanceof TypeError && error.message.includes('fetch')) {
-            // Only report actual network errors, not other TypeErrors
-            reportNetworkError(`Network request failed: ${error.message}`)
-          } else {
-            reportApiError(`API request failed: ${error.message}`)
-          }
+      // Better error handling for different types of failures
+      if (error?.name === 'AbortError') {
+        // Don't report abort errors as they're usually intentional timeouts
+        console.warn('Request aborted (likely timeout):', error.message)
+        // Don't record this as a circuit breaker failure or retry
+        throw error // Re-throw to prevent retry and circuit breaker failure
+      } else if (error instanceof TypeError && error.message.includes('fetch')) {
+        // Only report actual network errors, not other TypeErrors
+        reportNetworkError(`Network request failed: ${error.message}`)
+      } else {
+        reportApiError(`API request failed: ${error.message}`)
+      }
       
       // Record failure for circuit breaker (only for non-abort errors)
       circuitBreaker.recordFailure()
@@ -243,18 +242,20 @@ async function performFetchWithRetry<T>(
         await new Promise(res => setTimeout(res, backoff + jitter))
         continue
       }
-          // Only log non-404 errors as they might be unexpected
-          if (!error?.message?.includes('404')) {
-            console.error('API fetch error:', error)
-            // Don't report API errors for network issues that are already handled
-            if (!(error instanceof TypeError && error.message.includes('fetch'))) {
-              reportApiError(`API request failed: ${error?.message || 'Unknown error'}`, {
-                url: absoluteUrl,
-                attempt,
-                maxAttempts
-              })
-            }
-          }
+      
+      // Only log non-404 errors as they might be unexpected
+      if (!error?.message?.includes('404')) {
+        console.error('API fetch error:', error)
+        // Don't report API errors for network issues that are already handled
+        if (!(error instanceof TypeError && error.message.includes('fetch'))) {
+          reportApiError(`API request failed: ${error?.message || 'Unknown error'}`, {
+            url: absoluteUrl,
+            attempt,
+            maxAttempts
+          })
+        }
+      }
+      
       // Cache network errors to prevent repeated attempts
       const errorMessage = error instanceof Error ? error.message : 'Network error'
       setNegativeCache(absoluteUrl, errorMessage, 300)
