@@ -49,6 +49,9 @@ export default function VirtualizedPokemonGrid({
   sentinelRef
 }: VirtualizedPokemonGridProps) {
 
+  // Note: Intersection observer is handled by parent components to avoid conflicts
+  // This component only renders the sentinel element
+
   let theme = 'light'
   try {
     const themeContext = useTheme()
@@ -668,13 +671,15 @@ export default function VirtualizedPokemonGrid({
   }
 
   // Render non-virtualized content (original implementation)
+  console.log('🔍 VirtualizedPokemonGrid rendering - uniqueRegularPokemon.length:', uniqueRegularPokemon.length, 'sentinelRef type:', typeof sentinelRef)
   return (
-    <div className={`w-full max-w-full overflow-x-hidden ${className}`}>
+    <div className={`w-full max-w-full overflow-x-hidden min-h-screen ${className}`}>
       {/* Regular Pokemon */}
       {uniqueRegularPokemon.length > 0 && (
         <motion.div 
           className={`${getLayoutClasses()} w-full max-w-full ${density === 'list' ? 'pl-0 pr-0' : 'pl-0 pr-0'}`} 
           data-pokemon-grid
+          style={{ minHeight: '200vh' }}
           initial="hidden"
           animate="visible"
           variants={{
@@ -843,14 +848,21 @@ export default function VirtualizedPokemonGrid({
         </motion.div>
       )}
 
-      {/* Infinite scroll sentinel for non-virtualized content - triggers earlier */}
-      <div
-        ref={sentinelRef}
+      {/* Infinite scroll sentinel for non-virtualized content */}
+        <div
+          ref={(node) => {
+            console.log('🔗 VirtualizedPokemonGrid sentinelRef called with:', !!node, 'sentinelRef type:', typeof sentinelRef)
+            
+            // Call the external sentinelRef if provided
+            if (sentinelRef) {
+              sentinelRef(node)
+            }
+          }}
         style={{
           width: '100%',
           height: '100px', // Larger height for better detection
           backgroundColor: 'transparent',
-          marginTop: '-300px', // Reduced from 500px to prevent too many requests
+          marginTop: '-200px', // Position sentinel 200px above the bottom for earlier triggering
         }}
         data-infinite-scroll-sentinel="true"
       />

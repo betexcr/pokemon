@@ -124,8 +124,12 @@ async function fetchFromAPI<T>(url: string): Promise<T> {
   // Special handling for 503 errors (Service Unavailable)
   const is503Error = (status: number) => status === 503
 
-  // Convert relative URLs to absolute URLs
-  const absoluteUrl = url.startsWith('http') ? url : `${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'}${url}`
+  // Convert relative URLs to absolute only in the browser. On the server, keep relative so Next.js fetch resolves correctly in any environment.
+  const absoluteUrl = url.startsWith('http')
+    ? url
+    : (typeof window !== 'undefined'
+        ? `${window.location.origin}${url}`
+        : url)
 
   // Check circuit breaker before making request
   if (circuitBreaker.isOpen()) {

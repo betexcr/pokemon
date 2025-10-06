@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { redisCache, getRedisCacheKey, REDIS_CACHE_TTL } from '@/lib/redis'
 
-export const dynamic = 'force-static'
-export const revalidate = 86400 // 24 hours
+export const dynamic = 'force-dynamic'
+export const revalidate = 0 // No caching
 
 export async function GET(request: NextRequest) {
   try {
@@ -36,8 +36,8 @@ export async function GET(request: NextRequest) {
     
     const data = await response.json()
     
-    // Cache in Redis for 24 hours
-    await redisCache.set(cacheKey, data, REDIS_CACHE_TTL.POKEMON_LIST)
+    // Cache in Redis for 1 hour (reduced from 24 hours to prevent stale data)
+    await redisCache.set(cacheKey, data, 60 * 60)
     
     return NextResponse.json(data)
   } catch (error) {

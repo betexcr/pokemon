@@ -1216,110 +1216,8 @@ export default function ModernPokedexLayout({
     }
   }, [isLoadingMore, hasMorePokemon, currentOffset, totalPokemonCount]);
 
-  // Improved infinite scroll effect using Intersection Observer
-  useEffect(() => {
-    if (isLoadingMore || !hasMorePokemon) {
-      return;
-    }
-
-    // Define setupObserver function first
-    const setupObserver = (sentinelElement: Element) => {
-
-      // Create intersection observer with better configuration
-      const observer = new IntersectionObserver(
-        (entries) => {
-          const [entry] = entries;
-          
-          console.log('🔍 Intersection observer triggered:', {
-            isIntersecting: entry.isIntersecting,
-            isLoadingMore,
-            hasMorePokemon,
-            currentOffset,
-            totalPokemonCount
-          });
-          
-          if (entry.isIntersecting && !isLoadingMore && hasMorePokemon) {
-            console.log('🚫 Intersection observer disabled - using useViewportDataLoading instead');
-            // loadMorePokemon(); // DISABLED: Now using useViewportDataLoading
-          }
-        },
-        {
-          root: null, // Use viewport as root for better reliability
-          rootMargin: '400px', // Reduced from 800px to prevent too many requests
-          threshold: 0.01 // Lower threshold for more sensitive detection
-        }
-      );
-
-      observer.observe(sentinelElement);
-
-      return () => {
-        observer.disconnect();
-      };
-    };
-
-    // Find the sentinel element with retry mechanism
-    const findSentinel = () => {
-      const sentinel = document.querySelector('[data-infinite-scroll-sentinel="true"]');
-      
-      return sentinel;
-    };
-
-
-    let sentinel = findSentinel();
-    let observerCleanup: (() => void) | undefined;
-    
-    if (!sentinel) {
-      
-      // Retry finding sentinel after a short delay
-      const retryTimeout = setTimeout(() => {
-        sentinel = findSentinel();
-        if (sentinel) {
-          
-          observerCleanup = setupObserver(sentinel);
-        } else {
-          
-        }
-      }, 100);
-      
-      return () => clearTimeout(retryTimeout);
-    } else {
-      
-      // Set up observer for the found sentinel
-      observerCleanup = setupObserver(sentinel);
-    }
-
-    // Set up scroll-based backup detection (less aggressive)
-    const mainContentArea = document.querySelector('.flex-1.min-h-0.overflow-y-auto');
-    let scrollTimeout: NodeJS.Timeout;
-    
-    const handleScrollBackup = () => {
-      if (!mainContentArea || isLoadingMore || !hasMorePokemon) return;
-      
-      clearTimeout(scrollTimeout);
-      scrollTimeout = setTimeout(() => {
-        const { scrollTop, scrollHeight, clientHeight } = mainContentArea;
-        const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
-        
-        // Trigger loading when within 200px of bottom (reduced from 500px)
-        if (distanceFromBottom < 200) {
-          console.log('🚫 Scroll-based loading disabled - using useViewportDataLoading instead');
-          // loadMorePokemon(); // DISABLED: Now using useViewportDataLoading
-        }
-      }, 150); // Increased debounce time
-    };
-
-    if (mainContentArea) {
-      mainContentArea.addEventListener('scroll', handleScrollBackup, { passive: true });
-    }
-
-    return () => {
-      observerCleanup?.();
-      if (mainContentArea) {
-        mainContentArea.removeEventListener('scroll', handleScrollBackup);
-      }
-      clearTimeout(scrollTimeout);
-    };
-  }, [isLoadingMore, hasMorePokemon, loadMorePokemon, currentOffset])
+  // Note: Intersection observer is handled by the main page component to avoid conflicts
+  // This component only passes the sentinel ref to child components
 
   // Clear all filters
   const clearAllFilters = useCallback(() => {
@@ -2079,7 +1977,12 @@ export default function ModernPokedexLayout({
                       isLoadingMore={effectiveIsLoadingMore}
                       hasMorePokemon={effectiveHasMorePokemon}
                       onLoadMore={externalLoadMorePokemon || loadMorePokemon}
-                      sentinelRef={externalSentinelRef}
+                      sentinelRef={(node) => {
+                        console.log('🔗 ModernPokedexLayout sentinelRef called with:', !!node, 'externalSentinelRef type:', typeof externalSentinelRef)
+                        if (externalSentinelRef) {
+                          externalSentinelRef(node)
+                        }
+                      }}
                     />
                   )}
                 </div>
@@ -2096,10 +1999,10 @@ export default function ModernPokedexLayout({
                 {isAllGenerations && hasMorePokemon && !isLoadingMore && emptyBatchCountRef.current > 0 && (
                   <div className="text-center py-8">
                     <button
-                      onClick={() => console.log('🚫 Manual load more disabled - using useViewportDataLoading instead')}
+                      onClick={loadMorePokemon}
                       className="px-6 py-3 bg-poke-red text-white rounded-lg hover:bg-poke-red/90 transition-colors font-medium"
                     >
-                      Retry Loading Pokémon (Disabled)
+                      Retry Loading Pokémon
                     </button>
                     <p className="text-muted text-sm mt-2">There was an error loading more Pokémon. Click to retry.</p>
                   </div>

@@ -1,0 +1,309 @@
+{
+  "downloaded": [
+    "brock-masters.png",
+    "misty-masters.png",
+    "agatha-lgpe.png",
+    "lorelei-lgpe.png"
+  ],
+  "skipped": [
+    "erika.png",
+    "koga.png",
+    "sabrina-masters.png",
+    "blaine.png",
+    "giovanni.png",
+    "ltsurge-gen3.png",
+    "ltsurge.png",
+    "bruno.png",
+    "lance.png",
+    "falkner-gen2.png",
+    "bugsy-gen2.png",
+    "whitney-masters.png",
+    "morty-masters.png",
+    "chuck-gen2.png",
+    "jasmine-masters.png",
+    "pryce-gen2.png",
+    "clair-masters.png",
+    "will-gen2.png",
+    "koga.png",
+    "bruno.png",
+    "karen-gen2.png",
+    "roxanne-masters.png",
+    "brawly-gen6.png",
+    "wattson-gen3.png",
+    "flannery-gen6.png",
+    "norman-gen6.png",
+    "winona-gen6.png",
+    "tateandliza-gen6.png",
+    "wallace-masters.png",
+    "sidney-gen3.png",
+    "phoebe-masters.png",
+    "glacia-gen3.png",
+    "drake-gen3.png",
+    "steven-masters.png",
+    "roark.png",
+    "gardenia-masters.png",
+    "maylene.png",
+    "crasherwake.png",
+    "fantina.png",
+    "byron.png",
+    "candice-masters.png",
+    "volkner-masters.png",
+    "aaron.png",
+    "bertha.png",
+    "flint.png",
+    "lucian.png",
+    "cynthia-masters.png",
+    "cilan.png",
+    "chili.png",
+    "cress.png",
+    "lenora.png",
+    "burgh-masters.png",
+    "elesa-masters.png",
+    "clay.png",
+    "skyla-masters.png",
+    "brycen.png",
+    "drayden.png",
+    "iris-masters.png",
+    "shauntal.png",
+    "grimsley-masters.png",
+    "caitlin-masters.png",
+    "alder.png",
+    "viola-masters.png",
+    "grant.png",
+    "korrina-masters.png",
+    "ramos.png",
+    "clemont.png",
+    "valerie.png",
+    "olympia.png",
+    "wulfric.png",
+    "malva.png",
+    "siebold-masters.png",
+    "wikstrom.png",
+    "drasna.png",
+    "diantha-masters.png",
+    "ilima.png",
+    "lana-masters.png",
+    "kiawe.png",
+    "mallow-masters.png",
+    "sophocles.png",
+    "acerola-masters.png",
+    "mina-masters.png",
+    "hala.png",
+    "olivia.png",
+    "nanu.png",
+    "hapu.png",
+    "molayne.png",
+    "olivia.png",
+    "kahili.png",
+    "milo.png",
+    "nessa-masters.png",
+    "kabu.png",
+    "bea-masters.png",
+    "allister-masters.png",
+    "opal.png",
+    "gordie.png",
+    "melony.png",
+    "piers-masters.png",
+    "raihan-masters.png",
+    "leon-masters.png",
+    "hop-masters.png",
+    "marnie-masters.png",
+    "bede-masters.png",
+    "katy.png",
+    "brassius.png",
+    "iono.png",
+    "kofu.png",
+    "larry.png",
+    "ryme.png",
+    "tulip.png",
+    "grusha.png",
+    "poppy.png",
+    "hassel.png",
+    "geeta.png",
+    "red.png",
+    "blue.png",
+    "green.png",
+    "yellow.png",
+    "ethan-masters.png",
+    "lyra-masters.png",
+    "brendan-masters.png",
+    "may-masters.png",
+    "wally-masters.png",
+    "lucas.png",
+    "dawn-masters.png",
+    "barry-masters.png",
+    "nate-masters.png",
+    "rosa-masters.png",
+    "hugh.png",
+    "calem-masters.png",
+    "serena-masters.png",
+    "elio.png",
+    "selene-masters.png",
+    "gladion-masters.png",
+    "lillie-masters.png",
+    "victor-masters.png",
+    "gloria-masters.png",
+    "hop-masters.png",
+    "marnie-masters.png",
+    "bede-masters.png",
+    "silver-masters.png",
+    "wally-masters.png",
+    "barry-masters.png",
+    "bianca-masters.png",
+    "hugh.png",
+    "shauna-masters.png",
+    "tierno.png",
+    "trevor.png",
+    "hau-masters.png",
+    "gladion-masters.png",
+    "hop-masters.png",
+    "marnie-masters.png",
+    "bede-masters.png",
+    "nemona-masters.png",
+    "penny.png",
+    "giovanni.png",
+    "archie-gen6.png",
+    "maxie-gen6.png",
+    "cyrus-masters.png",
+    "ghetsis.png",
+    "lysandre-masters.png",
+    "guzma-masters.png",
+    "lusamine-masters.png",
+    "rose.png",
+    "oleana.png",
+    "sada.png",
+    "turo.png",
+    "ash.png",
+    "bill-gen3.png",
+    "mrfuji-gen3.png",
+    "teamrocket.png"
+  ],
+  "failed": [
+    {
+      "name": "marshall",
+      "error": "File not found: https://play.pokemonshowdown.com/sprites/trainers/marshall.png"
+    },
+    {
+      "name": "akahi",
+      "error": "File not found: https://play.pokemonshowdown.com/sprites/trainers/akahi.png"
+    },
+    {
+      "name": "rion",
+      "error": "File not found: https://play.pokemonshowdown.com/sprites/trainers/rion.png"
+    },
+    {
+      "name": "gary",
+      "error": "File not found: https://play.pokemonshowdown.com/sprites/trainers/gary.png"
+    },
+    {
+      "name": "juliana",
+      "error": "File not found: https://play.pokemonshowdown.com/sprites/trainers/juliana.png"
+    },
+    {
+      "name": "florian",
+      "error": "File not found: https://play.pokemonshowdown.com/sprites/trainers/florian.png"
+    },
+    {
+      "name": "professoroak",
+      "error": "File not found: https://play.pokemonshowdown.com/sprites/trainers/professoroak.png"
+    },
+    {
+      "name": "professorelm",
+      "error": "File not found: https://play.pokemonshowdown.com/sprites/trainers/professorelm.png"
+    },
+    {
+      "name": "professorbirch",
+      "error": "File not found: https://play.pokemonshowdown.com/sprites/trainers/professorbirch.png"
+    },
+    {
+      "name": "professorrowan",
+      "error": "File not found: https://play.pokemonshowdown.com/sprites/trainers/professorrowan.png"
+    },
+    {
+      "name": "professorjuniper",
+      "error": "File not found: https://play.pokemonshowdown.com/sprites/trainers/professorjuniper.png"
+    },
+    {
+      "name": "professorsycamore",
+      "error": "File not found: https://play.pokemonshowdown.com/sprites/trainers/professorsycamore.png"
+    },
+    {
+      "name": "professorkukui",
+      "error": "File not found: https://play.pokemonshowdown.com/sprites/trainers/professorkukui.png"
+    },
+    {
+      "name": "professorburnet",
+      "error": "File not found: https://play.pokemonshowdown.com/sprites/trainers/professorburnet.png"
+    },
+    {
+      "name": "professormagnolia",
+      "error": "File not found: https://play.pokemonshowdown.com/sprites/trainers/professormagnolia.png"
+    },
+    {
+      "name": "professorsonia",
+      "error": "File not found: https://play.pokemonshowdown.com/sprites/trainers/professorsonia.png"
+    },
+    {
+      "name": "professorturo",
+      "error": "File not found: https://play.pokemonshowdown.com/sprites/trainers/professorturo.png"
+    },
+    {
+      "name": "professorsada",
+      "error": "File not found: https://play.pokemonshowdown.com/sprites/trainers/professorsada.png"
+    },
+    {
+      "name": "arven",
+      "error": "File not found: https://play.pokemonshowdown.com/sprites/trainers/arven.png"
+    },
+    {
+      "name": "clavell",
+      "error": "File not found: https://play.pokemonshowdown.com/sprites/trainers/clavell.png"
+    },
+    {
+      "name": "jessie",
+      "error": "File not found: https://play.pokemonshowdown.com/sprites/trainers/jessie.png"
+    },
+    {
+      "name": "james",
+      "error": "File not found: https://play.pokemonshowdown.com/sprites/trainers/james.png"
+    },
+    {
+      "name": "meowth",
+      "error": "File not found: https://play.pokemonshowdown.com/sprites/trainers/meowth.png"
+    },
+    {
+      "name": "nursejoy",
+      "error": "File not found: https://play.pokemonshowdown.com/sprites/trainers/nursejoy.png"
+    },
+    {
+      "name": "officerjenny",
+      "error": "File not found: https://play.pokemonshowdown.com/sprites/trainers/officerjenny.png"
+    },
+    {
+      "name": "teamgalactic",
+      "error": "File not found: https://play.pokemonshowdown.com/sprites/trainers/teamgalactic.png"
+    },
+    {
+      "name": "teamplasma",
+      "error": "File not found: https://play.pokemonshowdown.com/sprites/trainers/teamplasma.png"
+    },
+    {
+      "name": "teamflare",
+      "error": "File not found: https://play.pokemonshowdown.com/sprites/trainers/teamflare.png"
+    },
+    {
+      "name": "teamskull",
+      "error": "File not found: https://play.pokemonshowdown.com/sprites/trainers/teamskull.png"
+    },
+    {
+      "name": "teamyell",
+      "error": "File not found: https://play.pokemonshowdown.com/sprites/trainers/teamyell.png"
+    },
+    {
+      "name": "teamstar",
+      "error": "File not found: https://play.pokemonshowdown.com/sprites/trainers/teamstar.png"
+    }
+  ],
+  "timestamp": "2025-10-04T05:42:34.889Z",
+  "total": 206
+}

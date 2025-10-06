@@ -9,6 +9,7 @@ class SharedPokemonCache {
   private cacheTimestamps = new Map<number, number>()
   private preloadQueue = new Set<number>()
   private inFlightFetches = new Set<number>()
+  private failedRequests = new Set<number>() // Track failed requests to prevent retries
   
   // Cache TTL: 10 minutes for in-memory cache
   private readonly CACHE_TTL = 10 * 60 * 1000
@@ -20,6 +21,11 @@ class SharedPokemonCache {
    * Get Pokemon from cache
    */
   get(id: number): Pokemon | null {
+    // Don't return cached data for known failed requests
+    if (this.failedRequests.has(id)) {
+      return null
+    }
+    
     const cached = this.cache.get(id)
     const timestamp = this.cacheTimestamps.get(id)
     
@@ -47,6 +53,28 @@ class SharedPokemonCache {
     
     this.cache.set(id, pokemon)
     this.cacheTimestamps.set(id, Date.now())
+    
+    // Remove from failed requests if successfully cached
+    this.failedRequests.delete(id)
+  }
+  
+  /**
+   * Mark a request as failed to prevent repeated attempts
+   */
+  markFailed(id: number): void {
+    this.failedRequests.add(id)
+    
+    // Clean up failed requests after 5 minutes
+    setTimeout(() => {
+      this.failedRequests.delete(id)
+    }, 5 * 60 * 1000)
+  }
+  
+  /**
+   * Check if a request has failed recently
+   */
+  hasFailed(id: number): boolean {
+    return this.failedRequests.has(id)
   }
   
   /**
@@ -99,13 +127,14 @@ class SharedPokemonCache {
     this.cacheTimestamps.clear()
     this.preloadQueue.clear()
     this.inFlightFetches.clear()
+    this.failedRequests.clear()
   }
   
   /**
    * Preload Pokemon data in background
    */
   async preloadPokemon(ids: number[], concurrency = 4): Promise<void> {
-    const queue = ids.filter(id => !this.has(id) && !this.inFlightFetches.has(id))
+    const queue = ids.filter(id => !this.has(id) && !this.inFlightFetches.has(id) && !this.hasFailed(id))
     
     if (queue.length === 0) return
     
@@ -126,6 +155,8 @@ class SharedPokemonCache {
           this.set(id, pokemon)
         } catch (error) {
           console.warn(`Failed to preload Pokemon ${id}:`, error)
+          // Mark as failed to prevent repeated attempts
+          this.markFailed(id)
         } finally {
           this.inFlightFetches.delete(id)
         }
@@ -202,6 +233,12 @@ export const cacheUtils = {
    * Get Pokemon from shared cache or fetch if not available
    */
   async getOrFetchPokemon(id: number): Promise<Pokemon | null> {
+    // Check if this request has failed recently
+    if (sharedPokemonCache.hasFailed(id)) {
+      console.log(`🚫 Skipping failed request for Pokemon ${id}`)
+      return null
+    }
+    
     // Check cache first
     const cached = sharedPokemonCache.get(id)
     if (cached) return cached
@@ -214,6 +251,8 @@ export const cacheUtils = {
       return pokemon
     } catch (error) {
       console.warn(`Failed to fetch Pokemon ${id}:`, error)
+      // Mark as failed to prevent repeated attempts
+      sharedPokemonCache.markFailed(id)
       return null
     }
   },
