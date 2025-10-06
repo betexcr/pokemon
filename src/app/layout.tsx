@@ -13,7 +13,6 @@ import { ReactQueryProvider } from '@/components/ReactQueryProvider'
 import PWAInstaller from '@/components/PWAInstaller'
 import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration'
 import OfflineIndicator from '@/components/OfflineIndicator'
-import CacheWarmingInitializer from '@/components/CacheWarmingInitializer'
 import PokemonPreloader from '@/components/PokemonPreloader'
 
 
@@ -136,6 +135,23 @@ export default function RootLayout({
           }}
         />
         
+        {/* Dev-only: ensure no SW/caches interfere on localhost */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(() => { try {
+  const isLocalhost = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+  if (isLocalhost) {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister().catch(() => {}))).catch(() => {});
+    }
+    if ('caches' in window) {
+      caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).catch(() => {});
+    }
+  }
+} catch(_) {} })();`
+          }}
+        />
+
         {/* Additional SEO */}
         <meta name="theme-color" content="#3B4CCA" />
         <meta name="msapplication-TileColor" content="#3B4CCA" />
@@ -198,7 +214,6 @@ export default function RootLayout({
                     <ErrorTip />
                     <PWAInstaller />
                     <ServiceWorkerRegistration />
-                    <CacheWarmingInitializer />
                     <PokemonPreloader />
                   </div>
                 </ToastProvider>
