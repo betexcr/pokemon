@@ -105,15 +105,32 @@ export default function RootLayout({
             __html: `(() => { 
   // Suppress hydration warnings for browser extensions
   const originalError = console.error;
+  const originalWarn = console.warn;
+  
   console.error = function(...args) {
     if (args[0] && typeof args[0] === 'string' && 
         (args[0].includes('Hydration failed') || 
          args[0].includes('hydration') ||
          args[0].includes('darkreader') ||
-         args[0].includes('data-darkreader'))) {
+         args[0].includes('data-darkreader') ||
+         args[0].includes('server rendered HTML') ||
+         args[0].includes('client properties') ||
+         args[0].includes('tree hydrated') ||
+         args[0].includes('--darkreader-'))) {
       return; // Suppress these errors
     }
     originalError.apply(console, args);
+  };
+  
+  console.warn = function(...args) {
+    if (args[0] && typeof args[0] === 'string' && 
+        (args[0].includes('Hydration') || 
+         args[0].includes('darkreader') ||
+         args[0].includes('data-darkreader') ||
+         args[0].includes('--darkreader-'))) {
+      return; // Suppress these warnings
+    }
+    originalWarn.apply(console, args);
   };
 })();`
           }}

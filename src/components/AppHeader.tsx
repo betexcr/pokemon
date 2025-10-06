@@ -89,8 +89,8 @@ export default function AppHeader({
 
   return (
     <header className="sticky top-0 z-50 bg-gradient-to-r from-surface via-surface to-surface border-b border-border shadow-lg" suppressHydrationWarning>
-      <div className="w-full max-w-full px-2 sm:px-4 md:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-14 sm:h-16 md:h-16 lg:h-18 xl:h-20 py-1 sm:py-2 md:py-3 list-none min-w-0">
+      <div className="w-full max-w-full px-2 sm:px-4 md:px-6 lg:px-8" suppressHydrationWarning>
+        <div className="flex items-center justify-between h-14 sm:h-16 md:h-16 lg:h-18 xl:h-20 py-1 sm:py-2 md:py-3 list-none min-w-0" suppressHydrationWarning>
           <div className="flex items-center space-x-2 sm:space-x-3 lg:space-x-4 min-w-0 flex-1">
             {backLink && (
               <Tooltip content={`Go back to ${backLabel}`} position="bottom">
@@ -114,7 +114,7 @@ export default function AppHeader({
             <div className="flex items-center space-x-2 lg:space-x-3 min-w-0 flex-1">
               {showIcon && (
                 <Tooltip content={`Current page: ${title}`} position="bottom">
-                  <div className={`p-1 sm:p-2 rounded-lg flex-shrink-0 ${iconConfig.bgColor} ${iconConfig.color} dark:${iconConfig.darkBgColor} dark:${iconConfig.darkColor}`}>
+                  <div className={`p-1 sm:p-2 rounded-lg flex-shrink-0 ${iconConfig.bgColor} ${iconConfig.color} dark:${iconConfig.darkBgColor} dark:${iconConfig.darkColor}`} suppressHydrationWarning>
                     {/* Icon is purely decorative */}
                     <IconComponent className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" />
                   </div>
