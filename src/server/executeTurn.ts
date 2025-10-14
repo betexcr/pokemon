@@ -12,10 +12,16 @@ import {
   processEndOfTurn,
   processReplacements,
 } from '@/lib/team-battle-engine-additional';
+import { applyEntryHazards } from '@/lib/team-battle-hazards';
+import { FieldState } from '@/lib/team-battle-types';
 import { calculateDamageDetailed } from '@/lib/team-battle-engine';
 import { getMove } from '@/lib/moveCache';
 import type { CompiledMove } from '@/lib/adapters/pokeapiMoveAdapter';
 import type { TypeName } from '@/lib/damage-calculator';
+import { rngNextFloat, rngRollChance, rngWeighted, rngNextInt } from '@/lib/battle-rng';
+import { BattleRng } from '@/lib/battle-rng';
+import { terrainPreventsStatus, applyStartOfTurnStatus } from '@/lib/team-battle-status';
+import { isGrounded } from '@/lib/team-battle-hazards';
 
 type Side = 'player' | 'opponent';
 
@@ -30,6 +36,7 @@ type ResolvedAction = {
   quickModifier: number;
   executionOrderRoll: number;
   isPursuitReaction?: boolean;
+  blockedByTerrain?: boolean;
 };
 
 const PRIORITY_SWITCH = 12; // Switch actions always occur before standard attacks unless a pursuit intercepts
@@ -81,6 +88,15 @@ export async function executeTurn(battleState: BattleState): Promise<BattleState
       continue;
     }
 
+  if (action.blockedByTerrain) {
+    state.battleLog.push({
+      type: 'status_effect',
+      message: `${getCurrentPokemon(actingTeam).pokemon.name}'s move was blocked by the terrain!`,
+      pokemon: getCurrentPokemon(actingTeam).pokemon.name,
+    });
+      continue;
+    }
+
     await executeMove(state, action, actingTeam, opposingTeam);
   }
 
@@ -105,6 +121,61 @@ function applyStartOfTurnEffects(state: BattleState): void {
 
     if (!active) return;
 
+    // Apply entry hazards if a new Pokémon switched in at the end of last turn
+    if (active.volatile.justSwitchedIn) {
+      const opposingTeam = side === 'player' ? state.opponent : state.player;
+      const result = applyEntryHazards(active, opposingTeam.sideConditions.hazards);
+
+      if (result.damage > 0) {
+        active.currentHp = Math.max(0, active.currentHp - result.damage);
+        state.battleLog.push({
+          type: 'status_damage',
+          message: `${active.pokemon.name} is hurt by entry hazards!`,
+          pokemon: active.pokemon.name,
+          damage: Math.round((result.damage / active.maxHp) * 100),
+        });
+      }
+
+      if (result.poisonStatus && !active.status) {
+        active.status = result.poisonStatus;
+        active.statusTurns = 0;
+        state.battleLog.push({
+          type: 'status_applied',
+          message: `${active.pokemon.name} was ${result.poisonStatus === 'badly-poisoned' ? 'badly poisoned' : 'poisoned'} by Toxic Spikes!`,
+          pokemon: active.pokemon.name,
+          status: result.poisonStatus.toUpperCase(),
+        });
+      }
+
+      if (result.applyStickyWeb) {
+        active.statModifiers.speed = Math.max(-6, active.statModifiers.speed - 1);
+        state.battleLog.push({
+          type: 'status_effect',
+          message: `${active.pokemon.name}'s Speed fell due to Sticky Web!`,
+          pokemon: active.pokemon.name,
+        });
+      }
+
+      active.volatile.justSwitchedIn = false;
+    }
+
+    if (active.volatile.yawn) {
+      active.volatile.yawn.turns -= 1;
+      if (active.volatile.yawn.turns <= 0) {
+        active.volatile.yawn = undefined;
+        if (!active.status && !terrainPreventsStatus(state.field.terrain?.kind, active, 'asleep')) {
+          active.status = 'asleep';
+          active.statusTurns = 0;
+          state.battleLog.push({
+            type: 'status_applied',
+            message: `${active.pokemon.name} fell asleep!`,
+            pokemon: active.pokemon.name,
+            status: 'SLP',
+          });
+        }
+      }
+    }
+
     if (active.volatile.protect) {
       active.volatile.protect.counter = Math.min((active.volatile.protect.counter ?? 1) + 1, 4);
       active.volatile.protect = undefined;
@@ -114,18 +185,7 @@ function applyStartOfTurnEffects(state: BattleState): void {
       active.volatile.flinched = false;
     }
 
-    if (active.status === 'asleep') {
-      active.statusTurns = (active.statusTurns ?? 0) + 1;
-      if (active.statusTurns >= 3) {
-        active.status = undefined;
-        active.statusTurns = undefined;
-        state.battleLog.push({
-          type: 'status_effect',
-          message: `${active.pokemon.name} woke up!`,
-          pokemon: active.pokemon.name,
-        });
-      }
-    }
+    applyStartOfTurnStatus(state, active, state.rng);
 
     if (active.volatile.encore && active.volatile.encore.turns > 0) {
       active.volatile.encore.turns -= 1;
@@ -187,15 +247,16 @@ async function buildActionQueue(state: BattleState): Promise<ResolvedAction[]> {
 
   for (const item of base) {
     if (item.type === 'switch') {
-      actions.push({
+      const switchAction: ResolvedAction = {
         user: item.user,
         type: 'switch',
         switchIndex: item.switchIndex,
         priority: PRIORITY_SWITCH,
         effectiveSpeed: getEffectiveSpeed(getCurrentPokemon(item.user === 'player' ? state.player : state.opponent)),
         quickModifier: 0,
-        executionOrderRoll: Math.random(),
-      });
+        executionOrderRoll: rngNextFloat(state.rng),
+      };
+      actions.push(switchAction);
       continue;
     }
 
@@ -207,27 +268,43 @@ async function buildActionQueue(state: BattleState): Promise<ResolvedAction[]> {
     const basePriority = getMovePriority(item.moveId);
 
     const priorityBoost = calculatePriorityModifiers(attacker, compiled);
-    const quickBoost = computeQuickModifiers(attacker, compiled);
+    const quickBoost = computeQuickModifiers(state, attacker, compiled);
     const effectivePriority = basePriority + priorityBoost + quickBoost.priorityDelta;
 
     const speed = adjustSpeedForTurnOrder(attacker, compiled, state);
+    const targetSide = item.target ?? (item.user === 'player' ? 'opponent' : 'player');
+    const terrainKind = state.field.terrain?.kind;
+    let blockedByTerrain = false;
+    if (
+      terrainKind === 'psychic' &&
+      effectivePriority > 0 &&
+      targetSide !== item.user
+    ) {
+      const targetTeam = targetSide === 'player' ? state.player : state.opponent;
+      if (isGrounded(getCurrentPokemon(targetTeam))) {
+        blockedByTerrain = true;
+      }
+    }
 
-    actions.push({
+    const actionEntry: ResolvedAction = {
       user: item.user,
       type: 'move',
       moveId: item.moveId,
-      target: item.target ?? (item.user === 'player' ? 'opponent' : 'player'),
+      target: targetSide,
       priority: effectivePriority,
       effectiveSpeed: speed,
       quickModifier: quickBoost.speedTieBreaker,
-      executionOrderRoll: Math.random(),
+      executionOrderRoll: rngNextFloat(state.rng),
       isPursuitReaction: compiled.name.toLowerCase() === 'pursuit' && defender.volatile && defender.volatile.choiceLock?.toLowerCase() === 'switch',
-    });
+      blockedByTerrain,
+    };
+
+    actions.push(actionEntry);
   }
 
   handlePursuitIntercept(actions, state);
 
-  const trickRoomActive = Boolean((state.field as any)?.trickRoomTurns && (state.field as any).trickRoomTurns > 0);
+  const trickRoomActive = Boolean(state.field.rooms?.trickRoom);
 
   actions.sort((a, b) => {
     if (a.priority !== b.priority) return b.priority - a.priority;
@@ -302,23 +379,27 @@ function calculatePriorityModifiers(attacker: BattlePokemon, move: CompiledMove)
   return bonus;
 }
 
-function computeQuickModifiers(attacker: BattlePokemon, move: CompiledMove): { priorityDelta: number; speedTieBreaker: number } {
+function computeQuickModifiers(state: BattleState, attacker: BattlePokemon, move: CompiledMove): { priorityDelta: number; speedTieBreaker: number } {
   let delta = 0;
   let breaker = 0;
 
   const ability = attacker.currentAbility?.toLowerCase();
-  if (ability === 'quick-draw' && move.category !== 'Status') {
-    if (Math.random() < 0.3) {
-      delta += 1;
-    }
+  const item = attacker.heldItem?.toLowerCase();
+
+  if (ability === 'quick-draw' && rngRollChance(state.rng, 0.3)) {
+    breaker += 1;
   }
 
-  const held = (attacker as any).item?.toLowerCase?.();
-  if (held === 'quick-claw' && move.category !== 'Status') {
-    if (Math.random() < 0.2) {
-      delta += 1;
-      breaker += 0.5;
-    }
+  if (item === 'quick-claw' && rngRollChance(state.rng, 0.2)) {
+    breaker += 1;
+  }
+
+  if (item === 'custap-berry' && attacker.currentHp <= Math.floor(attacker.maxHp / 4)) {
+    delta += 1;
+  }
+
+  if (item === 'lagging-tail' || item === 'full-incense' || ability === 'stall') {
+    breaker -= 1;
   }
 
   return { priorityDelta: delta, speedTieBreaker: breaker };
@@ -331,23 +412,22 @@ function adjustSpeedForTurnOrder(attacker: BattlePokemon, move: CompiledMove, st
     speed = Math.floor(speed / 2);
   }
 
-  const tailwind = (state.field as any)?.tailwind;
-  if (tailwind?.player && tailwind.player.turns > 0 && attacker === getCurrentPokemon(state.player)) {
+  const playerScreens = state.player.sideConditions.screens;
+  const opponentScreens = state.opponent.sideConditions.screens;
+  const isPlayer = attacker === getCurrentPokemon(state.player);
+
+  if (isPlayer && playerScreens.tailwind) {
     speed *= 2;
-  }
-  if (tailwind?.opponent && tailwind.opponent.turns > 0 && attacker === getCurrentPokemon(state.opponent)) {
+  } else if (!isPlayer && opponentScreens.tailwind) {
     speed *= 2;
   }
 
   const ability = attacker.currentAbility?.toLowerCase();
-  if (ability === 'chlorophyll' && (state.field as any)?.weather?.kind === 'sun') {
+  const weather = state.field.weather?.kind;
+  if (ability === 'chlorophyll' && weather === 'sun') {
     speed *= 2;
   }
-  if (ability === 'swift-swim' && (state.field as any)?.weather?.kind === 'rain') {
-    speed *= 2;
-  }
-
-  if ((state.field as any)?.tailwind?.user === attacker.pokemon.name) {
+  if (ability === 'swift-swim' && weather === 'rain') {
     speed *= 2;
   }
 
@@ -394,7 +474,7 @@ async function executeMove(
     attackingMoveSlot.pp = Math.max(0, attackingMoveSlot.pp - 1);
   }
 
-  const availability = canUseMove(attacker, moveId);
+  const availability = canUseMove(attacker, moveId, state.rng);
   if (!availability.canUse) {
     state.battleLog.push({
       type: 'status_effect',
@@ -404,7 +484,7 @@ async function executeMove(
     return;
   }
 
-  if (attacker.status === 'paralyzed' && Math.random() < 0.25) {
+  if (attacker.status === 'paralyzed' && rngRollChance(state.rng, 0.25)) {
     state.battleLog.push({
       type: 'status_effect',
       message: `${attacker.pokemon.name} is fully paralyzed!`,
@@ -422,7 +502,7 @@ async function executeMove(
     return;
   }
 
-  if (attacker.status === 'frozen' && Math.random() >= 0.2) {
+  if (attacker.status === 'frozen' && !rngRollChance(state.rng, 0.2)) {
     state.battleLog.push({
       type: 'status_effect',
       message: `${attacker.pokemon.name} is frozen solid!`,
@@ -447,16 +527,22 @@ async function executeMove(
     return;
   }
 
-  const hitsToTake = determineHitCount(move);
+  const hitsToTake = determineHitCount(state.rng, move);
   const hitResults: number[] = [];
   const criticals: boolean[] = [];
+  let totalDamageDealt = 0;
 
   for (let i = 0; i < hitsToTake; i++) {
     if (defender.currentHp <= 0) break;
 
-    const damageResult = await calculateDamageDetailed(attacker, defender, move as CompiledMove);
+    const damageResult = await calculateDamageDetailed(attacker, defender, move as CompiledMove, state);
     const damage = Math.max(1, damageResult.damage);
     defender.currentHp = Math.max(0, defender.currentHp - damage);
+    totalDamageDealt += damage;
+    tryConsumeBerry(state, defender);
+    if (defender.currentHp > 0 && defender.heldItem && shouldConsumeBerry(defender, damage)) {
+      consumeBerry(state, defender);
+    }
     hitResults.push(damage);
     criticals.push(damageResult.critical);
 
@@ -486,6 +572,10 @@ async function executeMove(
     }
   }
 
+  if (totalDamageDealt > 0) {
+    attacker.volatile.damageDealtThisTurn = (attacker.volatile.damageDealtThisTurn ?? 0) + totalDamageDealt;
+  }
+
   if (move.drain) {
     const drainAmount = Math.floor(hitResults.reduce((sum, val) => sum + val, 0) * (move.drain.fraction ?? 0));
     if (drainAmount > 0) {
@@ -512,8 +602,20 @@ async function executeMove(
     }
   }
 
+  // Life Orb recoil applies only if at least one hit landed
+  if (hitResults.length > 0 && attacker.heldItem?.toLowerCase() === 'life-orb') {
+    const lifeOrbDamage = Math.max(1, Math.floor(attacker.maxHp / 10));
+    attacker.currentHp = Math.max(0, attacker.currentHp - lifeOrbDamage);
+    state.battleLog.push({
+      type: 'recoil',
+      message: `${attacker.pokemon.name} is hurt by its Life Orb!`,
+      pokemon: attacker.pokemon.name,
+      damage: Math.round((lifeOrbDamage / attacker.maxHp) * 100),
+    });
+  }
+
   if (move.ailment) {
-    const ailmentApplied = maybeApplyAilment(defender, move.ailment.kind, move.ailment.chance);
+    const ailmentApplied = maybeApplyAilment(state, state.rng, defender, move.ailment.kind, move.ailment.chance);
     if (ailmentApplied) {
       state.battleLog.push({
         type: 'status_applied',
@@ -540,46 +642,68 @@ async function executeMove(
   }
 }
 
-function determineHitCount(move: CompiledMove): number {
+function determineHitCount(rng: BattleRng, move: CompiledMove): number {
   if (!move.hits) return 1;
   const { min, max } = move.hits;
   if (min === max) return min;
   const distribution = [2, 3, 4, 5];
   if (min === 2 && max === 5) {
-    const roll = Math.random();
+    const roll = rngNextFloat(rng);
     if (roll < 0.375) return 2;
     if (roll < 0.75) return 3;
     if (roll < 0.875) return 4;
     return 5;
   }
-  return distribution[Math.floor(Math.random() * distribution.length)] ?? min;
+  return distribution[rngNextInt(rng, distribution.length)] ?? min;
 }
 
-function maybeApplyAilment(target: BattlePokemon, ailment: string, chance = 100): string | null {
-  if (Math.random() * 100 >= chance) return null;
+function maybeApplyAilment(
+  state: BattleState,
+  rng: BattleRng,
+  target: BattlePokemon,
+  ailment: string,
+  chance = 100
+): string | null {
+  if (rngNextFloat(rng) * 100 >= chance) return null;
   const lower = ailment.toLowerCase();
-  if (!target.status) {
-    if (lower.includes('paral')) {
-      target.status = 'paralyzed';
-      return 'Paralyzed';
+  if (!target.status || lower.includes('stat')) {
+    const desiredStatus = lower.includes('poison')
+      ? (lower.includes('badly') ? 'badly-poisoned' : 'poisoned')
+      : lower.includes('burn')
+        ? 'burned'
+        : lower.includes('paral')
+          ? 'paralyzed'
+          : lower.includes('sleep')
+            ? 'asleep'
+            : lower.includes('freeze')
+              ? 'frozen'
+              : undefined;
+
+    if (desiredStatus && terrainPreventsStatus(state.field.terrain?.kind, target, desiredStatus)) {
+      return null;
     }
-    if (lower.includes('burn')) {
-      target.status = 'burned';
-      return 'Burned';
-    }
-    if (lower.includes('poison')) {
-      target.status = 'poisoned';
-      return 'Poisoned';
-    }
-    if (lower.includes('sleep')) {
-      target.status = 'asleep';
-      target.statusTurns = 0;
-      return 'Asleep';
-    }
-    if (lower.includes('freeze')) {
-      target.status = 'frozen';
-      target.statusTurns = 0;
-      return 'Frozen';
+
+    if (desiredStatus) {
+      if (!target.status || lower.includes('stat')) {
+        target.status = desiredStatus;
+        target.statusTurns = 0;
+        if (desiredStatus === 'badly-poisoned') {
+          target.volatile.toxicCounter = 1;
+          return 'Badly Poisoned';
+        }
+        switch (desiredStatus) {
+          case 'poisoned':
+            return 'Poisoned';
+          case 'burned':
+            return 'Burned';
+          case 'paralyzed':
+            return 'Paralyzed';
+          case 'asleep':
+            return 'Asleep';
+          case 'frozen':
+            return 'Frozen';
+        }
+      }
     }
   }
   return null;
@@ -602,7 +726,7 @@ function handleContactAbilities(state: BattleState, attacker: BattlePokemon, def
     });
   }
 
-  if (defenderAbility === 'static' && Math.random() < 0.3) {
+  if (defenderAbility === 'static' && rngRollChance(state.rng, 0.3)) {
     if (!attacker.status) {
       attacker.status = 'paralyzed';
       state.battleLog.push({
@@ -614,7 +738,7 @@ function handleContactAbilities(state: BattleState, attacker: BattlePokemon, def
     }
   }
 
-  if (defenderAbility === 'flame-body' && Math.random() < 0.3) {
+  if (defenderAbility === 'flame-body' && rngRollChance(state.rng, 0.3)) {
     if (!attacker.status) {
       attacker.status = 'burned';
       state.battleLog.push({

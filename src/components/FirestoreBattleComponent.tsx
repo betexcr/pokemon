@@ -12,12 +12,13 @@ import HPBar from '@/components/battle/HPBar';
 import StatusPopups, { StatusEvent } from '@/components/battle/StatusPopups';
 import AttackAnimator from '@/components/battle/AttackAnimator';
 import { FxKind } from '@/components/battle/fx/MoveFX.types';
-import { 
-  checkBattleParticipation, 
-  checkBattleActionPermission, 
+import {
+  checkBattleParticipation,
+  checkBattleActionPermission,
   handlePermissionError,
-  logPermissionError 
+  logPermissionError
 } from '@/lib/permissionUtils';
+import { BattleViewport } from '@/components/battle/gen9/BattleViewport';
 
 interface FirestoreBattleComponentProps {
   battleId: string;
@@ -429,144 +430,8 @@ export const FirestoreBattleComponent: React.FC<FirestoreBattleComponentProps> =
   const myTeam = battleState?.player.pokemon || [];
 
   return (
-    <div className="battle-container">
-      {/* Battle Header */}
-      <div className="battle-header mb-4">
-        <h2 className="text-2xl font-bold text-center">
-          Battle Phase: {phase}
-        </h2>
-        <div className="text-center text-sm text-gray-600">
-          Turn: {turnNumber} | Time Left: {timeLeftSec}s
-        </div>
-      </div>
-
-      {/* Battle Field */}
-      <div className="battle-field grid grid-cols-2 gap-6 mb-6">
-        {/* Player Side */}
-        <div className="player-side">
-          <h3 className="text-lg font-semibold mb-4">Your Pokemon</h3>
-          {myActive && (
-            <div className="pokemon-card p-4 mb-4 rounded-lg border-2 border-blue-500 bg-blue-50 shadow-lg">
-              <div className="flex items-start gap-4" ref={playerAnimRef}>
-                {/* Pokemon Image (Back view for player) */}
-                <PokemonBattleImage 
-                  species={myActive.pokemon.name} 
-                  variant="back" 
-                  size="large"
-                  className="flex-shrink-0"
-                />
-                
-                {/* Pokemon Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="pokemon-name font-bold text-lg capitalize mb-2">
-                    {formatPokemonName(myActive.pokemon.name)}
-                  </div>
-                  <div className="space-y-1 text-sm">
-                    <div className="pokemon-hp">
-                      <span className="font-medium">HP:</span> {myActive.currentHp}/{myActive.maxHp}
-                      <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-                        <div 
-                          className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${(myActive.currentHp / myActive.maxHp) * 100}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                    <div className="pokemon-level">
-                      <span className="font-medium">Level:</span> {myActive.level}
-                    </div>
-                    {myActive.status && (
-                      <div className="pokemon-status text-red-600 font-medium">
-                        Status: {myActive.status}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {/* Bench Pokemon */}
-          <div className="bench-pokemon">
-            <h4 className="font-semibold mb-3 text-gray-700">Bench</h4>
-            <div className="grid grid-cols-2 gap-2">
-              {myTeam.slice(1).map((pokemon, index) => (
-                <div
-                  key={index}
-                  className={`pokemon-card p-3 rounded-lg border text-sm transition-all duration-200 ${
-                    pokemon.currentHp <= 0 
-                      ? 'opacity-50 border-gray-300 bg-gray-100' 
-                      : 'border-gray-300 bg-white hover:border-blue-300 hover:shadow-md'
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <PokemonBattleImage 
-                      species={pokemon.pokemon.name} 
-                      variant="back" 
-                      size="small"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="pokemon-name font-medium capitalize truncate">
-                        {formatPokemonName(pokemon.pokemon.name)}
-                      </div>
-                      <div className="pokemon-hp text-xs text-gray-600">
-                        HP: {pokemon.currentHp}/{pokemon.maxHp}
-                      </div>
-                      {pokemon.currentHp <= 0 && (
-                        <div className="text-xs text-red-600 font-medium">Fainted</div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Opponent Side */}
-        <div className="opponent-side">
-          <h3 className="text-lg font-semibold mb-4">Opponent Pokemon</h3>
-          {oppActive && (
-            <div className="pokemon-card p-4 mb-4 rounded-lg border-2 border-red-500 bg-red-50 shadow-lg">
-              <div className="flex items-start gap-4" ref={oppAnimRef}>
-                {/* Pokemon Image (Front view for opponent) */}
-                <PokemonBattleImage 
-                  species={oppActive.pokemon.name} 
-                  variant="front" 
-                  size="large"
-                  className="flex-shrink-0"
-                />
-                
-                {/* Pokemon Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="pokemon-name font-bold text-lg capitalize mb-2">
-                    {formatPokemonName(oppActive.pokemon.name)}
-                  </div>
-                  <div className="space-y-1 text-sm">
-                    <div className="pokemon-hp">
-                      <span className="font-medium">HP:</span> {oppActive.currentHp}/{oppActive.maxHp}
-                      <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-                        <div 
-                          className="bg-red-500 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${(oppActive.currentHp / oppActive.maxHp) * 100}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                    <div className="pokemon-level">
-                      <span className="font-medium">Level:</span> {oppActive.level}
-                    </div>
-                    {oppActive.status && (
-                      <div className="pokemon-status text-red-600 font-medium">
-                        Status: {oppActive.status}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
+    <div className="space-y-6">
+      <BattleViewport state={battleState} />
       {/* Action Selection */}
       {phase === 'choice' && (
         <div className="action-selection">

@@ -16,6 +16,7 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { auth } from './firebase';
+import { BattleState } from './team-battle-engine';
 
 export interface BattleAction {
   playerId: string;

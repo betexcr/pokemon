@@ -1,8 +1,40 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
+
+const BASE_URL = process.env.BASE_URL ?? 'http://localhost:3000'
+const TEST_HOST_EMAIL = process.env.TEST_HOST_EMAIL ?? 'test-host@pokemon-battles.test'
+const TEST_HOST_PASSWORD = process.env.TEST_HOST_PASSWORD ?? 'TestHost123!'
+
+async function loginThroughProfile(page: Page, email: string, password: string) {
+  await page.goto(`${BASE_URL}/`, { waitUntil: 'domcontentloaded' })
+
+  const profileButton = page.locator('.user-dropdown-container button').first()
+  await profileButton.waitFor({ state: 'visible' })
+  await profileButton.click()
+
+  const authModal = page.getByTestId('auth-modal')
+  if (!(await authModal.isVisible({ timeout: 5000 }).catch(() => false))) {
+    const signInButton = page.getByRole('button', { name: /sign in/i, exact: false }).first()
+    await signInButton.click()
+    await expect(authModal).toBeVisible()
+  }
+
+  await page.getByTestId('auth-email').fill(email)
+  await page.getByTestId('auth-password').fill(password)
+
+  await Promise.all([
+    page.waitForFunction(() => {
+      const dropdown = document.querySelector('.user-dropdown-container button')
+      return dropdown?.textContent && dropdown.textContent.trim().length > 0
+    }, null, { timeout: 30000 }),
+    page.getByTestId('auth-submit').click()
+  ])
+}
 
 test('pokemon detail loads with retry', async ({ page }) => {
-  const pokemonId = 10
-  const url = `http://localhost:3000/pokemon/${pokemonId}/`
+  await loginThroughProfile(page, TEST_HOST_EMAIL, TEST_HOST_PASSWORD)
+
+  const pokemonId = 25
+  const url = `${BASE_URL}/pokemon/${pokemonId}`
 
   let attempts = 0
   const maxAttempts = 8
@@ -11,10 +43,8 @@ test('pokemon detail loads with retry', async ({ page }) => {
     attempts += 1
     await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 })
 
-    // If offline overlay exists, retry after clearing SW caches
-    const offlineVisible = await page.locator('text=You\'re Offline').first().isVisible().catch(() => false)
+    const offlineVisible = await page.locator("text=You're Offline").first().isVisible().catch(() => false)
     if (offlineVisible) {
-      // Try to force-refresh service worker state between attempts in dev
       await page.evaluate(async () => {
         if ('serviceWorker' in navigator) {
           const regs = await navigator.serviceWorker.getRegistrations()
@@ -29,14 +59,10 @@ test('pokemon detail loads with retry', async ({ page }) => {
       continue
     }
 
-    // Assert critical content pieces are present
     await expect(page.locator('main')).toBeVisible({ timeout: 10000 })
     await expect(page.locator('text=/Pokémon Details/i')).not.toHaveCount(0)
-    // Found content, break
     return
   }
 
   throw new Error(`Detail page did not load after ${maxAttempts} attempts`)
 })
-
-

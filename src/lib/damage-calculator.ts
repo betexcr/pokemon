@@ -1,6 +1,8 @@
 // Comprehensive Pokémon Damage Calculator (Gen VI+ baseline)
 // Adapted from modern competitive Pokémon damage calculation standards
 
+import { BattleRng, rngNextFloat, rngRollChance } from './battle-rng';
+
 export type TypeName = 
   | "Normal" | "Fire" | "Water" | "Electric" | "Grass" | "Ice" 
   | "Fighting" | "Poison" | "Ground" | "Flying" | "Psychic" | "Bug" 
@@ -60,7 +62,8 @@ export function calculateDamage({
   typeEffect,
   weatherMod,
   burnMod,
-  otherMods = 1
+  otherMods = 1,
+  rng
 }: {
   level: number;
   movePower: number;
@@ -72,12 +75,13 @@ export function calculateDamage({
   weatherMod: number;
   burnMod: number;
   otherMods?: number;
+  rng: BattleRng;
 }): number {
   // Critical hit multiplier (Gen VI+)
   const crit = isCrit ? 1.5 : 1.0;
   
   // Random factor (85-100%)
-  const rand = 0.85 + Math.random() * 0.15;
+  const rand = 0.85 + rngNextFloat(rng) * 0.15;
   
   // Base damage calculation
   const base = Math.floor(
@@ -122,7 +126,7 @@ export function getStabMultiplier(moveType: TypeName, attackerTypes: TypeName[],
 }
 
 // Critical hit chance calculation
-export function getCriticalHitChance(baseCritRate: number = 0.0625, hasHighCritMove: boolean = false, hasSuperLuck: boolean = false): boolean {
+export function getCriticalHitChance(baseCritRate: number = 0.0625, hasHighCritMove: boolean = false, hasSuperLuck: boolean = false, rng: BattleRng): boolean {
   let critRate = baseCritRate;
   
   if (hasHighCritMove) {
@@ -133,7 +137,7 @@ export function getCriticalHitChance(baseCritRate: number = 0.0625, hasHighCritM
     critRate *= 2; // Super Luck ability doubles crit rate
   }
   
-  return Math.random() < critRate;
+  return rngRollChance(rng, critRate);
 }
 
 // Comprehensive damage calculation with all modifiers
@@ -156,6 +160,7 @@ export function calculateComprehensiveDamage({
   hasExpertBelt = false,
   hasReflect = false,
   hasLightScreen = false,
+  hasAuroraVeil = false,
   isMultiTarget = false,
   terrain = 'None',
   hasTintedLens = false,
@@ -167,7 +172,8 @@ export function calculateComprehensiveDamage({
   hasPurePower = false,
   hasSniper = false,
   isHighCritMove = false,
-  hasSuperLuck = false
+  hasSuperLuck = false,
+  rng
 }: {
   level: number;
   movePower: number;
@@ -187,6 +193,7 @@ export function calculateComprehensiveDamage({
   hasExpertBelt?: boolean;
   hasReflect?: boolean;
   hasLightScreen?: boolean;
+  hasAuroraVeil?: boolean;
   isMultiTarget?: boolean;
   terrain?: 'None' | 'Electric' | 'Grassy' | 'Psychic' | 'Misty';
   hasTintedLens?: boolean;
@@ -199,6 +206,7 @@ export function calculateComprehensiveDamage({
   hasSniper?: boolean;
   isHighCritMove?: boolean;
   hasSuperLuck?: boolean;
+  rng: BattleRng;
 }): { damage: number; effectiveness: number; critical: boolean; effectivenessText: string } {
   
   // Apply stat stage modifiers
@@ -253,6 +261,9 @@ export function calculateComprehensiveDamage({
   if (hasLightScreen && !isPhysical) {
     otherMods *= 0.5;
   }
+  if (hasAuroraVeil) {
+    otherMods *= 0.5;
+  }
   
   // Multi-target penalty
   if (isMultiTarget) {
@@ -276,7 +287,7 @@ export function calculateComprehensiveDamage({
   }
   
   // Check for critical hit
-  const isCrit = getCriticalHitChance(0.0625, isHighCritMove, hasSuperLuck);
+  const isCrit = getCriticalHitChance(0.0625, isHighCritMove, hasSuperLuck, rng);
   
   // Apply Sniper ability (extra crit damage)
   let critMultiplier = isCrit ? 1.5 : 1.0;
@@ -295,7 +306,8 @@ export function calculateComprehensiveDamage({
     typeEffect,
     weatherMod,
     burnMod,
-    otherMods
+    otherMods,
+    rng
   });
   
   // Determine effectiveness text

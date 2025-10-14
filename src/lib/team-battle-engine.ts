@@ -1,19 +1,76 @@
-import { Pokemon, Move } from "@/types/pokemon";
-import { CompiledMove } from "./adapters/pokeapiMoveAdapter";
-import { DynamicPowerContext } from "@/types/move";
-import { 
-  calculateComprehensiveDamage, 
-  TypeName, 
-  calculateTypeEffectiveness 
-} from "./damage-calculator";
-import { getMove } from "./moveCache";
-import { executeTurn } from "./executor";
+import { Pokemon, Move } from '@/types/pokemon';
+import { CompiledMove } from './adapters/pokeapiMoveAdapter';
+import { DynamicPowerContext } from '@/types/move';
+import {
+  calculateComprehensiveDamage,
+  TypeName,
+  calculateTypeEffectiveness
+} from './damage-calculator';
+import { getMove } from './moveCache';
+import { executeTurn } from './executor';
 import { 
   resolveSwitch, 
   resolveMove, 
   processEndOfTurn, 
   processReplacements 
-} from "./team-battle-engine-additional";
+} from './team-battle-engine-additional';
+import {
+  BattleRng,
+  cloneBattleRng,
+  createBattleRng,
+  rngNextFloat,
+  rngNextInt,
+  rngRollChance,
+  normalizeBattleRng
+} from './battle-rng';
+import { FieldState, SideHazards, EMPTY_HAZARDS, createFieldState, FieldSideScreens, TerrainKind, WeatherKind } from './team-battle-types';
+import { isGrounded } from './team-battle-hazards';
+
+function normalizeTypeName(raw?: string | null): TypeName {
+  const fallback: TypeName = 'Normal';
+  if (!raw || typeof raw !== 'string') return fallback;
+  const normalized = raw.toLowerCase();
+  const formatted = (normalized.charAt(0).toUpperCase() + normalized.slice(1)) as TypeName;
+  return formatted;
+}
+
+function determineWeatherModifier(kind?: WeatherKind): 'None' | 'Rain' | 'Sun' | 'Sandstorm' | 'Hail' {
+  switch (kind) {
+    case 'rain':
+      return 'Rain';
+    case 'sun':
+      return 'Sun';
+    case 'sandstorm':
+      return 'Sandstorm';
+    case 'snow':
+      return 'Hail';
+    default:
+      return 'None';
+  }
+}
+
+function determineTerrainModifier(
+  terrainKind: TerrainKind | undefined,
+  moveType: TypeName,
+  attackerGrounded: boolean
+): 'None' | 'Electric' | 'Grassy' | 'Psychic' {
+  if (!terrainKind || terrainKind === 'none' || !attackerGrounded) {
+    return 'None';
+  }
+
+  const normalized = terrainKind.toLowerCase();
+
+  switch (normalized) {
+    case 'electric':
+      return moveType === 'Electric' ? 'Electric' : 'None';
+    case 'grassy':
+      return moveType === 'Grass' ? 'Grassy' : 'None';
+    case 'psychic':
+      return moveType === 'Psychic' ? 'Psychic' : 'None';
+    default:
+      return 'None';
+  }
+}
 
 export type BattlePokemon = {
   pokemon: Pokemon;
@@ -28,7 +85,7 @@ export type BattlePokemon = {
     disabled?: boolean;
     lastUsed?: number; // turn number when last used
   }>;
-  status?: 'paralyzed' | 'poisoned' | 'burned' | 'frozen' | 'asleep' | 'confused';
+  status?: 'paralyzed' | 'poisoned' | 'badly-poisoned' | 'burned' | 'frozen' | 'asleep' | 'confused';
   statusTurns?: number;
   // Volatile conditions
   volatile: {
@@ -43,6 +100,13 @@ export type BattlePokemon = {
     perishSong?: { turns: number };
     flinched?: boolean;
     binding?: { kind: string; turnsLeft: number; fraction: number };
+    justSwitchedIn?: boolean;
+    toxicCounter?: number;
+    yawn?: { turns: number };
+    aquaRing?: boolean;
+    wish?: { turns: number; heal: number };
+    leechSeedSource?: { owner: 'player' | 'opponent'; index: number };
+    damageDealtThisTurn?: number;
   };
   // Ability system
   currentAbility?: string;
@@ -65,14 +129,10 @@ export type BattleTeam = {
   faintedCount: number;
   // Side conditions
   sideConditions: {
-    reflect?: { turns: number };
-    lightScreen?: { turns: number };
-    safeguard?: { turns: number };
-    auroraVeil?: { turns: number };
-    spikes?: number; // layers
-    toxicSpikes?: number; // layers
-    stealthRock?: boolean;
-    stickyWeb?: boolean;
+    screens: FieldSideScreens;
+    hazards: SideHazards;
+    tailwind?: { turns: number };
+    luckyChant?: { turns: number };
   };
 };
 
@@ -92,7 +152,7 @@ export type BattleState = {
   player: BattleTeam;
   opponent: BattleTeam;
   turn: number; // Current turn number
-  rng: number; // RNG seed for reproducibility
+  rng: BattleRng; // Deterministic RNG state
   battleLog: BattleLogEntry[];
   isComplete: boolean;
   winner?: 'player' | 'opponent';
@@ -107,8 +167,8 @@ export type BattleState = {
     priority: number;
     speed: number;
   }>;
-  // Field state (no weather/hazards for now)
-  field: Record<string, never>;
+  // Field state
+  field: FieldState;
   // Multiplayer battle properties
   selectedMoves?: {
     player?: { type: 'move'; moveIndex: number } | null;
@@ -185,7 +245,11 @@ export function getEffectiveSpeed(pokemon: BattlePokemon): number {
 }
 
 // Check if a Pokemon can use a move (usability gates)
-export function canUseMove(pokemon: BattlePokemon, moveId: string): { canUse: boolean; reason?: string } {
+export function canUseMove(
+  pokemon: BattlePokemon,
+  moveId: string,
+  rng: BattleRng
+): { canUse: boolean; reason?: string } {
   const move = pokemon.moves.find(m => m.id === moveId);
   if (!move) return { canUse: false, reason: 'Invalid move' };
   
@@ -197,13 +261,13 @@ export function canUseMove(pokemon: BattlePokemon, moveId: string): { canUse: bo
   
   // Check status conditions
   if (pokemon.status === 'asleep') {
-    return { canUse: Math.random() < 0.25, reason: 'fast asleep' };
+    return { canUse: rngRollChance(rng, 0.25), reason: 'fast asleep' };
   }
   if (pokemon.status === 'frozen') {
-    return { canUse: Math.random() < 0.2, reason: 'frozen solid' };
+    return { canUse: rngRollChance(rng, 0.2), reason: 'frozen solid' };
   }
   if (pokemon.status === 'paralyzed') {
-    return { canUse: Math.random() < 0.75, reason: 'fully paralyzed' };
+    return { canUse: rngRollChance(rng, 0.75), reason: 'fully paralyzed' };
   }
   
   // Check volatile conditions
@@ -473,7 +537,8 @@ export async function applyStatusMoveEffects(
   if (compiledMove.statChanges && compiledMove.statChanges.length > 0) {
     for (const statChange of compiledMove.statChanges) {
       // Check if the effect triggers
-      if (Math.random() < (statChange.chance / 100)) {
+      const effectRng = battleState.rng;
+      if (rngRollChance(effectRng, (statChange.chance ?? 100) / 100)) {
         const target = statChange.stages > 0 ? attacker : defender; // Positive stages usually affect self, negative affect opponent
         const statName = mapStatName(statChange.stat);
         const oldValue = target.statModifiers[statName];
@@ -619,23 +684,23 @@ export function canUseMoveLegacy(pokemon: BattlePokemon, moveIndex: number): { c
   
   // Check status conditions that prevent moves
   if (pokemon.status === 'asleep') {
-    return { canUse: Math.random() < 0.25, reason: 'fast asleep' }; // 25% chance to wake up
+    return { canUse: false, reason: 'fast asleep' };
   }
   if (pokemon.status === 'frozen') {
-    return { canUse: Math.random() < 0.2, reason: 'frozen solid' }; // 20% chance to break free
+    return { canUse: false, reason: 'frozen solid' };
   }
   if (pokemon.status === 'paralyzed') {
-    return { canUse: Math.random() < 0.75, reason: 'fully paralyzed' }; // 25% chance to be paralyzed
+    return { canUse: false, reason: 'fully paralyzed' };
   }
   if (pokemon.status === 'confused') {
-    return { canUse: Math.random() < 0.5, reason: 'confused' }; // 50% chance to hit self
+    return { canUse: false, reason: 'confused' };
   }
   
   return { canUse: true };
 }
 
 // Process end of turn status effects
-export function processEndOfTurnStatus(pokemon: BattlePokemon): number {
+export function processEndOfTurnStatus(pokemon: BattlePokemon, rng: BattleRng): number {
   let damage = 0;
   
   // Increment status turns
@@ -659,7 +724,7 @@ export function processEndOfTurnStatus(pokemon: BattlePokemon): number {
       break;
     case 'frozen':
       // 20% chance to thaw each turn
-      if (Math.random() < 0.2) {
+      if (rngRollChance(rng, 0.2)) {
         pokemon.status = undefined;
         pokemon.statusTurns = undefined;
       }
@@ -684,8 +749,16 @@ export function processEndOfTurnStatus(pokemon: BattlePokemon): number {
 export async function calculateDamageDetailed(
   attacker: BattlePokemon,
   defender: BattlePokemon,
-  move: Move | CompiledMove
+  move: Move | CompiledMove,
+  state: BattleState
 ): Promise<{ damage: number; effectiveness: number; critical: boolean; statusEffect?: string; flinch?: boolean }> {
+  const rng = state.rng;
+  const weatherContext = determineWeatherModifier(state.field.weather?.kind);
+  const moveType = normalizeTypeName(compiledMove.type);
+  const attackerGrounded = isGrounded(attacker);
+  const terrainContext = determineTerrainModifier(state.field.terrain?.kind, moveType, attackerGrounded);
+  const attackerItem = attacker.heldItem?.toLowerCase();
+  const defenderItem = defender.heldItem?.toLowerCase();
   const level = attacker.level;
   
   // Handle both old Move type and new CompiledMove type
@@ -721,7 +794,7 @@ export async function calculateDamageDetailed(
   const power = compiledMove.getPower ? compiledMove.getPower(powerContext) : (compiledMove.power || 0);
   
   // Determine if move is physical or special
-  const moveType = compiledMove.type;
+  const moveType = normalizeTypeName(compiledMove.type);
   const isPhysical = compiledMove.category === 'Physical';
   
   // Get base stats
@@ -771,12 +844,11 @@ export async function calculateDamageDetailed(
   } catch {}
 
   // Get types
-  const attackerTypes = attacker.pokemon.types.map(type => 
-    (typeof type === 'string' ? type : type.type?.name || 'normal') as TypeName
-  );
-  const defenderTypes = defender.pokemon.types.map(type => 
-    (typeof type === 'string' ? type : type.type?.name || 'normal') as TypeName
-  );
+  const attackerTypes = attacker.pokemon.types.map(type => normalizeTypeName(typeof type === 'string' ? type : type.type?.name));
+  const defenderTypes = defender.pokemon.types.map(type => normalizeTypeName(typeof type === 'string' ? type : type.type?.name));
+
+  const groundedAttacker = attackerGrounded;
+  const groundedDefender = isGrounded(defender);
 
   // Check for abilities
   const currentAbility = getCurrentAbility(attacker);
@@ -812,16 +884,17 @@ export async function calculateDamageDetailed(
     attackStatStages: attacker.statModifiers.attack,
     defenseStatStages: defender.statModifiers.defense,
     isPhysical,
-    weather: 'None', // TODO: Add weather system
+    weather: weatherContext,
     isBurned: attacker.status === 'burned',
     hasGuts,
     hasAdaptability,
-    hasLifeOrb: false, // TODO: Add item system
-    hasExpertBelt: false, // TODO: Add item system
-    hasReflect: false, // TODO: Add screen system
-    hasLightScreen: false, // TODO: Add screen system
+    hasLifeOrb: attackerItem === 'life-orb',
+    hasExpertBelt: attackerItem === 'expert-belt',
+    hasReflect: hasScreen(state, defender, 'reflect') && isPhysical && !isCrit,
+    hasLightScreen: hasScreen(state, defender, 'lightScreen') && !isPhysical && !isCrit,
+    hasAuroraVeil: hasScreen(state, defender, 'auroraVeil') && !isCrit,
     isMultiTarget: false, // TODO: Add multi-target detection
-    terrain: 'None', // TODO: Add terrain system
+    terrain: terrainContext,
     hasTintedLens,
     hasFilter: defenderHasFilter,
     hasSolidRock: defenderHasSolidRock,
@@ -831,12 +904,13 @@ export async function calculateDamageDetailed(
     hasPurePower,
     hasSniper,
     isHighCritMove,
-    hasSuperLuck
+    hasSuperLuck,
+    rng
   });
   
   // Check for status effects and flinch using new move system
   const statusEffect = compiledMove.ailment ? compiledMove.ailment.kind : undefined;
-  const flinch = compiledMove.ailment?.kind === 'flinch' && Math.random() < (compiledMove.ailment.chance / 100);
+  const flinch = compiledMove.ailment?.kind === 'flinch' && rngRollChance(state.rng, (compiledMove.ailment.chance ?? 0) / 100);
   
   return {
     damage: result.damage,
@@ -1271,14 +1345,20 @@ export function initializeTeamBattle(
     pokemon: playerBattlePokemon,
     currentIndex: 0,
     faintedCount: 0,
-    sideConditions: {}
+    sideConditions: {
+      screens: {},
+      hazards: { ...EMPTY_HAZARDS },
+    }
   };
 
   const opponent: BattleTeam = {
     pokemon: opponentBattlePokemon,
     currentIndex: 0,
     faintedCount: 0,
-    sideConditions: {}
+    sideConditions: {
+      screens: {},
+      hazards: { ...EMPTY_HAZARDS },
+    }
   };
 
   // Determine turn order based on speed of first Pokémon
@@ -1303,7 +1383,7 @@ export function initializeTeamBattle(
     player,
     opponent,
     turn: 1,
-    rng: Math.floor(Math.random() * 1000000),
+    rng: createBattleRng(),
     battleLog: [{
       type: 'battle_start',
       message: `Battle Start!\n${playerTeamName} sends out ${playerCurrent.pokemon.name}!\n${opponentTeamName} sends out ${opponentCurrent.pokemon.name}!`,
@@ -1312,7 +1392,7 @@ export function initializeTeamBattle(
     isComplete: false,
     phase: 'choice',
     actionQueue: [],
-    field: {}
+    field: createFieldState()
   };
 }
 
@@ -1662,8 +1742,14 @@ async function endTurn(state: BattleState): Promise<BattleState> {
   }
   
   // Process end of turn status effects
-  const playerStatusDamage = processEndOfTurnStatus(newState.player.pokemon[newState.player.currentIndex]);
-  const opponentStatusDamage = processEndOfTurnStatus(newState.opponent.pokemon[newState.opponent.currentIndex]);
+  const playerStatusDamage = processEndOfTurnStatus(
+    newState.player.pokemon[newState.player.currentIndex],
+    newState.rng
+  );
+  const opponentStatusDamage = processEndOfTurnStatus(
+    newState.opponent.pokemon[newState.opponent.currentIndex],
+    newState.rng
+  );
   
   if (playerStatusDamage > 0) {
     const damagePercent = calculateDamagePercentage(playerStatusDamage, newState.player.pokemon[newState.player.currentIndex].maxHp);
@@ -1718,7 +1804,11 @@ export async function processBattleTurn(
     return state;
   }
   
-  const newState = { ...state, battleLog: [...state.battleLog] };
+  const newState = {
+    ...state,
+    battleLog: [...state.battleLog],
+    rng: cloneBattleRng(state.rng),
+  };
   newState.turn += 1;
   
   // A) Choice phase - actions are already provided
@@ -1783,4 +1873,13 @@ export async function processBattleTurn(
   }
   
   return newState;
+}
+
+function hasScreen(state: BattleState, defender: BattlePokemon, screen: 'reflect' | 'lightScreen' | 'auroraVeil'): boolean {
+  const isPlayer = defender === getCurrentPokemon(state.player);
+  const screens = isPlayer ? state.player.sideConditions.screens : state.opponent.sideConditions.screens;
+  if (screen === 'auroraVeil') {
+    return Boolean(screens.auroraVeil);
+  }
+  return Boolean((screens as any)[screen]);
 }

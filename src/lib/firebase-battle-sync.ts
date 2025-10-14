@@ -1,5 +1,6 @@
 import { BattleState, BattleAction, BattleTeam, BattlePokemon, processBattleTurn } from './team-battle-engine';
 import { battleService, MultiplayerBattleState } from './battleService';
+import { serializeBattleStateForFirestore } from './battle-state-serializer';
 import { 
   collection, 
   doc, 
@@ -11,11 +12,21 @@ import {
   type Unsubscribe
 } from 'firebase/firestore';
 import { db } from './firebase';
+import { deserializeBattleStateFromFirestore } from './battle-state-serializer';
 
 export interface FirebaseBattleSyncConfig {
   battleId: string;
   playerId: string;
   isHost: boolean;
+}
+
+export interface FirebaseBattlePayload {
+  battleId: string;
+  playerId: string;
+  isHost: boolean;
+  turnNumber: number;
+  phase: BattleState['phase'];
+  battleData: BattleState;
 }
 
 export interface SyncStatus {
@@ -101,8 +112,9 @@ export class FirebaseBattleSyncManager {
 
     // Extract battle state from battle data
     if (battle.battleData) {
-      const battleState = battle.battleData as BattleState;
-      this.handleBattleStateUpdate(battleState);
+      const serializedState = deserializeBattleStateFromFirestore(battle.battleData as Record<string, unknown>);
+      this.currentState = serializedState;
+      this.notifyStateChange(serializedState);
     }
 
     // Handle action updates
@@ -252,17 +264,17 @@ export class FirebaseBattleSyncManager {
       }
       
       // Update the battle with the new state
-      const updateData: any = {
-        battleData: state,
-        status: state.isComplete ? 'completed' : 'active'
-      };
+      const payload = serializeBattleStateForFirestore(state, {
+        playerId: this.config.playerId,
+        isHost: this.config.isHost,
+      });
       
-      // Only include turnNumber if it's defined
-      if (state.turnNumber !== undefined) {
-        updateData.turnNumber = state.turnNumber;
-      }
-      
-      await battleService.updateBattle(this.config.battleId, updateData);
+      await battleService.updateBattle(this.config.battleId, {
+        battleData: payload.serialized,
+        status: payload.state.isComplete ? 'completed' : 'active',
+        turnNumber: payload.turn,
+        phase: payload.phase,
+      });
 
       this.updateSyncStatus({ lastSync: Date.now() });
     } catch (error) {

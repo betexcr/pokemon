@@ -3,6 +3,13 @@
 import { BattleState, BattlePokemon, getCurrentPokemon, switchToPokemon, getEffectiveSpeed, isTeamDefeated, canUseMove, applyStatusMoveEffects } from './team-battle-engine';
 import { calculateComprehensiveDamage } from './damage-calculator';
 import { getMove } from './moveCache';
+import { applyEntryHazards } from './team-battle-hazards';
+import { handleOnEntryAbilities } from './team-battle-abilities';
+import { applyWeatherResidual, applyTerrainHealing, decrementFieldTimers, applyLeechSeed, applyBindingDamage } from './team-battle-field';
+import { applyEndOfTurnStatus, clearStatus } from './team-battle-status';
+import { getPokemonTypes } from './team-battle-hazards';
+import { BattleRng, rngRollChance } from './battle-rng';
+import { tryConsumeBerry, tryHarvestBerry } from './team-battle-items';
 
 // Resolve a switch action
 export async function resolveSwitch(state: BattleState, action: BattleState['actionQueue'][0]): Promise<void> {
@@ -29,6 +36,7 @@ export async function resolveSwitch(state: BattleState, action: BattleState['act
   
   // Run on-entry sequence (hazards, abilities, etc.)
   await runEntrySequence(state, action.user === 'player' ? 'opponent' : 'player', newPokemon);
+  newPokemon.volatile.justSwitchedIn = true;
 }
 
 // Resolve a move action
@@ -40,7 +48,7 @@ export async function resolveMove(state: BattleState, action: BattleState['actio
   console.log(`⚡ ${action.user} using move ${moveId}`);
   
   // Check if Pokemon can use the move
-  const canUseResult = canUseMove(attacker, moveId);
+  const canUseResult = canUseMove(attacker, moveId, state.rng);
   if (!canUseResult.canUse) {
     const reason = canUseResult.reason || 'couldn\'t use the move';
     state.battleLog.push({
@@ -132,6 +140,8 @@ export async function executeMoveAction(
   const damage = damageResult.damage;
   const oldHp = defender.currentHp;
   defender.currentHp = Math.max(0, defender.currentHp - damage);
+  totalDamageDealt += damage;
+  tryConsumeBerry(state, defender);
   
   console.log(`Damage calculated: ${damage} (${oldHp} -> ${defender.currentHp})`);
   
@@ -165,14 +175,50 @@ export async function executeMoveAction(
 // Run on-entry sequence for a Pokemon
 export async function runEntrySequence(state: BattleState, opponentSide: 'player' | 'opponent', incomingPokemon: BattlePokemon): Promise<void> {
   const opponentTeam = opponentSide === 'player' ? state.player : state.opponent;
-  
-  // Check for entry hazards (simplified - no hazards for now)
-  // TODO: Implement Stealth Rock, Spikes, Toxic Spikes, Sticky Web
-  
-  // Check for on-entry abilities/items
-  // TODO: Implement Intimidate, Download, Frisk, etc.
-  
-  console.log(`🎯 Running entry sequence for ${incomingPokemon.pokemon.name}`);
+
+  // Check for entry hazards
+  const hazards = opponentTeam.sideConditions.hazards;
+  const result = applyEntryHazards(incomingPokemon, hazards);
+
+  if (result.damage > 0) {
+    incomingPokemon.currentHp = Math.max(0, incomingPokemon.currentHp - result.damage);
+    state.battleLog.push({
+      type: 'status_damage',
+      message: `${incomingPokemon.pokemon.name} is hurt by entry hazards!`,
+      pokemon: incomingPokemon.pokemon.name,
+      damage: Math.round((result.damage / incomingPokemon.maxHp) * 100),
+    });
+  }
+
+  if (result.poisonStatus) {
+    incomingPokemon.status = result.poisonStatus;
+    incomingPokemon.statusTurns = 0;
+    state.battleLog.push({
+      type: 'status_applied',
+      message: `${incomingPokemon.pokemon.name} was ${result.poisonStatus === 'badly-poisoned' ? 'badly poisoned' : 'poisoned'} by Toxic Spikes!`,
+      pokemon: incomingPokemon.pokemon.name,
+      status: result.poisonStatus.toUpperCase(),
+    });
+  }
+
+  if (result.applyStickyWeb) {
+    incomingPokemon.statModifiers.speed = Math.max(-6, incomingPokemon.statModifiers.speed - 1);
+    state.battleLog.push({
+      type: 'status_effect',
+      message: `${incomingPokemon.pokemon.name}'s Speed was lowered by Sticky Web!`,
+      pokemon: incomingPokemon.pokemon.name,
+    });
+  }
+
+  if (result.absorbedToxicSpikes) {
+    state.battleLog.push({
+      type: 'status_effect',
+      message: `${incomingPokemon.pokemon.name} absorbed the Toxic Spikes!`,
+      pokemon: incomingPokemon.pokemon.name,
+    });
+  }
+
+  handleOnEntryAbilities(state, opponentSide === 'player' ? 'opponent' : 'player', incomingPokemon);
 }
 
 // Process end-of-turn effects
@@ -180,7 +226,18 @@ export async function processEndOfTurn(state: BattleState): Promise<void> {
   console.log('🌅 Processing end-of-turn effects');
   
   // 1. Residual damage/heal
+  applyWeatherResidual(state);
   processResidualDamage(state);
+  applyTerrainHealing(state);
+  applyLeechSeed(state);
+  applyBindingDamage(state);
+  decrementFieldTimers(state.field, {
+    player: state.player.sideConditions.screens,
+    opponent: state.opponent.sideConditions.screens,
+  });
+
+  applyEndOfTurnStatus(state, getCurrentPokemon(state.player));
+  applyEndOfTurnStatus(state, getCurrentPokemon(state.opponent));
   
   // 2. Item residuals
   processItemResiduals(state);
@@ -201,8 +258,17 @@ export function processResidualDamage(state: BattleState): void {
   const opponentPokemon = getCurrentPokemon(state.opponent);
   
   // Poison/Burn damage
-  if (playerPokemon.status === 'poisoned') {
-    const damage = Math.floor(playerPokemon.maxHp / 8);
+  if (playerPokemon.status === 'poisoned' || playerPokemon.status === 'badly-poisoned') {
+    if (!playerPokemon.volatile.toxicCounter) {
+      playerPokemon.volatile.toxicCounter = playerPokemon.status === 'badly-poisoned' ? 1 : 0;
+    }
+    if (playerPokemon.status === 'badly-poisoned') {
+      playerPokemon.volatile.toxicCounter += 1;
+    }
+    const damageFraction = playerPokemon.status === 'badly-poisoned'
+      ? Math.min(16, playerPokemon.volatile.toxicCounter ?? 1) / 16
+      : 1 / 8;
+    const damage = Math.floor(playerPokemon.maxHp * damageFraction);
     const oldHp = playerPokemon.currentHp;
     playerPokemon.currentHp = Math.max(0, playerPokemon.currentHp - damage);
     if (damage > 0) {
@@ -219,8 +285,17 @@ export function processResidualDamage(state: BattleState): void {
     }
   }
   
-  if (opponentPokemon.status === 'poisoned') {
-    const damage = Math.floor(opponentPokemon.maxHp / 8);
+  if (opponentPokemon.status === 'poisoned' || opponentPokemon.status === 'badly-poisoned') {
+    if (!opponentPokemon.volatile.toxicCounter) {
+      opponentPokemon.volatile.toxicCounter = opponentPokemon.status === 'badly-poisoned' ? 1 : 0;
+    }
+    if (opponentPokemon.status === 'badly-poisoned') {
+      opponentPokemon.volatile.toxicCounter += 1;
+    }
+    const damageFraction = opponentPokemon.status === 'badly-poisoned'
+      ? Math.min(16, opponentPokemon.volatile.toxicCounter ?? 1) / 16
+      : 1 / 8;
+    const damage = Math.floor(opponentPokemon.maxHp * damageFraction);
     const oldHp = opponentPokemon.currentHp;
     opponentPokemon.currentHp = Math.max(0, opponentPokemon.currentHp - damage);
     if (damage > 0) {
@@ -275,95 +350,183 @@ export function processResidualDamage(state: BattleState): void {
   }
   
   // Binding damage
-  const playerBinding = (playerPokemon.volatile as any).binding as { turnsLeft: number; fraction: number; kind: string } | undefined;
-  if (playerBinding) {
-    console.log(`🔗 Applying binding damage to ${playerPokemon.pokemon.name}:`, {
-      binding: playerBinding,
-      currentHp: playerPokemon.currentHp,
-      maxHp: playerPokemon.maxHp,
-      fraction: playerBinding.fraction
-    });
-    
-    const damage = Math.max(1, Math.floor(playerPokemon.maxHp * playerBinding.fraction));
-    const oldHp = playerPokemon.currentHp;
-    playerPokemon.currentHp = Math.max(0, playerPokemon.currentHp - damage);
-    playerBinding.turnsLeft -= 1;
-    
-    console.log(`🔗 Binding damage applied: ${damage} damage (${oldHp} -> ${playerPokemon.currentHp}), turns left: ${playerBinding.turnsLeft}`);
-    
-    if (playerBinding.turnsLeft <= 0) {
-      (playerPokemon.volatile as any).binding = undefined;
-      state.battleLog.push({
-        type: 'status_effect',
-        message: `${playerPokemon.pokemon.name} was freed from ${playerBinding.kind}!`,
-        pokemon: playerPokemon.pokemon.name
-      });
-    } else {
-      const percent = Math.round((damage / playerPokemon.maxHp) * 100);
-      const remain = Math.round((playerPokemon.currentHp / playerPokemon.maxHp) * 100);
-      state.battleLog.push({
-        type: 'status_damage',
-        message: `${playerPokemon.pokemon.name} is hurt by ${playerBinding.kind}! (${remain}% HP left)`,
-        pokemon: playerPokemon.pokemon.name,
-        damage: percent
-      });
-    }
-    
-    // Update fainted count if Pokemon fainted
-    if (oldHp > 0 && playerPokemon.currentHp <= 0) {
-      state.player.faintedCount = state.player.pokemon.filter(p => p.currentHp <= 0).length;
-    }
-  }
-  
-  const opponentBinding = (opponentPokemon.volatile as any).binding as { turnsLeft: number; fraction: number; kind: string } | undefined;
-  if (opponentBinding) {
-    console.log(`🔗 Applying binding damage to ${opponentPokemon.pokemon.name}:`, {
-      binding: opponentBinding,
-      currentHp: opponentPokemon.currentHp,
-      maxHp: opponentPokemon.maxHp,
-      fraction: opponentBinding.fraction
-    });
-    
-    const damage = Math.max(1, Math.floor(opponentPokemon.maxHp * opponentBinding.fraction));
-    const oldHp = opponentPokemon.currentHp;
-    opponentPokemon.currentHp = Math.max(0, opponentPokemon.currentHp - damage);
-    opponentBinding.turnsLeft -= 1;
-    
-    console.log(`🔗 Binding damage applied: ${damage} damage (${oldHp} -> ${opponentPokemon.currentHp}), turns left: ${opponentBinding.turnsLeft}`);
-    
-    if (opponentBinding.turnsLeft <= 0) {
-      (opponentPokemon.volatile as any).binding = undefined;
-      state.battleLog.push({
-        type: 'status_effect',
-        message: `${opponentPokemon.pokemon.name} was freed from ${opponentBinding.kind}!`,
-        pokemon: opponentPokemon.pokemon.name
-      });
-    } else {
-      const percent = Math.round((damage / opponentPokemon.maxHp) * 100);
-      const remain = Math.round((opponentPokemon.currentHp / opponentPokemon.maxHp) * 100);
-      state.battleLog.push({
-        type: 'status_damage',
-        message: `${opponentPokemon.pokemon.name} is hurt by ${opponentBinding.kind}! (${remain}% HP left)`,
-        pokemon: opponentPokemon.pokemon.name,
-        damage: percent
-      });
-    }
-    
-    // Update fainted count if Pokemon fainted
-    if (oldHp > 0 && opponentPokemon.currentHp <= 0) {
-      state.opponent.faintedCount = state.opponent.pokemon.filter(p => p.currentHp <= 0).length;
-    }
-  }
 }
 
 // Process item residuals
 export function processItemResiduals(state: BattleState): void {
-  // TODO: Implement Leftovers, Black Sludge, etc.
+  const processItem = (team: BattleTeam) => {
+    const pokemon = getCurrentPokemon(team);
+    if (pokemon.currentHp <= 0) return;
+
+    const item = pokemon.heldItem?.toLowerCase();
+    if (!item) return;
+
+    if (item === 'shell-bell' && pokemon.volatile.damageDealtThisTurn) {
+      const heal = Math.max(1, Math.floor(pokemon.volatile.damageDealtThisTurn / 8));
+      if (heal > 0 && pokemon.currentHp < pokemon.maxHp) {
+        pokemon.currentHp = Math.min(pokemon.maxHp, pokemon.currentHp + heal);
+        state.battleLog.push({
+          type: 'healing',
+          message: `${pokemon.pokemon.name} restored HP with Shell Bell!`,
+          pokemon: pokemon.pokemon.name,
+          healing: Math.round((heal / pokemon.maxHp) * 100),
+        });
+      }
+    }
+
+    if (item === 'leftovers' || (item === 'black-sludge' && pokemon.pokemon.types.some(t => (typeof t === 'string' ? t : t.type?.name || '') === 'Poison'))) {
+      const heal = Math.floor(pokemon.maxHp / 16);
+      if (heal > 0 && pokemon.currentHp < pokemon.maxHp) {
+        pokemon.currentHp = Math.min(pokemon.maxHp, pokemon.currentHp + heal);
+        state.battleLog.push({
+          type: 'healing',
+          message: `${pokemon.pokemon.name} restored HP with ${item === 'leftovers' ? 'Leftovers' : 'Black Sludge'}!`,
+          pokemon: pokemon.pokemon.name,
+          healing: Math.round((heal / pokemon.maxHp) * 100),
+        });
+      }
+    } else if (item === 'black-sludge') {
+      const damage = Math.floor(pokemon.maxHp / 8);
+      if (damage > 0) {
+        pokemon.currentHp = Math.max(0, pokemon.currentHp - damage);
+        state.battleLog.push({
+          type: 'status_damage',
+          message: `${pokemon.pokemon.name} was hurt by Black Sludge!`,
+          pokemon: pokemon.pokemon.name,
+          damage: Math.round((damage / pokemon.maxHp) * 100),
+        });
+      }
+    }
+
+    // TODO: implement berry consumption triggers during damage resolution
+  };
+
+  processItem(state.player);
+  processItem(state.opponent);
+
+  // Reset per-turn damage trackers after applying Shell Bell
+  getCurrentPokemon(state.player).volatile.damageDealtThisTurn = 0;
+  getCurrentPokemon(state.opponent).volatile.damageDealtThisTurn = 0;
 }
 
 // Process end-of-turn abilities
 export function processEndOfTurnAbilities(state: BattleState): void {
-  // TODO: Implement Speed Boost, Moody, Harvest, etc.
+  [state.player, state.opponent].forEach(team => {
+    const pokemon = getCurrentPokemon(team);
+    if (pokemon.currentHp <= 0) return;
+
+    const ability = pokemon.currentAbility?.toLowerCase();
+    switch (ability) {
+      case 'speed-boost': {
+        pokemon.statModifiers.speed = Math.min(6, pokemon.statModifiers.speed + 1);
+        state.battleLog.push({
+          type: 'status_effect',
+          message: `${pokemon.pokemon.name}'s Speed rose thanks to Speed Boost!`,
+          pokemon: pokemon.pokemon.name,
+        });
+        break;
+      }
+      case 'shed-skin': {
+        if (pokemon.status && rngRollChance(state.rng, 0.3)) {
+          const oldStatus = pokemon.status;
+          clearStatus(pokemon);
+          state.battleLog.push({
+            type: 'status_effect',
+            message: `${pokemon.pokemon.name} shed its ${oldStatus}!`,
+            pokemon: pokemon.pokemon.name,
+          });
+        }
+        break;
+      }
+      case 'hydration': {
+        if (pokemon.status && state.field.weather?.kind === 'rain') {
+          const oldStatus = pokemon.status;
+          clearStatus(pokemon);
+          state.battleLog.push({
+            type: 'status_effect',
+            message: `${pokemon.pokemon.name}'s Hydration cured its ${oldStatus}!`,
+            pokemon: pokemon.pokemon.name,
+          });
+        }
+        break;
+      }
+      case 'rain-dish': {
+        if (state.field.weather?.kind === 'rain') {
+          const heal = Math.floor(pokemon.maxHp / 16);
+          if (heal > 0 && pokemon.currentHp < pokemon.maxHp) {
+            pokemon.currentHp = Math.min(pokemon.maxHp, pokemon.currentHp + heal);
+            state.battleLog.push({
+              type: 'healing',
+              message: `${pokemon.pokemon.name} restored HP with Rain Dish!`,
+              pokemon: pokemon.pokemon.name,
+              healing: Math.round((heal / pokemon.maxHp) * 100),
+            });
+          }
+        }
+        break;
+      }
+      case 'dry-skin': {
+        if (state.field.weather?.kind === 'rain') {
+          const heal = Math.floor(pokemon.maxHp / 8);
+          if (heal > 0 && pokemon.currentHp < pokemon.maxHp) {
+            pokemon.currentHp = Math.min(pokemon.maxHp, pokemon.currentHp + heal);
+            state.battleLog.push({
+              type: 'healing',
+              message: `${pokemon.pokemon.name} restored HP with Dry Skin!`,
+              pokemon: pokemon.pokemon.name,
+              healing: Math.round((heal / pokemon.maxHp) * 100),
+            });
+          }
+        } else if (state.field.weather?.kind === 'sun') {
+          const damage = Math.floor(pokemon.maxHp / 8);
+          if (damage > 0) {
+            pokemon.currentHp = Math.max(0, pokemon.currentHp - damage);
+            state.battleLog.push({
+              type: 'status_damage',
+              message: `${pokemon.pokemon.name} was hurt by Dry Skin under the sun!`,
+              pokemon: pokemon.pokemon.name,
+              damage: Math.round((damage / pokemon.maxHp) * 100),
+            });
+          }
+        }
+        break;
+      }
+      case 'solar-power': {
+        if (state.field.weather?.kind === 'sun') {
+          const damage = Math.max(1, Math.floor(pokemon.maxHp / 8));
+          pokemon.currentHp = Math.max(0, pokemon.currentHp - damage);
+          state.battleLog.push({
+            type: 'status_damage',
+            message: `${pokemon.pokemon.name} is hurt by Solar Power!`,
+            pokemon: pokemon.pokemon.name,
+            damage: Math.round((damage / pokemon.maxHp) * 100),
+          });
+        }
+        break;
+      }
+      case 'ice-body': {
+        if (state.field.weather?.kind === 'snow') {
+          const heal = Math.floor(pokemon.maxHp / 16);
+          if (heal > 0 && pokemon.currentHp < pokemon.maxHp) {
+            pokemon.currentHp = Math.min(pokemon.maxHp, pokemon.currentHp + heal);
+            state.battleLog.push({
+              type: 'healing',
+              message: `${pokemon.pokemon.name} restored HP with Ice Body!`,
+              pokemon: pokemon.pokemon.name,
+              healing: Math.round((heal / pokemon.maxHp) * 100),
+            });
+          }
+        }
+        break;
+      }
+      case 'harvest': {
+        tryHarvestBerry(state, pokemon);
+        break;
+      }
+      default:
+        break;
+    }
+  });
 }
 
 // Process volatile decrements

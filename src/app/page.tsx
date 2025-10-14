@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 import { Pokemon, FilterState } from '@/types/pokemon'
+import ViewportPriorityLoader from '@/lib/viewportPriorityLoader'
 import { getPokemonTotalCount, generateAllPokemonSkeletons, getPokemonList, getPokemonSkeletonsWithPagination, generateSpecialFormsPokemon, getPokemonFallbackImage, getPokemonMainPageImage, getPokemonShinyImage } from '@/lib/api'
-import { ViewportPriorityLoader } from '@/lib/viewportPriorityLoader'
 import { useTheme } from '@/components/ThemeProvider'
 // Removed PokemonPreloader import to avoid HMR issues
 // Removed sharedPokemonCache import to avoid HMR issues - implementing cache logic inline

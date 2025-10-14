@@ -8,7 +8,6 @@ import StatusPopups, { StatusEvent } from '@/components/battle/StatusPopups';
 import AttackAnimator from '@/components/battle/AttackAnimator';
 import { FxKind } from '@/components/battle/fx/MoveFX.types';
 import { BattleSprite, BattleSpriteRef } from '@/components/battle/BattleSprite';
-import { rtdbService } from '@/lib/firebase-rtdb-service';
 import Image from 'next/image';
 
 const formatMoveLabel = (rawId: string): string => {

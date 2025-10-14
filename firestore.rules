@@ -55,6 +55,11 @@ service cloud.firestore {
       allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
     }
 
+    // Dex progress synced per user
+    match /users/{uid}/dex/{docId} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
     // Block everything else by default
     match /{document=**} {
       allow read, write: if false;

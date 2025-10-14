@@ -1,10 +1,9 @@
 "use client";
 
-import { TYPES, type TypeName } from '@/lib/type/data';
-import TypeBadge from '@/components/type/TypeBadge';
+import { type TypeName } from '@/lib/type/data';
 import TypeSelect from '@/components/type/TypeSelect';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 type Mode = 'wheel' | 'matrix';
 
@@ -22,9 +21,9 @@ export default function TypeControls({ initialMode, initialAttacker, initialDefe
     const defs = sp.get('defender');
     if (defs) {
       const [d1] = defs.split(',').filter(Boolean) as TypeName[];
-      return (d1 as TypeName) || initialDefenders?.[0] || 'Grass';
+      return (d1 as TypeName) || initialDefenders?.[0] || '';
     }
-    return initialDefenders?.[0] || 'Grass';
+    return initialDefenders?.[0] || '';
   });
   const [def2, setDef2] = useState<TypeName | ''>(() => {
     const defs = sp.get('defender');
@@ -42,10 +41,12 @@ export default function TypeControls({ initialMode, initialAttacker, initialDefe
     const nextAttacker = (sp.get('attacker') as TypeName) || initialAttacker || 'Fire';
     if (nextAttacker !== attacker) setAttacker(nextAttacker);
     const defs = sp.get('defender') || '';
-    const [nextD1, nextD2] = defs.split(',').filter(Boolean) as TypeName[];
-    if ((nextD1 || 'Grass') !== def1) setDef1((nextD1 as TypeName) || 'Grass');
-    if ((nextD2 || '') !== def2) setDef2((nextD2 as TypeName) || '');
-  }, [sp, initialMode, initialAttacker]);
+    const filtered = defs.split(',').filter(Boolean) as TypeName[];
+    const nextD1 = filtered[0] ?? initialDefenders?.[0] ?? '';
+    const nextD2 = filtered[1] ?? initialDefenders?.[1] ?? '';
+    if (nextD1 !== def1) setDef1(nextD1);
+    if (nextD2 !== def2) setDef2(nextD2);
+  }, [sp, initialMode, initialAttacker, initialDefenders, def1, def2]);
 
   useEffect(() => {
     const usp = new URLSearchParams(sp.toString());
