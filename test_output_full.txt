@@ -1,0 +1,80 @@
+
+Running 1 test using 1 worker
+
+Logging in host...
+Test failed: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:3002/
+Call log:
+[2m  - navigating to "http://127.0.0.1:3002/", waiting until "domcontentloaded"[22m
+
+    at loginThroughProfile [90m(D:\Code\pokemon\[39mtests\playwright\multiplayer-battle.spec.ts:11:14[90m)[39m
+    at login [90m(D:\Code\pokemon\[39mtests\playwright\multiplayer-battle.spec.ts:39:9[90m)[39m
+    at [90mD:\Code\pokemon\[39mtests\playwright\multiplayer-battle.spec.ts:54:11 {
+  name: [32m'Error'[39m,
+  [[32mSymbol(step)[39m]: {
+    location: {
+      file: [32m'D:\\Code\\pokemon\\tests\\playwright\\multiplayer-battle.spec.ts'[39m,
+      line: [33m11[39m,
+      column: [33m14[39m,
+      function: [32m'loginThroughProfile'[39m
+    },
+    category: [32m'pw:api'[39m,
+    title: [32m'Navigate to "/"'[39m,
+    apiName: [32m'page.goto'[39m,
+    params: {
+      url: [32m'http://127.0.0.1:3002/'[39m,
+      waitUntil: [32m'domcontentloaded'[39m,
+      timeout: [33m0[39m
+    },
+    group: [90mundefined[39m,
+    stepId: [32m'pw:api@38'[39m,
+    boxedStack: [90mundefined[39m,
+    steps: [],
+    attachmentIndices: [],
+    info: TestStepInfoImpl {
+      annotations: [],
+      _testInfo: [36m[TestInfoImpl][39m,
+      _stepId: [32m'pw:api@38'[39m,
+      _title: [32m'Navigate to "/"'[39m,
+      _parentStep: [90mundefined[39m,
+      skip: [36m[Function (anonymous)][39m
+    },
+    complete: [36m[Function: complete][39m,
+    endWallTime: [33m1764067406846[39m,
+    error: {
+      message: [32m'Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:3002/\n'[39m +
+        [32m'Call log:\n'[39m +
+        [32m'\x1B[2m  - navigating to "http://127.0.0.1:3002/", waiting until "domcontentloaded"\x1B[22m\n'[39m,
+      stack: [32m'Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:3002/\n'[39m +
+        [32m'Call log:\n'[39m +
+        [32m'\x1B[2m  - navigating to "http://127.0.0.1:3002/", waiting until "domcontentloaded"\x1B[22m\n'[39m +
+        [32m'\n'[39m +
+        [32m'    at loginThroughProfile (D:\\Code\\pokemon\\tests\\playwright\\multiplayer-battle.spec.ts:11:14)\n'[39m +
+        [32m'    at login (D:\\Code\\pokemon\\tests\\playwright\\multiplayer-battle.spec.ts:39:9)\n'[39m +
+        [32m'    at D:\\Code\\pokemon\\tests\\playwright\\multiplayer-battle.spec.ts:54:11'[39m,
+      cause: [90mundefined[39m
+    }
+  }
+}
+  ✘  1 tests\playwright\multiplayer-battle.spec.ts:44:5 › multiplayer battle flow: join, select team, battle (2.8s)
+
+
+  1) tests\playwright\multiplayer-battle.spec.ts:44:5 › multiplayer battle flow: join, select team, battle 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:3002/
+    Call log:
+    [2m  - navigating to "http://127.0.0.1:3002/", waiting until "domcontentloaded"[22m
+
+
+       9 |
+      10 | async function loginThroughProfile(page: Page, email: string, password: string) {
+    > 11 |   await page.goto(`${BASE_URL}/`, { waitUntil: 'domcontentloaded' });
+         |              ^
+      12 |
+      13 |   const profileButton = page.locator('.user-dropdown-container button').first();
+      14 |   await profileButton.waitFor({ state: 'visible' });
+        at loginThroughProfile (D:\Code\pokemon\tests\playwright\multiplayer-battle.spec.ts:11:14)
+        at login (D:\Code\pokemon\tests\playwright\multiplayer-battle.spec.ts:39:9)
+        at D:\Code\pokemon\tests\playwright\multiplayer-battle.spec.ts:54:11
+
+  1 failed
+    tests\playwright\multiplayer-battle.spec.ts:44:5 › multiplayer battle flow: join, select team, battle 

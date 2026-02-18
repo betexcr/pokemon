@@ -79,6 +79,7 @@ export interface RTDBBattlePublic {
     }>;
   };
   lastResultSummary: string;
+  battleLog?: string[];
 }
 
 export interface RTDBBattlePrivate {
@@ -257,7 +258,27 @@ class FirebaseRTDBService {
     const speciesName = this.extractSpeciesName(pokemon);
     const level = typeof pokemon.level === 'number' ? pokemon.level : 50;
     const types = this.extractTypes(pokemon);
-    const maxHp = typeof pokemon.maxHp === 'number' ? pokemon.maxHp : 100;
+    
+    // Calculate max HP if not provided
+    let maxHp: number;
+    if (typeof pokemon.maxHp === 'number') {
+      maxHp = pokemon.maxHp;
+    } else if (pokemon.pokemon?.stats || pokemon.stats) {
+      // Calculate HP from base stats using Pokemon formula
+      const stats = pokemon.pokemon?.stats || pokemon.stats;
+      const hpStat = Array.isArray(stats) 
+        ? stats.find((s: any) => s.stat?.name === 'hp' || s.name === 'hp')
+        : stats.hp;
+      const baseHp = typeof hpStat?.base_stat === 'number' ? hpStat.base_stat : 
+                     typeof hpStat === 'number' ? hpStat : 50;
+      
+      // Pokemon HP formula: floor(((2 * Base + IV + floor(EV/4)) * Level) / 100) + Level + 10
+      // Assuming max IVs (31) and no EVs for simplicity
+      maxHp = Math.floor(((2 * baseHp + 31) * level) / 100) + level + 10;
+    } else {
+      maxHp = 100; // Fallback
+    }
+    
     const currentHp = typeof pokemon.currentHp === 'number' ? pokemon.currentHp : maxHp;
 
     return {
@@ -461,6 +482,73 @@ class FirebaseRTDBService {
     return onValue(resolutionRef, (snapshot: DataSnapshot) => {
       callback(snapshot.val());
     });
+  }
+
+  // Helper methods for battle resolution
+  async getBattleMeta(battleId: string): Promise<RTDBBattleMeta | null> {
+    if (!this.db) throw new Error('RTDB not initialized');
+    
+    const metaRef = ref(this.db, `battles/${battleId}/meta`);
+    const snapshot = await get(metaRef);
+    return snapshot.val();
+  }
+
+  async writeResolution(
+    battleId: string,
+    turn: number,
+    resolution: RTDBResolution
+  ): Promise<void> {
+    if (!this.db) throw new Error('RTDB not initialized');
+    
+    const resolutionRef = ref(this.db, `battles/${battleId}/turns/${turn}/resolution`);
+    await set(resolutionRef, resolution);
+  }
+
+  async updatePublicState(
+    battleId: string,
+    updates: Partial<RTDBBattlePublic>
+  ): Promise<void> {
+    if (!this.db) throw new Error('RTDB not initialized');
+    
+    const publicRef = ref(this.db, `battles/${battleId}/public`);
+    await update(publicRef, updates);
+  }
+
+  async updateBattleMeta(
+    battleId: string,
+    updates: Partial<RTDBBattleMeta>
+  ): Promise<void> {
+    if (!this.db) throw new Error('RTDB not initialized');
+    
+    const metaRef = ref(this.db, `battles/${battleId}/meta`);
+    await update(metaRef, updates);
+  }
+
+  async updatePrivateState(
+    battleId: string,
+    uid: string,
+    updates: Partial<RTDBBattlePrivate>
+  ): Promise<void> {
+    if (!this.db) throw new Error('RTDB not initialized');
+    
+    const privateRef = ref(this.db, `battles/${battleId}/private/${uid}`);
+    await update(privateRef, updates);
+  }
+
+  async getPublicState(battleId: string): Promise<RTDBBattlePublic | null> {
+    if (!this.db) throw new Error('RTDB not initialized');
+    
+    const publicRef = ref(this.db, `battles/${battleId}/public`);
+    const snapshot = await get(publicRef);
+    return snapshot.val();
+  }
+
+  async getPrivateState(battleId: string, uid: string): Promise<RTDBBattlePrivate | null> {
+    if (!this.db) throw new Error('RTDB not initialized');
+    
+    const privateRef = ref(this.db, `battles/${battleId}/private/${uid}`);
+    const snapshot = await get(privateRef);
+    return snapshot.val();
   }
 
   // Cleanup

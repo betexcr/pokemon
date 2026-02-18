@@ -61,7 +61,8 @@ export async function preloadCommonMoves(): Promise<void> {
     'ice-beam', 'surf', 'earthquake', 'psychic', 'shadow-ball', 'dragon-pulse',
     'dark-pulse', 'flash-cannon', 'dazzling-gleam', 'close-combat', 'stone-edge',
     'iron-head', 'play-rough', 'sludge-bomb', 'energy-ball', 'thunder', 'fire-blast',
-    'blizzard', 'hydro-pump', 'solar-beam', 'hyper-beam', 'giga-impact'
+    'blizzard', 'hydro-pump', 'solar-beam', 'hyper-beam', 'giga-impact',
+    'air-slash', 'skull-bash'
   ];
   
   console.log('Preloading common moves...');

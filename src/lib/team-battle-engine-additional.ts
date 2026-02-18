@@ -1,6 +1,6 @@
 // Additional functions for the Gen-8/9 battle engine
 
-import { BattleState, BattlePokemon, getCurrentPokemon, switchToPokemon, getEffectiveSpeed, isTeamDefeated, canUseMove, applyStatusMoveEffects } from './team-battle-engine';
+import { BattleState, BattlePokemon, BattleTeam, getCurrentPokemon, switchToPokemon, getEffectiveSpeed, isTeamDefeated, canUseMove, applyStatusMoveEffects } from './team-battle-engine';
 import { calculateComprehensiveDamage } from './damage-calculator';
 import { getMove } from './moveCache';
 import { applyEntryHazards } from './team-battle-hazards';
@@ -8,8 +8,87 @@ import { handleOnEntryAbilities } from './team-battle-abilities';
 import { applyWeatherResidual, applyTerrainHealing, decrementFieldTimers, applyLeechSeed, applyBindingDamage } from './team-battle-field';
 import { applyEndOfTurnStatus, clearStatus } from './team-battle-status';
 import { getPokemonTypes } from './team-battle-hazards';
-import { BattleRng, rngRollChance } from './battle-rng';
+import { BattleRng, rngRollChance, rngNextInt, rngNextFloat } from './battle-rng';
 import { tryConsumeBerry, tryHarvestBerry } from './team-battle-items';
+
+// Process start-of-turn effects
+export async function processStartOfTurn(state: BattleState): Promise<void> {
+  console.log('🌄 Processing start-of-turn effects');
+  
+  // 1. Update field condition messages (weather, terrain)
+  if (state.field.weather) {
+    const weatherMessages: Record<string, string> = {
+      'rain': 'Rain continues to fall.',
+      'sun': 'The sunlight is strong.',
+      'sandstorm': 'The sandstorm rages.',
+      'snow': 'Snow continues to fall.'
+    };
+    const message = weatherMessages[state.field.weather.kind];
+    if (message) {
+      state.battleLog.push({
+        type: 'status_effect',
+        message
+      });
+    }
+  }
+  
+  if (state.field.terrain) {
+    const terrainMessages: Record<string, string> = {
+      'electric': 'Electric current runs across the battlefield.',
+      'grassy': 'Grass is covering the battlefield.',
+      'psychic': 'The battlefield is weird.',
+      'misty': 'Mist swirls around the battlefield.'
+    };
+    const message = terrainMessages[state.field.terrain.kind];
+    if (message) {
+      state.battleLog.push({
+        type: 'status_effect',
+        message
+      });
+    }
+  }
+  
+  // 2. Clear per-turn flags
+  const playerPokemon = getCurrentPokemon(state.player);
+  const opponentPokemon = getCurrentPokemon(state.opponent);
+  
+  playerPokemon.volatile.flinched = false;
+  playerPokemon.volatile.justSwitchedIn = false;
+  opponentPokemon.volatile.flinched = false;
+  opponentPokemon.volatile.justSwitchedIn = false;
+  
+  // 3. Process Yawn (sleep next turn)
+  if (playerPokemon.volatile.yawn) {
+    playerPokemon.volatile.yawn.turns--;
+    if (playerPokemon.volatile.yawn.turns <= 0) {
+      playerPokemon.status = 'asleep';
+      playerPokemon.statusTurns = 0;
+      playerPokemon.volatile.yawn = undefined;
+      state.battleLog.push({
+        type: 'status_applied',
+        message: `${playerPokemon.pokemon.name} fell asleep!`,
+        pokemon: playerPokemon.pokemon.name,
+        status: 'ASLEEP'
+      });
+    }
+  }
+  
+  if (opponentPokemon.volatile.yawn) {
+    opponentPokemon.volatile.yawn.turns--;
+    if (opponentPokemon.volatile.yawn.turns <= 0) {
+      opponentPokemon.status = 'asleep';
+      opponentPokemon.statusTurns = 0;
+      opponentPokemon.volatile.yawn = undefined;
+      state.battleLog.push({
+        type: 'status_applied',
+        message: `${opponentPokemon.pokemon.name} fell asleep!`,
+        pokemon: opponentPokemon.pokemon.name,
+        status: 'ASLEEP'
+      });
+    }
+  }
+}
+
 
 // Resolve a switch action
 export async function resolveSwitch(state: BattleState, action: BattleState['actionQueue'][0]): Promise<void> {
@@ -74,7 +153,36 @@ export async function resolveMove(state: BattleState, action: BattleState['actio
   await executeMoveAction(state, attacker, defender, moveId, action.user === 'player', action.user);
 }
 
-// Execute a move action (simplified version)
+// Determine hit count for multi-hit moves
+function determineHitCount(move: any, attacker: BattlePokemon, rng: BattleRng): number {
+  // Check if move is multi-hit
+  if (!move.hits) return 1;
+  
+  const minHits = move.hits.min || 1;
+  const maxHits = move.hits.max || 1;
+  
+  // Fixed hit count moves (e.g., Double Kick = 2, Triple Kick = 3)
+  if (minHits === maxHits) return minHits;
+  
+  // Skill Link ability always gives max hits
+  const ability = attacker.currentAbility?.toLowerCase();
+  if (ability === 'skill-link') return maxHits;
+  
+  // For 2-5 hit moves, use Gen 9 distribution:
+  // 35% for 2 hits, 35% for 3 hits, 15% for 4 hits, 15% for 5 hits
+  if (minHits === 2 && maxHits === 5) {
+    const roll = rngNextFloat(rng);
+    if (roll < 0.35) return 2;
+    if (roll < 0.70) return 3;
+    if (roll < 0.85) return 4;
+    return 5;
+  }
+  
+  // Default: random between min and max
+  return rngNextInt(rng, minHits, maxHits + 1);
+}
+
+// Execute a move action with multi-hit support
 export async function executeMoveAction(
   state: BattleState,
   attacker: BattlePokemon,
@@ -104,57 +212,276 @@ export async function executeMoveAction(
     return;
   }
   
-  // Get stats from the Pokemon data structure
-  const attackerAttackStat = attacker.pokemon.stats.find(s => s.stat.name === 'attack')?.base_stat || 50;
-  const attackerSpecialAttackStat = attacker.pokemon.stats.find(s => s.stat.name === 'special-attack')?.base_stat || 50;
-  const defenderDefenseStat = defender.pokemon.stats.find(s => s.stat.name === 'defense')?.base_stat || 50;
-  const defenderSpecialDefenseStat = defender.pokemon.stats.find(s => s.stat.name === 'special-defense')?.base_stat || 50;
+  // Check if defender is protected
+  if (defender.volatile.protect && defender.volatile.protect.active) {
+    // Feint and moves with "bypassesProtect" can bypass Protect
+    const bypassesProtect = moveId === 'feint' || move.bypassesProtect;
+    
+    if (!bypassesProtect) {
+      state.battleLog.push({
+        type: 'status_effect',
+        message: `${defender.pokemon.name} protected itself!`,
+        pokemon: defender.pokemon.name
+      });
+      
+      // Increment protect counter for next turn
+      if (!defender.volatile.protect.counter) {
+        defender.volatile.protect.counter = 1;
+      }
+      return; // Move blocked
+    }
+  }
   
-  // Determine if this is a physical or special move
-  const isPhysical = move.category === 'Physical';
-  const attackStat = isPhysical ? attackerAttackStat : attackerSpecialAttackStat;
-  const defenseStat = isPhysical ? defenderDefenseStat : defenderSpecialDefenseStat;
+  // Determine number of hits
+  const hitCount = determineHitCount(move, attacker, state.rng);
+  let totalDamageDealt = 0;
+  let actualHits = 0;
   
-  console.log(`Calculating damage for ${moveId} (power: ${move.power}, type: ${move.type}, category: ${move.category})`);
-  console.log(`Attacker: ${attacker.pokemon.name} (level ${attacker.level}, ${isPhysical ? 'attack' : 'special-attack'}: ${attackStat})`);
-  console.log(`Defender: ${defender.pokemon.name} (${isPhysical ? 'defense' : 'special-defense'}: ${defenseStat}, current HP: ${defender.currentHp})`);
+  // Execute each hit
+  for (let i = 0; i < hitCount; i++) {
+    // Check if defender is still alive
+    if (defender.currentHp <= 0) {
+      break; // Stop hitting if target fainted
+    }
+    
+    // Get stats from the Pokemon data structure
+    const attackerAttackStat = attacker.pokemon.stats.find(s => s.stat.name === 'attack')?.base_stat || 50;
+    const attackerSpecialAttackStat = attacker.pokemon.stats.find(s => s.stat.name === 'special-attack')?.base_stat || 50;
+    const defenderDefenseStat = defender.pokemon.stats.find(s => s.stat.name === 'defense')?.base_stat || 50;
+    const defenderSpecialDefenseStat = defender.pokemon.stats.find(s => s.stat.name === 'special-defense')?.base_stat || 50;
+    
+    // Determine if this is a physical or special move
+    const isPhysical = move.category === 'Physical';
+    const attackStat = isPhysical ? attackerAttackStat : attackerSpecialAttackStat;
+    const defenseStat = isPhysical ? defenderDefenseStat : defenderSpecialDefenseStat;
+    
+    // Calculate damage using the comprehensive damage calculator
+    const damageResult = calculateComprehensiveDamage({
+      level: attacker.level,
+      movePower: move.power || 0,
+      moveType: move.type as any,
+      attackerTypes: attacker.pokemon.types.map(type => 
+        (typeof type === 'string' ? type : type.type?.name || 'normal') as any
+      ),
+      defenderTypes: defender.pokemon.types.map(type => 
+        (typeof type === 'string' ? type : type.type?.name || 'normal') as any
+      ),
+      attackStat: attackStat,
+      defenseStat: defenseStat,
+      weather: 'None',
+      terrain: 'None',
+      isPhysical: move.category === 'Physical',
+    });
+    
+    let damage = damageResult.damage;
+    const oldHp = defender.currentHp;
+    
+    // Check for Focus Sash / Sturdy (survive at 1 HP from full HP)
+    const defenderAbility = defender.currentAbility?.toLowerCase();
+    const defenderItem = defender.heldItem?.toLowerCase();
+    const isFullHp = defender.currentHp === defender.maxHp;
+    const wouldFaint = defender.currentHp - damage <= 0;
+    
+    if (isFullHp && wouldFaint) {
+      // Focus Sash (one-time use item)
+      if (defenderItem === 'focus-sash' && !defender.volatile.focusSashUsed) {
+        damage = defender.currentHp - 1; // Leave at 1 HP
+        defender.volatile.focusSashUsed = true;
+        state.battleLog.push({
+          type: 'status_effect',
+          message: `${defender.pokemon.name} hung on using its Focus Sash!`,
+          pokemon: defender.pokemon.name
+        });
+      }
+      // Sturdy ability
+      else if (defenderAbility === 'sturdy') {
+        damage = defender.currentHp - 1; // Leave at 1 HP
+        state.battleLog.push({
+          type: 'status_effect',
+          message: `${defender.pokemon.name} endured the hit with Sturdy!`,
+          pokemon: defender.pokemon.name
+        });
+      }
+      // Focus Band (10% chance)
+      else if (defenderItem === 'focus-band' && rngRollChance(state.rng, 0.1)) {
+        damage = defender.currentHp - 1; // Leave at 1 HP
+        state.battleLog.push({
+          type: 'status_effect',
+          message: `${defender.pokemon.name} hung on using its Focus Band!`,
+          pokemon: defender.pokemon.name
+        });
+      }
+    }
+    
+    defender.currentHp = Math.max(0, defender.currentHp - damage);
+    totalDamageDealt += damage;
+    actualHits++;
+    
+    // Trigger contact abilities per hit (Rough Skin, Iron Barbs, Static, etc.)
+    if (move.makesContact) {
+      const defenderAbility = defender.currentAbility?.toLowerCase();
+      
+      // Rough Skin / Iron Barbs: 1/8 max HP recoil
+      if (defenderAbility === 'rough-skin' || defenderAbility === 'iron-barbs') {
+        const recoil = Math.floor(attacker.maxHp / 8);
+        attacker.currentHp = Math.max(0, attacker.currentHp - recoil);
+        state.battleLog.push({
+          type: 'status_damage',
+          message: `${attacker.pokemon.name} was hurt by ${defender.pokemon.name}'s ${defenderAbility === 'rough-skin' ? 'Rough Skin' : 'Iron Barbs'}!`,
+          pokemon: attacker.pokemon.name,
+          damage: Math.round((recoil / attacker.maxHp) * 100)
+        });
+      }
+      
+      // Static: 30% chance to paralyze
+      if (defenderAbility === 'static' && !attacker.status && rngRollChance(state.rng, 0.3)) {
+        attacker.status = 'paralyzed';
+        attacker.statusTurns = 0;
+        state.battleLog.push({
+          type: 'status_applied',
+          message: `${attacker.pokemon.name} was paralyzed by Static!`,
+          pokemon: attacker.pokemon.name,
+          status: 'PARALYZED'
+        });
+      }
+      
+      // Flame Body: 30% chance to burn
+      if (defenderAbility === 'flame-body' && !attacker.status && rngRollChance(state.rng, 0.3)) {
+        attacker.status = 'burned';
+        attacker.statusTurns = 0;
+        state.battleLog.push({
+          type: 'status_applied',
+          message: `${attacker.pokemon.name} was burned by Flame Body!`,
+          pokemon: attacker.pokemon.name,
+          status: 'BURNED'
+        });
+      }
+      
+      // Poison Point: 30% chance to poison
+      if (defenderAbility === 'poison-point' && !attacker.status && rngRollChance(state.rng, 0.3)) {
+        attacker.status = 'poisoned';
+        attacker.statusTurns = 0;
+        state.battleLog.push({
+          type: 'status_applied',
+          message: `${attacker.pokemon.name} was poisoned by Poison Point!`,
+          pokemon: attacker.pokemon.name,
+          status: 'POISONED'
+        });
+      }
+      
+      // Rocky Helmet: 1/6 max HP recoil
+      const defenderItem = defender.heldItem?.toLowerCase();
+      if (defenderItem === 'rocky-helmet') {
+        const recoil = Math.floor(attacker.maxHp / 6);
+        attacker.currentHp = Math.max(0, attacker.currentHp - recoil);
+        state.battleLog.push({
+          type: 'status_damage',
+          message: `${attacker.pokemon.name} was hurt by ${defender.pokemon.name}'s Rocky Helmet!`,
+          pokemon: attacker.pokemon.name,
+          damage: Math.round((recoil / attacker.maxHp) * 100)
+        });
+      }
+    }
+    
+    // Check if attacker fainted from recoil
+    if (attacker.currentHp <= 0) {
+      const attackingTeam = user === 'player' ? state.player : state.opponent;
+      attackingTeam.faintedCount = attackingTeam.pokemon.filter(p => p.currentHp <= 0).length;
+      break;
+    }
+  }
   
-  // Calculate damage using the comprehensive damage calculator
-  const damageResult = calculateComprehensiveDamage({
-    level: attacker.level,
-    movePower: move.power || 0,
-    moveType: move.type as any,
-    attackerTypes: attacker.pokemon.types.map(type => 
-      (typeof type === 'string' ? type : type.type?.name || 'normal') as any
-    ),
-    defenderTypes: defender.pokemon.types.map(type => 
-      (typeof type === 'string' ? type : type.type?.name || 'normal') as any
-    ),
-    attackStat: attackStat,
-    defenseStat: defenseStat,
-    weather: 'None', // TODO: Implement weather effects
-    terrain: 'None', // TODO: Implement terrain effects
-    isPhysical: move.category === 'Physical',
-  });
+  // Log multi-hit if applicable
+  if (actualHits > 1) {
+    state.battleLog.push({
+      type: 'multi_hit',
+      message: `Hit ${actualHits} time(s)!`,
+    });
+  }
   
-  const damage = damageResult.damage;
-  const oldHp = defender.currentHp;
-  defender.currentHp = Math.max(0, defender.currentHp - damage);
-  totalDamageDealt += damage;
-  tryConsumeBerry(state, defender);
-  
-  console.log(`Damage calculated: ${damage} (${oldHp} -> ${defender.currentHp})`);
-  
-  // Log damage dealt
-  const damagePercent = Math.round((damage / oldHp) * 100);
+  // Log total damage dealt
   const remainingPercent = Math.round((defender.currentHp / defender.maxHp) * 100);
-  
   state.battleLog.push({
     type: 'damage_dealt',
-    message: `${defender.pokemon.name} took ${damage} damage! (${remainingPercent}% HP left)`,
+    message: `${defender.pokemon.name} took ${totalDamageDealt} damage! (${remainingPercent}% HP left)`,
     pokemon: defender.pokemon.name,
-    damage: damagePercent
+    damage: totalDamageDealt
   });
+  
+  // Track damage for Shell Bell
+  if (!attacker.volatile.damageDealtThisTurn) {
+    attacker.volatile.damageDealtThisTurn = 0;
+  }
+  attacker.volatile.damageDealtThisTurn += totalDamageDealt;
+  
+  // Apply recoil damage (Brave Bird, Flare Blitz, etc.)
+  if (move.recoil && totalDamageDealt > 0) {
+    const recoilFraction = move.recoil.fraction || 0.33; // Default 1/3
+    const recoilDamage = Math.max(1, Math.floor(totalDamageDealt * recoilFraction));
+    attacker.currentHp = Math.max(0, attacker.currentHp - recoilDamage);
+    state.battleLog.push({
+      type: 'recoil',
+      message: `${attacker.pokemon.name} was damaged by recoil!`,
+      pokemon: attacker.pokemon.name,
+      damage: Math.round((recoilDamage / attacker.maxHp) * 100)
+    });
+    
+    // Check if attacker fainted from recoil
+    if (attacker.currentHp <= 0) {
+      const attackingTeam = user === 'player' ? state.player : state.opponent;
+      attackingTeam.faintedCount = attackingTeam.pokemon.filter(p => p.currentHp <= 0).length;
+      state.battleLog.push({
+        type: 'pokemon_fainted',
+        message: `${attacker.pokemon.name} fainted from recoil!`,
+        pokemon: attacker.pokemon.name
+      });
+    }
+  }
+  
+  // Apply drain healing (Giga Drain, Drain Punch, etc.)
+  if (move.drain && totalDamageDealt > 0) {
+    const drainFraction = move.drain.fraction || 0.5; // Default 50%
+    const healAmount = Math.max(1, Math.floor(totalDamageDealt * drainFraction));
+    const oldHp = attacker.currentHp;
+    attacker.currentHp = Math.min(attacker.maxHp, attacker.currentHp + healAmount);
+    const actualHeal = attacker.currentHp - oldHp;
+    
+    if (actualHeal > 0) {
+      state.battleLog.push({
+        type: 'drain',
+        message: `${attacker.pokemon.name} drained HP from ${defender.pokemon.name}!`,
+        pokemon: attacker.pokemon.name,
+        healing: Math.round((actualHeal / attacker.maxHp) * 100)
+      });
+    }
+  }
+  
+  // Apply Life Orb recoil (10% max HP)
+  const attackerItem = attacker.heldItem?.toLowerCase();
+  if (attackerItem === 'life-orb' && totalDamageDealt > 0) {
+    const lifeOrbRecoil = Math.floor(attacker.maxHp / 10);
+    attacker.currentHp = Math.max(0, attacker.currentHp - lifeOrbRecoil);
+    state.battleLog.push({
+      type: 'recoil',
+      message: `${attacker.pokemon.name} lost some HP due to Life Orb!`,
+      pokemon: attacker.pokemon.name,
+      damage: Math.round((lifeOrbRecoil / attacker.maxHp) * 100)
+    });
+    
+    // Check if attacker fainted from Life Orb
+    if (attacker.currentHp <= 0) {
+      const attackingTeam = user === 'player' ? state.player : state.opponent;
+      attackingTeam.faintedCount = attackingTeam.pokemon.filter(p => p.currentHp <= 0).length;
+      state.battleLog.push({
+        type: 'pokemon_fainted',
+        message: `${attacker.pokemon.name} fainted from Life Orb recoil!`,
+        pokemon: attacker.pokemon.name
+      });
+    }
+  }
+  
+  // Try to consume berry after damage
+  tryConsumeBerry(state, defender);
   
   // Check if Pokemon fainted
   if (defender.currentHp <= 0) {
@@ -169,6 +496,24 @@ export async function executeMoveAction(
     defendingTeam.faintedCount = defendingTeam.pokemon.filter(p => p.currentHp <= 0).length;
     
     console.log(`Pokemon fainted! Updated ${user === 'player' ? 'opponent' : 'player'} team fainted count to ${defendingTeam.faintedCount}`);
+    
+    // Trigger on-faint abilities (Moxie, Soul Heart, etc.)
+    const attackerAbility = attacker.currentAbility?.toLowerCase();
+    if (attackerAbility === 'moxie') {
+      attacker.statModifiers.attack = Math.min(6, attacker.statModifiers.attack + 1);
+      state.battleLog.push({
+        type: 'status_effect',
+        message: `${attacker.pokemon.name}'s Attack rose thanks to Moxie!`,
+        pokemon: attacker.pokemon.name
+      });
+    } else if (attackerAbility === 'soul-heart' || attackerAbility === 'beast-boost') {
+      attacker.statModifiers.specialAttack = Math.min(6, attacker.statModifiers.specialAttack + 1);
+      state.battleLog.push({
+        type: 'status_effect',
+        message: `${attacker.pokemon.name}'s Special Attack rose!`,
+        pokemon: attacker.pokemon.name
+      });
+    }
   }
 }
 

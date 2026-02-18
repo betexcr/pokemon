@@ -41,7 +41,7 @@ export default function OfflineIndicator() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-12.728 12.728m0-12.728l12.728 12.728" />
         </svg>
         <span className="text-sm font-medium">
-          You're offline. Some features may be limited.
+          You&apos;re offline. Some features may be limited.
         </span>
         <button
           onClick={handleManualCheck}

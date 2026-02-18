@@ -25,7 +25,7 @@ export default function ContestHelpGuide({ currentRound, selectedCategory }: Con
     },
     {
       title: "Introduction Round - Feed Pokéblocks",
-      content: "Feed colored Pokéblocks to boost your Pokémon's contest stats. Red=Coolness, Blue=Beauty, Pink=Cuteness, Green=Cleverness, Yellow=Toughness. Rainbow blocks boost all stats!",
+      content: "Feed colored Pokéblocks to boost your Pokémon&apos;s contest stats. Red=Coolness, Blue=Beauty, Pink=Cuteness, Green=Cleverness, Yellow=Toughness. Rainbow blocks boost all stats!",
       icon: "🍬"
     },
     {
@@ -40,7 +40,7 @@ export default function ContestHelpGuide({ currentRound, selectedCategory }: Con
     },
     {
       title: "Avoid Repetition",
-      content: "Don't use the same move twice in a row - the audience gets bored and you'll lose hearts! Variety is key to success.",
+      content: "Don&apos;t use the same move twice in a row - the audience gets bored and you&apos;ll lose hearts! Variety is key to success.",
       icon: "😴"
     },
     {

@@ -9,6 +9,9 @@ import AttackAnimator from '@/components/battle/AttackAnimator';
 import { FxKind } from '@/components/battle/fx/MoveFX.types';
 import { BattleSprite, BattleSpriteRef } from '@/components/battle/BattleSprite';
 import Image from 'next/image';
+import { BattleTurnManager } from '@/components/multiplayer/BattleTurnManager';
+import { BattleEndScreen } from '@/components/multiplayer/BattleEndScreen';
+import { useForfeit } from '@/hooks/useMultiplayerBattle';
 
 const formatMoveLabel = (rawId: string): string => {
   if (!rawId) return 'Unknown Move';
@@ -48,6 +51,17 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
     forfeit
   } = useBattleState(battleId);
 
+  useEffect(() => {
+    console.log('RTDBBattleComponent: Battle state updated:', {
+      hasMeta: !!meta,
+      hasPublic: !!pub,
+      hasPrivate: !!me,
+      phase: meta?.phase,
+      turn: meta?.turn,
+      publicTurn: pub?.lastResultSummary
+    });
+  }, [meta, pub, me]);
+
 
   // duplicate state/effects removed (using direct imports below)
 
@@ -67,6 +81,17 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
   const [statusEvents, setStatusEvents] = useState<StatusEvent[]>([]);
   const [activeMoveFX, setActiveMoveFX] = useState<{ kind: FxKind; key: number } | null>(null);
   const [pendingAction, setPendingAction] = useState<{ turn: number; type: 'move' | 'switch'; id: string | number } | null>(null);
+
+  // Battle end screen state
+  const [showEndScreen, setShowEndScreen] = useState(false);
+
+  // Determine if current user is host (p1)
+  const isHost = useMemo(() => {
+    return meta?.players?.p1?.uid === meUid;
+  }, [meta?.players?.p1?.uid, meUid]);
+
+  // Use multiplayer forfeit handler
+  const handleForfeit = useForfeit(battleId, meUid || '');
 
   const waitingForResolution = useMemo(() => {
     if (!meta) return false;
@@ -128,8 +153,11 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
 
   // Handle battle completion
   useEffect(() => {
-    if (meta?.phase === 'ended' && meta.winnerUid && onBattleComplete) {
-      onBattleComplete(meta.winnerUid);
+    if (meta?.phase === 'ended') {
+      setShowEndScreen(true);
+      if (meta.winnerUid && onBattleComplete) {
+        onBattleComplete(meta.winnerUid);
+      }
     }
   }, [meta?.phase, meta?.winnerUid, onBattleComplete]);
 
@@ -359,21 +387,11 @@ const handleMoveSelection = async (moveId: string, target?: 'p1' | 'p2') => {
     );
   }
 
-  if (error) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="text-red-500 text-lg">Error: {error}</div>
-      </div>
-    );
-  }
 
-  if (!meta || !pub || !me) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="text-lg">Waiting for battle data...</div>
-      </div>
-    );
-  }
+  // If loading or error, show that
+  if (loading) return <div className="p-8 text-center">Loading battle...</div>;
+  if (error) return <div className="p-8 text-center text-red-500">Error: {error}</div>;
+  if (!meta || !pub) return <div className="p-8 text-center">Waiting for battle data...</div>;
 
   // Get current active Pokemon using RTDB p1/p2 mapping
   const mySide: 'p1' | 'p2' | null = meUid && meta?.players
@@ -401,6 +419,15 @@ const handleMoveSelection = async (moveId: string, target?: 'p1' | 'p2') => {
 
   return (
     <div className="min-h-screen bg-bg text-text">
+      {/* Headless turn resolution manager (host only) */}
+      {meta && meUid && (
+        <BattleTurnManager 
+          battleId={battleId}
+          isHost={isHost}
+          userId={meUid}
+        />
+      )}
+      
       {/* Battle Header */}
       <div className="sticky top-0 z-40 border-b border-border bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/80 p-4">
         <div className="flex items-center justify-between">
@@ -409,7 +436,7 @@ const handleMoveSelection = async (moveId: string, target?: 'p1' | 'p2') => {
               <span className="mr-2 inline-block h-2 w-2 rounded-full bg-primary/80" />
               {meta.phase}
             </span>
-            <span className="text-xs text-muted">Turn {meta.turn}</span>
+            <span className="text-xs text-muted" data-testid="turn-counter">Turn {meta.turn}</span>
             <span className="text-xs text-muted">{timeLeftSec}s</span>
           </div>
           <div className="text-sm text-muted">
@@ -610,6 +637,29 @@ const handleMoveSelection = async (moveId: string, target?: 'p1' | 'p2') => {
             </div>
           </div>
 
+          {/* Battle Log */}
+          <div className="battle-log mt-4 p-4 bg-white/5 rounded-lg border border-white/10 max-h-48 overflow-y-auto">
+            <h3 className="text-sm font-semibold text-gray-400 mb-2 sticky top-0 bg-[#1a1a1a] py-1">Battle Log</h3>
+            <div className="space-y-1">
+              {pub?.battleLog?.map((log, i) => (
+                <div key={i} className="text-sm text-gray-300 font-mono">
+                  <span className="text-gray-500 mr-2">[{i + 1}]</span>
+                  {log}
+                </div>
+              )) || <div className="text-sm text-gray-500 italic">No battle history yet...</div>}
+              <div ref={(el) => el?.scrollIntoView({ behavior: 'smooth' })} />
+            </div>
+          </div>
+
+          {/* Debug Info */}
+          <div className="mt-8 p-4 bg-black/40 rounded text-xs font-mono text-gray-500">
+            <p>Battle ID: {battleId}</p>
+            <p>My UID: {meUid}</p>
+            <p>Phase: {meta?.phase}</p>
+            <p>Turn: {meta?.turn}</p>
+            <p>Winner: {meta?.winnerUid || 'None'}</p>
+          </div>
+
           {/* Pokemon Switch */}
           <div className="mb-4">
             <h4 className="font-medium mb-3">Switch Pokemon</h4>
@@ -681,7 +731,7 @@ const handleMoveSelection = async (moveId: string, target?: 'p1' | 'p2') => {
           {/* Forfeit Button */}
           <div className="text-center">
             <button
-              onClick={forfeit}
+              onClick={handleForfeit}
               className="inline-flex items-center justify-center rounded-md border border-red-600/60 bg-red-600/10 px-4 py-2 text-sm font-semibold text-red-400 hover:bg-red-600/15 hover:text-red-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
               data-testid="forfeit-button"
             >
@@ -728,38 +778,16 @@ const handleMoveSelection = async (moveId: string, target?: 'p1' | 'p2') => {
       )}
 
       {/* Battle Complete */}
-      {meta.phase === 'ended' && (
-        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-          <div className="bg-surface border border-border rounded-lg p-8 text-center max-w-2xl w-full text-text">
-            <h2 className="text-3xl font-bold mb-4">
-              {meta.winnerUid === meUid ? 'Victory!' : 'Defeat!'}
-            </h2>
-            <p className="text-lg mb-4">
-              {meta.winnerUid === meUid
-                ? 'You won the battle!'
-                : 'You lost the battle!'}
-            </p>
-            {meta.endedReason && (
-              <p className="text-sm text-muted mt-2">
-                Reason: {meta.endedReason}
-              </p>
-            )}
-            <div className="space-y-2">
-              <button
-                onClick={() => window.location.href = '/battle'}
-                className="w-full px-4 py-2 rounded-md border border-border bg-surface hover:bg-primary/5 hover:border-primary/50 text-text"
-              >
-                Battle Again
-              </button>
-              <button
-                onClick={() => window.location.href = '/'}
-                className="w-full px-4 py-2 rounded-md border border-border bg-surface hover:bg-primary/5 hover:border-primary/50 text-text"
-              >
-                Back to PokéDex
-              </button>
-            </div>
-          </div>
-        </div>
+      {showEndScreen && meta && (
+        <BattleEndScreen
+          winner={meta.winnerUid === meUid ? 'player' : meta.winnerUid === oppUid ? 'opponent' : null}
+          playerName={meta.players?.p1?.uid === meUid ? meta.players.p1.name : meta.players?.p2?.name || 'You'}
+          opponentName={meta.players?.p1?.uid === oppUid ? meta.players.p1.name : meta.players?.p2?.name || 'Opponent'}
+          endReason={meta.endedReason}
+          battleStats={{
+            turns: meta.turn
+          }}
+        />
       )}
     </div>
   );

@@ -17,6 +17,7 @@ import {
 import { db } from './firebase';
 import { auth } from './firebase';
 import { BattleState } from './team-battle-engine';
+import { fetchPokemon } from './pokeapi';
 
 export interface BattleAction {
   playerId: string;
@@ -140,19 +141,121 @@ class BattleService {
     }
   }
 
+  // Hydrate team with PokeAPI data (stats, weight)
+  private async hydrateTeam(team: any): Promise<any> {
+    if (!team) return team;
+    
+    // Handle different team structures (array vs object with slots)
+    let slots: any[] = [];
+    let isArray = false;
+    
+    if (Array.isArray(team)) {
+      slots = team;
+      isArray = true;
+    } else if (team.slots && Array.isArray(team.slots)) {
+      slots = team.slots;
+    } else if (team.pokemon && Array.isArray(team.pokemon)) {
+      slots = team.pokemon;
+    } else {
+      return team;
+    }
+
+    console.log(`💧 Hydrating team with ${slots.length} slots...`);
+
+    const hydratedSlots = await Promise.all(slots.map(async (slot) => {
+      if (!slot) return slot;
+      
+      // Get the ID or name to fetch
+      // Check both top-level and nested pokemon object
+      const idOrName = slot.id || slot.name || (slot.pokemon ? slot.pokemon.name : null);
+      
+      if (!idOrName) {
+        console.warn('⚠️ Slot missing ID/Name, skipping hydration:', slot);
+        return slot;
+      }
+
+      try {
+        // Fetch data from PokeAPI
+        const data = await fetchPokemon(idOrName) as any;
+        
+        // Create a new pokemon object or update existing one
+        // If slot has a 'pokemon' property (BattlePokemon structure), use it.
+        // Otherwise, we might need to construct it or attach stats to the slot directly 
+        // depending on what the engine expects.
+        // The engine expects BattlePokemon structure: { pokemon: { stats, weight, ... }, ... }
+        // But the input 'team' here might be the simple storage format.
+        // Let's try to be robust and add it to a 'pokemon' property if it exists, or create it.
+        
+        const existingPokemon = slot.pokemon || {};
+        
+        const pokemonUpdates: any = {
+             ...existingPokemon
+        };
+
+        // Add stats
+        // Always ensure stats are present. 
+        // If they are already there, maybe we don't overwrite? 
+        // But base stats shouldn't change, so overwriting with PokeAPI data is safe/correct.
+        // The only risk is if the user customized base stats? Unlikely for this app.
+        if (data.stats) {
+            if (!pokemonUpdates.stats) {
+                pokemonUpdates.stats = data.stats;
+            }
+        }
+        
+        // Add weight (always safe to add if missing)
+        if (data.weight && !pokemonUpdates.weight) {
+            pokemonUpdates.weight = data.weight;
+        }
+        
+        // Ensure name and id are present
+        if (!pokemonUpdates.name) pokemonUpdates.name = data.name;
+        if (!pokemonUpdates.id) pokemonUpdates.id = data.id;
+        if (!pokemonUpdates.types) pokemonUpdates.types = data.types.map((t: any) => t.type.name);
+
+        // If the slot didn't have a pokemon property, it might be a flat structure.
+        // But for the battle engine, we usually want the nested 'pokemon' object.
+        // However, we shouldn't drastically change the structure if we're not sure.
+        // Let's just ensure 'pokemon' property has the stats/weight.
+        
+        return {
+          ...slot,
+          pokemon: pokemonUpdates
+        };
+      } catch (e) {
+        console.warn(`❌ Failed to hydrate Pokemon ${idOrName}:`, e);
+        return slot;
+      }
+    }));
+
+    if (isArray) {
+      return hydratedSlots;
+    } else {
+      return {
+        ...team,
+        [team.slots ? 'slots' : 'pokemon']: hydratedSlots
+      };
+    }
+  }
+
   // Create a new battle
   async createBattle(roomId: string, hostId: string, hostName: string, hostTeam: unknown, guestId: string, guestName: string, guestTeam: unknown): Promise<string> {
     if (!db) throw new Error('Firebase not initialized');
     this.ensureAuthenticated();
     
+    console.log('🔄 Hydrating teams before battle creation...');
+    const hydratedHostTeam = await this.hydrateTeam(hostTeam);
+    const hydratedGuestTeam = await this.hydrateTeam(guestTeam);
+    console.log('✅ Teams hydrated.');
+
     const battleData = {
       roomId,
       hostId,
       hostName,
-      hostTeam,
+      hostTeam: hydratedHostTeam,
       guestId,
       guestName,
-      guestTeam,
+      guestTeam: hydratedGuestTeam,
       currentTurn: 'host' as const,
       turnNumber: 1,
       actions: [],

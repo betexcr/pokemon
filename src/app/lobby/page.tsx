@@ -7,6 +7,7 @@ import { Swords } from 'lucide-react';
 import AppHeader from '@/components/AppHeader';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { roomService, type RoomData } from '@/lib/roomService';
+import { getUserTeams, type SavedTeam } from '@/lib/userTeams';
 import LinkWithTransition from '@/components/LinkWithTransition';
 import { useLobbyTransition } from '@/hooks/useLobbyTransition';
 
@@ -15,40 +16,77 @@ function LobbyPage() {
   const router = useRouter();
   const lobbyTransition = useLobbyTransition();
   const [rooms, setRooms] = useState<RoomData[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [userTeams, setUserTeams] = useState<SavedTeam[]>([]);
+  const [selectedTeamId, setSelectedTeamId] = useState<string>('');
+  const [roomsLoading, setRoomsLoading] = useState(true);
+  const [teamsLoading, setTeamsLoading] = useState(true);
   const [creatingRoom, setCreatingRoom] = useState(false);
   // const [roomCode, setRoomCode] = useState('');
 
   // Load rooms from Firebase
   useEffect(() => {
     if (!user) {
-      setLoading(false);
+      setRoomsLoading(false);
       return;
     }
 
     const unsubscribe = roomService.onRoomsChange((rooms) => {
       setRooms(rooms);
-      setLoading(false);
+      setRoomsLoading(false);
     });
 
     return () => unsubscribe();
   }, [user]);
 
+  // Load user teams
+  useEffect(() => {
+    async function loadTeams() {
+      if (user) {
+        try {
+          const teams = await getUserTeams(user.uid);
+          setUserTeams(teams);
+          if (teams.length > 0) {
+            setSelectedTeamId(teams[0].id);
+          }
+        } catch (error) {
+          console.error('Failed to load teams:', error);
+        } finally {
+          setTeamsLoading(false);
+        }
+      } else {
+        setTeamsLoading(false);
+      }
+    }
+    loadTeams();
+  }, [user]);
+
   const createRoom = async () => {
     if (!user) return;
-    
+
+    if (!selectedTeamId) {
+      alert('Please select a team first!');
+      return;
+    }
+
+    const selectedTeam = userTeams.find(t => t.id === selectedTeamId);
+    if (!selectedTeam) {
+      alert('Selected team not found.');
+      return;
+    }
+
     setCreatingRoom(true);
     try {
       // Create room in Firestore
       const roomId = await roomService.createRoom(
         user.uid,
         user.displayName || 'Anonymous Trainer',
-        user.photoURL || null
+        user.photoURL || null,
+        selectedTeam
       );
-      
+
       // setRoomCode(roomId);
       console.log('Created room with ID:', roomId);
-      
+
       // Redirect to the room with lobby transition
       lobbyTransition(roomId);
     } catch (error) {
@@ -59,16 +97,40 @@ function LobbyPage() {
     }
   };
 
-  const joinRoom = (roomId: string) => {
+  const joinRoom = async (roomId: string) => {
     if (!user) return;
-    lobbyTransition(roomId);
+
+    if (!selectedTeamId) {
+      alert('Please select a team first!');
+      return;
+    }
+
+    const selectedTeam = userTeams.find(t => t.id === selectedTeamId);
+    if (!selectedTeam) {
+      alert('Selected team not found.');
+      return;
+    }
+
+    try {
+      await roomService.joinRoom(
+        roomId,
+        user.uid,
+        user.displayName || 'Anonymous Trainer',
+        user.photoURL || null,
+        selectedTeam
+      );
+      lobbyTransition(roomId);
+    } catch (error) {
+      console.error('Failed to join room:', error);
+      alert('Failed to join room. Please try again.');
+    }
   };
 
   const formatTimeAgo = (date: Date) => {
     const now = new Date();
     const diff = now.getTime() - date.getTime();
     const minutes = Math.floor(diff / (1000 * 60));
-    
+
     if (minutes < 1) return 'Just now';
     if (minutes === 1) return '1 minute ago';
     return `${minutes} minutes ago`;
@@ -83,21 +145,6 @@ function LobbyPage() {
       default: return 'bg-surface text-muted border-border';
     }
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-bg text-text" style={{ minHeight: '100vh', backgroundSize: 'cover', backgroundRepeat: 'no-repeat' }}>
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center justify-center min-h-[400px]">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-muted">Loading battle lobbies...</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-bg text-text" style={{ minHeight: '100vh', backgroundSize: 'cover', backgroundRepeat: 'no-repeat' }}>
@@ -114,16 +161,50 @@ function LobbyPage() {
       <div className="container mx-auto px-4 py-8 pb-16">
         {/* Create Room Section */}
         <div className="bg-surface rounded-xl shadow-lg p-6 mb-8 border border-border">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-semibold text-text mb-2">Create Battle Room</h2>
-              <p className="text-muted">Start a new battle and invite friends to join</p>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="w-full md:w-auto flex-1">
+              <h2 className="text-xl font-semibold text-text mb-2">Battle Preparation</h2>
+              <p className="text-muted mb-4">Select your team and start a battle</p>
+
+              <div className="relative max-w-md">
+                <label className="block text-sm font-medium text-text mb-1">Select Team</label>
+                <div className="relative">
+                  <select
+                    value={selectedTeamId}
+                    onChange={(e) => setSelectedTeamId(e.target.value)}
+                    disabled={teamsLoading}
+                    className="block w-full pl-3 pr-10 py-3 text-base border-border focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-lg border bg-surface text-text disabled:opacity-50"
+                  >
+                    {teamsLoading ? (
+                      <option>Loading teams...</option>
+                    ) : (
+                      <>
+                        <option value="" disabled>Select a team...</option>
+                        {userTeams.map((team) => (
+                          <option key={team.id} value={team.id}>
+                            {team.name} ({team.slots.length} Pokémon)
+                          </option>
+                        ))}
+                      </>
+                    )}
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-muted">
+                    <Swords className="h-4 w-4" />
+                  </div>
+                </div>
+                {!teamsLoading && userTeams.length === 0 && (
+                  <p className="mt-2 text-sm text-red-500">
+                    You don't have any teams yet! Go to the Team Builder to create one.
+                  </p>
+                )}
+              </div>
             </div>
+
             <button
               onClick={createRoom}
-              disabled={creatingRoom}
+              disabled={creatingRoom || !selectedTeamId || teamsLoading}
               data-testid="create-room-button"
-              className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center space-x-2"
+              className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
             >
               {creatingRoom ? (
                 <>
@@ -143,8 +224,13 @@ function LobbyPage() {
         {/* Available Rooms */}
         <div className="bg-surface rounded-xl shadow-lg p-6 border border-border">
           <h2 className="text-xl font-semibold text-text mb-6">Available Battle Rooms</h2>
-          
-          {rooms.length === 0 ? (
+
+          {roomsLoading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-muted">Loading rooms...</p>
+            </div>
+          ) : rooms.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-muted text-6xl mb-4">⚔️</div>
               <h3 className="text-lg font-medium text-text mb-2">No rooms available</h3>
@@ -155,6 +241,7 @@ function LobbyPage() {
               {rooms.map((room) => (
                 <div
                   key={room.id}
+                  data-testid="battle-room-card"
                   className="border border-border rounded-lg p-4 hover:shadow-md transition-shadow bg-surface"
                 >
                   <div className="flex items-center justify-between mb-3">
@@ -183,7 +270,7 @@ function LobbyPage() {
                       </span>
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2 text-sm text-muted mb-4">
                     <div className="flex justify-between">
                       <span>Players:</span>
@@ -194,21 +281,21 @@ function LobbyPage() {
                       <span>{formatTimeAgo(room.createdAt)}</span>
                     </div>
                   </div>
-                  
+
                   <button
                     onClick={() => joinRoom(room.id)}
-                    disabled={room.status !== 'waiting' || room.currentPlayers >= room.maxPlayers}
+                    disabled={room.status !== 'waiting' || room.currentPlayers >= room.maxPlayers || !selectedTeamId}
                     className={`w-full py-2 px-4 rounded-lg font-medium transition-colors border
                       ${room.status === 'waiting' && room.currentPlayers < room.maxPlayers
-                        ? 'bg-green-600 hover:bg-green-700 text-white border-green-700'
+                        ? (selectedTeamId ? 'bg-green-600 hover:bg-green-700 text-white border-green-700' : 'bg-gray-600/40 text-gray-300 border-gray-600 cursor-not-allowed')
                         : 'bg-gray-600/40 text-gray-300 border-gray-600 cursor-not-allowed'}
                     `}
                   >
                     {room.status === 'waiting' && room.currentPlayers < room.maxPlayers
-                      ? 'Join Battle'
+                      ? (selectedTeamId ? 'Join Battle' : 'Select Team to Join')
                       : room.status === 'waiting'
-                      ? 'Room Full'
-                      : 'In Progress'
+                        ? 'Room Full'
+                        : 'In Progress'
                     }
                   </button>
                 </div>

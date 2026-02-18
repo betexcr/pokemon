@@ -106,6 +106,7 @@ export default function AppHeader({
                   }}
                   className="flex items-center text-muted hover:text-text transition-colors flex-shrink-0 cursor-pointer"
                   title={backLabel}
+                  suppressHydrationWarning
                 >
                   <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
                 </a>
@@ -116,7 +117,9 @@ export default function AppHeader({
                 <Tooltip content={`Current page: ${title}`} position="bottom">
                   <div className={`p-1 sm:p-2 rounded-lg flex-shrink-0 ${iconConfig.bgColor} ${iconConfig.color} dark:${iconConfig.darkBgColor} dark:${iconConfig.darkColor}`} suppressHydrationWarning>
                     {/* Icon is purely decorative */}
-                    <IconComponent className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" />
+                    <span suppressHydrationWarning>
+                      <IconComponent className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" />
+                    </span>
                   </div>
                 </Tooltip>
               )}

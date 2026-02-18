@@ -79,6 +79,17 @@ export function formatPokemonNumber(id: number): string {
   return `#${id.toString().padStart(3, '0')}`;
 }
 
+// Normalize Pokemon ID for API calls (removes zero-padding)
+export function normalizePokemonId(id: number | string): number {
+  const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
+  
+  if (isNaN(numericId) || numericId <= 0) {
+    throw new Error(`Invalid Pokemon ID: ${id}`);
+  }
+  
+  return numericId;
+}
+
 // Format height and weight
 export function formatHeight(height: number): string {
   return `${(height / 10).toFixed(1)} m`;

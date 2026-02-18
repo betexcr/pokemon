@@ -10,31 +10,25 @@ export interface JapaneseNameInfo {
 // Pokemon-specific Japanese names with romaji, pronunciation, meanings, and explanations
 const japaneseNames: Record<string, JapaneseNameInfo> = {
   'フシギダネ': {
-
     japanese: 'フシギダネ',
     romaji: 'Fushigidane',
     pronunciation: 'foo-SHEE-ghee-dah-neh',
     meaning: 'Mysterious Seed (不思議 + 種)',
-    explanation: 'From 不思議 (fushigi, strange/mysterious) + 種 (tane, seed). Also wordplay on "Fushigi da ne?" meaning "Isn't it strange?"'t it strange?"'
-  
+    explanation: 'From 不思議 (fushigi, strange/mysterious) + 種 (tane, seed). Also wordplay on "Fushigi da ne?" meaning "Isn\'t it strange?"'
   },
   'フシギソウ': {
-
     japanese: 'フシギソウ',
     romaji: 'Fushigisou',
     pronunciation: 'foo-SHEE-ghee-soh',
     meaning: 'Mysterious Grass (不思議 + 草)',
     explanation: '不思議 (fushigi, mysterious) + 草 (sou, grass/plant). Also wordplay on "Fushigi sou" meaning "Seems mysterious."'
-  
   },
   'フシギバナ': {
-
     japanese: 'フシギバナ',
     romaji: 'Fushigibana',
     pronunciation: 'foo-SHEE-ghee-bah-nah',
     meaning: 'Mysterious Flower (不思議 + 花)',
     explanation: '不思議 (fushigi, mysterious) + 花 (bana, flower).'
-  
   },
   'ヒトカゲ': {
 
@@ -295,7 +289,7 @@ japanese: 'ポッポ',
     romaji: 'potsupo',
     pronunciation: 'po-tsu-po',
     meaning: 'Tiny Bird Pokémon',
-    explanation: 'Onomatopoeia for a pigeon's cooing.'
+    explanation: 'Onomatopoeia for a pigeon\'s cooing.'
   },
   'ピジョン': {
 japanese: 'ピジョン',
@@ -1142,7 +1136,7 @@ japanese: 'ミュウ',
     romaji: 'myuu',
     pronunciation: 'myu-u',
     meaning: 'New Species Pokémon',
-    explanation: 'From the sound "mew" (cat's meow).'
+    explanation: 'From the sound "mew" (cat\'s meow).'
   },
   'チコリータ': {
 japanese: 'チコリータ',

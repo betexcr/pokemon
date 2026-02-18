@@ -282,7 +282,7 @@ export default function ContestsPageClient() {
             Pokémon Contests
           </h1>
           <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300 mb-6">
-            Showcase your Pokémon's talents in kawaii performance competitions! ✨
+            Showcase your Pokémon&apos;s talents in kawaii performance competitions! ✨
           </p>
           
           {/* Current Stats Display */}
@@ -340,7 +340,7 @@ export default function ContestsPageClient() {
             </h2>
             <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 mb-6">
               <p className="text-center text-blue-700 dark:text-blue-300 font-medium">
-                💡 Each category has unique moves and strategies. Pick the one that matches your Pokémon's strengths!
+                💡 Each category has unique moves and strategies. Pick the one that matches your Pokémon&apos;s strengths!
               </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -379,7 +379,7 @@ export default function ContestsPageClient() {
             </h2>
             <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-4 mb-6">
               <p className="text-center text-green-700 dark:text-green-300 font-medium">
-                🍬 Feed colored Pokéblocks to boost your Pokémon's contest stats! Red=Coolness, Blue=Beauty, Pink=Cuteness, Green=Cleverness, Yellow=Toughness. Rainbow blocks boost all stats!
+                🍬 Feed colored Pokéblocks to boost your Pokémon&apos;s contest stats! Red=Coolness, Blue=Beauty, Pink=Cuteness, Green=Cleverness, Yellow=Toughness. Rainbow blocks boost all stats!
               </p>
             </div>
             <PokeblockTooltip>
@@ -409,7 +409,7 @@ export default function ContestsPageClient() {
             </h2>
             <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-4 mb-6">
               <p className="text-center text-purple-700 dark:text-purple-300 font-medium">
-                ✨ Use moves that match your contest category for bonus hearts! Fill the Excite Meter to trigger Spectacular Talent! Don't repeat the same move twice!
+                ✨ Use moves that match your contest category for bonus hearts! Fill the Excite Meter to trigger Spectacular Talent! Don&apos;t repeat the same move twice!
               </p>
             </div>
             
@@ -491,7 +491,7 @@ export default function ContestsPageClient() {
             </div>
             <div className="flex items-start gap-2">
               <span className="text-yellow-500">⚡</span>
-              <span>Don't repeat the same move twice - the audience will get bored!</span>
+              <span>Don&apos;t repeat the same move twice - the audience will get bored!</span>
             </div>
             <div className="flex items-start gap-2">
               <span className="text-purple-500">🎆</span>

@@ -1,0 +1,72 @@
+﻿
+Running 1 test using 1 worker
+
+[1A[2K[1/1] tests\playwright\multiplayer-battle.spec.ts:117:5 ΓÇ║ multiplayer battle flow: full team charizard verification
+[1A[2Ktests\playwright\multiplayer-battle.spec.ts:117:5 ΓÇ║ multiplayer battle flow: full team charizard verification
+Logging in host...
+
+[1A[2KLogging in guest...
+
+[1A[2KHost creating room...
+
+[1A[2KRoom created with ID: YNJ0D6qq8zSk4BFr6NIq
+
+[1A[2KGuest joining room...
+
+[1A[2KHost marking ready...
+
+[1A[2KGuest marking ready...
+
+[1A[2KHost starting battle...
+
+[1A[2KWaiting for battle to start...
+
+[1A[2KHost localStorage team: [{"id":6,"name":"Charizard","species":"charizard","level":50,"hp":{"cur":150,"max":150},"stats":{"hp":150,"atk":100,"def":100,"spa":150,"spd":100,"spe":120},"moves":[{"name":"Flamethrower","id":"flamethrower"},{"name":"Air Slash","id":"air-slash"}],"types":["fire","flying"]},{"id":9,"name":"Blastoise","species":"blastoise","level":50,"hp":{"cur":160,"max":160},"stats":{"hp":160,"atk":100,"def":120,"spa":100,"spd":120,"spe":90},"moves":[{"name":"Hydro Pump","id":"hydro-pump"},{"name":"Skull Bash","id":"skull-bash"}],"types":["water"]},{"id":3,"name":"Venusaur","species":"venusaur","level":50,"hp":{"cur":160,"max":160},"stats":{"hp":160,"atk":100,"def":100,"spa":120,"spd":120,"spe":80},"moves":[{"name":"Solar Beam","id":"solar-beam"},{"name":"Sludge Bomb","id":"sludge-bomb"}],"types":["grass","poison"]}]
+
+[1A[2KVerifying Host Active Pokemon...
+
+[1A[2Kplayer already has Charizard active.
+
+[1A[2KVerifying Guest Active Pokemon...
+
+[1A[2Kplayer already has Charizard active.
+
+[1A[2KVerifying Host Opponent...
+
+[1A[2KVerifying Guest Opponent...
+
+[1A[2KVerifying Initial HP...
+
+[1A[2KHost Initial HP: 100 / 100 HP ┬╖ Unknown type
+
+[1A[2KGuest Initial HP: 100 / 100 HP ┬╖ Unknown type
+
+[1A[2KExecuting Turn...
+
+
+[1A[2K  1) tests\playwright\multiplayer-battle.spec.ts:117:5 ΓÇ║ multiplayer battle flow: full team charizard verification 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByTestId('move-air-slash')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('move-air-slash')[22m
+
+
+      234 |     // Host uses Air Slash (Flying) vs Charizard (Fire/Flying) -> Normal effectiveness
+      235 |     const hostMoveBtn = hostPage.getByTestId('move-air-slash');
+    > 236 |     await expect(hostMoveBtn).toBeVisible();
+          |                               ^
+      237 |     console.log('Host clicking Air Slash...');
+      238 |     await hostMoveBtn.click({ force: true });
+      239 |
+        at D:\Code\pokemon\tests\playwright\multiplayer-battle.spec.ts:236:31
+
+
+[1A[2K  1 failed
+    tests\playwright\multiplayer-battle.spec.ts:117:5 ΓÇ║ multiplayer battle flow: full team charizard verification 

@@ -1,0 +1,30 @@
+﻿
+Running 1 test using 1 worker
+
+[1A[2K[1/1] tests\playwright\multiplayer-battle.spec.ts:116:5 ΓÇ║ multiplayer battle flow: full team charizard verification
+[1A[2Ktests\playwright\multiplayer-battle.spec.ts:116:5 ΓÇ║ multiplayer battle flow: full team charizard verification
+Logging in host...
+
+[1A[2KLogging in guest...
+
+
+[1A[2K  1) tests\playwright\multiplayer-battle.spec.ts:116:5 ΓÇ║ multiplayer battle flow: full team charizard verification 
+
+    [31mTest timeout of 180000ms exceeded.[39m
+
+    Error: page.screenshot: Target page, context or browser has been closed
+
+      261 |   } catch (e) {
+      262 |     console.error('Test failed:', e);
+    > 263 |     await hostPage.screenshot({ path: 'host-failure-deep-full.png' });
+          |                    ^
+      264 |     await guestPage.screenshot({ path: 'guest-failure-deep-full.png' });
+      265 |     throw e;
+      266 |   } finally {
+        at D:\Code\pokemon\tests\playwright\multiplayer-battle.spec.ts:263:20
+
+    Error Context: test-results\tests-playwright-multiplay-98639-team-charizard-verification\error-context.md
+
+
+[1A[2K  1 failed
+    tests\playwright\multiplayer-battle.spec.ts:116:5 ΓÇ║ multiplayer battle flow: full team charizard verification 

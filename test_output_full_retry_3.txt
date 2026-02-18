@@ -1,0 +1,150 @@
+
+Running 1 test using 1 worker
+
+Logging in host...
+Logging in guest...
+Host creating room...
+Room created with ID: fac2URdvlrNyt0v0SSA9
+Guest joining room...
+Host marking ready...
+Guest marking ready...
+Host starting battle...
+Waiting for battle to start...
+Verifying Battle UI...
+Submitting moves...
+Host selecting move: Solar Beam
+PP: 10 / 10
+Guest selecting move: Solar Beam
+PP: 10 / 10
+Verifying resolution...
+Test failed: ExpectError: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+Locator: locator('.battle-log')
+Expected substring: [32m"Solar Beam[39m
+[32mPP: 10 / 10"[39m
+Timeout: 20000ms
+Error: element(s) not found
+
+Call log:
+[2m  - Expect "toContainText" with timeout 20000ms[22m
+[2m  - waiting for locator('.battle-log')[22m
+[2m    6 × locator resolved to <div class="battle-log mt-4 p-4 bg-white/5 rounded-lg border border-white/10 max-h-48 overflow-y-auto">…</div>[22m
+[2m      - unexpected value "Battle LogNo battle history yet..."[22m
+
+    at [90mD:\Code\pokemon\[39mtests\playwright\multiplayer-battle.spec.ts:167:51 {
+  matcherResult: {
+    name: [32m'toContainText'[39m,
+    expected: [32m'Solar Beam\nPP: 10 / 10'[39m,
+    message: [32m'\x1B[2mexpect(\x1B[22m\x1B[31mlocator\x1B[39m\x1B[2m).\x1B[22mtoContainText\x1B[2m(\x1B[22m\x1B[32mexpected\x1B[39m\x1B[2m)\x1B[22m failed\n'[39m +
+      [32m'\n'[39m +
+      [32m"Locator: locator('.battle-log')\n"[39m +
+      [32m'Expected substring: \x1B[32m"Solar Beam\x1B[39m\n'[39m +
+      [32m'\x1B[32mPP: 10 / 10"\x1B[39m\n'[39m +
+      [32m'Timeout: 20000ms\n'[39m +
+      [32m'Error: element(s) not found\n'[39m +
+      [32m'\n'[39m +
+      [32m'Call log:\n'[39m +
+      [32m'\x1B[2m  - Expect "toContainText" with timeout 20000ms\x1B[22m\n'[39m +
+      [32m"\x1B[2m  - waiting for locator('.battle-log')\x1B[22m\n"[39m +
+      [32m'\x1B[2m    6 × locator resolved to <div class="battle-log mt-4 p-4 bg-white/5 rounded-lg border border-white/10 max-h-48 overflow-y-auto">…</div>\x1B[22m\n'[39m +
+      [32m'\x1B[2m      - unexpected value "Battle LogNo battle history yet..."\x1B[22m\n'[39m,
+    pass: [33mfalse[39m,
+    actual: [32m'Battle LogNo battle history yet...'[39m,
+    log: [
+      [32m'  - Expect "toContainText" with timeout 20000ms'[39m,
+      [32m"  - waiting for locator('.battle-log')"[39m,
+      [32m'    6 × locator resolved to <div class="battle-log mt-4 p-4 bg-white/5 rounded-lg border border-white/10 max-h-48 overflow-y-auto">…</div>'[39m,
+      [32m'      - unexpected value "Battle LogNo battle history yet..."'[39m
+    ],
+    timeout: [33m20000[39m
+  },
+  [[32mSymbol(step)[39m]: {
+    category: [32m'expect'[39m,
+    apiName: [32m'expect.toContainText'[39m,
+    title: [32m'Expect "toContainText"'[39m,
+    params: { expected: [32m'Solar Beam\nPP: 10 / 10'[39m },
+    infectParentStepsWithError: [90mundefined[39m,
+    stepId: [32m'expect@90'[39m,
+    group: [90mundefined[39m,
+    boxedStack: [90mundefined[39m,
+    location: {
+      file: [32m'D:\\Code\\pokemon\\tests\\playwright\\multiplayer-battle.spec.ts'[39m,
+      line: [33m167[39m,
+      column: [33m51[39m
+    },
+    steps: [],
+    attachmentIndices: [],
+    info: TestStepInfoImpl {
+      annotations: [],
+      _testInfo: [36m[TestInfoImpl][39m,
+      _stepId: [32m'expect@90'[39m,
+      _title: [32m'Expect "toContainText"'[39m,
+      _parentStep: [90mundefined[39m,
+      skip: [36m[Function (anonymous)][39m
+    },
+    complete: [36m[Function: complete][39m,
+    endWallTime: [33m1764178350053[39m,
+    error: {
+      message: [32m'Error: \x1B[2mexpect(\x1B[22m\x1B[31mlocator\x1B[39m\x1B[2m).\x1B[22mtoContainText\x1B[2m(\x1B[22m\x1B[32mexpected\x1B[39m\x1B[2m)\x1B[22m failed\n'[39m +
+        [32m'\n'[39m +
+        [32m"Locator: locator('.battle-log')\n"[39m +
+        [32m'Expected substring: \x1B[32m"Solar Beam\x1B[39m\n'[39m +
+        [32m'\x1B[32mPP: 10 / 10"\x1B[39m\n'[39m +
+        [32m'Timeout: 20000ms\n'[39m +
+        [32m'Error: element(s) not found\n'[39m +
+        [32m'\n'[39m +
+        [32m'Call log:\n'[39m +
+        [32m'\x1B[2m  - Expect "toContainText" with timeout 20000ms\x1B[22m\n'[39m +
+        [32m"\x1B[2m  - waiting for locator('.battle-log')\x1B[22m\n"[39m +
+        [32m'\x1B[2m    6 × locator resolved to <div class="battle-log mt-4 p-4 bg-white/5 rounded-lg border border-white/10 max-h-48 overflow-y-auto">…</div>\x1B[22m\n'[39m +
+        [32m'\x1B[2m      - unexpected value "Battle LogNo battle history yet..."\x1B[22m\n'[39m,
+      stack: [32m'Error: \x1B[2mexpect(\x1B[22m\x1B[31mlocator\x1B[39m\x1B[2m).\x1B[22mtoContainText\x1B[2m(\x1B[22m\x1B[32mexpected\x1B[39m\x1B[2m)\x1B[22m failed\n'[39m +
+        [32m'\n'[39m +
+        [32m"Locator: locator('.battle-log')\n"[39m +
+        [32m'Expected substring: \x1B[32m"Solar Beam\x1B[39m\n'[39m +
+        [32m'\x1B[32mPP: 10 / 10"\x1B[39m\n'[39m +
+        [32m'Timeout: 20000ms\n'[39m +
+        [32m'Error: element(s) not found\n'[39m +
+        [32m'\n'[39m +
+        [32m'Call log:\n'[39m +
+        [32m'\x1B[2m  - Expect "toContainText" with timeout 20000ms\x1B[22m\n'[39m +
+        [32m"\x1B[2m  - waiting for locator('.battle-log')\x1B[22m\n"[39m +
+        [32m'\x1B[2m    6 × locator resolved to <div class="battle-log mt-4 p-4 bg-white/5 rounded-lg border border-white/10 max-h-48 overflow-y-auto">…</div>\x1B[22m\n'[39m +
+        [32m'\x1B[2m      - unexpected value "Battle LogNo battle history yet..."\x1B[22m\n'[39m +
+        [32m'\n'[39m +
+        [32m'    at D:\\Code\\pokemon\\tests\\playwright\\multiplayer-battle.spec.ts:167:51'[39m,
+      cause: [90mundefined[39m
+    }
+  }
+}
+  ✘  1 tests\playwright\multiplayer-battle.spec.ts:44:5 › multiplayer battle flow: join, select team, battle (39.5s)
+
+
+  1) tests\playwright\multiplayer-battle.spec.ts:44:5 › multiplayer battle flow: join, select team, battle 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: locator('.battle-log')
+    Expected substring: [32m"Solar Beam[39m
+    [32mPP: 10 / 10"[39m
+    Timeout: 20000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 20000ms[22m
+    [2m  - waiting for locator('.battle-log')[22m
+    [2m    6 × locator resolved to <div class="battle-log mt-4 p-4 bg-white/5 rounded-lg border border-white/10 max-h-48 overflow-y-auto">…</div>[22m
+    [2m      - unexpected value "Battle LogNo battle history yet..."[22m
+
+
+      165 |     // Check for battle log update
+      166 |     // The log should contain "used [MoveName]"
+    > 167 |     await expect(hostPage.locator('.battle-log')).toContainText(hostMoveName, { timeout: 20000 });
+          |                                                   ^
+      168 |     await expect(guestPage.locator('.battle-log')).toContainText(guestMoveName, { timeout: 20000 });
+      169 |
+      170 |     // Verify turn number increased or phase reset
+        at D:\Code\pokemon\tests\playwright\multiplayer-battle.spec.ts:167:51
+
+  1 failed
+    tests\playwright\multiplayer-battle.spec.ts:44:5 › multiplayer battle flow: join, select team, battle 

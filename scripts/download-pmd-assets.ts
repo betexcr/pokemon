@@ -62,7 +62,7 @@ async function downloadForId(id: string) {
       const buf = await tryFetch(primary, alternates)
       await saveFile(path.join(outDir, filename), buf)
       console.log(`saved: ${id}/${filename}`)
-    } catch (e) {
+    } catch {
       console.warn(`missing: ${id}/${filename}`)
     }
   }
@@ -78,8 +78,8 @@ async function main() {
     const id = raw.padStart(4, '0')
     try {
       await downloadForId(id)
-    } catch (e) {
-      console.error(`Failed for ${id}:`, (e as Error).message)
+    } catch (error) {
+      console.error(`Failed for ${id}:`, (error as Error).message)
     }
   }
 }

@@ -1,0 +1,9 @@
+﻿
+Running 1 test using 1 worker
+
+[1A[2K[1/1] tests\playwright\multiplayer-battle.spec.ts:116:5 ΓÇ║ multiplayer battle flow: full team charizard verification
+[1A[2Ktests\playwright\multiplayer-battle.spec.ts:116:5 ΓÇ║ multiplayer battle flow: full team charizard verification
+Logging in host...
+
+[1A[2KLogging in guest...
+

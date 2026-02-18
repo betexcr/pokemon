@@ -1,7 +1,5 @@
 import type { NextConfig } from "next";
 
-const isDev = process.env.NODE_ENV === 'development';
-
 const nextConfig: NextConfig = {
   eslint: {
     // Warning: This allows production builds to successfully complete even if
@@ -13,13 +11,14 @@ const nextConfig: NextConfig = {
     // your project has type errors.
     ignoreBuildErrors: true,
   },
-  // Use regular Next.js build (not static export) to support API routes
-  // ...(isDev ? {} : { output: 'export' }),
+  // Use static export for Firebase hosting
+  // Use static export for Firebase hosting
+  // output: 'export',
   trailingSlash: true,
   // Exclude API routes from static export
-  outputFileTracingExcludes: {
-    '*': ['./src/app/api_backup/**/*']
-  },
+  // outputFileTracingExcludes: {
+  //   '*': ['./src/app/api_backup/**/*']
+  // },
   images: {
     unoptimized: true,
     remotePatterns: [

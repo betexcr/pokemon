@@ -118,7 +118,7 @@ export default function TalentRound({ selectedCategory, onMoveUse, usedMoves }: 
         </h4>
         <ul className="text-sm text-yellow-700 dark:text-yellow-300 space-y-1">
           <li>• Use {selectedCategory} moves for bonus hearts! ✨</li>
-          <li>• Don't repeat the same move twice - the audience gets bored! 😴</li>
+          <li>• Don&apos;t repeat the same move twice - the audience gets bored! 😴</li>
           <li>• Fill the Excite Meter for spectacular talent! 🎆</li>
           <li>• Higher power moves give more hearts! ⭐</li>
         </ul>

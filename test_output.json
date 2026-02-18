@@ -1,0 +1,184 @@
+{
+  "config": {
+    "rootDir": "D:/Code/pokemon",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "D:/Code/pokemon/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "D:/Code/pokemon",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.56.0",
+    "workers": 6,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "tests\\playwright\\multiplayer-battle.spec.ts",
+      "file": "tests/playwright/multiplayer-battle.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "multiplayer battle flow: full team charizard verification",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 28983,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('hp-bar-player')\nExpected substring: \u001b[32m\"1\u001b[7m5\u001b[27m0 / 1\u001b[7m5\u001b[27m0\"\u001b[39m\nReceived string:    \u001b[31m\"1\u001b[7m0\u001b[27m0 / 10\u001b[7m0 HP · Unknown type\u001b[27m\"\u001b[39m\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('hp-bar-player')\u001b[22m\n\u001b[2m    9 × locator resolved to <p data-testid=\"hp-bar-player\" class=\"mt-1 text-xs text-muted-foreground\">100 / 100 HP · Unknown type</p>\u001b[22m\n\u001b[2m      - unexpected value \"100 / 100 HP · Unknown type\"\u001b[22m\n",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('hp-bar-player')\nExpected substring: \u001b[32m\"1\u001b[7m5\u001b[27m0 / 1\u001b[7m5\u001b[27m0\"\u001b[39m\nReceived string:    \u001b[31m\"1\u001b[7m0\u001b[27m0 / 10\u001b[7m0 HP · Unknown type\u001b[27m\"\u001b[39m\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('hp-bar-player')\u001b[22m\n\u001b[2m    9 × locator resolved to <p data-testid=\"hp-bar-player\" class=\"mt-1 text-xs text-muted-foreground\">100 / 100 HP · Unknown type</p>\u001b[22m\n\u001b[2m      - unexpected value \"100 / 100 HP · Unknown type\"\u001b[22m\n\n    at D:\\Code\\pokemon\\tests\\playwright\\multiplayer-battle.spec.ts:209:57",
+                    "location": {
+                      "file": "D:\\Code\\pokemon\\tests\\playwright\\multiplayer-battle.spec.ts",
+                      "column": 57,
+                      "line": 209
+                    },
+                    "snippet": "\u001b[0m \u001b[90m 207 |\u001b[39m     \u001b[90m// 3. Verify Initial HP\u001b[39m\n \u001b[90m 208 |\u001b[39m     console\u001b[33m.\u001b[39mlog(\u001b[32m'Verifying Initial HP...'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 209 |\u001b[39m     \u001b[36mawait\u001b[39m expect(hostPage\u001b[33m.\u001b[39mgetByTestId(\u001b[32m'hp-bar-player'\u001b[39m))\u001b[33m.\u001b[39mtoContainText(\u001b[32m'150 / 150'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                                         \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 210 |\u001b[39m     \u001b[36mawait\u001b[39m expect(hostPage\u001b[33m.\u001b[39mgetByTestId(\u001b[32m'hp-bar-opponent'\u001b[39m))\u001b[33m.\u001b[39mtoContainText(\u001b[32m'150 / 150'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 211 |\u001b[39m\n \u001b[90m 212 |\u001b[39m     \u001b[90m// 4. Execute Turn & Verify Damage\u001b[39m\u001b[0m"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "D:\\Code\\pokemon\\tests\\playwright\\multiplayer-battle.spec.ts",
+                        "column": 57,
+                        "line": 209
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('hp-bar-player')\nExpected substring: \u001b[32m\"1\u001b[7m5\u001b[27m0 / 1\u001b[7m5\u001b[27m0\"\u001b[39m\nReceived string:    \u001b[31m\"1\u001b[7m0\u001b[27m0 / 10\u001b[7m0 HP · Unknown type\u001b[27m\"\u001b[39m\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('hp-bar-player')\u001b[22m\n\u001b[2m    9 × locator resolved to <p data-testid=\"hp-bar-player\" class=\"mt-1 text-xs text-muted-foreground\">100 / 100 HP · Unknown type</p>\u001b[22m\n\u001b[2m      - unexpected value \"100 / 100 HP · Unknown type\"\u001b[22m\n\n\n  207 |     // 3. Verify Initial HP\n  208 |     console.log('Verifying Initial HP...');\n> 209 |     await expect(hostPage.getByTestId('hp-bar-player')).toContainText('150 / 150');\n      |                                                         ^\n  210 |     await expect(hostPage.getByTestId('hp-bar-opponent')).toContainText('150 / 150');\n  211 |\n  212 |     // 4. Execute Turn & Verify Damage\n    at D:\\Code\\pokemon\\tests\\playwright\\multiplayer-battle.spec.ts:209:57"
+                    }
+                  ],
+                  "stdout": [
+                    {
+                      "text": "Logging in host...\n"
+                    },
+                    {
+                      "text": "Logging in guest...\n"
+                    },
+                    {
+                      "text": "Host creating room...\n"
+                    },
+                    {
+                      "text": "Room created with ID: d56FKm2RWuYrsMe27uir\n"
+                    },
+                    {
+                      "text": "Guest joining room...\n"
+                    },
+                    {
+                      "text": "Host marking ready...\n"
+                    },
+                    {
+                      "text": "Guest marking ready...\n"
+                    },
+                    {
+                      "text": "Host starting battle...\n"
+                    },
+                    {
+                      "text": "Waiting for battle to start...\n"
+                    },
+                    {
+                      "text": "Host localStorage team: [{\"id\":6,\"name\":\"Charizard\",\"species\":\"charizard\",\"level\":50,\"hp\":{\"cur\":150,\"max\":150},\"stats\":{\"hp\":150,\"atk\":100,\"def\":100,\"spa\":150,\"spd\":100,\"spe\":120},\"moves\":[{\"name\":\"Flamethrower\",\"id\":\"flamethrower\"},{\"name\":\"Air Slash\",\"id\":\"air-slash\"}],\"types\":[\"fire\",\"flying\"]},{\"id\":9,\"name\":\"Blastoise\",\"species\":\"blastoise\",\"level\":50,\"hp\":{\"cur\":160,\"max\":160},\"stats\":{\"hp\":160,\"atk\":100,\"def\":120,\"spa\":100,\"spd\":120,\"spe\":90},\"moves\":[{\"name\":\"Hydro Pump\",\"id\":\"hydro-pump\"},{\"name\":\"Skull Bash\",\"id\":\"skull-bash\"}],\"types\":[\"water\"]},{\"id\":3,\"name\":\"Venusaur\",\"species\":\"venusaur\",\"level\":50,\"hp\":{\"cur\":160,\"max\":160},\"stats\":{\"hp\":160,\"atk\":100,\"def\":100,\"spa\":120,\"spd\":120,\"spe\":80},\"moves\":[{\"name\":\"Solar Beam\",\"id\":\"solar-beam\"},{\"name\":\"Sludge Bomb\",\"id\":\"sludge-bomb\"}],\"types\":[\"grass\",\"poison\"]}]\n"
+                    },
+                    {
+                      "text": "Verifying Host Active Pokemon...\n"
+                    },
+                    {
+                      "text": "player already has Charizard active.\n"
+                    },
+                    {
+                      "text": "Verifying Guest Active Pokemon...\n"
+                    },
+                    {
+                      "text": "player already has Charizard active.\n"
+                    },
+                    {
+                      "text": "Verifying Host Opponent...\n"
+                    },
+                    {
+                      "text": "Verifying Guest Opponent...\n"
+                    },
+                    {
+                      "text": "Verifying Initial HP...\n"
+                    }
+                  ],
+                  "stderr": [
+                    {
+                      "text": "Test failed: ExpectError: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('hp-bar-player')\nExpected substring: \u001b[32m\"1\u001b[7m5\u001b[27m0 / 1\u001b[7m5\u001b[27m0\"\u001b[39m\nReceived string:    \u001b[31m\"1\u001b[7m0\u001b[27m0 / 10\u001b[7m0 HP · Unknown type\u001b[27m\"\u001b[39m\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('hp-bar-player')\u001b[22m\n\u001b[2m    9 × locator resolved to <p data-testid=\"hp-bar-player\" class=\"mt-1 text-xs text-muted-foreground\">100 / 100 HP · Unknown type</p>\u001b[22m\n\u001b[2m      - unexpected value \"100 / 100 HP · Unknown type\"\u001b[22m\n\n    at \u001b[90mD:\\Code\\pokemon\\\u001b[39mtests\\playwright\\multiplayer-battle.spec.ts:209:57 {\n  matcherResult: {\n    name: \u001b[32m'toContainText'\u001b[39m,\n    expected: \u001b[32m'150 / 150'\u001b[39m,\n    message: \u001b[32m'\\x1B[2mexpect(\\x1B[22m\\x1B[31mlocator\\x1B[39m\\x1B[2m).\\x1B[22mtoContainText\\x1B[2m(\\x1B[22m\\x1B[32mexpected\\x1B[39m\\x1B[2m)\\x1B[22m failed\\n'\u001b[39m +\n      \u001b[32m'\\n'\u001b[39m +\n      \u001b[32m\"Locator: getByTestId('hp-bar-player')\\n\"\u001b[39m +\n      \u001b[32m'Expected substring: \\x1B[32m\"1\\x1B[7m5\\x1B[27m0 / 1\\x1B[7m5\\x1B[27m0\"\\x1B[39m\\n'\u001b[39m +\n      \u001b[32m'Received string:    \\x1B[31m\"1\\x1B[7m0\\x1B[27m0 / 10\\x1B[7m0 HP · Unknown type\\x1B[27m\"\\x1B[39m\\n'\u001b[39m +\n      \u001b[32m'Timeout: 5000ms\\n'\u001b[39m +\n      \u001b[32m'\\n'\u001b[39m +\n      \u001b[32m'Call log:\\n'\u001b[39m +\n      \u001b[32m'\\x1B[2m  - Expect \"toContainText\" with timeout 5000ms\\x1B[22m\\n'\u001b[39m +\n      \u001b[32m\"\\x1B[2m  - waiting for getByTestId('hp-bar-player')\\x1B[22m\\n\"\u001b[39m +\n      \u001b[32m'\\x1B[2m    9 × locator resolved to <p data-testid=\"hp-bar-player\" class=\"mt-1 text-xs text-muted-foreground\">100 / 100 HP · Unknown type</p>\\x1B[22m\\n'\u001b[39m +\n      \u001b[32m'\\x1B[2m      - unexpected value \"100 / 100 HP · Unknown type\"\\x1B[22m\\n'\u001b[39m,\n    pass: \u001b[33mfalse\u001b[39m,\n    actual: \u001b[32m'100 / 100 HP · Unknown type'\u001b[39m,\n    log: [\n      \u001b[32m'  - Expect \"toContainText\" with timeout 5000ms'\u001b[39m,\n      \u001b[32m\"  - waiting for getByTestId('hp-bar-player')\"\u001b[39m,\n      \u001b[32m'    9 × locator resolved to <p data-testid=\"hp-bar-player\" class=\"mt-1 text-xs text-muted-foreground\">100 / 100 HP · Unknown type</p>'\u001b[39m,\n      \u001b[32m'      - unexpected value \"100 / 100 HP · Unknown type\"'\u001b[39m\n    ],\n    timeout: \u001b[33m5000\u001b[39m\n  },\n  [\u001b[32mSymbol(step)\u001b[39m]: {\n    category: \u001b[32m'expect'\u001b[39m,\n    apiName: \u001b[32m'expect.toContainText'\u001b[39m,\n    title: \u001b[32m'Expect \"toContainText\"'\u001b[39m,\n    params: { expected: \u001b[32m'150 / 150'\u001b[39m },\n    infectParentStepsWithError: \u001b[90mundefined\u001b[39m,\n    stepId: \u001b[32m'expect@85'\u001b[39m,\n    group: \u001b[90mundefined\u001b[39m,\n    boxedStack: \u001b[90mundefined\u001b[39m,\n    location: {\n      file: \u001b[32m'D:\\\\Code\\\\pokemon\\\\tests\\\\playwright\\\\multiplayer-battle.spec.ts'\u001b[39m,\n      line: \u001b[33m209\u001b[39m,\n      column: \u001b[33m57\u001b[39m\n    },\n    steps: [],\n    attachmentIndices: [],\n    info: TestStepInfoImpl {\n      annotations: [],\n      _testInfo: \u001b[36m[TestInfoImpl]\u001b[39m,\n      _stepId: \u001b[32m'expect@85'\u001b[39m,\n      _title: \u001b[32m'Expect \"toContainText\"'\u001b[39m,\n      _parentStep: \u001b[90mundefined\u001b[39m,\n      skip: \u001b[36m[Function (anonymous)]\u001b[39m\n    },\n    complete: \u001b[36m[Function: complete]\u001b[39m,\n    endWallTime: \u001b[33m1764972376278\u001b[39m,\n    error: {\n      message: \u001b[32m'Error: \\x1B[2mexpect(\\x1B[22m\\x1B[31mlocator\\x1B[39m\\x1B[2m).\\x1B[22mtoContainText\\x1B[2m(\\x1B[22m\\x1B[32mexpected\\x1B[39m\\x1B[2m)\\x1B[22m failed\\n'\u001b[39m +\n        \u001b[32m'\\n'\u001b[39m +\n        \u001b[32m\"Locator: getByTestId('hp-bar-player')\\n\"\u001b[39m +\n        \u001b[32m'Expected substring: \\x1B[32m\"1\\x1B[7m5\\x1B[27m0 / 1\\x1B[7m5\\x1B[27m0\"\\x1B[39m\\n'\u001b[39m +\n        \u001b[32m'Received string:    \\x1B[31m\"1\\x1B[7m0\\x1B[27m0 / 10\\x1B[7m0 HP · Unknown type\\x1B[27m\"\\x1B[39m\\n'\u001b[39m +\n        \u001b[32m'Timeout: 5000ms\\n'\u001b[39m +\n        \u001b[32m'\\n'\u001b[39m +\n        \u001b[32m'Call log:\\n'\u001b[39m +\n        \u001b[32m'\\x1B[2m  - Expect \"toContainText\" with timeout 5000ms\\x1B[22m\\n'\u001b[39m +\n        \u001b[32m\"\\x1B[2m  - waiting for getByTestId('hp-bar-player')\\x1B[22m\\n\"\u001b[39m +\n        \u001b[32m'\\x1B[2m    9 × locator resolved to <p data-testid=\"hp-bar-player\" class=\"mt-1 text-xs text-muted-foreground\">100 / 100 HP · Unknown type</p>\\x1B[22m\\n'\u001b[39m +\n        \u001b[32m'\\x1B[2m      - unexpected value \"100 / 100 HP · Unknown type\"\\x1B[22m\\n'\u001b[39m,\n      stack: \u001b[32m'Error: \\x1B[2mexpect(\\x1B[22m\\x1B[31mlocator\\x1B[39m\\x1B[2m).\\x1B[22mtoContainText\\x1B[2m(\\x1B[22m\\x1B[32mexpected\\x1B[39m\\x1B[2m)\\x1B[22m failed\\n'\u001b[39m +\n        \u001b[32m'\\n'\u001b[39m +\n        \u001b[32m\"Locator: getByTestId('hp-bar-player')\\n\"\u001b[39m +\n        \u001b[32m'Expected substring: \\x1B[32m\"1\\x1B[7m5\\x1B[27m0 / 1\\x1B[7m5\\x1B[27m0\"\\x1B[39m\\n'\u001b[39m +\n        \u001b[32m'Received string:    \\x1B[31m\"1\\x1B[7m0\\x1B[27m0 / 10\\x1B[7m0 HP · Unknown type\\x1B[27m\"\\x1B[39m\\n'\u001b[39m +\n        \u001b[32m'Timeout: 5000ms\\n'\u001b[39m +\n        \u001b[32m'\\n'\u001b[39m +\n        \u001b[32m'Call log:\\n'\u001b[39m +\n        \u001b[32m'\\x1B[2m  - Expect \"toContainText\" with timeout 5000ms\\x1B[22m\\n'\u001b[39m +\n        \u001b[32m\"\\x1B[2m  - waiting for getByTestId('hp-bar-player')\\x1B[22m\\n\"\u001b[39m +\n        \u001b[32m'\\x1B[2m    9 × locator resolved to <p data-testid=\"hp-bar-player\" class=\"mt-1 text-xs text-muted-foreground\">100 / 100 HP · Unknown type</p>\\x1B[22m\\n'\u001b[39m +\n        \u001b[32m'\\x1B[2m      - unexpected value \"100 / 100 HP · Unknown type\"\\x1B[22m\\n'\u001b[39m +\n        \u001b[32m'\\n'\u001b[39m +\n        \u001b[32m'    at D:\\\\Code\\\\pokemon\\\\tests\\\\playwright\\\\multiplayer-battle.spec.ts:209:57'\u001b[39m,\n      cause: \u001b[90mundefined\u001b[39m\n    }\n  }\n}\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2025-12-05T22:05:47.125Z",
+                  "annotations": [],
+                  "attachments": [],
+                  "errorLocation": {
+                    "file": "D:\\Code\\pokemon\\tests\\playwright\\multiplayer-battle.spec.ts",
+                    "column": 57,
+                    "line": 209
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "3c48c2a21c5d0fdcfa14-f62f2470c97264eee3fc",
+          "file": "tests/playwright/multiplayer-battle.spec.ts",
+          "line": 116,
+          "column": 5
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2025-12-05T22:05:35.982Z",
+    "duration": 41161.328,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

@@ -60,7 +60,7 @@ export const BattleSprite = forwardRef<BattleSpriteRef, BattleSpriteProps>(funct
 
       <div className="w-full text-center">
         <div className="flex items-center justify-between text-sm font-semibold text-text">
-          <span className="capitalize">{formatPokemonName(species)}</span>
+          <span className="capitalize" data-testid={`pokemon-name-${side}`}>{formatPokemonName(species)}</span>
           <span className="text-muted-foreground">Lv. {level}</span>
         </div>
         <div className="mt-2 h-2 w-full rounded-full bg-muted">
@@ -69,11 +69,11 @@ export const BattleSprite = forwardRef<BattleSpriteRef, BattleSpriteProps>(funct
             style={{ width: `${hpPercentage}%` }}
           />
         </div>
-        <p className="mt-1 text-xs text-muted-foreground">
+        <p className="mt-1 text-xs text-muted-foreground" data-testid={`hp-bar-${side}`}>
           {hp.cur} / {hp.max} HP · {types.join(' / ') || 'Unknown type'}
         </p>
         {status && (
-          <span className="mt-2 inline-flex items-center rounded-full border border-yellow-500/60 bg-yellow-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-500">
+          <span className="mt-2 inline-flex items-center rounded-full border border-yellow-500/60 bg-yellow-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-500" data-testid={`status-icon-${status}`}>
             {status}
           </span>
         )}

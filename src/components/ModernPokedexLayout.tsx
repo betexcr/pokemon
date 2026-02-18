@@ -1369,8 +1369,9 @@ export default function ModernPokedexLayout({
                 {(advancedFilters.types.length > 0 || searchTerm || (advancedFilters.generation && advancedFilters.generation !== '') || advancedFilters.legendary || advancedFilters.mythical) && (
                   <button
                     onClick={clearAllFilters}
-                    className="text-xs text-poke-blue hover:text-poke-blue/80 hover:underline font-medium"
-                    title="Clear all filters"
+                    disabled={isFiltering}
+                    className="text-xs text-poke-blue hover:text-poke-blue/80 hover:underline font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    title={isFiltering ? 'Filtering in progress...' : 'Clear all filters'}
                   >
                     Clear all
                   </button>
@@ -1398,17 +1399,18 @@ export default function ModernPokedexLayout({
                     {Object.keys(typeColors).map(type => (
                       <button
                         key={type}
-                        onClick={() => toggleTypeFilter(type)}
+                        onClick={() => !isFiltering && toggleTypeFilter(type)}
+                        disabled={isFiltering}
                         className={`px-2 py-1 rounded-lg text-xs font-medium transition-all duration-200 flex-shrink-0 ${
                           advancedFilters.types.includes(type) 
                             ? 'ring-2 ring-white shadow-lg scale-105' 
                             : 'opacity-80 hover:opacity-100'
-                        }`}
+                        } ${isFiltering ? 'opacity-50 cursor-not-allowed' : ''}`}
                         style={{
                           backgroundColor: `var(--type-${type})`,
                           color: typeColors[type].text === 'text-white' ? 'white' : 'black',
                         }}
-                        title={`Filter by ${formatPokemonName(type)} type`}
+                        title={isFiltering ? 'Filtering in progress...' : `Filter by ${formatPokemonName(type)} type`}
                       >
                         {formatPokemonName(type)}
                       </button>
@@ -1503,18 +1505,22 @@ export default function ModernPokedexLayout({
                     <button
                       key={type}
                       onClick={() => {
-                        toggleTypeFilter(type)
-                        setShowMobileMenu(false)
+                        if (!isFiltering) {
+                          toggleTypeFilter(type)
+                          setShowMobileMenu(false)
+                        }
                       }}
+                      disabled={isFiltering}
                       className={`px-2 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
                         advancedFilters.types.includes(type) 
                           ? 'ring-2 ring-white shadow-lg scale-105' 
                           : 'opacity-80 hover:opacity-100'
-                      }`}
+                      } ${isFiltering ? 'opacity-50 cursor-not-allowed' : ''}`}
                       style={{
                         backgroundColor: `var(--type-${type})`,
                         color: typeColors[type].text === 'text-white' ? 'white' : 'black',
                       }}
+                      title={isFiltering ? 'Filtering in progress...' : formatPokemonName(type)}
                     >
                       {formatPokemonName(type)}
                     </button>
@@ -1748,25 +1754,27 @@ export default function ModernPokedexLayout({
               {Object.keys(typeColors).map(type => (
                 <button
                   key={type}
-                  onClick={() => toggleTypeFilter(type)}
+                  onClick={() => !isFiltering && toggleTypeFilter(type)}
+                  disabled={isFiltering}
                   className={`px-1.5 py-1.5 rounded-xl text-sm font-semibold border-2 transition-all duration-300 whitespace-nowrap shadow-sm hover:shadow-md transform hover:scale-105 ${
                     advancedFilters.types.includes(type) 
                       ? 'border-white shadow-lg scale-105' 
                       : 'border-transparent opacity-60 hover:opacity-80'
-                  }`}
+                  } ${isFiltering ? 'opacity-50 cursor-not-allowed' : ''}`}
                   style={{
                     backgroundColor: `var(--type-${type})`,
                     color: typeColors[type].text === 'text-white' ? 'white' : 'black',
                     padding: '6px 6px'
                   }}
+                  title={isFiltering ? 'Filtering in progress...' : formatPokemonName(type)}
                   onMouseEnter={(e) => {
-                    if (!advancedFilters.types.includes(type)) {
+                    if (!advancedFilters.types.includes(type) && !isFiltering) {
                       e.currentTarget.style.opacity = '0.9'
                       e.currentTarget.style.transform = 'scale(1.05)'
                     }
                   }}
                   onMouseLeave={(e) => {
-                    if (!advancedFilters.types.includes(type)) {
+                    if (!advancedFilters.types.includes(type) && !isFiltering) {
                       e.currentTarget.style.opacity = '0.6'
                       e.currentTarget.style.transform = 'scale(1)'
                     }
@@ -1790,7 +1798,8 @@ export default function ModernPokedexLayout({
                 {(advancedFilters.types.length > 0 || searchTerm || (advancedFilters.generation && advancedFilters.generation !== '') || advancedFilters.legendary || advancedFilters.mythical) && (
                   <button
                     onClick={clearAllFilters}
-                    className="px-3 py-1.5 text-sm font-medium text-poke-blue hover:text-poke-blue/80 bg-poke-blue/10 hover:bg-poke-blue/20 rounded-lg transition-all duration-200 hover:shadow-sm"
+                    disabled={isFiltering}
+                    className="px-3 py-1.5 text-sm font-medium text-poke-blue hover:text-poke-blue/80 bg-poke-blue/10 hover:bg-poke-blue/20 rounded-lg transition-all duration-200 hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Clear filters
                   </button>
@@ -1936,24 +1945,57 @@ export default function ModernPokedexLayout({
           <>
             {isAllGenerations && advancedFilters.generation === 'all' && advancedFilters.types.length === 0 && !searchTerm ? (
               // Always use lazy loading with viewport-based loading
-              <div className={`pokemon-grid ${isFiltering ? 'pokemon-grid-updating' : ''}`}>
-                <VirtualizedPokemonGrid
-                  pokemonList={hydratedSortedPokemon}
-                  onToggleComparison={(id) => onToggleComparison(id, setShowSidebar)}
-                  onSelectPokemon={undefined}
-                  selectedPokemon={null}
-                  comparisonList={comparisonList}
-                  density={cardDensity}
-                  showSpecialForms={true}
-                  isLoadingMore={effectiveIsLoadingMore}
-                  hasMorePokemon={effectiveHasMorePokemon}
-                  onLoadMore={externalLoadMorePokemon || loadMorePokemon}
-                  sentinelRef={externalSentinelRef}
-                />
+              <div className="relative">
+                <div className={`pokemon-grid ${isFiltering ? 'pokemon-grid-updating' : ''}`}>
+                  <VirtualizedPokemonGrid
+                    pokemonList={hydratedSortedPokemon}
+                    onToggleComparison={(id) => onToggleComparison(id, setShowSidebar)}
+                    onSelectPokemon={undefined}
+                    selectedPokemon={null}
+                    comparisonList={comparisonList}
+                    density={cardDensity}
+                    showSpecialForms={true}
+                    isLoadingMore={effectiveIsLoadingMore}
+                    hasMorePokemon={effectiveHasMorePokemon}
+                    onLoadMore={externalLoadMorePokemon || loadMorePokemon}
+                    sentinelRef={externalSentinelRef}
+                  />
+                </div>
+                {isFiltering && (
+                  <div className="absolute inset-0 bg-gradient-to-br from-bg/40 via-bg/30 to-bg/40 backdrop-blur-md flex items-center justify-center pointer-events-none z-10">
+                    <div className="filter-modal-pulse relative bg-gradient-to-br from-white/95 to-white/90 dark:from-gray-800/95 dark:to-gray-900/90 border-2 border-poke-blue/30 shadow-2xl rounded-3xl px-10 py-8 flex flex-col items-center gap-4 overflow-hidden">
+                      {/* Animated gradient background */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-poke-blue/5 via-poke-red/5 to-poke-yellow/5 gradient-animate opacity-60"></div>
+                      
+                      {/* Shimmer effect overlay */}
+                      <div className="absolute inset-0 shimmer-effect pointer-events-none"></div>
+                      
+                      {/* Content */}
+                      <div className="relative z-10 flex flex-col items-center gap-4">
+                        {/* Pokéball spinner */}
+                        <div className="pokeball-spinner w-12 h-12 rounded-full bg-gradient-to-br from-poke-red to-red-600 border-4 border-white dark:border-gray-700 shadow-lg relative overflow-hidden">
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="w-full h-1 bg-gray-800 dark:bg-white"></div>
+                          </div>
+                          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white dark:bg-gray-800 border-2 border-gray-800 dark:border-white shadow-inner"></div>
+                        </div>
+                        
+                        {/* Text with gradient */}
+                        <div className="text-center">
+                          <h3 className="text-xl font-bold bg-gradient-to-r from-poke-blue via-poke-red to-poke-blue bg-clip-text text-transparent mb-1">
+                            Filtering Pokémon
+                          </h3>
+                          <p className="text-sm text-muted animate-pulse">Please wait...</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : sortedPokemon.length > 0 ? (
               <>
-                <div className={`pokemon-grid ${isFiltering ? 'pokemon-grid-updating' : ''}`}>
+                <div className="relative">
+                  <div className={`pokemon-grid ${isFiltering ? 'pokemon-grid-updating' : ''}`}>
                   {cardDensity === 'list' ? (
                     <PokedexListView
                       pokemonList={hydratedSortedPokemon}
@@ -1984,6 +2026,37 @@ export default function ModernPokedexLayout({
                         }
                       }}
                     />
+                  )}
+                </div>
+                  {isFiltering && (
+                    <div className="absolute inset-0 bg-gradient-to-br from-bg/40 via-bg/30 to-bg/40 backdrop-blur-md flex items-center justify-center pointer-events-none z-10">
+                      <div className="filter-modal-pulse relative bg-gradient-to-br from-white/95 to-white/90 dark:from-gray-800/95 dark:to-gray-900/90 border-2 border-poke-blue/30 shadow-2xl rounded-3xl px-10 py-8 flex flex-col items-center gap-4 overflow-hidden">
+                        {/* Animated gradient background */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-poke-blue/5 via-poke-red/5 to-poke-yellow/5 gradient-animate opacity-60"></div>
+                        
+                        {/* Shimmer effect overlay */}
+                        <div className="absolute inset-0 shimmer-effect pointer-events-none"></div>
+                        
+                        {/* Content */}
+                        <div className="relative z-10 flex flex-col items-center gap-4">
+                          {/* Pokéball spinner */}
+                          <div className="pokeball-spinner w-12 h-12 rounded-full bg-gradient-to-br from-poke-red to-red-600 border-4 border-white dark:border-gray-700 shadow-lg relative overflow-hidden">
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="w-full h-1 bg-gray-800 dark:bg-white"></div>
+                            </div>
+                            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white dark:bg-gray-800 border-2 border-gray-800 dark:border-white shadow-inner"></div>
+                          </div>
+                          
+                          {/* Text with gradient */}
+                          <div className="text-center">
+                            <h3 className="text-xl font-bold bg-gradient-to-r from-poke-blue via-poke-red to-poke-blue bg-clip-text text-transparent mb-1">
+                              Filtering Pokémon
+                            </h3>
+                            <p className="text-sm text-muted animate-pulse">Please wait...</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   )}
                 </div>
 

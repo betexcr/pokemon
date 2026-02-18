@@ -141,7 +141,7 @@ export default function ContestTooltip({
 export function PokeblockTooltip({ children }: { children: React.ReactNode }) {
   return (
     <ContestTooltip
-      content="Feed this Pokéblock to boost your Pokémon's contest stats! Each color corresponds to a different stat. Rainbow blocks boost all stats at once."
+      content="Feed this Pokéblock to boost your Pokémon&apos;s contest stats! Each color corresponds to a different stat. Rainbow blocks boost all stats at once."
       title="Pokéblock"
       icon={<Sparkles className="w-4 h-4" />}
       position="top"
@@ -180,7 +180,7 @@ export function ExciteMeterTooltip({ children }: { children: React.ReactNode }) 
 export function CategoryTooltip({ children }: { children: React.ReactNode }) {
   return (
     <ContestTooltip
-      content="Choose a contest category to compete in. Each category has unique moves and strategies. Pick the one that matches your Pokémon's strengths!"
+      content="Choose a contest category to compete in. Each category has unique moves and strategies. Pick the one that matches your Pokémon&apos;s strengths!"
       title="Contest Category"
       icon={<Heart className="w-4 h-4" />}
       position="top"

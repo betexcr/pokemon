@@ -96,7 +96,9 @@ function isChoosing(meta: Meta | null) {
 
 function activePrivate(me: PrivateState | null): Pokemon | null {
   if (!me?.team?.length) return null;
-  return me.team[0] ?? null; // Singles: index 0 is active in private mirror
+  // Use currentIndex if available, otherwise default to 0
+  const activeIndex = typeof (me as any).currentIndex === 'number' ? (me as any).currentIndex : 0;
+  return me.team[activeIndex] ?? me.team[0] ?? null;
 }
 
 export function useBattleState(battleId: string): UseBattleState {
@@ -227,6 +229,13 @@ export function useBattleState(battleId: string): UseBattleState {
 
   // Late-bind private subscription only after we know meta and user membership
   useEffect(() => {
+    console.log('useBattleState: Private subscription effect triggered', {
+      battleId,
+      authLoading,
+      meUid,
+      hasMeta: !!meta
+    });
+
     if (!battleId) return;
     if (authLoading) return;
     if (!meUid) return; // wait for auth
@@ -241,7 +250,6 @@ export function useBattleState(battleId: string): UseBattleState {
     const isParticipant = meta.players?.p1?.uid === meUid || meta.players?.p2?.uid === meUid;
     if (!isParticipant) {
       console.warn('useBattleState: current user is not a participant of this battle; skipping private subscription');
-      // Show a gentle message but do not throw hard error during warmup
       setError('You are not a participant in this battle.');
       return;
     }
@@ -252,7 +260,6 @@ export function useBattleState(battleId: string): UseBattleState {
       s => {
         console.log('useBattleState: Private data received:', s.val());
         setMe(s.val() ?? null);
-        // Clear any prior permission error once we successfully subscribe
         setError(prev => (prev === 'You are not a participant in this battle.' ? null : prev));
       },
       e => {
@@ -432,14 +439,29 @@ export function useBattleState(battleId: string): UseBattleState {
       headers,
       body: JSON.stringify(
         choice.action === 'move'
-          ? { action: 'move', moveId: choice.payload.moveId, target: choice.payload.target }
-          : { action: 'switch', switchToIndex: choice.payload.switchToIndex }
+          ? { action: 'move', moveId: choice.payload.moveId, target: choice.payload.target, clientVersion: choice.clientVersion }
+          : { action: 'switch', switchToIndex: choice.payload.switchToIndex, clientVersion: choice.clientVersion }
       ),
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error?.error || 'Failed to submit move');
+      let errorMessage = 'Failed to submit move';
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData?.error || errorMessage;
+      } catch (e) {
+        // If JSON parse fails, try to get text
+        const text = await response.text().catch(() => '');
+        console.error('API Error (Non-JSON):', text);
+        // Extract error from Next.js error page if possible (simple regex)
+        const match = text.match(/<pre>(.*?)<\/pre>/s);
+        if (match && match[1]) {
+             errorMessage = `Server Error: ${match[1].substring(0, 200)}...`;
+        } else {
+             errorMessage = `Server Error (${response.status}): Check console for details`;
+        }
+      }
+      throw new Error(errorMessage);
     }
   }, [battleId, meUid, meta]);
 

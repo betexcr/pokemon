@@ -7,8 +7,8 @@ export function useLobbyTransition() {
 
   return useCallback((roomId: string) => {
     // Trigger lobby wipe transition
-    const nav = () => router.push(`/lobby/${roomId}`);
-    
+    const nav = () => router.push(`/lobby/room?id=${roomId}`);
+
     // Use native view transition if available
     if (document.startViewTransition) {
       document.startViewTransition(nav);
