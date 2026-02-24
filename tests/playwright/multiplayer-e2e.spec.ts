@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 const BASE_URL = 'http://127.0.0.1:3002';
+const FIREBASE_API_KEY = 'AIzaSyASbdOWHRBH_QAqpjRrp9KyzPWheNuUZmY';
 
 test.describe('Multiplayer E2E Flow', () => {
   test('two players can login, build teams, and start a battle', async ({ browser }) => {
@@ -13,10 +14,10 @@ test.describe('Multiplayer E2E Flow', () => {
     const page1 = await context1.newPage();
     const page2 = await context2.newPage();
 
-    const player1Email = 'player1@test.local';
-    const player1Pass = 'TestPass123!';
-    const player2Email = 'player2@test.local';
-    const player2Pass = 'TestPass123!';
+    const player1Email = 'test-host@pokemon-battles.test';
+    const player1Pass = 'TestHost123!';
+    const player2Email = 'test-guest@pokemon-battles.test';
+    const player2Pass = 'TestGuest123!';
 
     try {
       // Navigate both to home
@@ -32,7 +33,7 @@ test.describe('Multiplayer E2E Flow', () => {
       const login1Response = await page1.evaluate(async (credentials) => {
         try {
           // We'll use the page's fetch to call Firebase REST API
-          const response = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyBjHVy5xeMw5X9ZXDFPdN4X3VZNbdIcgXY', {
+          const response = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${credentials.apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -48,7 +49,7 @@ test.describe('Multiplayer E2E Flow', () => {
             const error = await response.json();
             if (error.error?.message?.includes('EMAIL_NOT_FOUND')) {
               // Try to register
-              const signupResponse = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyBjHVy5xeMw5X9ZXDFPdN4X3VZNbdIcgXY', {
+              const signupResponse = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${credentials.apiKey}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -67,7 +68,7 @@ test.describe('Multiplayer E2E Flow', () => {
         } catch (e) {
           return { success: false, error: String(e) };
         }
-      }, { email: player1Email, password: player1Pass, displayName: 'Player 1' });
+      }, { email: player1Email, password: player1Pass, displayName: 'Player 1', apiKey: FIREBASE_API_KEY });
 
       console.log('Player 1 login result:', login1Response);
 
@@ -75,7 +76,7 @@ test.describe('Multiplayer E2E Flow', () => {
       console.log(`Logging in ${player2Email}...`);
       const login2Response = await page2.evaluate(async (credentials) => {
         try {
-          const response = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyBjHVy5xeMw5X9ZXDFPdN4X3VZNbdIcgXY', {
+          const response = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${credentials.apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -90,7 +91,7 @@ test.describe('Multiplayer E2E Flow', () => {
           } else {
             const error = await response.json();
             if (error.error?.message?.includes('EMAIL_NOT_FOUND')) {
-              const signupResponse = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyBjHVy5xeMw5X9ZXDFPdN4X3VZNbdIcgXY', {
+              const signupResponse = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${credentials.apiKey}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -109,7 +110,7 @@ test.describe('Multiplayer E2E Flow', () => {
         } catch (e) {
           return { success: false, error: String(e) };
         }
-      }, { email: player2Email, password: player2Pass, displayName: 'Player 2' });
+      }, { email: player2Email, password: player2Pass, displayName: 'Player 2', apiKey: FIREBASE_API_KEY });
 
       console.log('Player 2 login result:', login2Response);
 

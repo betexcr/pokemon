@@ -4,9 +4,9 @@ import { getPokemonWithPagination, getPokemonList, getPokemon, getPokemonPageSke
 /**
  * Secure Pokemon fetcher for main dex view (100 items per fetch)
  */
-export async function fetchPokemonForMainDex(offset: number, limit: number): Promise<Pokemon[]> {
+export async function fetchPokemonForMainDex(offset: number, limit: number, signal?: AbortSignal): Promise<Pokemon[]> {
   try {
-    const pokemon = await getPokemonWithPagination(limit, offset)
+    const pokemon = await getPokemonWithPagination(limit, offset, signal)
     
     // Validate the response
     if (!Array.isArray(pokemon)) {
@@ -36,16 +36,16 @@ export async function fetchPokemonForMainDex(offset: number, limit: number): Pro
  * Lightweight skeleton fetcher for main dex (uses list endpoint only)
  * Returns real Pokémon ids/names with small images, details hydrated elsewhere
  */
-export async function fetchPokemonSkeletonForMainDex(offset: number, limit: number): Promise<Pokemon[]> {
-  return getPokemonWithPagination(limit, offset)
+export async function fetchPokemonSkeletonForMainDex(offset: number, limit: number, signal?: AbortSignal): Promise<Pokemon[]> {
+  return getPokemonWithPagination(limit, offset, signal)
 }
 
 /**
  * Secure Pokemon fetcher for team/compare views (50 items per fetch)
  */
-export async function fetchPokemonForTeamCompare(offset: number, limit: number): Promise<Pokemon[]> {
+export async function fetchPokemonForTeamCompare(offset: number, limit: number, signal?: AbortSignal): Promise<Pokemon[]> {
   try {
-    const pokemonList = await getPokemonList(limit, offset)
+    const pokemonList = await getPokemonList(limit, offset, signal)
     
     // Validate the response
     if (!pokemonList || !Array.isArray(pokemonList.results)) {
@@ -116,9 +116,9 @@ export async function fetchPokemonForTeamCompare(offset: number, limit: number):
 /**
  * Secure Pokemon fetcher for PokemonSelector (30 items per fetch)
  */
-export async function fetchPokemonForSelector(offset: number, limit: number): Promise<Pokemon[]> {
+export async function fetchPokemonForSelector(offset: number, limit: number, signal?: AbortSignal): Promise<Pokemon[]> {
   try {
-    const pokemonList = await getPokemonList(limit, offset)
+    const pokemonList = await getPokemonList(limit, offset, signal)
     
     // Validate the response
     if (!pokemonList || !Array.isArray(pokemonList.results)) {
@@ -189,10 +189,10 @@ export async function fetchPokemonForSelector(offset: number, limit: number): Pr
 /**
  * Enhanced Pokemon fetcher that enriches basic Pokemon with full details
  */
-export async function fetchEnrichedPokemon(offset: number, limit: number): Promise<Pokemon[]> {
+export async function fetchEnrichedPokemon(offset: number, limit: number, signal?: AbortSignal): Promise<Pokemon[]> {
   try {
     // First get basic Pokemon list
-    const basicPokemon = await fetchPokemonForMainDex(offset, limit)
+    const basicPokemon = await fetchPokemonForMainDex(offset, limit, signal)
     
     if (basicPokemon.length === 0) {
       return []
@@ -207,7 +207,7 @@ export async function fetchEnrichedPokemon(offset: number, limit: number): Promi
       const enrichedBatch = await Promise.allSettled(
         batch.map(async (pokemon) => {
           try {
-            const fullPokemon = await getPokemon(pokemon.id)
+            const fullPokemon = await getPokemon(pokemon.id, signal)
             return fullPokemon
           } catch (error) {
             console.warn(`Failed to enrich Pokemon ${pokemon.id}:`, error)

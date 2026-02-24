@@ -6,6 +6,7 @@ import { reportApiError, reportNetworkError, reportDataLoadingError } from '@/li
 import { isSpecialForm, getSpecialFormInfo, getBasePokemonId } from '@/lib/specialForms'
 import { browserCache, getCacheKey, CACHE_TTL } from '@/lib/memcached'
 import { normalizePokemonId } from '@/lib/utils'
+import { analyticsManager } from '@/lib/requestAnalytics'
 
 // Fallback in-memory cache for when browser cache is unavailable
 const fallbackCache = new Map<string, { data: any; timestamp: number; ttl: number }>()
@@ -116,7 +117,8 @@ class CircuitBreaker {
 const circuitBreaker = new CircuitBreaker()
 
 // Generic fetch with retries and exponential backoff to handle transient CDN/errors
-async function fetchFromAPI<T>(url: string): Promise<T> {
+async function fetchFromAPI<T>(url: string, signal?: AbortSignal): Promise<T> {
+  const startTime = Date.now();
   const maxAttempts = 5 // Increased from 3 to 5 for better resilience
   const baseDelayMs = 500 // Increased base delay for 503 errors
   // Retry on common transient statuses; include 404 because PokeAPI/CDN can occasionally 404 briefly
@@ -132,28 +134,50 @@ async function fetchFromAPI<T>(url: string): Promise<T> {
       ? `${window.location.origin}${url}`
       : url)
 
-  // Check circuit breaker before making request
-  if (circuitBreaker.isOpen()) {
-    throw new Error('Service temporarily unavailable - too many recent failures. Please try again in a moment.')
-  }
-
-  // Check for duplicate in-flight requests to prevent race conditions
-  const requestKey = absoluteUrl
-  if (inFlightRequests.has(requestKey)) {
-    console.log('🔄 Deduplicating request:', requestKey)
-    return inFlightRequests.get(requestKey) as Promise<T>
-  }
-
-  // Create the request promise and store it for deduplication
-  const requestPromise = performFetchWithRetry<T>(absoluteUrl, maxAttempts, baseDelayMs, retryStatuses, is503Error)
-  inFlightRequests.set(requestKey, requestPromise)
+  // Record request start for analytics
+  const requestId = `fetch-${Date.now()}-${Math.random()}`;
+  analyticsManager.recordStart(requestId, absoluteUrl, 'api', 'normal');
 
   try {
-    const result = await requestPromise
-    return result
-  } finally {
-    // Clean up the in-flight request
-    inFlightRequests.delete(requestKey)
+    // Check circuit breaker before making request
+    if (circuitBreaker.isOpen()) {
+      throw new Error('Service temporarily unavailable - too many recent failures. Please try again in a moment.')
+    }
+
+    // Check if signal is already aborted before making request
+    if (signal?.aborted) {
+      throw new DOMException('Aborted', 'AbortError')
+    }
+
+    // Check for duplicate in-flight requests to prevent race conditions
+    const requestKey = absoluteUrl
+    if (inFlightRequests.has(requestKey)) {
+      console.log('🔄 Deduplicating request:', requestKey)
+      const cached = inFlightRequests.get(requestKey) as Promise<T>;
+      analyticsManager.recordComplete(requestId, 'completed');
+      return cached;
+    }
+
+    // Create the request promise and store it for deduplication
+    const requestPromise = performFetchWithRetry<T>(absoluteUrl, maxAttempts, baseDelayMs, retryStatuses, is503Error, signal)
+    inFlightRequests.set(requestKey, requestPromise)
+
+    try {
+      const result = await requestPromise
+      analyticsManager.recordComplete(requestId, 'completed');
+      return result
+    } finally {
+      // Clean up the in-flight request
+      inFlightRequests.delete(requestKey)
+    }
+  } catch (error: any) {
+    // Record error in analytics
+    if (error?.name === 'AbortError') {
+      analyticsManager.recordComplete(requestId, 'cancelled', 'AbortError');
+    } else {
+      analyticsManager.recordComplete(requestId, 'failed', error instanceof Error ? error.message : String(error));
+    }
+    throw error;
   }
 }
 
@@ -162,7 +186,8 @@ async function performFetchWithRetry<T>(
   maxAttempts: number,
   baseDelayMs: number,
   retryStatuses: Set<number>,
-  is503Error: (status: number) => boolean
+  is503Error: (status: number) => boolean,
+  externalSignal?: AbortSignal
 ): Promise<T> {
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     const controller = new AbortController()
@@ -180,6 +205,11 @@ async function performFetchWithRetry<T>(
         }
       })
       clearTimeout(timeout)
+      
+      // Clean up external signal listener if it exists
+      if (externalSignal && combinedSignal !== timeoutController.signal) {
+        externalSignal.removeEventListener('abort', () => {})
+      }
 
       if (!response.ok) {
         const shouldRetry = retryStatuses.has(response.status) && attempt < maxAttempts
@@ -228,6 +258,11 @@ async function performFetchWithRetry<T>(
       return result
     } catch (error: any) {
       clearTimeout(timeout)
+      
+      // Clean up external signal listener if it exists
+      if (externalSignal && combinedSignal !== timeoutController.signal) {
+        externalSignal.removeEventListener('abort', () => {})
+      }
 
       // Better error handling for different types of failures
       if (error?.name === 'AbortError') {
@@ -359,13 +394,13 @@ export function getPokemonGenerationImage(id: number, generation: number): strin
 }
 
 // Pokémon list functions
-export async function getPokemonList(limit = 100, offset = 0): Promise<{ results: Array<{ name: string; url: string }>; count: number }> {
+export async function getPokemonList(limit = 100, offset = 0, signal?: AbortSignal): Promise<{ results: Array<{ name: string; url: string }>; count: number }> {
   const cacheKey = getCacheKey('pokemon-list', { limit, offset })
   const cached = await getCache(cacheKey)
   if (cached) return cached
 
   const url = `${API_BASE_URL}/pokemon/?limit=${limit}&offset=${offset}`
-  const data = await fetchFromAPI<{ results: Array<{ name: string; url: string }>; count: number }>(url)
+  const data = await fetchFromAPI<{ results: Array<{ name: string; url: string }>; count: number }>(url, signal)
   await setCache(cacheKey, data, CACHE_TTL.POKEMON_LIST)
   return data
 }
@@ -423,7 +458,7 @@ export async function getAllValidPokemonIds(): Promise<number[]> {
 }
 
 // Individual Pokémon functions
-export async function getPokemon(id: number | string): Promise<Pokemon> {
+export async function getPokemon(id: number | string, signal?: AbortSignal): Promise<Pokemon> {
   // Ensure we always use numeric ID for API calls, removing any zero-padding
   const numericId = normalizePokemonId(id)
 
@@ -444,7 +479,7 @@ export async function getPokemon(id: number | string): Promise<Pokemon> {
     }
 
     // Get the base Pokemon data
-    const basePokemon = await getPokemon(specialFormInfo.basePokemonId)
+    const basePokemon = await getPokemon(specialFormInfo.basePokemonId, signal)
 
     // Create a modified Pokemon object for the special form
     const specialFormPokemon: Pokemon = {
@@ -471,7 +506,7 @@ export async function getPokemon(id: number | string): Promise<Pokemon> {
   const url = `${API_BASE_URL}/pokemon/${numericId}/`
   try {
     console.log(`🌐 Fetching Pokemon ${numericId} from API`)
-    const data = await fetchFromAPI<Pokemon>(url)
+    const data = await fetchFromAPI<Pokemon>(url, signal)
 
     // Cache with longer TTL for detail pages (24 hours)
     await setCache(cacheKey, data, CACHE_TTL.POKEMON_DETAIL * 2)
@@ -1063,17 +1098,17 @@ export async function getPokemonByType(type: string): Promise<Pokemon[]> {
 }
 
 // Pagination functions
-export async function getPokemonWithPagination(limit = 100, offset = 0): Promise<Pokemon[]> {
+export async function getPokemonWithPagination(limit = 100, offset = 0, signal?: AbortSignal): Promise<Pokemon[]> {
   const cacheKey = getCacheKey('pokemon-pagination', { limit, offset })
   const cached = await getCache(cacheKey)
   if (cached) return cached
 
   try {
-    const pokemonList = await getPokemonList(limit, offset)
+    const pokemonList = await getPokemonList(limit, offset, signal)
     const pokemonDetails = await Promise.all(
       pokemonList.results.map(async (pokemon) => {
         const id = pokemon.url.split('/').slice(-2)[0]
-        return await getPokemon(parseInt(id)).catch(() => null)
+        return await getPokemon(parseInt(id), signal).catch(() => null)
       })
     )
 

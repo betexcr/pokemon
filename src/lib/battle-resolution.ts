@@ -342,8 +342,41 @@ export async function resolveTurn(battleId: string): Promise<void> {
         // We need to map BattleState back to RTDB structure
         // This is the reverse of fetchBattleState
 
-        // Update Meta
+        // Prepare updates for meta
         const metaUpdates: any = {
+            turn: meta.turn + 1,
+            phase: currentState.isComplete ? 'ended' : 'choosing',
+            ...(currentState.isComplete && currentState.winner && {
+                winnerUid: currentState.winner === 'player' ? meta.players.p1.uid : meta.players.p2.uid
+            })
+        };
+
+        // Prepare updates for private nodes (team state)
+        const p1Updates = {
+            team: currentState.player.pokemon,
+            currentIndex: currentState.player.currentIndex
+        };
+
+        const p2Updates = {
+            team: currentState.opponent.pokemon,
+            currentIndex: currentState.opponent.currentIndex
+        };
+
+        // Prepare updates for public node
+        const publicUpdates = {
+            battleLog: currentState.battleLog,
+            field: {
+                screens: {
+                    p1: currentState.player.sideConditions.screens,
+                    p2: currentState.opponent.sideConditions.screens
+                },
+                hazards: {
+                    p1: currentState.player.sideConditions.hazards,
+                    p2: currentState.opponent.sideConditions.hazards
+                }
+            }
+        };
+
         console.log('Public updates:', publicUpdates);
 
         await Promise.all([

@@ -6,6 +6,10 @@ import { Pokemon, FilterState } from '@/types/pokemon'
 import ViewportPriorityLoader from '@/lib/viewportPriorityLoader'
 import { getPokemonTotalCount, generateAllPokemonSkeletons, getPokemonList, getPokemonSkeletonsWithPagination, generateSpecialFormsPokemon, getPokemonFallbackImage, getPokemonMainPageImage, getPokemonShinyImage } from '@/lib/api'
 import { useTheme } from '@/components/ThemeProvider'
+import { useRequestCancellation } from '@/hooks/useRequestCancellation'
+import { useViewportCancellation } from '@/hooks/useViewportCancellation'
+import { useRequestAnalytics } from '@/hooks/useRequestAnalytics'
+import { requestManager } from '@/lib/requestManager'
 // Removed PokemonPreloader import to avoid HMR issues
 // Removed sharedPokemonCache import to avoid HMR issues - implementing cache logic inline
 import RedPokedexLayout from '@/components/RedPokedexLayout'
@@ -21,6 +25,43 @@ import LobbyPage from '@/components/LobbyPage'
 export default function Home() {
   console.log('🚀 Home component loaded - NEW VERSION')
   const pathname = usePathname()
+  
+  // Setup automatic request cancellation on navigation
+  useRequestCancellation({
+    contexts: ['pokedex-main'],
+    onRouteChange: () => {
+      console.log('📍 Navigated away from main Pokedex, cancelling all Pokedex requests')
+    }
+  })
+
+  // Setup viewport-aware cancellation to cancel off-screen Pokemon requests
+  useViewportCancellation({
+    enabled: true,
+    bufferMargin: 1500, // Keep requests active 1500px beyond viewport
+    contextPrefix: 'viewport',
+    onCancel: (count) => {
+      if (count > 0) {
+        console.log(`🔍 Cancelled ${count} off-screen request(s)`)
+      }
+    }
+  })
+
+  // Setup request analytics for monitoring
+  const analytics = useRequestAnalytics({
+    autoPrune: true,
+    updateInterval: 2000
+  })
+  
+  // Log analytics summary periodically in dev
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      const interval = setInterval(() => {
+        const summary = analytics.getSummary()
+        console.log('📊 ' + summary)
+      }, 10000);
+      return () => clearInterval(interval);
+    }
+  }, [analytics]);
   
   // Fallback for static export - get pathname from window.location
   const [actualPathname, setActualPathname] = useState(pathname)
@@ -77,6 +118,73 @@ export default function Home() {
   const currentOffsetRef = useRef(0)
   const totalCountRef = useRef(0)
   const isTriggeredRef = useRef(false) // Prevent multiple intersection observer triggers
+  const activeFetchRequestRef = useRef<string | null>(null) // Track active request ID for cancellation
+  
+  // Create wrapped fetch function with request management
+  const createManagedFetch = useCallback(
+    (priority: 'normal' | 'high' = 'normal') => 
+      async (offset: number, limit: number): Promise<Pokemon[]> => {
+        // Cancel previous low-priority request if starting a new one
+        if (activeFetchRequestRef.current && priority === 'high') {
+          console.log('🛑 Cancelling previous request for higher priority fetch')
+          requestManager.cancelRequest(activeFetchRequestRef.current)
+        }
+
+        const { signal, requestId, startImmediately } = requestManager.createRequest('pokedex-main', priority)
+        activeFetchRequestRef.current = requestId
+        
+        // Start request immediately if pool allows
+        startImmediately()
+
+        try {
+          const data = await getPokemonList(limit, offset, signal)
+          requestManager.completeRequest(requestId)
+          activeFetchRequestRef.current = null
+          return data.results.map((r, i) => ({
+            id: i + offset + 1,
+            name: r.name,
+            base_experience: 0,
+            height: 0,
+            weight: 0,
+            is_default: true,
+            order: i + offset + 1,
+            abilities: [],
+            forms: [],
+            game_indices: [],
+            held_items: [],
+            location_area_encounters: '',
+            moves: [],
+            sprites: {
+              front_default: '',
+              front_shiny: null,
+              front_female: null,
+              front_shiny_female: null,
+              back_default: null,
+              back_shiny: null,
+              back_female: null,
+              back_shiny_female: null,
+              other: {
+                dream_world: { front_default: null, front_female: null },
+                home: { front_default: null, front_female: null, front_shiny: null, front_shiny_female: null },
+                'official-artwork': { front_default: null, front_shiny: null }
+              }
+            },
+            stats: [],
+            types: [],
+            species: { name: r.name, url: '' }
+          })) as Pokemon[]
+        } catch (error) {
+          if (error instanceof Error && error.message.includes('Abort')) {
+            console.log('📍 Request was cancelled')
+          } else {
+            console.error('Error fetching Pokemon:', error)
+          }
+          requestManager.completeRequest(requestId)
+          throw error
+        }
+      },
+    []
+  )
   
   // Viewport priority loader for smart Pokemon loading
   const viewportLoaderRef = useRef<ViewportPriorityLoader | null>(null)

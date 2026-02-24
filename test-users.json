@@ -1,0 +1,20 @@
+[
+  {
+    "email": "test-player-1@pokemon.local",
+    "password": "TestPlayer123!",
+    "uid": "LzcR6xQY3jdkjlkwOYV0hhaawy93",
+    "displayName": "Player One",
+    "teamId": "JzR0K3O7VRIr6PlCIjqC",
+    "teamName": "Thunder Squad",
+    "pokemonCount": 6
+  },
+  {
+    "email": "test-player-2@pokemon.local",
+    "password": "TestPlayer456!",
+    "uid": "FzYcgixxTYaeSQJyaVxA1Dzccj73",
+    "displayName": "Player Two",
+    "teamId": "4yiQ8ecmFaLG763aZ2bC",
+    "teamName": "Water Warriors",
+    "pokemonCount": 6
+  }
+]
