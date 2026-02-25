@@ -176,10 +176,14 @@ export default function PokedexScrollbar({
     }
   }, [isDragging, virtualScrollPercentage, scrollToPercentage])
 
-  if (!scrollContainer) return null
+  // Don't return null - always show the scrollbar UI
+  // Just disable interactive features if scrollContainer is not available
+  const isEnabled = !!scrollContainer
 
   return (
-    <div className="absolute right-2 top-2 bottom-2 w-12 flex flex-col items-center gap-2 z-40">
+    <div className="absolute right-2 top-2 bottom-2 w-12 flex flex-col items-center gap-2 z-40"
+      style={{ opacity: isEnabled ? 1 : 0.5, pointerEvents: isEnabled ? 'auto' : 'none' }}
+    >
       {/* Jump to Top */}
       <button
         onClick={() => scrollToPercentage(0)}
