@@ -2113,6 +2113,11 @@ export default function ModernPokedexLayout({
         )}
           </div>
 
+          {/* DEBUG: Test if this code path executes */}
+          <div className="fixed top-0 left-0 bg-purple-500 text-white p-4 z-[9999]" style={{ fontSize: '20px', fontWeight: 'bold' }}>
+            SCROLLBAR AREA - If you see this, code is executing
+          </div>
+
           {/* Pokedex Scrollbar - ALWAYS SHOWN FOR DEBUGGING */}
           <PokedexScrollbar
             scrollContainer={scrollContainerRef.current}

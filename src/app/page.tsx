@@ -23,27 +23,18 @@ import LobbyPage from '@/components/LobbyPage'
 // import MobileHeader from '@/components/MobileHeader'
 
 export default function Home() {
-  console.log('🚀 Home component loaded - NEW VERSION')
   const pathname = usePathname()
   
   // Setup automatic request cancellation on navigation
   useRequestCancellation({
-    contexts: ['pokedex-main'],
-    onRouteChange: () => {
-      console.log('📍 Navigated away from main Pokedex, cancelling all Pokedex requests')
-    }
+    contexts: ['pokedex-main']
   })
 
   // Setup viewport-aware cancellation to cancel off-screen Pokemon requests
   useViewportCancellation({
     enabled: true,
     bufferMargin: 1500, // Keep requests active 1500px beyond viewport
-    contextPrefix: 'viewport',
-    onCancel: (count) => {
-      if (count > 0) {
-        console.log(`🔍 Cancelled ${count} off-screen request(s)`)
-      }
-    }
+    contextPrefix: 'viewport'
   })
 
   // Setup request analytics for monitoring
@@ -52,41 +43,32 @@ export default function Home() {
     updateInterval: 2000
   })
   
-  // Log analytics summary periodically in dev
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      const interval = setInterval(() => {
-        const summary = analytics.getSummary()
-        console.log('📊 ' + summary)
-      }, 10000);
-      return () => clearInterval(interval);
-    }
-  }, [analytics]);
+  // Analytics are being tracked but not logged to reduce console noise
+  // To view analytics, check the requestManager.getAnalytics() in dev tools
   
   // Fallback for static export - get pathname from window.location
   const [actualPathname, setActualPathname] = useState(pathname)
+  const [isMainPokedex, setIsMainPokedex] = useState(false)
   
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      const pathIsMain = window.location.pathname === '/'
       setActualPathname(window.location.pathname)
+      setIsMainPokedex(pathIsMain)
       
-      // Add/remove pokedex-main-page class based on current path
-      // Only the main PokéDex page should have scroll disabled
-      if (window.location.pathname === '/') {
-        document.body.classList.add('pokedex-main-page')
-        // Also disable root scrollbars to ensure only component scrollbar is visible
-        document.documentElement.classList.add('pokedex-root')
+      // Apply CSS classes at the document level for main pokedex
+      // This is handled via CSS, but we set a data attribute for better performance
+      if (pathIsMain) {
+        document.documentElement.setAttribute('data-page', 'pokedex-main')
       } else {
-        document.body.classList.remove('pokedex-main-page')
-        document.documentElement.classList.remove('pokedex-root')
+        document.documentElement.removeAttribute('data-page')
       }
     }
     
     // Cleanup on unmount
     return () => {
       if (typeof window !== 'undefined') {
-        document.body.classList.remove('pokedex-main-page')
-        document.documentElement.classList.remove('pokedex-root')
+        document.documentElement.removeAttribute('data-page')
       }
     }
   }, [])
@@ -554,29 +536,17 @@ export default function Home() {
 
   // Ref for infinite scroll sentinel with balanced preloading
   const sentinelRef = useCallback((node: HTMLDivElement | null) => {
-    console.log('🔗 Sentinel ref callback called with node:', !!node)
     if (!node) return
     
-    console.log('👁️ Setting up intersection observer for sentinel')
     // Find the correct scroll container
     const scrollContainer = document.querySelector('.flex-1.min-h-0.overflow-y-auto')
-    console.log('📦 Scroll container found:', !!scrollContainer)
     
     const observer = new IntersectionObserver(
       entries => {
         const entry = entries[0]
-        console.log('🔍 Intersection observer triggered:', {
-          isIntersecting: entry.isIntersecting,
-          isLoadingMore: isLoadingMoreRef.current,
-          hasMorePokemon: hasMorePokemonRef.current,
-          currentOffset: currentOffsetRef.current,
-          totalCount: totalCountRef.current,
-          isTriggered: isTriggeredRef.current
-        })
         
         if (entry.isIntersecting && !isLoadingMoreRef.current && hasMorePokemonRef.current && !isTriggeredRef.current) {
           isTriggeredRef.current = true
-          console.log('🚀 Sentinel triggered - loading more Pokemon')
           
           // Temporarily disconnect observer to prevent multiple triggers
           observer.disconnect()
@@ -586,7 +556,6 @@ export default function Home() {
             setTimeout(() => {
               isTriggeredRef.current = false
               observer.observe(node)
-              console.log('🔄 Observer reconnected after loading')
             }, 100) // Reduced delay for faster reconnection
           })
         }
@@ -599,10 +568,8 @@ export default function Home() {
     )
     
     observer.observe(node)
-    console.log('✅ Intersection observer attached to sentinel')
     
     return () => {
-      console.log('🧹 Cleaning up intersection observer')
       observer.disconnect()
     }
   }, [loadMorePokemon]) // Only depend on loadMorePokemon
@@ -706,10 +673,13 @@ export default function Home() {
   // Determine layout mode based on theme
   const isModernTheme = theme === 'light' || theme === 'dark';
   
+  console.log('🎨 Theme check:', { theme, isModernTheme });
+
   // No console logging in production to avoid noise
 
   // Render modern layout for light/dark themes
   if (isModernTheme) {
+    console.log('✅ Rendering ModernPokedexLayout');
     return (
       <ModernPokedexLayout
         pokemonList={pokemonList}
@@ -731,7 +701,6 @@ export default function Home() {
         loadToEnd={loadToEnd}
         jumpToPokemonIndex={jumpToPokemonIndex}
         sentinelRef={(node) => {
-          console.log('🔗 Page component sentinelRef called with:', !!node, 'sentinelRef type:', typeof sentinelRef)
           if (sentinelRef) {
             sentinelRef(node)
           }
@@ -741,6 +710,7 @@ export default function Home() {
   }
 
   // Render retro layouts for game themes
+  console.log('🔴 Rendering RedPokedexLayout');
   if (theme === 'red') {
     if (loading) {
       return (
@@ -765,6 +735,7 @@ export default function Home() {
     );
   }
 
+  console.log('🟡 Rendering GoldPokedexLayout');
   if (theme === 'gold') {
     if (loading) {
       return (
@@ -789,6 +760,7 @@ export default function Home() {
     );
   }
 
+  console.log('🔴 Rendering RubyPokedexLayout');
   if (theme === 'ruby') {
     if (loading) {
       return (
