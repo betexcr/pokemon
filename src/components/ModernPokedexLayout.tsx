@@ -2114,7 +2114,7 @@ export default function ModernPokedexLayout({
           </div>
 
           {/* Pokedex Scrollbar - only show for All Generations mode */}
-          {isAllGenerations && advancedFilters.generation === 'all' && (
+          {advancedFilters.generation === 'all' && !searchTerm && (
             <PokedexScrollbar
               scrollContainer={scrollContainerRef.current}
               totalPokemon={totalCount || totalPokemonCount || 1302}
