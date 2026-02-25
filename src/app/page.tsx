@@ -335,6 +335,69 @@ export default function Home() {
     loadInitialPokemon()
   }, [])
 
+  // Load to end - load all remaining Pokemon at once
+  const loadToEnd = useCallback(async () => {
+    if (isLoadingMoreRef.current || !hasMorePokemonRef.current || loading) {
+      console.log(`🚫 Skipping loadToEnd - already loading or no more Pokemon`)
+      return
+    }
+
+    console.log(`🚀 Loading ALL remaining Pokemon to end...`)
+    setIsLoadingMore(true)
+
+    try {
+      const currentOffsetValue = currentOffsetRef.current
+      const remaining = totalCountRef.current - currentOffsetValue
+      
+      if (remaining <= 0) {
+        setHasMorePokemon(false)
+        setIsLoadingMore(false)
+        return
+      }
+
+      console.log(`📦 Loading ${remaining} remaining Pokemon`)
+      
+      // Generate all remaining skeletons at once
+      const newBatch = generateAllPokemonSkeletons(remaining).map((pokemon, index) => ({
+        ...pokemon,
+        id: currentOffsetValue + index + 1,
+        name: `pokemon-${currentOffsetValue + index + 1}`,
+        sprites: {
+          ...pokemon.sprites,
+          front_default: getPokemonFallbackImage(currentOffsetValue + index + 1),
+          other: {
+            ...pokemon.sprites.other,
+            'official-artwork': {
+              front_default: getPokemonMainPageImage(currentOffsetValue + index + 1),
+              front_shiny: getPokemonShinyImage(currentOffsetValue + index + 1),
+            }
+          }
+        }
+      }))
+
+      setPokemonList(prev => [...prev, ...newBatch])
+      setCurrentOffset(totalCountRef.current)
+      setHasMorePokemon(false)
+
+      // Load special forms
+      console.log('🎯 Loading special forms...')
+      try {
+        const specialForms = await generateSpecialFormsPokemon()
+        if (specialForms.length > 0) {
+          setPokemonList(prev => [...prev, ...specialForms])
+        }
+      } catch (err) {
+        console.error('❌ Error loading special forms:', err)
+      }
+
+      console.log('✅ Loaded all Pokemon to end!')
+    } catch (err) {
+      console.error('❌ Error loading to end:', err)
+    } finally {
+      setIsLoadingMore(false)
+    }
+  }, [loading])
+
   // Load more Pokemon function for infinite scroll
   const loadMorePokemon = useCallback(async () => {
     // Use refs to avoid dependency issues
@@ -606,6 +669,7 @@ export default function Home() {
         hasMorePokemon={hasMorePokemon}
         isLoadingMore={isLoadingMore}
         loadMorePokemon={loadMorePokemon}
+        loadToEnd={loadToEnd}
         sentinelRef={(node) => {
           console.log('🔗 Page component sentinelRef called with:', !!node, 'sentinelRef type:', typeof sentinelRef)
           if (sentinelRef) {

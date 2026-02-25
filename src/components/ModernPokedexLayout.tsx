@@ -22,6 +22,7 @@ import HeaderIcons, { HamburgerMenu } from '@/components/HeaderIcons'
 import AppHeader from '@/components/AppHeader'
 import Tooltip from '@/components/Tooltip'
 import SearchInput from '@/components/SearchInput'
+import PokedexScrollbar from '@/components/PokedexScrollbar'
 
 // Legendary and Mythical Pokémon lists
 const LEGENDARY_POKEMON = new Set([
@@ -85,6 +86,7 @@ interface ModernPokedexLayoutProps {
   hasMorePokemon?: boolean
   isLoadingMore?: boolean
   loadMorePokemon?: () => void
+  loadToEnd?: () => Promise<void>
   sentinelRef?: (node: HTMLDivElement | null) => void
 }
 
@@ -117,6 +119,7 @@ export default function ModernPokedexLayout({
   hasMorePokemon: externalHasMorePokemon,
   isLoadingMore: externalIsLoadingMore,
   loadMorePokemon: externalLoadMorePokemon,
+  loadToEnd: externalLoadToEnd,
   sentinelRef: externalSentinelRef
 }: ModernPokedexLayoutProps) {
   // console debug removed
@@ -2271,6 +2274,17 @@ export default function ModernPokedexLayout({
         onClose={closeAuthModal}
         initialMode={authModalMode}
       />
+
+      {/* Pokedex Scrollbar - only show for All Generations mode */}
+      {isAllGenerations && advancedFilters.generation === 'all' && (
+        <PokedexScrollbar
+          scrollContainer={scrollContainerRef.current}
+          totalPokemon={totalCount || totalPokemonCount || 1302}
+          loadedPokemon={loadedCount || pokemonList.length}
+          hasMorePokemon={effectiveHasMorePokemon}
+          onLoadToEnd={externalLoadToEnd}
+        />
+      )}
 
     </div>
   )
