@@ -2113,17 +2113,15 @@ export default function ModernPokedexLayout({
         )}
           </div>
 
-          {/* Pokedex Scrollbar - only show for All Generations mode */}
-          {advancedFilters.generation === 'all' && !searchTerm && (
-            <PokedexScrollbar
-              scrollContainer={scrollContainerRef.current}
-              totalPokemon={totalCount || totalPokemonCount || 1302}
-              loadedPokemon={loadedCount || pokemonList.length}
-              hasMorePokemon={effectiveHasMorePokemon}
-              onJumpToPosition={externalJumpToPokemonIndex}
-              onLoadToEnd={externalLoadToEnd}
-            />
-          )}
+          {/* Pokedex Scrollbar - ALWAYS SHOWN FOR DEBUGGING */}
+          <PokedexScrollbar
+            scrollContainer={scrollContainerRef.current}
+            totalPokemon={totalCount || totalPokemonCount || 1302}
+            loadedPokemon={loadedCount || pokemonList.length}
+            hasMorePokemon={effectiveHasMorePokemon}
+            onJumpToPosition={externalJumpToPokemonIndex}
+            onLoadToEnd={externalLoadToEnd}
+          />
         </div>
       </div>
 
