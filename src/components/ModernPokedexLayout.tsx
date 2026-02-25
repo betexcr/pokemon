@@ -87,6 +87,7 @@ interface ModernPokedexLayoutProps {
   isLoadingMore?: boolean
   loadMorePokemon?: () => void
   loadToEnd?: () => Promise<void>
+  jumpToPokemonIndex?: (index: number) => Promise<void>
   sentinelRef?: (node: HTMLDivElement | null) => void
 }
 
@@ -120,6 +121,7 @@ export default function ModernPokedexLayout({
   isLoadingMore: externalIsLoadingMore,
   loadMorePokemon: externalLoadMorePokemon,
   loadToEnd: externalLoadToEnd,
+  jumpToPokemonIndex: externalJumpToPokemonIndex,
   sentinelRef: externalSentinelRef
 }: ModernPokedexLayoutProps) {
   // console debug removed
@@ -2282,6 +2284,7 @@ export default function ModernPokedexLayout({
           totalPokemon={totalCount || totalPokemonCount || 1302}
           loadedPokemon={loadedCount || pokemonList.length}
           hasMorePokemon={effectiveHasMorePokemon}
+          onJumpToPosition={externalJumpToPokemonIndex}
           onLoadToEnd={externalLoadToEnd}
         />
       )}

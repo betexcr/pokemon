@@ -398,6 +398,61 @@ export default function Home() {
     }
   }, [loading])
 
+  // Jump to specific Pokemon index - load up to that point if needed
+  const jumpToPokemonIndex = useCallback(async (targetIndex: number) => {
+    if (loading) return
+    
+    const currentLoadedCount = currentOffsetRef.current
+    
+    // If already loaded, no need to load more
+    if (targetIndex < currentLoadedCount) {
+      return
+    }
+    
+    setIsLoadingMore(true)
+    
+    try {
+      const pokemonToLoad = targetIndex - currentLoadedCount + 50 // Load a bit extra for smooth scrolling
+      const cappedLoad = Math.min(pokemonToLoad, totalCountRef.current - currentLoadedCount)
+      
+      if (cappedLoad <= 0) {
+        setIsLoadingMore(false)
+        return
+      }
+      
+      console.log(`📦 Loading ${cappedLoad} Pokemon to reach index ${targetIndex}`)
+      
+      const newBatch = generateAllPokemonSkeletons(cappedLoad).map((pokemon, index) => ({
+        ...pokemon,
+        id: currentLoadedCount + index + 1,
+        name: `pokemon-${currentLoadedCount + index + 1}`,
+        sprites: {
+          ...pokemon.sprites,
+          front_default: getPokemonFallbackImage(currentLoadedCount + index + 1),
+          other: {
+            ...pokemon.sprites.other,
+            'official-artwork': {
+              front_default: getPokemonMainPageImage(currentLoadedCount + index + 1),
+              front_shiny: getPokemonShinyImage(currentLoadedCount + index + 1),
+            }
+          }
+        }
+      }))
+      
+      setPokemonList(prev => [...prev, ...newBatch])
+      const newOffset = currentLoadedCount + newBatch.length
+      setCurrentOffset(newOffset)
+      
+      if (newOffset >= totalCountRef.current) {
+        setHasMorePokemon(false)
+      }
+    } catch (err) {
+      console.error('❌ Error jumping to Pokemon index:', err)
+    } finally {
+      setIsLoadingMore(false)
+    }
+  }, [loading])
+
   // Load more Pokemon function for infinite scroll
   const loadMorePokemon = useCallback(async () => {
     // Use refs to avoid dependency issues
@@ -670,6 +725,7 @@ export default function Home() {
         isLoadingMore={isLoadingMore}
         loadMorePokemon={loadMorePokemon}
         loadToEnd={loadToEnd}
+        jumpToPokemonIndex={jumpToPokemonIndex}
         sentinelRef={(node) => {
           console.log('🔗 Page component sentinelRef called with:', !!node, 'sentinelRef type:', typeof sentinelRef)
           if (sentinelRef) {
