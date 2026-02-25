@@ -179,7 +179,7 @@ export default function PokedexScrollbar({
   if (!scrollContainer) return null
 
   return (
-    <div className="fixed right-4 top-24 bottom-24 w-12 flex flex-col items-center gap-2 z-50">
+    <div className="absolute right-2 top-2 bottom-2 w-12 flex flex-col items-center gap-2 z-40">
       {/* Jump to Top */}
       <button
         onClick={() => scrollToPercentage(0)}

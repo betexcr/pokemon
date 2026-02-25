@@ -385,6 +385,8 @@ export default function Home() {
         const specialForms = await generateSpecialFormsPokemon()
         if (specialForms.length > 0) {
           setPokemonList(prev => [...prev, ...specialForms])
+          // Update total count to include special forms
+          setTotalCount(prev => prev + specialForms.length)
         }
       } catch (err) {
         console.error('❌ Error loading special forms:', err)
@@ -518,6 +520,8 @@ export default function Home() {
                 console.log(`🎯 Added ${specialForms.length} special forms (total: ${newList.length})`)
                 return newList
               })
+              // Update total count to include special forms
+              setTotalCount(prev => prev + specialForms.length)
             }
           } catch (err) {
             console.error('❌ Error loading special forms:', err)

@@ -1936,7 +1936,7 @@ export default function ModernPokedexLayout({
         {/* Main Content Area */}
         <div 
           ref={scrollContainerRef}
-          className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scroll-stable scrollbar-hide"
+          className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scroll-stable scrollbar-hide relative"
         >
           <div className={`${showSidebar ? 'pl-0 pr-0' : 'pl-0 pr-4 sm:pl-0 sm:pr-6 lg:pl-0 lg:pr-8'} min-h-full w-full max-w-full pt-4 relative`}>
             {/* Pokémon Grid */}
@@ -2112,6 +2112,18 @@ export default function ModernPokedexLayout({
           </>
         )}
           </div>
+
+          {/* Pokedex Scrollbar - only show for All Generations mode */}
+          {isAllGenerations && advancedFilters.generation === 'all' && (
+            <PokedexScrollbar
+              scrollContainer={scrollContainerRef.current}
+              totalPokemon={totalCount || totalPokemonCount || 1302}
+              loadedPokemon={loadedCount || pokemonList.length}
+              hasMorePokemon={effectiveHasMorePokemon}
+              onJumpToPosition={externalJumpToPokemonIndex}
+              onLoadToEnd={externalLoadToEnd}
+            />
+          )}
         </div>
       </div>
 
@@ -2276,18 +2288,6 @@ export default function ModernPokedexLayout({
         onClose={closeAuthModal}
         initialMode={authModalMode}
       />
-
-      {/* Pokedex Scrollbar - only show for All Generations mode */}
-      {isAllGenerations && advancedFilters.generation === 'all' && (
-        <PokedexScrollbar
-          scrollContainer={scrollContainerRef.current}
-          totalPokemon={totalCount || totalPokemonCount || 1302}
-          loadedPokemon={loadedCount || pokemonList.length}
-          hasMorePokemon={effectiveHasMorePokemon}
-          onJumpToPosition={externalJumpToPokemonIndex}
-          onLoadToEnd={externalLoadToEnd}
-        />
-      )}
 
     </div>
   )
