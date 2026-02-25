@@ -20,10 +20,20 @@ export default function PokedexScrollbar({
   onJumpToPosition,
   onLoadToEnd
 }: PokedexScrollbarProps) {
+  console.log('🎯 PokedexScrollbar render:', { totalPokemon, loadedPokemon, hasScrollContainer: !!scrollContainer });
+  
   const [virtualScrollPercentage, setVirtualScrollPercentage] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const trackRef = useRef<HTMLDivElement>(null)
+
+  // Log mount/unmount
+  useEffect(() => {
+    console.log('✅ PokedexScrollbar MOUNTED');
+    return () => {
+      console.log('❌ PokedexScrollbar UNMOUNTED');
+    };
+  }, []);
 
   // Update virtual scroll percentage based on loaded Pokemon count
   // This represents position in the FULL Pokemon list (0-100% of total Pokemon)
@@ -180,9 +190,12 @@ export default function PokedexScrollbar({
   // Just disable interactive features if scrollContainer is not available
   const isEnabled = !!scrollContainer
 
+  console.log('🎯 PokedexScrollbar render UI:', { isEnabled, virtualScrollPercentage });
+
   return (
-    <div className="absolute right-2 top-2 bottom-2 w-12 flex flex-col items-center gap-2 z-40"
+    <div className="absolute right-2 top-2 bottom-2 w-16 flex flex-col items-center gap-2 z-50 bg-red-500/20 border-4 border-yellow-500"
       style={{ opacity: isEnabled ? 1 : 0.5, pointerEvents: isEnabled ? 'auto' : 'none' }}
+      title="DEBUG: Scrollbar container"
     >
       {/* Jump to Top */}
       <button
