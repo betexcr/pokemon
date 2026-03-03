@@ -23,7 +23,13 @@ export default function PokedexScrollbar({
   const [virtualScrollPercentage, setVirtualScrollPercentage] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
   const trackRef = useRef<HTMLDivElement>(null)
+
+  // Track mount status to prevent hydration mismatches
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   // Update virtual scroll percentage based on loaded Pokemon count
   // This represents position in the FULL Pokemon list (0-100% of total Pokemon)
@@ -178,11 +184,11 @@ export default function PokedexScrollbar({
 
   // Don't return null - always show the scrollbar UI
   // Just disable interactive features if scrollContainer is not available
-  const isEnabled = !!scrollContainer
+  const isEnabled = isMounted && !!scrollContainer
 
   return (
     <div 
-      className="fixed right-2 top-20 bottom-3 w-10 flex flex-col items-center gap-2 z-40 rounded-2xl border border-border bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm shadow-md"
+      className="fixed right-0 top-20 bottom-3 w-10 flex flex-col items-center gap-2 z-40 rounded-2xl border border-border bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm shadow-md"
       style={{ opacity: isEnabled ? 1 : 0.5, pointerEvents: isEnabled ? 'auto' : 'none' }}
     >
       {/* Jump to Top */}
@@ -218,12 +224,10 @@ export default function PokedexScrollbar({
 
         {/* Position Indicator */}
         <div
-          className="absolute left-full ml-2 bg-poke-blue text-white text-[11px] px-2 py-1 rounded-lg shadow-md whitespace-nowrap pointer-events-none border border-white/20"
+          className="absolute right-full mr-8 bg-poke-blue text-white text-[11px] px-3 py-2 rounded-lg shadow-md whitespace-nowrap pointer-events-none border border-white/20"
           style={{ 
             top: `${virtualScrollPercentage}%`, 
-            transform: 'translateY(-50%)',
-            opacity: isEnabled ? 1 : 0.4,
-            transition: 'opacity 0.2s'
+            transform: 'translateY(-50%)'
           }}
         >
           #{estimatedPokemonIndex + 1}
