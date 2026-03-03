@@ -41,17 +41,17 @@ export default function ContestFactsPage() {
         <nav aria-label="Contests sections" className="-mt-4 mb-2">
           <ul className="flex items-center gap-2 text-sm">
             <li>
-              <span className="inline-flex items-center rounded-full px-3 py-1 border border-border bg-surface text-text shadow-card">
-                Fun Facts
-              </span>
-            </li>
-            <li>
               <OptimizedLink
-                href="/contests/sim"
+                href="/contests"
                 className="inline-flex items-center rounded-full px-3 py-1 border border-border hover:bg-surface/60 text-text"
               >
                 Simulator
               </OptimizedLink>
+            </li>
+            <li>
+              <span className="inline-flex items-center rounded-full px-3 py-1 border border-border bg-surface text-text shadow-card">
+                Fun Facts
+              </span>
             </li>
           </ul>
         </nav>

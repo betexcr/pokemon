@@ -671,7 +671,6 @@ export default function VirtualizedPokemonGrid({
   }
 
   // Render non-virtualized content (original implementation)
-  console.log('🔍 VirtualizedPokemonGrid rendering - uniqueRegularPokemon.length:', uniqueRegularPokemon.length, 'sentinelRef type:', typeof sentinelRef)
   return (
     <div className={`w-full max-w-full overflow-x-hidden min-h-screen ${className}`}>
       {/* Regular Pokemon */}
@@ -851,8 +850,6 @@ export default function VirtualizedPokemonGrid({
       {/* Infinite scroll sentinel for non-virtualized content */}
         <div
           ref={(node) => {
-            console.log('🔗 VirtualizedPokemonGrid sentinelRef called with:', !!node, 'sentinelRef type:', typeof sentinelRef)
-            
             // Call the external sentinelRef if provided
             if (sentinelRef) {
               sentinelRef(node)

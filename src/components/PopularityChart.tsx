@@ -3,17 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import type { PokemonTrendView, RegionKey } from '@/lib/trends/types'
-import { REGION_KEYS } from '@/lib/trends/data'
-
-const regionColors: Record<RegionKey, string> = {
-  Global: '#2563eb',
-  Asia: '#ec4899',
-  US: '#10b981',
-  EU: '#f97316',
-}
 
 interface Props {
-  pokemon: PokemonTrendView
+  pokemon: PokemonTrendView[]
   activeRegion: RegionKey
 }
 
@@ -32,6 +24,7 @@ export function PopularityChart({ pokemon, activeRegion }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const [dims, setDims] = useState<Dimensions>({ width: 640, height: 280 })
   const [hoverIndex, setHoverIndex] = useState<number | null>(null)
+  const colorPalette = ['#2563eb', '#10b981', '#f97316', '#ec4899', '#a855f7', '#14b8a6', '#f59e0b']
 
   useEffect(() => {
     const el = containerRef.current
@@ -48,16 +41,26 @@ export function PopularityChart({ pokemon, activeRegion }: Props) {
     return () => observer.disconnect()
   }, [])
 
-  const pointsByRegion = useMemo(() => {
-    return REGION_KEYS.map((region) => ({
-      region,
-      values: pokemon.trend.map(({ year, values }) => ({ year, value: values[region] })),
-    }))
+  const years = useMemo(() => {
+    const base = pokemon[0]?.trend ?? []
+    return base.map((point) => point.year)
   }, [pokemon])
 
+  const seriesByPokemon = useMemo(() => {
+    return pokemon.map((entry, index) => {
+      const valuesByYear = new Map(entry.trend.map((point) => [point.year, point.values[activeRegion] ?? 0]))
+      return {
+        entry,
+        color: colorPalette[index % colorPalette.length],
+        values: years.map((year) => ({ year, value: valuesByYear.get(year) ?? 0 }))
+      }
+    })
+  }, [pokemon, years, activeRegion])
+
   const maxY = useMemo(() => {
-    return Math.max(10, ...pointsByRegion.flatMap((series) => series.values.map((v) => v.value)))
-  }, [pointsByRegion])
+    const allValues = seriesByPokemon.flatMap((series) => series.values.map((v) => v.value))
+    return Math.max(10, ...allValues)
+  }, [seriesByPokemon])
 
   const padding = { left: 48, right: 24, top: 24, bottom: 40 }
   const width = dims.width
@@ -65,15 +68,18 @@ export function PopularityChart({ pokemon, activeRegion }: Props) {
   const innerWidth = width - padding.left - padding.right
   const innerHeight = height - padding.top - padding.bottom
 
-  const years = pokemon.trend.map((point) => point.year)
   const stepX = years.length > 1 ? innerWidth / (years.length - 1) : innerWidth
 
   const hoverPayload = useMemo(() => {
     if (hoverIndex == null) return null
     const year = years[hoverIndex]
-    const series = pointsByRegion.map(({ region, values }) => ({ region, value: values[hoverIndex]?.value ?? 0 }))
+    const series = seriesByPokemon.map((item) => ({
+      name: item.entry.name,
+      color: item.color,
+      value: item.values[hoverIndex]?.value ?? 0,
+    }))
     return { year, series }
-  }, [hoverIndex, pointsByRegion, years])
+  }, [hoverIndex, seriesByPokemon, years])
 
   const handlePointer = (clientX: number) => {
     const svgLeft = containerRef.current?.getBoundingClientRect().left ?? 0
@@ -90,14 +96,14 @@ export function PopularityChart({ pokemon, activeRegion }: Props) {
     <div ref={containerRef} className="relative overflow-hidden">
       <div className="flex items-baseline justify-between gap-3 pb-2">
         <div>
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{pokemon.name} Popularity</h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">Comparative share from 2020 to 2025 across all regions.</p>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Popularity in {activeRegion}</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Compare multiple Pokémon across the same regional trend window.</p>
         </div>
-        <div className="flex items-center gap-3 text-xs">
-          {REGION_KEYS.map((region) => (
-            <span key={region} className={`flex items-center gap-1 ${region === activeRegion ? 'font-semibold text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'}`}>
-              <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: regionColors[region] }} />
-              {region}
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          {seriesByPokemon.map((item) => (
+            <span key={item.entry.name} className="flex items-center gap-1 text-slate-600 dark:text-slate-300">
+              <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: item.color }} />
+              {item.entry.name}
             </span>
           ))}
         </div>
@@ -106,7 +112,7 @@ export function PopularityChart({ pokemon, activeRegion }: Props) {
         width={width}
         height={height}
         role="img"
-        aria-label={`${pokemon.name} popularity line chart`}
+        aria-label={`${pokemon.length} Pokemon popularity line chart in ${activeRegion}`}
         onMouseLeave={resetHover}
         onTouchEnd={resetHover}
         onBlur={resetHover}
@@ -147,8 +153,8 @@ export function PopularityChart({ pokemon, activeRegion }: Props) {
             )
           })}
 
-          {pointsByRegion.map(({ region, values }) => {
-            const path = values
+          {seriesByPokemon.map((series) => {
+            const path = series.values
               .map((point, index) => {
                 const x = index * stepX
                 const y = innerHeight - (point.value / maxY) * innerHeight
@@ -159,12 +165,12 @@ export function PopularityChart({ pokemon, activeRegion }: Props) {
 
             return (
               <motion.path
-                key={region}
+                key={series.entry.name}
                 d={path}
                 fill="none"
-                stroke={regionColors[region]}
-                strokeWidth={region === activeRegion ? 2.8 : 1.8}
-                strokeOpacity={region === activeRegion ? 1 : 0.65}
+                stroke={series.color}
+                strokeWidth={series.entry.name === pokemon[0]?.name ? 2.8 : 1.8}
+                strokeOpacity={series.entry.name === pokemon[0]?.name ? 1 : 0.7}
                 initial={reduceMotion ? undefined : { pathLength: 0 }}
                 animate={reduceMotion ? undefined : { pathLength: 1 }}
                 transition={reduceMotion ? undefined : { duration: 0.9, ease: 'easeOut' }}
@@ -184,26 +190,26 @@ export function PopularityChart({ pokemon, activeRegion }: Props) {
             />
           )}
 
-          {pointsByRegion.map(({ region, values }) =>
-            values.map((point, index) => {
+          {seriesByPokemon.map((series) =>
+            series.values.map((point, index) => {
               const x = index * stepX
               const y = innerHeight - (point.value / maxY) * innerHeight
-              const isActive = hoverIndex === index || region === activeRegion
+              const isActive = hoverIndex === index
               const radius = isActive ? 4.2 : 3
               return (
                 <circle
-                  key={`${region}-${point.year}`}
+                  key={`${series.entry.name}-${point.year}`}
                   cx={x}
                   cy={y}
                   r={radius}
-                  fill={regionColors[region]}
+                  fill={series.color}
                   fillOpacity={isActive ? 1 : 0.75}
-                  stroke={region === activeRegion ? '#0f172a' : 'transparent'}
+                  stroke={isActive ? '#0f172a' : 'transparent'}
                   strokeWidth={isActive ? 1.2 : 0}
                   tabIndex={0}
                   role="presentation"
                   onFocus={() => setHoverIndex(index)}
-                  aria-label={`${pokemon.name} ${region} ${point.year}: ${point.value}%`}
+                  aria-label={`${series.entry.name} ${activeRegion} ${point.year}: ${point.value}%`}
                 />
               )
             })
@@ -219,21 +225,23 @@ export function PopularityChart({ pokemon, activeRegion }: Props) {
           }}
         >
           <div className="flex items-start gap-3 px-4 py-3">
-            <img
-              src={getSpriteUrl(pokemon)}
-              alt=""
-              width={48}
-              height={48}
-              className="h-12 w-12"
-              style={{ imageRendering: 'pixelated' }}
-            />
+            {pokemon.length === 1 ? (
+              <img
+                src={getSpriteUrl(pokemon[0])}
+                alt=""
+                width={48}
+                height={48}
+                className="h-12 w-12"
+                style={{ imageRendering: 'pixelated' }}
+              />
+            ) : null}
             <div className="space-y-1 text-sm">
-              <div className="font-semibold text-slate-900 dark:text-slate-100">{pokemon.name} • {hoverPayload.year}</div>
-              {hoverPayload.series.map(({ region, value }) => (
-                <div key={region} className={`flex justify-between gap-6 ${region === activeRegion ? 'font-medium text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'}`}>
+              <div className="font-semibold text-slate-900 dark:text-slate-100">{activeRegion} • {hoverPayload.year}</div>
+              {hoverPayload.series.map(({ name, color, value }) => (
+                <div key={name} className="flex justify-between gap-6 text-slate-600 dark:text-slate-300">
                   <span className="flex items-center gap-2">
-                    <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: regionColors[region] }} />
-                    {region}
+                    <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
+                    {name}
                   </span>
                   <span>{value}%</span>
                 </div>

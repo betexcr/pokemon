@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, memo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Pokemon } from "@/types/pokemon";
 import { formatPokemonName } from "@/lib/utils";
@@ -21,7 +21,7 @@ interface ModernPokemonCardProps {
   density?: "3cols" | "6cols" | "9cols" | "10cols" | "list";
 }
 
-export default function ModernPokemonCard({
+function ModernPokemonCardComponent({
   pokemon,
   isInComparison,
   onToggleComparison,
@@ -593,3 +593,19 @@ export default function ModernPokemonCard({
     </PokemonCardFrame>
   );
 }
+
+// Memoized component to prevent unnecessary re-renders when props haven't changed
+const ModernPokemonCard = memo(ModernPokemonCardComponent, (prevProps, nextProps) => {
+  // Return true if props are equal (skip re-render), false if different (re-render needed)
+  return (
+    prevProps.pokemon.id === nextProps.pokemon.id &&
+    prevProps.isInComparison === nextProps.isInComparison &&
+    prevProps.isSelected === nextProps.isSelected &&
+    prevProps.density === nextProps.density &&
+    prevProps.className === nextProps.className
+  );
+});
+
+ModernPokemonCard.displayName = 'ModernPokemonCard';
+
+export default ModernPokemonCard;

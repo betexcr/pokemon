@@ -81,3 +81,4 @@ public/trainer-sprites/
 public/pokemon-sprites/
 public/sprites/
 *.sprite
+.env*.local

@@ -501,7 +501,7 @@ function PhaseContent({
             <div className="rounded-3xl border border-border bg-surface p-5 shadow-sm">
               <h3 className="text-sm font-semibold text-text">Quick comparisons</h3>
               <p className="text-xs text-muted mt-2">All Top 50 entries. Tap to jump.</p>
-              <div className="mt-4 space-y-1.5 md:space-y-2 text-sm max-h-64 md:max-h-[420px] lg:max-h-[520px] xl:max-h-[640px] overflow-y-auto pr-1 md:pr-2 scrollbar-hide overscroll-contain">
+              <div className="mt-4 space-y-1.5 md:space-y-2 text-sm max-h-64 md:max-h-[420px] lg:max-h-[520px] xl:max-h-[640px] overflow-y-auto pr-1 md:pr-2 overscroll-contain">
                 {Array.from({ length: 10 }).map((_, index) => (
                   <div
                     key={`skeleton-${index}`}
@@ -993,7 +993,7 @@ function PhaseContent({
           <div className="rounded-3xl border border-border bg-surface p-5 shadow-sm">
             <h3 className="text-sm font-semibold text-text">Quick comparisons</h3>
             <p className="text-xs text-muted mt-2">All Top 50 entries. Tap to jump.</p>
-            <div ref={quickListRef} className="mt-4 space-y-1.5 md:space-y-2 text-sm max-h-64 md:max-h-[420px] lg:max-h-[520px] xl:max-h-[640px] overflow-y-auto pr-1 md:pr-2 scrollbar-hide overscroll-contain">
+            <div ref={quickListRef} className="mt-4 space-y-1.5 md:space-y-2 text-sm max-h-64 md:max-h-[420px] lg:max-h-[520px] xl:max-h-[640px] overflow-y-auto pr-1 md:pr-2 overscroll-contain">
               {!quickVisible ? (
                 // Skeleton loading state
                 Array.from({ length: 10 }).map((_, index) => (

@@ -1,11 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { contestData } from '@/data/contestData'
+import { getMovesForCategory } from '@/data/contestData'
 import { Heart, Star, Sparkles } from 'lucide-react'
+import { CONTEST_MOVES } from '@/data/contestMoves'
 
 interface TalentRoundProps {
-  selectedCategory: string
+  selectedCategory: 'cool' | 'beauty' | 'cute' | 'clever' | 'tough'
   onMoveUse: (move: string, category: string) => void
   usedMoves: string[]
 }
@@ -13,9 +14,20 @@ interface TalentRoundProps {
 export default function TalentRound({ selectedCategory, onMoveUse, usedMoves }: TalentRoundProps) {
   const [selectedMove, setSelectedMove] = useState<string | null>(null)
 
-  // Filter moves by category
-  const categoryMoves = contestData.moves.filter(move => move.category === selectedCategory)
-  const otherMoves = contestData.moves.filter(move => move.category !== selectedCategory)
+  // Get moves for the selected category
+  const categoryMoves = getMovesForCategory(selectedCategory)
+  
+  // Get some off-category moves for variety
+  const allMoves = Object.values(CONTEST_MOVES)
+  const otherMoves = allMoves
+    .filter(move => move.category !== selectedCategory)
+    .slice(0, 6)
+    .map(move => ({
+      name: move.name,
+      category: move.category,
+      description: move.description,
+      power: move.appeal
+    }))
 
   const handleMoveClick = (move: string, category: string) => {
     setSelectedMove(move)
@@ -82,7 +94,7 @@ export default function TalentRound({ selectedCategory, onMoveUse, usedMoves }: 
           🎪 Other Moves (Normal Points) 🎪
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {otherMoves.slice(0, 6).map((move) => (
+          {otherMoves.map((move) => (
             <button
               key={move.name}
               onClick={() => handleMoveClick(move.name, move.category)}
@@ -121,6 +133,7 @@ export default function TalentRound({ selectedCategory, onMoveUse, usedMoves }: 
           <li>• Don&apos;t repeat the same move twice - the audience gets bored! 😴</li>
           <li>• Fill the Excite Meter for spectacular talent! 🎆</li>
           <li>• Higher power moves give more hearts! ⭐</li>
+          <li>• Try to chain combo moves for extra points! 🔗</li>
         </ul>
       </div>
     </div>

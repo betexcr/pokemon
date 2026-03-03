@@ -152,7 +152,7 @@ export default function AdvancedFilters({
               
               {/* Filters Content */}
               {isFiltersExpanded && (
-                <div className="px-6 pb-6 overflow-y-auto max-h-96 scrollbar-hide">
+                <div className="px-6 pb-6 overflow-y-auto max-h-96">
                   <div className="space-y-6 min-w-0">
                     {/* Generation Filter */}
                     <div className="min-w-0">

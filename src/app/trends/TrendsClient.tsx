@@ -25,8 +25,13 @@ const STORAGE_KEY = 'trends:preferences:v1'
 
 function sanitizeState(state: Partial<TrendsState>): TrendsState {
   const fallback = getDefaultPokemon()
+  const compare = Array.isArray(state.compare)
+    ? state.compare.filter((name) => typeof name === 'string' && name.trim().length > 0)
+    : []
+  const uniqueCompare = Array.from(new Map(compare.map((name) => [name.toLowerCase(), name])).values())
   return {
     pokemon: state.pokemon || fallback.name,
+    compare: uniqueCompare,
     region: (state.region && REGION_KEYS.includes(state.region)) ? state.region : 'Global',
     year: TREND_YEARS.includes(state.year || 0) ? state.year! : TREND_YEARS[TREND_YEARS.length - 1],
     generations: Array.isArray(state.generations) ? state.generations : [],
@@ -36,12 +41,14 @@ function sanitizeState(state: Partial<TrendsState>): TrendsState {
 
 function readQueryParams(params: URLSearchParams): Partial<TrendsState> {
   const pokemon = params.get('poke') ?? undefined
+  const compare = params.get('compare')
   const region = params.get('region') as RegionKey | null
   const yearValue = params.get('year')
   const generations = params.get('gen')
   const types = params.get('types')
   return {
     pokemon,
+    compare: compare ? compare.split(',').filter(Boolean) : undefined,
     region: (region && REGION_KEYS.includes(region)) ? region : undefined,
     year: yearValue ? Number(yearValue) : undefined,
     generations: generations ? generations.split(',').map((value) => Number(value)).filter((value) => !Number.isNaN(value)) : undefined,
@@ -56,6 +63,7 @@ function serializeStateToParams(state: TrendsState) {
   params.set('year', String(state.year))
   if (state.generations.length) params.set('gen', state.generations.join(','))
   if (state.types.length) params.set('types', state.types.join(','))
+  if (state.compare.length) params.set('compare', state.compare.join(','))
   return params
 }
 
@@ -198,6 +206,35 @@ export default function TrendsClient() {
     return getDefaultPokemon()
   }, [state.pokemon])
 
+  const comparisonPokemon = useMemo(() => {
+    const resolved = state.compare
+      .map((name) => findPokemonByName(name))
+      .filter(Boolean) as (typeof TREND_DATA)[number][]
+    const unique = new Map<string, (typeof TREND_DATA)[number]>()
+    resolved.forEach((entry) => {
+      if (!unique.has(entry.name.toLowerCase())) unique.set(entry.name.toLowerCase(), entry)
+    })
+    return Array.from(unique.values()).filter((entry) => entry.name.toLowerCase() !== currentPokemon.name.toLowerCase())
+  }, [state.compare, currentPokemon])
+
+  const chartPokemon = useMemo(() => [currentPokemon, ...comparisonPokemon], [currentPokemon, comparisonPokemon])
+
+  const addToCompare = (name: string) => {
+    setState((prev) => {
+      if (name.toLowerCase() === prev.pokemon.toLowerCase()) return prev
+      const exists = prev.compare.some((entry) => entry.toLowerCase() === name.toLowerCase())
+      if (exists) return prev
+      return { ...prev, compare: [...prev.compare, name] }
+    })
+  }
+
+  const removeFromCompare = (name: string) => {
+    setState((prev) => ({
+      ...prev,
+      compare: prev.compare.filter((entry) => entry.toLowerCase() !== name.toLowerCase()),
+    }))
+  }
+
 
   const activePokemonList = useMemo(() => {
     const list = filtered.length ? filtered : TREND_DATA
@@ -287,7 +324,7 @@ export default function TrendsClient() {
           {/* Search Section */}
           <div className="mt-4 rounded-2xl border border-slate-200/80 bg-white/70 p-4 shadow-sm backdrop-blur dark:border-slate-700/70 dark:bg-slate-900/60">
             <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-100">Select Pokémon</h4>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Search and select from filtered results.</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Pick a primary Pokémon and add others to compare.</p>
             <div className="mt-3 relative">
               <input
                 type="text"
@@ -302,41 +339,91 @@ export default function TrendsClient() {
                 <div className="absolute z-50 mt-1 w-full rounded-md border border-slate-200 bg-white shadow-lg dark:border-slate-600 dark:bg-slate-800">
                   <div className="max-h-64 overflow-y-auto">
                     {searchFilteredList.slice(0, 50).map((entry, index) => (
-                      <button
+                      (() => {
+                        const isPrimary = state.pokemon.toLowerCase() === entry.name.toLowerCase()
+                        const isCompared = state.compare.some((name) => name.toLowerCase() === entry.name.toLowerCase())
+                        const addDisabled = isPrimary || isCompared
+                        return (
+                      <div
                         key={`${entry.name}-${entry.rank_global}-${index}`}
-                        type="button"
-                        onClick={() => {
-                          setState((prev) => ({ ...prev, pokemon: entry.name }))
-                          setShowSearchDropdown(false)
-                        }}
                         className={`flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition ${state.pokemon === entry.name ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm dark:border-blue-400 dark:bg-slate-800 dark:text-blue-300' : 'border-transparent bg-slate-50/70 hover:border-slate-200 hover:bg-white dark:bg-slate-800/40 dark:hover:bg-slate-800/70'}`}
                       >
-                        <div className="flex-shrink-0">
-                          <LazyImage
-                            srcList={[
-                              getPmdPortraitImage(entry.national_number),
-                              getPokemonImageUrl(entry.national_number),
-                              getPokemonFallbackImage(entry.national_number),
-                              "/placeholder-pokemon.png"
-                            ]}
-                            alt={entry.name}
-                            width={32}
-                            height={32}
-                            imgClassName="w-8 h-8 object-contain"
-                            rootMargin="50px"
-                            threshold={0.01}
-                          />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium truncate">#{entry.rank_global} {entry.name}</div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400">Rank #{entry.rank_global}</div>
-                        </div>
-                        <div className="flex-shrink-0 text-xs text-slate-500 dark:text-slate-400">
-                          {entry.peak_percent}%
-                        </div>
-                      </button>
+                        <button
+                          type="button"
+                          className="flex flex-1 items-center gap-3 text-left"
+                          onClick={() => {
+                            setState((prev) => ({ ...prev, pokemon: entry.name }))
+                            setShowSearchDropdown(false)
+                          }}
+                        >
+                          <div className="flex-shrink-0">
+                            <LazyImage
+                              srcList={[
+                                getPmdPortraitImage(entry.national_number),
+                                getPokemonImageUrl(entry.national_number),
+                                getPokemonFallbackImage(entry.national_number),
+                                "/placeholder-pokemon.png"
+                              ]}
+                              alt={entry.name}
+                              width={32}
+                              height={32}
+                              imgClassName="w-8 h-8 object-contain"
+                              rootMargin="50px"
+                              threshold={0.01}
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium truncate">#{entry.rank_global} {entry.name}</div>
+                            <div className="text-xs text-slate-500 dark:text-slate-400">Rank #{entry.rank_global}</div>
+                          </div>
+                          <div className="flex-shrink-0 text-xs text-slate-500 dark:text-slate-400">
+                            {entry.peak_percent}%
+                          </div>
+                        </button>
+                        <button
+                          type="button"
+                          className={`ml-2 rounded-full border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide transition ${addDisabled ? 'border-slate-200 text-slate-400 dark:border-slate-700 dark:text-slate-500' : 'border-slate-300 text-slate-600 hover:border-blue-400 hover:text-blue-700 dark:border-slate-600 dark:text-slate-300 dark:hover:border-blue-400 dark:hover:text-blue-300'}`}
+                          onClick={() => addToCompare(entry.name)}
+                          disabled={addDisabled}
+                        >
+                          {addDisabled ? 'Added' : 'Add'}
+                        </button>
+                      </div>
+                        )
+                      })()
                     ))}
                   </div>
+                </div>
+              )}
+            </div>
+            <div className="mt-4">
+              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                <span>Comparison list</span>
+                {state.compare.length > 0 && (
+                  <button
+                    type="button"
+                    className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                    onClick={() => setState((prev) => ({ ...prev, compare: [] }))}
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+              {comparisonPokemon.length === 0 ? (
+                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Add Pokémon to compare their trends.</p>
+              ) : (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {comparisonPokemon.map((entry) => (
+                    <button
+                      key={entry.name}
+                      type="button"
+                      className="flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs text-slate-700 shadow-sm transition hover:border-blue-400 hover:text-blue-700 dark:border-slate-600 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:border-blue-400 dark:hover:text-blue-300"
+                      onClick={() => removeFromCompare(entry.name)}
+                    >
+                      {entry.name}
+                      <span className="text-[10px] uppercase tracking-wide">Remove</span>
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
@@ -397,7 +484,7 @@ export default function TrendsClient() {
                     </div>
                   </div>
                 ) : null}
-                <PopularityChart pokemon={currentPokemon} activeRegion={state.region} />
+                <PopularityChart pokemon={chartPokemon} activeRegion={state.region} />
               </div>
             </motion.div>
             <motion.div

@@ -2109,16 +2109,7 @@ export default function ModernPokedexLayout({
               </div>
             )}
 
-          </>
-        )}
-          </div>
-
-          {/* DEBUG: Test if this code path executes */}
-          <div className="fixed top-0 left-0 bg-purple-500 text-white p-4 z-[9999]" style={{ fontSize: '20px', fontWeight: 'bold' }}>
-            SCROLLBAR AREA - If you see this, code is executing
-          </div>
-
-          {/* Pokedex Scrollbar - ALWAYS SHOWN FOR DEBUGGING */}
+          {/* Pokedex Scrollbar - Inside scroll container */}
           <PokedexScrollbar
             scrollContainer={scrollContainerRef.current}
             totalPokemon={totalCount || totalPokemonCount || 1302}
@@ -2127,6 +2118,11 @@ export default function ModernPokedexLayout({
             onJumpToPosition={externalJumpToPokemonIndex}
             onLoadToEnd={externalLoadToEnd}
           />
+
+          </>
+        )}
+          </div>
+
         </div>
       </div>
 

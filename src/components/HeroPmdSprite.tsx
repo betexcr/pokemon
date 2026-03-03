@@ -46,6 +46,7 @@ export function usePmdAnimations(pokemonId: number): { anims: AnimMeta[] | null;
 		const load = async () => {
 			const basePath = `/assets/pmd/${String(pokemonId).padStart(4, '0')}/sprite`
 			const remoteBasePath = `https://spriteserver.pmdcollab.org/assets/${String(pokemonId).padStart(4, '0')}/sprite`
+			const out: AnimMeta[] = []
 
 			try {
 				let xmlText: string
@@ -62,7 +63,6 @@ export function usePmdAnimations(pokemonId: number): { anims: AnimMeta[] | null;
 
 				const doc = new DOMParser().parseFromString(xmlText, 'application/xml')
 				const animNodes = Array.from(doc.getElementsByTagName('Anim'))
-				const out: AnimMeta[] = []
 
 				for (const node of animNodes) {
 					const name = node.getElementsByTagName('Name')[0]?.textContent || ''

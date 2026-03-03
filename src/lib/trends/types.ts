@@ -34,6 +34,7 @@ export interface PokemonTrendView extends PokemonPopularityRecord {
 
 export interface TrendsState {
   pokemon: string
+  compare: string[]
   region: RegionKey
   year: number
   generations: number[]
@@ -42,6 +43,7 @@ export interface TrendsState {
 
 export interface PersistableTrendsState {
   pokemon: string
+  compare: string[]
   region: RegionKey
   year: number
   generations: number[]

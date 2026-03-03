@@ -20,20 +20,10 @@ export default function PokedexScrollbar({
   onJumpToPosition,
   onLoadToEnd
 }: PokedexScrollbarProps) {
-  console.log('🎯 PokedexScrollbar render:', { totalPokemon, loadedPokemon, hasScrollContainer: !!scrollContainer });
-  
   const [virtualScrollPercentage, setVirtualScrollPercentage] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const trackRef = useRef<HTMLDivElement>(null)
-
-  // Log mount/unmount
-  useEffect(() => {
-    console.log('✅ PokedexScrollbar MOUNTED');
-    return () => {
-      console.log('❌ PokedexScrollbar UNMOUNTED');
-    };
-  }, []);
 
   // Update virtual scroll percentage based on loaded Pokemon count
   // This represents position in the FULL Pokemon list (0-100% of total Pokemon)
@@ -190,51 +180,49 @@ export default function PokedexScrollbar({
   // Just disable interactive features if scrollContainer is not available
   const isEnabled = !!scrollContainer
 
-  console.log('🎯 PokedexScrollbar render UI:', { isEnabled, virtualScrollPercentage });
-
   return (
-    <div className="absolute right-2 top-2 bottom-2 w-16 flex flex-col items-center gap-2 z-50 bg-red-500/20 border-4 border-yellow-500"
+    <div 
+      className="fixed right-2 top-20 bottom-3 w-10 flex flex-col items-center gap-2 z-40 rounded-2xl border border-border bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm shadow-md"
       style={{ opacity: isEnabled ? 1 : 0.5, pointerEvents: isEnabled ? 'auto' : 'none' }}
-      title="DEBUG: Scrollbar container"
     >
       {/* Jump to Top */}
       <button
         onClick={() => scrollToPercentage(0)}
         disabled={isLoading}
-        className="w-10 h-10 rounded-full bg-white dark:bg-gray-800 border-2 border-poke-blue shadow-lg hover:shadow-xl hover:scale-110 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-8 h-8 rounded-full bg-white dark:bg-gray-800 border border-poke-blue/30 shadow-sm hover:shadow-md hover:border-poke-blue/60 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
         title="Jump to top"
       >
-        <ChevronsUp className="w-5 h-5 text-poke-blue" />
+        <ChevronsUp className="w-4 h-4 text-poke-blue" />
       </button>
 
       {/* Scrollbar Track */}
       <div
         ref={trackRef}
         onClick={handleTrackClick}
-        className="flex-1 w-3 bg-gray-200 dark:bg-gray-700 rounded-full relative cursor-pointer hover:w-4 transition-all shadow-inner"
+        className="flex-1 w-3 bg-gray-300 dark:bg-gray-700 rounded-full relative cursor-pointer hover:w-4 transition-all shadow-inner"
       >
         {/* Progress Track */}
         <div
-          className="absolute top-0 left-0 w-full bg-gradient-to-b from-poke-blue to-poke-blue/50 rounded-full transition-all"
+          className="absolute top-0 left-0 w-full bg-gradient-to-b from-poke-blue to-poke-blue/60 rounded-full transition-all"
           style={{ height: `${virtualScrollPercentage}%` }}
         />
         
         {/* Thumb */}
         <div
-          className="absolute left-1/2 -translate-x-1/2 w-6 h-8 bg-white dark:bg-gray-800 border-2 border-poke-blue rounded-full shadow-lg cursor-grab active:cursor-grabbing hover:scale-110 transition-all flex items-center justify-center"
+          className="absolute left-1/2 -translate-x-1/2 w-7 h-8 bg-white dark:bg-gray-800 border-2 border-poke-blue rounded-full shadow-lg cursor-grab active:cursor-grabbing hover:scale-105 transition-all flex items-center justify-center"
           style={{ top: `${virtualScrollPercentage}%`, transform: 'translate(-50%, -50%)' }}
           onMouseDown={handleThumbMouseDown}
         >
-          <div className="w-1 h-3 bg-poke-blue rounded-full" />
+          <div className="w-1.5 h-4 bg-poke-blue rounded-full" />
         </div>
 
         {/* Position Indicator */}
         <div
-          className="absolute left-full ml-2 bg-poke-blue text-white text-xs px-2 py-1 rounded shadow-lg whitespace-nowrap pointer-events-none"
+          className="absolute left-full ml-2 bg-poke-blue text-white text-[11px] px-2 py-1 rounded-lg shadow-md whitespace-nowrap pointer-events-none border border-white/20"
           style={{ 
             top: `${virtualScrollPercentage}%`, 
             transform: 'translateY(-50%)',
-            opacity: isDragging || virtualScrollPercentage > 0 ? 1 : 0,
+            opacity: isEnabled ? 1 : 0.4,
             transition: 'opacity 0.2s'
           }}
         >
@@ -246,27 +234,20 @@ export default function PokedexScrollbar({
       <button
         onClick={jumpToEnd}
         disabled={isLoading}
-        className="w-10 h-10 rounded-full bg-white dark:bg-gray-800 border-2 border-poke-red shadow-lg hover:shadow-xl hover:scale-110 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed relative"
+        className="w-8 h-8 rounded-full bg-white dark:bg-gray-800 border border-poke-red/30 shadow-sm hover:shadow-md hover:border-poke-red/60 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed relative"
         title={hasMorePokemon ? "Load all & jump to end" : "Jump to bottom"}
       >
         {isLoading ? (
-          <div className="w-5 h-5 border-2 border-poke-red border-t-transparent rounded-full animate-spin" />
+          <div className="w-4 h-4 border-2 border-poke-red border-t-transparent rounded-full animate-spin" />
         ) : (
-          <ChevronsDown className="w-5 h-5 text-poke-red" />
+          <ChevronsDown className="w-4 h-4 text-poke-red" />
         )}
         {hasMorePokemon && (
           <div className="absolute -top-1 -right-1 w-3 h-3 bg-poke-red rounded-full animate-pulse" />
         )}
       </button>
 
-      {/* Info Display */}
-      <div className="bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-xs text-center shadow-lg">
-        <div className="font-bold text-poke-blue">{loadedPokemon}</div>
-        <div className="text-gray-500 dark:text-gray-400">of {totalPokemon}</div>
-        {hasMorePokemon && (
-          <div className="text-poke-red text-[10px] mt-1">More available</div>
-        )}
-      </div>
+
     </div>
   )
 }

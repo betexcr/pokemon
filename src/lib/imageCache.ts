@@ -15,14 +15,15 @@ interface ImageCacheConfig {
 }
 
 class ImageCache {
-  private memoryCache = new Map<string, string>() // URL -> ObjectURL
+  private memoryCache = new Map<string, { url: string; timestamp: number }>() // URL -> {ObjectURL, timestamp}
   private config: ImageCacheConfig
   private useServiceWorker: boolean
   private useIndexedDB: boolean
+  private cleanupInterval: ReturnType<typeof setInterval> | null = null
 
   constructor(config: Partial<ImageCacheConfig> = {}) {
     this.config = {
-      maxMemoryItems: 200, // Increased for better scroll performance
+      maxMemoryItems: 150, // Reduced from 200 to prevent memory bloat
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       useServiceWorker: true,
       useIndexedDB: false, // Disabled for now, can be enabled later
@@ -39,6 +40,37 @@ class ImageCache {
     // Initialize cache and check service worker availability
     if (this.useServiceWorker) {
       this.checkServiceWorkerSupport()
+    }
+    
+    // Start periodic cleanup of old cached images (every 5 minutes)
+    if (typeof window !== 'undefined') {
+      this.cleanupInterval = setInterval(() => {
+        this.cleanupOldEntries()
+      }, 5 * 60 * 1000)
+    }
+  }
+
+  private cleanupOldEntries() {
+    const now = Date.now()
+    const entriesToDelete: string[] = []
+    
+    for (const [url, entry] of this.memoryCache.entries()) {
+      // Remove entries older than half the maxAge
+      if (now - entry.timestamp > (this.config.maxAge / 2)) {
+        entriesToDelete.push(url)
+      }
+    }
+    
+    for (const url of entriesToDelete) {
+      const entry = this.memoryCache.get(url)
+      if (entry?.url) {
+        URL.revokeObjectURL(entry.url)
+      }
+      this.memoryCache.delete(url)
+    }
+    
+    if (entriesToDelete.length > 0) {
+      console.log(`[ImageCache] Cleaned up ${entriesToDelete.length} old cached images`)
     }
   }
 
@@ -57,24 +89,34 @@ class ImageCache {
   }
 
   private manageMemoryCache() {
-    // Keep only the most recent items in memory
+    // Aggressively clean up oldest items when exceeding max
     if (this.memoryCache.size > this.config.maxMemoryItems) {
       const entries = Array.from(this.memoryCache.entries())
-      const toRemove = entries.slice(0, entries.length - this.config.maxMemoryItems)
+      // Sort by timestamp (oldest first)
+      entries.sort((a, b) => a[1].timestamp - b[1].timestamp)
       
-      toRemove.forEach(([url, objectURL]) => {
-        URL.revokeObjectURL(objectURL)
+      // Remove oldest 25% of cache when limit exceeded
+      const itemsToRemove = Math.ceil(this.config.maxMemoryItems * 0.25)
+      
+      for (let i = 0; i < itemsToRemove; i++) {
+        const [url, entry] = entries[i]
+        if (entry.url) {
+          URL.revokeObjectURL(entry.url)
+        }
         this.memoryCache.delete(url)
-      })
+      }
       
-      console.log(`Memory cache cleanup: removed ${toRemove.length} old images`)
+      console.log(`[ImageCache] Memory cleanup: removed ${itemsToRemove} oldest images (cache size: ${this.memoryCache.size}/${this.config.maxMemoryItems})`)
     }
   }
 
   async getImage(url: string): Promise<string> {
     // 1. Check memory cache first (fastest)
-    if (this.memoryCache.has(url)) {
-      return this.memoryCache.get(url)!
+    const cached = this.memoryCache.get(url)
+    if (cached?.url) {
+      // Update timestamp for LRU
+      cached.timestamp = Date.now()
+      return cached.url
     }
 
     // 2. Check service worker cache (persistent)
@@ -86,14 +128,14 @@ class ImageCache {
           const objectURL = URL.createObjectURL(blob)
           
           // Add to memory cache for faster future access
-          this.memoryCache.set(url, objectURL)
+          this.memoryCache.set(url, { url: objectURL, timestamp: Date.now() })
           this.manageMemoryCache()
           
-          console.log(`Image served from service worker cache: ${url}`)
+          console.log(`[ImageCache] Served from SW: ${url}`)
           return objectURL
         }
       } catch (error) {
-        console.warn('Service worker cache lookup failed:', error)
+        console.warn('[ImageCache] SW cache lookup failed:', error)
       }
     }
 
@@ -102,9 +144,9 @@ class ImageCache {
       const response = await fetch(url)
       if (!response.ok) {
         if (response.status === 404) {
-          console.warn(`Image not found (404): ${url}`)
+          console.warn(`[ImageCache] Not found (404): ${url}`)
         } else {
-          console.warn(`Failed to fetch image: ${url} (${response.status})`)
+          console.warn(`[ImageCache] Fetch failed: ${url} (${response.status})`)
         }
         return url // Return original URL on error
       }
@@ -113,15 +155,15 @@ class ImageCache {
       const objectURL = URL.createObjectURL(blob)
 
       // Add to memory cache
-      this.memoryCache.set(url, objectURL)
+      this.memoryCache.set(url, { url: objectURL, timestamp: Date.now() })
       this.manageMemoryCache()
 
       // Service worker will automatically cache this response
-      console.log(`Image fetched and cached: ${url} (${blob.size} bytes)`)
+      console.log(`[ImageCache] Fetched: ${url} (${(blob.size / 1024).toFixed(2)} KB)`)
       return objectURL
 
     } catch (error) {
-      console.warn(`Failed to fetch image ${url}:`, error)
+      console.warn(`[ImageCache] Fetch failed for ${url}:`, error)
       return url // Return original URL on error
     }
   }
@@ -174,11 +216,13 @@ class ImageCache {
     }
   }
 
-  // Clear all cached images
+  // Clear all cached images properly
   clear() {
     // Revoke all object URLs to free memory
-    for (const objectURL of this.memoryCache.values()) {
-      URL.revokeObjectURL(objectURL)
+    for (const entry of this.memoryCache.values()) {
+      if (entry.url) {
+        URL.revokeObjectURL(entry.url)
+      }
     }
     
     this.memoryCache.clear()
@@ -189,14 +233,25 @@ class ImageCache {
         cache.keys().then(keys => {
           keys.forEach(request => {
             if (this.isPokemonImage(request.url)) {
-              cache.delete(request)
+              cache.delete(request).catch(err => 
+                console.warn('[ImageCache] Failed to delete cache entry:', err)
+              )
             }
           })
-        })
-      })
+        }).catch(err => console.warn('[ImageCache] Failed to enumerate cache keys:', err))
+      }).catch(err => console.warn('[ImageCache] Failed to open SW cache:', err))
     }
     
-    console.log('Image cache cleared')
+    console.log('[ImageCache] Cleared all cached images')
+  }
+
+  // Destructor-like cleanup
+  destroy() {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval)
+      this.cleanupInterval = null
+    }
+    this.clear()
   }
 
   // Helper to check if URL is a Pokemon image

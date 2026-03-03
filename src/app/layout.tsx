@@ -198,7 +198,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body suppressHydrationWarning className="min-h-screen bg-bg text-text pokeball-bg site-gradient font-sans">
+      <body suppressHydrationWarning className="min-h-screen text-text pokeball-bg site-gradient font-sans relative isolate">
         <ErrorProvider>
           <AuthProvider>
             <ThemeProvider>
@@ -206,7 +206,9 @@ export default function RootLayout({
                 <ToastProvider>
                   <RoutePreloader />
                   <PerformanceMonitor />
-                  <div className="min-h-screen">
+                  <div aria-hidden="true" className="app-background-pattern" />
+                  <div aria-hidden="true" className="app-background-fade" />
+                  <div className="relative z-10 min-h-screen">
                     <OfflineIndicator />
                     {children}
                     <GlobalErrorCatcher />

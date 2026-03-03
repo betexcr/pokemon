@@ -7,7 +7,7 @@ export default function Suggestions({ analysis }: { analysis: TeamAnalysis }) {
   const tips = suggestImprovements(analysis);
   return (
     <div className="rounded border p-3 bg-white/60 dark:bg-gray-900/40">
-      <h3 className="font-semibold mb-2">AI-Powered Team Suggestions</h3>
+      <h3 className="font-semibold mb-2">Team Suggestions</h3>
       {tips.length > 0 ? (
         <ul className="list-disc list-inside text-sm space-y-1">
           {tips.map((t, i) => (

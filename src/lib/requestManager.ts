@@ -38,10 +38,22 @@ class RequestManager {
       'default': 4           // Default max per context
     }
   };
+  
+  // Auto-cleanup configuration
+  private readonly MAX_REQUESTS_PER_CONTEXT = 100; // Auto-cleanup if exceeds this
+  private readonly REQUEST_RETENTION_TIME = 5 * 60 * 1000; // Keep completed requests for 5 minutes
+  private cleanupInterval: ReturnType<typeof setInterval> | null = null;
 
   constructor(config?: Partial<PoolConfig>) {
     if (config) {
       this.poolConfig = { ...this.poolConfig, ...config };
+    }
+    
+    // Start periodic cleanup to prevent memory leaks
+    if (typeof window !== 'undefined') {
+      this.cleanupInterval = setInterval(() => {
+        this.pruneOldRequests();
+      }, 60000); // Every 60 seconds
     }
   }
 
@@ -270,6 +282,40 @@ class RequestManager {
     this.observers.forEach(callback => {
       callback(new Map(this.requests));
     });
+  }
+
+  /**
+   * Auto-prune old requests to prevent memory buildup
+   */
+  private pruneOldRequests(): void {
+    const now = Date.now();
+    const toDelete: string[] = [];
+    
+    // Find requests that are too old
+    this.requests.forEach((entry, requestId) => {
+      // Only prune completed requests, keep pending/running ones
+      if (entry.status === 'completed' && (now - entry.createdAt) > this.REQUEST_RETENTION_TIME) {
+        toDelete.push(requestId);
+      }
+    });
+    
+    if (toDelete.length > 0) {
+      toDelete.forEach(id => this.requests.delete(id));
+      console.log(`[RequestManager] Pruned ${toDelete.length} old requests`);
+      this.notifyObservers();
+    }
+  }
+
+  /**
+   * Force cleanup and destroy the manager
+   */
+  destroy(): void {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+      this.cleanupInterval = null;
+    }
+    this.cancelAll();
+    this.observers.clear();
   }
 }
 

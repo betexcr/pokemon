@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Pokemon } from "@/types/pokemon";
 import TypeBadge from "@/components/TypeBadge";
@@ -30,8 +30,11 @@ interface PokemonHeroProps {
 
 export default function PokemonHero({ pokemon, abilities, flavorText, genus, hasGenderDifferences = false, loading = false }: PokemonHeroProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const vtName = `pokemon-sprite-${pokemon.id}`;
   const reduce = useReducedMotionPref();
+  const [hydratedArtQueryKey, setHydratedArtQueryKey] = useState<string>('');
   const [showAura, setShowAura] = useState(false);
   const [isShiny, setIsShiny] = useState(false);
   const [gender, setGender] = useState<'male' | 'female'>('male');
@@ -63,11 +66,134 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
 
   const [generation, setGeneration] = useState<'gen1' | 'gen1rb' | 'gen1rg' | 'gen1frlg' | 'gen2' | 'gen2g' | 'gen2s' | 'gen3' | 'gen3rs' | 'gen3frlg' | 'gen4' | 'gen4dp' | 'gen5' | 'gen5ani' | 'gen6' | 'gen6ani' | 'gen7' | 'gen8' | 'gen9' | 'home' | 'go'>(getDefaultGeneration(pokemon.id));
   const [imageSrc, setImageSrc] = useState<string>('');
+  const currentArtQueryKey = `${pokemon.id}:${searchParams.toString()}`;
+  const validStyles = new Set(['official', 'sprite', 'portrait', 'pmd', 'fallback']);
+  const validGenders = new Set(['male', 'female']);
+  const validOrientations = new Set(['front', 'back']);
+  const validGenerations = new Set([
+    'gen1', 'gen1rb', 'gen1rg', 'gen1frlg',
+    'gen2', 'gen2g', 'gen2s',
+    'gen3', 'gen3rs', 'gen3frlg',
+    'gen4', 'gen4dp',
+    'gen5', 'gen5ani',
+    'gen6', 'gen6ani',
+    'gen7', 'gen8', 'gen9',
+    'home', 'go'
+  ]);
 
-  // Update generation when Pokemon changes
+  const parseArtParam = (value: string | null) => {
+    const parsed = {
+      style: 'official' as typeof style,
+      generation: getDefaultGeneration(pokemon.id) as typeof generation,
+      orientation: 'front' as typeof orientation,
+      gender: 'male' as typeof gender,
+      portrait: 'Normal.png',
+      anim: '',
+    };
+    if (!value) return parsed;
+    if (validStyles.has(value)) {
+      parsed.style = value as typeof style;
+      return parsed;
+    }
+
+    const [kind, ...rest] = value.split(':');
+    if (!validStyles.has(kind || '')) return parsed;
+
+    if (kind === 'portrait') {
+      parsed.style = 'portrait';
+      parsed.portrait = rest.join(':') || 'Normal.png';
+      return parsed;
+    }
+    if (kind === 'pmd') {
+      parsed.style = 'pmd';
+      parsed.anim = rest.join(':');
+      return parsed;
+    }
+    if (kind === 'sprite') {
+      parsed.style = 'sprite';
+      const [gen, orient, genGender] = rest;
+      if (validGenerations.has(gen || '')) parsed.generation = gen as typeof generation;
+      if (validOrientations.has(orient || '')) parsed.orientation = orient as typeof orientation;
+      if (validGenders.has(genGender || '')) parsed.gender = genGender as typeof gender;
+      return parsed;
+    }
+
+    parsed.style = kind as typeof style;
+    return parsed;
+  };
+
+  const serializeArtParam = () => {
+    switch (style) {
+      case 'portrait':
+        return `portrait:${selectedPortrait || 'Normal.png'}`;
+      case 'pmd':
+        return selectedPmdAnim ? `pmd:${selectedPmdAnim}` : 'pmd';
+      case 'sprite':
+        return `sprite:${generation}:${orientation}:${gender}`;
+      case 'fallback':
+        return 'fallback';
+      case 'official':
+      default:
+        return 'official';
+    }
+  };
+
+  // Hydrate art controls from URL so links preserve the selected artwork.
   useEffect(() => {
-    setGeneration(getDefaultGeneration(pokemon.id));
-  }, [pokemon.id]);
+    const art = parseArtParam(searchParams.get('art'));
+
+    // Backward-compatible fallback for old links using split art_* params.
+    const legacyGender = searchParams.get('art_gender');
+    const legacyOrient = searchParams.get('art_orient');
+    const legacyGen = searchParams.get('art_gen');
+    const legacyPortrait = searchParams.get('art_portrait');
+    const legacyAnim = searchParams.get('art_anim');
+
+    setStyle(art.style);
+    setGender(validGenders.has(legacyGender || '') ? (legacyGender as typeof gender) : art.gender);
+    setOrientation(validOrientations.has(legacyOrient || '') ? (legacyOrient as typeof orientation) : art.orientation);
+    setIsShiny((searchParams.get('shiny') === '1' || searchParams.get('shiny') === 'true') || (searchParams.get('art_shiny') === '1' || searchParams.get('art_shiny') === 'true'));
+    setGeneration(validGenerations.has(legacyGen || '') ? (legacyGen as typeof generation) : art.generation);
+    setSelectedPortrait(legacyPortrait || art.portrait || 'Normal.png');
+    setSelectedPmdAnim(legacyAnim || art.anim || '');
+    setHydratedArtQueryKey(currentArtQueryKey);
+  }, [pokemon.id, searchParams, currentArtQueryKey]);
+
+  // Sync art controls back to URL query string for shareable links.
+  useEffect(() => {
+    if (hydratedArtQueryKey !== currentArtQueryKey) return;
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('art', serializeArtParam());
+    if (isShiny) {
+      params.set('shiny', '1');
+    } else {
+      params.delete('shiny');
+    }
+
+    // Remove legacy split params to keep the URL to one art param + optional shiny.
+    ['art_gender', 'art_orient', 'art_shiny', 'art_gen', 'art_portrait', 'art_anim'].forEach((key) => params.delete(key));
+
+    const nextQuery = params.toString();
+    const currentQuery = searchParams.toString();
+    if (nextQuery === currentQuery) return;
+
+    router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
+  }, [
+    hydratedArtQueryKey,
+    currentArtQueryKey,
+    router,
+    pathname,
+    searchParams,
+    pokemon.id,
+    style,
+    gender,
+    orientation,
+    isShiny,
+    generation,
+    selectedPortrait,
+    selectedPmdAnim,
+  ]);
 
   // Update image source when generation, style, shiny, gender, or orientation changes
   useEffect(() => {
@@ -183,25 +309,34 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
       try {
         const portraits = await getAvailablePortraits(pokemon.id);
         setAvailablePortraits(portraits);
-        // Reset to Normal portrait when Pokemon changes
-        setSelectedPortrait('Normal.png');
+        const requestedPortrait = parseArtParam(searchParams.get('art')).portrait || searchParams.get('art_portrait');
+        const hasRequestedPortrait = requestedPortrait && portraits.some(p => p.filename === requestedPortrait);
+        setSelectedPortrait(hasRequestedPortrait ? requestedPortrait : 'Normal.png');
       } catch (error) {
         console.error('Failed to fetch portraits:', error);
         // Set default portrait on error
         setAvailablePortraits([{ name: 'normal', filename: 'Normal.png', displayName: 'Normal' }]);
-        setSelectedPortrait('Normal.png');
+        setSelectedPortrait(parseArtParam(searchParams.get('art')).portrait || searchParams.get('art_portrait') || 'Normal.png');
       }
     };
 
     fetchPortraits();
-  }, [pokemon.id]);
+  }, [pokemon.id, searchParams]);
 
   // Initialize PMD animation when available
   useEffect(() => {
-    if (pmdAnims && pmdAnims.length > 0 && !selectedPmdAnim) {
+    if (!pmdAnims || pmdAnims.length === 0) return;
+    const requestedAnim = parseArtParam(searchParams.get('art')).anim || searchParams.get('art_anim');
+    if (requestedAnim && pmdAnims.some(anim => anim.name === requestedAnim)) {
+      if (selectedPmdAnim !== requestedAnim) {
+        setSelectedPmdAnim(requestedAnim);
+      }
+      return;
+    }
+    if (!selectedPmdAnim || !pmdAnims.some(anim => anim.name === selectedPmdAnim)) {
       setSelectedPmdAnim(pmdAnims[0].name);
     }
-  }, [pmdAnims, selectedPmdAnim]);
+  }, [pmdAnims, selectedPmdAnim, searchParams]);
 
   // Handle click outside to close dropdowns
   useEffect(() => {
@@ -227,7 +362,8 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
 
   // Navigation functions
   const navigateToPokemon = (id: number) => {
-    router.push(`/pokemon/${id}`);
+    const query = searchParams.toString();
+    router.push(query ? `/pokemon/${id}?${query}` : `/pokemon/${id}`);
   };
 
   const goToPrevious = () => {

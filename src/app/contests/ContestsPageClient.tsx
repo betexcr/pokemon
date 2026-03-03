@@ -20,6 +20,7 @@ import PokemonSelector from '@/components/PokemonSelector'
 import { contestData } from '@/data/contestData'
 import { Heart, Star, Sparkles, Trophy, Ribbon, Users } from 'lucide-react'
 import { Pokemon } from '@/types/pokemon'
+import { CONTEST_MOVES, checkCombo, ContestMoveData } from '@/data/contestMoves'
 
 interface ContestStats {
   coolness: number
@@ -97,8 +98,12 @@ export default function ContestsPageClient() {
     const category = contestState.selectedCategory
     if (!category) return
 
+    // Get the relevant stat for this category
     const statValue = contestState.pokemonStats[category as keyof ContestStats]
-    const stars = Math.floor(statValue / 50) + 1
+    
+    // Calculate stars based on stat value (following actual contest mechanics)
+    // 0-49: 1 star, 50-99: 2 stars, 100-149: 3 stars, 150-199: 4 stars, 200+: 5 stars
+    const stars = Math.min(Math.floor(statValue / 50) + 1, 5)
 
     setContestState(prev => ({
       ...prev,
@@ -107,33 +112,58 @@ export default function ContestsPageClient() {
     }))
 
     setCelebrationType('completion')
-    setCelebrationMessage(`Introduction Round Complete! +${stars} stars!`)
+    setCelebrationMessage(`Introduction Round Complete! Earned ${stars} ⭐!`)
     setShowCelebration(true)
   }
 
   // Handle move usage in talent round
   const handleMoveUse = (move: string, category: string) => {
+    // Get the move data from the contest moves database
+    const moveData = CONTEST_MOVES[move]
+    if (!moveData) return // Move not found
+
     const isMatchingCategory = category === contestState.selectedCategory
-    const isRepeatedMove = contestState.lastMove === move
+    const wasLastMove = contestState.lastMove === move
     const isSpectacular = contestState.exciteMeter >= 100
 
-    let heartsGained = 0
+    // Calculate base appeal
+    let heartsGained = moveData.appeal
+
+    // Apply category matching bonus
+    if (isMatchingCategory) {
+      heartsGained += 1 // Bonus for matching category
+    } else {
+      heartsGained = Math.max(1, heartsGained - 1) // Penalty for not matching
+    }
+
+    // Check if the previous move sets up a combo for this move
+    let comboBonus = 0
+    if (contestState.lastMove) {
+      const combo = checkCombo(contestState.lastMove, move)
+      if (combo.triggered) {
+        comboBonus = 2
+        heartsGained += comboBonus
+      }
+    }
+
+    // Apply penalty for repeating the same move
+    if (wasLastMove) {
+      heartsGained = Math.max(0, heartsGained - 3) // Severe penalty
+    }
+
+    // Apply spectacular talent bonus
+    let spectacularBonus = 0
     let newExciteMeter = contestState.exciteMeter
-
-    if (isMatchingCategory && !isRepeatedMove) {
-      heartsGained = 3
-      newExciteMeter = Math.min(contestState.exciteMeter + 20, 100)
-    } else if (isMatchingCategory && isRepeatedMove) {
-      heartsGained = -1 // Penalty for repeating moves
-    } else if (!isMatchingCategory) {
-      heartsGained = 1
-    }
-
     if (isSpectacular) {
-      heartsGained += 5
-      newExciteMeter = 0 // Reset meter
+      spectacularBonus = 5
+      heartsGained += spectacularBonus
+      newExciteMeter = 0 // Reset meter after spectacular
+    } else {
+      // Build excite meter based on appeal value
+      newExciteMeter = Math.min(contestState.exciteMeter + (moveData.appeal * 5), 100)
     }
 
+    // Update state
     setContestState(prev => ({
       ...prev,
       hearts: Math.max(0, prev.hearts + heartsGained),
@@ -142,21 +172,24 @@ export default function ContestsPageClient() {
       lastMove: move
     }))
 
-    setIsRepeatedMove(isRepeatedMove)
+    setIsRepeatedMove(wasLastMove)
 
-    // Show appropriate celebration
+    // Show appropriate celebration based on what happened
     if (isSpectacular) {
       setCelebrationType('spectacular')
-      setCelebrationMessage('SPECTACULAR TALENT!')
-    } else if (isMatchingCategory && !isRepeatedMove) {
+      setCelebrationMessage(`SPECTACULAR TALENT! +${heartsGained} ♥`)
+    } else if (comboBonus > 0) {
       setCelebrationType('move')
-      setCelebrationMessage('Perfect move!')
-    } else if (isRepeatedMove) {
+      setCelebrationMessage(`${move} - COMBO! +${heartsGained} ♥`)
+    } else if (wasLastMove) {
       setCelebrationType('bored')
-      setCelebrationMessage('The audience is bored...')
+      setCelebrationMessage('The audience is bored with the same move...')
+    } else if (isMatchingCategory) {
+      setCelebrationType('move')
+      setCelebrationMessage(`${move} - Perfect! +${heartsGained} ♥`)
     } else {
       setCelebrationType('move')
-      setCelebrationMessage('Good move!')
+      setCelebrationMessage(`${move} +${heartsGained} ♥`)
     }
 
     setShowCelebration(true)
