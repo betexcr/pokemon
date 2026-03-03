@@ -1,5 +1,7 @@
 'use client'
 
+import { measureImageLoad, shouldPreloadImage, getOptimalPreloadCount } from './imagePerformance'
+
 interface CachedImage {
   url: string
   blob: Blob
@@ -111,11 +113,14 @@ class ImageCache {
   }
 
   async getImage(url: string): Promise<string> {
+    const measureLoad = measureImageLoad(url, false)
+    
     // 1. Check memory cache first (fastest)
     const cached = this.memoryCache.get(url)
     if (cached?.url) {
       // Update timestamp for LRU
       cached.timestamp = Date.now()
+      measureLoad() // Record as cached load
       return cached.url
     }
 
@@ -131,6 +136,7 @@ class ImageCache {
           this.memoryCache.set(url, { url: objectURL, timestamp: Date.now() })
           this.manageMemoryCache()
           
+          measureLoad() // Record load time
           console.log(`[ImageCache] Served from SW: ${url}`)
           return objectURL
         }
@@ -141,13 +147,19 @@ class ImageCache {
 
     // 3. Fetch from network
     try {
-      const response = await fetch(url)
+      const response = await fetch(url, {
+        // Modern fetch optimization
+        priority: url.includes('official-artwork') ? 'high' : 'auto',
+        cache: 'force-cache' // Leverage browser cache
+      } as RequestInit)
+      
       if (!response.ok) {
         if (response.status === 404) {
           console.warn(`[ImageCache] Not found (404): ${url}`)
         } else {
           console.warn(`[ImageCache] Fetch failed: ${url} (${response.status})`)
         }
+        measureLoad() // Record failed load
         return url // Return original URL on error
       }
 
@@ -158,21 +170,31 @@ class ImageCache {
       this.memoryCache.set(url, { url: objectURL, timestamp: Date.now() })
       this.manageMemoryCache()
 
-      // Service worker will automatically cache this response
+      measureLoad() // Record successful load
       console.log(`[ImageCache] Fetched: ${url} (${(blob.size / 1024).toFixed(2)} KB)`)
       return objectURL
 
     } catch (error) {
       console.warn(`[ImageCache] Fetch failed for ${url}:`, error)
+      measureLoad() // Record failed load
       return url // Return original URL on error
     }
   }
 
-  // Preload images for better UX
+  // Preload images for better UX - connection-aware
   async preloadImages(urls: string[], maxConcurrent = 5): Promise<void> {
+    // Check if we should preload based on connection
+    if (!shouldPreloadImage()) {
+      console.log('[ImageCache] Skipping preload on slow connection or data saver mode')
+      return
+    }
+    
+    // Adjust concurrent requests based on connection
+    const optimalConcurrent = Math.min(maxConcurrent, getOptimalPreloadCount() / 2)
+    
     const chunks = []
-    for (let i = 0; i < urls.length; i += maxConcurrent) {
-      chunks.push(urls.slice(i, i + maxConcurrent))
+    for (let i = 0; i < urls.length; i += optimalConcurrent) {
+      chunks.push(urls.slice(i, i + optimalConcurrent))
     }
 
     for (const chunk of chunks) {
@@ -290,15 +312,22 @@ const POPULAR_POKEMON_IDS = [
 
 // Intelligent preloading based on user behavior and popularity
 export async function preloadPopularPokemon(): Promise<void> {
+  // Check if we should preload
+  if (!shouldPreloadImage()) {
+    console.log('🚫 Skipping preload on slow connection')
+    return
+  }
+  
   console.log('🚀 Preloading popular Pokemon images...')
   const startTime = performance.now()
   
-  // Preload first 20 most popular Pokemon
-  const popularIds = POPULAR_POKEMON_IDS.slice(0, 20)
+  // Preload based on connection quality
+  const preloadCount = getOptimalPreloadCount()
+  const popularIds = POPULAR_POKEMON_IDS.slice(0, preloadCount)
   await preloadPokemonImages(popularIds)
   
   const endTime = performance.now()
-  console.log(`✅ Preloaded ${popularIds.length} popular Pokemon images in ${(endTime - startTime).toFixed(2)}ms`)
+  console.log(`✅ Preloaded ${popularIds.length} popular Pokemon in ${(endTime - startTime).toFixed(2)}ms`)
 }
 
 // Preload Pokemon based on current viewport and scroll position

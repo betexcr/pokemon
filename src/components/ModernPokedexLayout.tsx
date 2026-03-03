@@ -12,6 +12,7 @@ import PokedexListView from './PokedexListView'
 import AdvancedFilters from './AdvancedFilters'
 import { useViewportDataLoading } from '@/hooks/useViewportDataLoading'
 import { Search, X, List, Grid3X3, Grid2X2, LayoutGridIcon, ChevronUp, ChevronDown } from 'lucide-react'
+import { Dices } from 'lucide-react'
 import UserDropdown from './UserDropdown'
 import AuthModal from './auth/AuthModal'
 import { useAuth } from '@/contexts/AuthContext'
@@ -23,6 +24,7 @@ import AppHeader from '@/components/AppHeader'
 import Tooltip from '@/components/Tooltip'
 import SearchInput from '@/components/SearchInput'
 import PokedexScrollbar from '@/components/PokedexScrollbar'
+import RecentlyViewedSection from '@/components/RecentlyViewedSection'
 
 // Legendary and Mythical Pokémon lists
 const LEGENDARY_POKEMON = new Set([
@@ -373,6 +375,53 @@ export default function ModernPokedexLayout({
   const lastLoadTimeRef = useRef<number>(0)
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login')
+  
+  // Favorites state management
+  const [favoritesList, setFavoritesList] = useState<number[]>([])
+  const [isFavoritesHydrated, setIsFavoritesHydrated] = useState(false)
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
+  
+  // Load favorites from localStorage on mount
+  useEffect(() => {
+    setIsFavoritesHydrated(true)
+    try {
+      if (typeof window !== 'undefined') {
+        const savedFavorites = localStorage.getItem('pokemon.favorites')
+        if (savedFavorites) {
+          const parsedFavorites = JSON.parse(savedFavorites)
+          if (Array.isArray(parsedFavorites)) {
+            setFavoritesList(parsedFavorites)
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error loading favorites from localStorage:', error)
+    }
+  }, [])
+
+  // Save favorites to localStorage whenever they change
+  useEffect(() => {
+    if (!isFavoritesHydrated) return // Don't save during initial render
+    
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('pokemon.favorites', JSON.stringify(favoritesList))
+      }
+    } catch (error) {
+      console.error('Error saving favorites to localStorage:', error)
+    }
+  }, [favoritesList, isFavoritesHydrated])
+
+  // Toggle favorite handler
+  const handleToggleFavorite = useCallback((pokemonId: number) => {
+    setFavoritesList(prev => {
+      if (prev.includes(pokemonId)) {
+        return prev.filter(id => id !== pokemonId)
+      } else {
+        return [...prev, pokemonId]
+      }
+    })
+  }, [])
   
   // Collapsible sections state with localStorage persistence
   const [isFiltersCollapsed, setIsFiltersCollapsed] = useState(true)
@@ -1245,6 +1294,7 @@ export default function ModernPokedexLayout({
     setDisplayPokemon(pokemonList)
     setIsInFilteredState(false) // Reset filtered state
     clearSearch()
+    setShowFavoritesOnly(false) // Reset favorites filter
     // Reset infinite scrolling state
     setAllGenerationsPokemon([])
     setCurrentOffset(0)
@@ -1371,7 +1421,7 @@ export default function ModernPokedexLayout({
                 <span className="text-xs text-muted font-medium whitespace-nowrap">
                   {isFiltering ? 'Filtering...' : ''}
                 </span>
-                {(advancedFilters.types.length > 0 || searchTerm || (advancedFilters.generation && advancedFilters.generation !== '') || advancedFilters.legendary || advancedFilters.mythical) && (
+                {(advancedFilters.types.length > 0 || searchTerm || (advancedFilters.generation && advancedFilters.generation !== '') || advancedFilters.legendary || advancedFilters.mythical || showFavoritesOnly) && (
                   <button
                     onClick={clearAllFilters}
                     disabled={isFiltering}
@@ -1747,6 +1797,18 @@ export default function ModernPokedexLayout({
                   <img src="/loading.gif" alt="Loading" width={20} height={20} className="opacity-80" />
                 </div>
               )}
+              <button
+                onClick={() => {
+                  // Get random Pokemon ID from filtered list or total count
+                  const maxId = totalCount || 1025
+                  const randomId = Math.floor(Math.random() * maxId) + 1
+                  router.push(`/pokemon/${randomId}`)
+                }}
+                className="flex-shrink-0 p-3 rounded-xl bg-gradient-to-r from-poke-yellow to-poke-red text-white hover:shadow-lg transition-all duration-200 hover:scale-105 group"
+                title="Random Pokémon"
+              >
+                <Dices className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+              </button>
             </div>
           </div>
 
@@ -1793,6 +1855,27 @@ export default function ModernPokedexLayout({
             {/* Filter Status & Actions */}
             <div className="flex items-center space-x-4 ml-6">
               <div className="flex items-center space-x-3">
+                {/* Favorites Filter Toggle */}
+                {favoritesList.length > 0 && (
+                  <button
+                    onClick={() => setShowFavoritesOnly(prev => !prev)}
+                    disabled={isFiltering}
+                    className={`px-3 py-1.5 text-sm font-semibold rounded-lg border-2 transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-105 flex items-center gap-2 ${
+                      showFavoritesOnly 
+                        ? 'bg-red-500 text-white border-white shadow-lg scale-105' 
+                        : 'bg-white text-red-500 border-red-200 hover:border-red-300'
+                    } ${isFiltering ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    title={showFavoritesOnly ? 'Show all Pokémon' : `Show only favorites (${favoritesList.length})`}
+                  >
+                    <Heart className={`w-4 h-4 ${showFavoritesOnly ? 'fill-current' : ''}`} />
+                    <span>Favorites</span>
+                    {favoritesList.length > 0 && (
+                      <span className={`text-xs px-1.5 py-0.5 rounded-full ${showFavoritesOnly ? 'bg-white/20' : 'bg-red-100'}`}>
+                        {favoritesList.length}
+                      </span>
+                    )}
+                  </button>
+                )}
                 <div className="flex items-center space-x-2">
                   <div className={`w-2 h-2 rounded-full ${isFiltering ? 'bg-poke-yellow animate-pulse' : 'bg-green-500'}`}></div>
                   <span className="text-sm font-medium text-muted">
@@ -1800,7 +1883,7 @@ export default function ModernPokedexLayout({
                   </span>
                 </div>
                 
-                {(advancedFilters.types.length > 0 || searchTerm || (advancedFilters.generation && advancedFilters.generation !== '') || advancedFilters.legendary || advancedFilters.mythical) && (
+                {(advancedFilters.types.length > 0 || searchTerm || (advancedFilters.generation && advancedFilters.generation !== '') || advancedFilters.legendary || advancedFilters.mythical || showFavoritesOnly) && (
                   <button
                     onClick={clearAllFilters}
                     disabled={isFiltering}
@@ -1814,6 +1897,9 @@ export default function ModernPokedexLayout({
           </div>
         </div>
           </div>
+
+          {/* Recently Viewed Section */}
+          <RecentlyViewedSection />
 
           {/* Size & Sort Controls */}
           <div className="border-t border-border bg-surface/60">
@@ -1964,6 +2050,9 @@ export default function ModernPokedexLayout({
                     hasMorePokemon={effectiveHasMorePokemon}
                     onLoadMore={externalLoadMorePokemon || loadMorePokemon}
                     sentinelRef={externalSentinelRef}
+                    favoritesList={favoritesList}
+                    onToggleFavorite={handleToggleFavorite}
+                    enableVirtualization={true}
                   />
                 </div>
                 {isFiltering && (
@@ -2019,7 +2108,7 @@ export default function ModernPokedexLayout({
                       selectedPokemon={null}
                       comparisonList={comparisonList}
                       density={cardDensity}
-                      enableVirtualization={false}
+                      enableVirtualization={true}
                       showSpecialForms={isAllGenerations || (advancedFilters.generation !== 'all' && advancedFilters.generation !== '')}
                       isLoadingMore={effectiveIsLoadingMore}
                       hasMorePokemon={effectiveHasMorePokemon}
@@ -2030,6 +2119,8 @@ export default function ModernPokedexLayout({
                           externalSentinelRef(node)
                         }
                       }}
+                      favoritesList={favoritesList}
+                      onToggleFavorite={handleToggleFavorite}
                     />
                   )}
                 </div>

@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import { useScrollIdle } from "@/hooks/useScrollIdle";
 import { getCachedImageUrl } from "@/lib/imageCache";
 
 interface LazyImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
@@ -19,6 +18,28 @@ interface LazyImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   imgClassName?: string;
   /** Optional style applied to the inner img element */
   imgStyle?: React.CSSProperties;
+  /** Priority loading for above-the-fold images (adds fetchpriority="high") */
+  priority?: boolean;
+  /** Image dimensions for CLS prevention */
+  width?: number;
+  height?: number;
+}
+
+/** 
+ * Check if user is on a slow connection using Network Information API
+ * Returns true if connection is slow or unknown
+ */
+function isSlowConnection(): boolean {
+  if (typeof navigator === 'undefined' || !('connection' in navigator)) {
+    return false; // Assume fast if API unavailable
+  }
+  
+  const connection = (navigator as any).connection;
+  if (!connection) return false;
+  
+  // Consider 2g, slow-2g as slow, or if saveData is enabled
+  const slowTypes = ['slow-2g', '2g'];
+  return slowTypes.includes(connection.effectiveType) || connection.saveData === true;
 }
 
 export default function LazyImage({
@@ -26,35 +47,50 @@ export default function LazyImage({
   alt,
   className,
   style,
-  rootMargin = "50px",
-  threshold = 0.1,
+  rootMargin = "100px", // Increased from 50px for better anticipatory loading
+  threshold = 0.01, // Lower threshold for earlier loading
   unloadOffscreen = false,
-  offscreenDelayMs = 6000,
+  offscreenDelayMs = 8000, // Increased from 6000ms
   onLoad,
   onError,
   imgClassName,
   imgStyle,
+  priority = false,
+  width,
+  height,
   ...imgProps
 }: LazyImageProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
 
-  const [isInView, setIsInView] = useState(false);
+  const [isInView, setIsInView] = useState(priority); // Priority images start visible
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const [hadError, setHadError] = useState(false);
-  const [loadingAllowed, setLoadingAllowed] = useState(false);
   const [cachedSrc, setCachedSrc] = useState<string>("");
   const offscreenTimerRef = useRef<number | null>(null);
-  const isScrollIdle = useScrollIdle();
+  const retryTimeoutRef = useRef<number | null>(null);
+  const isSlowNet = useRef(isSlowConnection());
 
-  // Start loading immediately when in view, don't wait for scroll idle
+  // Load immediately when in view - NO scroll idle wait for better performance
   const currentSrc = isInView ? srcList[currentIndex] : "";
 
   useEffect(() => {
     const el = containerRef.current;
-    if (!el || typeof window === "undefined" || !("IntersectionObserver" in window)) {
-      // Fallback: if no IO, mark as in view to load normally
+    if (!el || typeof window === "undefined") {
+      // Fallback: mark as in view to load normally
+      setIsInView(true);
+      return;
+    }
+
+    // Skip IntersectionObserver for priority images - load immediately
+    if (priority) {
+      setIsInView(true);
+      return;
+    }
+
+    if (!("IntersectionObserver" in window)) {
+      // Fallback for old browsers
       setIsInView(true);
       return;
     }
@@ -63,6 +99,7 @@ export default function LazyImage({
       (entries) => {
         const entry = entries[0];
         if (!entry) return;
+        
         if (entry.isIntersecting) {
           setIsInView(true);
           if (offscreenTimerRef.current) {
@@ -70,11 +107,11 @@ export default function LazyImage({
             offscreenTimerRef.current = null;
           }
         } else if (unloadOffscreen) {
+          // Only unload if far from viewport
           if (offscreenTimerRef.current) window.clearTimeout(offscreenTimerRef.current);
           offscreenTimerRef.current = window.setTimeout(() => {
             setIsInView(false);
             setLoaded(false);
-            setLoadingAllowed(false);
           }, offscreenDelayMs);
         }
       },
@@ -85,43 +122,41 @@ export default function LazyImage({
     return () => {
       io.disconnect();
       if (offscreenTimerRef.current) window.clearTimeout(offscreenTimerRef.current);
+      if (retryTimeoutRef.current) window.clearTimeout(retryTimeoutRef.current);
     };
-  }, [rootMargin, threshold, unloadOffscreen, offscreenDelayMs]);
+  }, [rootMargin, threshold, unloadOffscreen, offscreenDelayMs, priority]);
 
   // Reset error state when srcList changes
   useEffect(() => {
     setCurrentIndex(0);
     setHadError(false);
     setLoaded(false);
-    setLoadingAllowed(false);
   }, [srcList.join("|")]);
 
-  // Only load when in view AND scroll is idle for better performance
+  // Load cached image when in view - IMMEDIATE loading for better perceived performance
   useEffect(() => {
-    if (isInView && isScrollIdle) {
-      setLoadingAllowed(true);
-    } else if (unloadOffscreen) {
-      setLoadingAllowed(false);
+    if (currentSrc && isInView) {
+      // For priority images or fast connections, skip caching overhead
+      if (priority || !isSlowNet.current) {
+        setCachedSrc(currentSrc);
+      } else {
+        // Use cache for slow connections
+        getCachedImageUrl(currentSrc)
+          .then(cachedUrl => {
+            setCachedSrc(cachedUrl);
+          })
+          .catch(error => {
+            console.warn('Failed to get cached image URL:', error);
+            setCachedSrc(currentSrc); // Fallback to original URL
+          });
+      }
     }
-  }, [isInView, isScrollIdle, unloadOffscreen]);
-
-  // Load cached image when currentSrc changes
-  useEffect(() => {
-    if (currentSrc && loadingAllowed) {
-      getCachedImageUrl(currentSrc)
-        .then(cachedUrl => {
-          setCachedSrc(cachedUrl);
-        })
-        .catch(error => {
-          console.warn('Failed to get cached image URL:', error);
-          setCachedSrc(currentSrc); // Fallback to original URL
-        });
-    }
-  }, [currentSrc, loadingAllowed]);
+  }, [currentSrc, isInView, priority]);
 
   const handleLoad = useCallback<NonNullable<LazyImageProps["onLoad"]>>(
     (e) => {
       setLoaded(true);
+      setHadError(false);
       onLoad?.(e);
     },
     [onLoad]
@@ -130,10 +165,20 @@ export default function LazyImage({
   const handleError = useCallback<NonNullable<LazyImageProps["onError"]>>(
     (e) => {
       setHadError(true);
+      
+      // Try next source if available
       if (currentIndex < srcList.length - 1) {
         setCurrentIndex((idx) => idx + 1);
         setLoaded(false);
+      } else {
+        // All sources failed, retry after delay
+        if (retryTimeoutRef.current) window.clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = window.setTimeout(() => {
+          setCurrentIndex(0);
+          setHadError(false);
+        }, 3000); // Retry after 3 seconds
       }
+      
       onError?.(e);
     },
     [currentIndex, srcList.length, onError]
@@ -141,12 +186,16 @@ export default function LazyImage({
 
   return (
     <div ref={containerRef} className={className} style={style}>
-      {/* Render img only when in view (or keep without src to preserve layout) */}
+      {/* Always render img element to prevent layout shift */}
       <img
         ref={imgRef}
         alt={alt}
         src={cachedSrc || undefined}
-        loading="lazy"
+        width={width}
+        height={height}
+        loading={priority ? "eager" : "lazy"}
+        decoding="async" // 2026 best practice: non-blocking image decode
+        fetchPriority={priority ? "high" : undefined} // Prioritize above-the-fold images
         onLoad={handleLoad}
         onError={handleError}
         className={imgClassName}

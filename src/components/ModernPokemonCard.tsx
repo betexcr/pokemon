@@ -4,12 +4,13 @@ import { useState, useEffect, useRef, useMemo, memo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Pokemon } from "@/types/pokemon";
 import { formatPokemonName } from "@/lib/utils";
-import { Scale } from "lucide-react";
+import { Scale, Heart } from "lucide-react";
 import TypeBadge from "./TypeBadge";
 import Tooltip from "./Tooltip";
 import PokemonCardFrame from "./PokemonCardFrame";
 import LazyImage from "./LazyImage";
 import { PokemonCardSkeletonWithData } from "./PokemonCard";
+import { getGenerationRoman, getGenerationColor, getGenerationLabel } from "@/lib/generations";
 
 interface ModernPokemonCardProps {
   pokemon: Pokemon;
@@ -19,6 +20,8 @@ interface ModernPokemonCardProps {
   isSelected?: boolean;
   className?: string;
   density?: "3cols" | "6cols" | "9cols" | "10cols" | "list";
+  isFavorite?: boolean;
+  onToggleFavorite?: (id: number) => void;
 }
 
 function ModernPokemonCardComponent({
@@ -29,6 +32,8 @@ function ModernPokemonCardComponent({
   isSelected = false,
   className = "",
   density = "6cols",
+  isFavorite = false,
+  onToggleFavorite,
 }: ModernPokemonCardProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -129,8 +134,22 @@ function ModernPokemonCardComponent({
     onToggleComparison(pokemon.id);
   };
 
+  const handleFavoriteClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onToggleFavorite) {
+      onToggleFavorite(pokemon.id);
+    }
+  };
+
   const primaryType = pokemon.types[0]?.type.name || "normal";
   const accentColor = `var(--type-${primaryType})`;
+  
+  // Calculate base stats total
+  const baseStatsTotal = useMemo(() => {
+    if (!pokemon.stats || pokemon.stats.length === 0) return null
+    return pokemon.stats.reduce((sum, stat) => sum + stat.base_stat, 0)
+  }, [pokemon.stats])
   
   // Create gradient for multiple types
   const getAccentBarStyle = () => {
@@ -302,12 +321,16 @@ function ModernPokemonCardComponent({
 
   const artWrapperStyle = useMemo<React.CSSProperties>(() => {
     const top = density === '3cols' ? 40 : density === '6cols' ? 36 : 32
-    const bottom = density === '3cols' ? 60 : 8
+    const bottom = density === '3cols' ? 60 : density === '6cols' ? 48 : 40
     return {
       width: '100%',
       marginTop: `${top}px`,
       marginBottom: `${bottom}px`,
       borderRadius: '0.5rem',
+      minHeight: density === '3cols' ? '280px' : density === '6cols' ? '200px' : '160px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
     }
   }, [density])
 
@@ -381,6 +404,9 @@ function ModernPokemonCardComponent({
               <span className="text-xs font-mono text-gray-500 dark:text-gray-400 font-medium flex-shrink-0">
                 {pokemon.id !== 0 && `#${String(pokemon.id).padStart(3, "0")}`}
               </span>
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded bg-gradient-to-r ${getGenerationColor(pokemon.id)} text-white shadow-sm flex-shrink-0`}>
+                {getGenerationRoman(pokemon.id)}
+              </span>
               <h3 className="font-semibold text-gray-800 dark:text-gray-200 group-hover:text-poke-blue transition-colors truncate">
                 {hasRealName ? (
                   formatPokemonName(pokemon.name)
@@ -408,6 +434,39 @@ function ModernPokemonCardComponent({
                   </div>
                 )}
               </div>
+
+              {/* Base Stats Total */}
+              {baseStatsTotal !== null && (
+                <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-poke-blue/10 border border-poke-blue/20">
+                  <span className="text-xs text-muted font-medium">BST:</span>
+                  <span className="text-xs font-bold text-poke-blue">{baseStatsTotal}</span>
+                </div>
+              )}
+
+              {/* Favorite button */}
+              {onToggleFavorite && (
+                <button
+                  onClick={handleFavoriteClick}
+                  className={`
+                    p-1.5 rounded-full transition-all duration-200 border
+                    ${
+                      isFavorite
+                        ? "bg-red-500 text-white border-red-500 shadow-md"
+                        : "bg-white dark:bg-gray-700 text-gray-400 dark:text-gray-300 border-gray-200 dark:border-gray-500 hover:bg-red-500 hover:text-white hover:border-red-500"
+                    }
+                    focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1
+                  `}
+                  aria-label={
+                    isFavorite
+                      ? "Remove from favorites"
+                      : "Add to favorites"
+                  }
+                >
+                  <Heart
+                    className={`h-3 w-3 ${isFavorite ? "fill-current" : ""}`}
+                  />
+                </button>
+              )}
 
               {/* Comparison button */}
               <button
@@ -437,7 +496,6 @@ function ModernPokemonCardComponent({
       ) : (
           shouldUseTooltip ? (
             // Debug: Tooltip branch
-            (() => { return (
             <Tooltip
               content={tooltipContent}
               position="top"
@@ -448,35 +506,49 @@ function ModernPokemonCardComponent({
               <div ref={cardRef} className="flex flex-col relative" style={containerStyle}>
                 {/* Header */}
                 <div className="absolute top-1 left-1 right-1 z-20 flex items-center justify-between bg-white/95 dark:bg-gray-900/80 backdrop-blur-sm rounded-lg px-1.5 py-0.5 shadow-sm">
-                  <span className="text-slate-800 dark:text-gray-200 font-semibold text-xs sm:text-sm">{pokemon.id !== 0 && `#${String(pokemon.id).padStart(3, '0')}`}</span>
-                  <button onClick={handleComparisonClick} className={`p-1 sm:p-1.5 rounded-full transition-all duration-200 border ${isInComparison ? 'bg-blue-500 text-white border-blue-500 shadow-md' : 'bg-white dark:bg-gray-700 text-gray-400 dark:text-gray-300 border-gray-200 dark:border-gray-500 hover:bg-blue-500 hover:text-white hover:border-blue-500'} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 card-control`} aria-label={isInComparison ? 'Remove from comparison' : 'Add to comparison'}>
-                    <Scale className={`h-3 w-3 sm:h-4 sm:w-4 ${isInComparison ? 'fill-current' : ''}`} />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <span className="text-slate-800 dark:text-gray-200 font-semibold text-xs sm:text-sm">{pokemon.id !== 0 && `#${String(pokemon.id).padStart(3, '0')}`}</span>
+                    <span className={`text-[9px] sm:text-[10px] font-bold px-1 py-0.5 rounded bg-gradient-to-r ${getGenerationColor(pokemon.id)} text-white shadow-sm`}>
+                      {getGenerationRoman(pokemon.id)}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {onToggleFavorite && (
+                      <button onClick={handleFavoriteClick} className={`p-1 sm:p-1.5 rounded-full transition-all duration-200 border ${isFavorite ? 'bg-red-500 text-white border-red-500 shadow-md' : 'bg-white dark:bg-gray-700 text-gray-400 dark:text-gray-300 border-gray-200 dark:border-gray-500 hover:bg-red-500 hover:text-white hover:border-red-500'} focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 card-control`} aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}>
+                        <Heart className={`h-3 w-3 sm:h-4 sm:w-4 ${isFavorite ? 'fill-current' : ''}`} />
+                      </button>
+                    )}
+                    <button onClick={handleComparisonClick} className={`p-1 sm:p-1.5 rounded-full transition-all duration-200 border ${isInComparison ? 'bg-blue-500 text-white border-blue-500 shadow-md' : 'bg-white dark:bg-gray-700 text-gray-400 dark:text-gray-300 border-gray-200 dark:border-gray-500 hover:bg-blue-500 hover:text-white hover:border-blue-500'} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 card-control`} aria-label={isInComparison ? 'Remove from comparison' : 'Add to comparison'}>
+                      <Scale className={`h-3 w-3 sm:h-4 sm:w-4 ${isInComparison ? 'fill-current' : ''}`} />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Image - natural aspect ratio */}
-                <div className="relative flex w-full justify-center card-art" style={artWrapperStyle}>
-                  <div className="relative w-full aspect-square overflow-hidden rounded-xl bg-white/60 dark:bg-slate-900/40">
+                <div className="relative flex w-full justify-center items-center card-art" style={artWrapperStyle}>
+                  <div className="relative w-full h-full flex items-center justify-center rounded-xl bg-white/60 dark:bg-slate-900/40 p-2">
                     {!imageLoaded && !imageError && (
-                      <div className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-2 bg-slate-200/80 dark:bg-slate-800/60">
+                      <div className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-2 bg-slate-200/80 dark:bg-slate-800/60 rounded-xl">
                         <div className="w-14 h-14 bg-slate-300/60 dark:bg-slate-700/60 rounded-full animate-pulse" />
                         <span className="sr-only">Loading Pokémon artwork</span>
                       </div>
                     )}
                     <LazyImage
-                      className="absolute inset-0 z-10 flex items-center justify-center"
+                      className="relative z-10 flex items-center justify-center w-full h-full"
                       srcList={[primaryImageUrl, fallbackImageUrl, animatedUrl, placeholderImageUrl]}
                       alt={formatPokemonName(pokemon.name)}
-                      imgClassName={`object-contain transition-all duration-500 ease-out ${imageLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
+                      width={475}
+                      height={475}
+                      priority={pokemon.id <= 20}
+                      imgClassName={`object-contain max-w-full max-h-full w-auto h-auto transition-all duration-500 ease-out ${imageLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
                       imgStyle={{
                         viewTransitionName: `pokemon-sprite-${pokemon.id}`,
-                        width: '100%',
-                        height: '100%',
                         objectFit: 'contain',
-                        display: 'block'
+                        display: 'block',
+                        margin: 'auto'
                       }}
-                      rootMargin="100px"
-                      threshold={0.1}
+                      rootMargin="150px"
+                      threshold={0.01}
                       unloadOffscreen={false}
                       onLoad={() => setImageLoaded(true)}
                       onError={() => setImageError(true)}
@@ -510,46 +582,58 @@ function ModernPokemonCardComponent({
                       </div>
                     )}
                   </div>
+                  {baseStatsTotal !== null && density !== '9cols' && (
+                    <div className="flex items-center justify-center gap-1 mt-1">
+                      <span className="text-[10px] text-muted font-medium">BST:</span>
+                      <span className="text-[10px] font-bold text-poke-blue">{baseStatsTotal}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </Tooltip>
-            ); })()
           ) : (
             // Non-tooltip branch
-            (() => { 
-              return (
-                <div ref={cardRef} className="flex flex-col relative" style={containerStyle}>
+            <div ref={cardRef} className="flex flex-col relative" style={containerStyle}>
                   {/* Header */}
                   <div className="absolute top-1 left-1 right-1 z-20 flex items-center justify-between bg-white/95 dark:bg-gray-900/80 backdrop-blur-sm rounded-lg px-1.5 py-0.5 shadow-sm">
                     <span className="text-slate-800 dark:text-gray-200 font-semibold text-xs sm:text-sm">{pokemon.id !== 0 && `#${String(pokemon.id).padStart(3, '0')}`}</span>
-                    <button onClick={handleComparisonClick} className={`p-1 sm:p-1.5 rounded-full transition-all duration-200 border ${isInComparison ? 'bg-blue-500 text-white border-blue-500 shadow-md' : 'bg-white dark:bg-gray-700 text-gray-400 dark:text-gray-300 border-gray-200 dark:border-gray-500 hover:bg-blue-500 hover:text-white hover:border-blue-500'} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 card-control`} aria-label={isInComparison ? 'Remove from comparison' : 'Add to comparison'}>
-                      <Scale className={`h-3 w-3 sm:h-4 sm:w-4 ${isInComparison ? 'fill-current' : ''}`} />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      {onToggleFavorite && (
+                        <button onClick={handleFavoriteClick} className={`p-1 sm:p-1.5 rounded-full transition-all duration-200 border ${isFavorite ? 'bg-red-500 text-white border-red-500 shadow-md' : 'bg-white dark:bg-gray-700 text-gray-400 dark:text-gray-300 border-gray-200 dark:border-gray-500 hover:bg-red-500 hover:text-white hover:border-red-500'} focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 card-control`} aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}>
+                          <Heart className={`h-3 w-3 sm:h-4 sm:w-4 ${isFavorite ? 'fill-current' : ''}`} />
+                        </button>
+                      )}
+                      <button onClick={handleComparisonClick} className={`p-1 sm:p-1.5 rounded-full transition-all duration-200 border ${isInComparison ? 'bg-blue-500 text-white border-blue-500 shadow-md' : 'bg-white dark:bg-gray-700 text-gray-400 dark:text-gray-300 border-gray-200 dark:border-gray-500 hover:bg-blue-500 hover:text-white hover:border-blue-500'} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 card-control`} aria-label={isInComparison ? 'Remove from comparison' : 'Add to comparison'}>
+                        <Scale className={`h-3 w-3 sm:h-4 sm:w-4 ${isInComparison ? 'fill-current' : ''}`} />
+                      </button>
+                    </div>
                   </div>
 
                   {/* Image - natural aspect ratio */}
-                  <div className="relative flex w-full justify-center card-art" style={artWrapperStyle}>
-                    <div className="relative w-full aspect-square overflow-hidden rounded-xl bg-white/60 dark:bg-slate-900/40">
+                  <div className="relative flex w-full justify-center items-center card-art" style={artWrapperStyle}>
+                    <div className="relative w-full h-full flex items-center justify-center rounded-xl bg-white/60 dark:bg-slate-900/40 p-2">
                       {!imageLoaded && !imageError && (
-                        <div className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-2 bg-slate-200/80 dark:bg-slate-800/60">
+                        <div className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-2 bg-slate-200/80 dark:bg-slate-800/60 rounded-xl">
                           <div className="w-14 h-14 bg-slate-300/60 dark:bg-slate-700/60 rounded-full animate-pulse" />
                           <span className="sr-only">Loading Pokémon artwork</span>
                         </div>
                       )}
                       <LazyImage
-                        className="absolute inset-0 z-10 flex items-center justify-center"
+                        className="relative z-10 flex items-center justify-center w-full h-full"
                         srcList={[primaryImageUrl, fallbackImageUrl, animatedUrl, placeholderImageUrl]}
                         alt={formatPokemonName(pokemon.name)}
-                        imgClassName={`object-contain transition-all duration-500 ease-out ${imageLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
+                        width={475}
+                        height={475}
+                        priority={pokemon.id <= 20}
+                        imgClassName={`object-contain max-w-full max-h-full w-auto h-auto transition-all duration-500 ease-out ${imageLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
                         imgStyle={{
                           viewTransitionName: `pokemon-sprite-${pokemon.id}`,
-                          width: '100%',
-                          height: '100%',
                           objectFit: 'contain',
-                          display: 'block'
+                          display: 'block',
+                          margin: 'auto'
                         }}
-                        rootMargin="100px"
-                        threshold={0.1}
+                        rootMargin="150px"
+                        threshold={0.01}
                         unloadOffscreen={false}
                         onLoad={() => setImageLoaded(true)}
                         onError={() => setImageError(true)}
@@ -583,10 +667,15 @@ function ModernPokemonCardComponent({
                         </div>
                       )}
                     </div>
+                    {baseStatsTotal !== null && density !== '9cols' && (
+                      <div className="flex items-center justify-center gap-1 mt-1">
+                        <span className="text-[10px] text-muted font-medium">BST:</span>
+                        <span className="text-[10px] font-bold text-poke-blue">{baseStatsTotal}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
-              );
-            })()
+
           )
         )
       }
@@ -595,16 +684,21 @@ function ModernPokemonCardComponent({
 }
 
 // Memoized component to prevent unnecessary re-renders when props haven't changed
-const ModernPokemonCard = memo(ModernPokemonCardComponent, (prevProps, nextProps) => {
-  // Return true if props are equal (skip re-render), false if different (re-render needed)
-  return (
-    prevProps.pokemon.id === nextProps.pokemon.id &&
-    prevProps.isInComparison === nextProps.isInComparison &&
-    prevProps.isSelected === nextProps.isSelected &&
-    prevProps.density === nextProps.density &&
-    prevProps.className === nextProps.className
-  );
-});
+// Uses custom comparison to skip re-renders when only internal state changes
+const ModernPokemonCard = memo(
+  ModernPokemonCardComponent,
+  (prevProps, nextProps) => {
+    // Return true if props are equal (skip re-render), false if different (re-render needed)
+    return (
+      prevProps.pokemon.id === nextProps.pokemon.id &&
+      prevProps.isInComparison === nextProps.isInComparison &&
+      prevProps.isSelected === nextProps.isSelected &&
+      prevProps.density === nextProps.density &&
+      prevProps.className === nextProps.className &&
+      prevProps.isFavorite === nextProps.isFavorite
+    );
+  }
+);
 
 ModernPokemonCard.displayName = 'ModernPokemonCard';
 

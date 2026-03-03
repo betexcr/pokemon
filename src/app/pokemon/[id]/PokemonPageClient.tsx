@@ -8,6 +8,7 @@ import { Pokemon } from '@/types/pokemon'
 import { useSmartBackNavigation } from '@/hooks/useSmartBackNavigation'
 import { isSpecialForm } from '@/lib/specialForms'
 import { usePreloadAroundId } from '@/components/PokemonPreloader'
+import { useRecentlyViewed } from '@/hooks/useRecentlyViewed'
 
 interface PokemonPageClientProps {
   pokemon: Pokemon
@@ -15,9 +16,15 @@ interface PokemonPageClientProps {
 
 export default function PokemonPageClient({ pokemon }: PokemonPageClientProps) {
   const router = useRouter()
+  const { addRecentlyViewed } = useRecentlyViewed()
 
   // Preload surrounding Pokemon for better navigation
   usePreloadAroundId(pokemon.id, 10)
+
+  // Track this Pokemon as recently viewed
+  useEffect(() => {
+    addRecentlyViewed(pokemon.id, pokemon.name)
+  }, [pokemon.id, pokemon.name, addRecentlyViewed])
 
   // Set document title with capitalized Pokémon name
   useEffect(() => {

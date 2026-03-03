@@ -27,6 +27,9 @@ interface VirtualizedPokemonGridProps {
   isLoadingMore?: boolean
   onLoadMore?: () => void
   sentinelRef?: (node: HTMLDivElement | null) => void
+  // Favorites props
+  favoritesList?: number[]
+  onToggleFavorite?: (id: number) => void
 }
 
 export default function VirtualizedPokemonGrid({
@@ -46,7 +49,10 @@ export default function VirtualizedPokemonGrid({
   hasMorePokemon = true,
   isLoadingMore = false,
   onLoadMore,
-  sentinelRef
+  sentinelRef,
+  // Favorites props
+  favoritesList = [],
+  onToggleFavorite
 }: VirtualizedPokemonGridProps) {
 
   // Note: Intersection observer is handled by parent components to avoid conflicts
@@ -60,14 +66,14 @@ export default function VirtualizedPokemonGrid({
     // Theme provider not available, use default
   }
 
-  // Calculate layout based on density - fixed column counts with proper aspect ratios
+  // Calculate layout based on density - responsive column counts that adapt to screen size
   const getLayoutClasses = () => {
     switch (density) {
-      case '3cols': return 'grid grid-cols-3 gap-4 items-start' // Always 3 columns, items start aligned
-      case '6cols': return 'grid grid-cols-6 gap-3 items-start' // Always 6 columns, items start aligned
-      case '9cols': return 'grid grid-cols-9 gap-2 items-start' // Always 9 columns, items start aligned
+      case '3cols': return 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-start' // Responsive: 1-2-3 columns
+      case '6cols': return 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 items-start' // Responsive: 2-3-4-5-6 columns
+      case '9cols': return 'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 2xl:grid-cols-9 gap-2 items-start' // Responsive: 3-4-6-7-8-9 columns
       case 'list': return 'flex flex-col gap-1' // List view with tighter spacing
-      default: return 'grid grid-cols-6 gap-3 items-start' // Default to 6 columns, items start aligned
+      default: return 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 items-start' // Default responsive
     }
   }
 
@@ -108,11 +114,12 @@ export default function VirtualizedPokemonGrid({
   // Calculate grid dimensions for virtualization - Natural dimensions
   const getGridDimensions = useMemo(() => {
     switch (density) {
-      case '3cols': return { cols: 3, itemHeight: 'auto', gap: 16 } // Natural height
-      case '6cols': return { cols: 6, itemHeight: 'auto', gap: 12 } // Natural height
-      case '9cols': return { cols: 9, itemHeight: 'auto', gap: 8 }  // Natural height
+      // Keep row estimates close to actual rendered card heights to avoid clipping before measurement.
+      case '3cols': return { cols: 3, itemHeight: 470, gap: 16 }
+      case '6cols': return { cols: 6, itemHeight: 360, gap: 12 }
+      case '9cols': return { cols: 9, itemHeight: 320, gap: 8 }
       case 'list': return { cols: 1, itemHeight: 60, gap: 4 }
-      default: return { cols: 6, itemHeight: 140, gap: 12 }
+      default: return { cols: 6, itemHeight: 360, gap: 12 }
     }
   }, [density])
 
@@ -226,7 +233,8 @@ export default function VirtualizedPokemonGrid({
       // Use the main scroll container instead of creating our own
       return document.querySelector('.flex-1.min-h-0.overflow-y-auto') || parentRef.current
     },
-    estimateSize: () => (typeof getGridDimensions.itemHeight === 'number' ? getGridDimensions.itemHeight : 140) + getGridDimensions.gap,
+    estimateSize: () => getGridDimensions.itemHeight + getGridDimensions.gap,
+    measureElement: (element) => element.getBoundingClientRect().height,
     overscan: 5, // Render 5 extra rows for smooth scrolling
   })
 
@@ -286,6 +294,8 @@ export default function VirtualizedPokemonGrid({
                 onSelect={undefined}
                 isSelected={selectedPokemon?.id === pokemon.id}
                 density={density}
+                isFavorite={favoritesList.includes(pokemon.id)}
+                onToggleFavorite={onToggleFavorite}
               />
             ) : (
               <div
@@ -353,8 +363,8 @@ export default function VirtualizedPokemonGrid({
                     <PokemonCard
                       key={key}
                       pokemon={pokemon}
-                      isFavorite={false}
-                      onToggleFavorite={() => {}}
+                      isFavorite={favoritesList.includes(pokemon.id)}
+                      onToggleFavorite={onToggleFavorite || (() => {})}
                       isInComparison={comparisonList.includes(pokemon.id)}
                       onToggleComparison={onToggleComparison}
                       cardSize="compact"
@@ -372,6 +382,8 @@ export default function VirtualizedPokemonGrid({
                     onSelect={undefined}
                     isSelected={selectedPokemon?.id === pokemon.id}
                     density={density}
+                    isFavorite={favoritesList.includes(pokemon.id)}
+                    onToggleFavorite={onToggleFavorite}
                   />
                 )
               } else {
@@ -442,6 +454,8 @@ export default function VirtualizedPokemonGrid({
                 onSelect={undefined}
                 isSelected={selectedPokemon?.id === pokemon.id}
                 density={density}
+                isFavorite={favoritesList.includes(pokemon.id)}
+                onToggleFavorite={onToggleFavorite}
               />
             ) : (
               <div
@@ -509,8 +523,8 @@ export default function VirtualizedPokemonGrid({
                     <PokemonCard
                       key={key}
                       pokemon={pokemon}
-                      isFavorite={false}
-                      onToggleFavorite={() => {}}
+                      isFavorite={favoritesList.includes(pokemon.id)}
+                      onToggleFavorite={onToggleFavorite || (() => {})}
                       isInComparison={comparisonList.includes(pokemon.id)}
                       onToggleComparison={onToggleComparison}
                       cardSize="ultra"
@@ -528,6 +542,8 @@ export default function VirtualizedPokemonGrid({
                     onSelect={undefined}
                     isSelected={selectedPokemon?.id === pokemon.id}
                     density={density}
+                    isFavorite={favoritesList.includes(pokemon.id)}
+                    onToggleFavorite={onToggleFavorite}
                   />
                 )
               } else {
@@ -578,7 +594,7 @@ export default function VirtualizedPokemonGrid({
     }
 
     return rowContent
-  }, [getCacheKey, regularPokemon, specialFormsPokemon, regularRows, density, getGridDimensions, comparisonList, selectedPokemon, onToggleComparison, getLayoutClasses])
+  }, [getCacheKey, regularPokemon, specialFormsPokemon, regularRows, density, getGridDimensions, comparisonList, selectedPokemon, onToggleComparison, getLayoutClasses, favoritesList, onToggleFavorite])
 
   // Deduplicate Pokemon to ensure unique keys
   const uniqueRegularPokemon = useMemo(() => {
@@ -618,12 +634,13 @@ export default function VirtualizedPokemonGrid({
               {virtualizer.getVirtualItems().map((virtualRow) => (
                 <div
                   key={virtualRow.key}
+                  data-index={virtualRow.index}
+                  ref={virtualizer.measureElement}
                   style={{
                     position: 'absolute',
                     top: 0,
                     left: 0,
                     width: '100%',
-                    height: `${virtualRow.size}px`,
                     transform: `translateY(${virtualRow.start}px)`,
                   }}
                 >
@@ -715,6 +732,8 @@ export default function VirtualizedPokemonGrid({
                       onSelect={undefined}
                       isSelected={selectedPokemon?.id === pokemon.id}
                       density={density}
+                      isFavorite={favoritesList.includes(pokemon.id)}
+                      onToggleFavorite={onToggleFavorite}
                     />
                   ) : (
                     // Render skeleton card with Pokemon ID and name
@@ -808,6 +827,8 @@ export default function VirtualizedPokemonGrid({
                       onSelect={undefined}
                       isSelected={selectedPokemon?.id === pokemon.id}
                       density={density}
+                      isFavorite={favoritesList.includes(pokemon.id)}
+                      onToggleFavorite={onToggleFavorite}
                     />
                   ) : (
                     // Render skeleton card with Pokemon ID and name

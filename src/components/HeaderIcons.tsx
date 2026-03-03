@@ -90,7 +90,7 @@ export default function HeaderIcons({
           >
             <span className="absolute inset-0 pointer-events-none rounded-xl bg-gradient-to-br from-poke-blue/10 via-poke-red/10 to-amber-300/10 opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="absolute inset-1 rounded-lg bg-white/90 dark:bg-white/5" />
-            <Sparkles className="relative z-10 h-4 w-4 sm:h-6 sm:w-6 text-poke-blue dark:text-blue-300 group-hover:scale-110 transition-transform" />
+            <span suppressHydrationWarning><Sparkles className="relative z-10 h-4 w-4 sm:h-6 sm:w-6 text-poke-blue dark:text-blue-300 group-hover:scale-110 transition-transform" /></span>
           </PokedexLink>
         </Tooltip>
 			{openInsights && (
@@ -138,6 +138,7 @@ export default function HeaderIcons({
           width={48}
           height={48}
           className="relative z-10 w-full h-full object-contain"
+          suppressHydrationWarning
         />
         </OptimizedLink>
       </Tooltip>
@@ -156,6 +157,7 @@ export default function HeaderIcons({
           width={48}
           height={48}
           className="relative z-10 w-full h-full object-contain"
+          suppressHydrationWarning
         />
         </OptimizedLink>
       </Tooltip>
@@ -173,6 +175,7 @@ export default function HeaderIcons({
           width={48}
           height={48}
           className="relative z-10 w-full h-full object-contain"
+          suppressHydrationWarning
         />
         </OptimizedLink>
       </Tooltip>
@@ -190,6 +193,7 @@ export default function HeaderIcons({
           width={48}
           height={48}
           className="relative z-10 w-full h-full object-contain"
+          suppressHydrationWarning
         />
         </OptimizedLink>
       </Tooltip>
@@ -219,6 +223,7 @@ export function HamburgerMenu({ onClick, className = '' }: HamburgerMenuProps) {
         width={48}
         height={48}
         className="relative z-10 w-full h-full object-contain"
+        suppressHydrationWarning
       />
       </button>
     </Tooltip>

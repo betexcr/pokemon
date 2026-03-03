@@ -69,14 +69,14 @@ export default function OptimizedVirtualizedPokemonGrid({
     // Theme provider not available, use default
   }
 
-  // Calculate layout based on density
+  // Calculate layout based on density - responsive
   const getLayoutClasses = useCallback(() => {
     switch (density) {
-      case '3cols': return 'grid grid-cols-3 gap-4 items-start'
-      case '6cols': return 'grid grid-cols-6 gap-3 items-start'
-      case '9cols': return 'grid grid-cols-9 gap-2 items-start'
+      case '3cols': return 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-start'
+      case '6cols': return 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 items-start'
+      case '9cols': return 'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 2xl:grid-cols-9 gap-2 items-start'
       case 'list': return 'flex flex-col gap-1'
-      default: return 'grid grid-cols-6 gap-3 items-start'
+      default: return 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 items-start'
     }
   }, [density])
 

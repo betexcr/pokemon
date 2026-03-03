@@ -96,7 +96,7 @@ export default function PokemonCard({
           "group relative rounded-2xl border border-border bg-surface shadow-card transition cursor-pointer text-text",
           "hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-poke-blue focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
           mode === "grid"
-            ? "overflow-hidden flex flex-col aspect-square"
+            ? "overflow-hidden flex flex-col min-h-[280px]"
             : "grid grid-cols-[minmax(140px,200px)_1fr] gap-4 overflow-hidden",
           isSelected && "ring-2 ring-poke-blue ring-offset-2"
         )}
@@ -155,16 +155,15 @@ export default function PokemonCard({
         {isFavorite ? "❤️" : "♡"}
       </button>
 
-      {/* Artwork - square aspect ratio with minimal white space */}
+      {/* Artwork - full image display without clipping */}
       <div
         className={clsx(
-          "flex items-center justify-center overflow-hidden flex-1",
+          "flex items-center justify-center flex-1 p-4",
           mode === "grid" ? "w-full" : "w-full"
         )}
         style={{
-          padding: 0,
           backgroundColor: "transparent",
-          minHeight: 0 // Allow flex to work properly
+          minHeight: mode === "grid" ? "200px" : "auto"
         }}
       >
         <LazyImage
@@ -174,8 +173,9 @@ export default function PokemonCard({
             "/placeholder-pokemon.png"
           ]}
           alt={formatPokemonName(pokemon.name)}
-          width={512}
-          height={512}
+          width={475}
+          height={475}
+          priority={pokemon.id <= 20}
           imgClassName={clsx(
             "mx-auto max-h-full max-w-full w-auto h-auto object-contain transition-transform duration-300",
             "group-hover:scale-[1.04]"
@@ -186,7 +186,7 @@ export default function PokemonCard({
             maxHeight: "100%",
             margin: "auto"
           }}
-          rootMargin="250px"
+          rootMargin="200px"
           threshold={0.01}
         />
       </div>
@@ -226,13 +226,13 @@ function formatPokemonName(name: string): string {
 // Skeleton loading component
 export function PokemonCardSkeleton({ density = 'comfy' }: { density?: 'comfy' | 'compact' }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-border bg-slate-100/80 shadow-sm animate-pulse dark:bg-slate-900/40">
+    <div className="relative overflow-hidden rounded-2xl border border-border bg-slate-100/80 shadow-sm animate-pulse dark:bg-slate-900/40 min-h-[280px] flex flex-col">
       <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-white/10 to-transparent dark:from-white/10 dark:via-white/5 pointer-events-none" />
-      <div className="relative">
+      <div className="relative flex flex-col flex-1">
         <div className="h-1.5 w-full rounded-t-2xl bg-slate-300/80 dark:bg-slate-700/70" />
-        <div className="aspect-square bg-slate-200/70 dark:bg-slate-800/60" />
+        <div className="flex-1 min-h-[200px] bg-slate-200/70 dark:bg-slate-800/60" />
         <div className={clsx(
-          "space-y-3",
+          "space-y-3 flex-shrink-0",
           density === 'compact' ? 'p-3' : 'p-4'
         )}>
           <div className="flex items-baseline justify-between">

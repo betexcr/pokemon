@@ -29,9 +29,9 @@ export default function DexCard({ entry, isCaught, onToggleCaught }: DexCardProp
           className="h-4 w-4 accent-green-600"
         />
       </div>
-      <div className="aspect-square bg-gray-50 dark:bg-gray-900 rounded flex items-center justify-center overflow-hidden">
+      <div className="min-h-[120px] bg-gray-50 dark:bg-gray-900 rounded flex items-center justify-center p-2">
         {inView ? (
-          <img src={entry.sprite} alt={entry.name} className="object-contain w-full h-full" loading="lazy" />
+          <img src={entry.sprite} alt={entry.name} className="object-contain w-full h-full max-h-full" loading="lazy" />
         ) : (
           <div className="w-full h-full" aria-hidden />
         )}

@@ -38,7 +38,7 @@ export default function PokedexListView({
     <div className="w-full rounded-xl border border-border overflow-hidden bg-surface">
       {/* Rows */}
       <ul role="list" className="divide-y divide-border">
-        {pokemonList.map((pokemon) => {
+        {pokemonList.map((pokemon, index) => {
           const isInComparison = comparisonList.includes(pokemon.id);
           
           return (
@@ -56,6 +56,8 @@ export default function PokedexListView({
                     alt={pokemon.name}
                     width={80}
                     height={80}
+                    loading={index < 10 ? "eager" : "lazy"}
+                    priority={index < 10}
                     className="w-16 h-16 object-contain"
                     onLoadingComplete={(img) => {
                       const wrapper = (img as any).parentElement as HTMLElement | null;

@@ -293,10 +293,11 @@ export default function Home() {
         const total = await getPokemonTotalCount()
         setTotalCount(total)
         
-        // Load a much larger initial batch of skeletons for smooth scrolling
-        const initialBatch = generateAllPokemonSkeletons(200)
+        // Load a smaller initial batch of skeletons for faster initial render (50 instead of 200)
+        // This dramatically improves Time to First Paint and First Contentful Paint
+        const initialBatch = generateAllPokemonSkeletons(50)
         setPokemonList(initialBatch)
-        setCurrentOffset(200)
+        setCurrentOffset(50)
         setLoading(false)
         
         console.log(`✅ Initial batch loaded: ${initialBatch.length} Pokemon (total: ${total})`)
@@ -527,10 +528,10 @@ export default function Home() {
     setHasMorePokemon(true)
     setError(null)
     setLoading(true)
-    // Reload initial batch with larger size
-    const initialBatch = generateAllPokemonSkeletons(200)
+    // Reload initial batch with optimized size (50 for fast render)
+    const initialBatch = generateAllPokemonSkeletons(50)
     setPokemonList(initialBatch)
-    setCurrentOffset(200)
+    setCurrentOffset(50)
     setLoading(false)
   }, [])
 
@@ -589,7 +590,7 @@ export default function Home() {
 
   // Preload visible Pokemon for better performance (implemented inline to avoid HMR issues)
   const visiblePokemonIds = useMemo(() => {
-    return memoizedFilteredPokemon.slice(0, 100).map(p => p.id) // Increased for super smooth scrolling
+    return memoizedFilteredPokemon.slice(0, 50).map(p => p.id) // Optimized for better memory usage
   }, [memoizedFilteredPokemon])
 
   // Preloading is handled by the PokemonPreloader component in layout

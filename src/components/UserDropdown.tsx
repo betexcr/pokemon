@@ -173,6 +173,7 @@ export default function UserDropdown({ isMobile = false }: UserDropdownProps) {
               minHeight: '0 !important'
             }}
             referrerPolicy="no-referrer"
+            suppressHydrationWarning
           />
         </button>
       </div>
@@ -197,6 +198,7 @@ export default function UserDropdown({ isMobile = false }: UserDropdownProps) {
             className="w-full h-full rounded-full object-cover opacity-70"
             style={{ borderRadius: '50%' }}
             referrerPolicy="no-referrer"
+            suppressHydrationWarning
           />
         </button>
       </div>
@@ -238,6 +240,7 @@ export default function UserDropdown({ isMobile = false }: UserDropdownProps) {
               minHeight: '0 !important'
             }}
             referrerPolicy="no-referrer"
+            suppressHydrationWarning
           />
         </button>
 
@@ -287,7 +290,7 @@ export default function UserDropdown({ isMobile = false }: UserDropdownProps) {
             className="flex w-full items-center px-4 py-3 text-sm text-blue-600 dark:text-blue-400 transition hover:bg-blue-50 dark:hover:bg-blue-950/40 focus:bg-blue-50 dark:focus:bg-blue-950/40"
             type="button"
           >
-            <RotateCcw className="mr-2 h-4 w-4" />
+            <span suppressHydrationWarning><RotateCcw className="mr-2 h-4 w-4" /></span>
             Reset Poke-Tips
           </button>
           
@@ -303,7 +306,7 @@ export default function UserDropdown({ isMobile = false }: UserDropdownProps) {
             className="flex w-full items-center px-4 py-3 text-sm text-blue-600 dark:text-blue-400 transition hover:bg-blue-50 dark:hover:bg-blue-950/40 focus:bg-blue-50 dark:focus:bg-blue-950/40 rounded-b-lg"
             type="button"
           >
-            <LogIn className="mr-2 h-4 w-4" />
+            <span suppressHydrationWarning><LogIn className="mr-2 h-4 w-4" /></span>
             Sign In / Sign Up
           </button>
         </div>
@@ -414,7 +417,7 @@ export default function UserDropdown({ isMobile = false }: UserDropdownProps) {
                      focus:bg-blue-50 dark:focus:bg-blue-900/40
                      active:bg-blue-100 dark:active:bg-blue-900/60"
         >
-          <RotateCcw className="mr-2 h-4 w-4 text-current" />
+          <span suppressHydrationWarning><RotateCcw className="mr-2 h-4 w-4 text-current" /></span>
           Reset Poke-Tips
         </button>
 
@@ -430,7 +433,7 @@ export default function UserDropdown({ isMobile = false }: UserDropdownProps) {
                      active:bg-red-100 dark:active:bg-red-900/60
                      rounded-b-lg"
         >
-          <LogOut className="mr-2 h-4 w-4 text-current" />
+          <span suppressHydrationWarning><LogOut className="mr-2 h-4 w-4 text-current" /></span>
           Log out
         </button>
       </div>
