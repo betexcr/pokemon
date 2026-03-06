@@ -110,6 +110,7 @@ export default function TeamBuilderPage() {
   const [draftHydrated, setDraftHydrated] = useState(false)
   const layoutRef = useRef<HTMLDivElement | null>(null)
   const selectorInputRef = useRef<HTMLInputElement | null>(null)
+  const slotRefs = useRef<(HTMLDivElement | null)[]>([null, null, null, null, null, null])
   
   // Virtualized scrolling state
   const [pokemonOffset, setPokemonOffset] = useState(0)
@@ -1162,8 +1163,11 @@ export default function TeamBuilderPage() {
                     return newSet
                   })
                   setActiveSlotIndex(preferred)
-                  // Trigger re-analysis after Pokemon is added
                   setAnalysisTrigger(prev => prev + 1)
+                  // Scroll to the slot after React renders the expanded content
+                  requestAnimationFrame(() => {
+                    slotRefs.current[preferred]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                  })
                 }
               }}
               onPokemonRemove={(pokemonId) => {
@@ -1403,7 +1407,7 @@ export default function TeamBuilderPage() {
             {teamSlots.map((slot, idx) => {
               const poke = (slot.id ? (displayPokemonById[slot.id] || allPokemon.find(p => p.id === slot.id)) : null) || null
               return (
-                <div key={idx} className="border border-border rounded-lg bg-white/50 w-full min-w-0 overflow-hidden">
+                <div key={idx} ref={el => { slotRefs.current[idx] = el }} className="border border-border rounded-lg bg-white/50 w-full min-w-0 overflow-hidden">
                   {/* Collapsible Header */}
                   <div 
                     className="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50 transition-colors gap-3"
