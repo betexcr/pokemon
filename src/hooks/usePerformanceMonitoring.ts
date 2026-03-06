@@ -116,7 +116,7 @@ export function usePokedexPerformanceMonitoring() {
       rafRef.current = requestAnimationFrame(measureScrollFps)
     }
 
-    const scrollContainer = document.querySelector('.flex-1.min-h-0.overflow-y-auto')
+    const scrollContainer = document.querySelector('[data-main-scroll]')
     if (!scrollContainer) return
 
     let isScrolling = false

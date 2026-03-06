@@ -103,7 +103,7 @@ export function useViewportDataLoading({
       }
       
       // Get the scroll container (the main scrollable area)
-      const scrollContainer = document.querySelector('.flex-1.min-h-0.overflow-y-auto') || window;
+      const scrollContainer = document.querySelector('[data-main-scroll]') || window;
       const containerRect = scrollContainer === window ? 
         { top: 0, bottom: window.innerHeight } : 
         (scrollContainer as Element).getBoundingClientRect();
@@ -154,7 +154,7 @@ export function useViewportDataLoading({
     
     // Find Pokemon that are visible but don't have loaded data
     const pokemonCards = document.querySelectorAll('[data-pokemon-id]');
-    const scrollContainer = document.querySelector('.flex-1.min-h-0.overflow-y-auto') || window;
+    const scrollContainer = document.querySelector('[data-main-scroll]') || window;
     const containerRect = scrollContainer === window ? 
       { top: 0, bottom: window.innerHeight } : 
       (scrollContainer as Element).getBoundingClientRect();
@@ -246,7 +246,7 @@ export function useViewportDataLoading({
   // Set up scroll listener
   useEffect(() => {
     // Listen to the main scroll container instead of window
-    const scrollContainer = document.querySelector('.flex-1.min-h-0.overflow-y-auto');
+    const scrollContainer = document.querySelector('[data-main-scroll]');
     
     if (scrollContainer) {
       scrollContainer.addEventListener('scroll', handleScroll, { passive: true });

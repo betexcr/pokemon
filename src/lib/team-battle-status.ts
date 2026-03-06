@@ -27,7 +27,7 @@ export function incrementStatusTurns(pokemon: BattlePokemon): void {
 
 export function isGrounded(pokemon: BattlePokemon): boolean {
   const types = pokemon.pokemon.types.map(t => typeof t === 'string' ? t : t.type?.name || '');
-  return !types.includes('Flying');
+  return !types.includes('flying');
 }
 
 export function terrainPreventsStatus(terrain: FieldTerrain['kind'] | undefined, pokemon: BattlePokemon, status: BattlePokemon['status']): boolean {

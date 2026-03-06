@@ -31,16 +31,11 @@ export default function StatsSlider({
   };
 
   const fillColor = getColorValue(colorClass);
-  const TRACK_HEIGHT_PX = 24; // enforce explicit height
+  const TRACK_HEIGHT_PX = 18;
 
   return (
-    <div className={clsx("w-full", className)}>
-      <div className="mb-2 flex items-baseline justify-between">
-        <span className="text-base font-semibold text-text">{label}</span>
-        <div className="flex items-baseline gap-2 text-sm">
-          <span className="tabular-nums font-medium text-text">{value}</span>
-        </div>
-      </div>
+    <div className={clsx("w-full flex items-center gap-3", className)}>
+      <span className="w-10 shrink-0 text-sm font-semibold text-text">{label}</span>
 
       <div
         role="progressbar"
@@ -48,8 +43,8 @@ export default function StatsSlider({
         aria-valuemin={min}
         aria-valuemax={max}
         aria-valuenow={clamped}
-        className="relative w-full overflow-hidden rounded-full border-2 border-gray-300 dark:border-gray-600 shadow-inner"
-        style={{ 
+        className="relative flex-1 min-w-0 overflow-hidden rounded-full border-2 border-gray-300 dark:border-gray-600 shadow-inner"
+        style={{
           height: `${TRACK_HEIGHT_PX}px`,
           backgroundColor: '#f3f4f6',
           backgroundClip: 'padding-box'
@@ -57,13 +52,15 @@ export default function StatsSlider({
       >
         <div
           className="absolute left-0 top-0 h-full rounded-full transition-all duration-700 ease-out shadow-lg z-20"
-          style={{ 
+          style={{
             width: `${pct}%`,
             minWidth: pct > 0 ? '12px' : '0px',
             backgroundColor: fillColor
           }}
         />
       </div>
+
+      <span className="w-8 shrink-0 text-right text-sm tabular-nums font-medium text-text">{value}</span>
     </div>
   );
 }

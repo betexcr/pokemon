@@ -50,7 +50,7 @@ export function useViewportCancellation(options: UseViewportCancellationOptions 
   const processViewport = useCallback(async () => {
     if (!enabled) return;
 
-    const scrollContainer = scrollContainerRef.current || document.querySelector('.flex-1.min-h-0.overflow-y-auto');
+    const scrollContainer = scrollContainerRef.current || document.querySelector('[data-main-scroll]');
     if (!scrollContainer) return;
 
     const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
@@ -120,7 +120,7 @@ export function useViewportCancellation(options: UseViewportCancellationOptions 
   useEffect(() => {
     if (!enabled) return;
 
-    const scrollContainer = document.querySelector('.flex-1.min-h-0.overflow-y-auto');
+    const scrollContainer = document.querySelector('[data-main-scroll]');
     if (!scrollContainer) return;
 
     scrollContainerRef.current = scrollContainer as HTMLElement;
@@ -153,7 +153,7 @@ export function useViewportCancellation(options: UseViewportCancellationOptions 
      * Get list of currently visible Pokemon IDs
      */
     getVisiblePokemonIds: (): number[] => {
-      const scrollContainer = scrollContainerRef.current || document.querySelector('.flex-1.min-h-0.overflow-y-auto');
+      const scrollContainer = scrollContainerRef.current || document.querySelector('[data-main-scroll]');
       if (!scrollContainer) return [];
 
       const { scrollTop, clientHeight } = scrollContainer;

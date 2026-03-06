@@ -14,7 +14,7 @@ interface OptimizedVirtualizedPokemonGridProps {
   onSelectPokemon?: (pokemon: Pokemon) => void
   selectedPokemon: Pokemon | null
   comparisonList: number[]
-  density: '3cols' | '6cols' | '9cols' | 'list'
+  density: '3cols' | '6cols' | '9cols' | '12cols' | 'list'
   className?: string
   isLoading?: boolean
   enableVirtualization?: boolean
@@ -73,10 +73,11 @@ export default function OptimizedVirtualizedPokemonGrid({
   const getLayoutClasses = useCallback(() => {
     switch (density) {
       case '3cols': return 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-start'
-      case '6cols': return 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 items-start'
-      case '9cols': return 'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 2xl:grid-cols-9 gap-2 items-start'
+      case '6cols': return 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-3 items-start'
+      case '9cols': return 'grid grid-cols-9 gap-2 items-start'
+      case '12cols': return 'grid grid-cols-12 gap-2 items-start'
       case 'list': return 'flex flex-col gap-1'
-      default: return 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 items-start'
+      default: return 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-3 items-start'
     }
   }, [density])
 
@@ -86,6 +87,7 @@ export default function OptimizedVirtualizedPokemonGrid({
       case '3cols': return { cols: 3, itemHeight: 200, gap: 16 }
       case '6cols': return { cols: 6, itemHeight: 180, gap: 12 }
       case '9cols': return { cols: 9, itemHeight: 160, gap: 8 }
+      case '12cols': return { cols: 12, itemHeight: 150, gap: 8 }
       case 'list': return { cols: 1, itemHeight: 60, gap: 4 }
       default: return { cols: 6, itemHeight: 180, gap: 12 }
     }
@@ -193,7 +195,7 @@ export default function OptimizedVirtualizedPokemonGrid({
         >
           {rowPokemon.map((pokemon) => {
             const key = pokemon.id
-            if (density === '9cols') {
+            if (density === '9cols' || density === '12cols') {
               return (
                 <PokemonCard
                   key={key}
@@ -258,7 +260,7 @@ export default function OptimizedVirtualizedPokemonGrid({
         >
           {rowPokemon.map((pokemon) => {
             const key = pokemon.id
-            if (density === '9cols') {
+            if (density === '9cols' || density === '12cols') {
               return (
                 <PokemonCard
                   key={key}

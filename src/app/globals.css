@@ -225,7 +225,7 @@
   pointer-events: none;
   z-index: 1;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.92) 100%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.92) 10%),
     radial-gradient(800px 400px at 10% -10%, rgba(59, 130, 246, 0.10), transparent 60%),
     radial-gradient(700px 340px at 90% 110%, rgba(244, 63, 94, 0.08), transparent 60%),
     radial-gradient(600px 300px at -10% 110%, rgba(217, 70, 239, 0.08), transparent 60%);
@@ -262,10 +262,8 @@ html.dark .app-background-fade {
 html, body { 
   height: 100%; 
   width: 100%;
-  overflow: auto;
-  /* Reserve space for vertical scrollbar to prevent layout shift */
-  scrollbar-gutter: stable;
-  /* Ensure no default browser spacing adds bottom gaps */
+  overflow-x: hidden;
+  overflow-y: auto;
   margin: 0;
   padding: 0;
 }
@@ -633,11 +631,8 @@ body.pokedex-main-page .flex-1.min-h-0.overflow-y-auto > div {
 }
 
 /* Ensure Pokémon grid items stretch to fill row height */
-body.pokedex-main-page [data-pokemon-grid] {
-  align-items: stretch !important;
-}
 body.pokedex-main-page [data-pokemon-grid] > * {
-  height: 100% !important;
+  height: 100%;
 }
 
 /* Hide internal scrollbar track on WebKit in main list container */
@@ -751,10 +746,13 @@ html.dark body {
   background: #0f172a;
 }
 
-/* Prevent horizontal overflow on all elements */
-* {
-  max-width: 100%;
+*, *::before, *::after {
   box-sizing: border-box;
+}
+
+img, video, canvas, svg, iframe {
+  max-width: 100%;
+  height: auto;
 }
 
 /* Pokéball pattern overlay for body */
@@ -1008,6 +1006,11 @@ body.pokedex-main-page .dark .type-filters-scroll::-webkit-scrollbar-thumb:hover
 
 /* Removed CSS rule that was hiding names in 9-column view */
 
+/* Main Pokédex: remove extra bottom gap under artwork in card view */
+html[data-page='pokedex-main'] .cq-card .card-art {
+  margin-bottom: 0 !important;
+}
+
 @container (max-width: 105px) {
   /* Keep header so number can show; hide controls inside */
   .cq-card .card-header { 
@@ -1095,6 +1098,12 @@ body.pokedex-main-page .dark .type-filters-scroll::-webkit-scrollbar-thumb:hover
 
 .animate-faint-down {
   animation: faint-down 1.2s ease-in forwards;
+}
+
+/* Battle text box typewriter fade-in */
+@keyframes typewriter {
+  0%   { opacity: 0; transform: translateY(2px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
 /* Simple battle move animations */

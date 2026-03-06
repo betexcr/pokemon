@@ -178,6 +178,30 @@ export default function Home() {
     currentOffsetRef.current = currentOffset
     totalCountRef.current = totalCount
   }, [isLoadingMore, hasMorePokemon, currentOffset, totalCount])
+
+  const getViewportBatchSize = useCallback(() => {
+    if (typeof window === 'undefined') {
+      return 100
+    }
+
+    const density = localStorage.getItem('pokedex.cardDensity') || '6cols'
+    const viewportHeight = Math.max(window.innerHeight - 160, 480)
+
+    const densityConfig: Record<string, { cols: number; rowHeight: number }> = {
+      '3cols': { cols: 3, rowHeight: 486 },
+      '6cols': { cols: 6, rowHeight: 372 },
+      '9cols': { cols: 9, rowHeight: 328 },
+      '12cols': { cols: 12, rowHeight: 300 },
+      list: { cols: 1, rowHeight: 64 }
+    }
+
+    const config = densityConfig[density] || densityConfig['6cols']
+    const visibleRows = Math.ceil(viewportHeight / config.rowHeight)
+    const rowsPerChunk = Math.max(visibleRows + 10, 14)
+    const itemsPerChunk = rowsPerChunk * config.cols
+
+    return Math.min(Math.max(itemsPerChunk, 40), 220)
+  }, [])
   
   // Initialize viewport priority loader
   useEffect(() => {
@@ -213,7 +237,7 @@ export default function Home() {
   //   let lastScrollTime = Date.now()
     
   //   const handleScroll = () => {
-  //     const scrollContainer = document.querySelector('.flex-1.min-h-0.overflow-y-auto')
+  //     const scrollContainer = document.querySelector('[data-main-scroll]')
   //     if (!scrollContainer) return
       
   //     const currentScrollTop = scrollContainer.scrollTop
@@ -268,7 +292,7 @@ export default function Home() {
   //     scrollTimeout = setTimeout(handleScroll, 8) // ~120fps for better responsiveness
   //   }
     
-  //   const scrollContainer = document.querySelector('.flex-1.min-h-0.overflow-y-auto')
+  //   const scrollContainer = document.querySelector('[data-main-scroll]')
   //   if (scrollContainer) {
   //     scrollContainer.addEventListener('scroll', throttledScroll, { passive: true })
       
@@ -295,9 +319,10 @@ export default function Home() {
         
         // Load a smaller initial batch of skeletons for faster initial render (50 instead of 200)
         // This dramatically improves Time to First Paint and First Contentful Paint
-        const initialBatch = generateAllPokemonSkeletons(50)
+        const initialBatchSize = getViewportBatchSize()
+        const initialBatch = generateAllPokemonSkeletons(initialBatchSize)
         setPokemonList(initialBatch)
-        setCurrentOffset(50)
+        setCurrentOffset(initialBatchSize)
         setLoading(false)
         
         console.log(`✅ Initial batch loaded: ${initialBatch.length} Pokemon (total: ${total})`)
@@ -307,16 +332,17 @@ export default function Home() {
         console.error('❌ Error loading initial Pokemon:', err)
         setError('Failed to load Pokemon list')
         // Fallback to larger skeleton batch
-        const skeletons = generateAllPokemonSkeletons(200)
+        const fallbackBatchSize = Math.max(getViewportBatchSize(), 120)
+        const skeletons = generateAllPokemonSkeletons(fallbackBatchSize)
         setPokemonList(skeletons)
-        setTotalCount(1302) // Fallback count
-        setCurrentOffset(200)
+        setTotalCount(1025) // Fallback count
+        setCurrentOffset(fallbackBatchSize)
         setLoading(false)
       }
     }
 
     loadInitialPokemon()
-  }, [])
+  }, [getViewportBatchSize])
 
   // Load to end - load all remaining Pokemon at once
   const loadToEnd = useCallback(async () => {
@@ -386,26 +412,32 @@ export default function Home() {
   // Jump to specific Pokemon index - load up to that point if needed
   const jumpToPokemonIndex = useCallback(async (targetIndex: number) => {
     if (loading) return
+
+    const safeTargetIndex = Math.max(0, targetIndex)
     
     const currentLoadedCount = currentOffsetRef.current
+    const jumpBuffer = Math.max(getViewportBatchSize(), 80)
+    const effectiveTotalCount = Math.max(
+      totalCountRef.current > 0 ? totalCountRef.current : 1025,
+      safeTargetIndex + jumpBuffer + 1
+    )
     
     // If already loaded, no need to load more
-    if (targetIndex < currentLoadedCount) {
+    if (safeTargetIndex < currentLoadedCount) {
       return
     }
     
     setIsLoadingMore(true)
     
     try {
-      const pokemonToLoad = targetIndex - currentLoadedCount + 50 // Load a bit extra for smooth scrolling
-      const cappedLoad = Math.min(pokemonToLoad, totalCountRef.current - currentLoadedCount)
+      const pokemonToLoad = safeTargetIndex - currentLoadedCount + jumpBuffer // Load surrounding rows for smooth jump landing
+      const cappedLoad = Math.min(pokemonToLoad, effectiveTotalCount - currentLoadedCount)
       
       if (cappedLoad <= 0) {
-        setIsLoadingMore(false)
         return
       }
       
-      console.log(`📦 Loading ${cappedLoad} Pokemon to reach index ${targetIndex}`)
+      console.log(`📦 Loading ${cappedLoad} Pokemon to reach index ${safeTargetIndex}`)
       
       const newBatch = generateAllPokemonSkeletons(cappedLoad).map((pokemon, index) => ({
         ...pokemon,
@@ -427,16 +459,19 @@ export default function Home() {
       setPokemonList(prev => [...prev, ...newBatch])
       const newOffset = currentLoadedCount + newBatch.length
       setCurrentOffset(newOffset)
+      currentOffsetRef.current = newOffset
       
-      if (newOffset >= totalCountRef.current) {
+      if (newOffset >= effectiveTotalCount) {
         setHasMorePokemon(false)
+        hasMorePokemonRef.current = false
       }
+
     } catch (err) {
       console.error('❌ Error jumping to Pokemon index:', err)
     } finally {
       setIsLoadingMore(false)
     }
-  }, [loading])
+  }, [loading, getViewportBatchSize])
 
   // Load more Pokemon function for infinite scroll
   const loadMorePokemon = useCallback(async () => {
@@ -452,7 +487,7 @@ export default function Home() {
     try {
       const currentOffsetValue = currentOffsetRef.current
       console.log(`📦 Loading more Pokemon: offset=${currentOffsetValue}`)
-      const batchSize = 100 // 100 skeletons per batch
+      const batchSize = getViewportBatchSize()
       
       // Generate skeletons instantly without API calls for faster loading
       const newBatch = generateAllPokemonSkeletons(batchSize).map((pokemon, index) => ({
@@ -519,7 +554,7 @@ export default function Home() {
     } finally {
       setIsLoadingMore(false)
     }
-  }, [loading]) // Only depend on loading state
+  }, [loading, getViewportBatchSize]) // Only depend on loading state
 
   // Reset function for error recovery
   const resetPokemonList = useCallback(() => {
@@ -529,18 +564,19 @@ export default function Home() {
     setError(null)
     setLoading(true)
     // Reload initial batch with optimized size (50 for fast render)
-    const initialBatch = generateAllPokemonSkeletons(50)
+    const initialBatchSize = getViewportBatchSize()
+    const initialBatch = generateAllPokemonSkeletons(initialBatchSize)
     setPokemonList(initialBatch)
-    setCurrentOffset(50)
+    setCurrentOffset(initialBatchSize)
     setLoading(false)
-  }, [])
+  }, [getViewportBatchSize])
 
   // Ref for infinite scroll sentinel with balanced preloading
   const sentinelRef = useCallback((node: HTMLDivElement | null) => {
     if (!node) return
     
     // Find the correct scroll container
-    const scrollContainer = document.querySelector('.flex-1.min-h-0.overflow-y-auto')
+    const scrollContainer = document.querySelector('[data-main-scroll]')
     
     const observer = new IntersectionObserver(
       entries => {

@@ -204,7 +204,7 @@ function BattlePage() {
   };
 
   return (
-    <div className="h-screen bg-bg text-text flex flex-col overflow-hidden relative">
+    <div className="fixed inset-0 bg-bg text-text flex flex-col overflow-hidden">
       <AppHeader
         title="AI Battle"
         backLink="/"
@@ -216,8 +216,8 @@ function BattlePage() {
       />
 
       {/* Scrollable Content Area */}
-      <main className="flex-1 min-h-0 overflow-y-auto relative">
-        <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
+      <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden relative">
+        <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         {/* Player team selection */}
         <section className="border border-border rounded-xl bg-surface p-4">
           <div className="flex items-center justify-between mb-3">

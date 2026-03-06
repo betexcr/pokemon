@@ -31,10 +31,13 @@ export default function RecentlyViewedSection() {
         </div>
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
           {recentlyViewed.map((item) => (
-            <button
+            <div
               key={item.id}
+              role="button"
+              tabIndex={0}
               onClick={() => router.push(`/pokemon/${item.id}`)}
-              className="group relative flex-shrink-0 flex flex-col items-center gap-1 p-2 rounded-lg border border-border bg-surface hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md"
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/pokemon/${item.id}`) } }}
+              className="group relative flex-shrink-0 flex flex-col items-center gap-1 p-2 rounded-lg border border-border bg-surface hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer"
             >
               <button
                 onClick={(e) => {
@@ -61,7 +64,7 @@ export default function RecentlyViewedSection() {
               <span className="text-xs text-muted text-center max-w-[80px] truncate">
                 {formatPokemonName(item.name)}
               </span>
-            </button>
+            </div>
           ))}
         </div>
       </div>

@@ -1,8 +1,8 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Pokemon } from '@/types/pokemon'
-import { getPokemonList, getPokemon, getMove, getPokemonTotalCount } from '@/lib/api'
+import { getPokemonList, getPokemon, getMove } from '@/lib/api'
 import { formatPokemonName, getShowdownAnimatedSprite } from '@/lib/utils'
 import Image from 'next/image'
 import TypeBadge from '@/components/TypeBadge'
@@ -65,6 +65,14 @@ const normalizeTeamSlots = (slots?: Array<Partial<TeamSlot>> | null): TeamSlot[]
 const STORAGE_KEY = 'pokemon-team-builder'
 const CURRENT_TEAM_KEY = 'pokemon-current-team'
 const DISPLAY_POKEMON_KEY = 'pokemon-display-cache'
+const TEAM_DRAFT_KEY = 'pokemon-team-draft'
+
+type TeamDraftState = {
+  slots: TeamSlot[]
+  teamName: string
+  lastSelectedPokemon: number | null
+  activeSlotIndex: number | null
+}
 
 export default function TeamBuilderPage() {
   const router = useRouter()
@@ -93,6 +101,14 @@ export default function TeamBuilderPage() {
   const [saveError, setSaveError] = useState<string | null>(null)
   const [isWeaknessMatrixCollapsed, setIsWeaknessMatrixCollapsed] = useState(true)
   const [isOffenseMatrixCollapsed, setIsOffenseMatrixCollapsed] = useState(true)
+  const [isAnalysisColumnCollapsed, setIsAnalysisColumnCollapsed] = useState(false)
+  const [analysisColumnWidth, setAnalysisColumnWidth] = useState(380)
+  const [isResizingAnalysisColumn, setIsResizingAnalysisColumn] = useState(false)
+  const [collapsedMovesSections, setCollapsedMovesSections] = useState<Set<number>>(new Set())
+  const [collapsedAvailableMovesSections, setCollapsedAvailableMovesSections] = useState<Set<number>>(new Set())
+  const [draftHydrated, setDraftHydrated] = useState(false)
+  const layoutRef = useRef<HTMLDivElement | null>(null)
+  const selectorInputRef = useRef<HTMLInputElement | null>(null)
   
   // Virtualized scrolling state
   const [pokemonOffset, setPokemonOffset] = useState(0)
@@ -302,20 +318,42 @@ export default function TeamBuilderPage() {
     }
   }, [filteredPokemon, fetchPokemonTypes])
 
-  // Load current team state from localStorage
-  const loadCurrentTeam = useCallback(() => {
+  // Load current draft state from localStorage
+  const loadCurrentDraft = useCallback((): TeamDraftState => {
     try {
-      const saved = localStorage.getItem(CURRENT_TEAM_KEY)
-      if (saved) {
-        const parsed = JSON.parse(saved) as TeamSlot[]
-        if (Array.isArray(parsed) && parsed.length === 6) {
-          return parsed
+      const savedDraft = localStorage.getItem(TEAM_DRAFT_KEY)
+      if (savedDraft) {
+        const parsed = JSON.parse(savedDraft) as Partial<TeamDraftState>
+        if (parsed && typeof parsed === 'object') {
+          return {
+            slots: normalizeTeamSlots(parsed.slots),
+            teamName: typeof parsed.teamName === 'string' ? parsed.teamName : '',
+            lastSelectedPokemon: typeof parsed.lastSelectedPokemon === 'number' ? parsed.lastSelectedPokemon : null,
+            activeSlotIndex: typeof parsed.activeSlotIndex === 'number' ? parsed.activeSlotIndex : null
+          }
+        }
+      }
+
+      // Backward compatibility with legacy slots-only key
+      const legacySaved = localStorage.getItem(CURRENT_TEAM_KEY)
+      if (legacySaved) {
+        const parsed = JSON.parse(legacySaved) as Array<Partial<TeamSlot>>
+        return {
+          slots: normalizeTeamSlots(parsed),
+          teamName: '',
+          lastSelectedPokemon: null,
+          activeSlotIndex: null
         }
       }
     } catch (error) {
-      console.error('Failed to load current team:', error)
+      console.error('Failed to load current team draft:', error)
     }
-    return Array.from({ length: 6 }, () => createEmptySlot())
+    return {
+      slots: normalizeTeamSlots(),
+      teamName: '',
+      lastSelectedPokemon: null,
+      activeSlotIndex: null
+    }
   }, [])
 
   // Load display Pokemon cache from localStorage
@@ -343,6 +381,14 @@ export default function TeamBuilderPage() {
     }
   }, [])
 
+  const persistTeamDraft = useCallback((draft: TeamDraftState) => {
+    try {
+      localStorage.setItem(TEAM_DRAFT_KEY, JSON.stringify(draft))
+    } catch (error) {
+      console.error('Failed to persist team draft:', error)
+    }
+  }, [])
+
   // Persist display Pokemon cache to localStorage
   const persistDisplayPokemon = useCallback((pokemonCache: Record<number, Pokemon>) => {
     try {
@@ -358,9 +404,13 @@ export default function TeamBuilderPage() {
       try {
         setLoading(true)
         
-        // Load current team state first
-        const currentTeam = loadCurrentTeam()
+        // Load current draft state first
+        const currentDraft = loadCurrentDraft()
+        const currentTeam = currentDraft.slots
         setTeamSlots(currentTeam)
+        setTeamName(currentDraft.teamName)
+        setLastSelectedPokemon(currentDraft.lastSelectedPokemon)
+        setActiveSlotIndex(currentDraft.activeSlotIndex)
         
         // Load display Pokemon cache
         const displayCache = loadDisplayPokemon()
@@ -375,12 +425,12 @@ export default function TeamBuilderPage() {
         })
         setCollapsedSlots(newCollapsedSlots)
         
-        // Get total count and first 50 Pokémon
-        const [totalCount, pokemonList] = await Promise.all([
-          getPokemonTotalCount(),
-          getPokemonList(50, 0)
-        ])
-        
+        // Get first 50 Pokémon (count included in list response)
+        const pokemonList = await getPokemonList(50, 0)
+        const totalCount = typeof (pokemonList as { count?: number }).count === 'number'
+          ? (pokemonList as { count?: number }).count!
+          : 0
+
         setTotalPokemonCount(totalCount)
         
         // Create basic Pokémon objects with minimal data for search
@@ -460,10 +510,22 @@ export default function TeamBuilderPage() {
         setError('Failed to load Pokémon list')
       } finally {
         setLoading(false)
+        setDraftHydrated(true)
       }
     }
     load()
-  }, [loadCurrentTeam, loadDisplayPokemon])
+  }, [loadCurrentDraft, loadDisplayPokemon])
+
+  // Persist unsaved team draft continuously after initial hydration
+  useEffect(() => {
+    if (!draftHydrated) return
+    persistTeamDraft({
+      slots: teamSlots,
+      teamName,
+      lastSelectedPokemon,
+      activeSlotIndex
+    })
+  }, [draftHydrated, teamSlots, teamName, lastSelectedPokemon, activeSlotIndex, persistTeamDraft])
 
   // Load saved teams from Firebase or localStorage
   useEffect(() => {
@@ -540,39 +602,42 @@ export default function TeamBuilderPage() {
     return analyzeTeam(simpleTeam)
   }, [teamSlots, allPokemon, displayPokemonById, analysisTrigger])
 
-  const setSlot = async (idx: number, patch: Partial<TeamSlot>) => {
-    if (patch.id && typeof patch.id === 'number') {
-      // Track the last selected Pokémon for dropdown memory
-      setLastSelectedPokemon(patch.id)
-      
-      // Fetch full Pokémon details if we don't have them
-      const existingPokemon = allPokemon.find(p => p.id === patch.id)
-      try {
-        if (!existingPokemon) {
-          // Not in local list yet (e.g., added via search beyond initial page) → fetch and insert
-          const fullPokemon = await getPokemon(patch.id as number)
-          setAllPokemon(prev => [...prev, fullPokemon])
-          setDisplayPokemonById(prev => ({ ...prev, [fullPokemon.id]: fullPokemon }))
-        } else if (existingPokemon.types.length === 0 || existingPokemon.stats.length === 0) {
-          // Present but partial → upgrade to full data
-          const fullPokemon = await getPokemon(patch.id as number)
-          setAllPokemon(prev => prev.map(p => p.id === patch.id ? fullPokemon : p))
-          setDisplayPokemonById(prev => ({ ...prev, [fullPokemon.id]: fullPokemon }))
-        }
-      } catch (error) {
-        console.error('Failed to fetch Pokémon details:', error)
-      }
+  const hasTeamPokemon = useMemo(() => teamSlots.some(s => s.id !== null), [teamSlots])
+
+  const startResizingAnalysisColumn = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
+    event.preventDefault()
+    setIsResizingAnalysisColumn(true)
+  }, [])
+
+  useEffect(() => {
+    if (!isResizingAnalysisColumn) return
+
+    const handleMouseMove = (event: MouseEvent) => {
+      const layoutBounds = layoutRef.current?.getBoundingClientRect()
+      if (!layoutBounds) return
+      const nextWidth = layoutBounds.right - event.clientX
+      const clampedWidth = Math.min(620, Math.max(300, nextWidth))
+      setAnalysisColumnWidth(clampedWidth)
     }
-    
-    // Update available moves if level or Pokémon changes
-    if (patch.level || patch.id) {
-      const updatedSlot = { ...teamSlots[idx], ...patch }
-      if (updatedSlot.id && updatedSlot.level) {
-        const moves = await getAvailableMoves(updatedSlot.id, updatedSlot.level)
-        setAvailableMoves(prev => ({ ...prev, [idx]: moves }))
-      }
+
+    const handleMouseUp = () => {
+      setIsResizingAnalysisColumn(false)
     }
-    
+
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup', handleMouseUp)
+
+    return () => {
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [isResizingAnalysisColumn])
+
+  const setSlot = (idx: number, patch: Partial<TeamSlot>) => {
     // If changing Pokémon in the slot, clear any existing moves to avoid leakage
     const isPokemonChange = patch.id !== undefined && patch.id !== teamSlots[idx].id
     const newTeamSlots = teamSlots.map((s, i) => {
@@ -588,6 +653,9 @@ export default function TeamBuilderPage() {
       }
       return merged
     })
+
+    const updatedSlot = newTeamSlots[idx]
+
     setTeamSlots(newTeamSlots)
     
     // If the removed Pokémon was the last selected, clear it so it doesn't stick in UI
@@ -597,6 +665,44 @@ export default function TeamBuilderPage() {
     
     // Persist the updated team state
     persistCurrentTeam(newTeamSlots)
+
+    if (patch.id && typeof patch.id === 'number') {
+      // Track the last selected Pokémon for dropdown memory
+      setLastSelectedPokemon(patch.id)
+
+      // Fetch full Pokémon details in background for richer UI without blocking selection
+      const selectedId = patch.id
+      const existingPokemon = allPokemon.find(p => p.id === selectedId)
+      const needsFullData = !existingPokemon || existingPokemon.types.length === 0 || existingPokemon.stats.length === 0
+
+      if (needsFullData) {
+        void getPokemon(selectedId)
+          .then(fullPokemon => {
+            setAllPokemon(prev => {
+              const exists = prev.some(p => p.id === fullPokemon.id)
+              if (!exists) return [...prev, fullPokemon]
+              return prev.map(p => p.id === fullPokemon.id ? fullPokemon : p)
+            })
+            setDisplayPokemonById(prev => ({ ...prev, [fullPokemon.id]: fullPokemon }))
+          })
+          .catch(error => {
+            console.error('Failed to fetch Pokémon details:', error)
+          })
+      }
+    }
+
+    // Update available moves in background so slot selection is instant
+    if (updatedSlot?.id && updatedSlot.level) {
+      const selectedId = updatedSlot.id
+      const selectedLevel = updatedSlot.level
+      void getAvailableMoves(selectedId, selectedLevel)
+        .then(moves => {
+          setAvailableMoves(prev => ({ ...prev, [idx]: moves }))
+        })
+        .catch(error => {
+          console.error('Failed to load available moves:', error)
+        })
+    }
     
     // Auto-expand/collapse based on Pokémon assignment
     if (patch.id !== undefined) {
@@ -957,6 +1063,53 @@ export default function TeamBuilderPage() {
     }
   }, [allPokemon, levelMovesOnly])
 
+  // Ensure restored draft teams also have move pools hydrated
+  useEffect(() => {
+    const slotsToHydrate = teamSlots
+      .map((slot, idx) => ({ slot, idx }))
+      .filter(({ slot, idx }) => {
+        if (!slot.id || !slot.level) return false
+        const existing = availableMoves[idx]
+        return !Array.isArray(existing) || existing.length === 0
+      })
+
+    if (slotsToHydrate.length === 0) return
+
+    let cancelled = false
+
+    const hydrateMoves = async () => {
+      const results = await Promise.all(
+        slotsToHydrate.map(async ({ slot, idx }) => {
+          try {
+            const moves = await getAvailableMoves(slot.id!, slot.level)
+            return { idx, moves }
+          } catch (error) {
+            console.error(`Failed to hydrate moves for slot ${idx}:`, error)
+            return { idx, moves: [] as Array<{ name: string; type: string; damage_class: "physical" | "special" | "status"; power: number | null; accuracy: number | null; pp: number | null; level_learned_at: number | null; learn_method: string; short_effect?: string | null }> }
+          }
+        })
+      )
+
+      if (cancelled) return
+
+      setAvailableMoves(prev => {
+        const next = { ...prev }
+        results.forEach(({ idx, moves }) => {
+          if (moves.length > 0) {
+            next[idx] = moves
+          }
+        })
+        return next
+      })
+    }
+
+    void hydrateMoves()
+
+    return () => {
+      cancelled = true
+    }
+  }, [teamSlots, availableMoves, getAvailableMoves])
+
   // Helper function to capitalize strings
 
   // Toggle collapsed state for a team slot
@@ -1029,8 +1182,8 @@ export default function TeamBuilderPage() {
       />
 
       <main className="max-w-7xl mx-auto px-4 py-6 space-y-6 overflow-x-hidden">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6">
-          <div className="space-y-6">
+        <div ref={layoutRef} className="flex flex-col lg:flex-row gap-6 items-start">
+          <div className="space-y-6 flex-1 min-w-0 w-full">
         {/* Add Pokémon Search */}
         <section className="border border-border rounded-xl bg-surface p-4 overflow-visible">
           <h2 className="text-lg font-semibold mb-4 text-text">Add Pokémon</h2>
@@ -1038,6 +1191,7 @@ export default function TeamBuilderPage() {
           {/* Quick Add Pokemon Selector */}
           <div className="mb-4">
             <PokemonSelector
+              inputRef={selectorInputRef}
               selectedPokemon={teamSlots.filter(slot => slot.id !== null).map(slot => allPokemon.find(p => p.id === slot.id) || displayPokemonById[slot.id!]).filter(Boolean) as Pokemon[]}
               onPokemonSelect={async (pokemon) => {
                 // Cache full Pokémon data for immediate display even if not yet in the infinite list
@@ -1057,7 +1211,7 @@ export default function TeamBuilderPage() {
                   ? activeSlotIndex
                   : teamSlots.findIndex((_, i) => isVisiblyEmpty(i))
                 if (preferred !== -1) {
-                  await setSlot(preferred, { id: pokemon.id })
+                  setSlot(preferred, { id: pokemon.id })
                   setCollapsedSlots(prev => {
                     const newSet = new Set(prev)
                     newSet.delete(preferred)
@@ -1079,6 +1233,7 @@ export default function TeamBuilderPage() {
               maxSelections={6}
               placeholder="Quick add Pokémon to team (selects first empty slot)"
               className="w-full"
+              showSelectedPreview={false}
             />
           </div>
           
@@ -1100,7 +1255,7 @@ export default function TeamBuilderPage() {
                               onClick={async () => {
                                 const slot = teamSlots.findIndex(s => s.id === null)
                                 if (slot !== -1) {
-                                  await setSlot(slot, { id: lastPokemon.id })
+                                    setSlot(slot, { id: lastPokemon.id })
                                   setShowDropdown(false)
                                   setSearchTerm('')
                                   setCollapsedSlots(prev => {
@@ -1159,7 +1314,7 @@ export default function TeamBuilderPage() {
                           // Find the first empty slot
                           const slot = teamSlots.findIndex(s => s.id === null)
                           if (slot !== -1) {
-                            await setSlot(slot, { id: pokemon.id })
+                            setSlot(slot, { id: pokemon.id })
                             // Close dropdown and clear search term
                             setShowDropdown(false)
                             setSearchTerm('')
@@ -1300,30 +1455,87 @@ export default function TeamBuilderPage() {
           {saveError && (
             <div className="-mt-2 mb-2 text-xs text-red-600">{saveError}</div>
           )}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 w-full">
+          <div className="space-y-3 w-full">
             {teamSlots.map((slot, idx) => {
               const poke = (slot.id ? (displayPokemonById[slot.id] || allPokemon.find(p => p.id === slot.id)) : null) || null
               return (
-                <div key={idx} className="border border-border rounded-lg bg-white/50 w-full min-w-0">
+                <div key={idx} className="border border-border rounded-lg bg-white/50 w-full min-w-0 overflow-hidden">
                   {/* Collapsible Header */}
                   <div 
-                    className="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50 transition-colors"
-                    onClick={() => toggleSlotCollapse(idx)}
+                    className="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50 transition-colors gap-3"
+                    onClick={() => {
+                      if (!poke) {
+                        setActiveSlotIndex(idx)
+                        selectorInputRef.current?.focus()
+                        selectorInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                      } else {
+                        toggleSlotCollapse(idx)
+                      }
+                    }}
                   >
-                    <div className="flex items-center gap-2">
-                      {collapsedSlots.has(idx) ? (
-                        <ChevronRight className="h-4 w-4 text-muted" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4 text-muted" />
-                      )}
-                      <span className="text-sm font-medium text-text">Slot {idx + 1}</span>
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <span className="text-xs font-semibold text-muted w-12 flex-shrink-0">Slot {idx + 1}</span>
+                      <div className="relative w-16 h-16 flex-shrink-0 overflow-hidden bg-gradient-to-br from-white to-blue-50 rounded-lg border-2 border-blue-200 shadow-sm">
+                        {poke ? (
+                          <img
+                            src={getShowdownAnimatedSprite(poke.name, 'front', slot.isShiny || false)}
+                            alt={poke.name}
+                            width={64}
+                            height={64}
+                            className="w-full h-full object-contain scale-110"
+                            onError={(e) => {
+                              const target = e.currentTarget as HTMLImageElement
+                              target.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${poke.id}.png`
+                            }}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-[10px] text-muted">Empty</div>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        {poke ? (
+                          <>
+                            <div className="text-sm font-medium text-text truncate">
+                              #{poke.id} {formatPokemonName(poke.name)}
+                            </div>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {poke.types?.map((t) => (
+                                <TypeBadgeWithTooltip key={`${idx}-${t.type.name}`} type={t.type.name} />
+                              ))}
+                            </div>
+                          </>
+                        ) : (
+                          <div className="text-sm text-muted">Empty slot</div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <label className="text-xs text-muted hidden sm:inline">Lv</label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={100}
+                        value={slot.level}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => setSlot(idx, { level: Math.max(1, Math.min(100, Number(e.target.value) || 50)) })}
+                        className="w-16 px-2 py-1 border border-border rounded text-xs"
+                        style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
+                      />
                       {poke && (
-                        <span className="text-xs text-muted">
-                          #{poke.id} {formatPokemonName(poke.name)}
-                        </span>
+                        <label className="text-xs flex items-center gap-1 text-yellow-600" onClick={(e) => e.stopPropagation()}>
+                          <input 
+                            type="checkbox" 
+                            checked={slot.isShiny || false} 
+                            onChange={(e) => setSlot(idx, { isShiny: e.target.checked })}
+                            className="rounded border-gray-300"
+                          />
+                          <span className="hidden sm:inline">✨</span>
+                        </label>
                       )}
                     </div>
-                    <div className="flex items-center gap-2">
+
+                    <div className="flex items-center gap-2 flex-shrink-0">
                       <button 
                         onClick={(e) => {
                           e.stopPropagation()
@@ -1334,6 +1546,11 @@ export default function TeamBuilderPage() {
                       >
                         ✕
                       </button>
+                      {collapsedSlots.has(idx) ? (
+                        <ChevronRight className="h-4 w-4 text-muted" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4 text-muted" />
+                      )}
                     </div>
                   </div>
                   
@@ -1341,44 +1558,22 @@ export default function TeamBuilderPage() {
                   {!collapsedSlots.has(idx) && (
                     <div className="px-3 pb-3 w-full min-w-0">
                   
-                  {poke ? (
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="relative w-16 h-16 flex-shrink-0 overflow-hidden bg-white rounded">
-                        <img
-                          src={getShowdownAnimatedSprite(poke.name, 'front', slot.isShiny || false)}
-                          alt={poke.name}
-                          width={64}
-                          height={64}
-                          className="w-full h-full object-contain"
-                          onError={(e) => {
-                            const target = e.currentTarget as HTMLImageElement
-                            target.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${poke.id}.png`
-                            const loader = (target.parentElement?.querySelector('[data-img-loader]') as HTMLElement | null)
-                            if (loader) loader.style.display = 'none'
-                          }}
-                          onLoad={(e) => {
-                            const loader = (e.currentTarget.parentElement?.querySelector('[data-img-loader]') as HTMLElement | null)
-                            if (loader) loader.style.display = 'none'
-                          }}
-                        />
-                        <img src="/loading.gif" alt="Loading" className="absolute inset-0 m-auto w-5 h-5 opacity-80" data-img-loader />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-text">#{poke.id} {formatPokemonName(poke.name)}</div>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {poke.types?.length > 0 ? poke.types.map(t => (
-                            <TypeBadgeWithTooltip key={t.type.name} type={t.type.name} />
-                          )) : null}
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-sm mb-3 h-16 flex items-center justify-center text-muted border-2 border-dashed border-border rounded">
-                      {/* Auto-hydrate missing Pokémon details if we only have an ID */}
+                  {!poke && (
+                    <div
+                      className="text-sm mb-3 h-16 flex items-center justify-center text-muted border-2 border-dashed border-border rounded cursor-pointer hover:border-blue-400 hover:text-blue-600 transition-colors"
+                      onClick={() => {
+                        if (!slot.id) {
+                          setActiveSlotIndex(idx)
+                          selectorInputRef.current?.focus()
+                          selectorInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                        }
+                      }}
+                    >
                       {slot.id ? (
                         <button
                           className="text-blue-600 hover:text-blue-800"
-                          onClick={async () => {
+                          onClick={async (e) => {
+                            e.stopPropagation()
                             try {
                               const full = await getPokemon(slot.id!)
                               setDisplayPokemonById(prev => {
@@ -1392,36 +1587,37 @@ export default function TeamBuilderPage() {
                           Load Pokémon
                         </button>
                       ) : (
-                        <>Empty Slot</>
+                        <span className="flex items-center gap-2">
+                          <span className="text-lg">+</span> Click to add a Pokémon
+                        </span>
                       )}
                     </div>
                   )}
                   
-                  <div className="flex items-center gap-4 mb-3">
-                    <div className="flex items-center gap-2">
-                      <label className="text-xs">Level</label>
-                      <input type="number" min={1} max={100} value={slot.level} onChange={(e) => setSlot(idx, { level: Math.max(1, Math.min(100, Number(e.target.value) || 50)) })} className="w-20 px-2 py-1 border border-border rounded" style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }} />
-                    </div>
-                    {poke && (
-                      <div className="flex items-center gap-2">
-                        <label className="text-xs flex items-center gap-1">
-                          <input 
-                            type="checkbox" 
-                            checked={slot.isShiny || false} 
-                            onChange={(e) => setSlot(idx, { isShiny: e.target.checked })}
-                            className="rounded border-gray-300"
-                          />
-                          <span className="text-yellow-600">✨ Shiny</span>
-                        </label>
-                      </div>
-                    )}
-                  </div>
-                  
                   {/* Moveset Selector */}
                   {poke && (
                     <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <label className="text-sm font-medium text-text">Moves ({slot.moves.length}/4)</label>
+                      <div className="flex items-center justify-between gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCollapsedMovesSections(prev => {
+                              const next = new Set(prev)
+                              if (next.has(idx)) next.delete(idx)
+                              else next.add(idx)
+                              return next
+                            })
+                          }}
+                          className="inline-flex items-center gap-1 text-sm font-medium text-text hover:text-blue-700"
+                          title="Toggle moves section"
+                        >
+                          <span>Moves ({slot.moves.length}/4)</span>
+                          {collapsedMovesSections.has(idx) ? (
+                            <ChevronRight className="h-4 w-4 text-muted" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4 text-muted" />
+                          )}
+                        </button>
                         {slot.moves.length > 0 && (
                           <button 
                             onClick={() => setSlot(idx, { moves: [] })} 
@@ -1434,7 +1630,7 @@ export default function TeamBuilderPage() {
                       </div>
                       
                       {/* Selected Moves Table */}
-                      {slot.moves.length > 0 && (
+                      {!collapsedMovesSections.has(idx) && slot.moves.length > 0 && (
                         <div className="overflow-x-auto rounded-lg border border-gray-200 w-full">
                           <table className="w-full text-xs min-w-max">
                             <thead className="bg-gray-50 border-b border-gray-200">
@@ -1476,22 +1672,46 @@ export default function TeamBuilderPage() {
                           </table>
                         </div>
                       )}
+                      {!collapsedMovesSections.has(idx) && slot.moves.length === 0 && (
+                        <div className="text-xs text-muted border border-dashed border-border rounded p-2">
+                          No moves selected yet.
+                        </div>
+                      )}
                       
                       {/* Available Moves Table */}
                       {availableMoves[idx] && availableMoves[idx].length > 0 && slot.moves.length < 4 && (
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
-                            <div className="text-xs text-muted font-medium">
-                              Available moves ({availableMoves[idx].filter(move => !slot.moves.some(slotMove => slotMove.name === move.name)).filter(move => {
-                                if (levelMovesOnly) {
-                                  return move.learn_method === 'level-up' && move.level_learned_at && move.level_learned_at <= slot.level
-                                }
-                                return true
-                              }).length}):
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setCollapsedAvailableMovesSections(prev => {
+                                  const next = new Set(prev)
+                                  if (next.has(idx)) next.delete(idx)
+                                  else next.add(idx)
+                                  return next
+                                })
+                              }}
+                              className="inline-flex items-center gap-1 text-xs text-muted font-medium hover:text-blue-700"
+                              title="Toggle available moves section"
+                            >
+                              <span>
+                                Available moves ({availableMoves[idx].filter(move => !slot.moves.some(slotMove => slotMove.name === move.name)).filter(move => {
+                                  if (levelMovesOnly) {
+                                    return move.learn_method === 'level-up' && move.level_learned_at && move.level_learned_at <= slot.level
+                                  }
+                                  return true
+                                }).length})
+                              </span>
+                              {collapsedAvailableMovesSections.has(idx) ? (
+                                <ChevronRight className="h-4 w-4 text-muted" />
+                              ) : (
+                                <ChevronDown className="h-4 w-4 text-muted" />
+                              )}
                               {availableMoves[idx].filter(move => !slot.moves.some(slotMove => slotMove.name === move.name)).length > 20 && (
                                 <span className="ml-2 text-blue-600">• Scroll to see all moves</span>
                               )}
-                            </div>
+                            </button>
                             <label className="flex items-center gap-2 text-xs text-muted cursor-pointer">
                               <input
                                 type="checkbox"
@@ -1502,103 +1722,105 @@ export default function TeamBuilderPage() {
                               Level moves only
                             </label>
                           </div>
-                          <div className="overflow-x-auto rounded-lg border border-gray-200 w-full max-h-80 overflow-y-auto">
-                            <table className="w-full text-xs min-w-max">
-                              <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
-                                <tr className="[&>th]:px-2 [&>th]:py-1 text-left text-muted">
-                                  <th>Move</th><th>Type</th><th>Cat.</th><th>Power</th><th>Acc.</th><th>PP</th><th>Lvl</th><th>Method</th><th></th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {availableMoves[idx]
-                                  .filter(move => !slot.moves.some(slotMove => slotMove.name === move.name))
-                                  .filter(move => {
-                                    if (levelMovesOnly) {
-                                      // Only show level-up moves that are actually available at this level
-                                      return move.learn_method === 'level-up' && move.level_learned_at && move.level_learned_at <= slot.level
-                                    }
-                                    // Show all moves when filter is off
-                                    return true
-                                  })
-                                  .sort((a, b) => {
-                                    // Sort by learning method priority: level-up, machine, egg, tutor
-                                    const methodPriority = { 'level-up': 1, 'machine': 2, 'egg': 3, 'tutor': 4, 'unknown': 5 }
-                                    const aMethodPriority = methodPriority[a.learn_method as keyof typeof methodPriority] || 5
-                                    const bMethodPriority = methodPriority[b.learn_method as keyof typeof methodPriority] || 5
-                                    
-                                    if (aMethodPriority !== bMethodPriority) {
-                                      return aMethodPriority - bMethodPriority
-                                    }
-                                    
-                                    // If same method, sort by level learned (ascending), with null values at the end
-                                    const aLevel = a.level_learned_at ?? 999
-                                    const bLevel = b.level_learned_at ?? 999
-                                    if (aLevel !== bLevel) {
-                                      return aLevel - bLevel
-                                    }
-                                    
-                                    // If same level, sort by power (higher power first)
-                                    const aPower = a.power ?? 0
-                                    const bPower = b.power ?? 0
-                                    return bPower - aPower
-                                  })
-                                  .map((move) => (
-                                    <tr 
-                                      key={move.name} 
-                                      className="[&>td]:px-2 [&>td]:py-1 border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
-                                      onClick={() => toggleMove(idx, move)}
-                                      title={slot.moves.length >= 4 ? 'Maximum 4 moves reached' : 'Click to add move'}
-                                    >
-                                      <td className="font-medium capitalize text-text">
-                                        {move.short_effect ? (
-                                          <Tooltip content={move.short_effect} maxWidth="w-80" variant="move" type={move.type} position="top">
-                                            <span className="cursor-help">
-                                              {move.name}
-                                            </span>
-                                          </Tooltip>
-                                        ) : (
-                                          <span>{move.name}</span>
-                                        )}
-                                      </td>
-                                      <td><TypeBadgeWithTooltip type={move.type} /></td>
-                                      <td className="capitalize">{move.damage_class}</td>
-                                      <td>{move.power ?? '—'}</td>
-                                      <td>{move.accuracy ?? '—'}</td>
-                                      <td>{move.pp ?? '—'}</td>
-                                      <td>{move.level_learned_at ?? '—'}</td>
-                                      <td className="capitalize text-xs">
-                                        <span className={`px-1 py-0.5 rounded text-xs ${
-                                          move.learn_method === 'level-up' ? 'bg-blue-100 text-blue-800' :
-                                          move.learn_method === 'machine' ? 'bg-purple-100 text-purple-800' :
-                                          move.learn_method === 'egg' ? 'bg-green-100 text-green-800' :
-                                          move.learn_method === 'tutor' ? 'bg-orange-100 text-orange-800' :
-                                          'bg-gray-100 text-gray-800'
-                                        }`}>
-                                          {move.learn_method}
-                                        </span>
-                                      </td>
-                                      <td>
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation()
-                                            toggleMove(idx, move)
-                                          }}
-                                          disabled={slot.moves.length >= 4}
-                                          className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                                          title={slot.moves.length >= 4 ? 'Maximum 4 moves reached' : 'Add move'}
-                                        >
-                                          +
-                                        </button>
-                                      </td>
-                                    </tr>
-                                  ))}
-                                {/* Spacer row for better bottom spacing */}
-                                <tr>
-                                  <td colSpan={9} className="h-4"></td>
-                                </tr>
-                              </tbody>
-                            </table>
-                          </div>
+                          {!collapsedAvailableMovesSections.has(idx) && (
+                            <div className="overflow-x-auto rounded-lg border border-gray-200 w-full max-h-80 overflow-y-auto">
+                              <table className="w-full text-xs min-w-max">
+                                <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
+                                  <tr className="[&>th]:px-2 [&>th]:py-1 text-left text-muted">
+                                    <th>Move</th><th>Type</th><th>Cat.</th><th>Power</th><th>Acc.</th><th>PP</th><th>Lvl</th><th>Method</th><th></th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {availableMoves[idx]
+                                    .filter(move => !slot.moves.some(slotMove => slotMove.name === move.name))
+                                    .filter(move => {
+                                      if (levelMovesOnly) {
+                                        // Only show level-up moves that are actually available at this level
+                                        return move.learn_method === 'level-up' && move.level_learned_at && move.level_learned_at <= slot.level
+                                      }
+                                      // Show all moves when filter is off
+                                      return true
+                                    })
+                                    .sort((a, b) => {
+                                      // Sort by learning method priority: level-up, machine, egg, tutor
+                                      const methodPriority = { 'level-up': 1, 'machine': 2, 'egg': 3, 'tutor': 4, 'unknown': 5 }
+                                      const aMethodPriority = methodPriority[a.learn_method as keyof typeof methodPriority] || 5
+                                      const bMethodPriority = methodPriority[b.learn_method as keyof typeof methodPriority] || 5
+                                      
+                                      if (aMethodPriority !== bMethodPriority) {
+                                        return aMethodPriority - bMethodPriority
+                                      }
+                                      
+                                      // If same method, sort by level learned (ascending), with null values at the end
+                                      const aLevel = a.level_learned_at ?? 999
+                                      const bLevel = b.level_learned_at ?? 999
+                                      if (aLevel !== bLevel) {
+                                        return aLevel - bLevel
+                                      }
+                                      
+                                      // If same level, sort by power (higher power first)
+                                      const aPower = a.power ?? 0
+                                      const bPower = b.power ?? 0
+                                      return bPower - aPower
+                                    })
+                                    .map((move) => (
+                                      <tr 
+                                        key={move.name} 
+                                        className="[&>td]:px-2 [&>td]:py-1 border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+                                        onClick={() => toggleMove(idx, move)}
+                                        title={slot.moves.length >= 4 ? 'Maximum 4 moves reached' : 'Click to add move'}
+                                      >
+                                        <td className="font-medium capitalize text-text">
+                                          {move.short_effect ? (
+                                            <Tooltip content={move.short_effect} maxWidth="w-80" variant="move" type={move.type} position="top">
+                                              <span className="cursor-help">
+                                                {move.name}
+                                              </span>
+                                            </Tooltip>
+                                          ) : (
+                                            <span>{move.name}</span>
+                                          )}
+                                        </td>
+                                        <td><TypeBadgeWithTooltip type={move.type} /></td>
+                                        <td className="capitalize">{move.damage_class}</td>
+                                        <td>{move.power ?? '—'}</td>
+                                        <td>{move.accuracy ?? '—'}</td>
+                                        <td>{move.pp ?? '—'}</td>
+                                        <td>{move.level_learned_at ?? '—'}</td>
+                                        <td className="capitalize text-xs">
+                                          <span className={`px-1 py-0.5 rounded text-xs ${
+                                            move.learn_method === 'level-up' ? 'bg-blue-100 text-blue-800' :
+                                            move.learn_method === 'machine' ? 'bg-purple-100 text-purple-800' :
+                                            move.learn_method === 'egg' ? 'bg-green-100 text-green-800' :
+                                            move.learn_method === 'tutor' ? 'bg-orange-100 text-orange-800' :
+                                            'bg-gray-100 text-gray-800'
+                                          }`}>
+                                            {move.learn_method}
+                                          </span>
+                                        </td>
+                                        <td>
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation()
+                                              toggleMove(idx, move)
+                                            }}
+                                            disabled={slot.moves.length >= 4}
+                                            className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            title={slot.moves.length >= 4 ? 'Maximum 4 moves reached' : 'Add move'}
+                                          >
+                                            +
+                                          </button>
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  {/* Spacer row for better bottom spacing */}
+                                  <tr>
+                                    <td colSpan={9} className="h-4"></td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -1734,21 +1956,52 @@ export default function TeamBuilderPage() {
           </div>
           
           {/* Analysis Panels */}
-          {teamSlots.some(s => s.id !== null) && (
-          <div className="space-y-6">
-            <TypeRadar analysis={teamAnalysis} />
-            <WeaknessMatrix 
-              analysis={teamAnalysis} 
-              isCollapsed={isWeaknessMatrixCollapsed}
-              onToggleCollapse={() => setIsWeaknessMatrixCollapsed(!isWeaknessMatrixCollapsed)}
-            />
-            <OffenseMatrix 
-              team={convertTeamSlotsToSimple(teamSlots, allPokemon, displayPokemonById)} 
-              isCollapsed={isOffenseMatrixCollapsed}
-              onToggleCollapse={() => setIsOffenseMatrixCollapsed(!isOffenseMatrixCollapsed)}
-            />
-            <Suggestions analysis={teamAnalysis} />
-          </div>
+          {hasTeamPokemon && (
+            <div
+              className={`w-full lg:flex-shrink-0 ${isAnalysisColumnCollapsed ? 'hidden lg:flex lg:w-12' : ''}`}
+              style={!isAnalysisColumnCollapsed ? { width: `min(100%, ${analysisColumnWidth}px)` } : undefined}
+            >
+              {isAnalysisColumnCollapsed ? (
+                <div className="hidden lg:flex h-full w-12 border border-border rounded-xl bg-surface items-start justify-center py-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsAnalysisColumnCollapsed(false)}
+                    className="inline-flex items-center justify-center w-8 h-8 rounded-md border border-border hover:bg-white/60"
+                    title="Expand analysis panel"
+                    aria-label="Expand analysis panel"
+                  >
+                    <ChevronRight className="h-4 w-4 text-muted" />
+                  </button>
+                </div>
+              ) : (
+                <div className="relative space-y-6 w-full">
+                  <div className="hidden lg:block absolute -left-2 top-0 bottom-0 w-2 cursor-col-resize z-10" onMouseDown={startResizingAnalysisColumn} />
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setIsAnalysisColumnCollapsed(true)}
+                      className="inline-flex items-center gap-1 px-2 py-1 text-xs border border-border rounded-md hover:bg-white/60"
+                      title="Collapse analysis panel"
+                    >
+                      <ChevronRight className="h-3 w-3 rotate-180" />
+                      Collapse
+                    </button>
+                  </div>
+                  <TypeRadar analysis={teamAnalysis} />
+                  <WeaknessMatrix 
+                    analysis={teamAnalysis} 
+                    isCollapsed={isWeaknessMatrixCollapsed}
+                    onToggleCollapse={() => setIsWeaknessMatrixCollapsed(!isWeaknessMatrixCollapsed)}
+                  />
+                  <OffenseMatrix 
+                    team={convertTeamSlotsToSimple(teamSlots, allPokemon, displayPokemonById)} 
+                    isCollapsed={isOffenseMatrixCollapsed}
+                    onToggleCollapse={() => setIsOffenseMatrixCollapsed(!isOffenseMatrixCollapsed)}
+                  />
+                  <Suggestions analysis={teamAnalysis} />
+                </div>
+              )}
+            </div>
           )}
         </div>
       </main>

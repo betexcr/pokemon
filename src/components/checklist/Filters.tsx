@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useDexData } from "@/lib/checklist/dex.client";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useChecklist } from "./ChecklistProvider";
@@ -10,6 +10,7 @@ function parseCsv(v: string | null): number[] {
 }
 
 export default function Filters() {
+  const SEARCH_DEBOUNCE_MS = 180;
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -28,11 +29,15 @@ export default function Filters() {
   const selectedType = params.get("type") ?? "";
   const caughtFilter = params.get("caught") ?? "all"; // all | caught | uncaught
 
+  useEffect(() => {
+    setSearch(params.get("q") ?? "");
+  }, [params]);
+
   function updateParam(key: string, value: string | null) {
     const p = new URLSearchParams(params.toString());
     if (value && value.length) p.set(key, value);
     else p.delete(key);
-    router.replace(`${pathname}?${p.toString()}`);
+    router.replace(`${pathname}?${p.toString()}`, { scroll: false });
   }
 
   function toggleGen(gen: number) {
@@ -60,11 +65,19 @@ export default function Filters() {
 
   function onSearchInput(v: string) {
     setSearch(v);
-    const p = new URLSearchParams(params.toString());
-    if (v) p.set("q", v);
-    else p.delete("q");
-    router.replace(`${pathname}?${p.toString()}`);
   }
+
+  useEffect(() => {
+    const current = params.get("q") ?? "";
+    if (search === current) return;
+    const timeout = setTimeout(() => {
+      const p = new URLSearchParams(params.toString());
+      if (search) p.set("q", search);
+      else p.delete("q");
+      router.replace(`${pathname}?${p.toString()}`, { scroll: false });
+    }, SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timeout);
+  }, [search, params, pathname, router]);
 
   return (
     <div className="flex flex-wrap items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-900">

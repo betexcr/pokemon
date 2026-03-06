@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef, useMemo, Suspense } from "react";
+import { useEffect, useState, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, MessageCircle, Swords } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { ToastContainer, useToast } from "@/components/Toast";
 import RTDBBattleComponent from '@/components/RTDBBattleComponent';
-import { AIBattleScene } from '@/components/battle/AIBattleScene';
-import { GYM_CHAMPIONS } from '@/lib/gym_champions';
+import OfflineBattleComponent from '@/components/OfflineBattleComponent';
+import { GYM_CHAMPIONS, type Champion } from '@/lib/gym_champions';
 
 function BattleRuntimePage() {
   const router = useRouter();
@@ -34,8 +34,7 @@ function BattleRuntimePage() {
   
   const [showChat, setShowChat] = useState(false);
   const [showBattleResults, setShowBattleResults] = useState(false);
-  const [playerTeam, setPlayerTeam] = useState<Array<{ id: number; level: number; moves?: string[]; nature?: string }>>([]);
-  const [opponentChampionId, setOpponentChampionId] = useState<string>('');
+  const [opponentChampion, setOpponentChampion] = useState<Champion | null>(null);
   const [isAIBattle, setIsAIBattle] = useState(false);
   const [battleTypeDetermined, setBattleTypeDetermined] = useState(false);
 
@@ -47,61 +46,9 @@ function BattleRuntimePage() {
 
     if (opponentKind === "champion" && opponentId) {
       setIsAIBattle(true);
-      setOpponentChampionId(opponentId);
+      const champion = GYM_CHAMPIONS.find(c => c.id === opponentId) || null;
+      setOpponentChampion(champion);
       setBattleTypeDetermined(true);
-      
-      // Load player team from localStorage
-      if (playerTeamId) {
-        try {
-          // Try to load from current team first
-          const currentTeam = localStorage.getItem('pokemon-current-team');
-          if (currentTeam) {
-            const team = JSON.parse(currentTeam);
-            console.log('Loading current team from localStorage:', team);
-            // Current team is stored as an array of slots directly, not as an object with slots property
-            const teamData = team
-              .filter((slot: any) => slot.id !== null)
-              .map((slot: any) => ({ 
-                id: slot.id, 
-                level: slot.level,
-                moves: Array.isArray(slot.moves) ? slot.moves.slice(0,4).map((m: any) => m?.name).filter(Boolean) : undefined,
-                nature: slot.nature
-              }));
-            console.log('Processed team data:', teamData);
-            if (teamData.length > 0) {
-              setPlayerTeam(teamData);
-              return;
-            }
-          }
-
-          // Fallback to saved teams
-          const savedTeams = localStorage.getItem('pokemon-team-builder');
-          if (savedTeams) {
-            const teams = JSON.parse(savedTeams);
-            console.log('Loading from saved teams, looking for team ID:', playerTeamId);
-            console.log('Available teams:', teams.map((t: any) => ({ id: t.id, name: t.name })));
-            const team = teams.find((t: any) => t.id === playerTeamId);
-            if (team && team.slots) {
-              console.log('Found team:', team);
-              const teamData = team.slots
-                .filter((slot: any) => slot.id !== null)
-                .map((slot: any) => ({ 
-                  id: slot.id, 
-                  level: slot.level,
-                  moves: Array.isArray(slot.moves) ? slot.moves.slice(0,4).map((m: any) => m?.name).filter(Boolean) : undefined,
-                  nature: slot.nature
-                }));
-              console.log('Processed team data from saved teams:', teamData);
-              if (teamData.length > 0) {
-                setPlayerTeam(teamData);
-                return;
-              }
-            }
-          }
-        } catch (error) {
-          console.error('Failed to load player team:', error);
-        }
-      }
     } else {
       // Not an AI battle, set as determined
       setBattleTypeDetermined(true);
@@ -143,11 +90,11 @@ function BattleRuntimePage() {
     handleBackFromBattle();
   }, [handleBackFromBattle]);
 
-  // Show loading state
-  if (authLoading || !battleTypeDetermined || (isAIBattle && playerTeam.length === 0)) {
+  // Show loading state (AI battles skip auth check)
+  if ((!isAIBattle && authLoading) || !battleTypeDetermined || (isAIBattle && !opponentChampion)) {
     return (
-      <div className="min-h-screen bg-bg text-text flex items-center justify-center">
-        <div className="text-center">
+      <div className="fixed inset-0 bg-bg text-text flex items-center justify-center">
+        <div className="text-center px-4">
           <img src="/loading.gif" alt="Loading battle" width={128} height={128} className="mx-auto mb-4" />
           <p className="text-muted">Loading battle...</p>
         </div>
@@ -155,11 +102,11 @@ function BattleRuntimePage() {
     );
   }
 
-  // Show error if no user
-  if (!user) {
+  // Show error if no user (only for multiplayer battles)
+  if (!user && !isAIBattle) {
     return (
-      <div className="min-h-screen bg-bg text-text flex items-center justify-center">
-        <div className="text-center">
+      <div className="fixed inset-0 bg-bg text-text flex items-center justify-center">
+        <div className="text-center px-4">
           <p className="text-red-500 mb-4">You must be logged in to view battles</p>
           <button
             onClick={() => router.push("/auth")}
@@ -172,11 +119,11 @@ function BattleRuntimePage() {
     );
   }
 
-  // Show error if no battle ID
-  if (!urlBattleId) {
+  // Show error if no battle ID (only for multiplayer battles)
+  if (!urlBattleId && !isAIBattle) {
     return (
-      <div className="min-h-screen bg-bg text-text flex items-center justify-center">
-        <div className="text-center">
+      <div className="fixed inset-0 bg-bg text-text flex items-center justify-center">
+        <div className="text-center px-4">
           <p className="text-red-500 mb-4">No battle ID provided</p>
           <button
             onClick={() => router.push("/battle")}
@@ -191,53 +138,55 @@ function BattleRuntimePage() {
 
 
   return (
-    <div className="min-h-screen bg-bg text-text">
-      <header className="sticky top-0 z-50 border-b border-border bg-surface">
+    <div className="fixed inset-0 flex flex-col bg-bg text-text overflow-hidden">
+      <header className="flex-shrink-0 z-50 border-b border-border bg-surface">
         <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
+          <div className="flex items-center justify-between h-14 sm:h-16">
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0">
               <a
                 href={getBackUrl()}
                 onClick={handleBackClick}
                 onMouseDown={(e) => {
-                  // Handle middle click
                   if (e.button === 1) {
                     e.preventDefault()
                     window.open(getBackUrl(), '_blank')
                   }
                 }}
-                className="flex items-center space-x-2 text-muted hover:text-text transition-colors cursor-pointer"
+                className="flex items-center space-x-1 sm:space-x-2 text-muted hover:text-text transition-colors cursor-pointer flex-shrink-0"
               >
-                <ArrowLeft className="h-5 w-5" />
-                <span className="font-medium">Back to Lobby</span>
+                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="font-medium text-sm sm:text-base hidden sm:inline">Back to Lobby</span>
               </a>
               <div className="flex items-center gap-2">
-                <div className="p-2 rounded-lg bg-red-100 text-red-600">
-                  <Swords className="h-5 w-5" />
+                <div className="p-1.5 sm:p-2 rounded-lg bg-red-100 text-red-600">
+                  <Swords className="h-4 w-4 sm:h-5 sm:w-5" />
                 </div>
-                <h1 className="text-xl font-bold text-text">Battle</h1>
+                <h1 className="text-lg sm:text-xl font-bold text-text">Battle</h1>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-shrink-0">
               <button
                 onClick={() => setShowChat(!showChat)}
-                className="flex items-center gap-2 text-muted hover:text-text transition-colors"
+                className="flex items-center gap-1 sm:gap-2 text-muted hover:text-text transition-colors text-sm"
               >
-                <MessageCircle className="h-5 w-5" />
-                Chat
+                <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="hidden sm:inline">Chat</span>
               </button>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="w-full px-4 py-6">
+      <main className="flex-1 min-h-0 overflow-y-auto px-4 py-4 sm:py-6">
         {/* Toast bridge handled via useEffect above */}
-        {/* AI Battle */}
-        {isAIBattle ? (
-          <AIBattleScene
-            playerTeam={playerTeam}
-            opponentChampionId={opponentChampionId}
+        {/* AI Battle (offline, uses same engine as multiplayer) */}
+        {isAIBattle && opponentChampion ? (
+          <OfflineBattleComponent
+            config={{ opponentChampion }}
+            onBattleComplete={(winner) => {
+              console.log('AI Battle completed, winner:', winner);
+              setShowBattleResults(true);
+            }}
             viewMode="animated"
           />
         ) : (

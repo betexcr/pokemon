@@ -206,7 +206,7 @@ export function useInfiniteScroll<T>(
     const handleScroll = () => {
       if (isLoadingRef.current || !hasMore) return
 
-      const scrollElement = document.querySelector('.flex-1.min-h-0.overflow-y-auto') || 
+      const scrollElement = document.querySelector('[data-main-scroll]') || 
                            document.documentElement
       
       const { scrollTop, scrollHeight, clientHeight } = scrollElement
@@ -217,7 +217,7 @@ export function useInfiniteScroll<T>(
       }
     }
 
-    const scrollElement = document.querySelector('.flex-1.min-h-0.overflow-y-auto') || 
+    const scrollElement = document.querySelector('[data-main-scroll]') || 
                          document.documentElement
 
     if (scrollElement) {

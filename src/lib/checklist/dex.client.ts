@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { DexEntry } from "./types";
 import { getPokemonWithPagination, getPokemonFallbackImage } from "@/lib/api";
 
@@ -34,11 +34,17 @@ function getRangeForGen(gen: number) {
   return GEN_RANGES[gen] ?? GEN_RANGES[9];
 }
 
-export function useDexData() {
+function useDexDataStore() {
   const [dex, setDex] = useState<DexEntry[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loadingCount, setLoadingCount] = useState<number>(0);
   const [loadedGens, setLoadedGens] = useState<Set<number>>(new Set());
+  const loadedGensRef = useRef<Set<number>>(new Set());
   const loadingGensRef = useRef<Set<number>>(new Set());
+  const loading = loadingCount > 0;
+
+  useEffect(() => {
+    loadedGensRef.current = loadedGens;
+  }, [loadedGens]);
 
   const gens = useMemo(() => Object.keys(GEN_RANGES).map((n) => parseInt(n, 10)), []);
 
@@ -49,9 +55,9 @@ export function useDexData() {
   }, [dex]);
 
   const loadGeneration = useCallback(async (gen: number) => {
-    if (loadedGens.has(gen) || loadingGensRef.current.has(gen)) return;
+    if (loadedGensRef.current.has(gen) || loadingGensRef.current.has(gen)) return;
     loadingGensRef.current.add(gen);
-    setLoading(true);
+    setLoadingCount((c) => c + 1);
     try {
       const { start, end } = getRangeForGen(gen);
       const limit = end - start + 1;
@@ -72,12 +78,17 @@ export function useDexData() {
         merged.sort((a, b) => a.id - b.id);
         return merged;
       });
-      setLoadedGens((prev) => new Set(prev).add(gen));
+      setLoadedGens((prev) => {
+        if (prev.has(gen)) return prev;
+        const next = new Set(prev);
+        next.add(gen);
+        return next;
+      });
     } finally {
       loadingGensRef.current.delete(gen);
-      setLoading(false);
+      setLoadingCount((c) => Math.max(0, c - 1));
     }
-  }, [loadedGens]);
+  }, []);
 
   const loadAll = useCallback(async () => {
     // Load all generations sequentially to avoid overwhelming API
@@ -94,6 +105,23 @@ export function useDexData() {
   }, []);
 
   return { dex, gens, types, loading, loadedGens, loadGeneration, loadAll } as const;
+}
+
+type DexDataContextValue = ReturnType<typeof useDexDataStore>;
+
+const DexDataContext = createContext<DexDataContextValue | null>(null);
+
+export function DexDataProvider({ children }: { children: React.ReactNode }) {
+  const value = useDexDataStore();
+  return React.createElement(DexDataContext.Provider, { value }, children);
+}
+
+export function useDexData() {
+  const ctx = useContext(DexDataContext);
+  if (!ctx) {
+    throw new Error("useDexData must be used within DexDataProvider");
+  }
+  return ctx;
 }
 
 

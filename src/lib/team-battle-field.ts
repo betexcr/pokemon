@@ -60,7 +60,7 @@ export function applyWeatherResidual(state: BattleState): void {
       const pokemon = getCurrentPokemon(team);
       if (pokemon.currentHp <= 0) return;
       const types = getPokemonTypes(pokemon);
-      const immune = types.includes('Rock') || types.includes('Ground') || types.includes('Steel');
+      const immune = types.includes('rock') || types.includes('ground') || types.includes('steel');
       if (!immune) {
         const damage = Math.floor(pokemon.maxHp / 16);
         if (damage > 0) {

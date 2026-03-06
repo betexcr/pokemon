@@ -10,6 +10,7 @@ export default function TypeRadar({ analysis, id = 'team-radar' }: { analysis: T
   const reduce = useReducedMotion();
   const width = 420;
   const height = 420;
+  const svgHeight = height + 40;
   const r = 130;
   const cx = width / 2;
   const cy = height / 2;
@@ -39,7 +40,16 @@ export default function TypeRadar({ analysis, id = 'team-radar' }: { analysis: T
       <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
         Each axis is a Pokémon type. The blue shape grows toward types your team resists and shrinks toward types it is weak to. Bigger area near a label = better defense versus that type.
       </p>
-      <svg id={id} width={width} height={height + 40} role="img" aria-label="Team type coverage radar with full labels and legend">
+      <svg
+        id={id}
+        width="100%"
+        height="auto"
+        viewBox={`0 0 ${width} ${svgHeight}`}
+        preserveAspectRatio="xMidYMid meet"
+        role="img"
+        aria-label="Team type coverage radar with full labels and legend"
+        style={{ display: 'block', maxWidth: '100%' }}
+      >
         <g>
           {[0.4, 0.6, 0.8, 1].map((k, i) => (
             <circle key={i} cx={cx} cy={cy} r={r * k} fill="none" stroke="#e5e7eb" />

@@ -12,7 +12,7 @@ export default function Tabs({ activeTab, onTabChange }: TabsProps) {
   const [hovered, setHovered] = useState<typeof items[number] | null>(null);
 
   return (
-    <nav className="sticky top-16 z-30 bg-white dark:bg-gray-800 mt-5 md:mt-6" style={{ marginTop: 12 }}>
+    <nav className="bg-white dark:bg-gray-800 mt-5 md:mt-6" style={{ marginTop: 12 }}>
       <div className="flex justify-center py-5">
         <div className="flex flex-wrap justify-center gap-4">
           {items.map((id) => {

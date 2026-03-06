@@ -52,7 +52,7 @@ export default function PokemonPageClient({ pokemon }: PokemonPageClientProps) {
   }
 
   return (
-    <>
+    <div className="flex flex-col h-[100dvh] overflow-hidden">
       <AppHeader
         title={pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)}
         subtitle={getSubtitle()}
@@ -63,9 +63,11 @@ export default function PokemonPageClient({ pokemon }: PokemonPageClientProps) {
         showToolbar={true}
         onBackClick={handleBack}
       />
-      <main className="mx-auto w-full max-w-6xl px-4 pb-16 pt-8 sm:px-6 lg:px-8">
-        <PokemonDetails pokemon={pokemon} />
+      <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+          <div className="mx-auto w-full max-w-6xl px-4 pb-8 pt-4 sm:px-6 lg:px-8">
+          <PokemonDetails pokemon={pokemon} />
+        </div>
       </main>
-    </>
+    </div>
   )
 }

@@ -10,7 +10,7 @@ interface LazyPokemonGridProps {
   onSelectPokemon?: (pokemon: Pokemon) => void
   selectedPokemon?: Pokemon | null
   comparisonList?: Pokemon[]
-  density?: '3cols' | '6cols' | '9cols' | 'list'
+  density?: '3cols' | '6cols' | '9cols' | '12cols' | 'list'
   showSpecialForms?: boolean
 }
 
@@ -42,10 +42,11 @@ export default function LazyPokemonGrid({
     lazyLoading.createObserver()
   }, [])
 
-  // Generate Pokemon IDs to display (all 1302 Pokemon)
+  // Generate Pokemon IDs to display (all known main Pokédex Pokémon)
   const pokemonIds = useMemo(() => {
-    return Array.from({ length: 1302 }, (_, i) => i + 1)
-  }, [])
+    const count = Math.max(0, lazyLoading.state.totalCount || 0)
+    return Array.from({ length: count }, (_, i) => i + 1)
+  }, [lazyLoading.state.totalCount])
 
   // Get grid classes based on density
   const getGridClasses = () => {
@@ -55,7 +56,9 @@ export default function LazyPokemonGrid({
       case '6cols':
         return 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3'
       case '9cols':
-        return 'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 2xl:grid-cols-9 gap-2'
+        return 'grid grid-cols-9 gap-2'
+      case '12cols':
+        return 'grid grid-cols-12 gap-2'
       case 'list':
         return 'flex flex-col space-y-2'
       default:

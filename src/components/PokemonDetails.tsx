@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import PokemonHero from '@/components/PokemonHero'
 import Tabs from '@/components/pokemon/Tabs'
 import StatsSection from '@/components/pokemon/StatsSection'
@@ -28,11 +28,38 @@ export default function PokemonDetails({ pokemon, showHeader = true, className =
   const [evolutionChain, setEvolutionChain] = useState<any[]>([])
   const [typeMatchups, setTypeMatchups] = useState<any[]>([])
   const [activeTab, setActiveTab] = useState<'stats' | 'moves' | 'evolution' | 'matchups'>('stats')
+  const tabsRef = useRef<HTMLDivElement>(null)
+  const tabContentRef = useRef<HTMLDivElement>(null)
+  const isFirstTabChange = useRef(true)
   const [loading, setLoading] = useState(true)
   const [loadingMoves, setLoadingMoves] = useState(true)
   const [loadingEvolution, setLoadingEvolution] = useState(true)
   const [loadingMatchups, setLoadingMatchups] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // Reset to default view (top + Stats tab) when navigating to a different Pokemon
+  useEffect(() => {
+    setActiveTab('stats')
+    isFirstTabChange.current = true
+    const main = tabContentRef.current?.closest('main') as HTMLElement | null
+    if (main) main.scrollTo({ top: 0, behavior: 'instant' })
+  }, [pokemon.id])
+
+  // Scroll tab content into view when the user switches tabs (skip on initial mount)
+  useEffect(() => {
+    if (isFirstTabChange.current) {
+      isFirstTabChange.current = false
+      return
+    }
+    const el = tabsRef.current
+    if (!el) return
+    const scrollContainer = el.closest('main') as HTMLElement | null
+    if (!scrollContainer) return
+    const elTop = el.getBoundingClientRect().top
+    const containerTop = scrollContainer.getBoundingClientRect().top
+    const target = scrollContainer.scrollTop + (elTop - containerTop)
+    scrollContainer.scrollTo({ top: Math.max(0, target), behavior: 'smooth' })
+  }, [activeTab])
 
   useEffect(() => {
     const loadPokemonDetails = async () => {
@@ -175,13 +202,16 @@ export default function PokemonDetails({ pokemon, showHeader = true, className =
         />
       )}
       
-      <div className="mt-8">
+      <div ref={tabsRef} className="mt-4">
         <Tabs 
           activeTab={activeTab}
-          onTabChange={setActiveTab}
+          onTabChange={(tab) => {
+            isFirstTabChange.current = false
+            setActiveTab(tab)
+          }}
         />
         
-        <div className="mt-6">
+        <div ref={tabContentRef} className="mt-6">
           {(loading || externalLoading) ? (
             <PokemonDetailsSkeleton />
           ) : error ? (

@@ -33,7 +33,7 @@ async function getPokemonSpecies(pokemonId) {
 
 // Extract Japanese name from species data
 function extractJapaneseName(speciesData) {
-  const japaneseNameEntry = speciesData.names?.find(name => name.language.name === 'ja-Hrkt');
+  const japaneseNameEntry = speciesData.names?.find(name => name.language.name === 'ja-hrkt');
   return japaneseNameEntry ? japaneseNameEntry.name : null;
 }
 

@@ -1,96 +1,175 @@
-import { getDatabase } from 'firebase-admin/database';
+import { getRtdbOps, type RtdbOps } from './rtdb-access';
 import {
     BattleState,
     BattleAction,
     BattleTeam,
     BattlePokemon,
     buildActionQueue,
-    executeAction,
-    processEndOfTurnStatus,
     isTeamDefeated,
     getNextAvailablePokemon,
-    switchToPokemon,
     getCurrentPokemon,
-    calculateDamageDetailed
 } from './team-battle-engine';
-import { processStartOfTurn, processEndOfTurn } from './team-battle-engine-additional';
-import { createBattleRng, normalizeBattleRng } from './battle-rng';
+import { processStartOfTurn, processEndOfTurn, resolveMove, resolveSwitch } from './team-battle-engine-additional';
+import { createBattleRng } from './battle-rng';
 import { RTDBBattleMeta, RTDBBattlePrivate, RTDBBattlePublic, RTDBChoice } from './firebase-rtdb-service';
 
-// Helper to hydrate team with full Pokemon data (stats, types) from PokeAPI
-async function hydrateTeam(team: BattlePokemon[]): Promise<BattlePokemon[]> {
+const POKEAPI_BASE = 'https://pokeapi.co/api/v2';
+
+const _resolvingLocks = new Set<string>();
+
+async function fetchPokemonData(idOrName: number | string): Promise<any> {
+    const res = await fetch(`${POKEAPI_BASE}/pokemon/${idOrName}`);
+    if (!res.ok) throw new Error(`PokeAPI ${res.status} for pokemon/${idOrName}`);
+    return res.json();
+}
+
+function ensureVolatile(p: any): BattlePokemon['volatile'] {
+    return {
+        confusion: undefined,
+        substitute: undefined,
+        leechSeed: false,
+        choiceLock: undefined,
+        encore: undefined,
+        taunt: undefined,
+        disable: undefined,
+        protect: undefined,
+        perishSong: undefined,
+        flinched: false,
+        binding: undefined,
+        justSwitchedIn: false,
+        toxicCounter: 0,
+        yawn: undefined,
+        aquaRing: false,
+        wish: undefined,
+        ...(p?.volatile || {})
+    };
+}
+
+function ensureStatModifiers(p: any): BattlePokemon['statModifiers'] {
+    return {
+        attack: 0,
+        defense: 0,
+        specialAttack: 0,
+        specialDefense: 0,
+        speed: 0,
+        accuracy: 0,
+        evasion: 0,
+        ...(p?.statModifiers || {})
+    };
+}
+
+async function hydrateTeam(team: any[]): Promise<BattlePokemon[]> {
     const hydratedTeam = await Promise.all(team.map(async (p) => {
-        // If we already have stats and types, no need to fetch
-        if (p.pokemon.stats?.length && p.pokemon.types?.length) {
-            return p;
+        const pokemonObj = p.pokemon || p;
+        const pokemonId = pokemonObj.id || pokemonObj.name;
+        const hasStats = Array.isArray(pokemonObj.stats) && pokemonObj.stats.length > 0;
+
+        let fullData: any = null;
+        if (!hasStats && pokemonId) {
+            try {
+                fullData = await fetchPokemonData(pokemonId);
+            } catch (e) {
+                console.warn(`Failed to hydrate pokemon ${pokemonId}:`, e);
+            }
         }
-        // Otherwise return as-is (hydration would happen here if needed)
-        return p;
+
+        const pokemon = {
+            id: pokemonObj.id || fullData?.id || 0,
+            name: pokemonObj.name || fullData?.name || 'unknown',
+            types: (pokemonObj.types?.length ? pokemonObj.types : fullData?.types?.map((t: any) => t.type) || [{ name: 'normal' }]),
+            stats: hasStats ? pokemonObj.stats : (fullData?.stats || []),
+            weight: pokemonObj.weight || fullData?.weight || 500,
+            abilities: pokemonObj.abilities || fullData?.abilities || [],
+        };
+
+        const moves = Array.isArray(p.moves) ? p.moves.map((m: any) => {
+            if (typeof m === 'string') return { id: m, pp: 20, maxPp: 20 };
+            return {
+                id: m.id || m.name || 'tackle',
+                pp: typeof m.pp === 'number' ? m.pp : 20,
+                maxPp: typeof m.maxPp === 'number' ? m.maxPp : (typeof m.pp === 'number' ? m.pp : 20),
+                disabled: m.disabled || false,
+            };
+        }) : [{ id: 'tackle', pp: 35, maxPp: 35 }];
+
+        const hpStat = pokemon.stats.find((s: any) => (s.stat?.name || s.name) === 'hp');
+        const baseHp = hpStat?.base_stat ?? 50;
+        const level = typeof p.level === 'number' ? p.level : 50;
+        const calculatedMaxHp = Math.floor(((2 * baseHp + 31) * level) / 100) + level + 10;
+        const maxHp = typeof p.maxHp === 'number' && p.maxHp > 0 ? p.maxHp : calculatedMaxHp;
+        const currentHp = typeof p.currentHp === 'number' ? p.currentHp : maxHp;
+
+        return {
+            pokemon,
+            level,
+            nature: p.nature || 'hardy',
+            currentHp,
+            maxHp,
+            moves,
+            status: p.status || undefined,
+            statusTurns: p.statusTurns || 0,
+            volatile: ensureVolatile(p),
+            statModifiers: ensureStatModifiers(p),
+            heldItem: p.heldItem || undefined,
+        } as BattlePokemon;
     }));
     return hydratedTeam;
 }
 
-async function fetchBattleState(battleId: string): Promise<BattleState | null> {
-    const db = getDatabase();
-
-    const metaRef = db.ref(`battles/${battleId}/meta`);
-    const metaSnap = await metaRef.once('value');
-    const meta = metaSnap.val() as RTDBBattleMeta;
-
+async function fetchBattleState(battleId: string, ops: RtdbOps): Promise<BattleState | null> {
+    const meta = await ops.get(`battles/${battleId}/meta`) as RTDBBattleMeta;
     if (!meta) return null;
 
-    const p1PrivateRef = db.ref(`battles/${battleId}/private/${meta.players.p1.uid}`);
-    const p2PrivateRef = db.ref(`battles/${battleId}/private/${meta.players.p2.uid}`);
-    const publicRef = db.ref(`battles/${battleId}/public`);
-
-    const [p1Snap, p2Snap, publicSnap] = await Promise.all([
-        p1PrivateRef.once('value'),
-        p2PrivateRef.once('value'),
-        publicRef.once('value')
+    const [p1Private, p2Private, publicState] = await Promise.all([
+        ops.get(`battles/${battleId}/private/${meta.players.p1.uid}`) as Promise<RTDBBattlePrivate>,
+        ops.get(`battles/${battleId}/private/${meta.players.p2.uid}`) as Promise<RTDBBattlePrivate>,
+        ops.get(`battles/${battleId}/public`) as Promise<RTDBBattlePublic>,
     ]);
 
-    if (!p1Snap.exists() || !p2Snap.exists() || !publicSnap.exists()) {
-        console.error('fetchBattleState: Missing data snapshots');
-        console.error('P1 Private exists:', p1Snap.exists());
-        console.error('P2 Private exists:', p2Snap.exists());
-        console.error('Public exists:', publicSnap.exists());
+    if (!p1Private || !p2Private || !publicState) {
+        console.error('fetchBattleState: Missing data', { p1: !!p1Private, p2: !!p2Private, pub: !!publicState });
         return null;
     }
 
-    const p1Private = p1Snap.val() as RTDBBattlePrivate;
-    const p2Private = p2Snap.val() as RTDBBattlePrivate;
-    const publicState = publicSnap.val() as RTDBBattlePublic;
+    const p1RawTeam = Array.isArray(p1Private.team) ? p1Private.team : [];
+    const p2RawTeam = Array.isArray(p2Private.team) ? p2Private.team : [];
 
-    // Hydrate teams with missing data (stats, types, etc.)
     const [p1HydratedTeam, p2HydratedTeam] = await Promise.all([
-        hydrateTeam(p1Private.team),
-        hydrateTeam(p2Private.team)
+        hydrateTeam(p1RawTeam),
+        hydrateTeam(p2RawTeam)
     ]);
 
-    // Reconstruct BattleState
-    // Note: This is a simplified reconstruction. In a real app, you'd need a robust mapper.
-    // We assume the private state holds the authoritative "current" state for simplicity here,
-    // but ideally we should merge with any public volatile state if that's separate.
+    const mapScreens = (raw: any) => ({
+        reflect: raw?.reflect ? { turns: raw.reflect } : undefined,
+        lightScreen: raw?.lightScreen ? { turns: raw.lightScreen } : undefined,
+        auroraVeil: undefined,
+        safeguard: undefined,
+        tailwind: undefined,
+    });
+    const mapHazards = (raw: any) => ({
+        stealthRock: raw?.sr ?? false,
+        spikes: raw?.spikes ?? 0,
+        toxicSpikes: raw?.tSpikes ?? 0,
+        stickyWeb: raw?.web ?? false,
+    });
 
-    // We need to ensure the teams are in the correct format for BattleState
     const p1Team: BattleTeam = {
-        pokemon: p1HydratedTeam, // Use hydrated team
-        // Use saved currentIndex if available, otherwise default to 0
-        currentIndex: p1Private.currentIndex ?? 0,
-        faintedCount: p1Private.team.filter((p: any) => p.currentHp <= 0).length,
+        pokemon: p1HydratedTeam,
+        currentIndex: (p1Private as any).currentIndex ?? 0,
+        faintedCount: p1HydratedTeam.filter(p => p.currentHp <= 0).length,
         sideConditions: {
-            screens: publicState.field.screens.p1,
-            hazards: publicState.field.hazards.p1
+            screens: mapScreens(publicState?.field?.screens?.p1),
+            hazards: mapHazards(publicState?.field?.hazards?.p1),
         }
     };
 
     const p2Team: BattleTeam = {
-        pokemon: p2HydratedTeam, // Use hydrated team
-        currentIndex: p2Private.currentIndex ?? 0,
-        faintedCount: p2Private.team.filter((p: any) => p.currentHp <= 0).length,
+        pokemon: p2HydratedTeam,
+        currentIndex: (p2Private as any).currentIndex ?? 0,
+        faintedCount: p2HydratedTeam.filter(p => p.currentHp <= 0).length,
         sideConditions: {
-            screens: publicState.field.screens.p2,
-            hazards: publicState.field.hazards.p2
+            screens: mapScreens(publicState?.field?.screens?.p2),
+            hazards: mapHazards(publicState?.field?.hazards?.p2),
         }
     };
 
@@ -112,75 +191,38 @@ async function fetchBattleState(battleId: string): Promise<BattleState | null> {
     };
 }
 
-export async function resolveTurn(battleId: string): Promise<void> {
+export async function resolveTurn(battleId: string, authToken?: string): Promise<void> {
     console.log('=== RESOLVE TURN CALLED ===', battleId);
-    console.log('Getting database reference...');
-    const db = getDatabase();
-    const metaRef = db.ref(`battles/${battleId}/meta`);
-    console.log('Database reference obtained');
+    const ops = getRtdbOps(authToken);
 
-    // 1. Fetch Meta to get turn and players
-    const metaSnap = await metaRef.once('value');
-    if (!metaSnap.exists()) throw new Error('Battle not found');
-
-    const meta = metaSnap.val() as RTDBBattleMeta;
+    const meta = await ops.get(`battles/${battleId}/meta`) as RTDBBattleMeta;
+    if (!meta) throw new Error('Battle not found');
 
     if (meta.phase !== 'choosing') {
-        console.warn('Battle not in choosing phase, skipping resolution');
+        console.log(`Phase is "${meta.phase}", skipping resolution.`);
         return;
     }
 
-    // 2. Fetch Choices
-    const choicesRef = db.ref(`battles/${battleId}/turns/${meta.turn}/choices`);
-    const choicesSnap = await choicesRef.once('value');
-    const choices = choicesSnap.val() as Record<string, RTDBChoice>;
+    const lockKey = `${battleId}:${meta.turn}`;
+    if (_resolvingLocks.has(lockKey)) {
+        console.log(`In-memory lock held for ${lockKey}, skipping.`);
+        return;
+    }
+    _resolvingLocks.add(lockKey);
 
+    const choices = await ops.get(`battles/${battleId}/turns/${meta.turn}/choices`) as Record<string, RTDBChoice>;
     if (!choices || !choices[meta.players.p1.uid] || !choices[meta.players.p2.uid]) {
         console.log('Not all players have submitted choices yet.');
-        console.log('P1 submitted:', !!(choices && choices[meta.players.p1.uid]));
-        console.log('P2 submitted:', !!(choices && choices[meta.players.p2.uid]));
+        _resolvingLocks.delete(lockKey);
         return;
     }
 
-    console.log('✅ Both players submitted choices. Starting resolution...');
-    console.log('Current meta:', JSON.stringify(meta, null, 2));
-
-    // 3. Attempt to transition to 'resolving' phase atomically
-    // This prevents race conditions where multiple requests try to resolve the same turn
-    const { committed, snapshot } = await metaRef.transaction((currentMeta) => {
-        console.log('🔄 Transaction callback - currentMeta:', currentMeta);
-        console.log('🔄 Expected turn:', meta.turn);
-        
-        // Firebase Admin SDK may pass null on first read - use our fetched meta as baseline
-        const metaToCheck = currentMeta || meta;
-        
-        if (metaToCheck.phase === 'choosing' && metaToCheck.turn === meta.turn) {
-            console.log('✅ Transaction conditions met - updating phase to resolving');
-            return { ...metaToCheck, phase: 'resolving' };
-        }
-        
-        console.log('❌ Transaction conditions NOT met:', {
-            hasCurrentMeta: !!currentMeta,
-            currentPhase: metaToCheck?.phase,
-            currentTurn: metaToCheck?.turn,
-            expectedTurn: meta.turn
-        });
-        return undefined; // Abort if not in choosing phase or turn changed
-    });
-
-    if (!committed) {
-        console.warn('❌ Battle resolution aborted: Phase already changed or concurrent resolution.');
-        console.warn('Committed:', committed);
-        return;
-    }
-    console.log('✅ Transaction committed successfully');
-
-    // Update local meta with the committed snapshot
-    const lockedMeta = snapshot.val() as RTDBBattleMeta;
-    console.log('Phase locked to resolving. Proceeding with calculation...');
+    console.log('Both players submitted. Resolving turn', meta.turn);
+    await ops.update(`battles/${battleId}/meta`, { phase: 'resolving' });
+    console.log('Phase locked to resolving.');
 
     // 4. Fetch Current State
-    const battleState = await fetchBattleState(battleId);
+    const battleState = await fetchBattleState(battleId, ops);
     if (!battleState) {
         console.error('Failed to reconstruct battle state. One or more paths missing.');
         throw new Error('Failed to reconstruct battle state');
@@ -225,68 +267,19 @@ export async function resolveTurn(battleId: string): Promise<void> {
 
         for (const action of queue) {
             console.log('Processing action:', action);
-            const userTeam = action.user === 'player' ? currentState.player : currentState.opponent;
-            const targetTeam = action.user === 'player' ? currentState.opponent : currentState.player;
-            const userPokemon = getCurrentPokemon(userTeam);
-            const targetPokemon = getCurrentPokemon(targetTeam);
 
-            if (action.type === 'move' && action.moveId) {
-                const move = userPokemon.moves.find(m => m.id === action.moveId); // Match by ID
+            if (action.type === 'switch') {
+                await resolveSwitch(currentState, action);
+            } else if (action.type === 'move' && action.moveId) {
+                await resolveMove(currentState, action);
+            }
 
-                if (move) {
-                    currentState.battleLog.push({
-                        type: 'move_used',
-                        message: `${userPokemon.pokemon.name} used ${move.id}!`, // Use ID or name
-                        pokemon: userPokemon.pokemon.name,
-                        move: move.id
-                    });
+            currentState.player.faintedCount = currentState.player.pokemon.filter(p => p.currentHp <= 0).length;
+            currentState.opponent.faintedCount = currentState.opponent.pokemon.filter(p => p.currentHp <= 0).length;
 
-                    // Calculate damage
-                    console.log('Calculating damage for:', move.id);
-                    const result = await calculateDamageDetailed(userPokemon, targetPokemon, { name: move.id } as any, currentState);
-                    console.log('Damage result:', result);
-
-                    // Apply damage
-                    targetPokemon.currentHp = Math.max(0, targetPokemon.currentHp - result.damage);
-
-                    currentState.battleLog.push({
-                        type: 'damage_dealt',
-                        message: `It dealt ${result.damage} damage!`,
-                        damage: result.damage,
-                        effectiveness: result.effectiveness > 1 ? 'super_effective' : result.effectiveness < 1 ? 'not_very_effective' : 'normal'
-                    });
-
-                    // Check if Pokemon fainted
-                    if (targetPokemon.currentHp <= 0) {
-                        currentState.battleLog.push({
-                            type: 'pokemon_fainted',
-                            message: `${targetPokemon.pokemon.name} fainted!`,
-                            pokemon: targetPokemon.pokemon.name
-                        });
-                        // Update fainted count
-                        targetTeam.faintedCount = targetTeam.pokemon.filter(p => p.currentHp <= 0).length;
-                        console.log(`Pokemon fainted! Updated fainted count to ${targetTeam.faintedCount}`);
-                    }
-                } else {
-                    console.warn('Move not found for action:', action);
-                }
-            } else if (action.type === 'switch' && action.switchIndex !== undefined) {
-                 // Handle switch
-                 currentState.battleLog.push({
-                    type: 'switch',
-                    message: `${userPokemon.pokemon.name} switched out!`,
-                    pokemon: userPokemon.pokemon.name
-                 });
-
-                 // Update active index
-                 userTeam.currentIndex = action.switchIndex;
-                 const newPokemon = getCurrentPokemon(userTeam);
-
-                 currentState.battleLog.push({
-                    type: 'switch',
-                    message: `Go! ${newPokemon.pokemon.name}!`,
-                    pokemon: newPokemon.pokemon.name
-                 });
+            if (isTeamDefeated(currentState.player) || isTeamDefeated(currentState.opponent)) {
+                console.log('A team is fully defeated, stopping action queue.');
+                break;
             }
         }
 
@@ -362,8 +355,36 @@ export async function resolveTurn(battleId: string): Promise<void> {
             currentIndex: currentState.opponent.currentIndex
         };
 
-        // Prepare updates for public node
-        const publicUpdates = {
+        const p1ActiveNow = getCurrentPokemon(currentState.player);
+        const p2ActiveNow = getCurrentPokemon(currentState.opponent);
+
+        const makePublicActive = (mon: typeof p1ActiveNow) => ({
+            species: mon.pokemon.name,
+            level: mon.level,
+            types: (mon.pokemon.types || []).map((t: any) => typeof t === 'string' ? t : t.type?.name || t.name || 'normal'),
+            hp: { cur: Math.max(0, mon.currentHp), max: mon.maxHp },
+            status: mon.status || null,
+            boosts: {
+                atk: mon.statModifiers?.attack || 0,
+                def: mon.statModifiers?.defense || 0,
+                spa: mon.statModifiers?.specialAttack || 0,
+                spd: mon.statModifiers?.specialDefense || 0,
+                spe: mon.statModifiers?.speed || 0,
+                acc: mon.statModifiers?.accuracy || 0,
+                eva: mon.statModifiers?.evasion || 0
+            }
+        });
+
+        const makeBenchPublic = (team: typeof currentState.player) =>
+            team.pokemon
+                .filter((_, i) => i !== team.currentIndex)
+                .map((mon) => ({
+                    species: mon.pokemon.name,
+                    fainted: mon.currentHp <= 0,
+                    revealedMoves: mon.moves.map(m => m.id).slice(0, 4)
+                }));
+
+        const publicUpdates: any = {
             battleLog: currentState.battleLog,
             field: {
                 screens: {
@@ -374,35 +395,46 @@ export async function resolveTurn(battleId: string): Promise<void> {
                     p1: currentState.player.sideConditions.hazards,
                     p2: currentState.opponent.sideConditions.hazards
                 }
-            }
+            },
+            p1: {
+                active: makePublicActive(p1ActiveNow),
+                benchPublic: makeBenchPublic(currentState.player)
+            },
+            p2: {
+                active: makePublicActive(p2ActiveNow),
+                benchPublic: makeBenchPublic(currentState.opponent)
+            },
+            lastResultSummary: currentState.battleLog.length > 0
+                ? currentState.battleLog.map(l => l.message).join(' ')
+                : ''
         };
 
-        console.log('Public updates:', publicUpdates);
+        console.log('Public updates:', JSON.stringify(publicUpdates, null, 2));
 
         await Promise.all([
-            metaRef.update(metaUpdates),
-            db.ref(`battles/${battleId}/private/${meta.players.p1.uid}`).update(p1Updates),
-            db.ref(`battles/${battleId}/private/${meta.players.p2.uid}`).update(p2Updates),
-            db.ref(`battles/${battleId}/public`).update(publicUpdates),
-            // Clear choices for next turn
-            db.ref(`battles/${battleId}/turns/${meta.turn}/choices`).remove()
+            ops.update(`battles/${battleId}/meta`, metaUpdates),
+            ops.update(`battles/${battleId}/private/${meta.players.p1.uid}`, p1Updates),
+            ops.update(`battles/${battleId}/private/${meta.players.p2.uid}`, p2Updates),
+            ops.update(`battles/${battleId}/public`, publicUpdates),
+            ops.set(`battles/${battleId}/turns/${meta.turn}/choices`, null),
         ]);
         console.log('✅ RTDB updates completed successfully.');
 
     } catch (error: any) {
-        console.error('❌ Error during turn resolution:', error);
+        console.error('Error during turn resolution:', error);
         
-        // Attempt to set battle to ended state with error
         try {
-            await metaRef.update({
+            await ops.update(`battles/${battleId}/meta`, {
                 phase: 'ended',
                 endedReason: `Server Error: ${error.message}`
             });
-            console.log('⚠️ Battle terminated due to error.');
+            console.log('Battle terminated due to error.');
         } catch (cleanupError) {
-            console.error('❌ Failed to terminate battle:', cleanupError);
+            console.error('Failed to terminate battle:', cleanupError);
         }
         throw error;
+    } finally {
+        _resolvingLocks.delete(lockKey);
     }
 
     console.log(`Turn ${meta.turn} resolved. New phase: ${currentState.isComplete ? 'ended' : 'choosing'}`);

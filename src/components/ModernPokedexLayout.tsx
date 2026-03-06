@@ -8,10 +8,9 @@ import { useRouter } from 'next/navigation'
 import { getPokemonByGeneration, getPokemonByType, getPokemon, getPokemonWithPagination, getPokemonTotalCount, getPokemonList } from '@/lib/api'
 import ThemeToggle from './ThemeToggle'
 import VirtualizedPokemonGrid from './VirtualizedPokemonGrid'
-import PokedexListView from './PokedexListView'
 import AdvancedFilters from './AdvancedFilters'
 import { useViewportDataLoading } from '@/hooks/useViewportDataLoading'
-import { Search, X, List, Grid3X3, Grid2X2, LayoutGridIcon, ChevronUp, ChevronDown } from 'lucide-react'
+import { Search, X, List, Grid3X3, Grid2X2, LayoutGridIcon, ChevronUp, ChevronDown, Heart } from 'lucide-react'
 import { Dices } from 'lucide-react'
 import UserDropdown from './UserDropdown'
 import AuthModal from './auth/AuthModal'
@@ -149,7 +148,7 @@ export default function ModernPokedexLayout({
   const [isHydrated, setIsHydrated] = useState(false)
   const [sortBy, setSortBy] = useState<'id' | 'name' | 'stats' | 'hp' | 'attack' | 'defense' | 'special-attack' | 'special-defense' | 'speed'>('id')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
-  const [cardDensity, setCardDensity] = useState<'3cols' | '6cols' | '9cols' | 'list'>('6cols')
+  const [cardDensity, setCardDensity] = useState<'3cols' | '6cols' | '9cols' | '12cols' | 'list'>('6cols')
 
   // Hydration effect - load client-side state after hydration
   useEffect(() => {
@@ -225,7 +224,7 @@ export default function ModernPokedexLayout({
           setSortOrder(savedSortOrder as typeof sortOrder)
         }
         
-        if (savedCardDensity && ['3cols', '6cols', '9cols', 'list'].includes(savedCardDensity)) {
+        if (savedCardDensity && ['3cols', '6cols', '9cols', '12cols', 'list'].includes(savedCardDensity)) {
           setCardDensity(savedCardDensity as typeof cardDensity)
         }
       }
@@ -261,72 +260,79 @@ export default function ModernPokedexLayout({
     }
   }, [showSidebar, isHydrated])
   
-  // Load scroll position from sessionStorage on mount
+  // Restore scroll position on mount - polls until the container has enough content
   useEffect(() => {
+    if (typeof window === 'undefined') return
+    let target: number | null = null
     try {
-      if (typeof window !== 'undefined') {
-        const savedScrollPosition = sessionStorage.getItem(SCROLL_POSITION_KEY)
-        if (savedScrollPosition && scrollContainerRef.current) {
-          const scrollTop = parseInt(savedScrollPosition, 10)
-          // Use requestAnimationFrame to ensure DOM is ready
-          requestAnimationFrame(() => {
-            if (scrollContainerRef.current) {
-              scrollContainerRef.current.scrollTop = scrollTop
-            }
-          })
-        }
-      }
-    } catch (error) {
-      console.error('Error loading scroll position from sessionStorage:', error)
+      const saved = localStorage.getItem(SCROLL_POSITION_KEY)
+      if (saved) target = parseInt(saved, 10)
+    } catch {
+      return
     }
+    if (!target || target <= 0) return
+
+    const tryRestore = () => {
+      const el = scrollContainerRef.current
+      if (!el) return false
+      // Only apply once the container is scrollable to the target position
+      if (el.scrollHeight - el.clientHeight >= target! - 1) {
+        el.scrollTop = target!
+        return true
+      }
+      return false
+    }
+
+    if (tryRestore()) return
+
+    // Retry every 100ms until content loads, up to 5 seconds
+    let attempts = 0
+    const intervalId = setInterval(() => {
+      attempts++
+      if (tryRestore() || attempts >= 50) clearInterval(intervalId)
+    }, 100)
+
+    return () => clearInterval(intervalId)
   }, [])
-  
-  // Save scroll position to sessionStorage when scrolling
+
+  // Save scroll position to localStorage when scrolling (throttled)
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current
     if (!scrollContainer) return
-    
-    const handleScroll = () => {
-      try {
-        if (typeof window !== 'undefined') {
-          sessionStorage.setItem(SCROLL_POSITION_KEY, scrollContainer.scrollTop.toString())
-        }
-      } catch (error) {
-        console.error('Error saving scroll position to sessionStorage:', error)
-      }
-    }
-    
-    // Throttle scroll events for better performance
+
     let timeoutId: NodeJS.Timeout
-    const throttledHandleScroll = () => {
+    const handleScroll = () => {
       clearTimeout(timeoutId)
-      timeoutId = setTimeout(handleScroll, 100)
+      timeoutId = setTimeout(() => {
+        try {
+          localStorage.setItem(SCROLL_POSITION_KEY, scrollContainer.scrollTop.toString())
+        } catch { /* storage unavailable */ }
+      }, 100)
     }
-    
-    scrollContainer.addEventListener('scroll', throttledHandleScroll)
-    
+
+    scrollContainer.addEventListener('scroll', handleScroll, { passive: true })
     return () => {
-      scrollContainer.removeEventListener('scroll', throttledHandleScroll)
+      scrollContainer.removeEventListener('scroll', handleScroll)
       clearTimeout(timeoutId)
     }
   }, [])
-  
-  // Save scroll position when navigating away from the page
+
+  // Flush scroll position when navigating away or hiding the tab
   useEffect(() => {
-    const handleBeforeUnload = () => {
+    const saveNow = () => {
       try {
-        if (scrollContainerRef.current && typeof window !== 'undefined') {
-          sessionStorage.setItem(SCROLL_POSITION_KEY, scrollContainerRef.current.scrollTop.toString())
+        if (scrollContainerRef.current) {
+          localStorage.setItem(SCROLL_POSITION_KEY, scrollContainerRef.current.scrollTop.toString())
         }
-      } catch (error) {
-        console.error('Error saving scroll position on beforeunload:', error)
-      }
+      } catch { /* storage unavailable */ }
     }
-    
-    window.addEventListener('beforeunload', handleBeforeUnload)
-    
+    const handleVisibilityChange = () => { if (document.visibilityState === 'hidden') saveNow() }
+
+    window.addEventListener('beforeunload', saveNow)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload)
+      window.removeEventListener('beforeunload', saveNow)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [])
   
@@ -426,9 +432,14 @@ export default function ModernPokedexLayout({
   // Collapsible sections state with localStorage persistence
   const [isFiltersCollapsed, setIsFiltersCollapsed] = useState(true)
   const [isFiltersHydrated, setIsFiltersHydrated] = useState(false)
+  const loadedCountRef = useRef(loadedCount || pokemonList.length)
   
   // Always use lazy loading
   const [isInitialLoading, setIsInitialLoading] = useState(true)
+
+  useEffect(() => {
+    loadedCountRef.current = loadedCount || pokemonList.length
+  }, [loadedCount, pokemonList.length])
 
   // Handle hydration and load from localStorage
   useEffect(() => {
@@ -524,7 +535,7 @@ export default function ModernPokedexLayout({
           const count = await getPokemonTotalCount();
           setTotalPokemonCount(count || null);
         } catch (error) {
-          setTotalPokemonCount(1302);
+          setTotalPokemonCount(1025);
         }
         
         // Always use lazy loading - no initial batch needed
@@ -600,6 +611,106 @@ export default function ModernPokedexLayout({
     cacheTtl: 5 * 60 * 1000,
     throttleMs: 100
   })
+
+  const [jumpToNumberInput, setJumpToNumberInput] = useState('')
+
+  const handleJumpToPokemonNumber = useCallback(async () => {
+    const parsed = Number.parseInt(jumpToNumberInput, 10)
+    if (Number.isNaN(parsed)) return
+
+    const maxPokemon = totalCount || totalPokemonCount || 1025
+    const targetId = Math.min(maxPokemon, Math.max(1, parsed))
+    const targetIndex = targetId - 1
+    setJumpToNumberInput(String(targetId))
+
+    const scrollContainer = scrollContainerRef.current
+    if (!scrollContainer) return
+
+    const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+    const getLoadedCount = () => Math.max(1, loadedCountRef.current)
+    const waitForLoadedCount = async (requiredCount: number, timeoutMs = 1500) => {
+      const start = Date.now()
+      while (Date.now() - start < timeoutMs) {
+        if (getLoadedCount() >= requiredCount) return true
+        await wait(60)
+      }
+      return getLoadedCount() >= requiredCount
+    }
+
+    const scrollNearTargetRow = (smooth = false) => {
+      const densityConfig: Record<string, { cols: number }> = {
+        '3cols': { cols: 3 },
+        '6cols': { cols: 6 },
+        '9cols': { cols: 9 },
+        list: { cols: 1 }
+      }
+      const config = densityConfig[cardDensity] || densityConfig['6cols']
+      const effectiveLoaded = Math.max(getLoadedCount(), targetId)
+      const totalRows = Math.max(1, Math.ceil(effectiveLoaded / config.cols))
+      const targetRow = Math.floor(targetIndex / config.cols)
+      const rowRatio = totalRows > 1 ? targetRow / (totalRows - 1) : 0
+      const scrollHeight = scrollContainer.scrollHeight - scrollContainer.clientHeight
+
+      scrollContainer.scrollTo({
+        top: Math.max(0, Math.min(rowRatio * scrollHeight, scrollHeight)),
+        behavior: smooth ? 'smooth' : 'auto'
+      })
+    }
+
+    const tryCenterTarget = () => {
+      const targetElement = scrollContainer.querySelector(`[data-pokemon-id="${targetId}"]`) as HTMLElement | null
+      if (!targetElement) return false
+
+      const containerRect = scrollContainer.getBoundingClientRect()
+      const targetRect = targetElement.getBoundingClientRect()
+      const elementOffsetTop = targetRect.top - containerRect.top + scrollContainer.scrollTop
+      const centeredScrollTop = elementOffsetTop - (scrollContainer.clientHeight / 2) + (targetElement.clientHeight / 2)
+
+      scrollContainer.scrollTo({
+        top: Math.max(0, centeredScrollTop),
+        behavior: 'smooth'
+      })
+
+      return true
+    }
+
+    const jumpAttempts = externalJumpToPokemonIndex ? 10 : (externalLoadMorePokemon ? 12 : 1)
+    for (let attempt = 0; attempt < jumpAttempts; attempt++) {
+      if (externalJumpToPokemonIndex && getLoadedCount() < targetId) {
+        await externalJumpToPokemonIndex(targetIndex)
+        await waitForLoadedCount(targetId)
+      } else if (externalLoadMorePokemon && getLoadedCount() < targetId) {
+        await externalLoadMorePokemon()
+        await waitForLoadedCount(targetId, 800)
+      }
+
+      if (getLoadedCount() < targetId) {
+        continue
+      }
+
+      // Move viewport near target so virtualization mounts the row/card
+      scrollNearTargetRow(false)
+
+      await wait(attempt === 0 ? 120 : 180 + attempt * 40)
+      if (tryCenterTarget()) {
+        return
+      }
+    }
+
+    if (externalLoadToEnd && getLoadedCount() < targetId) {
+      await externalLoadToEnd()
+      scrollNearTargetRow(false)
+      await wait(180)
+      if (tryCenterTarget()) {
+        return
+      }
+    }
+
+    scrollNearTargetRow(true)
+
+    await wait(140)
+    tryCenterTarget()
+  }, [jumpToNumberInput, totalCount, totalPokemonCount, externalJumpToPokemonIndex, externalLoadMorePokemon, externalLoadToEnd, cardDensity])
 
   // Create a hash of current filter state to detect actual changes (excluding search results)
   const getFilterHash = useCallback(() => {
@@ -1242,7 +1353,7 @@ export default function ModernPokedexLayout({
         
         // Check if we've reached the limit
         // Use a more reasonable limit based on actual Pokemon count
-        const maxPokemonCount = totalPokemonCount || 1302; // Fallback to known total
+        const maxPokemonCount = totalPokemonCount || 1025; // Fallback to known total
         console.log(`📊 Checking limit: newOffset=${newOffset}, maxPokemonCount=${maxPokemonCount}, hasMorePokemon=${hasMorePokemon}`);
         
         if (newOffset >= maxPokemonCount) {
@@ -1763,27 +1874,63 @@ export default function ModernPokedexLayout({
 
       {/* Collapsible Search and Filters Section */}
       <div className="border-b border-border bg-surface">
-        {/* Toggle Button */}
-        <div className="w-full px-4 py-2">
+        {/* Toggle Row */}
+        <div className="w-full px-4 py-2 flex items-center gap-2">
+          {/* Advanced Filters button — always visible */}
+          <Tooltip content="Open advanced filters" position="bottom">
+            <button
+              onClick={() => setShowSidebar(prev => !prev)}
+              aria-pressed={showSidebar}
+              className={`flex-shrink-0 flex items-center gap-2 px-3 py-2.5 rounded-lg border text-sm font-semibold transition-all duration-200 shadow-sm hover:shadow-md ${
+                showSidebar
+                  ? 'bg-poke-blue/10 border-poke-blue text-poke-blue'
+                  : 'bg-surface border-border hover:bg-white/50 hover:border-poke-blue/30 text-text'
+              }`}
+            >
+              <Image src="/header-icons/advanced_filters.png" alt="Filters" width={18} height={18} className="w-4 h-4" />
+              <span>Filters</span>
+            </button>
+          </Tooltip>
+
+          {/* Expand/collapse toggle */}
           <button
             onClick={() => setIsFiltersCollapsed(!isFiltersCollapsed)}
-            className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium text-text hover:bg-surface/50 rounded-lg transition-all duration-200 hover:shadow-sm"
+            aria-expanded={!isFiltersCollapsed}
+            aria-controls="search-filters-panel"
+            title={isFiltersCollapsed ? 'Show search and filters' : 'Hide search and filters'}
+            className={`flex items-center justify-between flex-1 px-3 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 border ${
+              isFiltersCollapsed
+                ? 'text-text bg-surface hover:bg-surface/60 border-border hover:border-border/80'
+                : 'text-poke-blue bg-poke-blue/10 border-poke-blue/30 shadow-sm'
+            }`}
           >
             <span className="flex items-center gap-2">
               <Search className="w-4 h-4" />
               Search & Filters
+              <span className={`text-[11px] px-2 py-0.5 rounded-full border ${
+                isFiltersCollapsed
+                  ? 'text-muted border-border bg-surface'
+                  : 'text-poke-blue border-poke-blue/30 bg-white/70 dark:bg-surface/70'
+              }`}>
+                {isFiltersCollapsed ? 'Show' : 'Hide'}
+              </span>
             </span>
-            {isFiltersCollapsed ? (
-              <ChevronDown className="w-4 h-4 text-muted" />
-            ) : (
-              <ChevronUp className="w-4 h-4 text-muted" />
-            )}
+            <span className="flex items-center gap-1.5">
+              <span className="text-xs text-muted">
+                {isFiltersCollapsed ? 'Expand' : 'Collapse'}
+              </span>
+              {isFiltersCollapsed ? (
+                <ChevronDown className="w-4 h-4 text-muted" />
+              ) : (
+                <ChevronUp className="w-4 h-4 text-poke-blue" />
+              )}
+            </span>
           </button>
         </div>
 
         {/* Collapsible Content */}
-        <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
-          isFiltersCollapsed ? 'max-h-0 opacity-0' : 'max-h-[500px] opacity-100'
+        <div id="search-filters-panel" className={`overflow-hidden transition-all duration-300 ease-in-out ${
+          isFiltersCollapsed ? 'max-h-0 opacity-0' : 'max-h-[600px] opacity-100'
         }`}>
           {/* Search Bar */}
           <div className="px-4 py-3">
@@ -1792,6 +1939,32 @@ export default function ModernPokedexLayout({
                 onSearchChange={handleSearchChange}
                 placeholder="Search Pokémon..."
               />
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={totalCount || totalPokemonCount || 1025}
+                  value={jumpToNumberInput}
+                  onChange={(e) => setJumpToNumberInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      void handleJumpToPokemonNumber()
+                    }
+                  }}
+                  placeholder="#"
+                  className="w-20 h-10 rounded-xl border border-poke-blue/30 bg-white dark:bg-gray-800 px-2 text-sm text-center font-semibold text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-poke-blue/50"
+                  title="Jump to Pokédex number"
+                />
+                <button
+                  onClick={() => void handleJumpToPokemonNumber()}
+                  className="h-10 px-3 rounded-xl border border-poke-blue/30 bg-white dark:bg-gray-800 text-sm font-semibold text-poke-blue hover:border-poke-blue/60 transition-colors"
+                  title="Go to Pokédex number"
+                >
+                  Go
+                </button>
+              </div>
               {searchLoading && (
                 <div className="absolute right-6 top-1/2 transform -translate-y-1/2">
                   <img src="/loading.gif" alt="Loading" width={20} height={20} className="opacity-80" />
@@ -1814,7 +1987,7 @@ export default function ModernPokedexLayout({
 
           {/* Enhanced Type Filter Ribbon */}
           <div className="border-t border-border bg-gradient-to-r from-surface via-surface to-surface">
-        <div className="w-full max-w-full pl-0 pr-4 sm:pl-0 sm:pr-6 lg:pl-0 lg:pr-8 py-4">
+        <div className="w-full max-w-full px-0 py-4">
           <div className="flex items-center justify-between">
             {/* Type Filter Buttons */}
             <div className="flex items-center space-x-3 overflow-x-auto pb-2 type-filters-scroll">
@@ -1876,131 +2049,93 @@ export default function ModernPokedexLayout({
                     )}
                   </button>
                 )}
-                <div className="flex items-center space-x-2">
-                  <div className={`w-2 h-2 rounded-full ${isFiltering ? 'bg-poke-yellow animate-pulse' : 'bg-green-500'}`}></div>
-                  <span className="text-sm font-medium text-muted">
-                    {isFiltering ? 'Filtering...' : ''}
-                  </span>
-                </div>
                 
-                {(advancedFilters.types.length > 0 || searchTerm || (advancedFilters.generation && advancedFilters.generation !== '') || advancedFilters.legendary || advancedFilters.mythical || showFavoritesOnly) && (
-                  <button
-                    onClick={clearAllFilters}
-                    disabled={isFiltering}
-                    className="px-3 py-1.5 text-sm font-medium text-poke-blue hover:text-poke-blue/80 bg-poke-blue/10 hover:bg-poke-blue/20 rounded-lg transition-all duration-200 hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Clear filters
-                  </button>
-                )}
               </div>
             </div>
           </div>
         </div>
+          </div>
+
+          {/* Size, Sort & Advanced Filters Controls */}
+          <div className="border-t border-border px-4 py-3">
+            <div className="flex flex-row items-center justify-between gap-4">
+              {/* Left: Size */}
+              <div className="flex items-center space-x-3">
+                {/* Card Density Controls */}
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs font-medium text-muted uppercase tracking-wider">Size</span>
+                  <div className="flex items-center bg-surface rounded-xl p-1 shadow-sm">
+                    {[
+                      { visual: '3cols', label: '3 Cols', target: '3cols' },
+                      { visual: '6cols', label: '6 Cols', target: '6cols' },
+                      { visual: '9cols', label: '9 Cols', target: '9cols' },
+                      { visual: '12cols', label: '12 Cols', target: '12cols' },
+                      { visual: 'list', label: 'List', target: 'list' }
+                    ].map(({ visual, label, target }) => (
+                      <button
+                        key={visual}
+                        onClick={() => setCardDensity(target as '3cols' | '6cols' | '9cols' | '12cols' | 'list')}
+                        className={`px-2 py-2 text-xs font-medium rounded-full transition-all duration-200 flex items-center space-x-1 ${
+                          cardDensity === target
+                            ? 'bg-poke-blue text-white shadow-lg scale-105'
+                            : 'text-muted hover:text-text hover:bg-white/50'
+                        }`}
+                        style={{ borderRadius: '9999px', padding: '8px 8px' }}
+                      >
+                        <span className="inline-flex items-center justify-center">
+                          {visual === '3cols' && <LayoutGridIcon className="w-3 h-3" />}
+                          {visual === '6cols' && <Grid2X2 className="w-3 h-3" />}
+                          {visual === '9cols' && <Grid3X3 className="w-3 h-3" />}
+                          {visual === '12cols' && <LayoutGridIcon className="w-3 h-3" />}
+                          {visual === 'list' && <List className="w-3 h-3" />}
+                        </span>
+                        <span className="hidden sm:inline">{label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right: Sort Controls */}
+              <div className="flex items-center space-x-2">
+                <span className="text-xs font-medium text-muted uppercase tracking-wider">Sort</span>
+                <div className="flex items-center space-x-2">
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                    className="px-3 py-2 border border-border rounded-xl text-sm font-medium focus:ring-2 focus:ring-poke-blue focus:border-poke-blue focus:outline-none transition-all duration-200 shadow-sm hover:shadow-md control-keep"
+                    style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
+                  >
+                    <option value="id">Number</option>
+                    <option value="name">Name</option>
+                    <option value="stats">Total Stats</option>
+                    <option value="hp">HP</option>
+                    <option value="attack">Attack</option>
+                    <option value="defense">Defense</option>
+                    <option value="special-attack">Sp. Attack</option>
+                    <option value="special-defense">Sp. Defense</option>
+                    <option value="speed">Speed</option>
+                  </select>
+                  <button
+                    onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                    className="flex items-center gap-1 px-2 py-2 rounded-full bg-surface border border-border hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md group control-keep"
+                    style={{ borderRadius: '9999px', padding: '8px 8px' }}
+                    title={`Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`}
+                  >
+                    <div className={`transform transition-transform duration-200 ${sortOrder === 'asc' ? 'rotate-0' : 'rotate-180'}`}>
+                      <svg className="w-3 h-3 text-muted group-hover:text-poke-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                      </svg>
+                    </div>
+                    <span className="text-xs font-medium text-muted group-hover:text-poke-blue">{sortOrder === 'asc' ? 'ASC' : 'DESC'}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Recently Viewed Section */}
           <RecentlyViewedSection />
-
-          {/* Size & Sort Controls */}
-          <div className="border-t border-border bg-surface/60">
-        <div className="w-full max-w-full px-4 sm:px-6 lg:px-8 py-3">
-          <div className="flex flex-row items-center justify-between gap-4">
-            {/* Filters trigger placed left of Size selectors */}
-            <div className="flex items-center space-x-3">
-              <Tooltip content="Open advanced filters" position="bottom">
-                <button
-                  onClick={() => setShowSidebar(prev => !prev)}
-                  aria-pressed={showSidebar}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all duration-200 shadow-sm hover:shadow-md ${
-                    showSidebar
-                      ? 'bg-poke-blue/10 border-poke-blue text-poke-blue'
-                      : 'bg-surface border-border hover:bg-white/50 hover:border-poke-blue/30'
-                  }`}
-                >
-                  <Image src="/header-icons/advanced_filters.png" alt="Filters" width={18} height={18} className="w-4 h-4" />
-                  <span className="text-sm font-medium">Filters</span>
-                </button>
-              </Tooltip>
-              {/* Card Density Controls */}
-              <div className="flex items-center space-x-2">
-              <span className="text-xs font-medium text-muted uppercase tracking-wider">Size</span>
-              <div className="flex items-center bg-surface rounded-xl p-1 shadow-sm">
-                {[
-                  { visual: '3cols', label: '3 Cols', target: '3cols' },
-                  { visual: '6cols', label: '6 Cols', target: '6cols' },
-                  { visual: '9cols', label: '9 Cols', target: '9cols' },
-                  { visual: 'list', label: 'List', target: 'list' }
-                ].map(({ visual, label, target }) => (
-                  <button
-                    key={visual}
-                    onClick={() => setCardDensity(target as '3cols' | '6cols' | '9cols' | 'list')}
-                    className={`px-2 py-2 text-xs font-medium rounded-full transition-all duration-200 flex items-center space-x-1 ${
-                      cardDensity === target 
-                        ? 'bg-poke-blue text-white shadow-lg scale-105' 
-                        : 'text-muted hover:text-text hover:bg-white/50'
-                    }`}
-                    style={{ borderRadius: '9999px', padding: '8px 8px' }}
-                  >
-                    <span className="inline-flex items-center justify-center">
-                      {visual === '3cols' && (
-                        <LayoutGridIcon className="w-3 h-3" />
-                      )}
-                      {visual === '6cols' && (
-                        <Grid2X2 className="w-3 h-3" />
-                      )}
-                      {visual === '9cols' && (
-                        <Grid3X3 className="w-3 h-3" />
-                      )}
-                      {visual === 'list' && (
-                        <List className="w-3 h-3" />
-                      )}
-                    </span>
-                    <span className="hidden sm:inline">{label}</span>
-                  </button>
-                ))}
-              </div>
-              </div>
-            </div>
-
-            {/* Sort Controls */}
-            <div className="flex items-center space-x-2">
-              <span className="text-xs font-medium text-muted uppercase tracking-wider">Sort</span>
-              <div className="flex items-center space-x-2">
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                  className="px-3 py-2 border border-border rounded-xl text-sm font-medium focus:ring-2 focus:ring-poke-blue focus:border-poke-blue focus:outline-none transition-all duration-200 shadow-sm hover:shadow-md control-keep"
-                  style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
-                >
-                  <option value="id">Number</option>
-                  <option value="name">Name</option>
-                  <option value="stats">Total Stats</option>
-                  <option value="hp">HP</option>
-                  <option value="attack">Attack</option>
-                  <option value="defense">Defense</option>
-                  <option value="special-attack">Sp. Attack</option>
-                  <option value="special-defense">Sp. Defense</option>
-                  <option value="speed">Speed</option>
-                </select>
-                <button
-                  onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-                  className="flex items-center gap-1 px-2 py-2 rounded-full bg-surface border border-border hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md group control-keep"
-                  style={{ borderRadius: '9999px', padding: '8px 8px' }}
-                  title={`Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`}
-                >
-                  <div className={`transform transition-transform duration-200 ${sortOrder === 'asc' ? 'rotate-0' : 'rotate-180'}`}>
-                    <svg className="w-3 h-3 text-muted group-hover:text-poke-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-                    </svg>
-                  </div>
-                  <span className="text-xs font-medium text-muted group-hover:text-poke-blue">{sortOrder === 'asc' ? 'ASC' : 'DESC'}</span>
-                </button>
-              </div>
-            </div>
-
-          </div>
-        </div>
-          </div>
         </div>
       </div>
 
@@ -2022,6 +2157,7 @@ export default function ModernPokedexLayout({
         {/* Main Content Area */}
         <div 
           ref={scrollContainerRef}
+          data-main-scroll
           className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scroll-stable scrollbar-hide relative"
         >
           <div className={`${showSidebar ? 'pl-0 pr-0' : 'pl-0 pr-4 sm:pl-0 sm:pr-6 lg:pl-0 lg:pr-8'} min-h-full w-full max-w-full pt-4 relative`}>
@@ -2090,17 +2226,6 @@ export default function ModernPokedexLayout({
               <>
                 <div className="relative">
                   <div className={`pokemon-grid ${isFiltering ? 'pokemon-grid-updating' : ''}`}>
-                  {cardDensity === 'list' ? (
-                    <PokedexListView
-                      pokemonList={hydratedSortedPokemon}
-                      onToggleComparison={(id) => onToggleComparison(id, setShowSidebar)}
-                      onSelectPokemon={undefined}
-                      comparisonList={comparisonList}
-                      isLoadingMore={isLoadingMore}
-                      hasMorePokemon={hasMorePokemon}
-                      onLoadMore={loadMorePokemon}
-                    />
-                  ) : (
                     <VirtualizedPokemonGrid
                       pokemonList={hydratedSortedPokemon}
                       onToggleComparison={(id) => onToggleComparison(id, setShowSidebar)}
@@ -2122,7 +2247,6 @@ export default function ModernPokedexLayout({
                       favoritesList={favoritesList}
                       onToggleFavorite={handleToggleFavorite}
                     />
-                  )}
                 </div>
                   {isFiltering && (
                     <div className="absolute inset-0 bg-gradient-to-br from-bg/40 via-bg/30 to-bg/40 backdrop-blur-md flex items-center justify-center pointer-events-none z-10">
@@ -2203,7 +2327,7 @@ export default function ModernPokedexLayout({
           {/* Pokedex Scrollbar - Inside scroll container */}
           <PokedexScrollbar
             scrollContainer={scrollContainerRef.current}
-            totalPokemon={totalCount || totalPokemonCount || 1302}
+            totalPokemon={totalCount || totalPokemonCount || 1025}
             loadedPokemon={loadedCount || pokemonList.length}
             hasMorePokemon={effectiveHasMorePokemon}
             onJumpToPosition={externalJumpToPokemonIndex}

@@ -22,6 +22,94 @@ const formatMoveLabel = (rawId: string): string => {
     .join(' ');
 };
 
+/* ─── Pokemon-style text box ────────────────────────────────────────── */
+
+interface GameTextBoxProps {
+  battleLog?: any[];
+  waitingForResolution: boolean;
+  myActiveSpecies?: string | null;
+  displayedLogIndex: number;
+  onDisplayedLogIndexChange: (idx: number) => void;
+}
+
+function GameTextBox({
+  battleLog,
+  waitingForResolution,
+  myActiveSpecies,
+  displayedLogIndex,
+  onDisplayedLogIndexChange,
+}: GameTextBoxProps) {
+  const logRef = useRef<HTMLDivElement>(null);
+  const prevLengthRef = useRef(0);
+
+  const messages: string[] = useMemo(() => {
+    if (!battleLog?.length) return [];
+    return battleLog.map((entry: any) =>
+      typeof entry === 'string' ? entry : entry?.message ?? ''
+    ).filter(Boolean);
+  }, [battleLog]);
+
+  // Auto-advance to newest message when the log grows
+  useEffect(() => {
+    if (messages.length > prevLengthRef.current) {
+      onDisplayedLogIndexChange(messages.length - 1);
+    }
+    prevLengthRef.current = messages.length;
+  }, [messages.length, onDisplayedLogIndexChange]);
+
+  // Scroll into view when index changes
+  useEffect(() => {
+    logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: 'smooth' });
+  }, [displayedLogIndex]);
+
+  const visibleMessages = messages.length > 0
+    ? messages.slice(Math.max(0, messages.length - 3))
+    : [];
+
+  const idleText = waitingForResolution
+    ? null
+    : myActiveSpecies
+      ? `What will ${formatPokemonName(myActiveSpecies)} do?`
+      : null;
+
+  if (visibleMessages.length === 0 && !idleText) return null;
+
+  return (
+    <div className="mx-auto mt-2 w-full max-w-xl">
+      <div className="relative rounded-xl border-[3px] border-text/20 bg-surface/95 shadow-lg backdrop-blur">
+        <div className="absolute inset-[3px] rounded-lg border border-text/10 pointer-events-none" />
+        <div ref={logRef} className="relative px-5 py-3 min-h-[3.5rem] max-h-28 overflow-y-auto">
+          {visibleMessages.length > 0 ? (
+            <div className="space-y-1">
+              {visibleMessages.map((msg, i) => (
+                <p
+                  key={`${messages.length}-${i}`}
+                  className={`text-sm leading-relaxed text-text ${
+                    i === visibleMessages.length - 1
+                      ? 'animate-[typewriter_0.3s_ease-out]'
+                      : 'text-text/60'
+                  }`}
+                >
+                  {msg}
+                </p>
+              ))}
+            </div>
+          ) : idleText ? (
+            <p className="text-sm leading-relaxed text-text">{idleText}</p>
+          ) : null}
+        </div>
+        {visibleMessages.length > 0 && (
+          <div className="absolute bottom-2 right-3">
+            <span className="inline-block h-2 w-2 animate-bounce text-text/40">▼</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Main component ───────────────────────────────────────────────── */
+
 interface RTDBBattleComponentProps {
   battleId: string;
   onBattleComplete?: (winner: string) => void;
@@ -84,6 +172,7 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
 
   // Battle end screen state
   const [showEndScreen, setShowEndScreen] = useState(false);
+  const [displayedLogIndex, setDisplayedLogIndex] = useState(-1);
 
   // Determine if current user is host (p1)
   const isHost = useMemo(() => {
@@ -276,32 +365,11 @@ const handleMoveSelection = async (moveId: string, target?: 'p1' | 'p2') => {
     el.addEventListener('animationend', onEnd);
   };
 
-  // Parse lastResultSummary to drive simple animations
+  // Drive sprite animations from lastResultSummary
   useEffect(() => {
     const line = pub?.lastResultSummary?.toLowerCase?.() || '';
     if (!line) return;
-    // Toast with move info/effect when present
-    try {
-      const detail = (pub as any)?.lastResultDetail as { actor?: 'p1'|'p2'; moveId?: string; effect?: string; effectiveness?: 'super_effective' | 'not_very_effective' | 'no_effect' | 'normal' } | undefined;
-      if (detail?.moveId) {
-        const actorName = detail.actor === 'p2' ? 'Opponent' : 'You';
-        const title = `${actorName} used ${detail.moveId}`;
-        let message = detail.effect || '';
-        if (detail.effectiveness === 'super_effective') message = `${message} It's super effective!`;
-        if (detail.effectiveness === 'not_very_effective') message = `${message} It's not very effective.`;
-        if (detail.effectiveness === 'no_effect') message = `${message} It had no effect.`;
-        (window as any).__battle_toast?.({ title, message });
-      } else {
-        // Fallback: use summary text
-        const title = line.includes('used') ? pub?.lastResultSummary : 'Battle update';
-        let message = '';
-        if (line.includes('super effective')) message = `It's super effective!`;
-        if (line.includes('not very effective')) message = `It's not very effective.`;
-        (window as any).__battle_toast?.({ title, message });
-      }
-    } catch {}
     if (line.includes('used')) {
-      // Heuristic: if mentions opponent, animate opponent as actor
       if (line.includes('opponent')) {
         playAnim(oppAnimRef, 'animate-bounce');
       } else {
@@ -418,7 +486,7 @@ const handleMoveSelection = async (moveId: string, target?: 'p1' | 'p2') => {
   // (refs declared above)
 
   return (
-    <div className="min-h-screen bg-bg text-text">
+    <div className="w-full text-text">
       {/* Headless turn resolution manager (host only) */}
       {meta && meUid && (
         <BattleTurnManager 
@@ -428,8 +496,9 @@ const handleMoveSelection = async (moveId: string, target?: 'p1' | 'p2') => {
         />
       )}
       
+      <div className="w-full max-w-3xl mx-auto px-4 sm:px-6">
       {/* Battle Header */}
-      <div className="sticky top-0 z-40 border-b border-border bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/80 p-4">
+      <div className="sticky top-0 z-40 border-b border-border bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/80 px-3 py-2 sm:p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <span className="inline-flex items-center rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-muted shadow-sm">
@@ -446,7 +515,7 @@ const handleMoveSelection = async (moveId: string, target?: 'p1' | 'p2') => {
       </div>
 
       <div className="border-b border-border bg-surface/80">
-        <div className="max-w-4xl mx-auto px-4 py-2 flex items-center justify-center gap-3">
+        <div className="py-2 flex items-center justify-center gap-3">
           <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold transition-colors ${activePhase === 'choosing' ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'}`}>
             Selection Phase
           </span>
@@ -457,8 +526,8 @@ const handleMoveSelection = async (moveId: string, target?: 'p1' | 'p2') => {
       </div>
 
       {/* Battle Field */}
-      <div className="flex-1 p-6">
-        <div className="grid grid-cols-2 gap-8 h-full">
+      <div className="relative flex-1 p-3 sm:p-6">
+        <div className="grid grid-cols-2 gap-4 sm:gap-8 h-full">
           {/* Player Side */}
           <div className="flex flex-col justify-center items-center">
             <div className="text-center mb-4">
@@ -521,27 +590,27 @@ const handleMoveSelection = async (moveId: string, target?: 'p1' | 'p2') => {
             )}
           </div>
         </div>
+
+        {/* Pokemon-style Battle Text Box */}
+        <GameTextBox
+          battleLog={pub?.battleLog as any[] | undefined}
+          waitingForResolution={waitingForResolution}
+          myActiveSpecies={myActive?.species}
+          displayedLogIndex={displayedLogIndex}
+          onDisplayedLogIndexChange={setDisplayedLogIndex}
+        />
       </div>
 
       {/* Action Panel */}
       {meta.phase !== 'ended' && (
-        <div className="border-t border-border bg-surface/90 backdrop-blur p-4">
-          <div className="max-w-4xl mx-auto">
+        <div className="border-t border-border bg-surface/90 backdrop-blur p-3 sm:p-4">
+          <div>
             <h3 className="text-lg font-semibold mb-4">Choose Your Action</h3>
 
             {waitingForResolution && (
-              <div className="mb-4 rounded-lg border border-border bg-surface/80 p-3 text-sm text-muted text-center">
-                Waiting for resolution...
-                {pendingAction?.type === 'move' && (
-                  <div className="text-xs text-muted mt-1">
-                    Selected move: {formatMoveLabel(moveInfo[pendingAction.id as string]?.displayName || String(pendingAction.id))}
-                  </div>
-                )}
-                {pendingAction?.type === 'switch' && typeof pendingAction.id === 'number' && (
-                  <div className="text-xs text-muted mt-1">
-                    Switching to: {formatPokemonName(resolveTeamSpecies(myTeam[pendingAction.id]) || '')}
-                  </div>
-                )}
+              <div className="mb-4 flex items-center justify-center gap-2 text-sm text-muted">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                Waiting for opponent…
               </div>
             )}
 
@@ -637,29 +706,6 @@ const handleMoveSelection = async (moveId: string, target?: 'p1' | 'p2') => {
             </div>
           </div>
 
-          {/* Battle Log */}
-          <div className="battle-log mt-4 p-4 bg-white/5 rounded-lg border border-white/10 max-h-48 overflow-y-auto">
-            <h3 className="text-sm font-semibold text-gray-400 mb-2 sticky top-0 bg-[#1a1a1a] py-1">Battle Log</h3>
-            <div className="space-y-1">
-              {pub?.battleLog?.map((log, i) => (
-                <div key={i} className="text-sm text-gray-300 font-mono">
-                  <span className="text-gray-500 mr-2">[{i + 1}]</span>
-                  {log}
-                </div>
-              )) || <div className="text-sm text-gray-500 italic">No battle history yet...</div>}
-              <div ref={(el) => el?.scrollIntoView({ behavior: 'smooth' })} />
-            </div>
-          </div>
-
-          {/* Debug Info */}
-          <div className="mt-8 p-4 bg-black/40 rounded text-xs font-mono text-gray-500">
-            <p>Battle ID: {battleId}</p>
-            <p>My UID: {meUid}</p>
-            <p>Phase: {meta?.phase}</p>
-            <p>Turn: {meta?.turn}</p>
-            <p>Winner: {meta?.winnerUid || 'None'}</p>
-          </div>
-
           {/* Pokemon Switch */}
           <div className="mb-4">
             <h4 className="font-medium mb-3">Switch Pokemon</h4>
@@ -742,16 +788,7 @@ const handleMoveSelection = async (moveId: string, target?: 'p1' | 'p2') => {
         </div>
       )}
 
-      {/* Battle Log */}
-      {pub.lastResultSummary && (
-        <div className="border-t border-border bg-surface p-4 text-sm font-mono max-h-32 overflow-y-auto">
-          <div className="max-w-4xl mx-auto">
-            <div className="text-muted">
-              {pub.lastResultSummary}
-            </div>
-          </div>
         </div>
-      )}
 
       {/* Transition Effects for Animated View */}
       {viewMode === 'animated' && (

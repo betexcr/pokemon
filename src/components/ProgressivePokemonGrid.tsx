@@ -15,7 +15,7 @@ interface ProgressivePokemonGridProps {
   onSelectPokemon?: (pokemon: Pokemon) => void
   selectedPokemon: Pokemon | null
   comparisonList: number[]
-  density: '3cols' | '6cols' | '9cols' | 'list'
+  density: '3cols' | '6cols' | '9cols' | '12cols' | 'list'
   showSpecialForms?: boolean
   isLoadingMore?: boolean
   hasMorePokemon?: boolean
@@ -237,6 +237,7 @@ export default function ProgressivePokemonGrid({
                     density === '3cols' ? 'grid-cols-3' :
                     density === '6cols' ? 'grid-cols-6' :
                     density === '9cols' ? 'grid-cols-9' :
+                    density === '12cols' ? 'grid-cols-12' :
                     'grid-cols-1'
                   }`}>
                     {Array.from({ length: 6 }).map((_, index) => (

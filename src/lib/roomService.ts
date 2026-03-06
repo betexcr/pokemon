@@ -20,6 +20,7 @@ import { getDb as getClientDb, hasFirebaseClientConfig } from './firebase/client
 import { battleService } from './battleService';
 import { rtdbService } from './firebase-rtdb-service';
 import { firebaseErrorLogger, PermissionErrorDetails } from './firebaseErrorLogger';
+import { getPokemon } from './api';
 
 export interface RoomData {
   id: string;
@@ -969,11 +970,9 @@ class RoomService {
     const teamsAreIdentical = JSON.stringify(normalizedHostTeam) === JSON.stringify(normalizedGuestTeam);
 
     if (teamsAreIdentical) {
-      console.error('🚨 PREVENTION: Both players selected identical teams');
-      console.error('Host team:', normalizedHostTeam);
-      console.error('Guest team:', normalizedGuestTeam);
-      // throw new Error('Both players cannot use the same team. Please select different teams.');
-      console.warn('Ignoring same team check for testing purposes.');
+      console.warn('⚠️ Both players selected identical teams');
+      console.warn('Host team:', normalizedHostTeam);
+      console.warn('Guest team:', normalizedGuestTeam);
     }
 
     // Use existing battle document or create new one if needed
@@ -1006,8 +1005,8 @@ class RoomService {
     // Ensure RTDB mirrors the battle so realtime listeners can attach
     if (actualBattleId) {
       try {
-        const hostRtdbTeam = this.normalizeTeamForRTDB(roomData.hostTeam);
-        const guestRtdbTeam = this.normalizeTeamForRTDB(roomData.guestTeam);
+        const hostRtdbTeam = await this.normalizeTeamForRTDB(roomData.hostTeam);
+        const guestRtdbTeam = await this.normalizeTeamForRTDB(roomData.guestTeam);
         await rtdbService.createBattle(
           actualBattleId,
           roomData.hostId,
@@ -1123,7 +1122,7 @@ class RoomService {
     });
   }
 
-  private normalizeTeamForRTDB(teamData: unknown): Array<Record<string, unknown>> {
+  private async normalizeTeamForRTDB(teamData: unknown): Promise<Array<Record<string, unknown>>> {
     if (!teamData) return [];
     const slots = Array.isArray(teamData)
       ? teamData
@@ -1133,28 +1132,20 @@ class RoomService {
 
     if (!Array.isArray(slots)) return [];
 
-    return slots
-      .filter((slot: any) => slot && (slot.id != null || slot.species || slot.name))
-      .map((slot: any, index: number) => {
+    const validSlots = slots.filter((slot: any) => slot && (slot.id != null || slot.species || slot.name));
+
+    return Promise.all(validSlots.map(async (slot: any, index: number) => {
         const id = typeof slot.id === 'number' ? slot.id : parseInt(String(slot.id ?? 0), 10) || index + 1;
         const species = typeof slot.species === 'string'
           ? slot.species
           : slot.name || `pokemon-${id}`;
         const level = typeof slot.level === 'number' ? slot.level : 50;
-        
-        // Debug logging for moves
-        if (Array.isArray(slot.moves)) {
-            console.log(`[roomService] Processing moves for ${species} (Slot ${index}):`, slot.moves);
-        } else {
-            console.log(`[roomService] No moves array for ${species} (Slot ${index}):`, slot.moves);
-        }
 
         const moves = Array.isArray(slot.moves)
           ? slot.moves
             .map((move: any) => {
               if (typeof move === 'string') return { id: move, name: move, pp: 20, maxPp: 20 };
               if (move && typeof move === 'object') {
-                 // Ensure we capture all necessary battle stats
                  return {
                     id: move.name || move.id,
                     name: move.name || move.id,
@@ -1172,26 +1163,57 @@ class RoomService {
             .slice(0, 4)
           : [];
 
+        // Try to get pokemon data from slot first, fall back to PokeAPI
+        const srcPokemon = slot.pokemon || slot;
+        let stats = Array.isArray(srcPokemon.stats) ? srcPokemon.stats : [];
+        let rawTypes = Array.isArray(slot.types) ? slot.types
+          : Array.isArray(srcPokemon.types) ? srcPokemon.types : [];
+        let weight = srcPokemon.weight ?? null;
+        let abilities = Array.isArray(srcPokemon.abilities) ? srcPokemon.abilities : [];
+        let resolvedName = species;
+
+        // Fetch from PokeAPI when essential data is missing
+        if (stats.length === 0 && id > 0) {
+          try {
+            const apiData = await getPokemon(id);
+            stats = apiData.stats || [];
+            if (rawTypes.length === 0) rawTypes = apiData.types || [];
+            if (weight === null) weight = apiData.weight ?? 500;
+            if (abilities.length === 0) abilities = apiData.abilities || [];
+            resolvedName = apiData.name || species;
+          } catch (err) {
+            console.warn(`[normalizeTeamForRTDB] Could not fetch pokemon ${id}:`, err);
+          }
+        }
+
+        const types = rawTypes
+          .map((t: any) => (typeof t === 'string' ? t : t?.type?.name || t?.name))
+          .filter(Boolean);
+
+        let maxHp: number;
+        if (typeof slot.maxHp === 'number' && slot.maxHp > 0) {
+          maxHp = slot.maxHp;
+        } else if (stats.length > 0) {
+          const hpStat = stats.find((s: any) => s.stat?.name === 'hp' || s.name === 'hp');
+          const baseHp = typeof hpStat?.base_stat === 'number' ? hpStat.base_stat : 50;
+          maxHp = Math.floor(((2 * baseHp + 31) * level) / 100) + level + 10;
+        } else {
+          maxHp = Math.floor(((2 * 50 + 31) * level) / 100) + level + 10;
+        }
+        const currentHp = typeof slot.currentHp === 'number' ? slot.currentHp : maxHp;
+
         return {
-          pokemon: {
-            id,
-            name: species,
-            types: Array.isArray(slot.types)
-              ? slot.types
-                .map((t: any) => (typeof t === 'string' ? t : t?.type?.name))
-                .filter(Boolean)
-              : [],
-          },
+          pokemon: { id, name: resolvedName, types, stats, weight: weight ?? 500, abilities },
           level,
-          moves, // Return full move objects
-          currentHp: typeof slot.currentHp === 'number' ? slot.currentHp : 100,
-          maxHp: typeof slot.maxHp === 'number' ? slot.maxHp : 100,
+          moves,
+          currentHp,
+          maxHp,
           nature: typeof slot.nature === 'string' ? slot.nature : 'hardy',
           statModifiers: slot.statModifiers || {},
           status: slot.status || null,
           originalIndex: index
         };
-      });
+      }));
   }
 
   // Track user presence in a room

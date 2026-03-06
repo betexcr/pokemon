@@ -147,7 +147,7 @@ function LobbyPage() {
   };
 
   return (
-    <div className="min-h-screen bg-bg text-text" style={{ minHeight: '100vh', backgroundSize: 'cover', backgroundRepeat: 'no-repeat' }}>
+    <div className="fixed inset-0 flex flex-col bg-bg text-text overflow-hidden">
       <AppHeader
         title="Battle Lobby"
         backLink="/"
@@ -158,9 +158,10 @@ function LobbyPage() {
         showIcon={true}
       />
 
-      <div className="container mx-auto px-4 py-8 pb-16">
+      <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+        <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 py-6 pb-12">
         {/* Create Room Section */}
-        <div className="bg-surface rounded-xl shadow-lg p-6 mb-8 border border-border">
+        <div className="bg-surface rounded-xl shadow-lg p-4 sm:p-6 mb-6 border border-border">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="w-full md:w-auto flex-1">
               <h2 className="text-xl font-semibold text-text mb-2">Battle Preparation</h2>
@@ -222,7 +223,7 @@ function LobbyPage() {
         </div>
 
         {/* Available Rooms */}
-        <div className="bg-surface rounded-xl shadow-lg p-6 border border-border">
+        <div className="bg-surface rounded-xl shadow-lg p-4 sm:p-6 border border-border">
           <h2 className="text-xl font-semibold text-text mb-6">Available Battle Rooms</h2>
 
           {roomsLoading ? (
@@ -237,7 +238,7 @@ function LobbyPage() {
               <p className="text-muted">Be the first to create a battle room!</p>
             </div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2">
               {rooms.map((room) => (
                 <div
                   key={room.id}
@@ -303,7 +304,8 @@ function LobbyPage() {
             </div>
           )}
         </div>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }

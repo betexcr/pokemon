@@ -262,13 +262,28 @@ export function canUseMove(
 
   // Check status conditions
   if (pokemon.status === 'asleep') {
-    return { canUse: rngRollChance(rng, 0.25), reason: 'fast asleep' };
+    return { canUse: false, reason: 'fast asleep' };
   }
   if (pokemon.status === 'frozen') {
-    return { canUse: rngRollChance(rng, 0.2), reason: 'frozen solid' };
+    return { canUse: false, reason: 'frozen solid' };
   }
   if (pokemon.status === 'paralyzed') {
     return { canUse: rngRollChance(rng, 0.75), reason: 'fully paralyzed' };
+  }
+
+  if (pokemon.volatile.confusion && pokemon.volatile.confusion.turns > 0) {
+    pokemon.volatile.confusion.turns -= 1;
+    if (pokemon.volatile.confusion.turns <= 0) {
+      pokemon.volatile.confusion = undefined;
+    } else if (rngRollChance(rng, 1 / 3)) {
+      const basePower = 40;
+      const atkStat = pokemon.pokemon.stats?.find((s: any) => (s.stat?.name || s.name) === 'attack')?.base_stat ?? 50;
+      const defStat = pokemon.pokemon.stats?.find((s: any) => (s.stat?.name || s.name) === 'defense')?.base_stat ?? 50;
+      const level = pokemon.level ?? 50;
+      const confusionDmg = Math.max(1, Math.floor(((2 * level / 5 + 2) * basePower * atkStat / defStat) / 50 + 2));
+      pokemon.currentHp = Math.max(0, pokemon.currentHp - confusionDmg);
+      return { canUse: false, reason: 'confused and hurt itself' };
+    }
   }
 
   // Check volatile conditions
@@ -811,22 +826,21 @@ export async function calculateDamageDetailed(
   const defenderItem = defender.heldItem?.toLowerCase();
   const level = attacker.level;
 
-  // Calculate dynamic power if needed
   const powerContext: DynamicPowerContext = {
     attacker: {
       level: attacker.level,
-      weightKg: attacker.pokemon.weight / 10, // Convert from hectograms to kg
-      speed: attacker.pokemon.stats?.find(s => s.stat.name === 'speed')?.base_stat,
+      weightKg: (attacker.pokemon.weight || 500) / 10,
+      speed: attacker.pokemon.stats?.find(s => s.stat?.name === 'speed' || s.name === 'speed')?.base_stat ?? 50,
       curHP: attacker.currentHp,
       maxHP: attacker.maxHp
     },
     defender: {
-      weightKg: defender.pokemon.weight / 10,
-      speed: defender.pokemon.stats?.find(s => s.stat.name === 'speed')?.base_stat,
+      weightKg: (defender.pokemon.weight || 500) / 10,
+      speed: defender.pokemon.stats?.find(s => s.stat?.name === 'speed' || s.name === 'speed')?.base_stat ?? 50,
       curHP: defender.currentHp,
       maxHP: defender.maxHp,
-      types: defender.pokemon.types.map(t =>
-        (typeof t === 'string' ? t : t.type?.name || 'normal') as TypeName
+      types: (defender.pokemon.types || []).map((t: any) =>
+        (typeof t === 'string' ? t : t.type?.name || t.name || 'normal') as TypeName
       )
     }
   };
@@ -843,11 +857,17 @@ export async function calculateDamageDetailed(
   // Determine if move is physical or special
   const isPhysical = compiledMove.category === 'Physical';
 
-  // Get base stats
-  const attackerAttackStat = attacker.pokemon.stats?.find(stat => stat.stat.name === 'attack')?.base_stat || 50;
-  const attackerSpecialAttackStat = attacker.pokemon.stats?.find(stat => stat.stat.name === 'special-attack')?.base_stat || 50;
-  const defenderDefenseStat = defender.pokemon.stats?.find(stat => stat.stat.name === 'defense')?.base_stat || 50;
-  const defenderSpecialDefenseStat = defender.pokemon.stats?.find(stat => stat.stat.name === 'special-defense')?.base_stat || 50;
+  const findStat = (mon: BattlePokemon, statName: string): number => {
+    const stats = mon.pokemon.stats;
+    if (!Array.isArray(stats)) return 50;
+    const found = stats.find((s: any) => (s.stat?.name || s.name) === statName);
+    return found?.base_stat ?? 50;
+  };
+
+  const attackerAttackStat = findStat(attacker, 'attack');
+  const attackerSpecialAttackStat = findStat(attacker, 'special-attack');
+  const defenderDefenseStat = findStat(defender, 'defense');
+  const defenderSpecialDefenseStat = findStat(defender, 'special-defense');
 
   // Calculate actual stats at level
   const attackStat = isPhysical
@@ -963,7 +983,24 @@ export async function calculateDamageDetailed(
   });
 
   // Check for status effects and flinch using new move system
-  const statusEffect = compiledMove.ailment ? compiledMove.ailment.kind : undefined;
+  const AILMENT_MAP: Record<string, BattlePokemon['status']> = {
+    paralysis: 'paralyzed',
+    burn: 'burned',
+    poison: 'poisoned',
+    toxic: 'badly-poisoned',
+    sleep: 'asleep',
+    freeze: 'frozen',
+  };
+
+  let statusEffect: BattlePokemon['status'] | undefined;
+  if (compiledMove.ailment && compiledMove.ailment.kind !== 'flinch' && compiledMove.ailment.kind !== 'none') {
+    // PokeAPI: chance 0 = guaranteed, otherwise N = N% probability
+    const chance = compiledMove.ailment.chance === 0 ? 1 : (compiledMove.ailment.chance ?? 0) / 100;
+    if (rngRollChance(state.rng, chance)) {
+      statusEffect = AILMENT_MAP[compiledMove.ailment.kind];
+    }
+  }
+
   const flinch = compiledMove.ailment?.kind === 'flinch' && rngRollChance(state.rng, (compiledMove.ailment.chance ?? 0) / 100);
 
   return {
@@ -1680,12 +1717,12 @@ async function executeMoveAction(
           'PAR': 'paralyzed',
           'BRN': 'burned',
           'PSN': 'poisoned',
-          'TOX': 'poisoned',
+          'TOX': 'badly-poisoned',
           'SLP': 'asleep',
           'FRZ': 'frozen'
         };
         const status = statusMap[turnResult.appliedAilment] || turnResult.appliedAilment.toLowerCase();
-        defender.status = status as 'poisoned' | 'paralyzed' | 'asleep' | 'burned' | 'frozen';
+        defender.status = status as 'poisoned' | 'badly-poisoned' | 'paralyzed' | 'asleep' | 'burned' | 'frozen';
         defender.statusTurns = 0;
         state.battleLog.push({
           type: 'status_applied',

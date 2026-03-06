@@ -6086,6 +6086,121 @@ const japaneseNames: Record<string, JapaneseNameInfo> = {
     meaning: 'Peach + Servant',
     explanation: '桃 (*momo*, peach) + servant suffix. A peach-bound chain ghost.'
   },
+
+  'チョンチー': {
+    japanese: 'チョンチー',
+    romaji: 'Chonchi-',
+    meaning: 'Chinchou',
+    explanation: 'Japanese name for Chinchou.'
+  },
+  'マッシブーン': {
+    japanese: 'マッシブーン',
+    romaji: 'Mashibu-n',
+    meaning: 'Buzzwole',
+    explanation: 'Japanese name for Buzzwole.'
+  },
+  'フェローチェ': {
+    japanese: 'フェローチェ',
+    romaji: 'Fuero-chie',
+    meaning: 'Pheromosa',
+    explanation: 'Japanese name for Pheromosa.'
+  },
+  'デンジュモク': {
+    japanese: 'デンジュモク',
+    romaji: 'Denjumoku',
+    meaning: 'Xurkitree',
+    explanation: 'Japanese name for Xurkitree.'
+  },
+  'テッカグヤ': {
+    japanese: 'テッカグヤ',
+    romaji: 'Tekaguya',
+    meaning: 'Celesteela',
+    explanation: 'Japanese name for Celesteela.'
+  },
+  'カミツルギ': {
+    japanese: 'カミツルギ',
+    romaji: 'Kamitsurugi',
+    meaning: 'Kartana',
+    explanation: 'Japanese name for Kartana.'
+  },
+  'アクジキング': {
+    japanese: 'アクジキング',
+    romaji: 'Akujikingu',
+    meaning: 'Guzzlord',
+    explanation: 'Japanese name for Guzzlord.'
+  },
+  'ネクロズマ': {
+    japanese: 'ネクロズマ',
+    romaji: 'Nekurozuma',
+    meaning: 'Necrozma',
+    explanation: 'Japanese name for Necrozma.'
+  },
+  'ウオノラゴン': {
+    japanese: 'ウオノラゴン',
+    romaji: 'Uonoragon',
+    meaning: 'Dracovish',
+    explanation: 'Japanese name for Dracovish.'
+  },
+  'ウオチルドン': {
+    japanese: 'ウオチルドン',
+    romaji: 'Uochirudon',
+    meaning: 'Arctovish',
+    explanation: 'Japanese name for Arctovish.'
+  },
+  'ハリーマン': {
+    japanese: 'ハリーマン',
+    romaji: 'Hari-man',
+    meaning: 'Overqwil',
+    explanation: 'Japanese name for Overqwil.'
+  },
+  'シガロコ': {
+    japanese: 'シガロコ',
+    romaji: 'Shigaroko',
+    meaning: 'Rellor',
+    explanation: 'Japanese name for Rellor.'
+  },
+  'オトシドリ': {
+    japanese: 'オトシドリ',
+    romaji: 'Otoshidori',
+    meaning: 'Bombirdier',
+    explanation: 'Japanese name for Bombirdier.'
+  },
+  'テツノイバラ': {
+    japanese: 'テツノイバラ',
+    romaji: 'Tetsunoibara',
+    meaning: 'Iron Thorns',
+    explanation: 'Japanese name for Iron Thorns.'
+  },
+  'カミッチュ': {
+    japanese: 'カミッチュ',
+    romaji: 'Kamichu',
+    meaning: 'Dipplin',
+    explanation: 'Japanese name for Dipplin.'
+  },
+  'ウガツホムラ': {
+    japanese: 'ウガツホムラ',
+    romaji: 'Ugatsuhomura',
+    meaning: 'Gouging Fire',
+    explanation: 'Japanese name for Gouging Fire.'
+  },
+  'タケルライコ': {
+    japanese: 'タケルライコ',
+    romaji: 'Takeruraiko',
+    meaning: 'Raging Bolt',
+    explanation: 'Japanese name for Raging Bolt.'
+  },
+  'テツノカシラ': {
+    japanese: 'テツノカシラ',
+    romaji: 'Tetsunokashira',
+    meaning: 'Iron Crown',
+    explanation: 'Japanese name for Iron Crown.'
+  },
+  'モモワロウ': {
+    japanese: 'モモワロウ',
+    romaji: 'Momowarou',
+    meaning: 'Pecharunt',
+    explanation: 'Japanese name for Pecharunt.'
+  }
 }
 
 export function getJapaneseNameInfo(japaneseName: string): JapaneseNameInfo | null {
@@ -6176,7 +6291,7 @@ const pokemonIdToJapanese: Record<number, string> = {
   80: 'ヤドラン',    // Slowbro
   81: 'コイル',    // Magnemite
   82: 'レアコイル',    // Magneton
-  83: 'カモネギ',    // Farfetch'd
+  83: 'カモネギ',    // Farfetch’d
   84: 'ドードー',    // Doduo
   85: 'ドードリオ',    // Dodrio
   86: 'パウワウ',    // Seel
@@ -6263,6 +6378,7 @@ const pokemonIdToJapanese: Record<number, string> = {
   167: 'イトマル',    // Spinarak
   168: 'アリアドス',    // Ariados
   169: 'クロバット',    // Crobat
+  170: 'チョンチー',    // Chinchou
   171: 'ランターン',    // Lanturn
   172: 'ピチュー',    // Pichu
   173: 'ピィ',    // Cleffa
@@ -6858,43 +6974,58 @@ const pokemonIdToJapanese: Record<number, string> = {
   763: 'アマージョ',    // Tsareena
   764: 'キュワワー',    // Comfey
   765: 'ヤレユータン',    // Oranguru
-  781: 'ナゲツケサル',    // Passimian
-  782: 'コソクムシ',    // Wimpod
-  783: 'グソクムシャ',    // Golisopod
-  784: 'スナバァ',    // Sandygast
-  785: 'シロデスナ',    // Palossand
-  786: 'ナマコブシ',    // Pyukumuku
-  787: 'タイプ：ヌル',    // Type: Null
-  788: 'シルヴァディ',    // Silvally
-  789: 'メテノ',    // Minior
-  790: 'ネッコアラ',    // Komala
-  791: 'バクガメス',    // Turtonator
-  792: 'トゲデマル',    // Togedemaru
-  793: 'ミミッキュ',    // Mimikyu
-  794: 'ハギギシリ',    // Bruxish
-  795: 'ジジーロン',    // Drampa
-  796: 'ダダリン',    // Dhelmise
-  797: 'ジャラコ',    // Jangmo-o
-  798: 'ジャランゴ',    // Hakamo-o
-  799: 'ジャラランガ',    // Kommo-o
-  800: 'カプ・コケコ',    // Tapu Koko
-  801: 'カプ・テテフ',    // Tapu Lele
-  802: 'カプ・ブルル',    // Tapu Bulu
-  803: 'カプ・レヒレ',    // Tapu Fini
-  804: 'コスモッグ',    // Cosmog
-  805: 'コスモウム',    // Cosmoem
-  806: 'ソルガレオ',    // Solgaleo
-  807: 'ルナアーラ',    // Lunala
-  808: 'ウツロイド',    // Nihilego
-  809: 'マギアナ',    // Magearna
-  810: 'マーシャドー',    // Marshadow
-  811: 'ベベノム',    // Poipole
-  812: 'アーゴヨン',    // Naganadel
-  813: 'ツンデツンデ',    // Stakataka
-  814: 'ズガドーン',    // Blacephalon
-  815: 'ゼラオラ',    // Zeraora
-  816: 'メルタン',    // Meltan
-  817: 'メルメタル',    // Melmetal
+  766: 'ナゲツケサル',    // Passimian
+  767: 'コソクムシ',    // Wimpod
+  768: 'グソクムシャ',    // Golisopod
+  769: 'スナバァ',    // Sandygast
+  770: 'シロデスナ',    // Palossand
+  771: 'ナマコブシ',    // Pyukumuku
+  772: 'タイプ：ヌル',    // Type: Null
+  773: 'シルヴァディ',    // Silvally
+  774: 'メテノ',    // Minior
+  775: 'ネッコアラ',    // Komala
+  776: 'バクガメス',    // Turtonator
+  777: 'トゲデマル',    // Togedemaru
+  778: 'ミミッキュ',    // Mimikyu
+  779: 'ハギギシリ',    // Bruxish
+  780: 'ジジーロン',    // Drampa
+  781: 'ダダリン',    // Dhelmise
+  782: 'ジャラコ',    // Jangmo-o
+  783: 'ジャランゴ',    // Hakamo-o
+  784: 'ジャラランガ',    // Kommo-o
+  785: 'カプ・コケコ',    // Tapu Koko
+  786: 'カプ・テテフ',    // Tapu Lele
+  787: 'カプ・ブルル',    // Tapu Bulu
+  788: 'カプ・レヒレ',    // Tapu Fini
+  789: 'コスモッグ',    // Cosmog
+  790: 'コスモウム',    // Cosmoem
+  791: 'ソルガレオ',    // Solgaleo
+  792: 'ルナアーラ',    // Lunala
+  793: 'ウツロイド',    // Nihilego
+  794: 'マッシブーン',    // Buzzwole
+  795: 'フェローチェ',    // Pheromosa
+  796: 'デンジュモク',    // Xurkitree
+  797: 'テッカグヤ',    // Celesteela
+  798: 'カミツルギ',    // Kartana
+  799: 'アクジキング',    // Guzzlord
+  800: 'ネクロズマ',    // Necrozma
+  801: 'マギアナ',    // Magearna
+  802: 'マーシャドー',    // Marshadow
+  803: 'ベベノム',    // Poipole
+  804: 'アーゴヨン',    // Naganadel
+  805: 'ツンデツンデ',    // Stakataka
+  806: 'ズガドーン',    // Blacephalon
+  807: 'ゼラオラ',    // Zeraora
+  808: 'メルタン',    // Meltan
+  809: 'メルメタル',    // Melmetal
+  810: 'サルノリ',    // Grookey
+  811: 'バチンキー',    // Thwackey
+  812: 'ゴリランダー',    // Rillaboom
+  813: 'ヒバニー',    // Scorbunny
+  814: 'ラビフット',    // Raboot
+  815: 'エースバーン',    // Cinderace
+  816: 'メッソン',    // Sobble
+  817: 'ジメレオン',    // Drizzile
   818: 'インテレオン',    // Inteleon
   819: 'ホシガリス',    // Skwovet
   820: 'ヨクバリス',    // Greedent
@@ -6917,17 +7048,18 @@ const pokemonIdToJapanese: Record<number, string> = {
   837: 'タンドン',    // Rolycoly
   838: 'トロッゴン',    // Carkol
   839: 'セキタンザン',    // Coalossal
-  841: 'カジッチュ',    // Applin
-  842: 'アップリュー',    // Flapple
-  843: 'タルップル',    // Appletun
-  844: 'スナヘビ',    // Silicobra
-  845: 'サダイジャ',    // Sandaconda
-  846: 'ウッウ',    // Cramorant
-  847: 'サシカマス',    // Arrokuda
-  848: 'カマスジョー',    // Barraskewda
-  849: 'エレズン',    // Toxel
-  850: 'ストリンダー',    // Toxtricity
-  851: 'ヤクデ',    // Sizzlipede
+  840: 'カジッチュ',    // Applin
+  841: 'アップリュー',    // Flapple
+  842: 'タルップル',    // Appletun
+  843: 'スナヘビ',    // Silicobra
+  844: 'サダイジャ',    // Sandaconda
+  845: 'ウッウ',    // Cramorant
+  846: 'サシカマス',    // Arrokuda
+  847: 'カマスジョー',    // Barraskewda
+  848: 'エレズン',    // Toxel
+  849: 'ストリンダー',    // Toxtricity
+  850: 'ヤクデ',    // Sizzlipede
+  851: 'マルヤクデ',    // Centiskorch
   852: 'タタッコ',    // Clobbopus
   853: 'オトスパス',    // Grapploct
   854: 'ヤバチャ',    // Sinistea
@@ -6941,7 +7073,7 @@ const pokemonIdToJapanese: Record<number, string> = {
   862: 'タチフサグマ',    // Obstagoon
   863: 'ニャイキング',    // Perrserker
   864: 'サニゴーン',    // Cursola
-  865: 'ネギガナイト',    // Sirfetch'd
+  865: 'ネギガナイト',    // Sirfetch’d
   866: 'バリコオル',    // Mr. Rime
   867: 'デスバーン',    // Runerigus
   868: 'マホミル',    // Milcery
@@ -6958,8 +7090,8 @@ const pokemonIdToJapanese: Record<number, string> = {
   879: 'ダイオウドウ',    // Copperajah
   880: 'パッチラゴン',    // Dracozolt
   881: 'パッチルドン',    // Arctozolt
-  882: 'パッチラドン',    // Dracovish
-  883: 'パッチルゴン',    // Arctovish
+  882: 'ウオノラゴン',    // Dracovish
+  883: 'ウオチルドン',    // Arctovish
   884: 'ジュラルドン',    // Duraludon
   885: 'ドラメシヤ',    // Dreepy
   886: 'ドロンチ',    // Drakloak
@@ -6980,125 +7112,128 @@ const pokemonIdToJapanese: Record<number, string> = {
   901: 'ガチグマ',    // Ursaluna
   902: 'イダイトウ',    // Basculegion
   903: 'オオニューラ',    // Sneasler
-  904: 'ラブトロス',    // Enamorus
-  905: 'ニャオハ',    // Sprigatito
-  906: 'ニャローテ',    // Floragato
-  907: 'マスカーニャ',    // Meowscarada
-  908: 'ホゲータ',    // Fuecoco
-  909: 'アチゲータ',    // Crocalor
-  910: 'ラウドボーン',    // Skeledirge
-  911: 'クワッス',    // Quaxly
-  912: 'ウェルカモ',    // Quaxwell
-  913: 'ウェーニバル',    // Quaquaval
-  914: 'グルトン',    // Lechonk
-  915: 'パフュートン',    // Oinkologne
-  916: 'タマンチュラ',    // Tarountula
-  917: 'ワナイダー',    // Spidops
-  918: 'マメバッタ',    // Nymble
-  919: 'エクスレッグ',    // Lokix
-  920: 'パモ',    // Pawmi
-  921: 'パモット',    // Pawmo
-  922: 'パーモット',    // Pawmot
-  923: 'ワッカネズミ',    // Tandemaus
-  924: 'イッカネズミ',    // Maushold
-  925: 'パピモッチ',    // Fidough
-  926: 'バウッツェル',    // Dachsbun
-  927: 'ミニーブ',    // Smoliv
-  928: 'オリーニョ',    // Dolliv
-  929: 'オリーヴァ',    // Arboliva
-  930: 'イキリンコ',    // Squawkabilly
-  931: 'コジオ',    // Nacli
-  932: 'ジオヅム',    // Naclstack
-  933: 'キョジオーン',    // Garganacl
-  934: 'カルボウ',    // Charcadet
-  935: 'グレンアルマ',    // Armarouge
-  936: 'ソウブレイズ',    // Ceruledge
-  937: 'ズピカ',    // Tadbulb
-  938: 'ハラバリー',    // Bellibolt
-  939: 'カイデン',    // Wattrel
-  940: 'タイカイデン',    // Kilowattrel
-  941: 'オラチフ',    // Maschiff
-  942: 'マフィティフ',    // Mabosstiff
-  943: 'シルシュルー',    // Shroodle
-  944: 'タギングル',    // Grafaiai
-  945: 'アノクサ',    // Bramblin
-  946: 'アノホラグサ',    // Brambleghast
-  947: 'ノノクラゲ',    // Toedscool
-  948: 'リククラゲ',    // Toedscruel
-  949: 'ガケガニ',    // Klawf
-  950: 'カプサイジ',    // Capsakid
-  951: 'スコヴィラン',    // Scovillain
-  952: 'ベラカス',    // Rabsca
-  954: 'ヒラヒナ',    // Flittle
-  955: 'クエスパトラ',    // Espathra
-  956: 'カヌチャン',    // Tinkatink
-  957: 'ナカヌチャン',    // Tinkatuff
-  958: 'デカヌチャン',    // Tinkaton
-  959: 'ウミディグダ',    // Wiglett
-  960: 'ウミトリオ',    // Wugtrio
-  961: 'ナミイルカ',    // Finizen
-  963: 'イルカマン',    // Palafin
-  964: 'ブロロン',    // Varoom
-  965: 'ブロロローム',    // Revavroom
-  966: 'モトトカゲ',    // Cyclizar
-  967: 'ミミズズ',    // Orthworm
-  968: 'キラーメ',    // Glimmet
-  969: 'キラフロル',    // Glimmora
-  970: 'ボチ',    // Greavard
-  971: 'ハカドッグ',    // Houndstone
-  972: 'カラミンゴ',    // Flamigo
-  973: 'アルクジラ',    // Cetoddle
-  974: 'ハルクジラ',    // Cetitan
-  975: 'ミガルーサ',    // Veluza
-  976: 'ヘイラッシャ',    // Dondozo
-  977: 'シャリタツ',    // Tatsugiri
-  978: 'コノヨザル',    // Annihilape
-  979: 'ドオー',    // Clodsire
-  980: 'リキキリン',    // Farigiraf
-  981: 'ノココッチ',    // Dudunsparce
-  982: 'ドドゲザン',    // Kingambit
-  983: 'イダイナキバ',    // Great Tusk
-  984: 'サケブシッポ',    // Scream Tail
-  985: 'アラブルタケ',    // Brute Bonnet
-  986: 'ハバタクカミ',    // Flutter Mane
-  987: 'チヲハウハネ',    // Slither Wing
-  988: 'スナノケガワ',    // Sandy Shocks
-  989: 'テツノワダチ',    // Iron Treads
-  990: 'テツノツツミ',    // Iron Bundle
-  991: 'テツノカイナ',    // Iron Hands
-  992: 'テツノコウベ',    // Iron Jugulis
-  993: 'テツノドクガ',    // Iron Moth
-  994: 'テツノイワオ',    // Iron Thorns
-  995: 'セビエ',    // Frigibax
-  996: 'セゴール',    // Arctibax
-  997: 'セグレイブ',    // Baxcalibur
-  998: 'コレクレー',    // Gimmighoul
-  999: 'サーフゴー',    // Gholdengo
-  1000: 'チオンジェン',    // Wo-Chien
-  1001: 'パオジアン',    // Chien-Pao
-  1002: 'ディンルー',    // Ting-Lu
-  1003: 'イーユイ',    // Chi-Yu
-  1004: 'トドロクツキ',    // Roaring Moon
-  1005: 'テツノブジン',    // Iron Valiant
-  1006: 'コライドン',    // Koraidon
-  1007: 'ミライドン',    // Miraidon
-  1008: 'ウネルミナモ',    // Walking Wake
-  1009: 'テツノイサハ',    // Iron Leaves
-  1010: 'カミツオロチ',    // Dipplin
-  1011: 'チャデス',    // Poltchageist
-  1012: 'ヤバソチャ',    // Sinistcha
-  1013: 'イイネイヌ',    // Okidogi
-  1014: 'マシマシラ',    // Munkidori
-  1015: 'キチキギス',    // Fezandipiti
-  1016: 'オーガポン',    // Ogerpon
-  1017: 'ブリジュラス',    // Archaludon
-  1018: 'カグヤドン',    // Gouging Fire
-  1020: 'テツノカミ',    // Raging Bolt
-  1021: 'テツノイワ',    // Iron Boulder
-  1022: 'テツノカンムリ',    // Iron Crown
-  1023: 'テラパゴス',    // Terapagos
-  1024: 'モモロウ',    // Pecharunt
-  1025: 'モモロウ',    // Pecharunt
+  904: 'ハリーマン',    // Overqwil
+  905: 'ラブトロス',    // Enamorus
+  906: 'ニャオハ',    // Sprigatito
+  907: 'ニャローテ',    // Floragato
+  908: 'マスカーニャ',    // Meowscarada
+  909: 'ホゲータ',    // Fuecoco
+  910: 'アチゲータ',    // Crocalor
+  911: 'ラウドボーン',    // Skeledirge
+  912: 'クワッス',    // Quaxly
+  913: 'ウェルカモ',    // Quaxwell
+  914: 'ウェーニバル',    // Quaquaval
+  915: 'グルトン',    // Lechonk
+  916: 'パフュートン',    // Oinkologne
+  917: 'タマンチュラ',    // Tarountula
+  918: 'ワナイダー',    // Spidops
+  919: 'マメバッタ',    // Nymble
+  920: 'エクスレッグ',    // Lokix
+  921: 'パモ',    // Pawmi
+  922: 'パモット',    // Pawmo
+  923: 'パーモット',    // Pawmot
+  924: 'ワッカネズミ',    // Tandemaus
+  925: 'イッカネズミ',    // Maushold
+  926: 'パピモッチ',    // Fidough
+  927: 'バウッツェル',    // Dachsbun
+  928: 'ミニーブ',    // Smoliv
+  929: 'オリーニョ',    // Dolliv
+  930: 'オリーヴァ',    // Arboliva
+  931: 'イキリンコ',    // Squawkabilly
+  932: 'コジオ',    // Nacli
+  933: 'ジオヅム',    // Naclstack
+  934: 'キョジオーン',    // Garganacl
+  935: 'カルボウ',    // Charcadet
+  936: 'グレンアルマ',    // Armarouge
+  937: 'ソウブレイズ',    // Ceruledge
+  938: 'ズピカ',    // Tadbulb
+  939: 'ハラバリー',    // Bellibolt
+  940: 'カイデン',    // Wattrel
+  941: 'タイカイデン',    // Kilowattrel
+  942: 'オラチフ',    // Maschiff
+  943: 'マフィティフ',    // Mabosstiff
+  944: 'シルシュルー',    // Shroodle
+  945: 'タギングル',    // Grafaiai
+  946: 'アノクサ',    // Bramblin
+  947: 'アノホラグサ',    // Brambleghast
+  948: 'ノノクラゲ',    // Toedscool
+  949: 'リククラゲ',    // Toedscruel
+  950: 'ガケガニ',    // Klawf
+  951: 'カプサイジ',    // Capsakid
+  952: 'スコヴィラン',    // Scovillain
+  953: 'シガロコ',    // Rellor
+  954: 'ベラカス',    // Rabsca
+  955: 'ヒラヒナ',    // Flittle
+  956: 'クエスパトラ',    // Espathra
+  957: 'カヌチャン',    // Tinkatink
+  958: 'ナカヌチャン',    // Tinkatuff
+  959: 'デカヌチャン',    // Tinkaton
+  960: 'ウミディグダ',    // Wiglett
+  961: 'ウミトリオ',    // Wugtrio
+  962: 'オトシドリ',    // Bombirdier
+  963: 'ナミイルカ',    // Finizen
+  964: 'イルカマン',    // Palafin
+  965: 'ブロロン',    // Varoom
+  966: 'ブロロローム',    // Revavroom
+  967: 'モトトカゲ',    // Cyclizar
+  968: 'ミミズズ',    // Orthworm
+  969: 'キラーメ',    // Glimmet
+  970: 'キラフロル',    // Glimmora
+  971: 'ボチ',    // Greavard
+  972: 'ハカドッグ',    // Houndstone
+  973: 'カラミンゴ',    // Flamigo
+  974: 'アルクジラ',    // Cetoddle
+  975: 'ハルクジラ',    // Cetitan
+  976: 'ミガルーサ',    // Veluza
+  977: 'ヘイラッシャ',    // Dondozo
+  978: 'シャリタツ',    // Tatsugiri
+  979: 'コノヨザル',    // Annihilape
+  980: 'ドオー',    // Clodsire
+  981: 'リキキリン',    // Farigiraf
+  982: 'ノココッチ',    // Dudunsparce
+  983: 'ドドゲザン',    // Kingambit
+  984: 'イダイナキバ',    // Great Tusk
+  985: 'サケブシッポ',    // Scream Tail
+  986: 'アラブルタケ',    // Brute Bonnet
+  987: 'ハバタクカミ',    // Flutter Mane
+  988: 'チヲハウハネ',    // Slither Wing
+  989: 'スナノケガワ',    // Sandy Shocks
+  990: 'テツノワダチ',    // Iron Treads
+  991: 'テツノツツミ',    // Iron Bundle
+  992: 'テツノカイナ',    // Iron Hands
+  993: 'テツノコウベ',    // Iron Jugulis
+  994: 'テツノドクガ',    // Iron Moth
+  995: 'テツノイバラ',    // Iron Thorns
+  996: 'セビエ',    // Frigibax
+  997: 'セゴール',    // Arctibax
+  998: 'セグレイブ',    // Baxcalibur
+  999: 'コレクレー',    // Gimmighoul
+  1000: 'サーフゴー',    // Gholdengo
+  1001: 'チオンジェン',    // Wo-Chien
+  1002: 'パオジアン',    // Chien-Pao
+  1003: 'ディンルー',    // Ting-Lu
+  1004: 'イーユイ',    // Chi-Yu
+  1005: 'トドロクツキ',    // Roaring Moon
+  1006: 'テツノブジン',    // Iron Valiant
+  1007: 'コライドン',    // Koraidon
+  1008: 'ミライドン',    // Miraidon
+  1009: 'ウネルミナモ',    // Walking Wake
+  1010: 'テツノイサハ',    // Iron Leaves
+  1011: 'カミッチュ',    // Dipplin
+  1012: 'チャデス',    // Poltchageist
+  1013: 'ヤバソチャ',    // Sinistcha
+  1014: 'イイネイヌ',    // Okidogi
+  1015: 'マシマシラ',    // Munkidori
+  1016: 'キチキギス',    // Fezandipiti
+  1017: 'オーガポン',    // Ogerpon
+  1018: 'ブリジュラス',    // Archaludon
+  1019: 'カミツオロチ',    // Hydrapple
+  1020: 'ウガツホムラ',    // Gouging Fire
+  1021: 'タケルライコ',    // Raging Bolt
+  1022: 'テツノイワオ',    // Iron Boulder
+  1023: 'テツノカシラ',    // Iron Crown
+  1024: 'テラパゴス',    // Terapagos
+  1025: 'モモワロウ',    // Pecharunt
 }
 
 export function getPokemonJapaneseName(pokemonId: number): JapaneseNameInfo | null {

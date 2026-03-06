@@ -97,12 +97,20 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
                     .filter(Boolean)
 
                 const nature = typeof (slot as any).nature === 'string' ? (slot as any).nature : undefined
+                const types = Array.isArray((slot as any).types) ? (slot as any).types : (slot as any).pokemon?.types
+                const maxHp = typeof (slot as any).maxHp === 'number' ? (slot as any).maxHp : undefined
+                const currentHp = typeof (slot as any).currentHp === 'number' ? (slot as any).currentHp : undefined
+                const pokemon = (slot as any).pokemon && typeof (slot as any).pokemon === 'object' ? (slot as any).pokemon : undefined
 
                 return {
                     id,
                     level,
                     moves,
-                    nature
+                    nature,
+                    types,
+                    maxHp,
+                    currentHp,
+                    pokemon,
                 }
             })
             .filter(Boolean) as StoredSlot[]
@@ -211,9 +219,11 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
                 moves: moves
             }
 
-            if (slot.nature) {
-                base.nature = slot.nature
-            }
+            if (slot.nature) base.nature = slot.nature
+            if (slot.types) base.types = slot.types
+            if (typeof slot.maxHp === 'number') base.maxHp = slot.maxHp
+            if (typeof slot.currentHp === 'number') base.currentHp = slot.currentHp
+            if (slot.pokemon) base.pokemon = slot.pokemon
 
             return base
         })
@@ -222,8 +232,12 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
     type StoredSlot = {
         id: number | null
         level?: number
-        moves?: Array<any> // Allow full move objects
+        moves?: Array<any>
         nature?: string
+        types?: any[]
+        maxHp?: number
+        currentHp?: number
+        pokemon?: Record<string, unknown>
     }
 
     useEffect(() => {
@@ -443,50 +457,51 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
         router.push(`/battle/runtime?${params.toString()}`)
     }
 
-    if (!user) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-bg text-text">
-                <div className="text-center space-y-4">
-                    <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
-                    <p className="text-lg font-semibold">You must be signed in to view battle rooms.</p>
-                </div>
-            </div>
-        )
-    }
+  if (!user) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-bg text-text">
+        <div className="text-center space-y-4 px-4">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
+          <p className="text-lg font-semibold">You must be signed in to view battle rooms.</p>
+        </div>
+      </div>
+    )
+  }
 
-    if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-bg text-text">
-                <div className="flex flex-col items-center space-y-4">
-                    <Loader2 className="w-10 h-10 animate-spin text-poke-blue" />
-                    <p className="text-muted-foreground">Loading battle room…</p>
-                </div>
-            </div>
-        )
-    }
+  if (loading) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-bg text-text">
+        <div className="flex flex-col items-center space-y-4">
+          <Loader2 className="w-10 h-10 animate-spin text-poke-blue" />
+          <p className="text-muted-foreground">Loading battle room…</p>
+        </div>
+      </div>
+    )
+  }
 
-    if (error || !room) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-bg text-text">
-                <div className="text-center space-y-4">
-                    <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
-                    <p className="text-lg font-semibold">{error || 'Battle room not found.'}</p>
-                    <button
-                        onClick={() => router.push('/lobby')}
-                        className="px-4 py-2 bg-poke-blue text-white rounded-lg shadow hover:bg-poke-blue/90"
-                    >
-                        Back to Lobby
-                    </button>
-                </div>
-            </div>
-        )
-    }
+  if (error || !room) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-bg text-text">
+        <div className="text-center space-y-4 px-4">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
+          <p className="text-lg font-semibold">{error || 'Battle room not found.'}</p>
+          <button
+            onClick={() => router.push('/lobby')}
+            className="px-4 py-2 bg-poke-blue text-white rounded-lg shadow hover:bg-poke-blue/90"
+          >
+            Back to Lobby
+          </button>
+        </div>
+      </div>
+    )
+  }
 
     const bothReady = room.hostReady && room.guestReady
 
     return (
-        <div className="min-h-screen bg-bg text-text">
-            <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+        <div className="fixed inset-0 flex flex-col bg-bg text-text overflow-hidden">
+            <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+            <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-6">
                 <button
                     onClick={() => router.push('/lobby')}
                     className="text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -609,13 +624,14 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
                     )}
                 </section>
 
-                <section className="rounded-xl border border-dashed border-border bg-card/40 p-6 text-sm text-muted-foreground space-y-2">
+                <section className="rounded-xl border border-dashed border-border bg-card/40 p-4 sm:p-6 text-sm text-muted-foreground space-y-2">
                     <h3 className="text-base font-semibold text-foreground">Team Selection</h3>
                     <p>
                         Team selection UI has moved. Use the main lobby page to set your team before entering the room. Your chosen roster automatically syncs to the battle document when the host starts the match.
                     </p>
                 </section>
             </div>
+            </main>
         </div>
     )
 }

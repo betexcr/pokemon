@@ -19,7 +19,7 @@ interface ModernPokemonCardProps {
   onSelect?: (pokemon: Pokemon) => void;
   isSelected?: boolean;
   className?: string;
-  density?: "3cols" | "6cols" | "9cols" | "10cols" | "list";
+  density?: "3cols" | "6cols" | "9cols" | "10cols" | "12cols" | "list";
   isFavorite?: boolean;
   onToggleFavorite?: (id: number) => void;
 }
@@ -184,7 +184,7 @@ function ModernPokemonCardComponent({
 
   // On small viewports, the name/types can be hidden by design.
   // Provide an always-available tooltip for 3cols, 6cols, and 9cols densities when footer is not visible.
-  const shouldUseTooltip = (density === '3cols' || density === '6cols' || density === '9cols' || density === '10cols') && !isInfoVisible
+  const shouldUseTooltip = (density === '3cols' || density === '6cols' || density === '9cols' || density === '10cols' || density === '12cols') && !isInfoVisible
   
   // Debug logging to understand visibility detection
   if (pokemon.name === 'bulbasaur') {
@@ -320,16 +320,21 @@ function ModernPokemonCardComponent({
   };
 
   const artWrapperStyle = useMemo<React.CSSProperties>(() => {
-    const top = density === '3cols' ? 40 : density === '6cols' ? 36 : 32
-    const bottom = density === '3cols' ? 60 : density === '6cols' ? 48 : 40
+    const isDenseGrid = density === '9cols' || density === '10cols' || density === '12cols'
+    const top = density === '3cols' ? 24 : density === '6cols' ? 20 : isDenseGrid ? 6 : 16
+    const bottom = density === '3cols' ? 12 : density === '6cols' ? 10 : isDenseGrid ? 0 : 8
+    const artHeight = density === '3cols' ? '220px' : density === '6cols' ? '160px' : isDenseGrid ? '96px' : '140px'
     return {
       width: '100%',
       marginTop: `${top}px`,
       marginBottom: `${bottom}px`,
       borderRadius: '0.5rem',
-      minHeight: density === '3cols' ? '280px' : density === '6cols' ? '200px' : '160px',
+      height: artHeight,
+      minHeight: artHeight,
+      maxHeight: artHeight,
+      overflow: 'hidden',
       display: 'flex',
-      alignItems: 'center',
+      alignItems: isDenseGrid ? 'flex-end' : 'center',
       justifyContent: 'center'
     }
   }, [density])
@@ -411,7 +416,7 @@ function ModernPokemonCardComponent({
                 {hasRealName ? (
                   formatPokemonName(pokemon.name)
                 ) : (
-                  <div className="h-4 w-20 bg-slate-200/80 dark:bg-slate-800/60 rounded animate-pulse" />
+                  <span className="inline-block h-4 w-20 bg-slate-200/80 dark:bg-slate-800/60 rounded animate-pulse" />
                 )}
               </h3>
             </div>
@@ -563,26 +568,26 @@ function ModernPokemonCardComponent({
 
                 {/* Footer with types */}
                 <div ref={infoRef} className="relative bottom-0 left-0 right-0 z-20 bg-white/95 dark:bg-gray-900/80 backdrop-blur-sm rounded-lg px-1 py-1 shadow-sm mx-0.5 mb-0.5">
-                  <h3 className={`font-semibold text-center card-name mb-0 dark:text-gray-100 ${density === '9cols' ? 'text-xs mb-1' : density === '6cols' ? 'text-sm' : 'text-sm'}`} style={{ color: '#111827', fontWeight: 600, marginBlockStart: '0', marginBlockEnd: '0px' }}>
+                  <h3 className={`font-semibold text-center card-name mb-0 dark:text-gray-100 ${(density === '9cols' || density === '12cols') ? 'text-xs mb-1' : density === '6cols' ? 'text-sm' : 'text-sm'}`} style={{ color: '#111827', fontWeight: 600, marginBlockStart: '0', marginBlockEnd: '0px' }}>
                     {hasRealName ? (
                       formatPokemonName(pokemon.name)
                     ) : (
-                      <div className="h-4 w-20 bg-slate-200/80 dark:bg-slate-800/60 rounded animate-pulse mx-auto" />
+                      <span className="inline-block h-4 w-20 bg-slate-200/80 dark:bg-slate-800/60 rounded animate-pulse mx-auto" />
                     )}
                   </h3>
                   <div className="flex flex-wrap gap-0.5 justify-center card-badges">
                     {hasTypes ? (
                       pokemon.types.map((type) => (
-                        <TypeBadge key={type.type.name} type={type.type.name} className={`transition-transform duration-200 group-hover:scale-105 ${density === '9cols' ? 'text-[9px] px-1 py-1' : 'text-xs px-2 py-1'}`} />
+                        <TypeBadge key={type.type.name} type={type.type.name} className={`transition-transform duration-200 group-hover:scale-105 ${(density === '9cols' || density === '12cols') ? 'text-[9px] px-1 py-1' : 'text-xs px-2 py-1'}`} />
                       ))
                     ) : (
                       <div className="flex gap-1.5 justify-center">
-                        <div className={`h-6 w-16 rounded-full bg-slate-200/80 dark:bg-slate-800/60 animate-pulse ${density === '9cols' ? 'h-4 w-12' : 'h-6 w-16'}`} />
-                        <div className={`h-6 w-12 rounded-full bg-slate-200/80 dark:bg-slate-800/60 animate-pulse ${density === '9cols' ? 'h-4 w-8' : 'h-6 w-12'}`} />
+                        <div className={`h-6 w-16 rounded-full bg-slate-200/80 dark:bg-slate-800/60 animate-pulse ${(density === '9cols' || density === '12cols') ? 'h-4 w-12' : 'h-6 w-16'}`} />
+                        <div className={`h-6 w-12 rounded-full bg-slate-200/80 dark:bg-slate-800/60 animate-pulse ${(density === '9cols' || density === '12cols') ? 'h-4 w-8' : 'h-6 w-12'}`} />
                       </div>
                     )}
                   </div>
-                  {baseStatsTotal !== null && density !== '9cols' && (
+                  {baseStatsTotal !== null && density !== '9cols' && density !== '12cols' && (
                     <div className="flex items-center justify-center gap-1 mt-1">
                       <span className="text-[10px] text-muted font-medium">BST:</span>
                       <span className="text-[10px] font-bold text-poke-blue">{baseStatsTotal}</span>
@@ -648,26 +653,26 @@ function ModernPokemonCardComponent({
 
                   {/* Footer with types */}
                   <div ref={infoRef} className="relative bottom-0 left-0 right-0 z-20 bg-white/95 dark:bg-gray-900/80 backdrop-blur-sm rounded-lg px-1 py-1 shadow-sm mx-0.5 mb-0.5">
-                    <h3 className={`font-semibold text-center card-name mb-0 dark:text-gray-100 ${density === '9cols' ? 'text-xs' : density === '6cols' ? 'text-sm' : 'text-sm'}`} style={{ color: '#111827', fontWeight: 600, marginBlockStart: '0', marginBlockEnd: '0px' }}>
+                    <h3 className={`font-semibold text-center card-name mb-0 dark:text-gray-100 ${(density === '9cols' || density === '12cols') ? 'text-xs' : density === '6cols' ? 'text-sm' : 'text-sm'}`} style={{ color: '#111827', fontWeight: 600, marginBlockStart: '0', marginBlockEnd: '0px' }}>
                       {hasRealName ? (
                         formatPokemonName(pokemon.name)
                       ) : (
-                        <div className="h-4 w-20 bg-slate-200/80 dark:bg-slate-800/60 rounded animate-pulse mx-auto" />
+                        <span className="inline-block h-4 w-20 bg-slate-200/80 dark:bg-slate-800/60 rounded animate-pulse mx-auto" />
                       )}
                     </h3>
                     <div className="flex flex-wrap gap-0.5 justify-center card-badges">
                       {hasTypes ? (
                         pokemon.types.map((type) => (
-                          <TypeBadge key={type.type.name} type={type.type.name} className={`transition-transform duration-200 group-hover:scale-105 ${density === '9cols' ? 'text-[9px] px-1 py-1' : 'text-xs px-2 py-1'}`} />
+                          <TypeBadge key={type.type.name} type={type.type.name} className={`transition-transform duration-200 group-hover:scale-105 ${(density === '9cols' || density === '12cols') ? 'text-[9px] px-1 py-1' : 'text-xs px-2 py-1'}`} />
                         ))
                       ) : (
                         <div className="flex gap-1.5 justify-center">
-                          <div className={`h-6 w-16 rounded-full bg-slate-200/80 dark:bg-slate-800/60 animate-pulse ${density === '9cols' ? 'h-4 w-12' : 'h-6 w-16'}`} />
-                          <div className={`h-6 w-12 rounded-full bg-slate-200/80 dark:bg-slate-800/60 animate-pulse ${density === '9cols' ? 'h-4 w-8' : 'h-6 w-12'}`} />
+                          <div className={`h-6 w-16 rounded-full bg-slate-200/80 dark:bg-slate-800/60 animate-pulse ${(density === '9cols' || density === '12cols') ? 'h-4 w-12' : 'h-6 w-16'}`} />
+                          <div className={`h-6 w-12 rounded-full bg-slate-200/80 dark:bg-slate-800/60 animate-pulse ${(density === '9cols' || density === '12cols') ? 'h-4 w-8' : 'h-6 w-12'}`} />
                         </div>
                       )}
                     </div>
-                    {baseStatsTotal !== null && density !== '9cols' && (
+                    {baseStatsTotal !== null && density !== '9cols' && density !== '12cols' && (
                       <div className="flex items-center justify-center gap-1 mt-1">
                         <span className="text-[10px] text-muted font-medium">BST:</span>
                         <span className="text-[10px] font-bold text-poke-blue">{baseStatsTotal}</span>

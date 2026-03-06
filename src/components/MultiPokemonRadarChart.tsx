@@ -270,7 +270,7 @@ export default function MultiPokemonRadarChart({ pokemons, highlightedPokemonId 
   })
 
   return (
-    <div ref={containerRef} className="relative w-full h-full min-h-[240px] sm:min-h-[280px] md:min-h-[320px] lg:min-h-[360px]">
+    <div ref={containerRef} className="relative w-full h-full">
       <svg
         width={size}
         height={size}

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { memo, useCallback } from "react";
 import { useInView } from "@/hooks/useInView";
 import type { DexEntry } from "@/lib/checklist/types";
 
@@ -10,8 +10,11 @@ type DexCardProps = {
   onToggleCaught: (id: number, checked: boolean) => void;
 };
 
-export default function DexCard({ entry, isCaught, onToggleCaught }: DexCardProps) {
+function DexCard({ entry, isCaught, onToggleCaught }: DexCardProps) {
   const { ref, inView } = useInView<HTMLLabelElement>({ rootMargin: "300px" });
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    onToggleCaught(entry.id, e.target.checked);
+  }, [entry.id, onToggleCaught]);
 
   return (
     <label
@@ -24,7 +27,7 @@ export default function DexCard({ entry, isCaught, onToggleCaught }: DexCardProp
           type="checkbox"
           aria-checked={isCaught}
           checked={isCaught}
-          onChange={(e) => onToggleCaught(entry.id, e.target.checked)}
+          onChange={handleChange}
           aria-label={`Caught ${entry.name}`}
           className="h-4 w-4 accent-green-600"
         />
@@ -48,5 +51,11 @@ export default function DexCard({ entry, isCaught, onToggleCaught }: DexCardProp
     </label>
   );
 }
+
+export default memo(DexCard, (prev, next) => (
+  prev.entry.id === next.entry.id &&
+  prev.isCaught === next.isCaught &&
+  prev.entry === next.entry
+));
 
 

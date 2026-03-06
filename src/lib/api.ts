@@ -80,6 +80,31 @@ function setNegativeCache(key: string, error: string, ttlSeconds: number = 300):
 // Always use PokeAPI directly since we removed the internal API routes
 const API_BASE_URL = 'https://pokeapi.co/api/v2'
 
+let cachedMainlinePokemonMaxId: number | null = null
+let mainlinePokemonMaxIdPromise: Promise<number | null> | null = null
+
+async function getMainlinePokemonMaxId(): Promise<number | null> {
+  if (cachedMainlinePokemonMaxId !== null) return cachedMainlinePokemonMaxId
+  if (mainlinePokemonMaxIdPromise) return mainlinePokemonMaxIdPromise
+
+  mainlinePokemonMaxIdPromise = (async () => {
+    try {
+      const total = await getPokemonTotalCount()
+      if (Number.isFinite(total) && total > 0) {
+        cachedMainlinePokemonMaxId = total
+        return total
+      }
+      return null
+    } catch {
+      return null
+    } finally {
+      mainlinePokemonMaxIdPromise = null
+    }
+  })()
+
+  return mainlinePokemonMaxIdPromise
+}
+
 // Circuit breaker for handling 503 errors
 class CircuitBreaker {
   private failures = 0
@@ -462,6 +487,13 @@ export async function getPokemon(id: number | string, signal?: AbortSignal): Pro
   // Ensure we always use numeric ID for API calls, removing any zero-padding
   const numericId = normalizePokemonId(id)
 
+  if (!isSpecialForm(numericId)) {
+    const maxMainlinePokemonId = await getMainlinePokemonMaxId()
+    if (maxMainlinePokemonId !== null && numericId > maxMainlinePokemonId) {
+      throw new Error(`Pokemon with ID ${id} does not exist`)
+    }
+  }
+
   const cacheKey = getCacheKey('pokemon', { id: numericId })
 
   // Check cache first
@@ -767,6 +799,14 @@ export async function getPokemonMoves(id: number | string): Promise<Array<{ name
         try {
           const moveData = await getMove(entry.move.name)
           const effectEntry = moveData?.effect_entries?.find((entry: any) => entry.language?.name === 'en')
+          const effectChance = moveData?.effect_chance
+          let shortEffect = effectEntry?.short_effect || effectEntry?.effect || null
+          if (shortEffect) {
+            shortEffect = shortEffect.replace(
+              /\$effect_chance/g,
+              effectChance != null ? String(effectChance) : ''
+            )
+          }
 
           // Get the most recent learn method and level
           const versionDetails = entry.version_group_details || []
@@ -781,7 +821,7 @@ export async function getPokemonMoves(id: number | string): Promise<Array<{ name
             pp: moveData.pp,
             level_learned_at: latestVersion?.level_learned_at || null,
             learn_method: latestVersion?.move_learn_method?.name || 'unknown',
-            short_effect: effectEntry?.short_effect || effectEntry?.effect || null,
+            short_effect: shortEffect,
           }
         } catch (error) {
           console.debug('Failed to load move details', error)
@@ -837,10 +877,11 @@ export async function searchPokemonByName(query: string, signal?: AbortSignal): 
     // Early return for empty queries
     if (!trimmedQuery) return []
 
-    // Check for exact ID match (1-1302+ range) - prioritize exact matches
+    // Check for exact ID match in the valid main Pokédex range - prioritize exact matches
     if (/^\d+$/.test(trimmedQuery)) {
       const id = parseInt(trimmedQuery)
-      if (id >= 1 && id <= 1302) {
+      const maxMainlinePokemonId = await getMainlinePokemonMaxId()
+      if (id >= 1 && (maxMainlinePokemonId === null || id <= maxMainlinePokemonId)) {
         try {
           const exactMatch = await getPokemon(id)
           await setCache(cacheKey, [exactMatch], CACHE_TTL.POKEMON_LIST)

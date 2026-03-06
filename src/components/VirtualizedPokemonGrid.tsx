@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useMemo, useCallback, useRef, useEffect } from 'react'
+import React, { useMemo, useCallback, useRef, useEffect, useState } from 'react'
 import { Pokemon } from '@/types/pokemon'
 import ModernPokemonCard from './ModernPokemonCard'
 import PokemonCard from './PokemonCard'
@@ -15,7 +15,7 @@ interface VirtualizedPokemonGridProps {
   onSelectPokemon?: (pokemon: Pokemon) => void
   selectedPokemon: Pokemon | null
   comparisonList: number[]
-  density: '3cols' | '6cols' | '9cols' | 'list'
+  density: '3cols' | '6cols' | '9cols' | '12cols' | 'list'
   className?: string
   isLoading?: boolean
   enableVirtualization?: boolean
@@ -69,11 +69,12 @@ export default function VirtualizedPokemonGrid({
   // Calculate layout based on density - responsive column counts that adapt to screen size
   const getLayoutClasses = () => {
     switch (density) {
-      case '3cols': return 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-start' // Responsive: 1-2-3 columns
-      case '6cols': return 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 items-start' // Responsive: 2-3-4-5-6 columns
-      case '9cols': return 'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 2xl:grid-cols-9 gap-2 items-start' // Responsive: 3-4-6-7-8-9 columns
-      case 'list': return 'flex flex-col gap-1' // List view with tighter spacing
-      default: return 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 items-start' // Default responsive
+      case '3cols': return 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'
+      case '6cols': return 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3'
+      case '9cols':  return 'grid grid-cols-3 sm:grid-cols-6 md:grid-cols-9 gap-2'
+      case '12cols': return 'grid grid-cols-3 sm:grid-cols-6 md:grid-cols-9 lg:grid-cols-12 gap-2'
+      case 'list': return 'flex flex-col gap-1'
+      default: return 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3'
     }
   }
 
@@ -111,17 +112,42 @@ export default function VirtualizedPokemonGrid({
     }
   }
 
+  // Compute the actual rendered column count for the current density + viewport width.
+  // Must mirror the Tailwind responsive classes in getLayoutClasses().
+  const getResponsiveCols = useCallback((w: number): number => {
+    switch (density) {
+      case '3cols':  return w >= 1024 ? 3 : w >= 640 ? 2 : 1
+      case '6cols':  return w >= 768 ? 6 : w >= 640 ? 3 : 2
+      case '9cols':  return w >= 768 ? 9 : w >= 640 ? 6 : 3
+      case '12cols': return w >= 1024 ? 12 : w >= 768 ? 9 : w >= 640 ? 6 : 3
+      case 'list':   return 1
+      default:       return w >= 768 ? 6 : w >= 640 ? 3 : 2
+    }
+  }, [density])
+
+  const [responsiveCols, setResponsiveCols] = useState(() =>
+    typeof window !== 'undefined' ? getResponsiveCols(window.innerWidth) : 6
+  )
+
+  useEffect(() => {
+    const update = () => setResponsiveCols(getResponsiveCols(window.innerWidth))
+    update()
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
+  }, [getResponsiveCols])
+
   // Calculate grid dimensions for virtualization - Natural dimensions
   const getGridDimensions = useMemo(() => {
     switch (density) {
       // Keep row estimates close to actual rendered card heights to avoid clipping before measurement.
-      case '3cols': return { cols: 3, itemHeight: 470, gap: 16 }
-      case '6cols': return { cols: 6, itemHeight: 360, gap: 12 }
-      case '9cols': return { cols: 9, itemHeight: 320, gap: 8 }
-      case 'list': return { cols: 1, itemHeight: 60, gap: 4 }
-      default: return { cols: 6, itemHeight: 360, gap: 12 }
+      case '3cols':  return { cols: responsiveCols, itemHeight: 470, gap: 16 }
+      case '6cols':  return { cols: responsiveCols, itemHeight: 360, gap: 12 }
+      case '9cols':  return { cols: responsiveCols, itemHeight: 320, gap: 8  }
+      case '12cols': return { cols: responsiveCols, itemHeight: 300, gap: 8  }
+      case 'list':   return { cols: 1,               itemHeight: 60,  gap: 4  }
+      default:       return { cols: responsiveCols, itemHeight: 360, gap: 12 }
     }
-  }, [density])
+  }, [density, responsiveCols])
 
   const gridCols = getGridDimensions.cols
 
@@ -231,7 +257,7 @@ export default function VirtualizedPokemonGrid({
     count: totalRows,
     getScrollElement: () => {
       // Use the main scroll container instead of creating our own
-      return document.querySelector('.flex-1.min-h-0.overflow-y-auto') || parentRef.current
+      return document.querySelector('[data-main-scroll]') || parentRef.current
     },
     estimateSize: () => getGridDimensions.itemHeight + getGridDimensions.gap,
     measureElement: (element) => element.getBoundingClientRect().height,
@@ -283,6 +309,7 @@ export default function VirtualizedPokemonGrid({
         rowContent = (
           <div
             key={pokemon.id}
+            data-pokemon-id={pokemon.id}
             className="w-full"
           >
             {hasLoadedData ? (
@@ -358,33 +385,35 @@ export default function VirtualizedPokemonGrid({
               }
 
               if (hasLoadedData) {
-                if (density === '9cols') {
+                if (density === '9cols' || density === '12cols') {
                   return (
-                    <PokemonCard
-                      key={key}
-                      pokemon={pokemon}
-                      isFavorite={favoritesList.includes(pokemon.id)}
-                      onToggleFavorite={onToggleFavorite || (() => {})}
-                      isInComparison={comparisonList.includes(pokemon.id)}
-                      onToggleComparison={onToggleComparison}
-                      cardSize="compact"
-                      mode="grid"
-                    />
+                    <div key={key} data-pokemon-id={pokemon.id}>
+                      <PokemonCard
+                        pokemon={pokemon}
+                        isFavorite={favoritesList.includes(pokemon.id)}
+                        onToggleFavorite={onToggleFavorite || (() => {})}
+                        isInComparison={comparisonList.includes(pokemon.id)}
+                        onToggleComparison={onToggleComparison}
+                        cardSize="compact"
+                        mode="grid"
+                      />
+                    </div>
                   )
                 }
 
                 return (
-                  <ModernPokemonCard
-                    key={key}
-                    pokemon={pokemon}
-                    isInComparison={comparisonList.includes(pokemon.id)}
-                    onToggleComparison={onToggleComparison}
-                    onSelect={undefined}
-                    isSelected={selectedPokemon?.id === pokemon.id}
-                    density={density}
-                    isFavorite={favoritesList.includes(pokemon.id)}
-                    onToggleFavorite={onToggleFavorite}
-                  />
+                  <div key={key} data-pokemon-id={pokemon.id}>
+                    <ModernPokemonCard
+                      pokemon={pokemon}
+                      isInComparison={comparisonList.includes(pokemon.id)}
+                      onToggleComparison={onToggleComparison}
+                      onSelect={undefined}
+                      isSelected={selectedPokemon?.id === pokemon.id}
+                      density={density}
+                      isFavorite={favoritesList.includes(pokemon.id)}
+                      onToggleFavorite={onToggleFavorite}
+                    />
+                  </div>
                 )
               } else {
                 // Render skeleton card
@@ -443,6 +472,7 @@ export default function VirtualizedPokemonGrid({
         rowContent = (
           <div
             key={pokemon.id}
+            data-pokemon-id={pokemon.id}
             className="w-full"
           >
             {hasLoadedData ? (
@@ -518,33 +548,35 @@ export default function VirtualizedPokemonGrid({
               }
 
               if (hasLoadedData) {
-                if (density === '9cols') {
+                if (density === '9cols' || density === '12cols') {
                   return (
-                    <PokemonCard
-                      key={key}
-                      pokemon={pokemon}
-                      isFavorite={favoritesList.includes(pokemon.id)}
-                      onToggleFavorite={onToggleFavorite || (() => {})}
-                      isInComparison={comparisonList.includes(pokemon.id)}
-                      onToggleComparison={onToggleComparison}
-                      cardSize="ultra"
-                      mode="grid"
-                    />
+                    <div key={key} data-pokemon-id={pokemon.id}>
+                      <PokemonCard
+                        pokemon={pokemon}
+                        isFavorite={favoritesList.includes(pokemon.id)}
+                        onToggleFavorite={onToggleFavorite || (() => {})}
+                        isInComparison={comparisonList.includes(pokemon.id)}
+                        onToggleComparison={onToggleComparison}
+                        cardSize="ultra"
+                        mode="grid"
+                      />
+                    </div>
                   )
                 }
 
                 return (
-                  <ModernPokemonCard
-                    key={key}
-                    pokemon={pokemon}
-                    isInComparison={comparisonList.includes(pokemon.id)}
-                    onToggleComparison={onToggleComparison}
-                    onSelect={undefined}
-                    isSelected={selectedPokemon?.id === pokemon.id}
-                    density={density}
-                    isFavorite={favoritesList.includes(pokemon.id)}
-                    onToggleFavorite={onToggleFavorite}
-                  />
+                  <div key={key} data-pokemon-id={pokemon.id}>
+                    <ModernPokemonCard
+                      pokemon={pokemon}
+                      isInComparison={comparisonList.includes(pokemon.id)}
+                      onToggleComparison={onToggleComparison}
+                      onSelect={undefined}
+                      isSelected={selectedPokemon?.id === pokemon.id}
+                      density={density}
+                      isFavorite={favoritesList.includes(pokemon.id)}
+                      onToggleFavorite={onToggleFavorite}
+                    />
+                  </div>
                 )
               } else {
                 // Render skeleton card

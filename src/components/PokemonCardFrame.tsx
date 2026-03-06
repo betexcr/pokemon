@@ -6,7 +6,7 @@ interface PokemonCardFrameProps {
   children: ReactNode;
   isSelected?: boolean;
   className?: string;
-  density?: '3cols' | '6cols' | '9cols' | '10cols' | 'list';
+  density?: '3cols' | '6cols' | '9cols' | '10cols' | '12cols' | 'list';
   onClick?: (e: React.MouseEvent) => void;
   onKeyDown?: (e: React.KeyboardEvent) => void;
   onMouseEnter?: () => void;
@@ -41,7 +41,7 @@ export default function PokemonCardFrame({
   // Calculate card styling based on density
   const getCardClasses = () => {
     const baseClasses = `
-      group relative bg-surface border border-border ${density !== '9cols' ? 'overflow-hidden' : 'overflow-visible'}
+      group relative bg-surface border border-border ${(density !== '9cols' && density !== '12cols') ? 'overflow-hidden' : 'overflow-visible'}
       transition-all duration-200 hover:shadow-lg focus:outline-none
       focus:ring-2 focus:ring-poke-blue focus:ring-offset-2 focus:ring-offset-bg
       w-full h-full ml-0 p-0 cq-card
@@ -55,6 +55,7 @@ export default function PokemonCardFrame({
       '6cols': forceSquare ? 'rounded-lg hover:scale-[1.02] aspect-square shadow-sm hover:shadow-md' : 'rounded-lg hover:scale-[1.02] shadow-sm hover:shadow-md',
       '9cols': forceSquare ? 'rounded-md hover:scale-[1.01] aspect-square shadow-sm hover:shadow-md z-[10]' : 'rounded-md hover:scale-[1.01] shadow-sm hover:shadow-md z-[10]',
       '10cols': forceSquare ? 'rounded-sm hover:scale-[1.01] aspect-square shadow-sm hover:shadow-md z-[10]' : 'rounded-sm hover:scale-[1.01] shadow-sm hover:shadow-md z-[10]',
+      '12cols': forceSquare ? 'rounded-sm hover:scale-[1.01] aspect-square shadow-sm hover:shadow-md z-[10]' : 'rounded-sm hover:scale-[1.01] shadow-sm hover:shadow-md z-[10]',
       list: 'rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center h-[60px] px-4 py-3 border-l-4 border-l-transparent hover:border-l-poke-blue transition-all duration-200'
     } as const
 

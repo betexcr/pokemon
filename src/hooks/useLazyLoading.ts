@@ -36,9 +36,9 @@ export function useLazyLoading() {
       setState(prev => ({ ...prev, isLoading: true, error: null }))
       
       // Get total count from the API
-      const response = await fetch('https://pokeapi.co/api/v2/pokemon?limit=1')
+      const response = await fetch('https://pokeapi.co/api/v2/pokemon-species?limit=1')
       const data = await response.json()
-      const totalCount = data.count || 1302 // fallback to known count
+      const totalCount = data.count || 1025 // fallback to known count
       
       setState(prev => ({ 
         ...prev, 

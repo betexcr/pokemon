@@ -256,7 +256,7 @@ export function useOptimizedInfiniteScroll<T>(
   useEffect(() => {
     if (!enableVirtualization) return
 
-    const scrollElement = document.querySelector('.flex-1.min-h-0.overflow-y-auto') as HTMLElement
+    const scrollElement = document.querySelector('[data-main-scroll]') as HTMLElement
     if (!scrollElement) return
 
     scrollElementRef.current = scrollElement
@@ -348,7 +348,7 @@ export function useOptimizedInfiniteScroll<T>(
     const handleScroll = () => {
       if (isLoadingRef.current || !hasMore) return
 
-      const scrollElement = document.querySelector('.flex-1.min-h-0.overflow-y-auto') || 
+      const scrollElement = document.querySelector('[data-main-scroll]') || 
                            document.documentElement
       
       const { scrollTop, scrollHeight, clientHeight } = scrollElement
@@ -359,7 +359,7 @@ export function useOptimizedInfiniteScroll<T>(
       }
     }
 
-    const scrollElement = document.querySelector('.flex-1.min-h-0.overflow-y-auto') || 
+    const scrollElement = document.querySelector('[data-main-scroll]') || 
                          document.documentElement
 
     if (scrollElement) {

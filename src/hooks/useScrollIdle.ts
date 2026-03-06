@@ -49,7 +49,7 @@ const ensureListeners = () => {
   }
 
   const updateScrollTarget = () => {
-    const container = document.querySelector('.flex-1.min-h-0.overflow-y-auto')
+    const container = document.querySelector('[data-main-scroll]')
     clearScrollTargets()
     if (container instanceof Element) {
       addScrollTarget(container)
@@ -60,7 +60,7 @@ const ensureListeners = () => {
   updateScrollTarget()
 
   const observer = new MutationObserver(() => {
-    const container = document.querySelector('.flex-1.min-h-0.overflow-y-auto')
+    const container = document.querySelector('[data-main-scroll]')
     if (container instanceof Element && !scrollTargets.has(container)) {
       clearScrollTargets()
       addScrollTarget(container)

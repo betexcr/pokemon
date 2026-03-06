@@ -157,7 +157,7 @@ export function useGlobalErrorCatcher(options: GlobalErrorCatcherOptions = {}) {
           const isPokemonApi = url.includes('pokeapi.co') || url.includes('pokemon')
           
           if (isPokemonApi) {
-            // Only report 404s for Pokemon that should exist (IDs 1-1302)
+            // Only report 404s for Pokémon that should exist (IDs 1-1025)
             // Skip reporting 404s for species endpoints as they're expected for regional variants
             const shouldReport404 = () => {
               // Don't report 404s for species endpoints - these are expected for regional variants

@@ -1206,7 +1206,7 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
   
   return (
     <header 
-      className="relative mb-6 rounded-2xl border border-border bg-surface p-6 overflow-visible"
+      className="relative mb-3 rounded-2xl border border-border bg-surface p-4 overflow-visible"
       style={{ 
         '--type-color': `var(--type-${primaryType}-color, #60a5fa)` 
       } as React.CSSProperties}
@@ -1223,9 +1223,9 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
         transition={{ duration: 0.2, ease: "easeOut" }}
       />
       
-      <div className="relative space-y-6">
+      <div className="relative space-y-3">
         {/* Pokemon Header - Responsive Layout */}
-        <div className="flex flex-col lg:flex-row items-center lg:items-start gap-6">
+        <div className="flex flex-col lg:flex-row items-center lg:items-start gap-4">
           {/* Navigation Buttons - Desktop Only */}
           <div className="hidden lg:flex items-center gap-4 order-1">
             <button
@@ -1238,10 +1238,19 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
             </button>
           </div>
 
-          {/* Pokemon Image */}
+          {/* Pokemon Image — on mobile wrapped in a row with nav buttons */}
+          <div className="flex lg:contents items-center gap-3 order-2">
+            <button
+              onClick={goToPrevious}
+              disabled={pokemon.id <= 1}
+              className="lg:hidden group flex items-center justify-center w-10 h-10 rounded-full border border-border bg-surface hover:bg-surface/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-105 disabled:hover:scale-100 flex-shrink-0"
+              title={`Previous Pokémon (#${String(pokemon.id - 1).padStart(4, "0")})`}
+            >
+              <ChevronLeft className="h-5 w-5 text-muted group-hover:text-text transition-colors" />
+            </button>
           <div
             style={{ viewTransitionName: vtName } as React.CSSProperties}
-            className="rounded-xl bg-white/70 dark:bg-zinc-800/70 p-3 flex-shrink-0 order-2 lg:order-2"
+            className="rounded-xl bg-white/70 dark:bg-zinc-800/70 p-3 flex-shrink-0"
           >
             {style !== 'pmd' && imageSrc && (
               <Image 
@@ -1249,7 +1258,7 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
                 alt={pokemon.name}
                 width={140} 
                 height={140} 
-                className={`h-32 w-32 sm:h-36 sm:w-36 lg:h-40 lg:w-40 object-contain`} 
+                className={`h-24 w-24 sm:h-28 sm:w-28 lg:h-32 lg:w-32 object-contain`} 
                 priority 
                 onError={() => {
                   // Fallback to PokeAPI sprite if PokemonDB sprite fails
@@ -1260,10 +1269,19 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
               />
             )}
             {style === 'pmd' && selectedPmdAnim && (
-              <div className="h-32 w-32 sm:h-36 sm:w-36 lg:h-40 lg:w-40 flex items-center justify-center">
+              <div className="h-24 w-24 sm:h-28 sm:w-28 lg:h-32 lg:w-32 flex items-center justify-center">
                 <HeroPmdSprite pokemonId={pokemon.id} animName={selectedPmdAnim} scale={2} />
               </div>
             )}
+          </div>
+            <button
+              onClick={goToNext}
+              disabled={pokemon.id >= 1025}
+              className="lg:hidden group flex items-center justify-center w-10 h-10 rounded-full border border-border bg-surface hover:bg-surface/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-105 disabled:hover:scale-100 flex-shrink-0"
+              title={`Next Pokémon (#${String(pokemon.id + 1).padStart(4, "0")})`}
+            >
+              <ChevronRight className="h-5 w-5 text-muted group-hover:text-text transition-colors" />
+            </button>
           </div>
           
           {/* Pokemon Info - Side Layout on Desktop, Below on Mobile */}
@@ -1601,7 +1619,7 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
         </div>
 
         {/* Quick Stats Row - Responsive Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-muted">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-sm text-muted">
           <Stat label="Height" value={`${(pokemon.height / 10).toFixed(1)} m`} icon="📏" />
           <Stat label="Weight" value={`${(pokemon.weight / 10).toFixed(1)} kg`} icon="🏋️" />
           <Stat label="Base Exp" value={pokemon.base_experience} icon="⚡" />
@@ -1609,9 +1627,9 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
         </div>
 
         {/* Battle Stats */}
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold text-center">Battle Stats</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 sm:gap-4">
+        <div className="space-y-1.5">
+          <h3 className="text-base font-semibold text-center">Battle Stats</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
             {pokemon.stats.map(stat => (
               <Stat 
                 key={stat.stat.name}
@@ -1625,8 +1643,8 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
 
         {/* Abilities */}
         {(loading || (abilities && abilities.length > 0)) && (
-          <div className="space-y-2 text-center">
-            <h3 className="text-lg font-semibold">Abilities</h3>
+          <div className="space-y-1.5 text-center">
+            <h3 className="text-base font-semibold">Abilities</h3>
             <div className="flex flex-wrap gap-2 sm:gap-3 justify-center">
               {loading || !abilities || abilities.length === 0 ? (
                 // Show skeleton abilities when loading
@@ -1645,34 +1663,14 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
           </div>
         )}
 
-        {/* Mobile Navigation Buttons */}
-        <div className="flex lg:hidden items-center justify-center gap-4 mt-4">
-          <button
-            onClick={goToPrevious}
-            disabled={pokemon.id <= 1}
-            className="group flex items-center justify-center w-12 h-12 rounded-full border border-border bg-surface hover:bg-surface/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-105 disabled:hover:scale-100"
-            title={`Previous Pokémon (#${String(pokemon.id - 1).padStart(4, "0")})`}
-          >
-            <ChevronLeft className="h-6 w-6 text-muted group-hover:text-text transition-colors" />
-          </button>
-          <button
-            onClick={goToNext}
-            disabled={pokemon.id >= 1025}
-            className="group flex items-center justify-center w-12 h-12 rounded-full border border-border bg-surface hover:bg-surface/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-105 disabled:hover:scale-100"
-            title={`Next Pokémon (#${String(pokemon.id + 1).padStart(4, "0")})`}
-          >
-            <ChevronRight className="h-6 w-6 text-muted group-hover:text-text transition-colors" />
-          </button>
-        </div>
-
         {/* Description */}
         {(loading || flavorText) && (
-          <div className="space-y-2 text-center">
-            <h3 className="text-lg font-semibold">Description</h3>
+          <div className="space-y-1.5 text-center">
+            <h3 className="text-base font-semibold">Description</h3>
             {loading || !flavorText ? (
               <DescriptionSkeleton />
             ) : (
-              <p className="leading-7 text-muted">{flavorText}</p>
+              <p className="leading-6 text-sm text-muted">{flavorText}</p>
             )}
             {loading || genus ? (
               <div className="flex justify-center">
@@ -1694,9 +1692,9 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
 
 function Stat({label, value, icon}:{label:string; value:React.ReactNode; icon:string}) {
   return (
-    <div className="rounded-xl bg-white/50 dark:bg-zinc-800/50 p-3 text-center">
+    <div className="rounded-xl bg-white/50 dark:bg-zinc-800/50 p-2 text-center">
       <div className="text-xs text-muted">{icon} {label}</div>
-      <div className="mt-1 font-semibold">{value}</div>
+      <div className="mt-0.5 font-semibold text-sm">{value}</div>
     </div>
   );
 }
