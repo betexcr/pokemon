@@ -180,6 +180,55 @@ export class BrowserCache {
     }
   }
 
+  async getAllKeys(): Promise<string[]> {
+    if (typeof window === 'undefined') return []
+    try {
+      if (this.useIndexedDB) {
+        return await new Promise<string[]>((resolve, reject) => {
+          const request = indexedDB.open(this.dbName, this.dbVersion)
+          request.onerror = () => reject(request.error)
+          request.onupgradeneeded = (event) => {
+            const db = (event.target as IDBOpenDBRequest).result
+            if (!db.objectStoreNames.contains(this.storeName)) {
+              db.createObjectStore(this.storeName)
+            }
+          }
+          request.onsuccess = () => {
+            const db = request.result
+            if (!db.objectStoreNames.contains(this.storeName)) {
+              resolve([])
+              return
+            }
+            const tx = db.transaction([this.storeName], 'readonly')
+            const store = tx.objectStore(this.storeName)
+            const req = store.getAllKeys()
+            req.onerror = () => reject(req.error)
+            req.onsuccess = () => resolve(req.result as string[])
+          }
+        })
+      } else {
+        const keys: string[] = []
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i)
+          if (k && k.startsWith('pokemon:')) keys.push(k)
+        }
+        return keys
+      }
+    } catch (error) {
+      console.error('Browser cache getAllKeys error:', error)
+      return []
+    }
+  }
+
+  async getCacheStats(): Promise<{ totalKeys: number; pokemonDetailKeys: number; estimatedSizeMB: number }> {
+    const allKeys = await this.getAllKeys()
+    const pokemonDetailKeys = allKeys.filter(k => k.includes('"pokemon"') || k.includes('pokemon-detail')).length
+    const estimatedSizeMB = this.useIndexedDB
+      ? pokemonDetailKeys * 0.015
+      : this.getCacheSize() / (1024 * 1024)
+    return { totalKeys: allKeys.length, pokemonDetailKeys, estimatedSizeMB: Math.round(estimatedSizeMB * 100) / 100 }
+  }
+
   // Health check
   async ping(): Promise<boolean> {
     if (typeof window === 'undefined') return false

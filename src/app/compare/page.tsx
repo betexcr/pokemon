@@ -13,6 +13,7 @@ import MultiPokemonRadarChart from '@/components/MultiPokemonRadarChart'
 import PokeballReleaseAnimation from '@/components/PokeballReleaseAnimation'
 import AppHeader from '@/components/AppHeader'
 import PokemonSelector from '@/components/PokemonSelector'
+import OfflineBanner from '@/components/OfflineBanner'
 
 // Static export for Next.js 15 compatibility
 export const dynamic = 'force-dynamic'
@@ -159,7 +160,7 @@ export default function ComparePage() {
 
   return (
     <div className="h-screen root-full w-screen bg-gradient-to-br from-slate-900 via-slate-950 to-[#0b1120] flex flex-col overflow-hidden">
-      {/* Pokéball Release Animation */}
+      <OfflineBanner cachedMessage="You're offline. Only previously viewed Pokemon are available for comparison." />
       {showReleaseAnimation && (
         <PokeballReleaseAnimation 
           pokemons={pokemons} 

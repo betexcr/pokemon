@@ -11,7 +11,7 @@ import TypeControls from '@/components/type/TypeControls';
 import TypeWheel from '@/components/type/TypeWheel';
 import TypeMatrix from '@/components/type/TypeMatrix';
 import Tooltip from '@/components/Tooltip';
-// Removed unused imports
+import OfflineBanner from '@/components/OfflineBanner';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useSmartBackNavigation, useReferrerStorage } from '@/hooks/useSmartBackNavigation';
 
@@ -47,6 +47,7 @@ export default function Page() {
     <>
       <AppHeader title="Type Matchup Explorer" backLink={backLink} backLabel={backLabel} showToolbar={true} />
       <main className="mx-auto max-w-7xl px-4 py-8 grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6">
+      <div className="lg:col-span-2"><OfflineBanner cachedMessage="You're offline. Type data may be limited to cached entries." /></div>
       <header className="lg:col-span-2">
         <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-fuchsia-500 to-rose-500 dark:from-blue-400 dark:via-fuchsia-400 dark:to-rose-400">Type Matchup Explorer ⚔️</h1>
         <p className="text-sm text-gray-600 dark:text-gray-300">Visualize strengths, weaknesses, and immunities. Wheel is interactive; matrix works without JS.</p>

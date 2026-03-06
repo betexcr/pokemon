@@ -9,6 +9,7 @@ import { getTrainerSpriteUrl } from "@/lib/trainerSprites";
 import AppHeader from "@/components/AppHeader";
 import TrainerRoster from "@/components/battle/TrainerRoster";
 import TeamSelector from "@/components/TeamSelector";
+import OfflineBanner from "@/components/OfflineBanner";
 
 // Saved teams storage key reused from team builder
 // const STORAGE_KEY = "pokemon-team-builder";
@@ -205,6 +206,7 @@ function BattlePage() {
 
   return (
     <div className="fixed inset-0 bg-bg text-text flex flex-col overflow-hidden">
+      <OfflineBanner cachedMessage="You're offline. AI battles work offline with cached Pokemon data." />
       <AppHeader
         title="AI Battle"
         backLink="/"

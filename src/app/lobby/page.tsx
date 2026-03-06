@@ -10,6 +10,7 @@ import { roomService, type RoomData } from '@/lib/roomService';
 import { getUserTeams, type SavedTeam } from '@/lib/userTeams';
 import LinkWithTransition from '@/components/LinkWithTransition';
 import { useLobbyTransition } from '@/hooks/useLobbyTransition';
+import OfflineBanner from '@/components/OfflineBanner';
 
 function LobbyPage() {
   const { user } = useAuth();
@@ -148,6 +149,7 @@ function LobbyPage() {
 
   return (
     <div className="fixed inset-0 flex flex-col bg-bg text-text overflow-hidden">
+      <OfflineBanner requiresNetwork blockedMessage="Multiplayer lobby requires an internet connection. Try AI battles instead!" />
       <AppHeader
         title="Battle Lobby"
         backLink="/"

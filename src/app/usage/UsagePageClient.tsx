@@ -1,6 +1,7 @@
 'use client'
 
 import AppHeader from '@/components/AppHeader'
+import OfflineBanner from '@/components/OfflineBanner'
 import { useSmartBackNavigation, useReferrerStorage } from '@/hooks/useSmartBackNavigation'
 
 interface UsagePageClientProps {
@@ -26,6 +27,9 @@ export default function UsagePageClient({ title, children }: UsagePageClientProp
         backLabel={backLabel} 
         showToolbar={true} 
       />
+      <div className="mx-auto max-w-7xl px-4 pt-2">
+        <OfflineBanner requiresNetwork blockedMessage="Usage stats require an internet connection. Data from Smogon and other sources is not available offline." />
+      </div>
       {children}
     </>
   )

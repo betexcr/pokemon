@@ -97,7 +97,7 @@ async function hydrateTeam(team: any[]): Promise<BattlePokemon[]> {
         const level = typeof p.level === 'number' ? p.level : 50;
         const calculatedMaxHp = Math.floor(((2 * baseHp + 31) * level) / 100) + level + 10;
         const maxHp = typeof p.maxHp === 'number' && p.maxHp > 0 ? p.maxHp : calculatedMaxHp;
-        const currentHp = typeof p.currentHp === 'number' ? p.currentHp : maxHp;
+        const currentHp = typeof p.currentHp === 'number' && p.currentHp > 0 ? p.currentHp : maxHp;
 
         return {
             pokemon,

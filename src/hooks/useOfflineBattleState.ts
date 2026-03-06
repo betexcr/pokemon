@@ -135,7 +135,7 @@ async function hydrateSlot(raw: any): Promise<BattlePokemon> {
   const level = typeof raw.level === 'number' ? raw.level : 50;
   const calculatedMaxHp = Math.floor(((2 * baseHp + 31) * level) / 100) + level + 10;
   const maxHp = typeof raw.maxHp === 'number' && raw.maxHp > 0 ? raw.maxHp : calculatedMaxHp;
-  const currentHp = typeof raw.currentHp === 'number' ? raw.currentHp : maxHp;
+  const currentHp = typeof raw.currentHp === 'number' && raw.currentHp > 0 ? raw.currentHp : maxHp;
 
   return {
     pokemon: pokemon as any,

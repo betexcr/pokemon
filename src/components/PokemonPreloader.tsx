@@ -9,27 +9,20 @@ import { sharedPokemonCache } from '@/lib/sharedPokemonCache'
  */
 export default function PokemonPreloader() {
   useEffect(() => {
-    // Only run on client side and if not already preloading
     if (typeof window === 'undefined') return
 
-    // DISABLED: Preload popular Pokemon to prevent unnecessary API calls
-    // const preloadPopularPokemon = async () => {
-    //   try {
-    //     console.log('Starting Pokemon preloading...')
-        
-    //     // Preload Gen 1 Pokemon (most popular)
-    //     await sharedPokemonCache.preloadPopularPokemon()
-        
-    //     console.log('Pokemon preloading completed')
-    //   } catch (error) {
-    //     console.warn('Pokemon preloading failed:', error)
-    //   }
-    // }
+    const preloadEssentials = async () => {
+      try {
+        const { preloadTypeData, buildSearchIndex } = await import('@/lib/offlinePrefetch')
+        await preloadTypeData()
+        await buildSearchIndex()
+      } catch {
+        // non-critical
+      }
+    }
 
-    // DISABLED: Start preloading after a short delay to not block initial render
-    // const timeoutId = setTimeout(preloadPopularPokemon, 2000)
-
-    // return () => clearTimeout(timeoutId)
+    const timeoutId = setTimeout(preloadEssentials, 3000)
+    return () => clearTimeout(timeoutId)
   }, [])
 
   // This component doesn't render anything

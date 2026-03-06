@@ -8,6 +8,7 @@ import ShareModal from "@/components/checklist/ShareModal";
 import { ChecklistProvider } from "@/components/checklist/ChecklistProvider";
 import { DexDataProvider } from "@/lib/checklist/dex.client";
 import AppHeader from "@/components/AppHeader";
+import OfflineBanner from "@/components/OfflineBanner";
 
 export const metadata = {
   title: "Pokédex Checklist",
@@ -18,6 +19,7 @@ export default function ChecklistPage() {
     <>
       <AppHeader title="Pokédex Checklist" backLink="/" backLabel="Back to PokéDex" showToolbar={true} />
       <div className="container mx-auto px-4 py-6">
+        <OfflineBanner cachedMessage="You're offline. Checklist changes will sync when you reconnect." />
         <ChecklistProvider>
           <DexDataProvider>
             <div className="flex items-center justify-between mb-4">

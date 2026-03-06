@@ -31,6 +31,19 @@ const STATIC_ASSETS = [
   '/pokeball-pattern-dark.svg'
 ]
 
+// App routes to cache on first visit for offline navigation
+const APP_ROUTES = [
+  '/battle',
+  '/checklist',
+  '/compare',
+  '/type-matchups',
+  '/evolutions',
+  '/team',
+  '/team-builder',
+  '/top50',
+  '/trends',
+]
+
 // Pokemon image patterns
 const POKEMON_IMAGE_PATTERNS = [
   'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/',
@@ -67,7 +80,13 @@ self.addEventListener('install', (event) => {
         return cache.addAll(STATIC_ASSETS)
       })
       .then(() => {
-        console.log('Static assets cached successfully')
+        console.log('Static assets cached, precaching app routes...')
+        return caches.open(DYNAMIC_CACHE).then(cache =>
+          Promise.allSettled(APP_ROUTES.map(route => cache.add(route)))
+        )
+      })
+      .then(() => {
+        console.log('App routes precached successfully')
         return self.skipWaiting()
       })
       .catch((error) => {
@@ -114,8 +133,14 @@ self.addEventListener('fetch', (event) => {
     return
   }
   
+  // _next/static chunks are immutable build artifacts -- cache-first
+  if (url.pathname.startsWith('/_next/static/')) {
+    event.respondWith(cacheFirst(request, STATIC_CACHE))
+    return
+  }
+
   // Handle RSC payload requests specifically
-  if (url.pathname.endsWith('/index.txt') || url.pathname.includes('_next/static')) {
+  if (url.pathname.endsWith('/index.txt')) {
     event.respondWith(handleRSCRequest(request))
     return
   }
@@ -127,6 +152,8 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(enhancedImageCache(request, IMAGE_CACHE, 7 * 24 * 60 * 60 * 1000)) // 7 days
   } else if (isAPIRequest(request)) {
     event.respondWith(staleWhileRevalidate(request, DYNAMIC_CACHE))
+  } else if (isAppRoute(request)) {
+    event.respondWith(networkFirstAndCache(request, DYNAMIC_CACHE))
   } else {
     event.respondWith(networkFirst(request, DYNAMIC_CACHE))
   }
@@ -434,6 +461,35 @@ async function networkFirst(request, cacheName) {
   }
 }
 
+// Network-first with aggressive caching for app routes (offline navigation)
+async function networkFirstAndCache(request, cacheName) {
+  try {
+    const networkResponse = await fetch(request)
+    if (networkResponse.ok) {
+      const cache = await caches.open(cacheName)
+      const responseToCache = networkResponse.clone()
+      const newHeaders = new Headers(responseToCache.headers)
+      newHeaders.set('sw-cache-date', Date.now().toString())
+      const newResponse = new Response(responseToCache.body, {
+        status: responseToCache.status,
+        statusText: responseToCache.statusText,
+        headers: newHeaders
+      })
+      await cache.put(request, newResponse)
+    }
+    return networkResponse
+  } catch (error) {
+    const cache = await caches.open(cacheName)
+    const cachedResponse = await cache.match(request)
+    if (cachedResponse) return cachedResponse
+
+    const rootCached = await cache.match('/')
+    if (rootCached) return rootCached
+
+    return new Response('Page unavailable offline', { status: 503, headers: { 'Content-Type': 'text/plain' } })
+  }
+}
+
 // Stale While Revalidate Strategy - for Pokemon data
 async function staleWhileRevalidate(request, cacheName) {
   const cache = await caches.open(cacheName)
@@ -522,6 +578,13 @@ function isPokemonImage(request) {
          url.pathname.includes('/header-icons/')
 }
 
+function isAppRoute(request) {
+  const url = new URL(request.url)
+  const accept = request.headers.get('accept') || ''
+  if (!accept.includes('text/html')) return false
+  return APP_ROUTES.some(route => url.pathname === route || url.pathname.startsWith(route + '/'))
+}
+
 function isAPIRequest(request) {
   const url = new URL(request.url)
   return API_PATTERNS.some(pattern => url.href.startsWith(pattern))
@@ -532,15 +595,32 @@ self.addEventListener('sync', (event) => {
   if (event.tag === 'pokemon-data-sync') {
     event.waitUntil(syncPokemonData())
   }
+  if (event.tag === 'pokemon-pending-writes') {
+    event.waitUntil(notifyClientsToSync())
+  }
 })
 
 async function syncPokemonData() {
   try {
-    // Sync any pending Pokemon data updates
     console.log('Syncing Pokemon data in background...')
-    // Implementation would depend on specific sync requirements
+    const cache = await caches.open(DYNAMIC_CACHE)
+    for (const route of APP_ROUTES) {
+      try {
+        const response = await fetch(route)
+        if (response.ok) await cache.put(route, response)
+      } catch (e) {
+        console.warn('Route sync failed:', route, e)
+      }
+    }
   } catch (error) {
     console.error('Background sync failed:', error)
+  }
+}
+
+async function notifyClientsToSync() {
+  const clients = await self.clients.matchAll({ type: 'window' })
+  for (const client of clients) {
+    client.postMessage({ type: 'SYNC_PENDING_WRITES' })
   }
 }
 

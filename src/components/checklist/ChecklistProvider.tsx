@@ -4,6 +4,7 @@ import type { ProgressState } from "@/lib/checklist/types";
 import { hydrateState, toggleCaught as toggleCaughtHelper } from "@/lib/checklist/state";
 import { saveLocal, loadLocal, nowState, loadStreak, saveStreak, todayKey } from "@/lib/checklist/storage.local";
 import { saveCloud } from "@/lib/checklist/storage.firebase";
+import { enqueueSync, setupSyncListener, processSyncQueue } from "@/lib/syncQueue";
 
 type Ctx = {
   state: ProgressState;
@@ -34,15 +35,30 @@ export function ChecklistProvider({ children }: { children: React.ReactNode }) {
     };
   }, [uid]);
 
-  // Persist local immediately and debounce cloud writes while signed in
+  // Persist local immediately and debounce cloud writes while signed in.
+  // On cloud-write failure (e.g. offline), queue for retry.
   useEffect(() => {
     saveLocal(state);
     if (!uid) return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      saveCloud(uid, state).catch(() => {});
+      saveCloud(uid, state).catch(() => {
+        enqueueSync({ type: 'checklist', payload: { uid, state } });
+      });
     }, 1000);
   }, [state, uid]);
+
+  // Process queued cloud writes when back online
+  useEffect(() => {
+    if (!uid) return;
+    const handlers: Record<string, (p: any) => Promise<void>> = {
+      checklist: async (p: { uid: string; state: ProgressState }) => {
+        await saveCloud(p.uid, p.state);
+      },
+    };
+    processSyncQueue(handlers);
+    return setupSyncListener(handlers);
+  }, [uid]);
 
   // Track simple daily streak in localStorage
   const updateStreak = useCallback(() => {

@@ -14,6 +14,7 @@ import PWAInstaller from '@/components/PWAInstaller'
 import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration'
 import OfflineIndicator from '@/components/OfflineIndicator'
 import PokemonPreloader from '@/components/PokemonPreloader'
+import OfflineDownloadPanel from '@/components/OfflineDownloadPanel'
 
 
 const SITE_URL = 'https://pokemon-indol-tau.vercel.app'
@@ -212,6 +213,7 @@ export default function RootLayout({
                     <HelpAssistant />
                     <ErrorTip />
                     <PWAInstaller />
+                    <OfflineDownloadPanel />
                     <ServiceWorkerRegistration />
                     <PokemonPreloader />
                   </div>

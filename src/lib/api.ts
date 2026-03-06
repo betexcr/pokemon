@@ -8,6 +8,23 @@ import { browserCache, getCacheKey, CACHE_TTL } from '@/lib/memcached'
 import { normalizePokemonId } from '@/lib/utils'
 import { analyticsManager } from '@/lib/requestAnalytics'
 
+function isClientOffline(): boolean {
+  if (typeof window === 'undefined') return false
+  try {
+    const { offlineManager } = require('@/lib/offlineManager')
+    return !offlineManager.getNetworkState().isOnline
+  } catch {
+    return !navigator.onLine
+  }
+}
+
+export class OfflineError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'OfflineError'
+  }
+}
+
 // Fallback in-memory cache for when browser cache is unavailable
 const fallbackCache = new Map<string, { data: any; timestamp: number; ttl: number }>()
 
@@ -30,11 +47,13 @@ async function getCache(key: string): Promise<any> {
     console.warn('Browser cache unavailable, falling back to memory cache:', error)
   }
 
-  // Check negative cache first (failed requests)
-  const negativeCached = negativeCache.get(key)
-  if (negativeCached && Date.now() - negativeCached.timestamp < negativeCached.ttl) {
-    console.log('🚫 Negative cache hit - skipping failed request:', key)
-    throw new Error(`Request failed (cached): ${negativeCached.error}`)
+  // Check negative cache (skip when offline -- entries may be from transient network issues)
+  if (!isClientOffline()) {
+    const negativeCached = negativeCache.get(key)
+    if (negativeCached && Date.now() - negativeCached.timestamp < negativeCached.ttl) {
+      console.log('🚫 Negative cache hit - skipping failed request:', key)
+      throw new Error(`Request failed (cached): ${negativeCached.error}`)
+    }
   }
 
   // Fallback to in-memory cache
@@ -164,6 +183,11 @@ async function fetchFromAPI<T>(url: string, signal?: AbortSignal): Promise<T> {
   analyticsManager.recordStart(requestId, absoluteUrl, 'api', 'normal');
 
   try {
+    if (isClientOffline()) {
+      analyticsManager.recordComplete(requestId, 'failed', 'offline');
+      throw new OfflineError(`Cannot fetch ${absoluteUrl} while offline`)
+    }
+
     // Check circuit breaker before making request
     if (circuitBreaker.isOpen()) {
       throw new Error('Service temporarily unavailable - too many recent failures. Please try again in a moment.')
@@ -328,9 +352,11 @@ async function performFetchWithRetry<T>(
         }
       }
 
-      // Cache network errors to prevent repeated attempts
-      const errorMessage = error instanceof Error ? error.message : 'Network error'
-      setNegativeCache(absoluteUrl, errorMessage, 300)
+      // Don't poison the negative cache when we're just offline
+      if (!isClientOffline()) {
+        const errorMessage = error instanceof Error ? error.message : 'Network error'
+        setNegativeCache(absoluteUrl, errorMessage, 300)
+      }
 
       throw error
     }
@@ -900,6 +926,31 @@ export async function getMovesBatched(
   return results
 }
 
+async function searchFromLocalIndex(query: string): Promise<Pokemon[]> {
+  try {
+    const { getSearchIndex } = await import('@/lib/offlinePrefetch')
+    const index = await getSearchIndex()
+    if (!index) return []
+
+    const matches = index
+      .filter(entry => entry.name.includes(query) || String(entry.id) === query)
+      .slice(0, 15)
+
+    const results: Pokemon[] = []
+    for (const match of matches) {
+      try {
+        const pokemon = await getPokemon(match.id)
+        results.push(pokemon)
+      } catch {
+        // skip Pokemon not in cache
+      }
+    }
+    return results
+  } catch {
+    return []
+  }
+}
+
 // Search functions
 export async function searchPokemonByName(query: string, signal?: AbortSignal): Promise<Pokemon[]> {
   const cacheKey = getCacheKey('search-pokemon', { query })
@@ -911,6 +962,11 @@ export async function searchPokemonByName(query: string, signal?: AbortSignal): 
 
     // Early return for empty queries
     if (!trimmedQuery) return []
+
+    // When offline, use the local search index instead of hitting the network
+    if (isClientOffline()) {
+      return await searchFromLocalIndex(trimmedQuery)
+    }
 
     // Check for exact ID match in the valid main Pokédex range - prioritize exact matches
     if (/^\d+$/.test(trimmedQuery)) {

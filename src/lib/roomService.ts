@@ -1200,7 +1200,7 @@ class RoomService {
         } else {
           maxHp = Math.floor(((2 * 50 + 31) * level) / 100) + level + 10;
         }
-        const currentHp = typeof slot.currentHp === 'number' ? slot.currentHp : maxHp;
+        const currentHp = typeof slot.currentHp === 'number' && slot.currentHp > 0 ? slot.currentHp : maxHp;
 
         return {
           pokemon: { id, name: resolvedName, types, stats, weight: weight ?? 500, abilities },
