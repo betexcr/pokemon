@@ -852,17 +852,52 @@ export async function getPokemonMoves(id: number | string): Promise<Array<{ name
 }
 
 // Move functions
+const moveMemoryCache = new Map<string, any>()
+
 export async function getMove(id: number | string): Promise<any> {
-  // For moves, we can accept both numeric IDs and string names
+  const memKey = String(id).toLowerCase()
+  const memHit = moveMemoryCache.get(memKey)
+  if (memHit) return memHit
+
   const cacheKey = getCacheKey('move', { id })
   const cached = await getCache(cacheKey)
-  if (cached) return cached
+  if (cached) {
+    moveMemoryCache.set(memKey, cached)
+    return cached
+  }
 
-  // Use the ID as-is (could be numeric ID or move name)
   const url = `${API_BASE_URL}/move/${id}/`
   const data = await fetchFromAPI(url)
+  moveMemoryCache.set(memKey, data)
   await setCache(cacheKey, data, CACHE_TTL.MOVE)
   return data
+}
+
+/**
+ * Fetch multiple moves with concurrency control.
+ * Fires batches of `concurrency` requests; calls onBatch after each batch so the
+ * UI can stream partial results.
+ */
+export async function getMovesBatched(
+  names: string[],
+  opts?: { concurrency?: number; onBatch?: (moves: any[], startIdx: number) => void }
+): Promise<any[]> {
+  const batchSize = opts?.concurrency ?? 12
+  const results: any[] = new Array(names.length)
+
+  for (let start = 0; start < names.length; start += batchSize) {
+    const end = Math.min(start + batchSize, names.length)
+    const batch = names.slice(start, end)
+    const batchResults = await Promise.all(
+      batch.map(name => getMove(name).catch(() => null))
+    )
+    for (let i = 0; i < batchResults.length; i++) {
+      results[start + i] = batchResults[i]
+    }
+    opts?.onBatch?.(batchResults, start)
+  }
+
+  return results
 }
 
 // Search functions

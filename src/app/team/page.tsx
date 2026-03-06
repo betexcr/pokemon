@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Pokemon } from '@/types/pokemon'
-import { getPokemonList, getPokemon, getMove } from '@/lib/api'
+import { getPokemonList, getPokemon, getMove, getMovesBatched } from '@/lib/api'
 import { formatPokemonName, getShowdownAnimatedSprite } from '@/lib/utils'
 import Image from 'next/image'
 import TypeBadge from '@/components/TypeBadge'
@@ -86,6 +86,7 @@ export default function TeamBuilderPage() {
   // Force re-analysis when Pokemon data is loaded
   const [analysisTrigger, setAnalysisTrigger] = useState(0)
   const [availableMoves, setAvailableMoves] = useState<Record<number, Array<{ name: string; type: string; damage_class: "physical" | "special" | "status"; power: number | null; accuracy: number | null; pp: number | null; level_learned_at: number | null; learn_method: string; short_effect?: string | null }>>>({})
+  const [loadingMovesSlots, setLoadingMovesSlots] = useState<Set<number>>(new Set())
   const [teamSlots, setTeamSlots] = useState<TeamSlot[]>(() => normalizeTeamSlots())
   const [lastSelectedPokemon, setLastSelectedPokemon] = useState<number | null>(null)
   const [savedTeams, setSavedTeams] = useState<FirebaseSavedTeam[]>([])
@@ -695,12 +696,20 @@ export default function TeamBuilderPage() {
     if (updatedSlot?.id && updatedSlot.level) {
       const selectedId = updatedSlot.id
       const selectedLevel = updatedSlot.level
+      setLoadingMovesSlots(prev => new Set(prev).add(idx))
       void getAvailableMoves(selectedId, selectedLevel)
         .then(moves => {
           setAvailableMoves(prev => ({ ...prev, [idx]: moves }))
         })
         .catch(error => {
           console.error('Failed to load available moves:', error)
+        })
+        .finally(() => {
+          setLoadingMovesSlots(prev => {
+            const next = new Set(prev)
+            next.delete(idx)
+            return next
+          })
         })
     }
     
@@ -917,151 +926,75 @@ export default function TeamBuilderPage() {
     }
   }
 
-  // Get available moves for a Pokémon at a specific level
-  const getAvailableMoves = useCallback(async (pokemonId: number, level: number): Promise<Array<{ name: string; type: string; damage_class: "physical" | "special" | "status"; power: number | null; accuracy: number | null; pp: number | null; level_learned_at: number | null; learn_method: string; short_effect?: string | null }>> => {
+  type AvailableMove = { name: string; type: string; damage_class: "physical" | "special" | "status"; power: number | null; accuracy: number | null; pp: number | null; level_learned_at: number | null; learn_method: string; short_effect?: string | null }
+
+  const parseMoveList = useCallback((moves: Pokemon['moves']) => {
+    return moves
+      .filter(move => move.version_group_details.some(detail =>
+        ['level-up', 'machine', 'egg', 'tutor'].includes(detail.move_learn_method.name)
+      ))
+      .map(move => {
+        const levelUpDetail = move.version_group_details.find(detail => detail.move_learn_method.name === 'level-up');
+        const machineDetail = move.version_group_details.find(detail => detail.move_learn_method.name === 'machine');
+        const eggDetail = move.version_group_details.find(detail => detail.move_learn_method.name === 'egg');
+        const tutorDetail = move.version_group_details.find(detail => detail.move_learn_method.name === 'tutor');
+        return {
+          moveName: move.move.name,
+          level_learned_at: levelUpDetail?.level_learned_at || null,
+          learn_method: levelUpDetail ? 'level-up' :
+                       machineDetail ? 'machine' :
+                       eggDetail ? 'egg' :
+                       tutorDetail ? 'tutor' : 'unknown'
+        };
+      })
+      .filter((move, index, self) =>
+        index === self.findIndex(m => m.moveName === move.moveName)
+      );
+  }, [])
+
+  const getAvailableMoves = useCallback(async (
+    pokemonId: number,
+    level: number,
+  ): Promise<AvailableMove[]> => {
     try {
-      const pokemon = allPokemon.find(p => p.id === pokemonId)
+      let pokemon = allPokemon.find(p => p.id === pokemonId)
       if (!pokemon || pokemon.moves.length === 0) {
-        // Fetch full Pokémon data if we don't have moves
-        const fullPokemon = await getPokemon(pokemonId)
-        const allMoves = fullPokemon.moves
-          .filter(move => move.version_group_details.some(detail => 
-            ['level-up', 'machine', 'egg', 'tutor'].includes(detail.move_learn_method.name)
-          ))
-          .map(move => {
-            // Prioritize level-up moves, then machine, egg, tutor
-            const levelUpDetail = move.version_group_details.find(detail => detail.move_learn_method.name === 'level-up');
-            const machineDetail = move.version_group_details.find(detail => detail.move_learn_method.name === 'machine');
-            const eggDetail = move.version_group_details.find(detail => detail.move_learn_method.name === 'egg');
-            const tutorDetail = move.version_group_details.find(detail => detail.move_learn_method.name === 'tutor');
-            
-            return {
-              moveName: move.move.name,
-              level_learned_at: levelUpDetail?.level_learned_at || null,
-              learn_method: levelUpDetail ? 'level-up' : 
-                           machineDetail ? 'machine' : 
-                           eggDetail ? 'egg' : 
-                           tutorDetail ? 'tutor' : 'unknown'
-            };
-          })
-          .filter((move, index, self) => 
-            index === self.findIndex(m => m.moveName === move.moveName)
-          );
-
-        // Fetch full move details for each move
-        const movePromises = allMoves.map(async ({ moveName, level_learned_at, learn_method }) => {
-          try {
-            const moveData = await getMove(moveName);
-            const englishEffect = (moveData.effect_entries || []).find((e: { language: { name: string }; short_effect?: string; effect?: string }) => e.language?.name === 'en');
-            return {
-              name: moveData.name,
-              type: moveData.type.name,
-              damage_class: moveData.damage_class.name as "physical" | "special" | "status",
-              power: moveData.power,
-              accuracy: moveData.accuracy,
-              pp: moveData.pp,
-              level_learned_at,
-              learn_method,
-              short_effect: englishEffect?.short_effect || englishEffect?.effect || null
-            };
-          } catch (error) {
-            console.error(`Failed to fetch move ${moveName}:`, error);
-            return {
-              name: moveName,
-              type: 'normal',
-              damage_class: 'physical' as const,
-              power: null,
-              accuracy: null,
-              pp: null,
-              level_learned_at,
-              learn_method
-            };
-          }
-        });
-
-        const moveResults = await Promise.all(movePromises);
-        return moveResults
-          .filter(move => {
-            // For level-up moves, only include if level_learned_at <= level
-            if (move.learn_method === 'level-up') {
-              return move.level_learned_at && move.level_learned_at <= level
-            }
-            // For other move types (machine, egg, tutor), include them all
-            return true
-          })
+        pokemon = await getPokemon(pokemonId) as Pokemon
       }
 
-      // If we have basic move data, fetch full details
-      const allMoves = pokemon.moves
-        .filter(move => move.version_group_details.some(detail => 
-          ['level-up', 'machine', 'egg', 'tutor'].includes(detail.move_learn_method.name)
-        ))
-        .map(move => {
-          // Prioritize level-up moves, then machine, egg, tutor
-          const levelUpDetail = move.version_group_details.find(detail => detail.move_learn_method.name === 'level-up');
-          const machineDetail = move.version_group_details.find(detail => detail.move_learn_method.name === 'machine');
-          const eggDetail = move.version_group_details.find(detail => detail.move_learn_method.name === 'egg');
-          const tutorDetail = move.version_group_details.find(detail => detail.move_learn_method.name === 'tutor');
-          
-          return {
-            moveName: move.move.name,
-            level_learned_at: levelUpDetail?.level_learned_at || null,
-            learn_method: levelUpDetail ? 'level-up' : 
-                         machineDetail ? 'machine' : 
-                         eggDetail ? 'egg' : 
-                         tutorDetail ? 'tutor' : 'unknown'
-          };
-        })
-        .filter((move, index, self) => 
-          index === self.findIndex(m => m.moveName === move.moveName)
-        );
+      const allMoves = parseMoveList(pokemon.moves)
+      const moveNames = allMoves.map(m => m.moveName)
 
-      // Fetch full move details for each move
-      const movePromises = allMoves.map(async ({ moveName, level_learned_at, learn_method }) => {
-        try {
-          const moveData = await getMove(moveName);
-          const englishEffect = (moveData.effect_entries || []).find((e: { language: { name: string }; short_effect?: string; effect?: string }) => e.language?.name === 'en');
-          return {
-            name: moveData.name,
-            type: moveData.type.name,
-            damage_class: moveData.damage_class.name as "physical" | "special" | "status",
-            power: moveData.power,
-            accuracy: moveData.accuracy,
-            pp: moveData.pp,
-            level_learned_at,
-            learn_method,
-            short_effect: englishEffect?.short_effect || englishEffect?.effect || null
-          };
-        } catch (error) {
-          console.error(`Failed to fetch move ${moveName}:`, error);
-          return {
-            name: moveName,
-            type: 'normal',
-            damage_class: 'physical' as const,
-            power: null,
-            accuracy: null,
-            pp: null,
-            level_learned_at,
-            learn_method
-          };
+      const moveDataArr = await getMovesBatched(moveNames, { concurrency: 12 })
+
+      return allMoves.map(({ moveName, level_learned_at, learn_method }, i) => {
+        const moveData = moveDataArr[i]
+        if (!moveData) {
+          return { name: moveName, type: 'normal', damage_class: 'physical' as const, power: null, accuracy: null, pp: null, level_learned_at, learn_method }
         }
-      });
-
-      const moveResults = await Promise.all(movePromises);
-      return moveResults
-        .filter(move => {
-          // For level-up moves, only include if level_learned_at <= level
-          if (move.learn_method === 'level-up') {
-            return move.level_learned_at && move.level_learned_at <= level
-          }
-          // For other move types (machine, egg, tutor), include them all
-          return true
-        })
+        const englishEffect = (moveData.effect_entries || []).find((e: any) => e.language?.name === 'en')
+        return {
+          name: moveData.name,
+          type: moveData.type.name,
+          damage_class: moveData.damage_class.name as "physical" | "special" | "status",
+          power: moveData.power,
+          accuracy: moveData.accuracy,
+          pp: moveData.pp,
+          level_learned_at,
+          learn_method,
+          short_effect: englishEffect?.short_effect || englishEffect?.effect || null
+        }
+      }).filter(move => {
+        if (move.learn_method === 'level-up') {
+          return move.level_learned_at && move.level_learned_at <= level
+        }
+        return true
+      })
     } catch (error) {
       console.error('Error getting available moves:', error)
       return []
     }
-  }, [allPokemon, levelMovesOnly])
+  }, [allPokemon, parseMoveList])
 
   // Ensure restored draft teams also have move pools hydrated
   useEffect(() => {
@@ -1077,6 +1010,12 @@ export default function TeamBuilderPage() {
 
     let cancelled = false
 
+    setLoadingMovesSlots(prev => {
+      const next = new Set(prev)
+      slotsToHydrate.forEach(({ idx }) => next.add(idx))
+      return next
+    })
+
     const hydrateMoves = async () => {
       const results = await Promise.all(
         slotsToHydrate.map(async ({ slot, idx }) => {
@@ -1085,7 +1024,7 @@ export default function TeamBuilderPage() {
             return { idx, moves }
           } catch (error) {
             console.error(`Failed to hydrate moves for slot ${idx}:`, error)
-            return { idx, moves: [] as Array<{ name: string; type: string; damage_class: "physical" | "special" | "status"; power: number | null; accuracy: number | null; pp: number | null; level_learned_at: number | null; learn_method: string; short_effect?: string | null }> }
+            return { idx, moves: [] as AvailableMove[] }
           }
         })
       )
@@ -1099,6 +1038,11 @@ export default function TeamBuilderPage() {
             next[idx] = moves
           }
         })
+        return next
+      })
+      setLoadingMovesSlots(prev => {
+        const next = new Set(prev)
+        slotsToHydrate.forEach(({ idx }) => next.delete(idx))
         return next
       })
     }
@@ -1678,6 +1622,13 @@ export default function TeamBuilderPage() {
                         </div>
                       )}
                       
+                      {/* Loading moves indicator */}
+                      {loadingMovesSlots.has(idx) && (!availableMoves[idx] || availableMoves[idx].length === 0) && (
+                        <div className="flex items-center gap-2 text-xs text-muted py-2">
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          Loading available moves…
+                        </div>
+                      )}
                       {/* Available Moves Table */}
                       {availableMoves[idx] && availableMoves[idx].length > 0 && slot.moves.length < 4 && (
                         <div className="space-y-2">

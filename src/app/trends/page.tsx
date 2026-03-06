@@ -4,11 +4,11 @@ import TrendsClient from './TrendsClient'
 export const metadata: Metadata = {
   title: 'Popularity Trends Explorer',
   description: 'Explore Pokémon popularity over time with animated lines and a bubble timeline, with accessible fallbacks.',
-  alternates: { canonical: 'https://pokemon.ultharcr.com/trends' },
+  alternates: { canonical: 'https://pokemon-indol-tau.vercel.app/trends' },
   openGraph: {
     title: 'Popularity Trends Explorer',
     description: 'Interactive popularity trends with motion-aware, accessible visualizations.',
-    url: 'https://pokemon.ultharcr.com/trends',
+    url: 'https://pokemon-indol-tau.vercel.app/trends',
     type: 'website'
   },
   twitter: {

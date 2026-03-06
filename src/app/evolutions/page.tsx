@@ -8,11 +8,11 @@ import EvoClient from './EvoClient';
 export const metadata: Metadata = {
   title: 'Evolution Journeys',
   description: 'Interactive visualization of Pokémon evolution families with filters and accessibility-first design.',
-  alternates: { canonical: 'https://pokemon.ultharcr.com/evolutions' },
+  alternates: { canonical: 'https://pokemon-indol-tau.vercel.app/evolutions' },
   openGraph: {
     title: 'Evolution Journeys',
     description: 'Explore Pokémon evolution families with interactive graphs and filters.',
-    url: 'https://pokemon.ultharcr.com/evolutions',
+    url: 'https://pokemon-indol-tau.vercel.app/evolutions',
     type: 'website',
   },
   twitter: {

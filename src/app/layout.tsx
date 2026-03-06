@@ -16,8 +16,10 @@ import OfflineIndicator from '@/components/OfflineIndicator'
 import PokemonPreloader from '@/components/PokemonPreloader'
 
 
+const SITE_URL = 'https://pokemon-indol-tau.vercel.app'
+
 export const metadata: Metadata = {
-  metadataBase: new URL('https://pokemon.ultharcr.com'),
+  metadataBase: new URL(SITE_URL),
   title: 'PokéDex - Modern Pokémon Database',
   description: 'Explore the world of Pokémon with our modern, high-performance PokéDex application. Search, discover, and learn about your favorite Pokémon with beautiful UI and real-time data from PokeAPI.',
   keywords: 'Pokémon, PokéDex, PokeAPI, gaming, database, search, discover',
@@ -32,16 +34,15 @@ export const metadata: Metadata = {
     description: 'Explore the world of Pokémon with our modern, high-performance PokéDex application. Search, discover, and learn about your favorite Pokémon with beautiful UI and real-time data from PokeAPI.',
     type: 'website',
     locale: 'en_US',
-    url: 'https://pokemon.ultharcr.com',
+    url: SITE_URL,
     siteName: 'PokéDex',
     images: [
       {
-        url: 'https://pokemon.ultharcr.com/pokedex.jpg',
-        width: 1200,
-        height: 630,
+        url: '/pokedex.jpg',
+        width: 1224,
+        height: 650,
         alt: 'PokéDex - Modern Pokémon Database',
         type: 'image/jpeg',
-        secureUrl: 'https://pokemon.ultharcr.com/pokedex.jpg',
       },
     ],
   },
@@ -49,16 +50,14 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'PokéDex - Modern Pokémon Database',
     description: 'Explore the world of Pokémon with our modern, high-performance PokéDex application. Search, discover, and learn about your favorite Pokémon with beautiful UI and real-time data from PokeAPI.',
-    images: ['https://pokemon.ultharcr.com/pokedex.jpg'],
-    creator: '@pokemondex',
-    site: '@pokemondex',
+    images: ['/pokedex.jpg'],
   },
   robots: {
     index: true,
     follow: true,
   },
   alternates: {
-    canonical: 'https://pokemon.ultharcr.com',
+    canonical: SITE_URL,
   },
 }
 
@@ -171,11 +170,9 @@ export default function RootLayout({
               '@context': 'https://schema.org',
               '@type': 'Organization',
               name: 'PokéDex',
-              url: 'https://pokemon.ultharcr.com',
-              logo: 'https://pokemon.ultharcr.com/pokedex.jpg',
-              sameAs: [
-                'https://twitter.com/pokemondex'
-              ]
+              url: SITE_URL,
+              logo: `${SITE_URL}/pokedex.jpg`,
+              sameAs: []
             })
           }}
         />
@@ -188,10 +185,10 @@ export default function RootLayout({
               '@context': 'https://schema.org',
               '@type': 'WebSite',
               name: 'PokéDex',
-              url: 'https://pokemon.ultharcr.com',
+              url: SITE_URL,
               potentialAction: {
                 '@type': 'SearchAction',
-                target: 'https://pokemon.ultharcr.com/?q={search_term_string}',
+                target: `${SITE_URL}/?q={search_term_string}`,
                 'query-input': 'required name=search_term_string'
               }
             })

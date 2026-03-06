@@ -2,7 +2,7 @@ User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://pokemon.ultharcr.com/sitemap.xml
+Sitemap: https://pokemon-indol-tau.vercel.app/sitemap.xml
 
 # Social Media Crawlers
 User-agent: facebookexternalhit

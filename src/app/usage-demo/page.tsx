@@ -4,11 +4,11 @@ export const metadata: Metadata = {
   title: 'Usage Meta Demo',
   description: 'Demo of the Usage Meta module - requires real data connection',
   robots: { index: false, follow: false },
-  alternates: { canonical: 'https://pokemon.ultharcr.com/usage-demo' },
+  alternates: { canonical: 'https://pokemon-indol-tau.vercel.app/usage-demo' },
   openGraph: {
     title: 'Usage Meta Demo',
     description: 'Demonstration of the usage module (disabled, real data only).',
-    url: 'https://pokemon.ultharcr.com/usage-demo',
+    url: 'https://pokemon-indol-tau.vercel.app/usage-demo',
     type: 'website'
   },
   twitter: {

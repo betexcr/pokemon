@@ -1,25 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://pokemon.ultharcr.com/</loc>
+    <loc>https://pokemon-indol-tau.vercel.app/</loc>
     <lastmod>2024-12-19</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://pokemon.ultharcr.com/battle</loc>
+    <loc>https://pokemon-indol-tau.vercel.app/battle</loc>
     <lastmod>2024-12-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pokemon.ultharcr.com/compare</loc>
+    <loc>https://pokemon-indol-tau.vercel.app/compare</loc>
     <lastmod>2024-12-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pokemon.ultharcr.com/team</loc>
+    <loc>https://pokemon-indol-tau.vercel.app/team</loc>
     <lastmod>2024-12-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>

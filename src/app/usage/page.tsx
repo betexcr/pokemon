@@ -9,11 +9,11 @@ import { UsageFilters } from '@/types/usage';
 export const metadata: Metadata = {
   title: 'Usage Meta Dashboard',
   description: 'Comprehensive competitive usage statistics across all major platforms and generations',
-  alternates: { canonical: 'https://pokemon.ultharcr.com/usage' },
+  alternates: { canonical: 'https://pokemon-indol-tau.vercel.app/usage' },
   openGraph: {
     title: 'Usage Meta Dashboard',
     description: 'Comprehensive competitive usage statistics across Smogon, VGC, and more.',
-    url: 'https://pokemon.ultharcr.com/usage',
+    url: 'https://pokemon-indol-tau.vercel.app/usage',
     type: 'website'
   },
   twitter: {
@@ -61,7 +61,7 @@ export default function UsagePage() {
             '@type': 'Dataset',
             name: 'Pokémon Competitive Usage Dataset',
             description: 'Aggregated competitive Pokémon usage statistics across Smogon, VGC, and other platforms by generation and format.',
-            url: 'https://pokemon.ultharcr.com/usage',
+            url: 'https://pokemon-indol-tau.vercel.app/usage',
             license: 'https://creativecommons.org/licenses/by/4.0/',
             creator: {
               '@type': 'Organization',

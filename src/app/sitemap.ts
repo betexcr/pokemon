@@ -3,7 +3,7 @@ import type { MetadataRoute } from 'next'
 export const dynamic = 'force-static'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://pokemon.ultharcr.com'
+  const baseUrl = 'https://pokemon-indol-tau.vercel.app'
   const lastModified = new Date()
 
   const routes = [
