@@ -798,10 +798,34 @@ test.describe('Multiplayer Battle', () => {
   let guestPage: Page;
 
   test.beforeEach(async ({ browser }) => {
-    hostCtx = await browser.newContext();
-    guestCtx = await browser.newContext();
+    // Create contexts with half-screen viewports so windows sit side by side
+    const halfWidth = 640;
+    const height = 720;
+
+    hostCtx = await browser.newContext({ viewport: { width: halfWidth, height } });
+    guestCtx = await browser.newContext({ viewport: { width: halfWidth, height } });
     hostPage = await hostCtx.newPage();
     guestPage = await guestCtx.newPage();
+
+    // Position windows side by side using CDP (Chromium only)
+    try {
+      const hostCdp = await hostPage.context().newCDPSession(hostPage);
+      const guestCdp = await guestPage.context().newCDPSession(guestPage);
+
+      const { windowId: hostWin } = await hostCdp.send('Browser.getWindowForTarget');
+      const { windowId: guestWin } = await guestCdp.send('Browser.getWindowForTarget');
+
+      await hostCdp.send('Browser.setWindowBounds', {
+        windowId: hostWin,
+        bounds: { left: 0, top: 0, width: halfWidth + 16, height: height + 100, windowState: 'normal' },
+      });
+      await guestCdp.send('Browser.setWindowBounds', {
+        windowId: guestWin,
+        bounds: { left: halfWidth + 16, top: 0, width: halfWidth + 16, height: height + 100, windowState: 'normal' },
+      });
+    } catch {
+      // Non-Chromium browsers don't support CDP — skip positioning
+    }
   });
 
   test.afterEach(async () => {
