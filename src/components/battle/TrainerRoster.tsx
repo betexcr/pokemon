@@ -55,16 +55,16 @@ function TrainerTooltip({ champion, anchorEl }: { champion: Champion; anchorEl: 
   return createPortal(
     <div
       ref={tipRef}
-      className={`fixed z-[2147483647] w-72 rounded-xl border border-border bg-popover p-4 text-sm text-popover-foreground shadow-xl transition-opacity duration-150 ${coords ? 'opacity-100' : 'opacity-0'}`}
+      className={`fixed z-[2147483647] w-72 rounded-xl border border-border bg-surface p-4 text-sm text-text shadow-xl backdrop-blur-sm transition-opacity duration-150 ${coords ? 'opacity-100' : 'opacity-0'}`}
       style={coords ? { top: coords.top, left: coords.left } : { top: -9999, left: -9999 }}
     >
       {champion.description && (
-        <p className="mb-3 text-xs leading-relaxed text-muted-foreground">
+        <p className="mb-3 text-xs leading-relaxed text-muted">
           {champion.description}
         </p>
       )}
       <div className="mb-2 flex items-center gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted">
           {champion.team.name}
         </span>
       </div>
@@ -72,7 +72,7 @@ function TrainerTooltip({ champion, anchorEl }: { champion: Champion; anchorEl: 
         {champion.team.slots.map((slot, i) => (
           <li key={i} className="flex items-center justify-between text-xs">
             <span className="font-medium text-text">{slot.name || `#${slot.id}`}</span>
-            <span className="text-muted-foreground">Lv. {slot.level}</span>
+            <span className="text-muted">Lv. {slot.level}</span>
           </li>
         ))}
       </ul>
