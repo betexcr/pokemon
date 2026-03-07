@@ -68,11 +68,22 @@ function TrainerTooltip({ champion, anchorEl }: { champion: Champion; anchorEl: 
           {champion.team.name}
         </span>
       </div>
-      <ul className="space-y-1">
+      <ul className="space-y-0.5">
         {champion.team.slots.map((slot, i) => (
           <li key={i} className="flex items-center justify-between text-xs">
-            <span className="font-medium text-text">{slot.name || `#${slot.id}`}</span>
-            <span className="text-muted">Lv. {slot.level}</span>
+            <span className="flex items-center gap-1.5 font-medium text-text">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${slot.id}.png`}
+                alt={slot.name || `#${slot.id}`}
+                width={24}
+                height={24}
+                className="pixelated -my-1"
+                style={{ imageRendering: 'pixelated' }}
+              />
+              {slot.name || `#${slot.id}`}
+            </span>
+            <span className="text-muted">Lv.&nbsp;{slot.level}</span>
           </li>
         ))}
       </ul>
