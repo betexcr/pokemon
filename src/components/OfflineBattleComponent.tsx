@@ -32,20 +32,20 @@ function GameTextBox({ battleLog, myActiveSpecies }: { battleLog?: any[]; myActi
   if (visible.length === 0 && !idle) return null;
 
   return (
-    <div className="mx-auto mt-2 w-full max-w-xl">
-      <div className="relative rounded-xl border-[3px] border-text/20 bg-surface/95 shadow-lg backdrop-blur">
+    <div className="relative z-20 mx-auto mt-4 w-full max-w-xl">
+      <div className="relative rounded-xl border-[3px] border-text/20 bg-surface shadow-lg">
         <div className="absolute inset-[3px] rounded-lg border border-text/10 pointer-events-none" />
         <div ref={logRef} className="relative px-5 py-3 min-h-[3.5rem] max-h-28 overflow-y-auto">
           {visible.length > 0 ? (
             <div className="space-y-1">
               {visible.map((msg, i) => (
-                <p key={`${messages.length}-${i}`} className={`text-sm leading-relaxed text-text ${i === visible.length - 1 ? 'animate-[typewriter_0.3s_ease-out]' : 'text-text/60'}`}>
+                <p key={`${messages.length}-${i}`} className={`text-sm leading-relaxed text-text ${i === visible.length - 1 ? 'font-medium animate-[typewriter_0.3s_ease-out]' : 'text-text/60'}`}>
                   {msg}
                 </p>
               ))}
             </div>
           ) : idle ? (
-            <p className="text-sm leading-relaxed text-text">{idle}</p>
+            <p className="text-sm leading-relaxed text-text font-medium">{idle}</p>
           ) : null}
         </div>
       </div>

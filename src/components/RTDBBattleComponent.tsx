@@ -75,8 +75,8 @@ function GameTextBox({
   if (visibleMessages.length === 0 && !idleText) return null;
 
   return (
-    <div className="mx-auto mt-2 w-full max-w-xl">
-      <div className="relative rounded-xl border-[3px] border-text/20 bg-surface/95 shadow-lg backdrop-blur">
+    <div className="relative z-20 mx-auto mt-4 w-full max-w-xl">
+      <div className="relative rounded-xl border-[3px] border-text/20 bg-surface shadow-lg">
         <div className="absolute inset-[3px] rounded-lg border border-text/10 pointer-events-none" />
         <div ref={logRef} className="relative px-5 py-3 min-h-[3.5rem] max-h-28 overflow-y-auto">
           {visibleMessages.length > 0 ? (
@@ -86,7 +86,7 @@ function GameTextBox({
                   key={`${messages.length}-${i}`}
                   className={`text-sm leading-relaxed text-text ${
                     i === visibleMessages.length - 1
-                      ? 'animate-[typewriter_0.3s_ease-out]'
+                      ? 'font-medium animate-[typewriter_0.3s_ease-out]'
                       : 'text-text/60'
                   }`}
                 >
@@ -95,7 +95,7 @@ function GameTextBox({
               ))}
             </div>
           ) : idleText ? (
-            <p className="text-sm leading-relaxed text-text">{idleText}</p>
+            <p className="text-sm leading-relaxed text-text font-medium">{idleText}</p>
           ) : null}
         </div>
         {visibleMessages.length > 0 && (
