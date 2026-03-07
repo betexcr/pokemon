@@ -575,6 +575,7 @@ function isPokemonImage(request) {
          url.pathname.includes('/gen1/') ||
          url.pathname.includes('/gen2/') ||
          url.pathname.includes('/gen3/') ||
+         url.pathname.includes('/assets/trainers/') ||
          url.pathname.includes('/header-icons/')
 }
 

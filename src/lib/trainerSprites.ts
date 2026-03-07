@@ -2,44 +2,146 @@
 
 import type { Champion } from '@/lib/gym_champions'
 
-const TRAINER_SPRITES_BASE_PATH = '/gen1' // Default to gen1, will be overridden per generation
+const BASE = '/assets/trainers'
 
-// Explicit filename mappings for special-cased names or known PS aliases.
-// Keep this list minimal to avoid forcing non-existent files; prefer candidates below.
-const explicitFilenameMap: Record<string, string> = {
-  // Common Kanto leaders
-  brock: 'brock.png',
-  misty: 'misty.png',
-  erika: 'erika.png',
-  koga: 'koga.png',
-  sabrina: 'sabrina.png',
-  blaine: 'blaine.png',
-  giovanni: 'giovanni.png',
-  bruno: 'bruno.png',
-  lance: 'lance.png',
-  blue: 'blue.png',
+// Explicit mapping from derived trainer key -> filename in public/assets/trainers/.
+// Prefer "-masters" variants for higher-quality modern art when available.
+const TRAINER_SPRITE_MAP: Record<string, string> = {
+  // Kanto Gym Leaders
+  'brock': 'brock-masters.png',
+  'misty': 'misty-masters.png',
+  'lt-surge': 'ltsurge.png',
+  'ltsurge': 'ltsurge.png',
+  'erika': 'erika.png',
+  'koga': 'koga.png',
+  'sabrina': 'sabrina-masters.png',
+  'blaine': 'blaine.png',
+  'giovanni': 'giovanni.png',
+  // Kanto Elite Four
+  'lorelei': 'lorelei-lgpe.png',
+  'bruno': 'bruno.png',
+  'agatha': 'agatha-lgpe.png',
+  'lance': 'lance.png',
+  'blue': 'blue.png',
 
-  // Hoenn / others
-  roxanne: 'roxanne.png',
-  brawly: 'brawly.png',
-  wattson: 'wattson.png',
-  flannery: 'flannery.png',
-  norman: 'norman.png',
-  winona: 'winona.png',
-  wallace: 'wallace.png',
-  sidney: 'sidney.png',
-  phoebe: 'phoebe.png',
-  glacia: 'glacia.png',
-  drake: 'drake.png',
-  steven: 'steven.png',
+  // Johto Gym Leaders
+  'falkner': 'falkner-gen2.png',
+  'bugsy': 'bugsy-gen2.png',
+  'whitney': 'whitney-masters.png',
+  'morty': 'morty-masters.png',
+  'chuck': 'chuck-gen2.png',
+  'jasmine': 'jasmine-masters.png',
+  'pryce': 'pryce-gen2.png',
+  'clair': 'clair-masters.png',
+  // Johto Elite Four
+  'will': 'will-gen2.png',
+  'karen': 'karen-gen2.png',
 
-  // Showdown alias specials
-  // Prefer newest via candidates; keep alias only when name differs entirely
-  // e.g., Lt. Surge -> ltsurge handled by hyphenless; do not force a gen
-  wake: 'crasherwake.png', // PS uses crasherwake
-  tateliza: 'tateandliza-gen6.png', // PS uses tateandliza, prefer newest gen6
-  // Also add fallback mapping for gen3 folder
-  'tateandliza': 'tateandliza-gen3.png', // For gen3 fallback
+  // Hoenn Gym Leaders
+  'roxanne': 'roxanne-masters.png',
+  'brawly': 'brawly-gen6.png',
+  'wattson': 'wattson-gen3.png',
+  'flannery': 'flannery-gen6.png',
+  'norman': 'norman-gen6.png',
+  'winona': 'winona-gen6.png',
+  'tate-liza': 'tateandliza-gen6.png',
+  'tateandliza': 'tateandliza-gen6.png',
+  'wallace': 'wallace-masters.png',
+  // Hoenn Elite Four
+  'sidney': 'sidney-gen3.png',
+  'phoebe': 'phoebe-masters.png',
+  'glacia': 'glacia-gen3.png',
+  'drake': 'drake-gen3.png',
+  'steven': 'steven-masters.png',
+
+  // Sinnoh Gym Leaders
+  'roark': 'roark.png',
+  'gardenia': 'gardenia-masters.png',
+  'maylene': 'maylene.png',
+  'wake': 'crasherwake.png',
+  'crasherwake': 'crasherwake.png',
+  'fantina': 'fantina.png',
+  'byron': 'byron.png',
+  'candice': 'candice-masters.png',
+  'volkner': 'volkner-masters.png',
+  // Sinnoh Elite Four
+  'aaron': 'aaron.png',
+  'bertha': 'bertha.png',
+  'flint': 'flint.png',
+  'lucian': 'lucian.png',
+  'cynthia': 'cynthia-masters.png',
+
+  // Unova Gym Leaders
+  'cilan': 'cilan.png',
+  'chili': 'chili.png',
+  'cress': 'cress.png',
+  'lenora': 'lenora.png',
+  'burgh': 'burgh-masters.png',
+  'elesa': 'elesa-masters.png',
+  'clay': 'clay.png',
+  'skyla': 'skyla-masters.png',
+  'brycen': 'brycen.png',
+  'drayden': 'drayden.png',
+  // Unova Elite Four
+  'shauntal': 'shauntal.png',
+  'grimsley': 'grimsley-masters.png',
+  'caitlin': 'caitlin-masters.png',
+  'marshal': 'marshal.png',
+  'alder': 'alder.png',
+  'iris': 'iris-masters.png',
+
+  // Kalos Gym Leaders
+  'viola': 'viola-masters.png',
+  'grant': 'grant.png',
+  'korrina': 'korrina-masters.png',
+  'ramos': 'ramos.png',
+  'clemont': 'clemont.png',
+  'valerie': 'valerie.png',
+  'olympia': 'olympia.png',
+  'wulfric': 'wulfric.png',
+  // Kalos Elite Four
+  'malva': 'malva.png',
+  'siebold': 'siebold-masters.png',
+  'wikstrom': 'wikstrom.png',
+  'drasna': 'drasna.png',
+  'diantha': 'diantha-masters.png',
+
+  // Alola Kahunas / Elite Four
+  'hala': 'hala.png',
+  'olivia': 'olivia.png',
+  'nanu': 'nanu.png',
+  'hapu': 'hapu.png',
+  'acerola': 'acerola-masters.png',
+  'kahili': 'kahili.png',
+  'kukui': 'kukui.png',
+  'hau': 'hau-masters.png',
+  'molayne': 'molayne.png',
+
+  // Galar Gym Leaders
+  'milo': 'milo.png',
+  'nessa': 'nessa-masters.png',
+  'kabu': 'kabu.png',
+  'bea': 'bea-masters.png',
+  'allister': 'allister-masters.png',
+  'opal': 'opal.png',
+  'gordie': 'gordie.png',
+  'melony': 'melony.png',
+  'piers': 'piers-masters.png',
+  'raihan': 'raihan-masters.png',
+  'leon': 'leon-masters.png',
+
+  // Paldea Gym Leaders
+  'katy': 'katy.png',
+  'brassius': 'brassius.png',
+  'iono': 'iono.png',
+  'kofu': 'kofu.png',
+  'larry': 'larry.png',
+  'ryme': 'ryme.png',
+  'tulip': 'tulip.png',
+  'grusha': 'grusha.png',
+  'geeta': 'geeta.png',
+  'poppy': 'poppy.png',
+  'hassel': 'hassel.png',
 }
 
 function normalizeNameToKey(raw: string): string {
@@ -50,27 +152,22 @@ function normalizeNameToKey(raw: string): string {
     .replace(/^-+|-+$/g, '')
 }
 
-// Some IDs include regions or titles (e.g., 'lt-surge-kanto', 'kalos-elite-malva').
-// Strip known region/title tokens from both ends, preserving the trainer name in the middle.
+// Strip region/title tokens from champion IDs to get the trainer name.
 function deriveTrainerKeyFromId(id: string, fallbackName?: string): string {
   const tokens = id.toLowerCase().split('-').filter(Boolean)
-  const suffixBlacklist = new Set([
+  const noise = new Set([
     'kanto','johto','hoenn','sinnoh','unova','kalos','alola','galar','paldea',
     'elite','champion','champ','leader','kahuna','top','four','b2w2','usum'
   ])
 
   let start = 0
   let end = tokens.length - 1
-
-  // Drop leading region words like 'kalos'
-  while (start <= end && suffixBlacklist.has(tokens[start])) start++
-  // Drop trailing region/title words
-  while (end >= start && suffixBlacklist.has(tokens[end])) end--
+  while (start <= end && noise.has(tokens[start])) start++
+  while (end >= start && noise.has(tokens[end])) end--
 
   const pruned = tokens.slice(start, end + 1)
   if (pruned.length > 0) return pruned.join('-')
 
-  // Fallback to name without parentheses
   if (fallbackName) {
     const nameOnly = fallbackName.replace(/\([^)]*\)/g, '').trim()
     return normalizeNameToKey(nameOnly)
@@ -78,84 +175,28 @@ function deriveTrainerKeyFromId(id: string, fallbackName?: string): string {
   return normalizeNameToKey(id)
 }
 
-export function getTrainerSpriteUrlByKey(trainerKey: string, opts?: { gen?: number; region?: string }): string {
-  const key = normalizeNameToKey(trainerKey)
-  const gen = opts?.gen || 1 // Default to gen1
-  const genPath = `/gen${gen}`
+function resolveFilename(key: string): string {
+  const normalized = normalizeNameToKey(key)
+  if (TRAINER_SPRITE_MAP[normalized]) return TRAINER_SPRITE_MAP[normalized]
 
-  // Handle special filename mappings
-  const specialFilenameMap: Record<string, Record<number, string>> = {
-    'lt-surge': { 1: 'lt-surge.png', 2: 'lt-surge.png' },
-    'tate-liza': { 3: 'tate-liza.png' },
-    'tateandliza': { 3: 'tate-liza.png' },
-  }
+  const hyphenless = normalized.replace(/-/g, '')
+  if (TRAINER_SPRITE_MAP[hyphenless]) return TRAINER_SPRITE_MAP[hyphenless]
 
-  // Check for special mappings first
-  if (specialFilenameMap[key] && specialFilenameMap[key][gen]) {
-    return `${genPath}/${specialFilenameMap[key][gen]}`
-  }
-
-  // Check explicit map
-  if (explicitFilenameMap[key]) {
-    return `${genPath}/${explicitFilenameMap[key]}`
-  }
-
-  // Try different variations of the key
-  const hyphenless = key.replace(/-/g, '')
-  
-  // Common candidates to try
-  const candidates = [
-    `${key}.png`,
-    `${hyphenless}.png`,
-  ]
-
-  // Return the first candidate path
-  return `${genPath}/${candidates[0]}`
+  // Fallback: try common filename patterns
+  return `${hyphenless}.png`
 }
 
 export function getTrainerSpriteUrl(champion: Champion): string {
-  // Prefer derived key from id (handles regions/titles) then name
-  const idPrefix = deriveTrainerKeyFromId(champion.id, champion.name)
-  const genName = (champion.generation || '').toLowerCase()
-  const gen = genName.includes('iii') || genName.includes('3') ? 3
-    : genName.includes('ii') || genName.includes('2') ? 2
-    : genName.includes('i') || genName.includes('1') ? 1
-    : undefined
-  const region = gen === 1 ? 'kanto' : gen === 2 ? 'johto' : gen === 3 ? 'hoenn' : undefined
+  const trainerKey = deriveTrainerKeyFromId(champion.id, champion.name)
+  const filename = resolveFilename(trainerKey)
+  return `${BASE}/${filename}`
+}
 
-  const byId = getTrainerSpriteUrlByKey(idPrefix, { gen, region })
-  if (byId) return byId
-  return getTrainerSpriteUrlByKey(champion.name, { gen, region })
+export function getTrainerSpriteUrlByKey(trainerKey: string): string {
+  const filename = resolveFilename(trainerKey)
+  return `${BASE}/${filename}`
 }
 
 export function getTrainerSpriteUrls(champion: Champion): { primary: string; fallback?: string } {
-  const primary = getTrainerSpriteUrl(champion)
-  
-  // Generate fallback path for different generations
-  const idPrefix = deriveTrainerKeyFromId(champion.id, champion.name)
-  const genName = (champion.generation || '').toLowerCase()
-  const gen = genName.includes('iii') || genName.includes('3') ? 3
-    : genName.includes('ii') || genName.includes('2') ? 2
-    : genName.includes('i') || genName.includes('1') ? 1
-    : 1
-
-  let fallback: string | undefined
-  
-  // Try fallback to gen1 if not already gen1
-  if (gen !== 1) {
-    const key = normalizeNameToKey(idPrefix || champion.name)
-    const hyphenless = key.replace(/-/g, '')
-    
-    // Handle special cases where the filename differs from the key
-    const specialFallbacks: Record<string, string> = {
-      'tateliza': 'tate-liza',
-      'tateandliza': 'tate-liza',
-    }
-    const fallbackKey = specialFallbacks[hyphenless] || hyphenless
-    fallback = `/gen1/${fallbackKey}.png`
-  }
-
-  return { primary, fallback }
+  return { primary: getTrainerSpriteUrl(champion) }
 }
-
-
