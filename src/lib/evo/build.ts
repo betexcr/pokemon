@@ -164,6 +164,8 @@ export async function buildEvoGraph(options: BuildOptions = {}): Promise<Normali
   for (const chain of filteredChains) {
     const { species: familySpecies, edges } = buildFamilyFromChainSync(chain, speciesCache, pokemonCache);
 
+    if (edges.length === 0) continue;
+
     if (gens && gens.length) {
       if (!familySpecies.some((s) => gens.includes(s.gen))) continue;
     }

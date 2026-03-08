@@ -34,19 +34,21 @@ export default function TypeControls({ initialMode, initialAttacker, initialDefe
     return initialDefenders?.[1] || '';
   });
 
-  // Keep local state in sync when URL search params change (e.g., wheel clicks)
+  // Keep local state in sync when URL search params change (e.g., wheel clicks).
+  // Only react to `sp` changes — local state (mode, attacker, def1, def2) is
+  // intentionally excluded to avoid a race where the effect reads stale URL
+  // params and resets a just-updated defender selection.
   useEffect(() => {
     const nextMode = ((sp.get('mode') as Mode) || initialMode);
-    if (nextMode !== mode) setMode(nextMode);
+    setMode(nextMode);
     const nextAttacker = (sp.get('attacker') as TypeName) || initialAttacker || 'Fire';
-    if (nextAttacker !== attacker) setAttacker(nextAttacker);
+    setAttacker(nextAttacker);
     const defs = sp.get('defender') || '';
     const filtered = defs.split(',').filter(Boolean) as TypeName[];
-    const nextD1 = filtered[0] ?? initialDefenders?.[0] ?? '';
-    const nextD2 = filtered[1] ?? initialDefenders?.[1] ?? '';
-    if (nextD1 !== def1) setDef1(nextD1);
-    if (nextD2 !== def2) setDef2(nextD2);
-  }, [sp, initialMode, initialAttacker, initialDefenders, def1, def2]);
+    setDef1(filtered[0] ?? initialDefenders?.[0] ?? '');
+    setDef2(filtered[1] ?? initialDefenders?.[1] ?? '');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sp, initialMode, initialAttacker, initialDefenders]);
 
   useEffect(() => {
     const usp = new URLSearchParams(sp.toString());
