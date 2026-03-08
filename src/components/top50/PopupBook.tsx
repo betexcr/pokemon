@@ -238,7 +238,6 @@ export default function PopupBook({
         </nav>
 
         <div className="relative">
-          <div id="top50-phase-anchor" className="pointer-events-none" aria-hidden />
           <AnimatePresence mode="wait">
               <motion.div
               key={activePhase.id}
@@ -569,13 +568,17 @@ function PhaseContent({
     }, [quickVisible, pokemon])
 
     // When the list becomes visible or selection changes, center the selected entry
+    // within the sidebar only (avoid scrollIntoView which scrolls the whole page).
     useEffect(() => {
       if (!quickVisible) return
       const root = quickListRef.current
       if (!root) return
       const current = root.querySelector<HTMLButtonElement>(`button[data-rank="${selectedPokemon.rank}"]`)
       if (current) {
-        current.scrollIntoView({ block: 'center' })
+        const rootRect = root.getBoundingClientRect()
+        const itemRect = current.getBoundingClientRect()
+        const offset = itemRect.top - rootRect.top - (rootRect.height / 2) + (itemRect.height / 2)
+        root.scrollTop += offset
       }
     }, [quickVisible, selectedPokemon.rank])
 

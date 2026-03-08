@@ -76,41 +76,31 @@ const Top50Experience = forwardRef<Top50ExperienceRef, Top50ExperienceProps>(({ 
   const scrollToSpotlight = () => {
     if (typeof window === 'undefined') return
 
-    // Two-pass scroll: an immediate rough scroll using the stable anchor,
-    // then a precise adjustment once the spring animation has settled.
+    let retries = 0
+    const maxRetries = 60
 
-    const getHeaderHeight = () => {
-      const header = document.querySelector('header.sticky') as HTMLElement | null
-      return header ? Math.ceil(header.getBoundingClientRect().height) : 0
-    }
-
-    // --- Pass 1: immediate rough scroll using the stable (non-animated) anchor ---
-    const roughScroll = () => {
-      const anchor = document.getElementById('top50-phase-anchor') as HTMLElement | null
-      if (!anchor) return
-      const headerHeight = getHeaderHeight()
-      const anchorTop = anchor.getBoundingClientRect().top + window.scrollY
-      window.scrollTo({ top: Math.max(0, anchorTop - headerHeight - 16), behavior: 'smooth' })
-    }
-
-    // --- Pass 2: precise scroll to the card after the animation has settled ---
-    const preciseScroll = () => {
+    // Poll until the spotlight card is mounted in the DOM
+    // (handles AnimatePresence "wait" mode where the exit runs
+    // before the enter, so the card may not exist for ~500ms).
+    const waitForCard = () => {
       const card = document.getElementById('top50-spotlight-card') as HTMLElement | null
-      if (!card) return
-      const headerHeight = getHeaderHeight()
-      const cardTop = card.getBoundingClientRect().top + window.scrollY
-      const padding = 16
-      window.scrollTo({ top: Math.max(0, cardTop - headerHeight - padding), behavior: 'smooth' })
-      try { card.focus({ preventScroll: true }) } catch {}
+      if (!card || card.getBoundingClientRect().height === 0) {
+        if (retries++ < maxRetries) {
+          setTimeout(waitForCard, 50)
+        }
+        return
+      }
+      // Card is mounted — wait for the spring enter animation to settle
+      setTimeout(() => {
+        const header = document.querySelector('header.sticky') as HTMLElement | null
+        const headerHeight = header ? Math.ceil(header.getBoundingClientRect().height) : 0
+        card.style.scrollMarginTop = `${headerHeight + 8}px`
+        card.scrollIntoView({ block: 'start', behavior: 'smooth' })
+        try { card.focus({ preventScroll: true }) } catch {}
+      }, 550)
     }
 
-    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
-
-    // Pass 1 fires quickly after render
-    setTimeout(roughScroll, isMobile ? 80 : 50)
-
-    // Pass 2 fires after the spring animation settles (~500ms)
-    setTimeout(preciseScroll, isMobile ? 650 : 550)
+    setTimeout(waitForCard, 30)
   }
 
   // Initialize from URL if a rank is specified (e.g., /top50?rank=46 or hash like #rank=46)
