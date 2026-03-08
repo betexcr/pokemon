@@ -238,6 +238,7 @@ export default function PopupBook({
         </nav>
 
         <div className="relative">
+          <div id="top50-phase-anchor" className="pointer-events-none" aria-hidden />
           <AnimatePresence mode="wait">
               <motion.div
               key={activePhase.id}
@@ -878,11 +879,13 @@ function PhaseContent({
 
                   const portraitUrl = `https://raw.githubusercontent.com/PMDCollab/SpriteCollab/master/portrait/${id4}/Normal.png`
 
-                  const items: Array<{ key: string; label: string; url: string; pixelated?: boolean }>
+                  const isBack = orientation === 'back'
+
+                  const items: Array<{ key: string; label: string; url: string; pixelated?: boolean; frontOnly?: boolean }>
                     = [
-                      { key: 'official', label: 'Official', url: officialUrl },
+                      { key: 'official', label: 'Official', url: officialUrl, frontOnly: true },
                       { key: 'gif', label: 'GIF', url: gifUrl },
-                      { key: '3d', label: 'Gen 6-9', url: homeUrl },
+                      { key: '3d', label: 'Gen 6-9', url: homeUrl, frontOnly: true },
                       { key: 'sprite', label: 'Sprite', url: spriteUrl },
                       { key: 'pixel', label: 'Gen 1-5', url: pixelUrl, pixelated: true }
                     ]
@@ -944,9 +947,12 @@ function PhaseContent({
 
                       {/* Grid of styles */}
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                        {items.map(item => (
-                          <div key={item.key} className="flex flex-col items-center gap-2 rounded-xl border border-border bg-white/60 p-3 dark:bg-white/5">
+                        {items.map(item => {
+                          const isFrontOnly = isBack && item.frontOnly
+                          return (
+                          <div key={item.key} className={`flex flex-col items-center gap-2 rounded-xl border border-border bg-white/60 p-3 dark:bg-white/5 ${isFrontOnly ? 'opacity-40' : ''}`}>
                             <div className="relative h-24 w-24 flex items-center justify-center overflow-hidden rounded-lg border border-border">
+                              {!isFrontOnly && (
                               <img
                                 src={item.url}
                                 alt={`${name} ${item.label}`}
@@ -961,7 +967,6 @@ function PhaseContent({
                                 onError={(e) => {
                                   const el = e.currentTarget as HTMLImageElement
                                   setUnavailableMap(prev => ({ ...prev, [item.key]: true }))
-                                  // Simple fallback chain per style
                                   if (item.key === 'gif') {
                                     el.src = spriteUrl
                                   } else if (item.key === '3d') {
@@ -971,7 +976,13 @@ function PhaseContent({
                                   }
                                 }}
                               />
-                              {unavailableMap[item.key] && (
+                              )}
+                              {isFrontOnly && (
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <span className="text-[10px] font-semibold text-muted">Front only</span>
+                                </div>
+                              )}
+                              {!isFrontOnly && unavailableMap[item.key] && (
                                 <div className="absolute inset-0 flex items-center justify-center bg-white/70 dark:bg-black/60">
                                   <span className="text-[10px] font-semibold text-muted">Unavailable</span>
                                 </div>
@@ -979,7 +990,8 @@ function PhaseContent({
                             </div>
                             <div className="text-xs font-semibold text-muted">{item.label}</div>
                           </div>
-                        ))}
+                          )
+                        })}
                       </div>
                     </div>
                   )

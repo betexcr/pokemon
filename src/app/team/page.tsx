@@ -22,6 +22,7 @@ import {
 } from '@/lib/userTeams'
 import { updateTeamInFirebase } from '@/lib/userTeams'
 import AuthModal from '@/components/auth/AuthModal'
+import ConfirmDialog from '@/components/ConfirmDialog'
 import AppHeader from '@/components/AppHeader'
 import PokemonSelector from '@/components/PokemonSelector'
 import { DEFAULT_NATURE, NATURES, type NatureName, type NatureStat } from '@/data/natures'
@@ -108,6 +109,7 @@ export default function TeamBuilderPage() {
   const [collapsedMovesSections, setCollapsedMovesSections] = useState<Set<number>>(new Set())
   const [collapsedAvailableMovesSections, setCollapsedAvailableMovesSections] = useState<Set<number>>(new Set())
   const [draftHydrated, setDraftHydrated] = useState(false)
+  const [confirmAction, setConfirmAction] = useState<{ title: string; message: string; onConfirm: () => void } | null>(null)
   const layoutRef = useRef<HTMLDivElement | null>(null)
   const selectorInputRef = useRef<HTMLInputElement | null>(null)
   const slotRefs = useRef<(HTMLDivElement | null)[]>([null, null, null, null, null, null])
@@ -1173,9 +1175,18 @@ export default function TeamBuilderPage() {
               onPokemonRemove={(pokemonId) => {
                 const slotIndex = teamSlots.findIndex(s => s.id === pokemonId)
                 if (slotIndex !== -1) {
-                  setSlot(slotIndex, { id: null })
-                  // Trigger re-analysis after Pokemon is removed
-                  setAnalysisTrigger(prev => prev + 1)
+                  const pokeName = displayPokemonById[pokemonId]
+                    ? formatPokemonName(displayPokemonById[pokemonId].name)
+                    : `Pokémon #${pokemonId}`
+                  setConfirmAction({
+                    title: 'Remove Pokémon',
+                    message: `Remove ${pokeName} from your team?`,
+                    onConfirm: () => {
+                      setSlot(slotIndex, { id: null })
+                      setAnalysisTrigger(prev => prev + 1)
+                      setConfirmAction(null)
+                    },
+                  })
                 }
               }}
               maxSelections={6}
@@ -1487,7 +1498,15 @@ export default function TeamBuilderPage() {
                       <button 
                         onClick={(e) => {
                           e.stopPropagation()
-                          setSlot(idx, { id: null })
+                          const pokeName = poke ? formatPokemonName(poke.name) : 'this Pokémon'
+                          setConfirmAction({
+                            title: 'Remove Pokémon',
+                            message: `Remove ${pokeName} from slot ${idx + 1}? This will also clear its moves.`,
+                            onConfirm: () => {
+                              setSlot(idx, { id: null })
+                              setConfirmAction(null)
+                            },
+                          })
                         }} 
                         className="text-xs text-red-600 hover:text-red-800"
                         title="Remove Pokémon from slot"
@@ -1861,7 +1880,16 @@ export default function TeamBuilderPage() {
                       </button>
                       <button 
                         className="text-xs text-red-600 hover:text-red-800 px-2 py-1 rounded border border-red-200 hover:bg-red-50 whitespace-nowrap" 
-                        onClick={() => deleteTeam(team.id)}
+                        onClick={() => {
+                          setConfirmAction({
+                            title: 'Remove Team',
+                            message: `Permanently remove "${team.name}"? This cannot be undone.`,
+                            onConfirm: () => {
+                              deleteTeam(team.id)
+                              setConfirmAction(null)
+                            },
+                          })
+                        }}
                       >
                         Remove
                       </button>
@@ -1966,6 +1994,16 @@ export default function TeamBuilderPage() {
         isOpen={showAuthModal} 
         onClose={() => setShowAuthModal(false)}
         initialMode="login"
+      />
+
+      <ConfirmDialog
+        isOpen={confirmAction !== null}
+        title={confirmAction?.title ?? ''}
+        message={confirmAction?.message ?? ''}
+        confirmLabel="Remove"
+        variant="danger"
+        onConfirm={() => confirmAction?.onConfirm()}
+        onCancel={() => setConfirmAction(null)}
       />
     </div>
   )

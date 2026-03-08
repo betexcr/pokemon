@@ -75,65 +75,42 @@ const Top50Experience = forwardRef<Top50ExperienceRef, Top50ExperienceProps>(({ 
 
   const scrollToSpotlight = () => {
     if (typeof window === 'undefined') return
-    
-    // Wait for the nav DOM to exist and layout to settle (handles slower renders and mobile layout changes)
-    let tries = 0
-    const maxTries = 30 // Increased retry count for phase transitions
-    
-    const tryScroll = () => {
-      const phasesNav = document.getElementById('top50-phases-nav') as HTMLElement | null
-      const section = document.getElementById('top50-popup-book') as HTMLElement | null
-      
-      // Check if navigation is properly rendered and visible
-      const isNavReady = phasesNav && 
-        phasesNav.getBoundingClientRect().height > 0 && 
-        phasesNav.offsetParent !== null
-      
-      if (!isNavReady && !section) {
-        if (tries++ < maxTries) {
-          // Use longer delay for phase transitions
-          const delay = tries < 10 ? 16 : 50
-          return setTimeout(() => window.requestAnimationFrame(tryScroll), delay)
-        }
-        return
-      }
-      
-      // Account for sticky header height when scrolling
-      const header = document.querySelector('header.sticky') as HTMLElement | null
-      const headerHeight = header ? Math.ceil(header.getBoundingClientRect().height) : 0
-      const padding = 16
-      let y: number
-      
-      if (isNavReady) {
-        // Scroll to show the content that comes right after the navigation
-        const rect = phasesNav.getBoundingClientRect()
-        const bottom = rect.bottom + window.scrollY
-        
-        // Scroll to the bottom of the navigation to show the content that follows
-        y = Math.max(0, bottom - headerHeight - padding)
-      } else if (section) {
-        // Fallback: scroll to the top of the popup book section
-        const top = section.getBoundingClientRect().top + window.scrollY
-        y = Math.max(0, top - headerHeight - padding)
-      } else {
-        return
-      }
-      
-      window.scrollTo({ top: y, behavior: 'smooth' })
 
-      // After scrolling, move focus to the nav for accessibility
-      if (isNavReady) {
-        window.setTimeout(() => {
-          try { phasesNav.focus({ preventScroll: true }) } catch {}
-        }, 250)
-      }
+    // Two-pass scroll: an immediate rough scroll using the stable anchor,
+    // then a precise adjustment once the spring animation has settled.
+
+    const getHeaderHeight = () => {
+      const header = document.querySelector('header.sticky') as HTMLElement | null
+      return header ? Math.ceil(header.getBoundingClientRect().height) : 0
     }
-    
-    // Add a longer delay for phase transitions to ensure layout has settled
+
+    // --- Pass 1: immediate rough scroll using the stable (non-animated) anchor ---
+    const roughScroll = () => {
+      const anchor = document.getElementById('top50-phase-anchor') as HTMLElement | null
+      if (!anchor) return
+      const headerHeight = getHeaderHeight()
+      const anchorTop = anchor.getBoundingClientRect().top + window.scrollY
+      window.scrollTo({ top: Math.max(0, anchorTop - headerHeight - 16), behavior: 'smooth' })
+    }
+
+    // --- Pass 2: precise scroll to the card after the animation has settled ---
+    const preciseScroll = () => {
+      const card = document.getElementById('top50-spotlight-card') as HTMLElement | null
+      if (!card) return
+      const headerHeight = getHeaderHeight()
+      const cardTop = card.getBoundingClientRect().top + window.scrollY
+      const padding = 16
+      window.scrollTo({ top: Math.max(0, cardTop - headerHeight - padding), behavior: 'smooth' })
+      try { card.focus({ preventScroll: true }) } catch {}
+    }
+
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
-    const initialDelay = isMobile ? 150 : 100 // Increased delay for phase transitions
-    
-    setTimeout(() => window.requestAnimationFrame(tryScroll), initialDelay)
+
+    // Pass 1 fires quickly after render
+    setTimeout(roughScroll, isMobile ? 80 : 50)
+
+    // Pass 2 fires after the spring animation settles (~500ms)
+    setTimeout(preciseScroll, isMobile ? 650 : 550)
   }
 
   // Initialize from URL if a rank is specified (e.g., /top50?rank=46 or hash like #rank=46)

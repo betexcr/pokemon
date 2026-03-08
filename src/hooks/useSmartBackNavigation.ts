@@ -1,47 +1,15 @@
 'use client'
 
-import { useRouter, usePathname } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
+import { useEffect } from 'react'
 
 interface SmartBackNavigationOptions {
   defaultBackLink: string
   defaultBackLabel: string
 }
 
-export function useSmartBackNavigation({ defaultBackLink, defaultBackLabel }: SmartBackNavigationOptions) {
-  const router = useRouter()
-  const pathname = usePathname()
-  const [backLink, setBackLink] = useState(defaultBackLink)
-  const [backLabel, setBackLabel] = useState(defaultBackLabel)
-
-  useEffect(() => {
-    // Check if we have a referrer in sessionStorage
-    const referrer = sessionStorage.getItem('navigation_referrer')
-    
-    if (referrer) {
-      // If we came from the main page, go back to main page
-      if (referrer === '/') {
-        setBackLink('/')
-        setBackLabel('Back to PokéDex')
-      }
-      // If we came from insights, go back to insights
-      else if (referrer === '/insights') {
-        setBackLink('/insights')
-        setBackLabel('Back to Insights')
-      }
-      // For other referrers, use default
-      else {
-        setBackLink(defaultBackLink)
-        setBackLabel(defaultBackLabel)
-      }
-    } else {
-      // No referrer found, use default
-      setBackLink(defaultBackLink)
-      setBackLabel(defaultBackLabel)
-    }
-  }, [defaultBackLink, defaultBackLabel])
-
-  return { backLink, backLabel }
+export function useSmartBackNavigation(_options?: SmartBackNavigationOptions) {
+  return { backLink: '/', backLabel: 'Back to PokéDex' }
 }
 
 // Hook to track navigation for smart back navigation
