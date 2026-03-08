@@ -159,7 +159,14 @@ export default function PopupBook({
   const activePhase = phases[currentPhase]
   
   // Fetch signature move description to display in tooltip
-  const [signatureMoveInfo, setSignatureMoveInfo] = useState<{ shortEffect: string | null; type?: string; damageClass?: 'physical' | 'special' | 'status' } | null>(null)
+  const [signatureMoveInfo, setSignatureMoveInfo] = useState<{
+    shortEffect: string | null
+    type?: string
+    damageClass?: 'physical' | 'special' | 'status'
+    power?: number | null
+    accuracy?: number | null
+    pp?: number | null
+  } | null>(null)
   useEffect(() => {
     let isMounted = true
     const fetchMove = async () => {
@@ -169,13 +176,29 @@ export default function PopupBook({
           if (isMounted) setSignatureMoveInfo(null)
           return
         }
-        // Normalize to PokeAPI id/name and use adapter which resolves short effect and metadata
         const normalized = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
         const mv = await loadMoveFromPokeAPI(normalized)
         if (!isMounted) return
         const type = (mv as any).type
         const damageClass = ((mv as any).category || (mv as any).damage_class)?.toString().toLowerCase() as 'physical' | 'special' | 'status' | undefined
-        setSignatureMoveInfo({ shortEffect: (mv as any).shortEffect ?? null, type, damageClass })
+
+        let shortEffect: string | null = (mv as any).shortEffect ?? null
+        if (!shortEffect) {
+          const parts: string[] = []
+          if ((mv as any).power) parts.push(`Power ${(mv as any).power}`)
+          if ((mv as any).accuracy) parts.push(`Accuracy ${(mv as any).accuracy}%`)
+          if ((mv as any).pp) parts.push(`PP ${(mv as any).pp}`)
+          if (parts.length) shortEffect = parts.join(' · ')
+        }
+
+        setSignatureMoveInfo({
+          shortEffect,
+          type,
+          damageClass,
+          power: (mv as any).power ?? null,
+          accuracy: (mv as any).accuracy ?? null,
+          pp: (mv as any).pp ?? null
+        })
       } catch (e) {
         if (isMounted) setSignatureMoveInfo(null)
       }
@@ -541,7 +564,7 @@ function PhaseContent({
     const minTrend = Math.min(...trend)
     const maxTrend = Math.max(...trend)
     const [gender, setGender] = useState<'male' | 'female'>('male')
-    const [orientation, setOrientation] = useState<'front' | 'back'>('front')
+    
     const [femaleAvailable, setFemaleAvailable] = useState<boolean>(true)
     const [unavailableMap, setUnavailableMap] = useState<Record<string, boolean>>({})
 
@@ -861,7 +884,6 @@ function PhaseContent({
 
                   const spriteUrl = (() => {
                     const parts: string[] = []
-                    if (orientation === 'back') parts.push('back')
                     if (shiny) parts.push('shiny')
                     if (female) parts.push('female')
                     const suffix = parts.length ? `/${parts.join('/')}` : ''
@@ -870,7 +892,7 @@ function PhaseContent({
 
                   const pixelUrl = spriteUrl // same as sprite; styled pixelated
 
-                  const gifUrl = getShowdownAnimatedSprite(name, orientation, shiny)
+                  const gifUrl = getShowdownAnimatedSprite(name, 'front', shiny)
 
                   const homeUrl = (() => {
                     // Best-effort HOME path; may not exist for all
@@ -882,13 +904,11 @@ function PhaseContent({
 
                   const portraitUrl = `https://raw.githubusercontent.com/PMDCollab/SpriteCollab/master/portrait/${id4}/Normal.png`
 
-                  const isBack = orientation === 'back'
-
-                  const items: Array<{ key: string; label: string; url: string; pixelated?: boolean; frontOnly?: boolean }>
+                  const items: Array<{ key: string; label: string; url: string; pixelated?: boolean }>
                     = [
-                      { key: 'official', label: 'Official', url: officialUrl, frontOnly: true },
+                      { key: 'official', label: 'Official', url: officialUrl },
                       { key: 'gif', label: 'GIF', url: gifUrl },
-                      { key: '3d', label: 'Gen 6-9', url: homeUrl, frontOnly: true },
+                      { key: '3d', label: 'Gen 6-9', url: homeUrl },
                       { key: 'sprite', label: 'Sprite', url: spriteUrl },
                       { key: 'pixel', label: 'Gen 1-5', url: pixelUrl, pixelated: true }
                     ]
@@ -930,32 +950,14 @@ function PhaseContent({
                             ♀ Female
                           </button>
                         </div>
-                        <div className="inline-flex rounded-lg border border-border overflow-hidden">
-                          <button
-                            type="button"
-                            onClick={() => setOrientation('front')}
-                            className={`px-3 py-1 text-xs ${orientation === 'front' ? 'bg-surface text-text' : 'bg-transparent text-muted'}`}
-                          >
-                            Front
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setOrientation('back')}
-                            className={`px-3 py-1 text-xs ${orientation === 'back' ? 'bg-surface text-text' : 'bg-transparent text-muted'}`}
-                          >
-                            Back
-                          </button>
-                        </div>
+                        
                       </div>
 
                       {/* Grid of styles */}
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                        {items.map(item => {
-                          const isFrontOnly = isBack && item.frontOnly
-                          return (
-                          <div key={item.key} className={`flex flex-col items-center gap-2 rounded-xl border border-border bg-white/60 p-3 dark:bg-white/5 ${isFrontOnly ? 'opacity-40' : ''}`}>
+                        {items.map(item => (
+                          <div key={item.key} className="flex flex-col items-center gap-2 rounded-xl border border-border bg-white/60 p-3 dark:bg-white/5">
                             <div className="relative h-24 w-24 flex items-center justify-center overflow-hidden rounded-lg border border-border">
-                              {!isFrontOnly && (
                               <img
                                 src={item.url}
                                 alt={`${name} ${item.label}`}
@@ -979,13 +981,7 @@ function PhaseContent({
                                   }
                                 }}
                               />
-                              )}
-                              {isFrontOnly && (
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                  <span className="text-[10px] font-semibold text-muted">Front only</span>
-                                </div>
-                              )}
-                              {!isFrontOnly && unavailableMap[item.key] && (
+                              {unavailableMap[item.key] && (
                                 <div className="absolute inset-0 flex items-center justify-center bg-white/70 dark:bg-black/60">
                                   <span className="text-[10px] font-semibold text-muted">Unavailable</span>
                                 </div>
@@ -993,8 +989,7 @@ function PhaseContent({
                             </div>
                             <div className="text-xs font-semibold text-muted">{item.label}</div>
                           </div>
-                          )
-                        })}
+                        ))}
                       </div>
                     </div>
                   )
