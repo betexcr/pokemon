@@ -62,3 +62,10 @@ export type NormalizedEvoGraph = {
   families: NormalizedFamily[];
 };
 
+export type EvoFilters = {
+  search: string;
+  gens: string[];
+  methods: string[];
+  branchingOnly: boolean;
+};
+

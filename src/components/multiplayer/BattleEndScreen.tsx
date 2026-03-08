@@ -13,6 +13,7 @@ interface Props {
     damageDealt?: number;
     damageTaken?: number;
   };
+  returnTo?: { path: string; label: string };
 }
 
 /**
@@ -23,7 +24,8 @@ export function BattleEndScreen({
   playerName, 
   opponentName, 
   endReason = 'victory',
-  battleStats 
+  battleStats,
+  returnTo = { path: '/lobby', label: 'Return to Lobby' },
 }: Props) {
   const router = useRouter();
   const isWinner = winner === 'player';
@@ -122,11 +124,11 @@ export function BattleEndScreen({
         {/* Actions */}
         <div className="space-y-2">
           <button
-            onClick={() => router.push('/lobby')}
+            onClick={() => router.push(returnTo.path)}
             className="w-full px-4 py-3 bg-poke-blue text-white rounded-lg hover:bg-poke-blue/90 transition-colors flex items-center justify-center gap-2 font-semibold"
           >
             <ArrowLeft className="w-4 h-4" />
-            Return to Lobby
+            {returnTo.label}
           </button>
           
           {/* Optional: Add rematch button in future

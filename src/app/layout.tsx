@@ -10,7 +10,6 @@ import RoutePreloader from '@/components/RoutePreloader'
 import PerformanceMonitor from '@/components/PerformanceMonitor'
 import { ToastProvider } from '@/components/ToastProvider'
 import { ReactQueryProvider } from '@/components/ReactQueryProvider'
-import PWAInstaller from '@/components/PWAInstaller'
 import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration'
 import OfflineIndicator from '@/components/OfflineIndicator'
 import PokemonPreloader from '@/components/PokemonPreloader'
@@ -212,7 +211,6 @@ export default function RootLayout({
                     <GlobalErrorCatcher />
                     <HelpAssistant />
                     <ErrorTip />
-                    <PWAInstaller />
                     <OfflineDownloadPanel />
                     <ServiceWorkerRegistration />
                     <PokemonPreloader />

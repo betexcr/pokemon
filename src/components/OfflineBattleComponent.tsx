@@ -387,6 +387,7 @@ export const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
           opponentName={meta.players.p2.name || 'Opponent'}
           endReason={meta.endedReason}
           battleStats={{ turns: meta.turn }}
+          returnTo={{ path: '/battle', label: 'Back to Battles' }}
         />
       )}
     </div>

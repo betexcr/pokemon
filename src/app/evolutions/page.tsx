@@ -22,39 +22,15 @@ export const metadata: Metadata = {
   }
 };
 
-// Revalidate the static page periodically to keep data fresh
-export const revalidate = 3600; // 1 hour
-// Remove force-static to allow search parameters to work properly
-
-type SearchParams = { [key: string]: string | string[] | undefined };
+export const revalidate = 3600;
 
 export default async function EvolutionsPage() {
-  // Default values for static export
-  const gens = undefined;
-  const methods = undefined;
-  const limit = 20;
-  const offset = 0;
-  
-  // Build directly on the server to avoid an internal network roundtrip
-  const normalized: NormalizedEvoGraph = await buildEvoGraph({ gens, methods, offset, limit });
-  
-  // Debug logging
-  console.log('Evolutions API response:', {
-    familiesCount: normalized.families.length,
-    firstFamily: normalized.families[0] ? {
-      familyId: normalized.families[0].familyId,
-      speciesCount: normalized.families[0].species.length,
-      edgesCount: normalized.families[0].edges?.length || 0
-    } : null
+  const normalized: NormalizedEvoGraph = await buildEvoGraph({
+    gens: [1],
+    offset: 0,
+    limit: 80,
   });
 
-  const initialSearch = '';
-  const initialGen: string[] = [];
-  const initialMethod: string[] = [];
-  const initialOpen: number[] = [];
-  const branchingOnly = false;
-
-  // No-JS progressive enhancement fallback: list base forms with evolution counts
   const serverList = normalized.families.map((fam) => {
     const count = fam.edges?.length ?? 0;
     const bases = fam.bases
@@ -75,15 +51,7 @@ export default async function EvolutionsPage() {
         </div>
       </header>
 
-      <EvoClient
-        data={normalized}
-        serverList={serverList}
-        initialSearch={initialSearch}
-        initialGen={initialGen}
-        initialMethod={initialMethod}
-        initialOpen={initialOpen}
-        branchingOnly={branchingOnly}
-      />
+      <EvoClient data={normalized} serverList={serverList} />
 
       <footer className="lg:col-span-2 mt-8 text-xs text-gray-500">
         <p>Accessibility: Full keyboard nav, visible focus rings, prefers-reduced-motion respected. Data powered by PokeAPI with caching.</p>

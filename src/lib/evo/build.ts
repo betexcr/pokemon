@@ -48,126 +48,57 @@ function hasEvolutionMethod(evolution: any, methods: string[]): boolean {
 
 const POKEAPI_BASE_URL = 'https://pokeapi.co/api/v2';
 
-// Batch fetch Pokemon data to reduce API calls
+const POKEAPI_FETCH_OPTIONS: RequestInit = {
+  headers: { 'Content-Type': 'application/json' },
+  next: { revalidate: 86_400 },
+} as RequestInit;
+
 async function getBatchPokemonData(ids: number[], batchSize: number = 50): Promise<Map<number, { types: string[] }>> {
   const result = new Map<number, { types: string[] }>();
-  
-  // Process in smaller batches to avoid overwhelming the API
+
   for (let i = 0; i < ids.length; i += batchSize) {
     const batch = ids.slice(i, i + batchSize);
-    
-    // Add delay between batches to respect rate limits
-    if (i > 0) {
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
-    
-    const promises = batch.map(async (id) => {
-      try {
-        const response = await fetch(`${POKEAPI_BASE_URL}/pokemon/${id}`, {
-          headers: { 'Content-Type': 'application/json' }
-        });
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+    const batchResults = await Promise.all(
+      batch.map(async (id) => {
+        try {
+          const response = await fetch(`${POKEAPI_BASE_URL}/pokemon/${id}`, POKEAPI_FETCH_OPTIONS);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const data = await response.json();
+          return { id, types: (data.types || []).map((t: any) => capitalize(t.type.name)) };
+        } catch (error) {
+          console.warn(`Failed to fetch Pokemon ${id}:`, error);
+          return { id, types: [] as string[] };
         }
-        const data = await response.json();
-        return {
-          id,
-          types: (data.types || []).map((t: any) => capitalize(t.type.name))
-        };
-      } catch (error) {
-        console.warn(`Failed to fetch minimal data for Pokemon ${id}:`, error);
-        return { id, types: [] };
-      }
-    });
-    
-    const batchResults = await Promise.all(promises);
-    batchResults.forEach(({ id, types }) => {
-      result.set(id, { types });
-    });
+      })
+    );
+    batchResults.forEach(({ id, types }) => result.set(id, { types }));
   }
-  
+
   return result;
 }
 
-// Optimized function to fetch only the minimal data needed for evolutions
-async function getMinimalPokemonData(id: number): Promise<{ types: string[] }> {
-  try {
-    const response = await fetch(`${POKEAPI_BASE_URL}/pokemon/${id}`, {
-      headers: { 'Content-Type': 'application/json' }
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const data = await response.json();
-    return {
-      types: (data.types || []).map((t: any) => capitalize(t.type.name))
-    };
-  } catch (error) {
-    console.warn(`Failed to fetch minimal data for Pokemon ${id}:`, error);
-    return { types: [] };
-  }
-}
-
-// Batch fetch species data to reduce API calls
 async function getBatchSpeciesData(ids: number[], batchSize: number = 50): Promise<Map<number, { name: string; generation: string | null }>> {
   const result = new Map<number, { name: string; generation: string | null }>();
-  
-  // Process in smaller batches to avoid overwhelming the API
+
   for (let i = 0; i < ids.length; i += batchSize) {
     const batch = ids.slice(i, i + batchSize);
-    
-    // Add delay between batches to respect rate limits
-    if (i > 0) {
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
-    
-    const promises = batch.map(async (id) => {
-      try {
-        const response = await fetch(`${POKEAPI_BASE_URL}/pokemon-species/${id}`, {
-          headers: { 'Content-Type': 'application/json' }
-        });
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+    const batchResults = await Promise.all(
+      batch.map(async (id) => {
+        try {
+          const response = await fetch(`${POKEAPI_BASE_URL}/pokemon-species/${id}`, POKEAPI_FETCH_OPTIONS);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const data = await response.json();
+          return { id, name: data.name || '', generation: data.generation?.name || null };
+        } catch (error) {
+          console.warn(`Failed to fetch species ${id}:`, error);
+          return { id, name: '', generation: null };
         }
-        const data = await response.json();
-        return {
-          id,
-          name: data.name || '',
-          generation: data.generation?.name || null
-        };
-      } catch (error) {
-        console.warn(`Failed to fetch minimal species data for Pokemon ${id}:`, error);
-        return { id, name: '', generation: null };
-      }
-    });
-    
-    const batchResults = await Promise.all(promises);
-    batchResults.forEach(({ id, name, generation }) => {
-      result.set(id, { name, generation });
-    });
+      })
+    );
+    batchResults.forEach(({ id, name, generation }) => result.set(id, { name, generation }));
   }
-  
-  return result;
-}
 
-// Optimized function to fetch only the minimal species data needed for evolutions
-async function getMinimalSpeciesData(id: number): Promise<{ name: string; generation: string | null }> {
-  try {
-    const response = await fetch(`${POKEAPI_BASE_URL}/pokemon-species/${id}`, {
-      headers: { 'Content-Type': 'application/json' }
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const data = await response.json();
-    return {
-      name: data.name || '',
-      generation: data.generation?.name || null
-    };
-  } catch (error) {
-    console.warn(`Failed to fetch minimal species data for Pokemon ${id}:`, error);
-    return { name: '', generation: null };
-  }
+  return result;
 }
 
 type BuildOptions = {
@@ -177,10 +108,11 @@ type BuildOptions = {
   limit?: number; // Page size for progressive paging
 };
 
+const CHAIN_FETCH_CONCURRENCY = 20;
+
 export async function buildEvoGraph(options: BuildOptions = {}): Promise<NormalizedEvoGraph> {
   const { gens, methods, offset, limit } = options;
 
-  // If gen filter is provided, first collect all species for those generations
   let chainIds: number[];
   if (gens && gens.length) {
     const speciesForGens = await listSpeciesByGenerations(gens);
@@ -200,156 +132,91 @@ export async function buildEvoGraph(options: BuildOptions = {}): Promise<Normali
   const end = typeof limit === 'number' && limit > 0 ? start + limit : undefined;
   chainIds = chainIds.slice(start, end);
 
-  const families: Family[] = [];
-
-  // Collect all unique Pokemon IDs first for batch fetching
   const allPokemonIds = new Set<number>();
-  const evolutionChains: EvolutionChain[] = [];
-
-  // First pass: collect chains and Pokemon IDs, with early filtering for methods
   const filteredChains: EvolutionChain[] = [];
-  
-  for (const chainId of chainIds) {
-    let chain: EvolutionChain;
-    try {
-      chain = await getEvolutionChain(chainId);
-      
-      // Early method filtering: if methods filter is specified, check if this chain has any matching methods
+
+  for (let i = 0; i < chainIds.length; i += CHAIN_FETCH_CONCURRENCY) {
+    const batch = chainIds.slice(i, i + CHAIN_FETCH_CONCURRENCY);
+    const settled = await Promise.allSettled(batch.map((id) => getEvolutionChain(id)));
+
+    for (const result of settled) {
+      if (result.status !== 'fulfilled') continue;
+      const chain = result.value;
+
       if (methods && methods.length > 0) {
-        const hasMatchingMethod = chain.chain.evolves_to.some(evolution => 
-          hasEvolutionMethod(evolution, methods)
-        ) || hasEvolutionMethod(chain.chain, methods);
-        
-        if (!hasMatchingMethod) {
-          continue; // Skip this chain if it doesn't have any matching methods
-        }
+        const hasMatch = hasEvolutionMethod(chain.chain, methods) ||
+          chain.chain.evolves_to.some((evo: any) => hasEvolutionMethod(evo, methods));
+        if (!hasMatch) continue;
       }
-      
+
       filteredChains.push(chain);
-      
-      // Collect all Pokemon IDs from this chain
-      const chainIds = extractAllPokemonIds(chain);
-      chainIds.forEach(id => allPokemonIds.add(id));
-    } catch {
-      continue;
+      for (const id of extractAllPokemonIds(chain)) allPokemonIds.add(id);
     }
   }
-  
-  // Use filtered chains instead of all chains
-  evolutionChains.push(...filteredChains);
 
-  // Batch fetch all Pokemon and species data
-  console.log(`Batch fetching data for ${allPokemonIds.size} Pokemon from ${evolutionChains.length} chains...`);
   const pokemonIds = Array.from(allPokemonIds);
-  
-  // Use smaller batch sizes when filters are applied to improve performance
-  const hasFilters = (gens && gens.length > 0) || (methods && methods.length > 0);
-  const batchSize = hasFilters ? 25 : 50; // Smaller batches for filtered data
-  
   const [speciesCache, pokemonCache] = await Promise.all([
-    getBatchSpeciesData(pokemonIds, batchSize),
-    getBatchPokemonData(pokemonIds, batchSize)
+    getBatchSpeciesData(pokemonIds),
+    getBatchPokemonData(pokemonIds),
   ]);
 
-  console.log(`Batch fetch complete. Processing ${evolutionChains.length} evolution chains...`);
+  const families: Family[] = [];
+  for (const chain of filteredChains) {
+    const { species: familySpecies, edges } = buildFamilyFromChainSync(chain, speciesCache, pokemonCache);
 
-  // Second pass: build families using cached data
-  for (const chain of evolutionChains) {
-    const { species: familySpecies, edges } = await buildFamilyFromChain(chain, speciesCache, pokemonCache);
-
-    // If a gen filter is present, keep only families that have any species matching those gens
     if (gens && gens.length) {
-      const anyMatch = familySpecies.some((s) => gens.includes(s.gen));
-      if (!anyMatch) continue;
+      if (!familySpecies.some((s) => gens.includes(s.gen))) continue;
     }
 
-    const family: Family = {
-      familyId: String(chain.id),
-      species: familySpecies,
-      edges,
-    };
-    families.push(family);
+    families.push({ familyId: String(chain.id), species: familySpecies, edges });
   }
 
-  // Apply method filtering if specified
-  let filteredFamilies = families;
+  let finalFamilies = families;
   if (methods && methods.length > 0) {
     const methodSet = new Set(methods);
-    filteredFamilies = families.filter(family => {
-      // Check if any edge in this family uses one of the specified methods
-      return family.edges.some(edge => methodSet.has(edge.method.kind));
-    });
+    finalFamilies = families.filter((f) => f.edges.some((e) => methodSet.has(e.method.kind)));
   }
 
-  // Normalize for maps/bases/branched flags
-  return normalizeEvoGraph({ families: filteredFamilies } as EvoGraph);
+  return normalizeEvoGraph({ families: finalFamilies } as EvoGraph);
 }
 
 async function listAllEvolutionChainIds(): Promise<number[]> {
-  // Fetch all evolution-chain references (large list, but single request with big limit)
   const url = `${POKEAPI_BASE_URL}/evolution-chain?limit=5000`;
-  const res = await fetch(url, { headers: { 'Content-Type': 'application/json' } });
+  const res = await fetch(url, POKEAPI_FETCH_OPTIONS);
   if (!res.ok) throw new Error(`Failed to list evolution chains: ${res.status}`);
   const json = await res.json();
-  const ids: number[] = (json.results as Array<{ url: string }>).
-    map((r) => extractId(r.url)).
-    filter((n: number | null): n is number => Number.isFinite(n));
+  const ids: number[] = (json.results as Array<{ url: string }>)
+    .map((r) => extractId(r.url))
+    .filter((n: number | null): n is number => Number.isFinite(n));
   return Array.from(new Set(ids)).sort((a, b) => a - b);
 }
 
 async function listSpeciesByGenerations(gens: number[]) {
-  // Fetch species list (we need evolution_chain URLs and generation classification)
-  // PokeAPI doesn't provide species list by generation in a single call, but
-  // the generation endpoint lists species for that generation. Use it.
-  const species: Awaited<ReturnType<typeof getPokemonSpecies>>[] = [];
-  
-  // Collect all species IDs first
   const allSpeciesIds: number[] = [];
-  for (const g of gens) {
-    console.log(`Debug: Fetching generation ${g} species...`);
-    const url = `${POKEAPI_BASE_URL}/generation/${g}`;
-    const res = await fetch(url, { headers: { 'Content-Type': 'application/json' } });
-    if (!res.ok) {
-      console.warn(`Failed to fetch generation ${g}: ${res.status}`);
-      continue;
-    }
-    const json = await res.json();
-    const speciesRefs = (json.pokemon_species || []) as Array<{ name: string; url: string }>;
-    console.log(`Debug: Found ${speciesRefs.length} species for generation ${g}`);
-    for (const ref of speciesRefs) {
-      const id = extractId(ref.url);
-      if (id) allSpeciesIds.push(id);
-    }
-  }
-  
-  console.log(`Debug: Total species IDs to fetch: ${allSpeciesIds.length}`);
-  
-  // Batch fetch all species data with rate limiting
-  const batchSize = 5;
+
+  const genResults = await Promise.all(
+    gens.map(async (g) => {
+      const url = `${POKEAPI_BASE_URL}/generation/${g}`;
+      const res = await fetch(url, POKEAPI_FETCH_OPTIONS);
+      if (!res.ok) return [];
+      const json = await res.json();
+      return ((json.pokemon_species || []) as Array<{ name: string; url: string }>)
+        .map((ref) => extractId(ref.url))
+        .filter((id): id is number => id !== null);
+    })
+  );
+  for (const ids of genResults) allSpeciesIds.push(...ids);
+
+  const species: Awaited<ReturnType<typeof getPokemonSpecies>>[] = [];
+  const batchSize = 25;
   for (let i = 0; i < allSpeciesIds.length; i += batchSize) {
     const batch = allSpeciesIds.slice(i, i + batchSize);
-    
-    // Add delay between batches to respect rate limits
-    if (i > 0) {
-      await new Promise(resolve => setTimeout(resolve, 200));
+    const settled = await Promise.allSettled(batch.map((id) => getPokemonSpecies(id)));
+    for (const r of settled) {
+      if (r.status === 'fulfilled' && r.value) species.push(r.value);
     }
-    
-    const promises = batch.map(async (id) => {
-      try {
-        return await getPokemonSpecies(id);
-      } catch (error) {
-        console.warn(`Failed to fetch species ${id}:`, error);
-        return null;
-      }
-    });
-    
-    const batchResults = await Promise.all(promises);
-    batchResults.forEach((sp) => {
-      if (sp) species.push(sp);
-    });
   }
-  
-  console.log(`Debug: Successfully fetched ${species.length} species data`);
+
   return species;
 }
 
@@ -373,7 +240,7 @@ function extractAllPokemonIds(chain: EvolutionChain): number[] {
   return ids;
 }
 
-async function buildFamilyFromChain(
+function buildFamilyFromChainSync(
   chain: EvolutionChain,
   speciesCache: Map<number, { name: string; generation: string | null }>,
   pokemonCache: Map<number, { types: string[] }>
@@ -381,30 +248,25 @@ async function buildFamilyFromChain(
   const speciesMap = new Map<number, Species>();
   const edges: Edge[] = [];
 
-  // Traverse the chain recursively
   function visit(node: EvolutionChainLink) {
     const id = node.species.url ? extractId(node.species.url) : null;
     if (!id) return;
     if (!speciesMap.has(id)) {
-      const s = getSpeciesSummarySync(id, speciesCache, pokemonCache);
-      speciesMap.set(id, s);
+      speciesMap.set(id, getSpeciesSummarySync(id, speciesCache, pokemonCache));
     }
     for (const next of node.evolves_to) {
       const toId = next.species.url ? extractId(next.species.url) : null;
       if (!toId) continue;
       if (!speciesMap.has(toId)) {
-        const s2 = getSpeciesSummarySync(toId, speciesCache, pokemonCache);
-        speciesMap.set(toId, s2);
+        speciesMap.set(toId, getSpeciesSummarySync(toId, speciesCache, pokemonCache));
       }
-      const method = mapMethod(next.evolution_details?.[0]);
-      edges.push({ from: id, to: toId, method });
+      edges.push({ from: id, to: toId, method: mapMethod(next.evolution_details?.[0]) });
       visit(next);
     }
   }
 
   visit(chain.chain);
-  const species = Array.from(speciesMap.values());
-  return { species, edges };
+  return { species: Array.from(speciesMap.values()), edges };
 }
 
 function getSpeciesSummarySync(
@@ -430,49 +292,11 @@ function getSpeciesSummarySync(
   const name = sp.name.replace(/-/g, ' ');
   const baseGen = generationNumber(sp.generation);
   const gen = getEnhancedGeneration(sp.name, baseGen ?? 0);
-  
-  // Debug logging for generation 7
-  if (sp.generation === 'generation-vii' && (sp.name.includes('rowlet') || sp.name.includes('litten') || sp.name.includes('popplio'))) {
-    console.log(`Debug: ${sp.name} - baseGen: ${baseGen}, enhancedGen: ${gen}, generation: ${sp.generation}`);
-  }
-  
+
   return {
     id,
     name,
     gen,
-    types,
-    sprite: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`,
-  };
-}
-
-async function getSpeciesSummary(
-  id: number,
-  speciesCache: Map<number, { name: string; generation: string | null }>,
-  pokemonCache: Map<number, { types: string[] }>
-): Promise<Species> {
-  let sp = speciesCache.get(id);
-  if (!sp) {
-    sp = await getMinimalSpeciesData(id);
-    speciesCache.set(id, sp);
-  }
-  
-  // Only fetch minimal Pokemon data for types - avoid full Pokemon fetch
-  let types: string[] = [];
-  if (!pokemonCache.has(id)) {
-    const minimalData = await getMinimalPokemonData(id);
-    types = minimalData.types;
-    pokemonCache.set(id, minimalData);
-  } else {
-    const cached = pokemonCache.get(id);
-    types = cached?.types || [];
-  }
-
-  const name = sp.name.replace(/-/g, ' ');
-  const gen = generationNumber(sp.generation);
-  return {
-    id,
-    name,
-    gen: gen ?? 0,
     types,
     sprite: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`,
   };

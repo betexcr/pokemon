@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, useReducedMotion } from 'framer-motion';
 import type { NormalizedEvoGraph, NormalizedFamily } from '@/lib/evo/types';
 import { methodToText, normalizeEvoGraph } from '@/lib/evo/normalize';
+import type { EvoFilters } from '@/lib/evo/types';
 import EvoCard from './EvoCard';
 import EvoSkeleton from './EvoSkeleton';
 import Image from 'next/image';
@@ -12,172 +13,111 @@ import { formatPokemonName } from '@/lib/utils';
 
 type Props = {
   data: NormalizedEvoGraph;
+  filters: EvoFilters;
 };
 
-export default function EvoTree({ data }: Props) {
-  const sp = useSearchParams();
+export default function EvoTree({ data, filters }: Props) {
   const router = useRouter();
-  const pathname = usePathname();
   const reduce = useReducedMotion() ?? false;
   const PAGE_SIZE = 10;
 
-  const query = (sp.get('search') || '').toLowerCase();
-  const gens = (sp.get('gen') || '').split(',').filter(Boolean);
-  const methods = (sp.get('method') || '').split(',').filter(Boolean);
-  const branchingOnly = sp.get('branchingOnly') === '1' || sp.get('branchingOnly') === 'true';
-  const openParam = (sp.get('open') || '').split(',').map((s) => Number(s)).filter(Boolean);
+  const { search: query, gens, methods, branchingOnly } = filters;
+  const queryLc = query.toLowerCase();
 
-  const [open, setOpen] = useState<number[]>(openParam);
+  const [open, setOpen] = useState<number[]>([]);
   const [families, setFamilies] = useState(data.families);
   const [loaded, setLoaded] = useState({ offset: data.families.length, hasMore: true });
-  const [isInitialLoading, setIsInitialLoading] = useState(false);
-  const [isFilterLoading, setIsFilterLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Navigation handler for Pokemon detail pages
   const handlePokemonClick = useCallback((pokemonId: number) => {
     router.push(`/pokemon/${pokemonId}`);
   }, [router]);
 
+  const genKey = gens.join(',');
+  const methodKey = methods.join(',');
+
+  // Track which filter combo the current families were fetched for so we know
+  // when a client-side fetch is needed and can ignore stale server re-renders.
+  // Initialised to '1_' because the server pre-fetches gen 1 data.
+  const fetchedFilterKey = useRef<string | null>('1_');
+
+  // Sync server data only on first mount (or if we haven't done a client fetch yet).
+  // After a client-side gen/method fetch we must NOT overwrite with stale server data
+  // that can arrive via an RSC refetch triggered by router.replace().
   useEffect(() => {
-    setOpen(openParam);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sp.get('open')]);
-
-  // Handle filter loading state - show loading during actual API calls
-  useEffect(() => {
-    const hasFilters = gens.length > 0 || methods.length > 0 || branchingOnly;
-    if (hasFilters) {
-      // Show loading immediately when filters are applied
-      setIsFilterLoading(true);
-    } else {
-      setIsFilterLoading(false);
-    }
-  }, [gens.length, methods.length, branchingOnly]);
-
-  function setOpenParam(next: number[]) {
-    const usp = new URLSearchParams(sp.toString());
-    if (next.length) usp.set('open', next.join(','));
-    else usp.delete('open');
-    router.replace(`${pathname}?${usp.toString()}`, { scroll: false });
-    setOpen(next);
-  }
-
-  function toggleOpen(id: number) {
-    const next = open.includes(id) ? open.filter((x) => x !== id) : [...open, id];
-    setOpenParam(next);
-  }
-
-  useEffect(() => {
-    // If the server provided a new dataset (e.g., full refresh), sync local state
+    if (fetchedFilterKey.current !== null) return;
     setFamilies(data.families);
     setLoaded({ offset: data.families.length, hasMore: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data.families]);
 
-  // When generation filter changes via URL (client-side), proactively fetch a fresh dataset
-  // But only if we don't already have the right data from server-side rendering
+  // Fetch families when the selected generations change.
+  // We skip the fetch only when the current families were already fetched for
+  // this exact genKey (avoids re-fetching the same data).
   useEffect(() => {
-    const genKey = gens.join(',');
-    if (!genKey) return; // no gen filter -> keep current dataset and rely on pagination
-
-    // Check if we already have data that matches the current generation filter
-    // If the server already provided the right data, don't make another request
-    const hasMatchingData = families.some(family => 
-      family.species.some(species => gens.includes(String(species.gen)))
-    );
-    
-    // Only fetch if we don't have matching data or if we have very few families (indicating incomplete data)
-    if (hasMatchingData && families.length > 10) return;
+    if (!genKey) return;
+    if (fetchedFilterKey.current === `${genKey}_${methodKey}`) return;
 
     let aborted = false;
-    setIsInitialLoading(true);
+    setIsLoading(true);
     (async () => {
       try {
         const usp = new URLSearchParams();
         usp.set('gen', genKey);
-        usp.set('limit', String(PAGE_SIZE * 30)); // initial bulk to populate view
+        if (methodKey) usp.set('method', methodKey);
+        usp.set('limit', '300');
         usp.set('offset', '0');
-        const res = await fetch(`/api/evolutions?${usp.toString()}`, { cache: 'no-store' });
-        if (!res.ok) return;
+        const res = await fetch(`/api/evolutions?${usp.toString()}`);
+        if (!res.ok || aborted) return;
         const json: NormalizedEvoGraph = await res.json();
         if (aborted) return;
         const next = normalizeEvoGraph(json as any);
+        fetchedFilterKey.current = `${genKey}_${methodKey}`;
         setFamilies(next.families || []);
         setLoaded({ offset: next.families.length, hasMore: true });
-      } catch {}
-      finally {
-        if (!aborted) {
-          setIsInitialLoading(false);
-          setIsFilterLoading(false);
-        }
+      } catch {} finally {
+        if (!aborted) setIsLoading(false);
       }
     })();
-
     return () => { aborted = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gens.join(',')]);
+  }, [genKey]);
 
-  // When method filter changes via URL (client-side), proactively fetch a fresh dataset
-  // But only if we don't already have the right data from server-side rendering
+  // Fetch families when the selected methods change.
   useEffect(() => {
-    const methodKey = methods.join(',');
-    if (!methodKey) return; // no method filter -> keep current dataset and rely on pagination
-
-    // Check if we already have data that matches the current method filter
-    // If the server already provided the right data, don't make another request
-    const hasMatchingData = families.some(family => 
-      family.edges.some(edge => methods.includes(edge.method.kind))
-    );
-    
-    // Only fetch if we don't have matching data or if we have very few families (indicating incomplete data)
-    if (hasMatchingData && families.length > 10) return;
+    if (!methodKey) return;
+    if (fetchedFilterKey.current === `${genKey}_${methodKey}`) return;
 
     let aborted = false;
-    setIsInitialLoading(true);
+    setIsLoading(true);
     (async () => {
       try {
         const usp = new URLSearchParams();
+        if (genKey) usp.set('gen', genKey);
         usp.set('method', methodKey);
-        usp.set('limit', String(PAGE_SIZE * 30)); // initial bulk to populate view
+        usp.set('limit', '300');
         usp.set('offset', '0');
-        const res = await fetch(`/api/evolutions?${usp.toString()}`, { cache: 'no-store' });
-        if (!res.ok) return;
+        const res = await fetch(`/api/evolutions?${usp.toString()}`);
+        if (!res.ok || aborted) return;
         const json: NormalizedEvoGraph = await res.json();
         if (aborted) return;
         const next = normalizeEvoGraph(json as any);
+        fetchedFilterKey.current = `${genKey}_${methodKey}`;
         setFamilies(next.families || []);
         setLoaded({ offset: next.families.length, hasMore: true });
-      } catch {}
-      finally {
-        if (!aborted) {
-          setIsInitialLoading(false);
-          setIsFilterLoading(false);
-        }
+      } catch {} finally {
+        if (!aborted) setIsLoading(false);
       }
     })();
-
     return () => { aborted = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [methods.join(',')]);
+  }, [methodKey]);
 
   const filteredFamilies = useMemo(() => {
     let fams = families.slice();
 
-    // Only log in development and when there are significant changes
-    if (process.env.NODE_ENV === 'development' && families.length > 0) {
-      console.log('Filtering families:', {
-        totalFamilies: families.length,
-        query: query || 'none',
-        gens: gens.length || 'all',
-        methods: methods.length || 'all',
-        branchingOnly
-      });
-    }
-
-    if (query) {
-      const queryLower = query.toLowerCase();
+    if (queryLc) {
       fams = fams.filter((f) =>
-        f.species.some((s) => s.name.toLowerCase().includes(queryLower))
+        f.species.some((s) => s.name.toLowerCase().includes(queryLc))
       );
     }
 
@@ -207,173 +147,96 @@ export default function EvoTree({ data }: Props) {
     });
 
     return fams;
-  }, [families, query, gens, methods, branchingOnly]);
+  }, [families, queryLc, gens, methods, branchingOnly]);
 
   // Windowing: render in fixed-size chunks (10-by-10)
   const [limit, setLimit] = useState(PAGE_SIZE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const visible = filteredFamilies.slice(0, limit);
-  
-  // For generation-filtered or method-filtered data, we should only show "Show more" if we haven't displayed all families yet
-  // or if we're not in filtering mode and there might be more data
-  const hasFiltering = gens.length > 0 || methods.length > 0;
-  const canShowMore = hasFiltering 
-    ? visible.length < filteredFamilies.length 
-    : (visible.length < filteredFamilies.length || loaded.hasMore);
 
   async function fetchMore() {
     if (isLoadingMore) return;
     setIsLoadingMore(true);
     try {
       const usp = new URLSearchParams();
-      const genParam = sp.get('gen');
-      const methodParam = sp.get('method');
-      
-      if (genParam) usp.set('gen', genParam);
-      if (methodParam) usp.set('method', methodParam);
-      
-      // For generation-filtered or method-filtered data, we need to be more careful with offset calculation
-      // If we have filtering, we should start from the total families we already have
-      const hasFiltering = genParam || methodParam;
-      const currentOffset = hasFiltering ? families.length : loaded.offset;
-      usp.set('offset', String(currentOffset));
+      if (gens.length) usp.set('gen', gens.join(','));
+      if (methods.length) usp.set('method', methods.join(','));
+      usp.set('offset', String(loaded.offset));
       usp.set('limit', String(PAGE_SIZE));
-      
-      const res = await fetch(`/api/evolutions?${usp.toString()}`, { cache: 'no-store' });
-      if (!res.ok) throw new Error('Failed to load more');
+
+      const res = await fetch(`/api/evolutions?${usp.toString()}`);
+      if (!res.ok) {
+        setLoaded((s) => ({ ...s, hasMore: false }));
+        return;
+      }
       const json: NormalizedEvoGraph = await res.json();
       const next = normalizeEvoGraph(json as any);
       const nextFamilies = next.families || [];
-      
+
       if (nextFamilies.length === 0) {
         setLoaded((s) => ({ ...s, hasMore: false }));
         return;
       }
-      
+
       setFamilies((prev) => {
         const seen = new Set(prev.map((f) => f.familyId));
         const merged = [...prev];
         for (const f of nextFamilies) if (!seen.has(f.familyId)) merged.push(f);
         return merged;
       });
-      
-      // Update offset based on whether we're in generation mode or not
-      if (genParam) {
-        setLoaded((s) => ({ offset: families.length + nextFamilies.length, hasMore: nextFamilies.length >= PAGE_SIZE }));
-      } else {
-        setLoaded((s) => ({ offset: s.offset + nextFamilies.length, hasMore: nextFamilies.length >= PAGE_SIZE }));
-      }
+
+      setLoaded((s) => ({
+        offset: s.offset + nextFamilies.length,
+        hasMore: nextFamilies.length >= PAGE_SIZE,
+      }));
+    } catch {
+      setLoaded((s) => ({ ...s, hasMore: false }));
     } finally {
       setIsLoadingMore(false);
     }
   }
 
-  // Auto-fetch more when searching yields no local results, one page at a time.
-  useEffect(() => {
-    if (!query) return;
-    if (filteredFamilies.length > 0) return;
-    if (!loaded.hasMore) return;
-    if (isLoadingMore) return;
-    // Fetch next page; effect will re-run after state updates
-    handleShowMore();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, filteredFamilies.length, loaded.hasMore, isLoadingMore]);
-
-  // Search-based loading for better performance when searching
-  useEffect(() => {
-    if (!query || query.length < 2) return;
-    
-    let aborted = false;
-    setIsInitialLoading(true);
-    
-    (async () => {
-      try {
-        const searchParams = new URLSearchParams();
-        searchParams.set('q', query);
-        if (gens.length) {
-          searchParams.set('gen', gens.join(','));
-        }
-        
-        const res = await fetch(`/api/evolutions/search?${searchParams.toString()}`, { 
-          cache: 'no-store' 
-        });
-        if (!res.ok) return;
-        const json = await res.json();
-        if (aborted) return;
-        
-        // Merge search results with existing families
-        setFamilies(prev => {
-          const seen = new Set(prev.map(f => f.familyId));
-          const newFamilies = json.families.filter((f: any) => !seen.has(f.familyId));
-          return [...prev, ...newFamilies];
-        });
-      } catch (error) {
-        console.error('Search failed:', error);
-      } finally {
-        if (!aborted) {
-          setIsInitialLoading(false);
-          setIsFilterLoading(false);
-        }
-      }
-    })();
-
-    return () => { aborted = true; };
-  }, [query, gens.join(',')]);
-
   async function handleShowMore() {
     if (isLoadingMore) return;
-    
-    // Prefer revealing already-filtered local items first
+
     if (visible.length < filteredFamilies.length) {
       setLimit((n) => n + PAGE_SIZE);
       return;
     }
-    
-    // If we're in filtering mode and have shown all families, don't fetch more
-    if (hasFiltering && visible.length >= filteredFamilies.length) {
-      return;
-    }
-    
-    // If we've shown all locally available filtered items but there are more on the server, fetch then reveal
-    if (loaded.hasMore) {
-      await fetchMore();
-      setLimit((n) => n + PAGE_SIZE);
-    }
+
+    if (!loaded.hasMore) return;
+
+    await fetchMore();
+    setLimit((n) => n + PAGE_SIZE);
   }
 
-  // When filters/search change, reset visible count
   useEffect(() => {
     setLimit(PAGE_SIZE);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, gens.join(','), methods.join(','), branchingOnly]);
+  }, [queryLc, genKey, methodKey, branchingOnly]);
 
-  // Infinite scroll: observe a sentinel near the bottom to trigger fetchMore
+  // Infinite scroll: observe a sentinel near the bottom to auto-load more
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const handleShowMoreRef = useRef(handleShowMore);
+  handleShowMoreRef.current = handleShowMore;
+
   useEffect(() => {
-    if (!canShowMore) return;
     const el = sentinelRef.current;
     if (!el) return;
     const observer = new IntersectionObserver(
       (entries) => {
-        const entry = entries[0];
-        if (entry.isIntersecting && !isLoadingMore && canShowMore) {
-          handleShowMore();
+        if (entries[0]?.isIntersecting) {
+          handleShowMoreRef.current();
         }
       },
-      { root: null, rootMargin: '200px', threshold: 0 }
+      { root: null, rootMargin: '400px', threshold: 0 }
     );
     observer.observe(el);
     return () => observer.disconnect();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canShowMore, isLoadingMore, sentinelRef.current]);
+  }, []);
 
-  // Optimize rendering by reducing the initial batch size for better performance
-  const MAX_INITIAL_RENDER = 20; // Render fewer items initially for better performance
-  const shouldLimitInitial = visible.length > MAX_INITIAL_RENDER && !query && gens.length === 0;
-  const displayItems = shouldLimitInitial ? visible.slice(0, MAX_INITIAL_RENDER) : visible;
+  const displayItems = visible;
 
-  // Show loading skeleton when initial loading, but keep header and filters visible
-  if (isInitialLoading) {
+  if (isLoading && families.length === 0) {
     return (
       <div className="flex flex-col gap-4">
         <EvoSkeleton />
@@ -381,133 +244,99 @@ export default function EvoTree({ data }: Props) {
     );
   }
 
-  // Show filter loading state when filters are being applied
-  if (isFilterLoading) {
-    return (
-      <div className="flex flex-col gap-4">
-        {/* Show a subtle loading indicator instead of full-screen loading */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="flex items-center justify-center py-8"
-        >
-          <motion.div
-            animate={{ 
-              rotate: 360,
-              scale: [1, 1.1, 1]
-            }}
-            transition={{ 
-              rotate: { duration: 1.5, repeat: Infinity, ease: "linear" },
-              scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-            }}
-            className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center mb-4"
-          >
-            <motion.div
-              animate={{ opacity: [0.3, 1, 0.3] }}
-              transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-              className="text-white text-xl"
-            >
-              ⚡
-            </motion.div>
-          </motion.div>
-          <motion.div
-            animate={{ opacity: [0.5, 1, 0.5] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-            className="ml-3 text-sm text-gray-600 dark:text-gray-400"
-          >
-            {methods.length > 0 && `Finding ${methods.join(', ')} evolutions...`}
-            {gens.length > 0 && `Filtering by ${gens.join(', ')}...`}
-            {branchingOnly && 'Showing branched evolutions only...'}
-            {!methods.length && !gens.length && !branchingOnly && 'Processing filters...'}
-          </motion.div>
-        </motion.div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col gap-4" role="list" aria-label="Evolution families">
-      {displayItems.map((fam) => (
-        <FamilyTree
-          key={fam.familyId}
-          fam={fam}
-          open={open}
-          onToggle={toggleOpen}
-          reduce={reduce}
-          onPokemonClick={handlePokemonClick}
-        />)
-      )}
-      {shouldLimitInitial && visible.length > MAX_INITIAL_RENDER && (
-        <div className="flex justify-center">
-          <button 
-            type="button" 
-            className="px-4 py-2 rounded border text-sm bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/40" 
-            onClick={() => setLimit(visible.length)}
-          >
-            Show all {visible.length} families
-          </button>
-        </div>
-      )}
-      {canShowMore && (
-        <div className="flex justify-center">
-          <button 
-            type="button" 
-            className="px-3 py-1.5 rounded border text-sm bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2" 
-            onClick={handleShowMore} 
-            disabled={isLoadingMore}
-          >
-            {isLoadingMore ? (
-              <>
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  className="w-4 h-4 rounded-full border-2 border-blue-400 border-t-transparent"
-                />
-                Loading more...
-              </>
-            ) : (
-              'Show more'
-            )}
-          </button>
+      {displayItems.map((fam) => {
+        const famIsOpen = open.some((id) => fam.bases.includes(id));
+        return (
+          <FamilyTree
+            key={fam.familyId}
+            fam={fam}
+            isOpen={famIsOpen}
+            onToggle={() => {
+              const ids = fam.bases;
+              setOpen((prev) =>
+                ids.every((id) => prev.includes(id))
+                  ? prev.filter((id) => !ids.includes(id))
+                  : [...prev, ...ids.filter((id) => !prev.includes(id))]
+              );
+            }}
+            reduce={reduce}
+            onPokemonClick={handlePokemonClick}
+          />
+        );
+      })}
+
+      {/* Sentinel for IntersectionObserver auto-load */}
+      <div ref={sentinelRef} className="h-1" aria-hidden />
+
+      {isLoadingMore && (
+        <div className="flex justify-center py-4">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            className="w-6 h-6 rounded-full border-2 border-blue-400 border-t-transparent"
+          />
+          <span className="ml-2 text-sm text-gray-500">Loading more families...</span>
         </div>
       )}
     </div>
   );
 }
 
-function FamilyTree({ fam, open, onToggle, reduce, onPokemonClick }: { fam: NormalizedFamily; open: number[]; onToggle: (id: number) => void; reduce: boolean; onPokemonClick: (id: number) => void }) {
-  const bases = fam.bases.map((id) => fam.speciesById.get(id)!).filter(Boolean);
-  const isOpen = open.some((id) => fam.bases.includes(id));
+const BLUR_PLACEHOLDER =
+  "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q==";
 
-  const content = (
-    <div className="mt-3 pl-2">
-      {renderFamilyFlat(fam, reduce, onPokemonClick)}
-    </div>
+const FamilyTree = React.memo(function FamilyTree({
+  fam,
+  isOpen,
+  onToggle,
+  reduce,
+  onPokemonClick,
+}: {
+  fam: NormalizedFamily;
+  isOpen: boolean;
+  onToggle: () => void;
+  reduce: boolean;
+  onPokemonClick: (id: number) => void;
+}) {
+  const bases = useMemo(
+    () => fam.bases.map((id) => fam.speciesById.get(id)!).filter(Boolean),
+    [fam.bases, fam.speciesById]
   );
 
+  const [hasBeenOpened, setHasBeenOpened] = useState(isOpen);
+  useEffect(() => {
+    if (isOpen) setHasBeenOpened(true);
+  }, [isOpen]);
+
   return (
-    <section className="rounded-md border bg-white/60 dark:bg-gray-900/40" role="listitem" aria-label={`${bases.map((b) => b.name).join(', ')} family`}>
+    <section
+      className="rounded-md border bg-white/60 dark:bg-gray-900/40"
+      role="listitem"
+      aria-label={`${bases.map((b) => b.name).join(', ')} family`}
+    >
       <div
         className="flex items-center justify-between p-3 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
         role="button"
         tabIndex={0}
         aria-expanded={isOpen}
-        onClick={() => bases.forEach((b) => onToggle(b.id))}
+        onClick={onToggle}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            bases.forEach((b) => onToggle(b.id));
+            onToggle();
           }
         }}
       >
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={(e) => { e.stopPropagation(); bases.forEach((b) => onToggle(b.id)); }}
+            onClick={(e) => { e.stopPropagation(); onToggle(); }}
             aria-expanded={isOpen}
             className="h-8 w-8 grid place-items-center rounded border bg-gray-50 dark:bg-gray-800"
           >
-            {isOpen ? '−' : '+'}
+            {isOpen ? '\u2212' : '+'}
           </button>
           <h2 className="font-semibold flex items-center gap-3">
             {bases.map((b) => (
@@ -521,17 +350,20 @@ function FamilyTree({ fam, open, onToggle, reduce, onPokemonClick }: { fam: Norm
                   decoding="async"
                   priority={false}
                   placeholder="blur"
-                  blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+                  blurDataURL={BLUR_PLACEHOLDER}
                   className="w-14 h-14 rounded bg-white/50 dark:bg-black/40 object-contain"
                   onError={(e) => {
-                    (e.currentTarget as any).src = b.sprite || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${b.id}.png`
+                    (e.currentTarget as any).src =
+                      b.sprite || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${b.id}.png`;
                   }}
                 />
                 <span>{formatPokemonName(b.name)}</span>
               </span>
             ))}
           </h2>
-          {fam.isBranched && <span className="ml-2 text-xs rounded-full bg-purple-600 text-white px-2 py-0.5">Branched</span>}
+          {fam.isBranched && (
+            <span className="ml-2 text-xs rounded-full bg-purple-600 text-white px-2 py-0.5">Branched</span>
+          )}
         </div>
         <span className="text-xs text-gray-500">{fam.species.length} species</span>
       </div>
@@ -541,73 +373,61 @@ function FamilyTree({ fam, open, onToggle, reduce, onPokemonClick }: { fam: Norm
         transition={reduce ? { duration: 0 } : { type: 'tween', duration: 0.2 }}
         className="overflow-hidden"
       >
-        {content}
+        {hasBeenOpened && (
+          <div className="mt-3 pl-2">
+            <FamilyEdges fam={fam} reduce={reduce} onPokemonClick={onPokemonClick} />
+          </div>
+        )}
       </motion.div>
     </section>
   );
-}
+});
 
-// Minimal, readable layout: flat list of edges with badges between nodes.
-function renderFamilyFlat(fam: NormalizedFamily, reduce: boolean, onPokemonClick: (id: number) => void) {
-  const rows: JSX.Element[] = [];
-  const seen = new Set<string>();
-  const [hoverTarget, setHoverTarget] = (typeof window !== 'undefined') ? (window as any).__evoHover || [null, null] : [null, null];
-  fam.species.forEach((s) => {
-    const outs = fam.outgoing.get(s.id) || [];
-    if (outs.length === 0) return;
-    outs.forEach((e) => {
-      const key = `${e.from}-${e.to}`;
-      if (seen.has(key)) return;
-      seen.add(key);
-      const to = fam.speciesById.get(e.to)!;
-      rows.push(
-        <div key={key} className="flex items-center gap-2 p-2">
-          <EvoCard 
-            species={fam.speciesById.get(e.from)!} 
-            onClick={() => onPokemonClick(fam.speciesById.get(e.from)!.id)}
-          />
-          <svg width="80" height="8" aria-hidden>
-            <line
-              x1="4"
-              y1="4"
-              x2="76"
-              y2="4"
-              stroke="#9CA3AF"
-              strokeWidth="2"
-              strokeDasharray="72"
-              strokeDashoffset={reduce ? 0 : 72}
+const FamilyEdges = React.memo(function FamilyEdges({
+  fam,
+  reduce,
+  onPokemonClick,
+}: {
+  fam: NormalizedFamily;
+  reduce: boolean;
+  onPokemonClick: (id: number) => void;
+}) {
+  const rows = useMemo(() => {
+    const result: JSX.Element[] = [];
+    const seen = new Set<string>();
+
+    for (const s of fam.species) {
+      const outs = fam.outgoing.get(s.id) || [];
+      for (const e of outs) {
+        const key = `${e.from}-${e.to}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const from = fam.speciesById.get(e.from)!;
+        const to = fam.speciesById.get(e.to)!;
+        result.push(
+          <div key={key} className="flex items-center gap-2 p-2">
+            <EvoCard species={from} onClick={() => onPokemonClick(from.id)} />
+            <svg width="80" height="8" aria-hidden>
+              <line x1="4" y1="4" x2="76" y2="4" stroke="#9CA3AF" strokeWidth="2" strokeDasharray="72" strokeDashoffset={reduce ? 0 : 72}>
+                {!reduce && <animate attributeName="stroke-dashoffset" from="72" to="0" dur="0.35s" fill="freeze" />}
+              </line>
+            </svg>
+            <span
+              title={methodToText(e.method)}
+              className="text-xs rounded-full border bg-gray-50 dark:bg-gray-800 px-2 py-1"
             >
-              {!reduce && (
-                <animate attributeName="stroke-dashoffset" from="72" to="0" dur="0.35s" fill="freeze" />
-              )}
-            </line>
-          </svg>
-          <span
-            role="img"
-            aria-label={methodToText(e.method)}
-            title={methodToText(e.method)}
-            className="text-xs rounded-full border bg-gray-50 dark:bg-gray-800 px-2 py-1"
-            onMouseEnter={() => {
-              (window as any).__evoHover = [e.to, Date.now()];
-            }}
-            onMouseLeave={() => {
-              (window as any).__evoHover = [null, Date.now()];
-            }}
-          >
-            {methodIcon(e.method.kind)} <span className="ml-1 align-middle">{methodToText(e.method)}</span>
-          </span>
-          <div className={(typeof window !== 'undefined' && (window as any).__evoHover?.[0] === e.to) ? 'ring-2 ring-blue-500 rounded' : ''}>
-            <EvoCard 
-              species={to} 
-              onClick={() => onPokemonClick(to.id)}
-            />
+              {methodIcon(e.method.kind)} <span className="ml-1 align-middle">{methodToText(e.method)}</span>
+            </span>
+            <EvoCard species={to} onClick={() => onPokemonClick(to.id)} />
           </div>
-        </div>
-      );
-    });
-  });
+        );
+      }
+    }
+    return result;
+  }, [fam, reduce, onPokemonClick]);
+
   return <div className="flex flex-col">{rows}</div>;
-}
+});
 
 function methodIcon(kind: string) {
   switch (kind) {
