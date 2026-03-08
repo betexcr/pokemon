@@ -955,10 +955,16 @@ export default function TeamBuilderPage() {
       );
   }, [])
 
+  const moveCacheRef = useRef<Map<string, AvailableMove[]>>(new Map())
+
   const getAvailableMoves = useCallback(async (
     pokemonId: number,
     level: number,
   ): Promise<AvailableMove[]> => {
+    const cacheKey = `${pokemonId}:${level}`
+    const cached = moveCacheRef.current.get(cacheKey)
+    if (cached) return cached
+
     try {
       let pokemon = allPokemon.find(p => p.id === pokemonId)
       if (!pokemon || pokemon.moves.length === 0) {
@@ -968,9 +974,9 @@ export default function TeamBuilderPage() {
       const allMoves = parseMoveList(pokemon.moves)
       const moveNames = allMoves.map(m => m.moveName)
 
-      const moveDataArr = await getMovesBatched(moveNames, { concurrency: 12 })
+      const moveDataArr = await getMovesBatched(moveNames)
 
-      return allMoves.map(({ moveName, level_learned_at, learn_method }, i) => {
+      const result = allMoves.map(({ moveName, level_learned_at, learn_method }, i) => {
         const moveData = moveDataArr[i]
         if (!moveData) {
           return { name: moveName, type: 'normal', damage_class: 'physical' as const, power: null, accuracy: null, pp: null, level_learned_at, learn_method }
@@ -993,6 +999,9 @@ export default function TeamBuilderPage() {
         }
         return true
       })
+
+      moveCacheRef.current.set(cacheKey, result)
+      return result
     } catch (error) {
       console.error('Error getting available moves:', error)
       return []

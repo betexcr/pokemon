@@ -900,19 +900,30 @@ export async function getMove(id: number | string): Promise<any> {
 }
 
 /**
- * Fetch multiple moves with concurrency control.
- * Fires batches of `concurrency` requests; calls onBatch after each batch so the
- * UI can stream partial results.
+ * Fetch multiple moves in parallel.
+ * Cached moves resolve instantly; only true network requests hit PokeAPI.
+ * Falls back to batched concurrency if specified (default: full parallel).
  */
 export async function getMovesBatched(
   names: string[],
   opts?: { concurrency?: number; onBatch?: (moves: any[], startIdx: number) => void }
 ): Promise<any[]> {
-  const batchSize = opts?.concurrency ?? 12
+  const concurrency = opts?.concurrency ?? names.length
   const results: any[] = new Array(names.length)
 
-  for (let start = 0; start < names.length; start += batchSize) {
-    const end = Math.min(start + batchSize, names.length)
+  if (concurrency >= names.length) {
+    const settled = await Promise.all(
+      names.map(name => getMove(name).catch(() => null))
+    )
+    for (let i = 0; i < settled.length; i++) {
+      results[i] = settled[i]
+    }
+    opts?.onBatch?.(results, 0)
+    return results
+  }
+
+  for (let start = 0; start < names.length; start += concurrency) {
+    const end = Math.min(start + concurrency, names.length)
     const batch = names.slice(start, end)
     const batchResults = await Promise.all(
       batch.map(name => getMove(name).catch(() => null))
