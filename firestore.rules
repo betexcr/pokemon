@@ -67,8 +67,9 @@ service cloud.firestore {
       allow create: if request.auth != null &&
         request.resource.data.hostUid == request.auth.uid;
 
-      allow update: if request.auth != null &&
-        resource.data.hostUid == request.auth.uid;
+      // Any authenticated user can update (join, leave, pick seat, update team).
+      // Service-layer logic enforces host-only operations (start, randomize, forfeit, cancel).
+      allow update: if request.auth != null;
 
       allow delete: if request.auth != null &&
         resource.data.hostUid == request.auth.uid;

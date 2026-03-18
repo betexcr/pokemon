@@ -318,41 +318,56 @@ class ChampionshipService {
 
   async getOpenChampionships(): Promise<Championship[]> {
     const db = this.getDb();
-    const q = query(
-      collection(db, this.collectionName),
-      where('status', 'in', ['open', 'seeding']),
-      orderBy('createdAt', 'desc')
-    );
-    const snap = await getDocs(q);
-    return snap.docs.map((d) =>
-      docToChampionship(d.id, d.data() as ChampionshipDocument)
-    );
-  }
-
-  async getUserChampionships(uid: string): Promise<Championship[]> {
-    const db = this.getDb();
-    const q = query(
-      collection(db, this.collectionName),
-      where('participants', 'array-contains', uid)
-    );
 
     try {
+      const q = query(
+        collection(db, this.collectionName),
+        where('status', 'in', ['open', 'seeding']),
+        orderBy('createdAt', 'desc')
+      );
       const snap = await getDocs(q);
       return snap.docs.map((d) =>
         docToChampionship(d.id, d.data() as ChampionshipDocument)
       );
     } catch {
-      // Firestore can't do array-contains on nested objects easily;
-      // fall back to fetching all non-completed and filtering client-side
-      const q2 = query(
+      // Composite index may not exist yet; fall back to unordered query
+      const q = query(
+        collection(db, this.collectionName),
+        where('status', 'in', ['open', 'seeding'])
+      );
+      const snap = await getDocs(q);
+      return snap.docs
+        .map((d) => docToChampionship(d.id, d.data() as ChampionshipDocument))
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    }
+  }
+
+  async getUserChampionships(uid: string): Promise<Championship[]> {
+    const db = this.getDb();
+
+    // Firestore can't do array-contains on arrays of objects;
+    // fetch all active championships and filter client-side
+    try {
+      const q = query(
         collection(db, this.collectionName),
         where('status', 'in', ['open', 'seeding', 'in_progress']),
         orderBy('createdAt', 'desc')
       );
-      const snap = await getDocs(q2);
+      const snap = await getDocs(q);
       return snap.docs
         .map((d) => docToChampionship(d.id, d.data() as ChampionshipDocument))
         .filter((c) => c.participants.some((p) => p.uid === uid));
+    } catch {
+      // Composite index may not exist yet; fall back to unordered query
+      const q = query(
+        collection(db, this.collectionName),
+        where('status', 'in', ['open', 'seeding', 'in_progress'])
+      );
+      const snap = await getDocs(q);
+      return snap.docs
+        .map((d) => docToChampionship(d.id, d.data() as ChampionshipDocument))
+        .filter((c) => c.participants.some((p) => p.uid === uid))
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
     }
   }
 

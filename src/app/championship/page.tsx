@@ -17,6 +17,7 @@ function ChampionshipHubPage() {
   const [openChampionships, setOpenChampionships] = useState<Championship[]>([]);
   const [myChampionships, setMyChampionships] = useState<Championship[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
 
   const [showForm, setShowForm] = useState(false);
@@ -29,6 +30,7 @@ function ChampionshipHubPage() {
 
     async function load() {
       try {
+        setLoadError(null);
         const [open, mine] = await Promise.all([
           championshipService.getOpenChampionships(),
           championshipService.getUserChampionships(user!.uid),
@@ -37,6 +39,7 @@ function ChampionshipHubPage() {
         setMyChampionships(mine);
       } catch (err) {
         console.error('Failed to load championships:', err);
+        setLoadError('Failed to load championships. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -238,6 +241,18 @@ function ChampionshipHubPage() {
               <div className="text-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-500 mx-auto mb-4" />
                 <p className="text-muted">Loading championships...</p>
+              </div>
+            ) : loadError ? (
+              <div className="text-center py-12">
+                <div className="text-6xl mb-4">⚠️</div>
+                <h3 className="text-lg font-medium text-text mb-2">Could not load championships</h3>
+                <p className="text-muted mb-4">{loadError}</p>
+                <button
+                  onClick={() => { setLoading(true); setLoadError(null); window.location.reload(); }}
+                  className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                >
+                  Retry
+                </button>
               </div>
             ) : openChampionships.length === 0 ? (
               <div className="text-center py-12">
