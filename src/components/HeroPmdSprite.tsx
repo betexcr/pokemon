@@ -23,7 +23,7 @@ export function usePmdAnimations(pokemonId: number): { anims: AnimMeta[] | null;
 		const load = async () => {
 			const id = String(pokemonId).padStart(4, '0')
 			const basePath = `/assets/pmd/${id}/sprite`
-			const remoteBasePath = `https://spriteserver.pmdcollab.org/assets/${id}/sprite`
+			const remoteBasePath = `https://raw.githubusercontent.com/PMDCollab/SpriteCollab/master/sprite/${id}`
 			const out: AnimMeta[] = []
 
 			try {
@@ -32,6 +32,7 @@ export function usePmdAnimations(pokemonId: number): { anims: AnimMeta[] | null;
 					const res = await fetch(`${basePath}/AnimData.xml`)
 					if (!res.ok) throw new Error('Local AnimData.xml not found')
 					xmlText = await res.text()
+					if (!xmlText.includes('<AnimData')) throw new Error('Invalid XML response')
 				} catch {
 					if (cancelled) return
 					const res = await fetch(`${remoteBasePath}/AnimData.xml`)

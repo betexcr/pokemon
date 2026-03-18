@@ -1268,9 +1268,15 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
                 }}
               />
             )}
-            {style === 'pmd' && selectedPmdAnim && (
+            {style === 'pmd' && (
               <div className="h-24 w-24 sm:h-28 sm:w-28 lg:h-32 lg:w-32 flex items-center justify-center">
-                <HeroPmdSprite pokemonId={pokemon.id} animName={selectedPmdAnim} scale={2} />
+                {selectedPmdAnim ? (
+                  <HeroPmdSprite pokemonId={pokemon.id} animName={selectedPmdAnim} scale={2} />
+                ) : (
+                  <div className="text-muted text-xs text-center">
+                    {pmdError ? 'Animations unavailable' : pmdAnims === null ? 'Loading...' : 'No animations found'}
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -14,7 +14,6 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   // Use static export for Firebase hosting
-  // Use static export for Firebase hosting
   // output: 'export',
   trailingSlash: true,
   // Exclude API routes from static export

@@ -1,5 +1,9 @@
 import ChampionshipClient from './ChampionshipClient';
 
+export function generateStaticParams() {
+  return [{ id: '_' }];
+}
+
 interface Props {
   params: Promise<{ id: string }>;
 }
