@@ -1,0 +1,101 @@
+{
+  "common": {
+    "search": "検索",
+    "loading": "読み込み中...",
+    "back": "戻る",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "clear": "クリア",
+    "remove": "削除",
+    "close": "閉じる",
+    "offline": "オフラインです",
+    "signIn": "サインイン",
+    "signOut": "サインアウト"
+  },
+  "nav": {
+    "home": "ポケデックス",
+    "battle": "バトル",
+    "team": "チームビルダー",
+    "compare": "比較",
+    "checklist": "チェックリスト",
+    "top50": "トップ50",
+    "contests": "コンテスト",
+    "usage": "使用統計",
+    "evolutions": "進化",
+    "typeMatchups": "タイプ相性",
+    "trends": "トレンド",
+    "battleGuide": "バトルガイド"
+  },
+  "pokedex": {
+    "title": "モダンポケデックス",
+    "discovered": "{count}匹のポケモンを発見",
+    "searchPlaceholder": "ポケモンの名前かIDで検索...",
+    "density": "密度",
+    "cozy": "ゆったり",
+    "compact": "コンパクト",
+    "ultra": "ウルトラ",
+    "filters": "詳細フィルター",
+    "noResults": "「{term}」に一致するポケモンが見つかりません"
+  },
+  "pokemon": {
+    "stats": "ステータス",
+    "moves": "わざ",
+    "abilities": "とくせい",
+    "evolution": "しんか",
+    "matchups": "タイプ相性",
+    "overview": "概要",
+    "hp": "HP",
+    "attack": "こうげき",
+    "defense": "ぼうぎょ",
+    "specialAttack": "とくこう",
+    "specialDefense": "とくぼう",
+    "speed": "すばやさ",
+    "height": "たかさ",
+    "weight": "おもさ",
+    "baseExperience": "基礎経験値"
+  },
+  "battle": {
+    "title": "AIバトル",
+    "yourTeam": "あなたのチーム",
+    "opponent": "対戦相手",
+    "selectTeam": "バトルするチームを選択",
+    "startBattle": "バトル開始",
+    "battleGuide": "バトルガイド",
+    "movesLeft": "残り{count}わざ",
+    "fainted": "ひんし",
+    "won": "{name}の勝ち！",
+    "lost": "{name}の負け！"
+  },
+  "team": {
+    "title": "チームビルダー＆シナジー分析",
+    "addPokemon": "ポケモンを追加",
+    "yourTeam": "あなたのチーム",
+    "savedTeams": "保存済みチーム",
+    "teamName": "チーム名",
+    "saveTeam": "チームを保存",
+    "clearTeam": "クリア",
+    "emptySlot": "空きスロット",
+    "nature": "せいかく",
+    "level": "レベル",
+    "shiny": "色違い",
+    "moves": "わざ",
+    "noTeams": "保存済みチームはまだありません。",
+    "syncCloud": "クラウド同期済み",
+    "localOnly": "ローカルのみ"
+  },
+  "checklist": {
+    "title": "ポケモン図鑑チェックリスト",
+    "progress": "進捗",
+    "caught": "捕まえた",
+    "seen": "見た",
+    "remaining": "残り"
+  },
+  "usage": {
+    "title": "使用率メタダッシュボード",
+    "format": "フォーマット",
+    "generation": "世代",
+    "month": "月",
+    "usagePercent": "使用率",
+    "rank": "順位"
+  }
+}

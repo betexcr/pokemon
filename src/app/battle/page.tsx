@@ -220,6 +220,18 @@ function BattlePage() {
       {/* Scrollable Content Area */}
       <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden relative">
         <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+        {/* Battle Guide Link */}
+        <div className="flex justify-end">
+          <button
+            onClick={() => router.push("/battle/guide")}
+            className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Battle Guide
+          </button>
+        </div>
         {/* Player team selection */}
         <section className="border border-border rounded-xl bg-surface p-4">
           <div className="flex items-center justify-between mb-3">

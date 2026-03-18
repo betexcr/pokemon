@@ -242,7 +242,12 @@ export function getEffectiveSpeed(pokemon: BattlePokemon): number {
       if (n.decreasedStat === 'speed') calculatedSpeed = Math.floor(calculatedSpeed * 0.9);
     }
   } catch { }
-  return applyStatModifier(calculatedSpeed, pokemon.statModifiers?.speed || 0);
+  let finalSpeed = applyStatModifier(calculatedSpeed, pokemon.statModifiers?.speed || 0);
+  // Paralysis halves speed (Gen 7+)
+  if (pokemon.status === 'paralyzed') {
+    finalSpeed = Math.floor(finalSpeed * 0.5);
+  }
+  return finalSpeed;
 }
 
 // Check if a Pokemon can use a move (usability gates)
@@ -288,9 +293,13 @@ export function canUseMove(
 
   // Check volatile conditions
   if (pokemon.volatile.taunt && pokemon.volatile.taunt.turns > 0) {
-    // Only allow damaging moves if taunted
-    // For now, assume all moves are status moves if they have no power
-    return { canUse: true }; // TODO: Check if move is status vs damaging
+    const isStatusMove =
+      move.damage_class?.name === 'status' ||
+      (move as any).category === 'status' ||
+      (!move.power && move.power !== undefined);
+    if (isStatusMove) {
+      return { canUse: false, reason: 'taunted' };
+    }
   }
 
   if (pokemon.volatile.encore && pokemon.volatile.encore.turns > 0) {

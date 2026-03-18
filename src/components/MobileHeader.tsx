@@ -14,13 +14,15 @@ interface MobileHeaderProps {
   pokemonCount: number
   density: 'cozy' | 'compact' | 'ultra' | 'list'
   onDensityChange: (density: 'cozy' | 'compact' | 'ultra' | 'list') => void
+  onFiltersClick?: () => void
 }
 
 export default function MobileHeader({ 
   theme, 
   pokemonCount, 
   density, 
-  onDensityChange 
+  onDensityChange,
+  onFiltersClick: onFiltersClickProp 
 }: MobileHeaderProps) {
   const router = useRouter()
   const { user } = useAuth()
@@ -47,6 +49,11 @@ export default function MobileHeader({
     setIsMenuOpen(false)
   }
 
+  const handleChampionshipClick = () => {
+    router.push('/championship')
+    setIsMenuOpen(false)
+  }
+
   const handleTop50Click = () => {
     router.push('/top50')
     setIsMenuOpen(false)
@@ -57,8 +64,10 @@ export default function MobileHeader({
   }
 
   const handleFiltersClick = () => {
-    // TODO: Implement filters functionality
-    console.log('Advanced filters clicked')
+    if (onFiltersClickProp) {
+      onFiltersClickProp()
+      setIsMenuOpen(false)
+    }
   }
 
   const renderProfilePicture = () => {
@@ -372,7 +381,24 @@ export default function MobileHeader({
                     />
                     <span className="font-medium">Compare</span>
                   </button>
-              {/* Advanced Filters button removed from mobile menu */}
+                  <button
+                    onClick={handleChampionshipClick}
+                    className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg bg-white/50 text-text hover:bg-white/70 transition-colors"
+                  >
+                    <span className="h-5 w-5 flex items-center justify-center text-yellow-500">🏆</span>
+                    <span className="font-medium">Championships</span>
+                  </button>
+                  {onFiltersClickProp && (
+                    <button
+                      onClick={handleFiltersClick}
+                      className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg bg-white/50 text-text hover:bg-white/70 transition-colors"
+                    >
+                      <svg className="h-5 w-5 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                      </svg>
+                      <span className="font-medium">Advanced Filters</span>
+                    </button>
+                  )}
                 </div>
               </div>
 

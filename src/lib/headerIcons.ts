@@ -86,6 +86,13 @@ export const HEADER_ICONS: Record<string, HeaderIconConfig> = {
     darkColor: 'text-pink-400',
     darkBgColor: 'bg-pink-900/30'
   },
+  'championship': {
+    icon: Trophy,
+    color: 'text-yellow-600',
+    bgColor: 'bg-yellow-100',
+    darkColor: 'text-yellow-400',
+    darkBgColor: 'bg-yellow-900/30'
+  },
   'lobby': {
     icon: Swords,
     color: 'text-red-600',
@@ -337,6 +344,7 @@ export function getPageIconKey(pathname: string): string {
   if (pathname.startsWith('/compare')) return 'compare'
   if (pathname.startsWith('/top50')) return 'top50'
   if (pathname.startsWith('/contests')) return 'contests'
+  if (pathname.startsWith('/championship')) return 'championship'
   if (pathname.startsWith('/lobby')) return 'lobby'
   if (pathname.startsWith('/room')) return 'room'
   if (pathname.startsWith('/settings')) return 'settings'

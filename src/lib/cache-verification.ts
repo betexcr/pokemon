@@ -49,13 +49,23 @@ class CacheVerification {
   async verifyRedis(): Promise<{ status: 'connected' | 'error'; latency?: number; error?: string }> {
     try {
       if (typeof window !== 'undefined') {
-        // Redis can only be accessed from server-side
         return { status: 'error', error: 'Redis is server-side only' }
       }
 
-      // This would be called from server-side code
-      // For now, return a placeholder
-      return { status: 'connected', latency: 0 }
+      const { isRedisAvailable, cacheGet, cacheSet } = await import('./cache/redis')
+      if (!isRedisAvailable()) {
+        return { status: 'error', error: 'Redis not configured or unavailable' }
+      }
+
+      const start = Date.now()
+      const key = '__cache_health_check__'
+      await cacheSet(key, 'ok', 10)
+      const val = await cacheGet(key)
+      const latency = Date.now() - start
+
+      return val === 'ok'
+        ? { status: 'connected', latency }
+        : { status: 'error', error: 'Redis read-back mismatch' }
     } catch (error) {
       return {
         status: 'error',

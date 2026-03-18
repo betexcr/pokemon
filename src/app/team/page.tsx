@@ -32,6 +32,7 @@ import TypeRadar from '@/components/team/TypeRadar'
 import WeaknessMatrix from '@/components/team/WeaknessMatrix'
 import OffenseMatrix from '@/components/team/OffenseMatrix'
 import Suggestions from '@/components/team/Suggestions'
+import SynergyPanel from '@/components/team/SynergyPanel'
 
 // Types are now imported from userTeams.ts
 
@@ -1570,6 +1571,38 @@ export default function TeamBuilderPage() {
                     </div>
                   )}
                   
+                  {/* Nature Selector */}
+                  {poke && (
+                    <div className="mb-3 flex items-center gap-3">
+                      <label className="text-xs font-medium text-muted flex-shrink-0">Nature</label>
+                      <select
+                        value={slot.nature}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => setSlot(idx, { nature: e.target.value as NatureName })}
+                        className="px-2 py-1 border border-border rounded text-xs bg-surface text-text"
+                      >
+                        {NATURES.map(n => (
+                          <option key={n.value} value={n.value}>
+                            {n.label}{n.increasedStat && n.decreasedStat
+                              ? ` (+${NATURE_STAT_LABEL[n.increasedStat]} / -${NATURE_STAT_LABEL[n.decreasedStat]})`
+                              : ' (Neutral)'}
+                          </option>
+                        ))}
+                      </select>
+                      {(() => {
+                        const nature = NATURES.find(n => n.value === slot.nature)
+                        if (!nature || !nature.increasedStat) return null
+                        return (
+                          <span className="text-xs text-muted">
+                            <span className="text-green-600">+{NATURE_STAT_LABEL[nature.increasedStat]}</span>
+                            {' / '}
+                            <span className="text-red-500">-{NATURE_STAT_LABEL[nature.decreasedStat!]}</span>
+                          </span>
+                        )
+                      })()}
+                    </div>
+                  )}
+
                   {/* Moveset Selector */}
                   {poke && (
                     <div className="space-y-3">
@@ -1991,6 +2024,7 @@ export default function TeamBuilderPage() {
                     onToggleCollapse={() => setIsOffenseMatrixCollapsed(!isOffenseMatrixCollapsed)}
                   />
                   <Suggestions analysis={teamAnalysis} />
+                  <SynergyPanel analysis={teamAnalysis} />
                 </div>
               )}
             </div>

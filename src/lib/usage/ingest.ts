@@ -192,9 +192,11 @@ export class UsageIngestionCLI {
    * Load content from URL
    */
   private async loadFromURL(url: string): Promise<string> {
-    // In a real implementation, you'd use fetch or axios
-    // For now, we'll throw an error as URL loading requires additional setup
-    throw new Error('URL loading not implemented in this version');
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
+    }
+    return response.text();
   }
   
   /**

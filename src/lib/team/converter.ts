@@ -9,26 +9,35 @@ import type { TypeName } from '@/lib/type/data';
 export function convertPokemonToSimple(pokemon: Pokemon, moves: MoveData[] = []): SimplePokemon {
   const types: TypeName[] = pokemon.types.map(t => {
     const typeName = t.type.name;
-    // Capitalize first letter to match TypeName format
     return (typeName.charAt(0).toUpperCase() + typeName.slice(1)) as TypeName;
   });
   
-  // Convert moves to the SimplePokemon format
   const simpleMoves = moves.map(move => ({
     name: move.name,
     type: (move.type.charAt(0).toUpperCase() + move.type.slice(1)) as TypeName,
-    power: move.power || 0
+    power: move.power || 0,
+    damageClass: move.damage_class as 'physical' | 'special' | 'status' | undefined
   }));
 
-  const hp = pokemon.stats.find(s => s.stat.name === 'hp')?.base_stat || 100;
+  const getStat = (name: string) => pokemon.stats.find(s => s.stat.name === name)?.base_stat || 50;
+
+  const abilities = (pokemon.abilities || []).map(a => a.ability.name);
 
   return {
     id: pokemon.id,
     name: pokemon.name,
     types,
-    hp,
+    hp: getStat('hp'),
     moves: simpleMoves,
-    sprite: pokemon.sprites.front_default || undefined
+    sprite: pokemon.sprites.front_default || undefined,
+    abilities,
+    stats: {
+      attack: getStat('attack'),
+      defense: getStat('defense'),
+      specialAttack: getStat('special-attack'),
+      specialDefense: getStat('special-defense'),
+      speed: getStat('speed'),
+    },
   };
 }
 

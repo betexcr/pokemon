@@ -162,6 +162,17 @@ export default function HeaderIcons({
         </OptimizedLink>
       </Tooltip>
       
+      <Tooltip content="Create and join multiplayer championship tournaments" position="bottom">
+        <OptimizedLink 
+          href="/championship"
+          className="relative w-8 h-8 sm:w-12 sm:h-12 md:w-12 md:h-12 lg:w-14 lg:h-14 xl:w-16 xl:h-16  overflow-hidden aspect-square border-2 border-gray-300 bg-white/80 shadow-sm transition-all duration-300 ease-in-out flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 touch-manipulation dark:border-gray-600 dark:bg-gray-800/70 dark:hover:bg-gray-700/70" 
+          title="Championships"
+        >
+          <span className="absolute inset-1 bg-white/90 dark:bg-white/15" />
+          <span className="relative z-10 text-base sm:text-xl md:text-2xl" suppressHydrationWarning>🏆</span>
+        </OptimizedLink>
+      </Tooltip>
+
       <Tooltip content="View the most popular and powerful Pokémon based on usage statistics and battle performance" position="bottom">
         <OptimizedLink 
           href="/top50"

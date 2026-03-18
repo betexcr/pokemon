@@ -81,11 +81,23 @@ export default function ContestFactsPage() {
 
       {/* Grid */}
       <section>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map(f => (
-            <FactCard key={f.id} fact={f} onOpen={setOpen} />
-          ))}
-        </div>
+        {filtered.length === 0 ? (
+          <div className="rounded-xl border border-border bg-surface p-8 text-center">
+            <p className="text-muted text-sm">No facts match your current filters.</p>
+            <button
+              onClick={onClear}
+              className="mt-3 inline-flex items-center rounded-full px-4 py-1.5 text-xs border border-border hover:bg-surface/60 text-text"
+            >
+              Clear filters
+            </button>
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {filtered.map(f => (
+              <FactCard key={f.id} fact={f} onOpen={setOpen} />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Modal */}

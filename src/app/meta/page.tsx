@@ -1,45 +1,87 @@
 import type { Metadata } from 'next';
-import type { MetaDataset, PokemonMeta } from '@/lib/meta/types';
+import { fetchMetaData } from '@/lib/meta/fetchMetaData';
 import UsageTable from '@/components/meta/UsageTable';
 import MetaPodium from '@/components/meta/MetaPodium';
 import MoveHeatmap from '@/components/meta/MoveHeatmap';
-import TrendChart from '@/components/meta/TrendChart';
-import UsageWinScatter from '@/components/meta/UsageWinScatter';
-import Filters from '@/components/meta/Filters';
 import MetaPageClient from './MetaPageClient';
 
 export const metadata: Metadata = {
   title: 'Competitive Meta Dashboard',
-  description: 'Usage trends, win rates, and moves for competitive play with server-first tables and light animations.',
+  description: 'Usage trends, win rates, and moves for competitive play.',
 };
 
 export const revalidate = 3600;
 
-export default async function Page() {
-  // Default values for static export
-  const format = 'OU';
-  const month = '2024-08';
-  const page = 1;
-  const sort = 'usage' as 'usage' | 'winrate';
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ format?: string; month?: string; sort?: string }>;
+}) {
+  const params = await searchParams;
+  const format = params.format || 'OU';
+  const month = params.month || '2024-08';
+  const sort = (params.sort as 'usage' | 'winrate') || 'usage';
 
-  // For static export, show a placeholder message
+  const dataset = await fetchMetaData(format, month);
+
+  const sorted = [...dataset.top].sort((a, b) =>
+    sort === 'winrate' ? b.winrate - a.winrate : b.usage - a.usage,
+  );
+
   return (
     <MetaPageClient title="Competitive Meta">
-      <main className="mx-auto max-w-7xl px-4 py-8">
-        <div className="rounded-lg border border-blue-200 bg-blue-50 p-8 text-center dark:border-blue-800 dark:bg-blue-900/20">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-800/30">
-            <svg className="h-6 w-6 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <h3 className="mt-4 text-lg font-medium text-blue-800 dark:text-blue-200">Meta Dashboard</h3>
-          <p className="mt-2 text-sm text-blue-600 dark:text-blue-300">
-            The competitive meta dashboard requires server-side functionality that is not available in static export mode.
-          </p>
-          <p className="mt-2 text-xs text-blue-500 dark:text-blue-400">
-            Please use the full application with server-side rendering to access meta data features.
-          </p>
+      <main className="mx-auto max-w-7xl px-4 py-8 space-y-8">
+        {/* Format / Month selectors */}
+        <div className="flex flex-wrap gap-3 items-center">
+          <span className="text-sm text-muted">Format:</span>
+          {['OU', 'UU', 'VGC'].map(f => (
+            <a
+              key={f}
+              href={`/meta?format=${f}&month=${month}&sort=${sort}`}
+              className={`px-3 py-1 text-sm rounded-full border ${
+                f === format
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : 'border-border text-muted hover:bg-surface/60'
+              }`}
+            >
+              {f}
+            </a>
+          ))}
+          <span className="ml-4 text-sm text-muted">Sort:</span>
+          {(['usage', 'winrate'] as const).map(s => (
+            <a
+              key={s}
+              href={`/meta?format=${format}&month=${month}&sort=${s}`}
+              className={`px-3 py-1 text-sm rounded-full border ${
+                s === sort
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : 'border-border text-muted hover:bg-surface/60'
+              }`}
+            >
+              {s === 'usage' ? 'Usage %' : 'Win Rate'}
+            </a>
+          ))}
         </div>
+
+        {/* Podium */}
+        {sorted.length >= 3 && (
+          <MetaPodium top3={sorted.slice(0, 3)} />
+        )}
+
+        {/* Table */}
+        <UsageTable rows={sorted} />
+
+        {/* Move Heatmaps for top 3 */}
+        {sorted.length > 0 && (
+          <section>
+            <h2 className="text-lg font-bold mb-4 text-text">Top Moves</h2>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {sorted.slice(0, 3).map(p => (
+                <MoveHeatmap key={p.name} pokemon={p} />
+              ))}
+            </div>
+          </section>
+        )}
       </main>
     </MetaPageClient>
   );

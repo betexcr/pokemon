@@ -14,6 +14,7 @@ import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration'
 import OfflineIndicator from '@/components/OfflineIndicator'
 import PokemonPreloader from '@/components/PokemonPreloader'
 import OfflineDownloadPanel from '@/components/OfflineDownloadPanel'
+import AnalyticsProvider from '@/components/AnalyticsProvider'
 
 
 const SITE_URL = 'https://pokemon-indol-tau.vercel.app'
@@ -214,6 +215,7 @@ export default function RootLayout({
                     <OfflineDownloadPanel />
                     <ServiceWorkerRegistration />
                     <PokemonPreloader />
+                    <AnalyticsProvider />
                   </div>
                 </ToastProvider>
               </ReactQueryProvider>

@@ -1,0 +1,101 @@
+{
+  "common": {
+    "search": "Buscar",
+    "loading": "Cargando...",
+    "back": "Atrás",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "clear": "Borrar",
+    "remove": "Eliminar",
+    "close": "Cerrar",
+    "offline": "Estás sin conexión",
+    "signIn": "Iniciar sesión",
+    "signOut": "Cerrar sesión"
+  },
+  "nav": {
+    "home": "PokéDex",
+    "battle": "Batalla",
+    "team": "Constructor de Equipos",
+    "compare": "Comparar",
+    "checklist": "Lista",
+    "top50": "Top 50",
+    "contests": "Concursos",
+    "usage": "Estadísticas de Uso",
+    "evolutions": "Evoluciones",
+    "typeMatchups": "Tipos",
+    "trends": "Tendencias",
+    "battleGuide": "Guía de Batalla"
+  },
+  "pokedex": {
+    "title": "PokéDex Moderno",
+    "discovered": "{count} Pokémon descubiertos",
+    "searchPlaceholder": "Buscar Pokémon por nombre o ID...",
+    "density": "Densidad",
+    "cozy": "Amplio",
+    "compact": "Compacto",
+    "ultra": "Ultra",
+    "filters": "Filtros Avanzados",
+    "noResults": "No se encontraron Pokémon que coincidan con \"{term}\""
+  },
+  "pokemon": {
+    "stats": "Estadísticas",
+    "moves": "Movimientos",
+    "abilities": "Habilidades",
+    "evolution": "Evolución",
+    "matchups": "Enfrentamientos",
+    "overview": "General",
+    "hp": "PS",
+    "attack": "Ataque",
+    "defense": "Defensa",
+    "specialAttack": "At. Esp.",
+    "specialDefense": "Def. Esp.",
+    "speed": "Velocidad",
+    "height": "Altura",
+    "weight": "Peso",
+    "baseExperience": "Exp. Base"
+  },
+  "battle": {
+    "title": "Batalla IA",
+    "yourTeam": "Tu Equipo",
+    "opponent": "Oponente",
+    "selectTeam": "Selecciona un equipo para batallar",
+    "startBattle": "Iniciar Batalla",
+    "battleGuide": "Guía de Batalla",
+    "movesLeft": "{count} movimientos restantes",
+    "fainted": "Debilitado",
+    "won": "¡{name} ganó!",
+    "lost": "¡{name} perdió!"
+  },
+  "team": {
+    "title": "Constructor de Equipos y Analizador de Sinergia",
+    "addPokemon": "Añadir Pokémon",
+    "yourTeam": "Tu Equipo",
+    "savedTeams": "Equipos Guardados",
+    "teamName": "Nombre del equipo",
+    "saveTeam": "Guardar Equipo",
+    "clearTeam": "Borrar",
+    "emptySlot": "Espacio vacío",
+    "nature": "Naturaleza",
+    "level": "Nivel",
+    "shiny": "Shiny",
+    "moves": "Movimientos",
+    "noTeams": "No hay equipos guardados aún.",
+    "syncCloud": "Sincronizado en la Nube",
+    "localOnly": "Solo Almacenamiento Local"
+  },
+  "checklist": {
+    "title": "Lista Pokédex",
+    "progress": "Progreso",
+    "caught": "Atrapados",
+    "seen": "Vistos",
+    "remaining": "Restantes"
+  },
+  "usage": {
+    "title": "Panel de Meta de Uso",
+    "format": "Formato",
+    "generation": "Generación",
+    "month": "Mes",
+    "usagePercent": "% de Uso",
+    "rank": "Posición"
+  }
+}

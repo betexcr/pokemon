@@ -6,7 +6,7 @@ import { getMove } from './moveCache';
 import { applyEntryHazards } from './team-battle-hazards';
 import { handleOnEntryAbilities } from './team-battle-abilities';
 import { applyWeatherResidual, applyTerrainHealing, decrementFieldTimers, applyLeechSeed, applyBindingDamage } from './team-battle-field';
-import { applyEndOfTurnStatus, clearStatus, applyStatus, applyStartOfTurnStatus } from './team-battle-status';
+import { applyEndOfTurnStatus, clearStatus, applyStatus, applyStartOfTurnStatus, terrainPreventsStatus } from './team-battle-status';
 import { getPokemonTypes } from './team-battle-hazards';
 import { BattleRng, rngRollChance, rngNextInt, rngNextFloat } from './battle-rng';
 import { tryConsumeBerry, tryHarvestBerry } from './team-battle-items';
@@ -268,6 +268,11 @@ function applyMoveAilment(
 
   if (move.ailment.kind === 'confusion') {
     if (defender.volatile.confusion) return;
+    // Misty Terrain protects grounded Pokemon from confusion
+    if (state.field.terrain?.kind === 'misty') {
+      const types = defender.pokemon.types.map((t: any) => typeof t === 'string' ? t : t.type?.name || t.name || '');
+      if (!types.includes('flying')) return;
+    }
     const chance = move.ailment.chance === 0 ? 1 : (move.ailment.chance ?? (isSecondary ? 0 : 100)) / 100;
     if (chance > 0 && !rngRollChance(state.rng, chance)) return;
     defender.volatile.confusion = { turns: 2 + rngNextInt(state.rng, 4) };
@@ -277,6 +282,11 @@ function applyMoveAilment(
 
   const status = AILMENT_TO_STATUS[move.ailment.kind];
   if (!status || defender.status) return;
+
+  // Terrain blocks certain statuses on grounded Pokemon
+  if (terrainPreventsStatus(state.field.terrain?.kind, defender, status)) {
+    return;
+  }
 
   if (isSecondary) {
     const chance = move.ailment.chance === 0 ? 1 : (move.ailment.chance ?? 0) / 100;
@@ -294,7 +304,6 @@ function applyMoveAilment(
     pokemon: defender.pokemon.name,
     status: status as string,
   });
-  console.log(`Status applied: ${defender.pokemon.name} -> ${status}`);
 }
 
 function applyMoveSecondaryStatChanges(
@@ -966,7 +975,7 @@ export function processItemResiduals(state: BattleState): void {
       }
     }
 
-    // TODO: implement berry consumption triggers during damage resolution
+    tryConsumeBerry(state, pokemon);
   };
 
   processItem(state.player);

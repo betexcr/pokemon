@@ -1,14 +1,16 @@
 import type { NextConfig } from "next";
+import createNextIntlPlugin from 'next-intl/plugin';
+
+const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
+
+const CDN_URL = process.env.NEXT_PUBLIC_CDN_URL;
 
 const nextConfig: NextConfig = {
+  ...(CDN_URL ? { assetPrefix: CDN_URL } : {}),
   eslint: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has ESLint errors.
     ignoreDuringBuilds: true,
   },
   typescript: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has type errors.
     ignoreBuildErrors: true,
   },
   // Use static export for Firebase hosting
@@ -65,6 +67,22 @@ const nextConfig: NextConfig = {
   generateBuildId: async () => {
     return 'pokemon-app-build'
   },
+  async headers() {
+    return [
+      {
+        source: '/:path*.(png|jpg|jpeg|gif|svg|ico|webp|woff2|woff)',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+      {
+        source: '/_next/static/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+    ];
+  },
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);

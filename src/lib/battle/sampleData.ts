@@ -1,6 +1,6 @@
 import type { TypeName } from '@/lib/type/data';
 
-export type Move = { name: string; type: TypeName; power: number };
+export type Move = { name: string; type: TypeName; power: number; damageClass?: 'physical' | 'special' | 'status' };
 export type SimplePokemon = {
   id: number;
   name: string;
@@ -8,6 +8,8 @@ export type SimplePokemon = {
   hp: number;
   moves: Move[];
   sprite?: string;
+  abilities?: string[];
+  stats?: { attack: number; defense: number; specialAttack: number; specialDefense: number; speed: number };
 };
 
 export const SAMPLE_POKEMON: Record<string, SimplePokemon> = {

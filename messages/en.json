@@ -1,0 +1,101 @@
+{
+  "common": {
+    "search": "Search",
+    "loading": "Loading...",
+    "back": "Back",
+    "save": "Save",
+    "cancel": "Cancel",
+    "clear": "Clear",
+    "remove": "Remove",
+    "close": "Close",
+    "offline": "You are offline",
+    "signIn": "Sign In",
+    "signOut": "Sign Out"
+  },
+  "nav": {
+    "home": "PokéDex",
+    "battle": "Battle",
+    "team": "Team Builder",
+    "compare": "Compare",
+    "checklist": "Checklist",
+    "top50": "Top 50",
+    "contests": "Contests",
+    "usage": "Usage Stats",
+    "evolutions": "Evolutions",
+    "typeMatchups": "Type Matchups",
+    "trends": "Trends",
+    "battleGuide": "Battle Guide"
+  },
+  "pokedex": {
+    "title": "Modern PokéDex",
+    "discovered": "{count} Pokémon discovered",
+    "searchPlaceholder": "Search Pokémon by name or ID...",
+    "density": "Density",
+    "cozy": "Cozy",
+    "compact": "Compact",
+    "ultra": "Ultra",
+    "filters": "Advanced Filters",
+    "noResults": "No Pokémon found matching \"{term}\""
+  },
+  "pokemon": {
+    "stats": "Stats",
+    "moves": "Moves",
+    "abilities": "Abilities",
+    "evolution": "Evolution",
+    "matchups": "Matchups",
+    "overview": "Overview",
+    "hp": "HP",
+    "attack": "Attack",
+    "defense": "Defense",
+    "specialAttack": "Sp. Atk",
+    "specialDefense": "Sp. Def",
+    "speed": "Speed",
+    "height": "Height",
+    "weight": "Weight",
+    "baseExperience": "Base Exp."
+  },
+  "battle": {
+    "title": "AI Battle",
+    "yourTeam": "Your Team",
+    "opponent": "Opponent",
+    "selectTeam": "Select a team to battle",
+    "startBattle": "Start Battle",
+    "battleGuide": "Battle Guide",
+    "movesLeft": "{count} moves left",
+    "fainted": "Fainted",
+    "won": "{name} won!",
+    "lost": "{name} lost!"
+  },
+  "team": {
+    "title": "Team Builder & Synergy Analyzer",
+    "addPokemon": "Add Pokémon",
+    "yourTeam": "Your Team",
+    "savedTeams": "Saved Teams",
+    "teamName": "Team name",
+    "saveTeam": "Save Team",
+    "clearTeam": "Clear",
+    "emptySlot": "Empty slot",
+    "nature": "Nature",
+    "level": "Level",
+    "shiny": "Shiny",
+    "moves": "Moves",
+    "noTeams": "No teams saved yet.",
+    "syncCloud": "Synced to Cloud",
+    "localOnly": "Local Storage Only"
+  },
+  "checklist": {
+    "title": "Pokédex Checklist",
+    "progress": "Progress",
+    "caught": "Caught",
+    "seen": "Seen",
+    "remaining": "Remaining"
+  },
+  "usage": {
+    "title": "Usage Meta Dashboard",
+    "format": "Format",
+    "generation": "Generation",
+    "month": "Month",
+    "usagePercent": "Usage %",
+    "rank": "Rank"
+  }
+}

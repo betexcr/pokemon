@@ -184,8 +184,8 @@ async function fetchBattleState(battleId: string, ops: RtdbOps): Promise<BattleS
         phase: 'selection', // We are resolving, so we start from selection state effectively
         actionQueue: [],
         field: {
-            weather: undefined, // TODO: Map from publicState if needed
-            terrain: undefined,
+            weather: publicState?.field?.weather ?? undefined,
+            terrain: publicState?.field?.terrain ?? undefined,
             rooms: {}
         }
     };
@@ -387,6 +387,8 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
         const publicUpdates: any = {
             battleLog: currentState.battleLog,
             field: {
+                weather: currentState.field?.weather ?? null,
+                terrain: currentState.field?.terrain ?? null,
                 screens: {
                     p1: currentState.player.sideConditions.screens,
                     p2: currentState.opponent.sideConditions.screens

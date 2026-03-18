@@ -26,7 +26,7 @@ export default function ContestSimPage() {
           <ul className="flex items-center gap-2 text-sm">
             <li>
               <OptimizedLink
-                href="/contests"
+                href="/contests/facts"
                 className="inline-flex items-center rounded-full px-3 py-1 border border-border hover:bg-surface/60 text-text"
               >
                 Fun Facts

@@ -298,8 +298,8 @@ export default function ContestsPageClient() {
 
       {/* Interactive Tutorial */}
       <ContestTutorial 
-        onComplete={() => console.log('Tutorial completed')}
-        onSkip={() => console.log('Tutorial skipped')}
+        onComplete={() => {}}
+        onSkip={() => {}}
       />
 
       {/* UI Explainer */}
@@ -311,15 +311,12 @@ export default function ContestsPageClient() {
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         {/* Header Section */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-clip-text text-transparent">
-            Pokémon Contests
-          </h1>
           <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300 mb-6">
-            Showcase your Pokémon&apos;s talents in kawaii performance competitions! ✨
+            Showcase your Pokémon&apos;s talents in kawaii performance competitions!
           </p>
           
           {/* Current Stats Display */}
-          <div id="score-display" className="flex flex-wrap justify-center gap-4 mb-6">
+          <div id="score-display" role="status" aria-live="polite" className="flex flex-wrap justify-center gap-4 mb-6">
             <div className="flex items-center gap-2 bg-white/80 dark:bg-gray-800/80 rounded-full px-4 py-2 shadow-lg">
               <Star className="w-5 h-5 text-yellow-500" />
               <span className="font-bold text-gray-700 dark:text-gray-300">{contestState.stars}</span>

@@ -596,7 +596,7 @@ export const GYM_CHAMPIONS: Champion[] = [
     },
   },
 
-  // ===== Generation IV - Sinnoh (placeholders; teams will be refined) =====
+  // ===== Generation IV - Sinnoh (Diamond / Pearl) =====
   {
     id: 'roark-sinnoh',
     name: 'Roark (Sinnoh)',
@@ -661,8 +661,8 @@ export const GYM_CHAMPIONS: Champion[] = [
     team: {
       name: 'Hearthome Leader',
       slots: [
-        { id: 426, level: 24, name: 'Drifblim' },
-        { id: 94, level: 24, name: 'Gengar' },
+        { id: 355, level: 24, name: 'Duskull' },
+        { id: 93, level: 24, name: 'Haunter' },
         { id: 429, level: 26, name: 'Mismagius' },
       ],
     },

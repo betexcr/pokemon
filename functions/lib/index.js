@@ -1689,9 +1689,8 @@ async function fetchBattleState(battleId) {
     // We are resolving, so we start from selection state effectively
     actionQueue: [],
     field: {
-      weather: void 0,
-      // TODO: Map from publicState if needed
-      terrain: void 0,
+      weather: publicState?.field?.weather ?? void 0,
+      terrain: publicState?.field?.terrain ?? void 0,
       rooms: {}
     }
   };

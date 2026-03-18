@@ -69,7 +69,7 @@ export default function TrendChart({ data, pokemon, region }: { data: PokemonTre
           transition={reduce ? undefined : { duration: 0.7 }}
         />
         {points.map((p, i) => {
-          const id = 0 // TODO: Fix entries reference
+          const id = pokemonData.national_number
           const id4 = String(id).padStart(4, '0')
           const portrait = id ? `https://raw.githubusercontent.com/PMDCollab/SpriteCollab/master/portrait/${id4}/Normal.png` : ''
           const fallback = id ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png` : ''
