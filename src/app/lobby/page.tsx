@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
-import { Swords } from 'lucide-react';
+import { Swords, Filter, X } from 'lucide-react';
 import AppHeader from '@/components/AppHeader';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { roomService, type RoomData } from '@/lib/roomService';
@@ -12,9 +11,13 @@ import LinkWithTransition from '@/components/LinkWithTransition';
 import { useLobbyTransition } from '@/hooks/useLobbyTransition';
 import OfflineBanner from '@/components/OfflineBanner';
 
+const ALL = 'all' as const;
+/** Lobby listing only includes waiting + ready rooms */
+type RoomStatusFilter = typeof ALL | 'waiting' | 'ready';
+type RoomSpotsFilter = typeof ALL | 'open' | 'full';
+
 function LobbyPage() {
   const { user } = useAuth();
-  const router = useRouter();
   const lobbyTransition = useLobbyTransition();
   const [rooms, setRooms] = useState<RoomData[]>([]);
   const [userTeams, setUserTeams] = useState<SavedTeam[]>([]);
@@ -23,6 +26,64 @@ function LobbyPage() {
   const [teamsLoading, setTeamsLoading] = useState(true);
   const [creatingRoom, setCreatingRoom] = useState(false);
   // const [roomCode, setRoomCode] = useState('');
+
+  const [filterSearch, setFilterSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState<RoomStatusFilter>(ALL);
+  const [filterSpots, setFilterSpots] = useState<RoomSpotsFilter>(ALL);
+  const [filterMaxPlayers, setFilterMaxPlayers] = useState<typeof ALL | number>(ALL);
+  const [filterHost, setFilterHost] = useState<typeof ALL | 'mine'>(ALL);
+  const [filterGuest, setFilterGuest] = useState<typeof ALL | 'yes' | 'no'>(ALL);
+
+  const filterRooms = useCallback(
+    (list: RoomData[]) => {
+      const q = filterSearch.trim().toLowerCase();
+      return list.filter((room) => {
+        if (q && !room.hostName.toLowerCase().includes(q)) return false;
+        if (filterStatus !== ALL && room.status !== filterStatus) return false;
+        if (filterSpots === 'open' && room.currentPlayers >= room.maxPlayers) return false;
+        if (filterSpots === 'full' && room.currentPlayers < room.maxPlayers) return false;
+        if (filterMaxPlayers !== ALL && room.maxPlayers !== filterMaxPlayers) return false;
+        if (filterHost === 'mine' && user && room.hostId !== user.uid) return false;
+        if (filterGuest === 'yes' && !room.guestId) return false;
+        if (filterGuest === 'no' && room.guestId) return false;
+        return true;
+      });
+    },
+    [
+      filterSearch,
+      filterStatus,
+      filterSpots,
+      filterMaxPlayers,
+      filterHost,
+      filterGuest,
+      user,
+    ]
+  );
+
+  const filteredRooms = useMemo(() => filterRooms(rooms), [rooms, filterRooms]);
+
+  const maxPlayerOptions = useMemo(() => {
+    const s = new Set<number>();
+    rooms.forEach((r) => s.add(r.maxPlayers));
+    return Array.from(s).sort((a, b) => a - b);
+  }, [rooms]);
+
+  const filtersActive =
+    filterSearch.trim() !== '' ||
+    filterStatus !== ALL ||
+    filterSpots !== ALL ||
+    filterMaxPlayers !== ALL ||
+    filterHost !== ALL ||
+    filterGuest !== ALL;
+
+  const clearFilters = () => {
+    setFilterSearch('');
+    setFilterStatus(ALL);
+    setFilterSpots(ALL);
+    setFilterMaxPlayers(ALL);
+    setFilterHost(ALL);
+    setFilterGuest(ALL);
+  };
 
   // Load rooms from Firebase
   useEffect(() => {
@@ -197,7 +258,7 @@ function LobbyPage() {
                 </div>
                 {!teamsLoading && userTeams.length === 0 && (
                   <p className="mt-2 text-sm text-red-500">
-                    You don't have any teams yet! Go to the Team Builder to create one.
+                    You don&apos;t have any teams yet! Go to the Team Builder to create one.
                   </p>
                 )}
               </div>
@@ -226,7 +287,103 @@ function LobbyPage() {
 
         {/* Available Rooms */}
         <div className="bg-surface rounded-xl shadow-lg p-4 sm:p-6 border border-border">
-          <h2 className="text-xl font-semibold text-text mb-6">Available Battle Rooms</h2>
+          <h2 className="text-xl font-semibold text-text mb-4">Available Battle Rooms</h2>
+
+          <div className="mb-6 p-4 rounded-lg border border-border bg-bg/50">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <h3 className="text-sm font-semibold text-text flex items-center gap-2">
+                <Filter className="w-4 h-4 text-muted" />
+                Filters
+              </h3>
+              {filtersActive && (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="inline-flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  Clear
+                </button>
+              )}
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="sm:col-span-2 lg:col-span-3">
+                <label className="block text-xs font-medium text-muted mb-1">Host name</label>
+                <input
+                  type="search"
+                  value={filterSearch}
+                  onChange={(e) => setFilterSearch(e.target.value)}
+                  placeholder="Search by host…"
+                  className="w-full pl-3 pr-3 py-2 text-sm rounded-lg border border-border bg-surface text-text placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-blue-600/50"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-muted mb-1">Status</label>
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value as RoomStatusFilter)}
+                  className="w-full pl-3 pr-8 py-2 text-sm rounded-lg border border-border bg-surface text-text"
+                >
+                  <option value={ALL}>All</option>
+                  <option value="waiting">Waiting</option>
+                  <option value="ready">Ready</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-muted mb-1">Slots</label>
+                <select
+                  value={filterSpots}
+                  onChange={(e) => setFilterSpots(e.target.value as RoomSpotsFilter)}
+                  className="w-full pl-3 pr-8 py-2 text-sm rounded-lg border border-border bg-surface text-text"
+                >
+                  <option value={ALL}>Any</option>
+                  <option value="open">Open spot</option>
+                  <option value="full">Full</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-muted mb-1">Max players</label>
+                <select
+                  value={filterMaxPlayers === ALL ? ALL : String(filterMaxPlayers)}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setFilterMaxPlayers(v === ALL ? ALL : Number(v));
+                  }}
+                  className="w-full pl-3 pr-8 py-2 text-sm rounded-lg border border-border bg-surface text-text"
+                >
+                  <option value={ALL}>All</option>
+                  {maxPlayerOptions.map((n) => (
+                    <option key={n} value={n}>
+                      {n}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-muted mb-1">Host</label>
+                <select
+                  value={filterHost}
+                  onChange={(e) => setFilterHost(e.target.value as typeof ALL | 'mine')}
+                  className="w-full pl-3 pr-8 py-2 text-sm rounded-lg border border-border bg-surface text-text"
+                >
+                  <option value={ALL}>All rooms</option>
+                  <option value="mine">My rooms</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-muted mb-1">Guest joined</label>
+                <select
+                  value={filterGuest}
+                  onChange={(e) => setFilterGuest(e.target.value as typeof ALL | 'yes' | 'no')}
+                  className="w-full pl-3 pr-8 py-2 text-sm rounded-lg border border-border bg-surface text-text"
+                >
+                  <option value={ALL}>Either</option>
+                  <option value="no">No guest yet</option>
+                  <option value="yes">Guest present</option>
+                </select>
+              </div>
+            </div>
+          </div>
 
           {roomsLoading ? (
             <div className="text-center py-12">
@@ -240,8 +397,15 @@ function LobbyPage() {
               <p className="text-muted">Be the first to create a battle room!</p>
             </div>
           ) : (
+            <>
+              <p className="text-sm text-muted mb-3">
+                Showing {filteredRooms.length} of {rooms.length}
+              </p>
+              {filteredRooms.length === 0 ? (
+                <p className="text-sm text-muted py-8 text-center">No rooms match these filters.</p>
+              ) : (
             <div className="grid gap-4 sm:grid-cols-2">
-              {rooms.map((room) => (
+              {filteredRooms.map((room) => (
                 <div
                   key={room.id}
                   data-testid="battle-room-card"
@@ -304,6 +468,8 @@ function LobbyPage() {
                 </div>
               ))}
             </div>
+              )}
+            </>
           )}
         </div>
         </div>

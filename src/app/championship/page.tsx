@@ -1,14 +1,24 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { Trophy, Users, Crown, Plus } from 'lucide-react';
+import { Trophy, Users, Crown, Plus, Filter, X } from 'lucide-react';
 import AppHeader from '@/components/AppHeader';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import OfflineBanner from '@/components/OfflineBanner';
 import { championshipService } from '@/lib/championshipService';
-import type { Championship, ChampionshipSize, SeatMode } from '@/lib/championship/types';
+import type {
+  Championship,
+  ChampionshipSize,
+  ChampionshipStatus,
+  SeatMode,
+} from '@/lib/championship/types';
+
+const ALL = 'all' as const;
+
+type SpotFilter = typeof ALL | 'open' | 'full';
+type RoleFilter = typeof ALL | 'host' | 'joined' | 'not_joined';
 
 function ChampionshipHubPage() {
   const { user } = useAuth();
@@ -24,6 +34,67 @@ function ChampionshipHubPage() {
   const [formName, setFormName] = useState('');
   const [formSize, setFormSize] = useState<ChampionshipSize>(8);
   const [formSeatMode, setFormSeatMode] = useState<SeatMode>('random');
+
+  const [filterSearch, setFilterSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState<typeof ALL | ChampionshipStatus>(ALL);
+  const [filterSize, setFilterSize] = useState<typeof ALL | ChampionshipSize>(ALL);
+  const [filterSeatMode, setFilterSeatMode] = useState<typeof ALL | SeatMode>(ALL);
+  const [filterSpots, setFilterSpots] = useState<SpotFilter>(ALL);
+  const [filterRole, setFilterRole] = useState<RoleFilter>(ALL);
+
+  const filterChampionships = useCallback(
+    (list: Championship[]) => {
+      const q = filterSearch.trim().toLowerCase();
+      const uid = user?.uid;
+      return list.filter((c) => {
+        if (q) {
+          const nameMatch = c.name.toLowerCase().includes(q);
+          const hostMatch = c.hostName.toLowerCase().includes(q);
+          if (!nameMatch && !hostMatch) return false;
+        }
+        if (filterStatus !== ALL && c.status !== filterStatus) return false;
+        if (filterSize !== ALL && c.size !== filterSize) return false;
+        if (filterSeatMode !== ALL && c.seatMode !== filterSeatMode) return false;
+        if (filterSpots === 'open' && c.participants.length >= c.size) return false;
+        if (filterSpots === 'full' && c.participants.length < c.size) return false;
+        if (filterRole !== ALL && uid) {
+          const isHost = c.hostUid === uid;
+          const isJoined = c.participants.some((p) => p.uid === uid);
+          if (filterRole === 'host' && !isHost) return false;
+          if (filterRole === 'joined' && (!isJoined || isHost)) return false;
+          if (filterRole === 'not_joined' && (isHost || isJoined)) return false;
+        }
+        return true;
+      });
+    },
+    [filterSearch, filterStatus, filterSize, filterSeatMode, filterSpots, filterRole, user?.uid]
+  );
+
+  const filteredOpen = useMemo(
+    () => filterChampionships(openChampionships),
+    [openChampionships, filterChampionships]
+  );
+  const filteredMine = useMemo(
+    () => filterChampionships(myChampionships),
+    [myChampionships, filterChampionships]
+  );
+
+  const filtersActive =
+    filterSearch.trim() !== '' ||
+    filterStatus !== ALL ||
+    filterSize !== ALL ||
+    filterSeatMode !== ALL ||
+    filterSpots !== ALL ||
+    filterRole !== ALL;
+
+  const clearFilters = () => {
+    setFilterSearch('');
+    setFilterStatus(ALL);
+    setFilterSize(ALL);
+    setFilterSeatMode(ALL);
+    setFilterSpots(ALL);
+    setFilterRole(ALL);
+  };
 
   useEffect(() => {
     if (!user) { setLoading(false); return; }
@@ -210,6 +281,104 @@ function ChampionshipHubPage() {
             )}
           </div>
 
+          {/* List filters */}
+          <div className="bg-surface rounded-xl shadow-lg p-4 sm:p-6 mb-6 border border-border">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+              <h2 className="text-lg font-semibold text-text flex items-center gap-2">
+                <Filter className="w-5 h-5 text-muted" />
+                Filter lists
+              </h2>
+              {filtersActive && (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="inline-flex items-center gap-1 text-sm text-yellow-500 hover:text-yellow-400"
+                >
+                  <X className="w-4 h-4" />
+                  Clear
+                </button>
+              )}
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="sm:col-span-2 lg:col-span-3">
+                <label className="block text-xs font-medium text-muted mb-1">Search name or host</label>
+                <input
+                  type="search"
+                  value={filterSearch}
+                  onChange={(e) => setFilterSearch(e.target.value)}
+                  placeholder="Championship or host name…"
+                  className="w-full pl-3 pr-3 py-2 text-sm rounded-lg border border-border bg-bg text-text placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-yellow-600/50"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-muted mb-1">Status</label>
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value as typeof ALL | ChampionshipStatus)}
+                  className="w-full pl-3 pr-8 py-2 text-sm rounded-lg border border-border bg-bg text-text"
+                >
+                  <option value={ALL}>All statuses</option>
+                  <option value="open">Open</option>
+                  <option value="seeding">Seeding</option>
+                  <option value="in_progress">In progress</option>
+                  <option value="completed">Completed</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-muted mb-1">Bracket size</label>
+                <select
+                  value={filterSize}
+                  onChange={(e) => setFilterSize(e.target.value as typeof ALL | ChampionshipSize)}
+                  className="w-full pl-3 pr-8 py-2 text-sm rounded-lg border border-border bg-bg text-text"
+                >
+                  <option value={ALL}>All sizes</option>
+                  <option value={4}>4</option>
+                  <option value={8}>8</option>
+                  <option value={16}>16</option>
+                  <option value={32}>32</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-muted mb-1">Seat mode</label>
+                <select
+                  value={filterSeatMode}
+                  onChange={(e) => setFilterSeatMode(e.target.value as typeof ALL | SeatMode)}
+                  className="w-full pl-3 pr-8 py-2 text-sm rounded-lg border border-border bg-bg text-text"
+                >
+                  <option value={ALL}>All modes</option>
+                  <option value="random">Random</option>
+                  <option value="pick">Pick seat</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-muted mb-1">Slots</label>
+                <select
+                  value={filterSpots}
+                  onChange={(e) => setFilterSpots(e.target.value as SpotFilter)}
+                  className="w-full pl-3 pr-8 py-2 text-sm rounded-lg border border-border bg-bg text-text"
+                >
+                  <option value={ALL}>Any</option>
+                  <option value="open">Has open spots</option>
+                  <option value="full">Full roster</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-muted mb-1">My role</label>
+                <select
+                  value={filterRole}
+                  onChange={(e) => setFilterRole(e.target.value as RoleFilter)}
+                  className="w-full pl-3 pr-8 py-2 text-sm rounded-lg border border-border bg-bg text-text"
+                >
+                  <option value={ALL}>Any</option>
+                  <option value="host">I&apos;m the host</option>
+                  <option value="joined">I&apos;m joined (not host)</option>
+                  <option value="not_joined">I&apos;m not in this one</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
           {/* My Championships */}
           {myChampionships.length > 0 && (
             <div className="bg-surface rounded-xl shadow-lg p-4 sm:p-6 mb-6 border border-border">
@@ -217,15 +386,22 @@ function ChampionshipHubPage() {
                 <Trophy className="w-5 h-5 text-yellow-500" />
                 My Championships
               </h2>
+              <p className="text-sm text-muted mb-3">
+                Showing {filteredMine.length} of {myChampionships.length}
+              </p>
               <div className="grid gap-3">
-                {myChampionships.map((c) => (
-                  <ChampionshipCard
-                    key={c.id}
-                    championship={c}
-                    onClick={() => router.push(`/championship/${c.id}`)}
-                    currentUserId={user?.uid}
-                  />
-                ))}
+                {filteredMine.length === 0 ? (
+                  <p className="text-sm text-muted py-6 text-center">No championships match these filters.</p>
+                ) : (
+                  filteredMine.map((c) => (
+                    <ChampionshipCard
+                      key={c.id}
+                      championship={c}
+                      onClick={() => router.push(`/championship/${c.id}`)}
+                      currentUserId={user?.uid}
+                    />
+                  ))
+                )}
               </div>
             </div>
           )}
@@ -261,16 +437,25 @@ function ChampionshipHubPage() {
                 <p className="text-muted">Be the first to create a tournament!</p>
               </div>
             ) : (
-              <div className="grid gap-3">
-                {openChampionships.map((c) => (
-                  <ChampionshipCard
-                    key={c.id}
-                    championship={c}
-                    onClick={() => router.push(`/championship/${c.id}`)}
-                    currentUserId={user?.uid}
-                  />
-                ))}
-              </div>
+              <>
+                <p className="text-sm text-muted mb-3">
+                  Showing {filteredOpen.length} of {openChampionships.length}
+                </p>
+                {filteredOpen.length === 0 ? (
+                  <p className="text-sm text-muted py-6 text-center">No championships match these filters.</p>
+                ) : (
+                  <div className="grid gap-3">
+                    {filteredOpen.map((c) => (
+                      <ChampionshipCard
+                        key={c.id}
+                        championship={c}
+                        onClick={() => router.push(`/championship/${c.id}`)}
+                        currentUserId={user?.uid}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
