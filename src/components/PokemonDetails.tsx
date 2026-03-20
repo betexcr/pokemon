@@ -24,6 +24,8 @@ export default function PokemonDetails({ pokemon, showHeader = true, className =
   const [flavorText, setFlavorText] = useState<string>('')
   const [genus, setGenus] = useState<string>('')
   const [hasGenderDifferences, setHasGenderDifferences] = useState<boolean>(false)
+  const [isLegendary, setIsLegendary] = useState<boolean>(false)
+  const [isMythical, setIsMythical] = useState<boolean>(false)
   const [moves, setMoves] = useState<any[]>([])
   const [evolutionChain, setEvolutionChain] = useState<any[]>([])
   const [typeMatchups, setTypeMatchups] = useState<any[]>([])
@@ -74,6 +76,8 @@ export default function PokemonDetails({ pokemon, showHeader = true, className =
           const englishGenus = speciesData.genera?.find((genus: any) => genus.language.name === 'en')?.genus || ''
           setGenus(englishGenus)
           setHasGenderDifferences(speciesData.has_gender_differences || false)
+          setIsLegendary(speciesData.is_legendary || false)
+          setIsMythical(speciesData.is_mythical || false)
           return speciesData
         }).catch(error => {
           console.warn('Failed to load species data:', error)
@@ -198,6 +202,8 @@ export default function PokemonDetails({ pokemon, showHeader = true, className =
           flavorText={flavorText}
           genus={genus}
           hasGenderDifferences={hasGenderDifferences}
+          isLegendary={isLegendary}
+          isMythical={isMythical}
           loading={loading}
         />
       )}

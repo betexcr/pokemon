@@ -133,52 +133,70 @@ class ChampionshipService {
         seed: nextSeed,
       };
 
-      txn.update(ref, {
-        participants: [...data.participants, participant],
+      const newParticipants = [...data.participants, participant];
+      const update: Record<string, unknown> = {
+        participants: newParticipants,
         updatedAt: serverTimestamp(),
-      });
+      };
+      if (newParticipants.length === data.size) {
+        update.status = 'seeding';
+      }
+
+      txn.update(ref, update);
     });
   }
 
   async leaveChampionship(id: string, uid: string): Promise<void> {
     const db = this.getDb();
     const ref = doc(db, this.collectionName, id);
-    const snap = await getDoc(ref);
-    if (!snap.exists()) throw new Error('Championship not found');
 
-    const data = snap.data() as ChampionshipDocument;
-    if (data.status !== 'open' && data.status !== 'seeding') {
-      throw new Error('Cannot leave an in-progress championship');
-    }
-    if (data.hostUid === uid) throw new Error('Host cannot leave. Delete the championship instead.');
+    await runTransaction(db, async (txn) => {
+      const snap = await txn.get(ref);
+      if (!snap.exists()) throw new Error('Championship not found');
 
-    await updateDoc(ref, {
-      participants: data.participants.filter((p) => p.uid !== uid),
-      updatedAt: serverTimestamp(),
+      const data = snap.data() as ChampionshipDocument;
+      if (data.status !== 'open' && data.status !== 'seeding') {
+        throw new Error('Cannot leave an in-progress championship');
+      }
+      if (data.hostUid === uid) throw new Error('Host cannot leave. Delete the championship instead.');
+
+      const participants = data.participants.filter((p) => p.uid !== uid);
+      const update: Record<string, unknown> = {
+        participants,
+        updatedAt: serverTimestamp(),
+      };
+      if (data.status === 'seeding' && participants.length < data.size) {
+        update.status = 'open';
+      }
+
+      txn.update(ref, update);
     });
   }
 
   async pickSeat(id: string, uid: string, seed: number): Promise<void> {
     const db = this.getDb();
     const ref = doc(db, this.collectionName, id);
-    const snap = await getDoc(ref);
-    if (!snap.exists()) throw new Error('Championship not found');
 
-    const data = snap.data() as ChampionshipDocument;
-    if (data.seatMode !== 'pick') throw new Error('Seat picking is not enabled');
-    if (data.status !== 'open' && data.status !== 'seeding') {
-      throw new Error('Cannot pick seats right now');
-    }
-    if (seed < 1 || seed > data.size) throw new Error('Invalid seed number');
+    await runTransaction(db, async (txn) => {
+      const snap = await txn.get(ref);
+      if (!snap.exists()) throw new Error('Championship not found');
 
-    const seatTaken = data.participants.some((p) => p.uid !== uid && p.seed === seed);
-    if (seatTaken) throw new Error('That seat is already taken');
+      const data = snap.data() as ChampionshipDocument;
+      if (data.seatMode !== 'pick') throw new Error('Seat picking is not enabled');
+      if (data.status !== 'open' && data.status !== 'seeding') {
+        throw new Error('Cannot pick seats right now');
+      }
+      if (seed < 1 || seed > data.size) throw new Error('Invalid seed number');
 
-    const participants = data.participants.map((p) =>
-      p.uid === uid ? { ...p, seed } : p
-    );
+      const seatTaken = data.participants.some((p) => p.uid !== uid && p.seed === seed);
+      if (seatTaken) throw new Error('That seat is already taken');
 
-    await updateDoc(ref, { participants, updatedAt: serverTimestamp() });
+      const participants = data.participants.map((p) =>
+        p.uid === uid ? { ...p, seed } : p
+      );
+
+      txn.update(ref, { participants, updatedAt: serverTimestamp() });
+    });
   }
 
   async updateParticipantTeam(
@@ -227,6 +245,9 @@ class ChampionshipService {
 
     const data = snap.data() as ChampionshipDocument;
     if (data.hostUid !== hostUid) throw new Error('Only the host can start');
+    if (data.status !== 'open' && data.status !== 'seeding') {
+      throw new Error('Championship cannot be started in its current state');
+    }
     if (data.participants.length !== data.size) {
       throw new Error(`Need exactly ${data.size} participants to start (have ${data.participants.length})`);
     }

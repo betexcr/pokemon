@@ -25,10 +25,12 @@ interface PokemonHeroProps {
   flavorText?: string;
   genus?: string;
   hasGenderDifferences?: boolean;
+  isLegendary?: boolean;
+  isMythical?: boolean;
   loading?: boolean;
 }
 
-export default function PokemonHero({ pokemon, abilities, flavorText, genus, hasGenderDifferences = false, loading = false }: PokemonHeroProps) {
+export default function PokemonHero({ pokemon, abilities, flavorText, genus, hasGenderDifferences = false, isLegendary = false, isMythical = false, loading = false }: PokemonHeroProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -1297,6 +1299,24 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
                 {pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)}
               </h1>
               
+              {/* Legendary / Mythical Badges */}
+              {(isLegendary || isMythical) && (
+                <div className="mt-2 flex flex-wrap gap-2 justify-center lg:justify-start">
+                  {isLegendary && (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border border-amber-200 dark:border-amber-700/50">
+                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                      Legendary
+                    </span>
+                  )}
+                  {isMythical && (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300 border border-violet-200 dark:border-violet-700/50">
+                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                      Mythical
+                    </span>
+                  )}
+                </div>
+              )}
+
               {/* Special Form Indicators */}
               {pokemon.special_form && (
                 <div className="mt-2 flex flex-wrap gap-2 justify-center lg:justify-start">
