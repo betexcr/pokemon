@@ -8,7 +8,6 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    needs: [ci]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -24,8 +23,7 @@ jobs:
 
       - name: Build with static export
         run: |
-          # Temporarily enable static export for deployment
-          sed -i 's|// Removed '\''output: export'\'' to enable dynamic rendering for lobby rooms|output: '\''export'\'',|' next.config.ts
+          sed -i "s|  // output: 'export',|  output: 'export',|" next.config.ts
           npm run build
         env:
           NEXT_PUBLIC_FIREBASE_API_KEY: ${{ vars.NEXT_PUBLIC_FIREBASE_API_KEY }}
