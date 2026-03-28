@@ -15,12 +15,13 @@ interface SortWorkerResponse {
   type: 'SORT_COMPLETE'
   data: {
     sortedIndices: number[]
-    timestamp: number
+    requestId: string
   }
 }
 
 export function useSortWorker() {
   const workerRef = useRef<Worker | null>(null)
+  const blobUrlRef = useRef<string | null>(null)
   const pendingSorts = useRef<Map<string, (result: number[]) => void>>(new Map())
 
   useEffect(() => {
@@ -31,7 +32,7 @@ export function useSortWorker() {
         const workerCode = `
           // Web Worker for sorting Pokemon data without blocking the UI
           self.onmessage = function(e) {
-            const { type, data } = e.data
+            const { type, data, requestId } = e.data
 
             if (type === 'SORT_POKEMON') {
               const { pokemon, sortBy, sortOrder, statsData } = data
@@ -90,7 +91,7 @@ export function useSortWorker() {
                 type: 'SORT_COMPLETE',
                 data: {
                   sortedIndices,
-                  timestamp: Date.now()
+                  requestId
                 }
               })
             }
@@ -98,13 +99,13 @@ export function useSortWorker() {
         `
 
         const blob = new Blob([workerCode], { type: 'application/javascript' })
-        workerRef.current = new Worker(URL.createObjectURL(blob))
+        blobUrlRef.current = URL.createObjectURL(blob)
+        workerRef.current = new Worker(blobUrlRef.current)
 
         workerRef.current.onmessage = (e: MessageEvent<SortWorkerResponse>) => {
           const { type, data } = e.data
           if (type === 'SORT_COMPLETE') {
-            const { sortedIndices, timestamp } = data
-            const requestId = `${timestamp}`
+            const { sortedIndices, requestId } = data
             const callback = pendingSorts.current.get(requestId)
             if (callback) {
               callback(sortedIndices)
@@ -125,6 +126,10 @@ export function useSortWorker() {
       if (workerRef.current) {
         workerRef.current.terminate()
         workerRef.current = null
+      }
+      if (blobUrlRef.current) {
+        URL.revokeObjectURL(blobUrlRef.current)
+        blobUrlRef.current = null
       }
     }
   }, [])
@@ -184,20 +189,19 @@ export function useSortWorker() {
       return
     }
 
-    const requestId = `${Date.now()}`
+    const requestId = `${Date.now()}-${Math.random()}`
     pendingSorts.current.set(requestId, onComplete)
 
-    const message: SortWorkerMessage = {
+    workerRef.current.postMessage({
       type: 'SORT_POKEMON',
+      requestId,
       data: {
         pokemon,
         sortBy,
         sortOrder,
         statsData
       }
-    }
-
-    workerRef.current.postMessage(message)
+    })
   }, [])
 
   return { sortPokemon, isWorkerAvailable: !!workerRef.current }

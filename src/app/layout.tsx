@@ -76,7 +76,7 @@ export default function RootLayout({
         
         
         {/* Viewport for mobile responsiveness */}
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         {/* Early theme application to avoid flash of incorrect theme */}
         <script
           dangerouslySetInnerHTML={{

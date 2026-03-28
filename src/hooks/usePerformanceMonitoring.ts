@@ -89,7 +89,6 @@ export function usePokedexPerformanceMonitoring() {
 
     let lastScrollTime = Date.now()
     let scrollFpsCount = 0
-    let fpsCheckInterval: number
 
     const measureScrollFps = () => {
       const now = Date.now()

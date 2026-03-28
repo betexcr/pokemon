@@ -1,10 +1,9 @@
 "use client";
 
-import React, { useState } from 'react';
-import { TYPES, type TypeName } from '@/lib/type/data';
+import React from 'react';
+import { TYPES } from '@/lib/type/data';
 import type { TeamAnalysis } from '@/lib/team/engine';
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import TypeBadgeWithTooltip from '@/components/TypeBadgeWithTooltip';
 
 interface WeaknessMatrixProps {
   analysis: TeamAnalysis;
@@ -13,9 +12,7 @@ interface WeaknessMatrixProps {
 }
 
 export default function WeaknessMatrix({ analysis, isCollapsed = true, onToggleCollapse }: WeaknessMatrixProps) {
-  console.log('WeaknessMatrix received analysis:', analysis);
   const max = Math.max(1, ...TYPES.map((t) => analysis.weaknesses[t] || 0));
-  console.log('WeaknessMatrix max value:', max);
   
   return (
     <div className="border border-border rounded-xl bg-surface p-4">

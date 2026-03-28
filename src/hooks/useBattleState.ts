@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { onValue, ref as dbRef, serverTimestamp, set } from "firebase/database";
+import { onValue, ref as dbRef } from "firebase/database";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { doc, updateDoc, getDoc, serverTimestamp as firestoreServerTimestamp } from "firebase/firestore";
-import { rtdb, auth, db } from "@/lib/firebase";
+import { rtdb, auth } from "@/lib/firebase";
 
 type IdMap<T> = Record<string, T>;
 
@@ -88,8 +87,6 @@ type UseBattleState = {
   forfeit: () => Promise<void>;
 };
 
-const TURN_SECONDS = 45;
-
 function isChoosing(meta: Meta | null) {
   return !!meta && meta.phase === "choosing";
 }
@@ -120,14 +117,12 @@ export function useBattleState(battleId: string): UseBattleState {
   // Listen to authentication state changes
   useEffect(() => {
     if (!auth) {
-      console.warn('useBattleState: Firebase auth unavailable; skipping auth listener.');
       setAuthLoading(false);
       setError(prev => prev ?? 'Authentication service unavailable.');
       return;
     }
 
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      console.log('useBattleState: Auth state changed:', currentUser ? 'authenticated' : 'not authenticated');
       setUser(currentUser);
       setAuthLoading(false);
     });
@@ -137,39 +132,20 @@ export function useBattleState(battleId: string): UseBattleState {
 
   // Subscribe to meta and public state early; defer private until we confirm auth + membership
   useEffect(() => {
-    if (!battleId) {
-      console.log('useBattleState: No battleId provided');
-      return;
-    }
-    
-    if (authLoading) {
-      console.log('useBattleState: Authentication still loading...');
-      return;
-    }
+    if (!battleId) return;
+    if (authLoading) return;
 
     if (!meUid) {
-      console.log('useBattleState: No authenticated user, waiting...');
       setError('User not authenticated');
       return;
     }
 
     const database = rtdb;
     if (!database) {
-      console.warn('useBattleState: Realtime Database unavailable; cannot subscribe to battle.');
       setLoading(false);
       setError('Realtime battle service unavailable.');
       return;
     }
-    
-    console.log('useBattleState: Setting up listeners for battle:', battleId, 'user:', meUid);
-    console.log('useBattleState: Auth state details:', {
-      hasUser: !!user,
-      uid: user?.uid,
-      email: user?.email,
-      isAnonymous: user?.isAnonymous,
-      authLoading,
-      meUid
-    });
     
     setLoading(true);
     setError(null);
@@ -179,34 +155,16 @@ export function useBattleState(battleId: string): UseBattleState {
     // Add error handling for each listener
     unsubs.push(onValue(
       dbRef(database, `/battles/${battleId}/meta`), 
-      s => {
-        console.log('useBattleState: Meta data received:', s.val());
-        setMeta(s.val() ?? null);
-      }, 
+      s => setMeta(s.val() ?? null),
       e => {
         console.error('useBattleState: Meta listener error:', e);
-        console.error('useBattleState: Meta listener error details:', {
-          code: (e as any).code,
-          message: e.message,
-          battleId,
-          userUid: meUid,
-          authState: {
-            hasUser: !!user,
-            uid: user?.uid,
-            email: user?.email,
-            isAnonymous: user?.isAnonymous
-          }
-        });
         setError(e.message);
       }
     ));
     
     unsubs.push(onValue(
       dbRef(database, `/battles/${battleId}/public`), 
-      s => {
-        console.log('useBattleState: Public data received:', s.val());
-        setPub(s.val() ?? null);
-      }, 
+      s => setPub(s.val() ?? null),
       e => {
         console.error('useBattleState: Public listener error:', e);
         setError(e.message);
@@ -221,44 +179,28 @@ export function useBattleState(battleId: string): UseBattleState {
       e => console.error('useBattleState: Server offset error:', e)
     ));
 
-    return () => { 
-      console.log('useBattleState: Cleaning up listeners');
-      unsubs.forEach(u => u()); 
-    };
+    return () => { unsubs.forEach(u => u()); };
   }, [battleId, meUid, authLoading]);
 
   // Late-bind private subscription only after we know meta and user membership
   useEffect(() => {
-    console.log('useBattleState: Private subscription effect triggered', {
-      battleId,
-      authLoading,
-      meUid,
-      hasMeta: !!meta
-    });
-
     if (!battleId) return;
     if (authLoading) return;
     if (!meUid) return; // wait for auth
     if (!meta) return;  // wait for meta so we can verify membership
 
     const database = rtdb;
-    if (!database) {
-      console.warn('useBattleState: Realtime Database unavailable for private subscription.');
-      return;
-    }
+    if (!database) return;
 
     const isParticipant = meta.players?.p1?.uid === meUid || meta.players?.p2?.uid === meUid;
     if (!isParticipant) {
-      console.warn('useBattleState: current user is not a participant of this battle; skipping private subscription');
       setError('You are not a participant in this battle.');
       return;
     }
 
-    console.log('useBattleState: Subscribing to private state for user:', meUid);
     const unsub = onValue(
       dbRef(database, `/battles/${battleId}/private/${meUid}`),
       s => {
-        console.log('useBattleState: Private data received:', s.val());
         setMe(s.val() ?? null);
         setError(prev => (prev === 'You are not a participant in this battle.' ? null : prev));
       },
@@ -274,10 +216,12 @@ export function useBattleState(battleId: string): UseBattleState {
   useEffect(() => {
     if (authLoading) {
       setLoading(true);
+    } else if (error) {
+      setLoading(false);
     } else if (meta && pub && me) {
       setLoading(false);
     }
-  }, [meta, pub, me, authLoading]);
+  }, [meta, pub, me, authLoading, error]);
 
   const timeLeftSec = useMemo(() => {
     if (!meta || meta.phase !== "choosing" || !meta.deadlineAt) return 0;
@@ -286,8 +230,14 @@ export function useBattleState(battleId: string): UseBattleState {
     return Math.max(0, Math.ceil((assumedDeadline - now) / 1000));
   }, [meta, serverOffsetMs]);
 
+  // Determine which side (p1/p2) the current user is on.
+  const mySide = useMemo(() => {
+    if (!meta || !meUid) return null;
+    return meta.players.p1.uid === meUid ? 'p1' : meta.players.p2.uid === meUid ? 'p2' : null;
+  }, [meta, meUid]);
+
   // Pull public volatiles for my active (for UI) and private secrets (for exact legality).
-  const myPublicActive = useMemo(() => (meUid && pub ? pub[meUid]?.active ?? null : null), [pub, meUid]);
+  const myPublicActive = useMemo(() => (mySide && pub ? (pub as any)[mySide]?.active ?? null : null), [pub, mySide]);
   const myPublicV = myPublicActive?.volatiles ?? {};
   const myPrivateActive = useMemo(() => activePrivate(me), [me]);
 
@@ -425,7 +375,7 @@ export function useBattleState(battleId: string): UseBattleState {
 
   const writeChoice = useCallback(async (choice: ChoicePayload) => {
     if (!meUid || !meta) throw new Error("No auth or meta");
-    if (!isChoosing(meta)) throw new Error("Not in choosing phase");
+    if (choice.action !== 'forfeit' && !isChoosing(meta)) throw new Error("Not in choosing phase");
 
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     const tokenHeader = await getIdTokenHeader();
@@ -440,7 +390,9 @@ export function useBattleState(battleId: string): UseBattleState {
       body: JSON.stringify(
         choice.action === 'move'
           ? { action: 'move', moveId: choice.payload.moveId, target: choice.payload.target, clientVersion: choice.clientVersion }
-          : { action: 'switch', switchToIndex: choice.payload.switchToIndex, clientVersion: choice.clientVersion }
+          : choice.action === 'forfeit'
+            ? { action: 'forfeit', clientVersion: choice.clientVersion }
+            : { action: 'switch', switchToIndex: choice.payload.switchToIndex, clientVersion: choice.clientVersion }
       ),
     });
 
@@ -469,7 +421,6 @@ export function useBattleState(battleId: string): UseBattleState {
   useEffect(() => {
     if (process.env.NEXT_PUBLIC_E2E === 'true') {
       (window as any).writeChoice = writeChoice;
-      console.log('🎮 Exposed writeChoice to global scope from useBattleState hook');
     }
     return () => {
       if (process.env.NEXT_PUBLIC_E2E === 'true') {

@@ -13,8 +13,6 @@ export interface StatusEvent {
 
 interface StatusPopupsProps {
   events: StatusEvent[]
-  anchorAlly?: { x: number; y: number }
-  anchorFoe?: { x: number; y: number }
 }
 
 export default function StatusPopups({ events }: StatusPopupsProps) {

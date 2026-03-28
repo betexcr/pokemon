@@ -34,6 +34,7 @@ function ChampionshipHubPage() {
   const [formName, setFormName] = useState('');
   const [formSize, setFormSize] = useState<ChampionshipSize>(8);
   const [formSeatMode, setFormSeatMode] = useState<SeatMode>('random');
+  const [formMaxGeneration, setFormMaxGeneration] = useState<'all' | number>('all');
 
   const [filterSearch, setFilterSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState<typeof ALL | ChampionshipStatus>(ALL);
@@ -128,7 +129,8 @@ function ChampionshipHubPage() {
         formName.trim(),
         formSize,
         formSeatMode,
-        user.photoURL || undefined
+        user.photoURL || undefined,
+        formMaxGeneration === 'all' ? undefined : formMaxGeneration
       );
       router.push(`/championship/${id}`);
     } catch (err) {
@@ -249,6 +251,31 @@ function ChampionshipHubPage() {
                     {formSeatMode === 'random'
                       ? 'Players will be randomly assigned to bracket positions'
                       : 'Players can choose their preferred seed/position'}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-text mb-1">
+                    Pokémon allowed
+                  </label>
+                  <select
+                    value={formMaxGeneration === 'all' ? 'all' : String(formMaxGeneration)}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setFormMaxGeneration(v === 'all' ? 'all' : Number.parseInt(v, 10));
+                    }}
+                    className="block w-full pl-3 pr-10 py-2.5 text-sm border-border focus:outline-none focus:ring-yellow-500 focus:border-yellow-500 rounded-lg border bg-surface text-text"
+                  >
+                    <option value="all">All generations</option>
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((g) => (
+                      <option key={g} value={g}>
+                        Through Gen {g} (cumulative National Dex)
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-muted mt-1">
+                    Limits saved teams so every filled slot uses a Pokémon introduced by this
+                    generation or earlier.
                   </p>
                 </div>
 
@@ -399,6 +426,16 @@ function ChampionshipHubPage() {
                       championship={c}
                       onClick={() => router.push(`/championship/${c.id}`)}
                       currentUserId={user?.uid}
+                      onDelete={c.hostUid === user?.uid ? async () => {
+                        if (!confirm('Delete this championship? This cannot be undone.')) return;
+                        try {
+                          await championshipService.deleteChampionship(c.id, user!.uid);
+                          setMyChampionships((prev) => prev.filter((ch) => ch.id !== c.id));
+                          setOpenChampionships((prev) => prev.filter((ch) => ch.id !== c.id));
+                        } catch (err) {
+                          alert(err instanceof Error ? err.message : 'Failed to delete');
+                        }
+                      } : undefined}
                     />
                   ))
                 )}
@@ -451,6 +488,16 @@ function ChampionshipHubPage() {
                         championship={c}
                         onClick={() => router.push(`/championship/${c.id}`)}
                         currentUserId={user?.uid}
+                        onDelete={c.hostUid === user?.uid ? async () => {
+                          if (!confirm('Delete this championship? This cannot be undone.')) return;
+                          try {
+                            await championshipService.deleteChampionship(c.id, user!.uid);
+                            setOpenChampionships((prev) => prev.filter((ch) => ch.id !== c.id));
+                            setMyChampionships((prev) => prev.filter((ch) => ch.id !== c.id));
+                          } catch (err) {
+                            alert(err instanceof Error ? err.message : 'Failed to delete');
+                          }
+                        } : undefined}
                       />
                     ))}
                   </div>
@@ -468,17 +515,19 @@ function ChampionshipCard({
   championship: c,
   onClick,
   currentUserId,
+  onDelete,
 }: {
   championship: Championship;
   onClick: () => void;
   currentUserId?: string;
+  onDelete?: () => void;
 }) {
   const statusColors: Record<string, string> = {
-    open: 'bg-green-700/25 text-green-100 border-green-600',
-    seeding: 'bg-yellow-700/25 text-yellow-100 border-yellow-600',
-    in_progress: 'bg-blue-700/25 text-blue-100 border-blue-600',
-    completed: 'bg-gray-700/40 text-gray-200 border-gray-600',
-    cancelled: 'bg-red-700/25 text-red-100 border-red-600',
+    open: 'bg-green-100 text-green-800 border-green-300 dark:bg-green-700/25 dark:text-green-100 dark:border-green-600',
+    seeding: 'bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-700/25 dark:text-yellow-100 dark:border-yellow-600',
+    in_progress: 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-700/25 dark:text-blue-100 dark:border-blue-600',
+    completed: 'bg-gray-100 text-gray-700 border-gray-300 dark:bg-gray-700/40 dark:text-gray-200 dark:border-gray-600',
+    cancelled: 'bg-red-100 text-red-800 border-red-300 dark:bg-red-700/25 dark:text-red-100 dark:border-red-600',
   };
 
   const isHost = c.hostUid === currentUserId;
@@ -492,13 +541,25 @@ function ChampionshipCard({
       <div className="flex items-center justify-between mb-2">
         <h3 className="font-semibold text-text truncate mr-2">{c.name}</h3>
         <div className="flex items-center gap-2 flex-shrink-0">
+          {isHost && onDelete && c.status !== 'in_progress' && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+              className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-red-600/90 hover:bg-red-700 text-white border border-red-700"
+              aria-label="Delete championship"
+            >
+              Delete
+            </button>
+          )}
           {isHost && (
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-yellow-600/30 text-yellow-200 border border-yellow-600">
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-yellow-100 text-yellow-800 border border-yellow-300 dark:bg-yellow-600/30 dark:text-yellow-200 dark:border-yellow-600">
               Host
             </span>
           )}
           {isJoined && !isHost && (
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-600/30 text-blue-200 border border-blue-600">
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-800 border border-blue-300 dark:bg-blue-600/30 dark:text-blue-200 dark:border-blue-600">
               Joined
             </span>
           )}
@@ -511,13 +572,20 @@ function ChampionshipCard({
           </span>
         </div>
       </div>
-      <div className="flex items-center gap-4 text-sm text-muted">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-muted">
         <span>{c.participants.length}/{c.size} trainers</span>
         <span>{c.seatMode === 'random' ? '🎲 Random' : '🎯 Pick'}</span>
         <span>by {c.hostName}</span>
+        {typeof c.maxGeneration === 'number' &&
+          c.maxGeneration >= 1 &&
+          c.maxGeneration <= 9 && (
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-purple-100 text-purple-800 border border-purple-300 dark:bg-violet-600/25 dark:text-violet-200 dark:border-violet-500/50">
+              Through Gen {c.maxGeneration}
+            </span>
+          )}
       </div>
       {c.status === 'completed' && c.winnerName && (
-        <div className="mt-2 text-sm text-yellow-400 flex items-center gap-1">
+        <div className="mt-2 text-sm text-yellow-600 dark:text-yellow-400 flex items-center gap-1">
           <Crown className="w-3.5 h-3.5" /> Champion: {c.winnerName}
         </div>
       )}

@@ -7,7 +7,6 @@ import { getTrainerSpriteUrl } from '@/lib/trainerSprites'
 interface AIBattleSceneProps {
   playerTeam: Array<{ id: number; level: number; moves?: string[]; nature?: string }>
   opponentChampionId: string
-  viewMode?: 'animated' | 'classic'
 }
 
 export function AIBattleScene({ playerTeam, opponentChampionId }: AIBattleSceneProps) {

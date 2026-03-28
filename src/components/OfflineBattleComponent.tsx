@@ -235,7 +235,6 @@ export const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
                 status={myActive.status as any}
                 types={myActive.types || []}
                 side="player"
-                field={{ safeguardTurns: 0, mistTurns: 0, reflectTurns: 0, lightScreenTurns: 0 }}
                 className="transform scale-110"
                 spriteMode={viewMode === 'animated' ? 'animated' : 'static'}
               />
@@ -256,7 +255,6 @@ export const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
                 status={oppActive.status as any}
                 types={oppActive.types || []}
                 side="opponent"
-                field={{ safeguardTurns: 0, mistTurns: 0, reflectTurns: 0, lightScreenTurns: 0 }}
                 className="transform scale-110"
                 spriteMode={viewMode === 'animated' ? 'animated' : 'static'}
               />

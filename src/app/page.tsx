@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { usePathname } from 'next/navigation'
 import { Pokemon, FilterState } from '@/types/pokemon'
 import ViewportPriorityLoader from '@/lib/viewportPriorityLoader'
 import { getPokemonTotalCount, generateAllPokemonSkeletons, getPokemonList, getPokemonSkeletonsWithPagination, generateSpecialFormsPokemon, getPokemonFallbackImage, getPokemonMainPageImage, getPokemonShinyImage } from '@/lib/api'
@@ -9,22 +8,14 @@ import { useTheme } from '@/components/ThemeProvider'
 import { useRequestCancellation } from '@/hooks/useRequestCancellation'
 import { useViewportCancellation } from '@/hooks/useViewportCancellation'
 import { useRequestAnalytics } from '@/hooks/useRequestAnalytics'
-import { requestManager } from '@/lib/requestManager'
 // Removed PokemonPreloader import to avoid HMR issues
 // Removed sharedPokemonCache import to avoid HMR issues - implementing cache logic inline
 import RedPokedexLayout from '@/components/RedPokedexLayout'
 import GoldPokedexLayout from '@/components/GoldPokedexLayout'
 import RubyPokedexLayout from '@/components/RubyPokedexLayout'
 import ModernPokedexLayout from '@/components/ModernPokedexLayout'
-import ProtectedRoute from '@/components/auth/ProtectedRoute'
-import RoomPageClient from '@/app/lobby/[roomId]/RoomPageClient'
-import LobbyPage from '@/components/LobbyPage'
-// import ComparisonOverlay from '@/components/ComparisonOverlay'
-// import MobileHeader from '@/components/MobileHeader'
 
 export default function Home() {
-  const pathname = usePathname()
-  
   // Setup automatic request cancellation on navigation
   useRequestCancellation({
     contexts: ['pokedex-main']
@@ -46,30 +37,10 @@ export default function Home() {
   // Analytics are being tracked but not logged to reduce console noise
   // To view analytics, check the requestManager.getAnalytics() in dev tools
   
-  // Fallback for static export - get pathname from window.location
-  const [actualPathname, setActualPathname] = useState(pathname)
-  const [isMainPokedex, setIsMainPokedex] = useState(false)
-  
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const pathIsMain = window.location.pathname === '/'
-      setActualPathname(window.location.pathname)
-      setIsMainPokedex(pathIsMain)
-      
-      // Apply CSS classes at the document level for main pokedex
-      // This is handled via CSS, but we set a data attribute for better performance
-      if (pathIsMain) {
-        document.documentElement.setAttribute('data-page', 'pokedex-main')
-      } else {
-        document.documentElement.removeAttribute('data-page')
-      }
-    }
-    
-    // Cleanup on unmount
+    document.documentElement.setAttribute('data-page', 'pokedex-main')
     return () => {
-      if (typeof window !== 'undefined') {
-        document.documentElement.removeAttribute('data-page')
-      }
+      document.documentElement.removeAttribute('data-page')
     }
   }, [])
   const [comparisonList, setComparisonList] = useState<number[]>([])
@@ -100,74 +71,6 @@ export default function Home() {
   const currentOffsetRef = useRef(0)
   const totalCountRef = useRef(0)
   const isTriggeredRef = useRef(false) // Prevent multiple intersection observer triggers
-  const activeFetchRequestRef = useRef<string | null>(null) // Track active request ID for cancellation
-  
-  // Create wrapped fetch function with request management
-  const createManagedFetch = useCallback(
-    (priority: 'normal' | 'high' = 'normal') => 
-      async (offset: number, limit: number): Promise<Pokemon[]> => {
-        // Cancel previous low-priority request if starting a new one
-        if (activeFetchRequestRef.current && priority === 'high') {
-          console.log('🛑 Cancelling previous request for higher priority fetch')
-          requestManager.cancelRequest(activeFetchRequestRef.current)
-        }
-
-        const { signal, requestId, startImmediately } = requestManager.createRequest('pokedex-main', priority)
-        activeFetchRequestRef.current = requestId
-        
-        // Start request immediately if pool allows
-        startImmediately()
-
-        try {
-          const data = await getPokemonList(limit, offset, signal)
-          requestManager.completeRequest(requestId)
-          activeFetchRequestRef.current = null
-          return data.results.map((r, i) => ({
-            id: i + offset + 1,
-            name: r.name,
-            base_experience: 0,
-            height: 0,
-            weight: 0,
-            is_default: true,
-            order: i + offset + 1,
-            abilities: [],
-            forms: [],
-            game_indices: [],
-            held_items: [],
-            location_area_encounters: '',
-            moves: [],
-            sprites: {
-              front_default: '',
-              front_shiny: null,
-              front_female: null,
-              front_shiny_female: null,
-              back_default: null,
-              back_shiny: null,
-              back_female: null,
-              back_shiny_female: null,
-              other: {
-                dream_world: { front_default: null, front_female: null },
-                home: { front_default: null, front_female: null, front_shiny: null, front_shiny_female: null },
-                'official-artwork': { front_default: null, front_shiny: null }
-              }
-            },
-            stats: [],
-            types: [],
-            species: { name: r.name, url: '' }
-          })) as Pokemon[]
-        } catch (error) {
-          if (error instanceof Error && error.message.includes('Abort')) {
-            console.log('📍 Request was cancelled')
-          } else {
-            console.error('Error fetching Pokemon:', error)
-          }
-          requestManager.completeRequest(requestId)
-          throw error
-        }
-      },
-    []
-  )
-  
   // Viewport priority loader for smart Pokemon loading
   const viewportLoaderRef = useRef<ViewportPriorityLoader | null>(null)
   
@@ -226,86 +129,6 @@ export default function Home() {
     return () => clearInterval(retryInterval)
   }, [])
   
-  // Viewport-based loading on scroll - DISABLED to prevent conflicts with useViewportDataLoading
-  // useEffect(() => {
-  //   if (!viewportLoaderRef.current) return
-    
-  //   let lastScrollTop = 0
-  //   let scrollDirection = 'down'
-  //   let lastScrollDirection = 'down'
-  //   let scrollVelocity = 0
-  //   let lastScrollTime = Date.now()
-    
-  //   const handleScroll = () => {
-  //     const scrollContainer = document.querySelector('[data-main-scroll]')
-  //     if (!scrollContainer) return
-      
-  //     const currentScrollTop = scrollContainer.scrollTop
-  //     const currentTime = Date.now()
-  //     const timeDelta = currentTime - lastScrollTime
-      
-  //     // Calculate scroll velocity for better direction detection
-  //     if (timeDelta > 0) {
-  //       scrollVelocity = Math.abs(currentScrollTop - lastScrollTop) / timeDelta
-  //     }
-      
-  //     // Determine scroll direction with velocity consideration
-  //     if (currentScrollTop > lastScrollTop + 5) { // Add threshold to avoid micro-movements
-  //       scrollDirection = 'down'
-  //     } else if (currentScrollTop < lastScrollTop - 5) {
-  //       scrollDirection = 'up'
-  //     }
-  //     // If within threshold, keep the same direction
-      
-  //     // Check if scroll direction changed with velocity consideration
-  //     if (scrollDirection !== lastScrollDirection && scrollVelocity > 0.5) {
-  //       console.log(`🔄 Scroll direction changed: ${lastScrollDirection} → ${scrollDirection} (velocity: ${scrollVelocity.toFixed(2)})`)
-  //       // Force viewport update when direction changes
-  //       if (viewportLoaderRef.current && typeof viewportLoaderRef.current.forceViewportUpdate === 'function') {
-  //         viewportLoaderRef.current.forceViewportUpdate()
-  //       } else {
-  //         console.warn('⚠️ forceViewportUpdate method not available on viewport loader')
-  //       }
-  //       lastScrollDirection = scrollDirection
-  //     }
-      
-  //     // Update tracking variables
-  //     lastScrollTop = currentScrollTop
-  //     lastScrollTime = currentTime
-      
-  //     // Get all Pokemon IDs that need loading
-  //     const allPokemonIds = pokemonList
-  //       .filter(p => (p.types?.length || 0) === 0) // Only skeletons
-  //       .map(p => p.id)
-      
-  //     if (allPokemonIds.length > 0) {
-  //       // Load with viewport priority - always call, let the loader handle throttling
-  //       viewportLoaderRef.current?.loadWithPriority(allPokemonIds)
-  //     }
-  //   }
-    
-  //   // Less aggressive throttling for better responsiveness
-  //   let scrollTimeout: NodeJS.Timeout
-  //   const throttledScroll = () => {
-  //     clearTimeout(scrollTimeout)
-  //     // Use requestAnimationFrame for smoother scrolling
-  //     scrollTimeout = setTimeout(handleScroll, 8) // ~120fps for better responsiveness
-  //   }
-    
-  //   const scrollContainer = document.querySelector('[data-main-scroll]')
-  //   if (scrollContainer) {
-  //     scrollContainer.addEventListener('scroll', throttledScroll, { passive: true })
-      
-  //     // Initial load
-  //     handleScroll()
-      
-  //     return () => {
-  //       scrollContainer.removeEventListener('scroll', throttledScroll)
-  //       clearTimeout(scrollTimeout)
-  //     }
-  //   }
-  // }, [pokemonList])
-
   // Load initial Pokemon data - FAST SCROLL VERSION
   useEffect(() => {
     const loadInitialPokemon = async () => {
@@ -619,41 +442,6 @@ export default function Home() {
     }
   }, [])
 
-  // Memoize filtered Pokémon to prevent unnecessary re-renders and improve performance
-  const memoizedFilteredPokemon = useMemo(() => {
-    return pokemonList
-  }, [pokemonList])
-
-  // Preload visible Pokemon for better performance (implemented inline to avoid HMR issues)
-  const visiblePokemonIds = useMemo(() => {
-    return memoizedFilteredPokemon.slice(0, 50).map(p => p.id) // Optimized for better memory usage
-  }, [memoizedFilteredPokemon])
-
-  // Preloading is handled by the PokemonPreloader component in layout
-  // Removed inline preloading to avoid HMR issues
-
-
-  // Sort Pokémon using pokemonList for better performance
-  const sortedPokemon = [...pokemonList].sort((a, b) => {
-    let comparison = 0
-    switch (filters.sortBy) {
-      case 'name':
-        comparison = a.name.localeCompare(b.name)
-        break
-      case 'height':
-        comparison = a.height - b.height
-        break
-      case 'weight':
-        comparison = a.weight - b.weight
-        break
-      default:
-        comparison = a.id - b.id
-    }
-    return filters.sortOrder === 'desc' ? -comparison : comparison
-  })
-
-
-
   const toggleComparison = (id: number, setShowSidebar?: (show: boolean) => void) => {
     const isAdding = !comparisonList.includes(id)
     const newComparison = isAdding
@@ -684,27 +472,6 @@ export default function Home() {
         </div>
       </div>
     )
-  }
-
-  // Handle client-side routing for lobby pages
-  
-  if (actualPathname === '/lobby') {
-    return (
-      <ProtectedRoute>
-        <LobbyPage />
-      </ProtectedRoute>
-    )
-  }
-  
-  if (actualPathname.startsWith('/lobby/')) {
-    const roomId = actualPathname.split('/lobby/')[1]
-    if (roomId) {
-      return (
-        <ProtectedRoute>
-          <RoomPageClient roomId={roomId} />
-        </ProtectedRoute>
-      )
-    }
   }
 
   // Determine layout mode based on theme

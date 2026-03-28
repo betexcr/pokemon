@@ -57,7 +57,7 @@ export function calculateDamage({
   movePower,
   attackStat,
   defenseStat,
-  isCrit,
+  critMultiplier,
   stab,
   typeEffect,
   weatherMod,
@@ -69,7 +69,7 @@ export function calculateDamage({
   movePower: number;
   attackStat: number;
   defenseStat: number;
-  isCrit: boolean;
+  critMultiplier: number;
   stab: number;
   typeEffect: number;
   weatherMod: number;
@@ -77,8 +77,7 @@ export function calculateDamage({
   otherMods?: number;
   rng: BattleRng;
 }): number {
-  // Critical hit multiplier (Gen VI+)
-  const crit = isCrit ? 1.5 : 1.0;
+  const crit = critMultiplier;
   
   // Random factor (85-100%)
   const rand = 0.85 + rngNextFloat(rng) * 0.15;
@@ -173,6 +172,7 @@ export function calculateComprehensiveDamage({
   hasSniper = false,
   isHighCritMove = false,
   hasSuperLuck = false,
+  precomputedCrit,
   rng
 }: {
   level: number;
@@ -206,6 +206,7 @@ export function calculateComprehensiveDamage({
   hasSniper?: boolean;
   isHighCritMove?: boolean;
   hasSuperLuck?: boolean;
+  precomputedCrit?: boolean;
   rng: BattleRng;
 }): { damage: number; effectiveness: number; critical: boolean; effectivenessText: string } {
   
@@ -286,8 +287,8 @@ export function calculateComprehensiveDamage({
     otherMods *= 0.5;
   }
   
-  // Check for critical hit
-  const isCrit = getCriticalHitChance(0.0625, isHighCritMove, hasSuperLuck, rng);
+  // Check for critical hit (use precomputed result if provided to avoid dual rolls)
+  const isCrit = precomputedCrit ?? getCriticalHitChance(0.0625, isHighCritMove, hasSuperLuck, rng);
   
   // Apply Sniper ability (extra crit damage)
   let critMultiplier = isCrit ? 1.5 : 1.0;
@@ -301,7 +302,7 @@ export function calculateComprehensiveDamage({
     movePower,
     attackStat: finalAttackStat,
     defenseStat: modifiedDefenseStat,
-    isCrit,
+    critMultiplier,
     stab,
     typeEffect,
     weatherMod,

@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { Pokemon } from '@/types/pokemon'
 import { searchPokemonByName } from '@/lib/api'
-import { debounce } from 'lodash'
+import { debounce, type DebouncedFunc } from 'lodash'
 
 interface SearchCache {
   [key: string]: {
@@ -32,6 +32,8 @@ export function useSearch(options: UseSearchOptions = {}) {
   const searchCache = useRef<SearchCache>({})
   const lastRequestTime = useRef<number>(0)
   const abortController = useRef<AbortController | null>(null)
+  const deferTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const debouncedSearchRef = useRef<DebouncedFunc<(term: string) => Promise<void>> | null>(null)
 
   // Check if search term is cached and valid
   const getCachedResults = useCallback((term: string): Pokemon[] | null => {
@@ -126,7 +128,12 @@ export function useSearch(options: UseSearchOptions = {}) {
 
   // Debounced search
   const debouncedSearch = useCallback(
-    debounce(performSearch, debounceMs),
+    (() => {
+      if (debouncedSearchRef.current) debouncedSearchRef.current.cancel();
+      const fn = debounce(performSearch, debounceMs);
+      debouncedSearchRef.current = fn;
+      return fn;
+    })(),
     [performSearch, debounceMs]
   )
 
@@ -136,7 +143,8 @@ export function useSearch(options: UseSearchOptions = {}) {
     setSearchTerm(newTerm)
     
     // Defer other state updates to prevent blocking the UI thread
-    setTimeout(() => {
+    if (deferTimeoutRef.current) clearTimeout(deferTimeoutRef.current)
+    deferTimeoutRef.current = setTimeout(() => {
       if (!newTerm.trim()) {
         // Clear results immediately for empty search
         setResults([])
@@ -176,9 +184,9 @@ export function useSearch(options: UseSearchOptions = {}) {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (abortController.current) {
-        abortController.current.abort()
-      }
+      if (abortController.current) abortController.current.abort()
+      if (debouncedSearchRef.current) debouncedSearchRef.current.cancel()
+      if (deferTimeoutRef.current) clearTimeout(deferTimeoutRef.current)
     }
   }, [])
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import {
@@ -26,6 +26,10 @@ import { getUserTeams, type SavedTeam } from '@/lib/userTeams';
 import { roomService, type RoomData } from '@/lib/roomService';
 import { rtdbService } from '@/lib/firebase-rtdb-service';
 import type { Championship, ChampionshipMatch } from '@/lib/championship/types';
+import {
+  formatChampionshipGenerationRule,
+  teamWithinMaxGeneration,
+} from '@/lib/pokemon/nationalDexByGeneration';
 
 interface Props {
   championshipId: string;
@@ -70,6 +74,34 @@ function ChampionshipDetailContent({ championshipId }: Props) {
     loadTeams();
   }, [user]);
 
+  const championshipId_ = championship?.id;
+  const maxGeneration = championship?.maxGeneration;
+
+  const generationRuleText = useMemo(
+    () =>
+      championship ? formatChampionshipGenerationRule(maxGeneration) : null,
+    [maxGeneration, championship]
+  );
+
+  const teamChoices = useMemo(() => {
+    if (!maxGeneration) return userTeams;
+    return userTeams.filter((t) =>
+      teamWithinMaxGeneration(t.slots, maxGeneration)
+    );
+  }, [userTeams, maxGeneration]);
+
+  useEffect(() => {
+    if (!championship || teamsLoading) return;
+    if (teamChoices.length === 0) {
+      setSelectedTeamId('');
+      return;
+    }
+    setSelectedTeamId((prev) => {
+      if (prev && teamChoices.some((t) => t.id === prev)) return prev;
+      return teamChoices[0].id;
+    });
+  }, [championshipId_, maxGeneration, teamChoices, teamsLoading, championship]);
+
   // Watch active match rooms and auto-advance winners
   const advancingRef = useRef<Set<string>>(new Set());
   useEffect(() => {
@@ -108,7 +140,7 @@ function ChampionshipDetailContent({ championshipId }: Props) {
 
   const c = championship;
   const isHost = c?.hostUid === user?.uid;
-  const isJoined = c?.participants.some((p) => p.uid === user?.uid);
+  const isJoined = c?.participants?.some((p) => p.uid === user?.uid) ?? false;
   const isFull = c ? c.participants.length >= c.size : false;
 
   const handleJoin = useCallback(async () => {
@@ -266,7 +298,7 @@ function ChampionshipDetailContent({ championshipId }: Props) {
           myParticipant?.team
         );
 
-        await championshipService.setMatchRoom(c.id, match.id, roomId);
+        await championshipService.setMatchRoom(c.id, match.id, roomId, user.uid);
         router.push(`/lobby/${roomId}`);
       } catch (err) {
         console.error('Failed to start battle:', err);
@@ -315,12 +347,18 @@ function ChampionshipDetailContent({ championshipId }: Props) {
       <AppHeader
         title={c.name}
         subtitle={
-          <span className="flex items-center gap-2 text-sm text-muted">
+          <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
             <span>{statusLabel}</span>
             <span>·</span>
             <span>{c.participants.length}/{c.size} trainers</span>
             <span>·</span>
             <span>Host: {c.hostName}</span>
+            {generationRuleText && (
+              <>
+                <span>·</span>
+                <span className="text-purple-600 dark:text-violet-300">Through Gen {c.maxGeneration}</span>
+              </>
+            )}
           </span>
         }
         backLink="/championship"
@@ -341,6 +379,11 @@ function ChampionshipDetailContent({ championshipId }: Props) {
                     <Users className="w-5 h-5 text-blue-400" />
                     Join Championship
                   </h3>
+                  {generationRuleText && (
+                    <p className="text-sm text-purple-700 dark:text-violet-200 bg-purple-50 dark:bg-violet-950/30 border border-purple-200 dark:border-violet-500/25 rounded-lg px-3 py-2 mb-3">
+                      {generationRuleText}
+                    </p>
+                  )}
                   <div className="space-y-3">
                     <div>
                       <label className="block text-sm font-medium text-text mb-1">
@@ -359,7 +402,7 @@ function ChampionshipDetailContent({ championshipId }: Props) {
                             <option value="" disabled>
                               Select a team...
                             </option>
-                            {userTeams.map((t) => (
+                            {teamChoices.map((t) => (
                               <option key={t.id} value={t.id}>
                                 {t.name} ({t.slots.length} Pokémon)
                               </option>
@@ -372,10 +415,21 @@ function ChampionshipDetailContent({ championshipId }: Props) {
                           No teams found. Create one in Team Builder first.
                         </p>
                       )}
+                      {!teamsLoading &&
+                        userTeams.length > 0 &&
+                        c.maxGeneration != null &&
+                        teamChoices.length === 0 && (
+                          <p className="mt-1 text-xs text-amber-400">
+                            None of your saved teams meet this championship&apos;s generation
+                            limit. Edit or create a team in Team Builder.
+                          </p>
+                        )}
                     </div>
                     <button
                       onClick={handleJoin}
-                      disabled={actionLoading || isFull || !selectedTeamId}
+                      disabled={
+                        actionLoading || isFull || !selectedTeamId || teamChoices.length === 0
+                      }
                       className="w-full bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white py-2.5 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
                     >
                       {actionLoading ? (
@@ -393,24 +447,39 @@ function ChampionshipDetailContent({ championshipId }: Props) {
               {isJoined && (
                 <div className="bg-surface rounded-xl shadow-lg p-4 sm:p-6 border border-border">
                   <h3 className="text-lg font-semibold text-text mb-3">Your Team</h3>
+                  {generationRuleText && (
+                    <p className="text-sm text-purple-700 dark:text-violet-200 bg-purple-50 dark:bg-violet-950/30 border border-purple-200 dark:border-violet-500/25 rounded-lg px-3 py-2 mb-3">
+                      {generationRuleText}
+                    </p>
+                  )}
                   <div className="flex gap-2 items-end">
                     <div className="flex-1">
                       <select
                         value={selectedTeamId}
                         onChange={(e) => setSelectedTeamId(e.target.value)}
-                        disabled={teamsLoading}
+                        disabled={teamsLoading || teamChoices.length === 0}
                         className="block w-full pl-3 pr-10 py-2.5 text-sm border-border focus:outline-none focus:ring-yellow-500 focus:border-yellow-500 rounded-lg border bg-surface text-text disabled:opacity-50"
                       >
-                        {userTeams.map((t) => (
+                        {teamChoices.map((t) => (
                           <option key={t.id} value={t.id}>
                             {t.name} ({t.slots.length} Pokémon)
                           </option>
                         ))}
                       </select>
+                      {!teamsLoading &&
+                        userTeams.length > 0 &&
+                        c.maxGeneration != null &&
+                        teamChoices.length === 0 && (
+                          <p className="mt-1 text-xs text-amber-400">
+                            No eligible teams. Adjust your roster in Team Builder.
+                          </p>
+                        )}
                     </div>
                     <button
                       onClick={handleUpdateTeam}
-                      disabled={actionLoading || !selectedTeamId}
+                      disabled={
+                        actionLoading || !selectedTeamId || teamChoices.length === 0
+                      }
                       className="px-4 py-2.5 bg-yellow-600 hover:bg-yellow-700 disabled:bg-yellow-400 text-white rounded-lg text-sm font-medium transition-colors"
                     >
                       Update
@@ -580,6 +649,23 @@ function ChampionshipDetailContent({ championshipId }: Props) {
                   currentUserUid={user?.uid}
                 />
               </div>
+
+              {isHost && c.status === 'completed' && (
+                <div className="bg-surface rounded-xl shadow-lg p-4 sm:p-6 border border-yellow-500/30">
+                  <h3 className="text-lg font-semibold text-text mb-3 flex items-center gap-2">
+                    <Crown className="w-5 h-5 text-yellow-500" />
+                    Host Controls
+                  </h3>
+                  <button
+                    onClick={handleDelete}
+                    disabled={actionLoading}
+                    className="w-full py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete Championship
+                  </button>
+                </div>
+              )}
             </div>
           )}
 

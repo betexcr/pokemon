@@ -11,7 +11,6 @@ import {
   GoogleAuthProvider,
   OAuthProvider,
   signInWithPopup,
-  signInWithRedirect,
   getRedirectResult,
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
@@ -45,7 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const result = await getRedirectResult(auth);
         if (result) {
-          console.log('User signed in successfully via Google redirect:', result.user.displayName);
+          // redirect sign-in handled by onAuthStateChanged
         }
       } catch (error) {
         console.warn('Error handling Google redirect result (non-critical):', error);
@@ -83,17 +82,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error('Authentication service is currently unavailable. Please try again later.');
     }
     try {
-      console.log('Creating user with email:', email);
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      console.log('User created successfully:', userCredential.user.uid);
       
       if (displayName) {
-        console.log('Updating profile with display name:', displayName);
         await updateProfile(userCredential.user, { displayName });
-        console.log('Profile updated successfully');
       }
-      
-      console.log('Signup completed successfully');
     } catch (error) {
       console.error('Error signing up:', error);
       throw error;
@@ -119,22 +112,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const result = await signInWithPopup(auth, provider);
       
-      // The signed-in user info
-      const user = result.user;
-      
-      // This gives you a Google Access Token
-      const credential = GoogleAuthProvider.credentialFromResult(result);
-      const accessToken = credential?.accessToken;
-      
-      console.log('User signed in successfully with Google:', {
-        displayName: user.displayName,
-        email: user.email,
-        photoURL: user.photoURL,
-        uid: user.uid
-      });
-      
-      // You can now access user.uid, user.email, user.displayName, etc.
-      // The user is automatically signed in and the onAuthStateChanged will trigger
+      // onAuthStateChanged handles the rest
       
     } catch (error: unknown) {
       console.error('Error during Google sign-in:', error);
@@ -174,19 +152,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const result = await signInWithPopup(auth, provider);
       
-      // The signed-in user info
-      const user = result.user;
-      
-      // This gives you a Microsoft Access Token
-      const credential = OAuthProvider.credentialFromResult(result);
-      const accessToken = credential?.accessToken;
-      
-      console.log('User signed in successfully with Microsoft:', {
-        displayName: user.displayName,
-        email: user.email,
-        photoURL: user.photoURL,
-        uid: user.uid
-      });
+      // onAuthStateChanged handles the rest
       
     } catch (error: unknown) {
       console.error('Error during Microsoft sign-in:', error);
@@ -224,19 +190,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const result = await signInWithPopup(auth, provider);
       
-      // The signed-in user info
-      const user = result.user;
-      
-      // This gives you a Twitter Access Token
-      const credential = OAuthProvider.credentialFromResult(result);
-      const accessToken = credential?.accessToken;
-      
-      console.log('User signed in successfully with Twitter:', {
-        displayName: user.displayName,
-        email: user.email,
-        photoURL: user.photoURL,
-        uid: user.uid
-      });
+      // onAuthStateChanged handles the rest
       
     } catch (error: unknown) {
       console.error('Error during Twitter sign-in:', error);

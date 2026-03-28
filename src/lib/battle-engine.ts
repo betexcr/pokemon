@@ -229,7 +229,7 @@ export function getTypeEffectiveness(attackType: string, defenseTypes: string[])
     grass: { fire: 0.5, water: 2, grass: 0.5, poison: 0.5, flying: 0.5, bug: 0.5, rock: 2, ground: 2, steel: 0.5, dragon: 0.5 },
     ice: { fire: 0.5, water: 0.5, grass: 2, ice: 0.5, ground: 2, flying: 2, dragon: 2, steel: 0.5 },
     fighting: { normal: 2, ice: 2, poison: 0.5, flying: 0.5, psychic: 0.5, bug: 0.5, rock: 2, ghost: 0, dark: 2, steel: 2 },
-    poison: { grass: 2, poison: 0.5, ground: 0.5, rock: 0.5, ghost: 0.5, steel: 0, bug: 2 },
+    poison: { grass: 2, poison: 0.5, ground: 0.5, rock: 0.5, ghost: 0.5, steel: 0 },
     ground: { fire: 2, electric: 2, grass: 0.5, poison: 2, flying: 0, bug: 0.5, rock: 2, steel: 2 },
     flying: { electric: 0.5, grass: 2, ice: 0.5, fighting: 2, bug: 2, rock: 0.5, steel: 0.5 },
     psychic: { fighting: 2, poison: 2, psychic: 0.5, dark: 0, steel: 0.5 },
@@ -306,7 +306,7 @@ export function calculateDamageDetailed(
   const flinch = canCauseFlinch(move) && Math.random() < 0.3; // 30% flinch chance
   
   return {
-    damage: Math.max(1, damage),
+    damage: effectiveness === 0 ? 0 : Math.max(1, damage),
     effectiveness,
     critical: criticalHit > 1,
     statusEffect: statusEffect || undefined,
@@ -639,48 +639,111 @@ export function executeAction(state: BattleState, action: BattleAction): BattleS
       }
     }
 
+    // Recompute active Pokemon after auto-switch so EOT runs on the correct slot
+    const playerActive = getCurrentPokemon(newState.player);
+    const opponentActive = getCurrentPokemon(newState.opponent);
+
     // Process end of turn status effects
-    const playerStatusDamage = processEndOfTurnStatus(playerCurrentPokemon);
-    const opponentStatusDamage = processEndOfTurnStatus(opponentCurrentPokemon);
+    const playerStatusDamage = processEndOfTurnStatus(playerActive);
+    const opponentStatusDamage = processEndOfTurnStatus(opponentActive);
     
     if (playerStatusDamage > 0) {
-      const oldHp = playerCurrentPokemon.currentHp + playerStatusDamage;
-      const damagePercent = calculateDamagePercentage(playerStatusDamage, playerCurrentPokemon.maxHp);
-      const remainingPercent = Math.round((playerCurrentPokemon.currentHp / playerCurrentPokemon.maxHp) * 100);
+      const damagePercent = calculateDamagePercentage(playerStatusDamage, playerActive.maxHp);
+      const remainingPercent = Math.round((playerActive.currentHp / playerActive.maxHp) * 100);
       
       newState.battleLog.push({
         type: 'status_damage',
-        message: `${playerCurrentPokemon.pokemon.name} was hurt by its ${playerCurrentPokemon.status}! (${remainingPercent}% HP left)`,
-        pokemon: String(playerCurrentPokemon.pokemon.name),
+        message: `${playerActive.pokemon.name} was hurt by its ${playerActive.status}! (${remainingPercent}% HP left)`,
+        pokemon: String(playerActive.pokemon.name),
         damage: damagePercent,
-        status: String(playerCurrentPokemon.status)
+        status: String(playerActive.status)
       });
     }
     
     if (opponentStatusDamage > 0) {
-      const oldHp = opponentCurrentPokemon.currentHp + opponentStatusDamage;
-      const damagePercent = calculateDamagePercentage(opponentStatusDamage, opponentCurrentPokemon.maxHp);
-      const remainingPercent = Math.round((opponentCurrentPokemon.currentHp / opponentCurrentPokemon.maxHp) * 100);
+      const damagePercent = calculateDamagePercentage(opponentStatusDamage, opponentActive.maxHp);
+      const remainingPercent = Math.round((opponentActive.currentHp / opponentActive.maxHp) * 100);
       
       newState.battleLog.push({
         type: 'status_damage',
-        message: `${opponentCurrentPokemon.pokemon.name} was hurt by its ${opponentCurrentPokemon.status}! (${remainingPercent}% HP left)`,
-        pokemon: String(opponentCurrentPokemon.pokemon.name),
+        message: `${opponentActive.pokemon.name} was hurt by its ${opponentActive.status}! (${remainingPercent}% HP left)`,
+        pokemon: String(opponentActive.pokemon.name),
         damage: damagePercent,
-        status: String(opponentCurrentPokemon.status)
+        status: String(opponentActive.status)
       });
     }
-    
-    // Switch turns
-    newState.turn = newState.turn === 'player' ? 'opponent' : 'player';
-    newState.turnNumber++;
-    
-    // Add turn indicator
-    newState.battleLog.push({
-      type: 'turn_start',
-      message: `Turn ${newState.turnNumber}:`,
-      turn: newState.turnNumber
-    });
+
+    // Post-EOT faint handling
+    if (playerActive.currentHp <= 0) {
+      newState.battleLog.push({
+        type: 'pokemon_fainted',
+        message: `${playerActive.pokemon.name} fainted!`,
+        pokemon: String(playerActive.pokemon.name)
+      });
+    }
+    if (opponentActive.currentHp <= 0) {
+      newState.battleLog.push({
+        type: 'pokemon_fainted',
+        message: `${opponentActive.pokemon.name} fainted!`,
+        pokemon: String(opponentActive.pokemon.name)
+      });
+    }
+
+    if (isTeamDefeated(newState.player)) {
+      newState.isComplete = true;
+      newState.winner = 'opponent';
+      newState.battleLog.push({
+        type: 'battle_end',
+        message: 'All your Pokémon have fainted! You lost the battle!',
+        turn: newState.turnNumber
+      });
+    } else if (isTeamDefeated(newState.opponent)) {
+      newState.isComplete = true;
+      newState.winner = 'player';
+      newState.battleLog.push({
+        type: 'battle_end',
+        message: 'All opponent Pokémon have fainted! You won the battle!',
+        turn: newState.turnNumber
+      });
+    } else {
+      if (playerActive.currentHp <= 0) {
+        const nextIdx = getNextAvailablePokemon(newState.player);
+        if (nextIdx !== null) {
+          switchToPokemon(newState.player, nextIdx);
+          const newCurrent = getCurrentPokemon(newState.player);
+          newState.battleLog.push({
+            type: 'pokemon_sent_out',
+            message: `Go! ${newCurrent.pokemon.name}!`,
+            pokemon: String(newCurrent.pokemon.name)
+          });
+        }
+      }
+      if (opponentActive.currentHp <= 0) {
+        const nextIdx = getNextAvailablePokemon(newState.opponent);
+        if (nextIdx !== null) {
+          switchToPokemon(newState.opponent, nextIdx);
+          const newCurrent = getCurrentPokemon(newState.opponent);
+          newState.battleLog.push({
+            type: 'pokemon_sent_out',
+            message: `${newCurrent.pokemon.name} was sent out!`,
+            pokemon: String(newCurrent.pokemon.name)
+          });
+        }
+      }
+    }
+
+    if (!newState.isComplete) {
+      // Switch turns
+      newState.turn = newState.turn === 'player' ? 'opponent' : 'player';
+      newState.turnNumber++;
+
+      // Add turn indicator
+      newState.battleLog.push({
+        type: 'turn_start',
+        message: `Turn ${newState.turnNumber}:`,
+        turn: newState.turnNumber
+      });
+    }
   }
   
   return newState;

@@ -6,7 +6,6 @@ import type { TeamAnalysis } from '@/lib/team/engine';
 import { motion, useReducedMotion } from 'framer-motion';
 
 export default function TypeRadar({ analysis, id = 'team-radar' }: { analysis: TeamAnalysis; id?: string }) {
-  console.log('TypeRadar received analysis:', analysis);
   const reduce = useReducedMotion();
   const width = 420;
   const height = 420;
@@ -16,12 +15,9 @@ export default function TypeRadar({ analysis, id = 'team-radar' }: { analysis: T
   const cy = height / 2;
 
   function val(t: TypeName) {
-    const net = (analysis.net[t] || 0); // can be negative
-    // Normalize from [-3..+3] to [0.2..1]
+    const net = (analysis.net[t] || 0);
     const norm = Math.max(0, Math.min(1, (net + 3) / 6));
-    const result = 0.2 + norm * 0.8;
-    console.log(`TypeRadar val for ${t}: net=${net}, norm=${norm}, result=${result}`);
-    return result;
+    return 0.2 + norm * 0.8;
   }
 
   const points = TYPES.map((t, i) => {

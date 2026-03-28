@@ -110,7 +110,11 @@ A comprehensive, high-performance Pokémon web application built with Next.js, T
 - **State Management**: React hooks with localStorage
 - **Virtualization**: Standard CSS Grid (optimized for performance)
 - **Theming**: CSS Custom Properties with dynamic theme switching
-- **Testing**: Jest with React Testing Library
+- **Testing**: Vitest with React Testing Library
+
+### Maintainer reference
+
+**Hosting, architecture map, and pointers to complex modules** (battles, RTDB, championships, caching): see **[docs/ARCHITECTURE_AND_HOSTING.md](docs/ARCHITECTURE_AND_HOSTING.md)**. Includes the known Vercel production URL and how to verify what commit is deployed.
 
 ## 📱 UI/UX Features
 
@@ -171,7 +175,7 @@ A comprehensive, high-performance Pokémon web application built with Next.js, T
    ```
 
 5. **Open your browser**
-   Navigate to [http://localhost:3000](http://localhost:3000)
+   Navigate to [http://localhost:3002](http://localhost:3002)
 
 ### Available Scripts
 
@@ -457,7 +461,7 @@ src/
 - **TypeScript**: Strict type checking
 - **ESLint**: Code quality enforcement
 - **Prettier**: Consistent code formatting
-- **Comprehensive Testing**: Jest tests for all components and functionality
+- **Comprehensive Testing**: Vitest tests for all components and functionality
 - **Git Hooks**: Pre-commit quality checks
 
 ## 📈 Recent Enhancements
@@ -514,18 +518,11 @@ src/
 
 ### Planned Features
 - **GraphQL Integration**: Optional GraphQL endpoint support
-- **Offline Support**: Service worker for offline functionality
-- **Advanced Search**: Full-text search with filters
-- **Team Builder**: Create and save Pokémon teams
-- **Battle Simulator**: Simple battle mechanics
 - **Social Features**: Share teams and favorites
 
 ### Technical Improvements
-- **Redis Integration**: Production-ready caching
 - **CDN**: Image and static asset optimization
-- **Analytics**: User behavior tracking
 - **PWA**: Progressive Web App features
-- **Internationalization**: Multi-language support
 
 ## 🤝 Contributing
 

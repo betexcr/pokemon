@@ -571,7 +571,7 @@ export class BrowserCache {
   // Helper method to check if cache item is valid
   private isValidCacheItem(item: CacheItem): boolean {
     if (!item || typeof item !== 'object') return false
-    if (!item.data || typeof item.timestamp !== 'number') return false
+    if (item.data === undefined || item.data === null || typeof item.timestamp !== 'number') return false
     if (item.ttl > 0 && Date.now() - item.timestamp > item.ttl) return false
     return true
   }
@@ -579,6 +579,3 @@ export class BrowserCache {
 
 // Export singleton instance
 export const browserCache = new BrowserCache()
-
-// Export for compatibility
-export const redisCache = browserCache

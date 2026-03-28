@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 interface BattleStartFlashProps {
   onDone?: () => void
@@ -13,14 +13,16 @@ interface BattleStartFlashProps {
  */
 export default function BattleStartFlash({ onDone, durationMs = 2000 }: BattleStartFlashProps) {
   const [visible, setVisible] = useState(true)
+  const onDoneRef = useRef(onDone)
+  onDoneRef.current = onDone
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setVisible(false)
-      onDone?.()
+      onDoneRef.current?.()
     }, durationMs)
     return () => window.clearTimeout(timer)
-  }, [durationMs, onDone])
+  }, [durationMs])
 
   if (!visible) return null
 

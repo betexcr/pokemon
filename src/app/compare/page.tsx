@@ -133,6 +133,22 @@ export default function ComparePage() {
     )
   }
 
+  if (error) {
+    return (
+      <div className="h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-6">
+          <p className="text-red-500 font-semibold mb-4">{error}</p>
+          <button
+            onClick={() => loadSelectedPokemon()}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="h-screen root-full w-screen bg-gradient-to-br from-slate-900 via-slate-950 to-[#0b1120] flex flex-col overflow-hidden">
       <OfflineBanner cachedMessage="You're offline. Only previously viewed Pokemon are available for comparison." />

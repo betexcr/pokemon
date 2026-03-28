@@ -279,7 +279,6 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
   // Initialise battle
   useEffect(() => {
     if (!config || initialized.current) return;
-    initialized.current = true;
 
     (async () => {
       try {
@@ -376,6 +375,7 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
         setPub(projectPublic(state));
         setMe(projectPrivate(state.player));
         setLoading(false);
+        initialized.current = true;
       } catch (err: any) {
         console.error('Offline battle init error:', err);
         setError(err.message || 'Failed to initialize battle');

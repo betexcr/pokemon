@@ -1,22 +1,18 @@
 'use client'
 
-import { forwardRef, useImperativeHandle, useMemo } from 'react'
+import { forwardRef, useMemo } from 'react'
 import Image from 'next/image'
 import { getPokemonBattleImageWithFallback, formatPokemonName, getPokemonIdFromSpecies, getShowdownAnimatedSprite } from '@/lib/utils'
 
-export interface BattleSpriteRef {
-  shake?: () => void
-}
+export interface BattleSpriteRef {}
 
 interface BattleSpriteProps {
   species: string
   level: number
   hp: { cur: number; max: number }
   status?: string | null
-  volatiles?: string[] | null
   types?: string[]
   side?: 'player' | 'opponent'
-  field?: Record<string, unknown>
   className?: string
   spriteMode?: 'animated' | 'static'
   shiny?: boolean
@@ -24,10 +20,8 @@ interface BattleSpriteProps {
 
 export const BattleSprite = forwardRef<BattleSpriteRef, BattleSpriteProps>(function BattleSprite(
   { species, level, hp, status, types = [], side = 'player', className = '', spriteMode = 'static', shiny = false },
-  ref
+  _ref
 ) {
-  useImperativeHandle(ref, () => ({ shake: () => {} }), [])
-
   const speciesId = getPokemonIdFromSpecies(species) ?? 1
   const variant: 'front' | 'back' = side === 'player' ? 'back' : 'front'
   const staticSprite = useMemo(() => getPokemonBattleImageWithFallback(speciesId, variant, shiny), [speciesId, variant, shiny])

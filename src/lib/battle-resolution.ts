@@ -97,7 +97,9 @@ async function hydrateTeam(team: any[]): Promise<BattlePokemon[]> {
         const level = typeof p.level === 'number' ? p.level : 50;
         const calculatedMaxHp = Math.floor(((2 * baseHp + 31) * level) / 100) + level + 10;
         const maxHp = typeof p.maxHp === 'number' && p.maxHp > 0 ? p.maxHp : calculatedMaxHp;
-        const currentHp = typeof p.currentHp === 'number' && p.currentHp > 0 ? p.currentHp : maxHp;
+        const currentHp = typeof p.currentHp === 'number' && p.currentHp >= 0
+            ? Math.min(p.currentHp, maxHp)
+            : maxHp;
 
         return {
             pokemon,
@@ -192,34 +194,28 @@ async function fetchBattleState(battleId: string, ops: RtdbOps): Promise<BattleS
 }
 
 export async function resolveTurn(battleId: string, authToken?: string): Promise<void> {
-    console.log('=== RESOLVE TURN CALLED ===', battleId);
     const ops = getRtdbOps(authToken);
 
     const meta = await ops.get(`battles/${battleId}/meta`) as RTDBBattleMeta;
     if (!meta) throw new Error('Battle not found');
 
     if (meta.phase !== 'choosing') {
-        console.log(`Phase is "${meta.phase}", skipping resolution.`);
         return;
     }
 
     const lockKey = `${battleId}:${meta.turn}`;
     if (_resolvingLocks.has(lockKey)) {
-        console.log(`In-memory lock held for ${lockKey}, skipping.`);
         return;
     }
     _resolvingLocks.add(lockKey);
 
     const choices = await ops.get(`battles/${battleId}/turns/${meta.turn}/choices`) as Record<string, RTDBChoice>;
     if (!choices || !choices[meta.players.p1.uid] || !choices[meta.players.p2.uid]) {
-        console.log('Not all players have submitted choices yet.');
         _resolvingLocks.delete(lockKey);
         return;
     }
 
-    console.log('Both players submitted. Resolving turn', meta.turn);
     await ops.update(`battles/${battleId}/meta`, { phase: 'resolving' });
-    console.log('Phase locked to resolving.');
 
     // 4. Fetch Current State
     const battleState = await fetchBattleState(battleId, ops);
@@ -227,8 +223,6 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
         console.error('Failed to reconstruct battle state. One or more paths missing.');
         throw new Error('Failed to reconstruct battle state');
     }
-    console.log('Battle state reconstructed successfully.');
-
     // 4. Map Choices to BattleActions
     const p1Choice = choices[meta.players.p1.uid];
     const p2Choice = choices[meta.players.p2.uid];
@@ -266,8 +260,6 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
         await processStartOfTurn(currentState);
 
         for (const action of queue) {
-            console.log('Processing action:', action);
-
             if (action.type === 'switch') {
                 await resolveSwitch(currentState, action);
             } else if (action.type === 'move' && action.moveId) {
@@ -278,13 +270,11 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
             currentState.opponent.faintedCount = currentState.opponent.pokemon.filter(p => p.currentHp <= 0).length;
 
             if (isTeamDefeated(currentState.player) || isTeamDefeated(currentState.opponent)) {
-                console.log('A team is fully defeated, stopping action queue.');
                 break;
             }
         }
 
         // 8. End of Turn Processing
-        console.log('Processing end of turn effects...');
         await processEndOfTurn(currentState);
         
         const p1Active = getCurrentPokemon(currentState.player);
@@ -302,7 +292,6 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
                     message: `Go! ${newPokemon.pokemon.name}!`,
                     pokemon: newPokemon.pokemon.name
                 });
-                console.log(`Auto-replaced P1's fainted Pokemon with ${newPokemon.pokemon.name} at index ${nextIndex}`);
             }
         }
 
@@ -316,7 +305,6 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
                     message: `Go! ${newPokemon.pokemon.name}!`,
                     pokemon: newPokemon.pokemon.name
                 });
-                console.log(`Auto-replaced P2's fainted Pokemon with ${newPokemon.pokemon.name} at index ${nextIndex}`);
             }
         }
 
@@ -411,8 +399,6 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
                 : ''
         };
 
-        console.log('Public updates:', JSON.stringify(publicUpdates, null, 2));
-
         await Promise.all([
             ops.update(`battles/${battleId}/meta`, metaUpdates),
             ops.update(`battles/${battleId}/private/${meta.players.p1.uid}`, p1Updates),
@@ -420,7 +406,6 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
             ops.update(`battles/${battleId}/public`, publicUpdates),
             ops.set(`battles/${battleId}/turns/${meta.turn}/choices`, null),
         ]);
-        console.log('✅ RTDB updates completed successfully.');
 
     } catch (error: any) {
         console.error('Error during turn resolution:', error);
@@ -428,9 +413,8 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
         try {
             await ops.update(`battles/${battleId}/meta`, {
                 phase: 'ended',
-                endedReason: `Server Error: ${error.message}`
+                endedReason: 'resolution_failed'
             });
-            console.log('Battle terminated due to error.');
         } catch (cleanupError) {
             console.error('Failed to terminate battle:', cleanupError);
         }
@@ -439,6 +423,5 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
         _resolvingLocks.delete(lockKey);
     }
 
-    console.log(`Turn ${meta.turn} resolved. New phase: ${currentState.isComplete ? 'ended' : 'choosing'}`);
 }
 

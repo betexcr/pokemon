@@ -7,6 +7,7 @@ import { isSpecialForm, getSpecialFormInfo, getBasePokemonId } from '@/lib/speci
 import { browserCache, getCacheKey, CACHE_TTL } from '@/lib/memcached'
 import { normalizePokemonId } from '@/lib/utils'
 import { analyticsManager } from '@/lib/requestAnalytics'
+import { getGenerationExclusiveDexRange } from '@/lib/pokemon/nationalDexByGeneration'
 
 function isClientOffline(): boolean {
   if (typeof window === 'undefined') return false
@@ -18,7 +19,7 @@ function isClientOffline(): boolean {
   }
 }
 
-export class OfflineError extends Error {
+class OfflineError extends Error {
   constructor(message: string) {
     super(message)
     this.name = 'OfflineError'
@@ -33,10 +34,6 @@ const negativeCache = new Map<string, { error: string; timestamp: number; ttl: n
 
 // Request deduplication to prevent race conditions
 const inFlightRequests = new Map<string, Promise<any>>()
-
-// API call optimization - batch similar requests
-const requestBatcher = new Map<string, { promise: Promise<any>; timestamp: number }>()
-const BATCH_TIMEOUT = 50 // ms
 
 async function getCache(key: string): Promise<any> {
   try {
@@ -201,10 +198,7 @@ async function fetchFromAPI<T>(url: string, signal?: AbortSignal): Promise<T> {
     // Check for duplicate in-flight requests to prevent race conditions
     const requestKey = absoluteUrl
     if (inFlightRequests.has(requestKey)) {
-      console.log('🔄 Deduplicating request:', requestKey)
-      const cached = inFlightRequests.get(requestKey) as Promise<T>;
-      analyticsManager.recordComplete(requestId, 'completed');
-      return cached;
+      return inFlightRequests.get(requestKey) as Promise<T>;
     }
 
     // Create the request promise and store it for deduplication
@@ -244,21 +238,19 @@ async function performFetchWithRetry<T>(
       controller.abort()
     }, 15000)
 
+    const fetchSignal = externalSignal
+      ? AbortSignal.any([controller.signal, externalSignal])
+      : controller.signal
+
     try {
-      // Use native fetch for better reliability
       const response = await fetch(absoluteUrl, {
-        signal: controller.signal,
+        signal: fetchSignal,
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json'
         }
       })
       clearTimeout(timeout)
-      
-      // Clean up external signal listener if it exists
-      if (externalSignal && combinedSignal !== timeoutController.signal) {
-        externalSignal.removeEventListener('abort', () => {})
-      }
 
       if (!response.ok) {
         const shouldRetry = retryStatuses.has(response.status) && attempt < maxAttempts
@@ -307,11 +299,6 @@ async function performFetchWithRetry<T>(
       return result
     } catch (error: any) {
       clearTimeout(timeout)
-      
-      // Clean up external signal listener if it exists
-      if (externalSignal && combinedSignal !== timeoutController.signal) {
-        externalSignal.removeEventListener('abort', () => {})
-      }
 
       // Better error handling for different types of failures
       if (error?.name === 'AbortError') {
@@ -398,50 +385,14 @@ export function getPokemonCardImage(id: number): string {
   return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${id}.png`
 }
 
-export function getPokemonThumbnailImage(id: number): string {
-  // Small thumbnail for lists
-  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`
-}
-
 export function getPokemonShinyImage(id: number): string {
   // Shiny variant
   return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/shiny/${id}.png`
 }
 
-export function getPokemon3DImage(id: number): string {
-  // 3D model image if available
-  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/3d/${id}.png`
-}
-
-export function getPokemonDreamWorldImage(id: number): string {
+function getPokemonDreamWorldImage(id: number): string {
   // Dream World artwork (if available)
   return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/dream-world/${id}.svg`
-}
-
-// Utility function to get the best available image with fallbacks
-export function getPokemonBestImage(id: number, variant: 'default' | 'shiny' = 'default', preferType: 'artwork' | 'home' | 'sprite' = 'artwork'): string {
-  const images = {
-    artwork: variant === 'shiny' ? getPokemonShinyImage(id) : getPokemonMainPageImage(id),
-    home: getPokemonCardImage(id),
-    sprite: getPokemonFallbackImage(id)
-  }
-
-  return images[preferType] || images.artwork
-}
-
-// Generation-specific image sources
-export function getPokemonGenerationImage(id: number, generation: number): string {
-  // Some generations have specific artwork styles
-  if (generation >= 8) {
-    // Gen 8+ use Home artwork
-    return getPokemonCardImage(id)
-  } else if (generation >= 6) {
-    // Gen 6-7 use official artwork
-    return getPokemonMainPageImage(id)
-  } else {
-    // Earlier gens use sprites
-    return getPokemonFallbackImage(id)
-  }
 }
 
 // Pokémon list functions
@@ -1171,21 +1122,12 @@ export async function getPokemonByGeneration(generation: number): Promise<Pokemo
   if (cached) return cached
 
   try {
-    // Generation ranges (approximate)
-    const generationRanges: Record<number, { start: number; end: number }> = {
-      1: { start: 1, end: 151 },
-      2: { start: 152, end: 251 },
-      3: { start: 252, end: 386 },
-      4: { start: 387, end: 493 },
-      5: { start: 494, end: 649 },
-      6: { start: 650, end: 721 },
-      7: { start: 722, end: 809 },
-      8: { start: 810, end: 905 },
-      9: { start: 906, end: 1025 }
+    let range: { start: number; end: number };
+    try {
+      range = getGenerationExclusiveDexRange(generation);
+    } catch {
+      throw new Error(`Invalid generation: ${generation}`);
     }
-
-    const range = generationRanges[generation]
-    if (!range) throw new Error(`Invalid generation: ${generation}`)
 
     const pokemonList: Pokemon[] = []
     const batchSize = 50
@@ -1426,39 +1368,3 @@ export function getPokemonPageSkeleton(count: number): Pokemon[] {
   return generateAllPokemonSkeletons(count)
 }
 
-// Type effectiveness calculation
-export function calculateTypeEffectiveness(attackingTypes: string[], defendingTypes: string[]): number {
-  // Simplified type effectiveness calculation
-  // This would need to be implemented with the full type chart
-  const typeChart: Record<string, Record<string, number>> = {
-    normal: { rock: 0.5, ghost: 0, steel: 0.5 },
-    fire: { fire: 0.5, water: 0.5, grass: 2, ice: 2, bug: 2, rock: 0.5, dragon: 0.5, steel: 2 },
-    water: { fire: 2, water: 0.5, grass: 0.5, ground: 2, rock: 2, dragon: 0.5 },
-    electric: { water: 2, electric: 0.5, grass: 0.5, ground: 0, flying: 2, dragon: 0.5 },
-    grass: { fire: 0.5, water: 2, grass: 0.5, poison: 0.5, ground: 2, flying: 0.5, bug: 0.5, rock: 2, dragon: 0.5, steel: 0.5 },
-    ice: { fire: 0.5, water: 0.5, grass: 2, ice: 0.5, ground: 2, flying: 2, dragon: 2, steel: 0.5 },
-    fighting: { normal: 2, ice: 2, poison: 0.5, flying: 0.5, psychic: 0.5, bug: 1, rock: 2, ghost: 0, dark: 2, steel: 2, fairy: 0.5 },
-    poison: { grass: 2, poison: 0.5, ground: 0.5, rock: 0.5, ghost: 0.5, steel: 0, fairy: 2 },
-    ground: { fire: 2, electric: 2, grass: 0.5, poison: 2, flying: 0, bug: 1, rock: 2, steel: 2 },
-    flying: { electric: 0.5, grass: 2, fighting: 2, bug: 2, rock: 0.5, steel: 0.5 },
-    psychic: { fighting: 2, poison: 2, psychic: 0.5, dark: 0, steel: 0.5 },
-    bug: { fire: 0.5, grass: 2, fighting: 0.5, poison: 0.5, flying: 0.5, psychic: 2, ghost: 0.5, dark: 2, steel: 0.5, fairy: 0.5 },
-    rock: { fire: 2, ice: 2, fighting: 0.5, ground: 0.5, flying: 2, bug: 2, steel: 0.5 },
-    ghost: { normal: 0, psychic: 2, ghost: 2, dark: 0.5 },
-    dragon: { dragon: 2, steel: 0.5, fairy: 0 },
-    dark: { fighting: 0.5, psychic: 2, ghost: 2, dark: 0.5, fairy: 0.5 },
-    steel: { fire: 0.5, water: 0.5, electric: 0.5, ice: 2, rock: 2, fairy: 2, steel: 0.5 },
-    fairy: { fire: 0.5, fighting: 2, poison: 0.5, dragon: 2, dark: 2, steel: 0.5 }
-  }
-
-  let effectiveness = 1
-
-  for (const attackingType of attackingTypes) {
-    for (const defendingType of defendingTypes) {
-      const multiplier = typeChart[attackingType]?.[defendingType] || 1
-      effectiveness *= multiplier
-    }
-  }
-
-  return effectiveness
-}

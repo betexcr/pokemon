@@ -37,6 +37,8 @@ export interface Championship {
   hostName: string;
   size: ChampionshipSize;
   seatMode: SeatMode;
+  /** When set (1–9), teams may only use National Dex numbers through this generation (inclusive). */
+  maxGeneration?: number;
   status: ChampionshipStatus;
   participants: ChampionshipParticipant[];
   bracket: ChampionshipMatch[];
@@ -54,6 +56,7 @@ export interface ChampionshipDocument {
   hostName: string;
   size: ChampionshipSize;
   seatMode: SeatMode;
+  maxGeneration?: number;
   status: ChampionshipStatus;
   participants: ChampionshipParticipant[];
   bracket: ChampionshipMatch[];

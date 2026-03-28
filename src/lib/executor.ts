@@ -3,6 +3,12 @@ import { BattlePokemon } from "./team-battle-engine";
 import { TypeName } from "@/lib/damage-calculator";
 import { getMove } from "./moveCache";
 
+const SELF_STAT_DROP_MOVES = new Set([
+  'close-combat', 'superpower', 'overheat', 'draco-meteor', 'leaf-storm',
+  'v-create', 'hammer-arm', 'psycho-boost', 'shell-smash', 'fleur-cannon',
+  'hyperspace-fury', 'clanging-scales',
+]);
+
 // --- Utilities ---
 function hasSTAB(user: BattlePokemon, moveType: TypeName): boolean {
   return user.pokemon.types.some(t => 
@@ -169,8 +175,8 @@ export async function executeTurn(opts: ExecuteTurnOptions): Promise<TurnResult>
     missed: false, typeEffectiveness: 1,
   };
 
-  // --- Accuracy check (skip if Status with no harm OR accuracy=null) ---
-  const bypass = !!move.bypassAccuracyCheck || isStatus;
+  // --- Accuracy check (skip if move explicitly bypasses or has no accuracy value) ---
+  const bypass = !!move.bypassAccuracyCheck;
   if (!bypass) {
     const hit = willMoveHit(
       move.accuracy ?? 100,
@@ -300,7 +306,15 @@ export async function executeTurn(opts: ExecuteTurnOptions): Promise<TurnResult>
     }
     if (move.statChanges?.length) {
       const logs: string[] = [];
-      applyStatChanges(defender, move.statChanges, logs);
+      const selfDrop = SELF_STAT_DROP_MOVES.has(move.name.toLowerCase());
+      for (const sc of move.statChanges) {
+        if (Math.random() * 100 >= (sc.chance ?? 100)) continue;
+        const target = selfDrop ? attacker : (sc.stages > 0 ? attacker : defender);
+        const statName = mapStatName(sc.stat);
+        const oldValue = target.statModifiers[statName];
+        target.statModifiers[statName] = Math.max(-6, Math.min(6, oldValue + sc.stages));
+        logs.push(`stat:${sc.stat} ${sc.stages > 0 ? "+" : ""}${sc.stages}`);
+      }
       if (logs.length) result.statChanges = logs;
     }
     // Flinch secondaries for common moves (use PokeAPI shortEffect if available in future)

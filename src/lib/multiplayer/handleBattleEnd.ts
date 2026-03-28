@@ -13,13 +13,10 @@ export async function handleBattleEnd(
   finalState: BattleState,
   endReason: 'victory' | 'forfeit' | 'timeout' = 'victory'
 ): Promise<void> {
-  console.log(`🏁 Battle ${battleId} ended. Reason: ${endReason}`);
-  
   try {
     // Get meta to determine UIDs
     const meta = await rtdbService.getBattleMeta(battleId);
     if (!meta) {
-      console.warn('Battle meta not found, cannot complete battle end flow');
       return;
     }
     
@@ -39,12 +36,9 @@ export async function handleBattleEnd(
       endedReason: endReason
     });
     
-    console.log(`✅ RTDB meta updated - Winner: ${winnerUid}, Reason: ${endReason}`);
-    
     // 2. Get battle info from Firestore
     const battle = await battleService.getBattle(battleId);
     if (!battle) {
-      console.warn('Battle document not found in Firestore');
       return;
     }
     
@@ -55,22 +49,17 @@ export async function handleBattleEnd(
       updatedAt: new Date()
     } as any);
     
-    console.log(`✅ Firestore battle document updated`);
-    
     // 4. Update room status if room exists
     if (battle.roomId) {
       try {
         await roomService.updateRoom(battle.roomId, {
           status: 'finished'
         });
-        console.log(`✅ Room ${battle.roomId} status updated to finished`);
-      } catch (roomError) {
-        console.warn('Failed to update room status:', roomError);
+      } catch {
         // Don't throw - battle end is more important than room status
       }
     }
     
-    console.log(`🎉 Battle cleanup complete. Winner: ${winnerUid || 'None'}`);
   } catch (error) {
     console.error('❌ Failed to handle battle end:', error);
     throw error;
@@ -84,8 +73,6 @@ export async function handleForfeit(
   battleId: string,
   userId: string
 ): Promise<void> {
-  console.log(`🏳️ Player ${userId} forfeiting battle ${battleId}`);
-  
   const meta = await rtdbService.getBattleMeta(battleId);
   if (!meta) throw new Error('Battle not found');
   
@@ -135,8 +122,6 @@ export async function handleTimeout(
   battleId: string,
   timedOutUserId: string
 ): Promise<void> {
-  console.log(`⏰ Player ${timedOutUserId} timed out in battle ${battleId}`);
-  
   const meta = await rtdbService.getBattleMeta(battleId);
   if (!meta) throw new Error('Battle not found');
   

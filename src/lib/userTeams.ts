@@ -216,8 +216,6 @@ export async function getUserTeams(userId: string): Promise<SavedTeam[]> {
   const db = ensureDb()
 
   try {
-    console.log('getUserTeams: Fetching teams for userId:', userId)
-
     const collectionRef = collection(db, 'userTeams')
     const baseQuery = query(
       collectionRef,
@@ -227,7 +225,6 @@ export async function getUserTeams(userId: string): Promise<SavedTeam[]> {
 
     try {
       const snapshot = await getDocs(baseQuery)
-      console.log('getUserTeams: Query snapshot size:', snapshot.docs.length)
       return snapshot.docs.map(docToSavedTeam)
     } catch (error) {
       const firestoreError = error as FirestoreError

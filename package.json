@@ -17,7 +17,7 @@
     "start": "next start",
     "lint": "eslint . --max-warnings=0",
     "test": "vitest",
-    "test:unit": "vitest run src/lib/__tests__/firebase-rtdb-service.test.ts src/lib/__tests__/battle-engine-rtdb.test.ts src/lib/__tests__/battle-state-conversion.test.ts",
+    "test:unit": "vitest run src/lib/__tests__/firebase-rtdb-service.test.ts src/lib/__tests__/battle-engine-rtdb.test.ts src/lib/__tests__/battle-state-conversion.test.ts src/lib/championship/__tests__/bracket.test.ts src/lib/pokemon/__tests__/nationalDexByGeneration.test.ts",
     "test:component": "vitest run src/components/__tests__/RTDBBattleComponent.test.tsx",
     "test:integration": "vitest run src/lib/__tests__/battle-flow-integration.test.ts src/lib/__tests__/rtdb-integration.test.ts",
     "test:performance": "vitest run src/lib/__tests__/rtdb-performance.test.ts",
@@ -48,10 +48,8 @@
     "assets:pmd:id": "node scripts/download-pmd-assets.js $PMD_ID"
   },
   "dependencies": {
-    "@playwright/test": "^1.55.1",
     "@tanstack/react-query": "^5.0.0",
     "@tanstack/react-virtual": "^3.13.12",
-    "@types/uuid": "^10.0.0",
     "@upstash/redis": "^1.35.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -72,11 +70,12 @@
     "uuid": "^13.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.55.1",
     "@testing-library/jest-dom": "^6.0.0",
     "@testing-library/react": "^14.0.0",
     "@testing-library/user-event": "^14.0.0",
-    "@types/jest": "^30.0.0",
     "@types/lodash": "^4.17.20",
+    "@types/uuid": "^10.0.0",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",

@@ -8,10 +8,10 @@ const CDN_URL = process.env.NEXT_PUBLIC_CDN_URL;
 const nextConfig: NextConfig = {
   ...(CDN_URL ? { assetPrefix: CDN_URL } : {}),
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
   },
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   // Use static export for Firebase hosting
   // output: 'export',
@@ -60,11 +60,6 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       }
     ],
-  },
-  // Remove Firebase environment variables for static deployment
-  // Ensure environment variables are available at build time
-  generateBuildId: async () => {
-    return 'pokemon-app-build'
   },
   async headers() {
     return [

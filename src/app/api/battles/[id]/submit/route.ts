@@ -30,6 +30,13 @@ export async function POST(
             return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
         }
 
+        if (action === 'move' && (typeof moveId !== 'string' && typeof moveId !== 'number')) {
+            return NextResponse.json({ error: 'Missing or invalid moveId' }, { status: 400 });
+        }
+        if (action === 'switch' && typeof switchToIndex !== 'number') {
+            return NextResponse.json({ error: 'Missing or invalid switchToIndex' }, { status: 400 });
+        }
+
         const ops = getRtdbOps(token);
 
         const meta = await ops.get(`battles/${battleId}/meta`);
@@ -38,6 +45,10 @@ export async function POST(
         }
         if (meta.phase === 'ended') {
             return NextResponse.json({ error: 'Battle already ended' }, { status: 400 });
+        }
+
+        if (uid !== meta.players?.p1?.uid && uid !== meta.players?.p2?.uid) {
+            return NextResponse.json({ error: 'Not a participant in this battle' }, { status: 403 });
         }
 
         // Handle forfeit immediately — no need to wait for opponent
@@ -84,6 +95,10 @@ export async function POST(
                 await resolveTurn(battleId, token);
             } catch (err: any) {
                 console.error('Error resolving turn:', err);
+                return NextResponse.json(
+                    { error: 'Failed to resolve turn. Please try again.' },
+                    { status: 500 }
+                );
             }
         }
 
@@ -91,7 +106,7 @@ export async function POST(
     } catch (error: any) {
         console.error('Error in submit route:', error);
         return NextResponse.json(
-            { error: error.message || 'Internal Server Error' },
+            { error: 'Internal Server Error' },
             { status: 500 }
         );
     }

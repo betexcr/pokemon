@@ -97,6 +97,39 @@ describe('seedBracket', () => {
     const later = seeded.filter((m) => m.round > 1);
     later.forEach((m) => expect(m.status).toBe('pending'));
   });
+
+  it('places seeds 1 and 2 in opposite halves for 8-player bracket', () => {
+    const bracket = generateBracket(8);
+    const participants = makeParticipants(8);
+    const seeded = seedBracket(bracket, participants);
+
+    const r1 = seeded.filter((m) => m.round === 1).sort((a, b) => a.position - b.position);
+    expect(r1).toHaveLength(4);
+
+    const topHalfSeeds = [r1[0], r1[1]].flatMap((m) => [m.player1Seed, m.player2Seed]);
+    const bottomHalfSeeds = [r1[2], r1[3]].flatMap((m) => [m.player1Seed, m.player2Seed]);
+
+    expect(topHalfSeeds).toContain(1);
+    expect(bottomHalfSeeds).toContain(2);
+    expect(topHalfSeeds).not.toContain(2);
+    expect(bottomHalfSeeds).not.toContain(1);
+  });
+
+  it('produces correct standard pairings for 8 players', () => {
+    const bracket = generateBracket(8);
+    const participants = makeParticipants(8);
+    const seeded = seedBracket(bracket, participants);
+
+    const r1 = seeded.filter((m) => m.round === 1).sort((a, b) => a.position - b.position);
+    const pairings = r1.map((m) => [m.player1Seed, m.player2Seed]);
+
+    expect(pairings).toEqual([
+      [1, 8],
+      [4, 5],
+      [2, 7],
+      [3, 6],
+    ]);
+  });
 });
 
 describe('advanceWinner', () => {

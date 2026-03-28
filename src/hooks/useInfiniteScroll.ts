@@ -56,6 +56,7 @@ export function useInfiniteScroll<T>(
   const observerRef = useRef<IntersectionObserver | null>(null)
   const isLoadingRef = useRef(false)
   const lastLoadTimeRef = useRef(0)
+  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const expectedTotal = useMemo(() => {
     if (typeof totalCount === 'number') return totalCount
@@ -129,7 +130,8 @@ export function useInfiniteScroll<T>(
       if (retryCount < retryAttempts) {
         setRetryCount(prev => prev + 1)
         const delay = retryDelay * Math.pow(2, retryCount)
-        setTimeout(() => {
+        if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current)
+        retryTimeoutRef.current = setTimeout(() => {
           loadMore()
         }, delay)
         return
@@ -145,6 +147,7 @@ export function useInfiniteScroll<T>(
 
   // Reset function to clear all data and start fresh
   const reset = useCallback(() => {
+    if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current)
     setData([])
     setOffset(0)
     setHasMore(true)
@@ -153,6 +156,13 @@ export function useInfiniteScroll<T>(
     isLoadingRef.current = false
     setTotalCount(null)
     totalCountResolvedRef.current = false
+  }, [])
+
+  // Clear retry timer on unmount
+  useEffect(() => {
+    return () => {
+      if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current)
+    }
   }, [])
 
   // Set up intersection observer for automatic loading

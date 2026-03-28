@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo } from "react";
 import clsx from "clsx";
 import TypeBadge from "./TypeBadge";
@@ -8,7 +7,6 @@ import LazyImage from "./LazyImage";
 import { getPokemonMainPageImage } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import { Scale } from "lucide-react";
-import { PokeballLink } from "./TransitionLink";
 import LinkWithTransition from "./LinkWithTransition";
 
 /**
@@ -61,17 +59,6 @@ export default function PokemonCard({
   );
 
   const router = useRouter();
-
-  const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    
-    if (onSelect) {
-      onSelect(pokemon);
-    } else {
-      // Navigate to detail page
-      router.push(`/pokemon/${pokemon.id}`);
-    }
-  };
 
   const handleMouseEnter = () => {
     // Prefetch the Pokemon detail page on hover for faster navigation

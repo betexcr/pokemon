@@ -115,7 +115,7 @@ export default function AppHeader({
             <div className="flex items-center space-x-2 lg:space-x-3 min-w-0 flex-1">
               {showIcon && (
                 <Tooltip content={`Current page: ${title}`} position="bottom">
-                  <div className={`p-1 sm:p-2 rounded-lg flex-shrink-0 ${iconConfig.bgColor} ${iconConfig.color} dark:${iconConfig.darkBgColor} dark:${iconConfig.darkColor}`} suppressHydrationWarning>
+                  <div className={`p-1 sm:p-2 rounded-lg flex-shrink-0 ${iconConfig.bgColor} ${iconConfig.color} ${iconConfig.darkBgColor} ${iconConfig.darkColor}`} suppressHydrationWarning>
                     {/* Icon is purely decorative */}
                     <span suppressHydrationWarning>
                       <IconComponent className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" suppressHydrationWarning />

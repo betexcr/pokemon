@@ -67,15 +67,6 @@ class BattleService {
   private auth = auth;
   
   private ensureAuthenticated(): void {
-    console.log('🔍 Authentication state check:', {
-      authObjectExists: !!this.auth,
-      currentUserExists: !!this.auth?.currentUser,
-      currentUserUid: this.auth?.currentUser?.uid,
-      currentUserEmail: this.auth?.currentUser?.email,
-      currentUserEmailVerified: this.auth?.currentUser?.emailVerified,
-      currentUserDisplayName: this.auth?.currentUser?.displayName
-    });
-    
     if (!this.auth?.currentUser?.uid) {
       console.error('❌ Authentication check failed: No current user');
       console.error('❌ Auth object exists:', !!this.auth);
@@ -86,9 +77,7 @@ class BattleService {
     
     // Check if the user's token is still valid
     if (this.auth.currentUser) {
-      this.auth.currentUser.getIdToken().then(token => {
-        console.log('🔑 User token is valid, length:', token.length);
-      }).catch(error => {
+      this.auth.currentUser.getIdToken().catch(error => {
         console.error('❌ User token validation failed:', error);
         throw new Error('Authentication token expired. Please sign in again.');
       });
@@ -160,8 +149,6 @@ class BattleService {
       return team;
     }
 
-    console.log(`💧 Hydrating team with ${slots.length} slots...`);
-
     const hydratedSlots = await Promise.all(slots.map(async (slot) => {
       if (!slot) return slot;
       
@@ -170,7 +157,6 @@ class BattleService {
       const idOrName = slot.id || slot.name || (slot.pokemon ? slot.pokemon.name : null);
       
       if (!idOrName) {
-        console.warn('⚠️ Slot missing ID/Name, skipping hydration:', slot);
         return slot;
       }
 
@@ -223,7 +209,6 @@ class BattleService {
           pokemon: pokemonUpdates
         };
       } catch (e) {
-        console.warn(`❌ Failed to hydrate Pokemon ${idOrName}:`, e);
         return slot;
       }
     }));
@@ -243,10 +228,8 @@ class BattleService {
     if (!db) throw new Error('Firebase not initialized');
     this.ensureAuthenticated();
     
-    console.log('🔄 Hydrating teams before battle creation...');
     const hydratedHostTeam = await this.hydrateTeam(hostTeam);
     const hydratedGuestTeam = await this.hydrateTeam(guestTeam);
-    console.log('✅ Teams hydrated.');
 
     const battleData = {
       roomId,
@@ -266,33 +249,12 @@ class BattleService {
       updatedAt: serverTimestamp()
     };
 
-    console.log('📝 Creating battle document with data:', {
-      roomId,
-      hostId,
-      hostName,
-      guestId,
-      guestName,
-      hasHostTeam: !!hostTeam,
-      hasGuestTeam: !!guestTeam
-    });
-
     const docRef = await addDoc(collection(db, this.battlesCollection), battleData);
-    console.log('✅ Battle document created with ID:', docRef.id);
-    console.log('📊 Battle data structure:', {
-      hostId: battleData.hostId,
-      guestId: battleData.guestId,
-      roomId: battleData.roomId,
-      status: battleData.status,
-      hasHostTeam: !!battleData.hostTeam,
-      hasGuestTeam: !!battleData.guestTeam
-    });
     
     // Verify the document was created successfully by immediately reading it back
     try {
       const verificationDoc = await getDoc(doc(db, this.battlesCollection, docRef.id));
-      if (verificationDoc.exists()) {
-        console.log('✅ Battle document verification successful');
-      } else {
+      if (!verificationDoc.exists()) {
         console.error('❌ Battle document verification failed - document does not exist after creation');
         throw new Error('Battle document was not created properly');
       }
@@ -330,31 +292,12 @@ class BattleService {
     if (!db) throw new Error('Firebase not initialized');
     this.ensureAuthenticated();
     
-    console.log('🔄 Updating battle:', { battleId, updates });
     const currentUserId = this.getCurrentUserId();
-    console.log('🔑 Current user UID:', currentUserId);
-    console.log('🔑 User authenticated:', this.auth?.currentUser ? 'Yes' : 'No');
-    console.log('🔑 Auth token valid:', currentUserId ? 'Yes' : 'No');
     
     const battleRef = doc(db, this.battlesCollection, battleId);
     const snap = await getDoc(battleRef);
     if (snap.exists()) {
       const current = snap.data();
-      console.log('📊 Current battle data:', current);
-      console.log('🔍 Battle document structure check:');
-      console.log('  - Host ID:', current.hostId);
-      console.log('  - Guest ID:', current.guestId);
-      console.log('  - Room ID:', current.roomId);
-      console.log('  - Status:', current.status);
-      console.log('  - Current user matches host:', currentUserId === current.hostId);
-      console.log('  - Current user matches guest:', currentUserId === current.guestId);
-      console.log('  - Document ID:', snap.id);
-      console.log('  - All document fields:', Object.keys(current));
-      console.log('  - Field types:', {
-        hostId: typeof current.hostId,
-        guestId: typeof current.guestId,
-        roomId: typeof current.roomId
-      });
       
       // Build a comparable subset without updatedAt
       const keys = Object.keys(updates).filter(k => k !== 'updatedAt');
@@ -365,7 +308,6 @@ class BattleService {
         currSubset[k] = current[k];
       });
       if (this.isEqual(currSubset, nextSubset)) {
-        console.log('⏭️ Skipping update - no changes detected');
         return; // No-op update; skip write to avoid loop
       }
     }
@@ -382,26 +324,13 @@ class BattleService {
       payload.battleData = this.sanitizeForFirestore(payload.battleData);
     }
     
-    console.log('📤 Sending payload to Firebase:', payload);
-    
     try {
       const updateData = {
         ...payload,
         updatedAt: serverTimestamp()
       };
       
-      console.log('📤 Final update data being sent to Firebase:', updateData);
-      console.log('🔑 Current user UID:', currentUserId);
-      console.log('🏠 Battle host ID:', snap.data()?.hostId);
-      console.log('👥 Battle guest ID:', snap.data()?.guestId);
-      console.log('🔍 Update fields being sent:', Object.keys(updateData));
-      console.log('🔍 User has permission to update:', 
-        currentUserId === snap.data()?.hostId || 
-        currentUserId === snap.data()?.guestId
-      );
-      
       await updateDoc(battleRef, updateData);
-      console.log('✅ Battle updated successfully');
     } catch (error) {
       console.error('❌ Failed to update battle:', error);
       
@@ -472,14 +401,7 @@ class BattleService {
     if (!db) throw new Error('Firebase not initialized');
     this.ensureAuthenticated();
     
-    console.log('📤 === BATTLE SERVICE ADD ACTION ===');
-    console.log('🆔 Battle ID:', battleId);
-    console.log('👤 Player ID:', action.playerId);
-    console.log('👤 Player Name:', action.playerName);
-    console.log('🎯 Action Type:', action.type);
-    console.log('⚡ Action Details:', action);
     const currentUserId = this.getCurrentUserId();
-    console.log('🔑 Current user UID:', currentUserId);
     
     const battleRef = doc(db, this.battlesCollection, battleId);
     const battleSnap = await getDoc(battleRef);
@@ -489,13 +411,6 @@ class BattleService {
     }
     
     const battleData = battleSnap.data();
-    console.log('📊 Current battle data:', {
-      turnNumber: battleData.turnNumber,
-      currentTurn: battleData.currentTurn,
-      actionsCount: (battleData.actions || []).length,
-      hostId: battleData.hostId,
-      guestId: battleData.guestId
-    });
     
     // Check if this player has already made an action for the current turn
     const currentTurnNumber = battleData.turnNumber || 1;
@@ -504,7 +419,6 @@ class BattleService {
     );
     
     if (existingActionForTurn) {
-      console.log('⚠️ Player has already made an action for this turn, skipping duplicate');
       return;
     }
     
@@ -514,13 +428,9 @@ class BattleService {
       timestamp: Date.now()
     };
     
-    console.log('📝 Adding new action:', newAction);
-    
     // Add the action to the actions array (sanitize to avoid undefined in nested fields)
     const updatedActionsRaw = [...(battleData.actions || []), newAction];
     const updatedActions = this.sanitizeForFirestore(updatedActionsRaw);
-    
-    console.log('📊 Updated actions array length:', updatedActions.length);
     
     // Update the battle document (single write to reduce contention)
     const updateData = {
@@ -532,11 +442,8 @@ class BattleService {
     // Final defensive sanitation of the whole payload
     const cleanedUpdateData = this.sanitizeForFirestore(updateData as unknown as Record<string, unknown>);
     
-    console.log('📤 Final addAction update data:', updateData);
-    
     try {
       await updateDoc(battleRef, cleanedUpdateData as any);
-      console.log('✅ Action added successfully');
     } catch (error) {
       console.error('❌ Failed to add action:', error);
       
@@ -553,9 +460,6 @@ class BattleService {
       console.error('❌ Error details:', errorDetails);
       throw error;
     }
-    
-    console.log('✅ Action added to Firebase successfully');
-    console.log('📡 Other players should now receive this action via Firebase listener');
   }
 
   // Legacy method for backward compatibility
@@ -577,12 +481,9 @@ class BattleService {
     if (!db) throw new Error('Firebase not initialized');
     this.ensureAuthenticated();
     
-    console.log('🚀 Starting battle:', { battleId, initialBattleData });
-    
     const battleRef = doc(db, this.battlesCollection, battleId);
     
     // Add initial delay to account for Firestore eventual consistency
-    console.log('⏳ Waiting for Firestore consistency...');
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     // Use dynamic retry system for battle document retrieval
@@ -599,17 +500,10 @@ class BattleService {
             throw new Error(`Battle document ${battleId} not found`);
           }
           
-          console.log('✅ Battle document found');
           return snap;
         },
         BATTLE_RETRY_CONFIG,
-        (attempt, delay, error) => {
-          console.log(`⏳ Battle document retrieval attempt ${attempt} failed:`, {
-            error: error?.message || error,
-            nextRetryIn: `${delay}ms`,
-            battleId
-          });
-        }
+        () => {}
       );
     } catch (error) {
       console.error('❌ Battle document retrieval failed after all retries:', error);
@@ -622,21 +516,16 @@ class BattleService {
     }
     
     const data = snap.data();
-    console.log('📊 Existing battle data:', data);
     
     if (data.status === 'active' && this.isEqual(data.battleData, initialBattleData)) {
-      console.log('⏭️ Battle already active with same data, skipping');
       return; // Already active with same data
     }
     
-    console.log('🔄 Updating existing battle document');
     await updateDoc(battleRef, {
       battleData: this.sanitizeForFirestore(initialBattleData),
       status: 'active',
       updatedAt: serverTimestamp()
     });
-    
-    console.log('✅ Battle started successfully');
   }
 
   // End the battle
@@ -669,14 +558,12 @@ class BattleService {
     
     // Guard: avoid subscribing before auth is available to prevent permission errors
     if (!auth?.currentUser) {
-      console.warn('onBattleChange called before user is authenticated; skipping subscription to avoid permission error');
       callback(null);
       return () => {};
     }
     
     // Additional check: ensure the user is fully authenticated
     if (!auth.currentUser.uid) {
-      console.warn('onBattleChange called with invalid user; skipping subscription to avoid permission error');
       callback(null);
       return () => {};
     }
@@ -717,24 +604,15 @@ class BattleService {
     if (!db) throw new Error('Firebase not initialized');
     this.ensureAuthenticated();
     
-    console.log('🧹 Leaving battle:', battleId, 'for user:', userId);
     const currentUserId = this.getCurrentUserId();
-    console.log('🔑 Current user UID:', currentUserId);
-    console.log('🔑 User matches provided userId:', currentUserId === userId);
     
     // Check if user is the host before attempting to delete
     try {
-      console.log('🔍 Step 1: Getting battle document reference');
       const battleRef = doc(db, this.battlesCollection, battleId);
-      console.log('🔍 Step 2: Attempting to fetch battle document');
       
       let battleSnap;
       try {
         battleSnap = await getDoc(battleRef);
-        console.log('🔍 Step 3: Battle document fetch result:', {
-          exists: battleSnap.exists(),
-          id: battleSnap.id
-        });
       } catch (fetchError) {
         console.error('❌ Error fetching battle document:', fetchError);
         console.error('❌ Fetch error details:', {
@@ -755,26 +633,10 @@ class BattleService {
       
       if (battleSnap.exists()) {
         const battleData = battleSnap.data();
-        console.log('📊 Battle data:', {
-          hostId: battleData.hostId,
-          guestId: battleData.guestId,
-          status: battleData.status
-        });
-        console.log('🔍 User is host:', battleData.hostId === currentUserId);
-        console.log('🔍 User is guest:', battleData.guestId === currentUserId);
         
         if (battleData.hostId === currentUserId) {
-          // Only host can delete the battle
-          console.log('🗑️ Step 4: Host leaving - attempting to delete battle');
           await this.deleteBattle(battleId);
-          console.log('✅ Successfully left battle (host deleted):', battleId);
-        } else {
-          // Non-host just logs out, doesn't delete battle
-          console.log('👋 Step 4: Non-host leaving - not deleting battle');
-          console.log('✅ Successfully left battle (non-host):', battleId);
         }
-      } else {
-        console.log('✅ Battle already deleted:', battleId);
       }
     } catch (error) {
       console.error('❌ Error leaving battle:', error);
@@ -875,9 +737,6 @@ class BattleService {
           'error.toJSON': (error as any)?.toJSON?.()
         });
       }
-      
-      // Don't throw error for leave operations to avoid breaking navigation
-      console.log('⚠️ Continuing despite leave error');
     }
   }
 
@@ -885,8 +744,6 @@ class BattleService {
   async recoverBattle(battleId: string, roomId: string, hostId: string, hostName: string, hostTeam: unknown, guestId: string, guestName: string, guestTeam: unknown): Promise<void> {
     if (!db) throw new Error('Firebase not initialized');
     this.ensureAuthenticated();
-    
-    console.log('🔧 Attempting to recover corrupted battle:', battleId);
     
     const currentUserId = this.getCurrentUserId();
     if (currentUserId !== hostId) {
@@ -898,7 +755,6 @@ class BattleService {
     // Delete the corrupted battle
     try {
       await deleteDoc(battleRef);
-      console.log('🗑️ Deleted corrupted battle document');
     } catch (error) {
       console.error('❌ Failed to delete corrupted battle:', error);
       throw error;
@@ -926,7 +782,6 @@ class BattleService {
       
       // Create a new document with the same ID
       await setDoc(battleRef, battleData);
-      console.log('✅ Successfully recovered battle with proper data structure');
     } catch (error) {
       console.error('❌ Failed to recreate battle:', error);
       throw error;
@@ -938,81 +793,29 @@ class BattleService {
     if (!db) throw new Error('Firebase not initialized');
     this.ensureAuthenticated();
     
-    console.log('🗑️ Deleting battle:', battleId);
     const currentUserId = this.getCurrentUserId();
-    console.log('🔑 Current user UID:', currentUserId);
     
     const battleRef = doc(db, this.battlesCollection, battleId);
     
-    // First check if the user has permission to delete this battle
-    console.log('🔍 Step 1: Checking battle permissions before deletion');
     const battleSnap = await getDoc(battleRef);
     
     if (!battleSnap.exists()) {
-      console.log('⚠️ Battle document does not exist, skipping deletion');
       return;
     }
     
     const battleData = battleSnap.data();
-    console.log('📊 Battle data for deletion check:', {
-      hostId: battleData.hostId,
-      guestId: battleData.guestId,
-      status: battleData.status,
-      hasHostId: !!battleData.hostId,
-      hostIdType: typeof battleData.hostId
-    });
     
     const isHost = battleData.hostId === currentUserId;
-    console.log('🔍 User is host (can delete):', isHost);
-    console.log('🔍 Permission check details:', {
-      currentUserId,
-      battleHostId: battleData.hostId,
-      areEqual: battleData.hostId === currentUserId,
-      currentUserType: typeof currentUserId,
-      battleHostIdType: typeof battleData.hostId
-    });
     
     if (!isHost) {
       throw new Error(`User ${currentUserId} is not the host (${battleData.hostId}) and cannot delete battle ${battleId}`);
     }
     
-    console.log('🔍 Step 2: Attempting to delete battle document');
-    console.log('🔍 Firebase context for deletion:', {
-      auth: {
-        uid: currentUserId,
-        email: this.auth?.currentUser?.email,
-        emailVerified: this.auth?.currentUser?.emailVerified
-      },
-      documentPath: `${this.battlesCollection}/${battleId}`,
-      documentData: {
-        hostId: battleData.hostId,
-        status: battleData.status
-      }
-    });
-    
     // Re-fetch the document right before deletion to ensure we have the latest state
-    console.log('🔍 Step 2.1: Re-fetching document before deletion');
     let finalBattleSnap;
     try {
       finalBattleSnap = await getDoc(battleRef);
-      if (finalBattleSnap.exists()) {
-        const finalBattleData = finalBattleSnap.data();
-        console.log('🔍 Final document state before deletion:', {
-          exists: finalBattleSnap.exists(),
-          hostId: finalBattleData.hostId,
-          guestId: finalBattleData.guestId,
-          status: finalBattleData.status,
-          currentUserMatchesHost: finalBattleData.hostId === currentUserId,
-          documentId: finalBattleSnap.id,
-          hostIdType: typeof finalBattleData.hostId,
-          hostIdValue: finalBattleData.hostId,
-          currentUserIdValue: currentUserId,
-          areEqual: finalBattleData.hostId === currentUserId,
-          documentKeys: Object.keys(finalBattleData),
-          fullDocumentData: finalBattleData
-        });
-      } else {
-        console.log('⚠️ Document no longer exists before deletion attempt');
+      if (!finalBattleSnap.exists()) {
         return;
       }
     } catch (fetchError) {
@@ -1021,7 +824,6 @@ class BattleService {
     }
     
     // Verify authentication state one more time before deletion
-    console.log('🔍 Step 2.2: Final authentication verification');
     const finalAuthState = {
       currentUser: this.auth?.currentUser?.uid,
       email: this.auth?.currentUser?.email,
@@ -1033,28 +835,14 @@ class BattleService {
       if (this.auth?.currentUser) {
         const token = await this.auth.currentUser.getIdToken();
         finalAuthState.tokenValid = !!token;
-        console.log('🔍 Auth token check result:', { tokenLength: token?.length });
       }
     } catch (tokenError) {
       console.error('❌ Token validation failed:', tokenError);
       finalAuthState.tokenValid = false;
     }
     
-    console.log('🔍 Final auth state before deletion:', finalAuthState);
-    
     try {
-      console.log('🔍 About to call deleteDoc with:', {
-        documentPath: `${this.battlesCollection}/${battleId}`,
-        auth: {
-          uid: this.auth?.currentUser?.uid,
-          email: this.auth?.currentUser?.email
-        },
-        documentExists: finalBattleSnap?.exists(),
-        documentData: finalBattleSnap?.exists() ? finalBattleSnap.data() : null
-      });
-      
       await deleteDoc(battleRef);
-      console.log('✅ Battle deleted successfully:', battleId);
     } catch (deleteError) {
       console.error('❌ Firebase deleteDoc error:', deleteError);
       

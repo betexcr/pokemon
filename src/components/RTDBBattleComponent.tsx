@@ -3,7 +3,6 @@ import { useBattleState } from '@/hooks/useBattleState';
 import Tooltip from '@/components/Tooltip';
 import { getMove } from '@/lib/moveCache';
 import { getPokemonIdFromSpecies, getPokemonBattleImageWithFallback, formatPokemonName, getShowdownAnimatedSprite } from '@/lib/utils';
-import HitShake from '@/components/battle/HitShake';
 import StatusPopups, { StatusEvent } from '@/components/battle/StatusPopups';
 import AttackAnimator from '@/components/battle/AttackAnimator';
 import { FxKind } from '@/components/battle/fx/MoveFX.types';
@@ -174,10 +173,19 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
   const [showEndScreen, setShowEndScreen] = useState(false);
   const [displayedLogIndex, setDisplayedLogIndex] = useState(-1);
 
-  // Determine if current user is host (p1)
+  // Determine if current user is host (p1) and which side they are on
   const isHost = useMemo(() => {
     return meta?.players?.p1?.uid === meUid;
   }, [meta?.players?.p1?.uid, meUid]);
+
+  const mySideEarly: 'p1' | 'p2' | null = useMemo(() => {
+    if (!meUid || !meta?.players) return null;
+    return meta.players.p1.uid === meUid ? 'p1' : meta.players.p2.uid === meUid ? 'p2' : null;
+  }, [meta?.players, meUid]);
+
+  const oppSideEarly: 'p1' | 'p2' | null = useMemo(() => {
+    return mySideEarly === 'p1' ? 'p2' : mySideEarly === 'p2' ? 'p1' : null;
+  }, [mySideEarly]);
 
   // Use multiplayer forfeit handler
   const handleForfeit = useForfeit(battleId, meUid || '');
@@ -251,7 +259,7 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
   }, [meta?.phase, meta?.winnerUid, onBattleComplete]);
 
 const handleMoveSelection = async (moveId: string, target?: 'p1' | 'p2') => {
-  console.log('🎮 handleMoveSelection called:', { moveId, target, hasPub: !!pub, hasMyActive: !!(meUid && (pub as any)?.[meUid]?.active) });
+  console.log('🎮 handleMoveSelection called:', { moveId, target, hasPub: !!pub, hasMyActive: !!(mySideEarly && (pub as any)?.[mySideEarly]?.active) });
     try {
       if (!meta) {
         console.warn('No battle meta available; cannot select move.');
@@ -388,24 +396,24 @@ const handleMoveSelection = async (moveId: string, target?: 'p1' | 'p2') => {
   // Damage animations when HP values change (robust cue)
   const lastMyHpRef = useRef<number | null>(null);
   const lastOppHpRef = useRef<number | null>(null);
+  const myHpCur = mySideEarly && pub ? (pub as any)[mySideEarly]?.active?.hp?.cur : null;
+  const oppHpCur = oppSideEarly && pub ? (pub as any)[oppSideEarly]?.active?.hp?.cur : null;
   useEffect(() => {
-    const cur = meUid ? pub?.[meUid]?.active?.hp?.cur : null;
-    if (typeof cur === 'number') {
-      if (lastMyHpRef.current != null && cur < lastMyHpRef.current) {
+    if (typeof myHpCur === 'number') {
+      if (lastMyHpRef.current != null && myHpCur < lastMyHpRef.current) {
         playAnim(playerAnimRef, 'animate-damage');
       }
-      lastMyHpRef.current = cur;
+      lastMyHpRef.current = myHpCur;
     }
-  }, [pub?.[meUid!]?.active?.hp?.cur, meUid, pub]);
+  }, [myHpCur]);
   useEffect(() => {
-    const cur = oppUid ? pub?.[oppUid]?.active?.hp?.cur : null;
-    if (typeof cur === 'number') {
-      if (lastOppHpRef.current != null && cur < lastOppHpRef.current) {
+    if (typeof oppHpCur === 'number') {
+      if (lastOppHpRef.current != null && oppHpCur < lastOppHpRef.current) {
         playAnim(oppAnimRef, 'animate-damage');
       }
-      lastOppHpRef.current = cur;
+      lastOppHpRef.current = oppHpCur;
     }
-  }, [pub?.[oppUid!]?.active?.hp?.cur, oppUid, pub]);
+  }, [oppHpCur]);
 
   const renderSpriteImage = useCallback(
     (
@@ -455,17 +463,12 @@ const handleMoveSelection = async (moveId: string, target?: 'p1' | 'p2') => {
     );
   }
 
-
-  // If loading or error, show that
-  if (loading) return <div className="p-8 text-center">Loading battle...</div>;
   if (error) return <div className="p-8 text-center text-red-500">Error: {error}</div>;
   if (!meta || !pub) return <div className="p-8 text-center">Waiting for battle data...</div>;
 
-  // Get current active Pokemon using RTDB p1/p2 mapping
-  const mySide: 'p1' | 'p2' | null = meUid && meta?.players
-    ? (meta.players.p1.uid === meUid ? 'p1' : meta.players.p2.uid === meUid ? 'p2' : null)
-    : null;
-  const oppSide: 'p1' | 'p2' | null = mySide === 'p1' ? 'p2' : mySide === 'p2' ? 'p1' : null;
+  // Reuse early-computed side keys for active Pokemon lookup
+  const mySide = mySideEarly;
+  const oppSide = oppSideEarly;
   const myActive = mySide && (pub as any)?.[mySide]?.active ? (pub as any)[mySide].active : null;
   const oppActive = oppSide && (pub as any)?.[oppSide]?.active ? (pub as any)[oppSide].active : null;
   const myTeam = me?.team || [];
@@ -492,7 +495,6 @@ const handleMoveSelection = async (moveId: string, target?: 'p1' | 'p2') => {
         <BattleTurnManager 
           battleId={battleId}
           isHost={isHost}
-          userId={meUid}
         />
       )}
       
@@ -543,16 +545,9 @@ const handleMoveSelection = async (moveId: string, target?: 'p1' | 'p2') => {
                   max: myActive.hp.max 
                 }}
                 status={myActive.status}
-                volatiles={myActive.volatiles}
                 types={myActive.types || []}
                 side="player"
                 shiny={Boolean((myActive as any)?.shiny || (myActive as any)?.isShiny)}
-                field={{
-                  safeguardTurns: 0,
-                  mistTurns: 0,
-                  reflectTurns: 0,
-                  lightScreenTurns: 0
-                }}
                 className="transform scale-110"
                 spriteMode={viewMode === 'animated' ? 'animated' : 'static'}
               />
@@ -574,16 +569,9 @@ const handleMoveSelection = async (moveId: string, target?: 'p1' | 'p2') => {
                   max: oppActive.hp.max 
                 }}
                 status={oppActive.status}
-                volatiles={oppActive.volatiles}
                 types={oppActive.types || []}
                 side="opponent"
                 shiny={Boolean((oppActive as any)?.shiny || (oppActive as any)?.isShiny)}
-                field={{
-                  safeguardTurns: 0,
-                  mistTurns: 0,
-                  reflectTurns: 0,
-                  lightScreenTurns: 0
-                }}
                 className="transform scale-110"
                 spriteMode={viewMode === 'animated' ? 'animated' : 'static'}
               />
@@ -795,8 +783,6 @@ const handleMoveSelection = async (moveId: string, target?: 'p1' | 'p2') => {
         <>
           {/* Status Popups */}
           <StatusPopups
-            anchorAlly={{ x: 0.20, y: 0.58 }}
-            anchorFoe={{ x: 0.80, y: 0.18 }}
             events={statusEvents}
           />
           

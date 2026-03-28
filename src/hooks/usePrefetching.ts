@@ -31,26 +31,22 @@ export function useIntelligentPrefetching(config: Partial<PrefetchConfig> = {}) 
     if (!finalConfig.enabled || isPrefetching.current) return
 
     isPrefetching.current = true
+    let limitedIds: number[] = []
     
     try {
-      // Limit concurrent prefetches
-      const limitedIds = ids.slice(0, finalConfig.maxConcurrent)
+      limitedIds = ids.slice(0, finalConfig.maxConcurrent)
       
-      // Add to queue to prevent duplicates
       limitedIds.forEach(id => prefetchQueue.current.add(id))
       
-      // Prefetch using React Query
       const promises = limitedIds.map(id => prefetchPokemon(id))
       await Promise.allSettled(promises)
       
-      // Also prefetch using cache utils for redundancy
       await prefetchUtils.prefetchPokemon(limitedIds)
       
     } catch (error) {
       console.warn('Prefetching failed:', error)
     } finally {
       isPrefetching.current = false
-      // Clear queue
       limitedIds.forEach(id => prefetchQueue.current.delete(id))
     }
   }, [finalConfig.enabled, finalConfig.maxConcurrent, prefetchPokemon])

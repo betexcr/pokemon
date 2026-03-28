@@ -7,13 +7,11 @@ import { applyEntryHazards } from './team-battle-hazards';
 import { handleOnEntryAbilities } from './team-battle-abilities';
 import { applyWeatherResidual, applyTerrainHealing, decrementFieldTimers, applyLeechSeed, applyBindingDamage } from './team-battle-field';
 import { applyEndOfTurnStatus, clearStatus, applyStatus, applyStartOfTurnStatus, terrainPreventsStatus } from './team-battle-status';
-import { getPokemonTypes } from './team-battle-hazards';
 import { BattleRng, rngRollChance, rngNextInt, rngNextFloat } from './battle-rng';
 import { tryConsumeBerry, tryHarvestBerry } from './team-battle-items';
 
 // Process start-of-turn effects
 export async function processStartOfTurn(state: BattleState): Promise<void> {
-  console.log('🌄 Processing start-of-turn effects');
   
   // 1. Update field condition messages (weather, terrain)
   if (state.field.weather) {
@@ -108,8 +106,6 @@ export async function resolveSwitch(state: BattleState, action: BattleState['act
   const team = action.user === 'player' ? state.player : state.opponent;
   const switchIndex = action.switchIndex!;
   
-  console.log(`🔄 ${action.user} switching to Pokemon at index ${switchIndex}`);
-  
   // Clear some volatiles from outgoing Pokemon
   const currentPokemon = getCurrentPokemon(team);
   currentPokemon.volatile.protect = undefined;
@@ -144,10 +140,7 @@ export async function resolveMove(state: BattleState, action: BattleState['actio
   const defender = action.user === 'player' ? getCurrentPokemon(state.opponent) : getCurrentPokemon(state.player);
   const moveId = action.moveId!;
   
-  console.log(`⚡ ${action.user} using move ${moveId}`);
-  
   if (attacker.currentHp <= 0) {
-    console.log(`${attacker.pokemon.name} has fainted, skipping move.`);
     return;
   }
   
@@ -306,16 +299,23 @@ function applyMoveAilment(
   });
 }
 
+const SELF_STAT_DROP_MOVES = new Set([
+  'close-combat', 'superpower', 'overheat', 'draco-meteor', 'leaf-storm',
+  'v-create', 'hammer-arm', 'psycho-boost', 'shell-smash', 'fleur-cannon',
+  'hyperspace-fury', 'clanging-scales',
+]);
+
 function applyMoveSecondaryStatChanges(
   state: BattleState, move: any,
   attacker: BattlePokemon, defender: BattlePokemon,
   _isSecondary = false,
 ): void {
   if (!move.statChanges || move.statChanges.length === 0) return;
+  const selfDrop = SELF_STAT_DROP_MOVES.has(move.name?.toLowerCase?.() ?? '');
   for (const sc of move.statChanges) {
     const chance = (sc.chance ?? 100) / 100;
     if (!rngRollChance(state.rng, chance)) continue;
-    const target = sc.stages > 0 ? attacker : defender;
+    const target = selfDrop ? attacker : (sc.stages > 0 ? attacker : defender);
     const statName = STAT_ABBR_TO_NAME[sc.stat];
     if (!statName) continue;
     const old = target.statModifiers[statName];
@@ -823,8 +823,6 @@ export async function executeMoveAction(
     const defendingTeam = user === 'player' ? state.opponent : state.player;
     defendingTeam.faintedCount = defendingTeam.pokemon.filter(p => p.currentHp <= 0).length;
     
-    console.log(`Pokemon fainted! Updated ${user === 'player' ? 'opponent' : 'player'} team fainted count to ${defendingTeam.faintedCount}`);
-    
     // Trigger on-faint abilities (Moxie, Soul Heart, etc.)
     const attackerAbility = attacker.currentAbility?.toLowerCase();
     if (attackerAbility === 'moxie') {
@@ -896,8 +894,6 @@ export async function runEntrySequence(state: BattleState, opponentSide: 'player
 
 // Process end-of-turn effects
 export async function processEndOfTurn(state: BattleState): Promise<void> {
-  console.log('🌅 Processing end-of-turn effects');
-  
   // 1. Residual damage/heal
   applyWeatherResidual(state);
   processResidualDamage(state);
@@ -1186,32 +1182,27 @@ export function processVolatileDecrements(state: BattleState): void {
   }
 }
 
-// Check for faints from residuals
+// Check for faints from residuals and resync faintedCount from HP
 export function checkResidualFaints(state: BattleState): void {
-  const playerPokemon = getCurrentPokemon(state.player);
-  const opponentPokemon = getCurrentPokemon(state.opponent);
-  
-  if (playerPokemon.currentHp <= 0) {
-    state.battleLog.push({
-      type: 'pokemon_fainted',
-      message: `${playerPokemon.pokemon.name} fainted!`,
-      pokemon: playerPokemon.pokemon.name
-    });
-  }
-  
-  if (opponentPokemon.currentHp <= 0) {
-    state.battleLog.push({
-      type: 'pokemon_fainted',
-      message: `${opponentPokemon.pokemon.name} fainted!`,
-      pokemon: opponentPokemon.pokemon.name
-    });
-  }
+  const checkSide = (team: BattleTeam) => {
+    const pokemon = getCurrentPokemon(team);
+    const prevFaintedCount = team.faintedCount;
+    team.faintedCount = team.pokemon.filter(p => p.currentHp <= 0).length;
+    if (pokemon.currentHp <= 0 && team.faintedCount > prevFaintedCount) {
+      state.battleLog.push({
+        type: 'pokemon_fainted',
+        message: `${pokemon.pokemon.name} fainted!`,
+        pokemon: pokemon.pokemon.name
+      });
+    }
+  };
+
+  checkSide(state.player);
+  checkSide(state.opponent);
 }
 
 // Process force replacements
 export async function processReplacements(state: BattleState): Promise<void> {
-  console.log('🔄 Processing force replacements');
-  
   // Check if either side needs a replacement
   const playerNeedsReplacement = getCurrentPokemon(state.player).currentHp <= 0;
   const opponentNeedsReplacement = getCurrentPokemon(state.opponent).currentHp <= 0;

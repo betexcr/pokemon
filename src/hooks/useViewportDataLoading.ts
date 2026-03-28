@@ -6,35 +6,23 @@ import { getPokemon } from '@/lib/api';
 
 interface UseViewportDataLoadingProps {
   pokemonList: Pokemon[];
-  rootMargin?: string;
-  threshold?: number;
   scrollIdleDelay?: number;
 }
 
 export function useViewportDataLoading({
   pokemonList,
-  rootMargin = '200px',
-  threshold = 0.1,
   scrollIdleDelay = 300
 }: UseViewportDataLoadingProps) {
   const [loadedPokemon, setLoadedPokemon] = useState<Map<number, Pokemon>>(new Map());
   const [loadingPokemon, setLoadingPokemon] = useState<Set<number>>(new Set());
-  const observerRef = useRef<IntersectionObserver | null>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isScrollIdleRef = useRef(true);
-  const visiblePokemonIdsRef = useRef<Set<number>>(new Set());
   const hasUserInteractedRef = useRef(false);
-  const lastLoadedRangeRef = useRef<{start: number, end: number} | null>(null);
   const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const initialLoadTriggeredRef = useRef(false);
 
   // Mark Pokemon as loaded
   const markPokemonLoaded = useCallback((pokemon: Pokemon) => {
-    console.log(`💾 Marking Pokemon #${pokemon.id} as loaded:`, {
-      name: pokemon.name,
-      types: pokemon.types?.map(t => t.type?.name).filter(Boolean) || [],
-      hasImage: !!pokemon.sprites?.front_default
-    });
     setLoadedPokemon(prev => new Map(prev.set(pokemon.id, pokemon)));
     setLoadingPokemon(prev => {
       const newSet = new Set(prev);
@@ -56,17 +44,9 @@ export function useViewportDataLoading({
           return loadedPrev; // Already loaded
         }
         
-        // Start loading
-        console.log(`🔄 Fetching data for Pokemon #${pokemonId}`);
-        
         // Load the data asynchronously
         getPokemon(pokemonId)
           .then(pokemonData => {
-            console.log(`✅ Loaded Pokemon #${pokemonId}:`, {
-              name: pokemonData.name,
-              types: pokemonData.types?.map(t => t.type?.name).filter(Boolean) || [],
-              hasImage: !!pokemonData.sprites?.front_default
-            });
             markPokemonLoaded(pokemonData);
           })
           .catch(error => {
@@ -127,9 +107,6 @@ export function useViewportDataLoading({
       // Load data for Pokemon in the visible range immediately
       if (visiblePokemonIds.size > 0) {
         const visibleIdsArray = Array.from(visiblePokemonIds).sort((a, b) => a - b);
-        console.log(`Loading data for visible Pokemon: ${visibleIdsArray.slice(0, 5).join(', ')}... (${visibleIdsArray.length} total)`);
-        
-        // Load Pokemon data immediately for better performance
         visibleIdsArray.forEach(pokemonId => {
           loadPokemonData(pokemonId);
         });
@@ -139,8 +116,6 @@ export function useViewportDataLoading({
 
   // Load initial batch of Pokemon immediately (only first 6 Pokemon)
   const loadInitialBatch = useCallback(() => {
-    console.log('Loading initial batch of Pokemon for immediate display');
-    
     // Load only the first 6 Pokemon immediately for better performance
     const initialBatchSize = 6;
     for (let i = 1; i <= Math.min(initialBatchSize, pokemonList.length); i++) {
@@ -150,8 +125,6 @@ export function useViewportDataLoading({
 
   // Catch-up loading for fast scrolling scenarios
   const loadCatchUpData = useCallback(() => {
-    console.log('Running catch-up loading for any missed Pokemon');
-    
     // Find Pokemon that are visible but don't have loaded data
     const pokemonCards = document.querySelectorAll('[data-pokemon-id]');
     const scrollContainer = document.querySelector('[data-main-scroll]') || window;
@@ -175,9 +148,7 @@ export function useViewportDataLoading({
       }
     });
     
-    // Load any missed Pokemon
     if (missedPokemonIds.length > 0) {
-      console.log(`Catch-up loading ${missedPokemonIds.length} missed Pokemon:`, missedPokemonIds.slice(0, 10));
       missedPokemonIds.forEach(pokemonId => {
         loadPokemonData(pokemonId);
       });
@@ -211,21 +182,17 @@ export function useViewportDataLoading({
 
   // No intersection observer needed - using scroll-based approach instead
 
-  // Trigger initial loading when Pokemon list becomes available - DISABLED to prevent off-screen loading
+  // Trigger initial loading when Pokemon list becomes available
   useEffect(() => {
     if (pokemonList.length > 0 && !initialLoadTriggeredRef.current) {
-      console.log('Pokemon list available, setting up viewport-only loading (no initial batch)');
       initialLoadTriggeredRef.current = true;
       
-      // DISABLED: Load initial batch immediately
-      // loadInitialBatch();
-      
-      // Set up viewport-based loading only when user interacts
-      setTimeout(() => {
+      const id = setTimeout(() => {
         hasUserInteractedRef.current = true;
         isScrollIdleRef.current = true;
         loadVisiblePokemonData();
-      }, 100); // Slightly longer delay to ensure user interaction
+      }, 100);
+      return () => clearTimeout(id);
     }
   }, [pokemonList.length, loadVisiblePokemonData]);
 
@@ -260,7 +227,6 @@ export function useViewportDataLoading({
     const handleTypeRetry = (event: CustomEvent) => {
       const { pokemonId } = event.detail;
       if (pokemonId && !loadedPokemon.has(pokemonId) && !loadingPokemon.has(pokemonId)) {
-        console.log(`Retrying type loading for Pokemon #${pokemonId}`);
         loadPokemonData(pokemonId);
       }
     };
@@ -286,24 +252,7 @@ export function useViewportDataLoading({
 
   // Get Pokemon with loaded data or skeleton
   const getPokemonWithData = useCallback((pokemon: Pokemon): Pokemon => {
-    const loadedData = loadedPokemon.get(pokemon.id);
-    if (loadedData) {
-      console.log(`📦 Returning loaded data for Pokemon #${pokemon.id}:`, {
-        name: loadedData.name,
-        types: loadedData.types?.map(t => t.type?.name).filter(Boolean) || [],
-        hasImage: !!loadedData.sprites?.front_default
-      });
-      return loadedData;
-    }
-    // Log when returning skeleton data
-    if (pokemon.id >= 690 && pokemon.id <= 710) {
-      console.log(`🦴 Returning skeleton data for Pokemon #${pokemon.id}:`, {
-        name: pokemon.name,
-        types: pokemon.types?.map(t => t.type?.name).filter(Boolean) || [],
-        hasImage: !!pokemon.sprites?.front_default
-      });
-    }
-    return pokemon;
+    return loadedPokemon.get(pokemon.id) ?? pokemon;
   }, [loadedPokemon]);
 
   // Check if Pokemon is loaded

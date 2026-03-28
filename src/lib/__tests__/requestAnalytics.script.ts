@@ -1,6 +1,6 @@
 /**
  * Test file to verify analytics system works correctly
- * Run with: npx ts-node src/lib/__tests__/requestAnalytics.test.ts
+ * Run with: npx ts-node src/lib/__tests__/requestAnalytics.script.ts
  */
 
 import { analyticsManager } from '../requestAnalytics';

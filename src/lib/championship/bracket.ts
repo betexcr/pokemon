@@ -68,18 +68,25 @@ export function seedBracket(
  * Build the standard tournament seed ordering so that top seeds are placed
  * in opposite ends of the bracket and meet as late as possible.
  *
+ * Uses the recursive doubling algorithm: start with [0,1] (seed 1 vs 2),
+ * then at each step pair each existing slot with its complement to fill the
+ * next bracket size. This ensures seed 1 and seed 2 are in opposite halves,
+ * seed 1-4 are each in separate quarter-brackets, etc.
+ *
  * Returns an array of participant indices (0-based) where consecutive pairs
  * form a match: [match0_p1, match0_p2, match1_p1, match1_p2, ...]
  */
 function buildSeedOrder(size: number): number[] {
-  if (size === 2) return [0, 1];
-
-  const order: number[] = [];
-  const half = size / 2;
-  for (let i = 0; i < half; i++) {
-    order.push(i, size - 1 - i);
+  let slots = [0, 1];
+  while (slots.length < size) {
+    const next: number[] = [];
+    const max = slots.length * 2 - 1;
+    for (const s of slots) {
+      next.push(s, max - s);
+    }
+    slots = next;
   }
-  return order;
+  return slots;
 }
 
 /**

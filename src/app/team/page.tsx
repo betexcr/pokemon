@@ -2,14 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Pokemon } from '@/types/pokemon'
-import { getPokemonList, getPokemon, getMove, getMovesBatched } from '@/lib/api'
+import { getPokemonList, getPokemon, getMovesBatched } from '@/lib/api'
 import { formatPokemonName, getShowdownAnimatedSprite } from '@/lib/utils'
 import Image from 'next/image'
-import TypeBadge from '@/components/TypeBadge'
 import TypeBadgeWithTooltip from '@/components/TypeBadgeWithTooltip'
 import Tooltip from '@/components/Tooltip'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, ChevronDown, ChevronRight, Cloud, CloudOff, Save, Loader2, Wifi } from 'lucide-react'
+import { ChevronDown, ChevronRight, Cloud, CloudOff, Save, Loader2, Wifi } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { 
   saveTeamToFirebase, 
@@ -111,6 +110,7 @@ export default function TeamBuilderPage() {
   const [collapsedAvailableMovesSections, setCollapsedAvailableMovesSections] = useState<Set<number>>(new Set())
   const [draftHydrated, setDraftHydrated] = useState(false)
   const [confirmAction, setConfirmAction] = useState<{ title: string; message: string; onConfirm: () => void } | null>(null)
+  const [overwriteTarget, setOverwriteTarget] = useState<FirebaseSavedTeam | null>(null)
   const layoutRef = useRef<HTMLDivElement | null>(null)
   const selectorInputRef = useRef<HTMLInputElement | null>(null)
   const slotRefs = useRef<(HTMLDivElement | null)[]>([null, null, null, null, null, null])
@@ -747,9 +747,21 @@ export default function TeamBuilderPage() {
       setSaveError('Each Pokémon must have 4 moves before saving.')
       return
     }
+
+    const name = teamName.trim() || `Team ${new Date().toLocaleString()}`
+    const existing = savedTeams.find(
+      (t) => t.name.toLowerCase() === name.toLowerCase()
+    )
+    if (existing) {
+      setOverwriteTarget(existing)
+      return
+    }
+
+    await saveTeamAsNew(name)
+  }
+
+  const saveTeamAsNew = async (name: string) => {
     if (!user) {
-      // User not authenticated, save to localStorage
-      const name = teamName.trim() || `Team ${new Date().toLocaleString()}`
       const id = `local_${Date.now()}`
       const team: FirebaseSavedTeam = { 
         id, 
@@ -764,10 +776,8 @@ export default function TeamBuilderPage() {
       return
     }
 
-    // User is authenticated, save to Firebase
     setSaving(true)
     try {
-      const name = teamName.trim() || `Team ${new Date().toLocaleString()}`
       const teamData = {
         name,
         slots: teamSlots,
@@ -791,7 +801,7 @@ export default function TeamBuilderPage() {
       setTeamName('')
     } catch (error) {
       console.error('Error saving team:', error)
-      setError('Failed to save team. Please try again.')
+      setSaveError('Failed to save team. Please try again.')
     } finally {
       setSaving(false)
     }
@@ -831,14 +841,13 @@ export default function TeamBuilderPage() {
       setSavedTeams(next)
     } catch (error) {
       console.error('Error overwriting team:', error)
-      setError('Failed to overwrite team. Please try again.')
+      setSaveError('Failed to overwrite team. Please try again.')
     } finally {
       setSaving(false)
     }
   }
 
   const loadTeam = async (team: FirebaseSavedTeam) => {
-    console.log('Loading team:', team.name, 'with slots:', team.slots.map(s => ({ id: s.id, level: s.level })));
     setTeamSlots(team.slots)
     setTeamName(team.name)
     
@@ -1205,165 +1214,6 @@ export default function TeamBuilderPage() {
               showSelectedPreview={false}
             />
           </div>
-          
-          {/* Secondary inline search removed to avoid duplicate UI; PokemonSelector on top handles search */}
-          {false && (
-          <div className="relative search-dropdown-container max-w-full z-[10000]">
-            <input/>
-            {showDropdown && (
-              <div className="absolute top-full left-0 w-full max-w-full mt-1 bg-white border border-border rounded-lg shadow-2xl z-[10010] max-h-96 overflow-y-auto pokemon-dropdown-list">
-                {(searchTerm.trim() ? filteredPokemon : allPokemon).length > 0 ? (
-                  <div className="divide-y divide-border">
-                    {/* Show last selected Pokémon at the top if available and not in search mode */}
-                    {!searchTerm.trim() && lastSelectedPokemon && (
-                      (() => {
-                        const lastPokemon = allPokemon.find(p => p.id === lastSelectedPokemon)!
-                        return lastPokemon ? (
-                          <div key={`last-${lastPokemon.id}`} className="bg-blue-50 border-b-2 border-blue-200">
-                            <button
-                              onClick={async () => {
-                                const slot = teamSlots.findIndex(s => s.id === null)
-                                if (slot !== -1) {
-                                    setSlot(slot, { id: lastPokemon.id })
-                                  setShowDropdown(false)
-                                  setSearchTerm('')
-                                  setCollapsedSlots(prev => {
-                                    const newSet = new Set(prev)
-                                    newSet.delete(slot)
-                                    return newSet
-                                  })
-                                }
-                              }}
-                              className="w-full text-left hover:bg-blue-100 flex items-center gap-1 transition-colors h-10 py-1 px-2"
-                            >
-                              <div className="relative w-6 h-6 flex-shrink-0 bg-blue-100 rounded">
-                                <Image
-                                  src={getShowdownAnimatedSprite(lastPokemon.name)}
-                                  alt={lastPokemon.name}
-                                  width={24}
-                                  height={24}
-                                  className="w-full h-full object-contain"
-                                  unoptimized
-                                  onError={(e) => {
-                                    const target = e.target as HTMLImageElement
-                                    target.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${lastPokemon.id}.png`
-                                  }}
-                                />
-                              </div>
-                              <div className="flex-1 min-w-0 leading-none">
-                                <div className="font-medium capitalize text-text text-xs leading-none">
-                                  {formatPokemonName(lastPokemon.name)} (Last Selected)
-                                </div>
-                                <div className="text-[10px] text-muted leading-none">
-                                  {lastPokemon.id !== 0 && `#${String(lastPokemon.id).padStart(4, '0')}`}
-                                </div>
-                              </div>
-                              <div className="flex gap-1 items-center">
-                                {lastPokemon.types.length > 0 ? (
-                                  lastPokemon.types.map((typeObj) => {
-                                    const typeName = typeof typeObj === 'string' ? typeObj : typeObj.type?.name
-                                    return typeName ? (
-                                      <TypeBadgeWithTooltip key={`${lastPokemon.id}-${typeName}`} type={typeName} />
-                                    ) : null
-                                  })
-                                ) : (
-                                  <span className="text-xs text-muted">…</span>
-                                )}
-                              </div>
-                            </button>
-                          </div>
-                        ) : null
-                      })()
-                    )}
-                    
-                    {(searchTerm.trim() ? filteredPokemon.slice(0, 50) : allPokemon).map((pokemon) => (
-                      <button
-                        key={pokemon.id}
-                        onClick={async () => {
-                          // Find the first empty slot
-                          const slot = teamSlots.findIndex(s => s.id === null)
-                          if (slot !== -1) {
-                            setSlot(slot, { id: pokemon.id })
-                            // Close dropdown and clear search term
-                            setShowDropdown(false)
-                            setSearchTerm('')
-                            // Focus on the selected Pokemon slot by expanding it
-                            setCollapsedSlots(prev => {
-                              const newSet = new Set(prev)
-                              newSet.delete(slot)
-                              return newSet
-                            })
-                          } else {
-                            // All slots are full, show a message or replace the last selected slot
-                            console.log('All team slots are full')
-                          }
-                        }}
-                        className="w-full text-left hover:bg-gray-50 flex items-center gap-1 transition-colors h-10 py-1"
-                      >
-                        <div className="relative w-6 h-6 flex-shrink-0 bg-gray-100 rounded">
-                          <Image
-                            src={getShowdownAnimatedSprite(pokemon.name)}
-                            alt={pokemon.name}
-                            width={24}
-                            height={24}
-                            className="w-full h-full object-contain"
-                            unoptimized
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement
-                              target.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`
-                            }}
-                          />
-                        </div>
-                        <div className="flex-1 min-w-0 leading-none">
-                          <div className="font-medium capitalize text-text text-xs leading-none">
-                            {formatPokemonName(pokemon.name)}
-                          </div>
-                          <div className="text-[10px] text-muted leading-none">
-                            {pokemon.id !== 0 && `#${String(pokemon.id).padStart(4, '0')}`}
-                          </div>
-                        </div>
-                        <div className="flex gap-1 items-center">
-                          {pokemon.types.length > 0 ? (
-                            pokemon.types.map((typeObj) => {
-                              // Handle both object format { type: { name: "fire" } } and string format "fire"
-                              const typeName = typeof typeObj === 'string' ? typeObj : typeObj.type?.name
-                              return typeName ? (
-                                <TypeBadgeWithTooltip key={`${pokemon.id}-${typeName}`} type={typeName} />
-                              ) : null
-                            })
-                          ) : (
-                            <span className="text-xs text-muted">…</span>
-                          )}
-                        </div>
-                      </button>
-                    ))}
-                    
-                    {/* Loading indicator for virtualized scrolling */}
-                    {!searchTerm.trim() && loadingMorePokemon && (
-                      <div className="p-4 text-center text-muted">
-                        <img src="/loading.gif" alt="Loading more Pokémon" width={40} height={40} className="mx-auto mb-2" />
-                        <p className="text-sm">Loading more Pokémon...</p>
-                      </div>
-                    )}
-                    
-                    {/* End of list indicator */}
-                    {!searchTerm.trim() && !hasMorePokemon && allPokemon.length > 0 && (
-                      <div className="p-4 text-center text-muted text-sm">
-                        All {totalPokemonCount} Pokémon loaded
-                      </div>
-                    )}
-                  </div>
-                ) : searchTerm.trim() ? (
-                  <div className="p-4 text-center text-muted">
-                    No Pokémon found matching &quot;{searchTerm}&quot;
-                  </div>
-                ) : (
-                  <div className="p-4 text-center text-muted">No suggestions available</div>
-                )}
-              </div>
-            )}
-          </div>
-          )}
         </section>
 
         {/* Team slots */}
@@ -2047,6 +1897,21 @@ export default function TeamBuilderPage() {
         variant="danger"
         onConfirm={() => confirmAction?.onConfirm()}
         onCancel={() => setConfirmAction(null)}
+      />
+
+      <ConfirmDialog
+        isOpen={overwriteTarget !== null}
+        title="Overwrite existing team?"
+        message={`A team named "${overwriteTarget?.name}" already exists. Do you want to overwrite it with your current team?`}
+        confirmLabel="Overwrite"
+        variant="default"
+        onConfirm={() => {
+          if (overwriteTarget) {
+            overwriteTeam(overwriteTarget)
+          }
+          setOverwriteTarget(null)
+        }}
+        onCancel={() => setOverwriteTarget(null)}
       />
     </div>
   )

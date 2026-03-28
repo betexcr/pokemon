@@ -41,6 +41,7 @@ export function useProgressiveLoading() {
 
   const loadingRef = useRef<Set<string>>(new Set())
   const abortControllerRef = useRef<AbortController | null>(null)
+  const staggerTimersRef = useRef<ReturnType<typeof setTimeout>[]>([])
 
   // Initialize generation states
   const initializeGenerations = useCallback(() => {
@@ -223,13 +224,16 @@ export function useProgressiveLoading() {
 
   // Load specific generations
   const loadGenerations = useCallback(async (generations: string[]) => {
+    staggerTimersRef.current.forEach(t => clearTimeout(t));
+    staggerTimersRef.current = [];
     initializeGenerations()
     
     // Load generations in parallel but with staggered starts
     generations.forEach((generation, index) => {
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         loadGeneration(generation)
       }, index * 100) // Stagger by 100ms
+      staggerTimersRef.current.push(timer)
     })
   }, [initializeGenerations, loadGeneration])
 
@@ -266,9 +270,8 @@ export function useProgressiveLoading() {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort()
-      }
+      if (abortControllerRef.current) abortControllerRef.current.abort()
+      staggerTimersRef.current.forEach(t => clearTimeout(t))
     }
   }, [])
 

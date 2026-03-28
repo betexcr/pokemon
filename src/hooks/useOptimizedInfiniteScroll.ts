@@ -80,6 +80,7 @@ export function useOptimizedInfiniteScroll<T>(
   const lastLoadTimeRef = useRef(0)
   const scrollElementRef = useRef<HTMLElement | null>(null)
   const preloadTriggeredRef = useRef(false)
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout>>()
 
   const expectedTotal = useMemo(() => {
     if (typeof totalCount === 'number') return totalCount
@@ -168,6 +169,7 @@ export function useOptimizedInfiniteScroll<T>(
       const advanceBy = appendedCount > 0 ? appendedCount : newData.length
       setOffset(pageOffset + advanceBy)
       setRetryCount(0)
+      clearTimeout(retryTimerRef.current)
 
       // Don't set hasMore to false based on expected total - let the API response determine this
       // Only set hasMore to false when we actually get no data from the API
@@ -179,7 +181,7 @@ export function useOptimizedInfiniteScroll<T>(
       if (retryCount < retryAttempts) {
         setRetryCount(prev => prev + 1)
         const delay = retryDelay * Math.pow(2, retryCount)
-        setTimeout(() => {
+        retryTimerRef.current = setTimeout(() => {
           loadMore()
         }, delay)
         return
@@ -205,6 +207,7 @@ export function useOptimizedInfiniteScroll<T>(
 
   // Reset function
   const reset = useCallback(() => {
+    clearTimeout(retryTimerRef.current)
     setData([])
     setOffset(0)
     setHasMore(true)
@@ -214,6 +217,12 @@ export function useOptimizedInfiniteScroll<T>(
     setTotalCount(null)
     totalCountResolvedRef.current = false
     preloadTriggeredRef.current = false
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      clearTimeout(retryTimerRef.current)
+    }
   }, [])
 
   // Virtualization calculations

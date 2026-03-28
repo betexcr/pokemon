@@ -50,16 +50,13 @@ export default function ImageModal({ isOpen, onClose, imageUrl, alt, pokemonName
           url: window.location.href
         })
       } catch {
-        console.log('Share cancelled')
+        // Share cancelled by user
       }
     } else {
-      // Fallback: copy to clipboard
       try {
         await navigator.clipboard.writeText(window.location.href)
-        // You could add a toast notification here
-        console.log('Link copied to clipboard')
       } catch {
-        console.error('Failed to copy link')
+        // Clipboard write not available
       }
     }
   }, [pokemonName])

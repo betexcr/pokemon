@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useRef, useState, useMemo } from 'react'
 import type { FxKind } from './fx/MoveFX.types'
 
 interface AttackAnimatorProps {
@@ -26,6 +26,8 @@ interface Particle {
 export default function AttackAnimator({ kind, from, to, playKey, power = 1, onDone }: AttackAnimatorProps) {
   const [phase, setPhase] = useState<'active' | 'done'>('active')
   const [shake, setShake] = useState(false)
+  const onDoneRef = useRef(onDone)
+  onDoneRef.current = onDone
 
   const animDuration = Math.min(800, 400 + power * 40)
 
@@ -35,14 +37,14 @@ export default function AttackAnimator({ kind, from, to, playKey, power = 1, onD
     const shakeEnd = shakeTimer ? window.setTimeout(() => setShake(false), animDuration * 0.6 + 200) : undefined
     const timer = window.setTimeout(() => {
       setPhase('done')
-      onDone?.()
+      onDoneRef.current?.()
     }, animDuration + 100)
     return () => {
       window.clearTimeout(timer)
       if (shakeTimer) window.clearTimeout(shakeTimer)
       if (shakeEnd) window.clearTimeout(shakeEnd)
     }
-  }, [playKey, onDone, animDuration, power])
+  }, [playKey, animDuration, power])
 
   const particles = useMemo(() => {
     const count = Math.min(20, 6 + Math.floor(power / 15))

@@ -11,6 +11,8 @@ const config = {
   storageBucket: trimmed(process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET),
   messagingSenderId: trimmed(process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID),
   appId: trimmed(process.env.NEXT_PUBLIC_FIREBASE_APP_ID),
+  databaseURL: trimmed(process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL),
+  measurementId: trimmed(process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID),
 };
 
 const requiredKeys: Array<keyof typeof config> = ['apiKey', 'authDomain', 'projectId', 'appId'];

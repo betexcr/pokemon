@@ -31,7 +31,6 @@ export default function LoginForm({ onToggleMode, onSuccess }: LoginFormProps) {
       setError('');
       setLoading(true);
       await signIn(email, password);
-      console.log('Login successful, calling onSuccess callback');
       onSuccess?.();
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'Failed to sign in');
@@ -45,7 +44,6 @@ export default function LoginForm({ onToggleMode, onSuccess }: LoginFormProps) {
       setError('');
       setGoogleLoading(true);
       await signInWithGoogle();
-      console.log('Google login successful, calling onSuccess callback');
       onSuccess?.();
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'Failed to sign in with Google');
@@ -60,7 +58,6 @@ export default function LoginForm({ onToggleMode, onSuccess }: LoginFormProps) {
       setError('');
       setMicrosoftLoading(true);
       await signInWithMicrosoft();
-      console.log('Microsoft login successful, calling onSuccess callback');
       onSuccess?.();
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'Failed to sign in with Microsoft');
@@ -74,7 +71,6 @@ export default function LoginForm({ onToggleMode, onSuccess }: LoginFormProps) {
       setError('');
       setTwitterLoading(true);
       await signInWithTwitter();
-      console.log('Twitter login successful, calling onSuccess callback');
       onSuccess?.();
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'Failed to sign in with Twitter');

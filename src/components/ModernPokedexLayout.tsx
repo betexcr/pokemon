@@ -1242,7 +1242,7 @@ export default function ModernPokedexLayout({
     getPokemonWithData: getPokemonWithDataViewport,
     isPokemonLoaded: isPokemonLoadedViewport,
     isPokemonLoading: isPokemonLoadingViewport,
-  } = useViewportDataLoading({ pokemonList: sortedPokemon, rootMargin: '250px', threshold: 0.05, scrollIdleDelay: 200 })
+  } = useViewportDataLoading({ pokemonList: sortedPokemon, scrollIdleDelay: 200 })
 
   // When sidebar closes, nudge viewport loader to evaluate current visibility
   useEffect(() => {

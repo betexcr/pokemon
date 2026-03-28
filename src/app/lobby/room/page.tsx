@@ -2,7 +2,7 @@
 
 import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import RoomPageClient from '@/components/lobby/RoomPageClient';
+import RoomPageClient from '@/app/lobby/[roomId]/RoomPageClient';
 
 function RoomPageContent() {
     const searchParams = useSearchParams();

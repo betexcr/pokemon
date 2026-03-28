@@ -41,7 +41,6 @@ export default function RegisterForm({ onToggleMode, onSuccess }: RegisterFormPr
       setError('');
       setLoading(true);
       await signUp(email, password, displayName);
-      console.log('Signup successful, calling onSuccess callback');
       onSuccess?.();
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'Failed to create account');

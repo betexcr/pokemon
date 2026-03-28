@@ -1,6 +1,6 @@
 /**
  * Test file to verify request management system works correctly
- * Run with: npx ts-node src/lib/__tests__/requestManager.test.ts
+ * Run with: npx ts-node src/lib/__tests__/requestManager.script.ts
  */
 
 import { requestManager } from '../requestManager';

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, MessageCircle, Bell } from 'lucide-react';
+import { X, MessageCircle } from 'lucide-react';
 
 interface Toast {
   id: string;

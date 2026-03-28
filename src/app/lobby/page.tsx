@@ -7,7 +7,6 @@ import AppHeader from '@/components/AppHeader';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { roomService, type RoomData } from '@/lib/roomService';
 import { getUserTeams, type SavedTeam } from '@/lib/userTeams';
-import LinkWithTransition from '@/components/LinkWithTransition';
 import { useLobbyTransition } from '@/hooks/useLobbyTransition';
 import OfflineBanner from '@/components/OfflineBanner';
 
@@ -25,7 +24,6 @@ function LobbyPage() {
   const [roomsLoading, setRoomsLoading] = useState(true);
   const [teamsLoading, setTeamsLoading] = useState(true);
   const [creatingRoom, setCreatingRoom] = useState(false);
-  // const [roomCode, setRoomCode] = useState('');
 
   const [filterSearch, setFilterSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState<RoomStatusFilter>(ALL);

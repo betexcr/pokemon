@@ -122,7 +122,6 @@ export default function AdvancedFilters({
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  console.log('Close button clicked');
                   setShowSidebar(false);
                 }}
                 aria-label="Close advanced filters"

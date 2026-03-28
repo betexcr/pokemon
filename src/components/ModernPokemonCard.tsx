@@ -186,13 +186,6 @@ function ModernPokemonCardComponent({
   // Provide an always-available tooltip for 3cols, 6cols, and 9cols densities when footer is not visible.
   const shouldUseTooltip = (density === '3cols' || density === '6cols' || density === '9cols' || density === '10cols' || density === '12cols') && !isInfoVisible
   
-  // Debug logging to understand visibility detection
-  if (pokemon.name === 'bulbasaur') {
-    console.log(`🔍 Bulbasaur debug - density: ${density}, isInfoVisible: ${isInfoVisible}, shouldUseTooltip: ${shouldUseTooltip}`)
-  }
-  
-
-
   // Visibility detection for footer (name/types)
   useEffect(() => {
     const el = infoRef.current;
@@ -216,11 +209,6 @@ function ModernPokemonCardComponent({
           const intersectionHeight = entry.intersectionRect.height;
           const ratio = intersectionHeight / targetHeight;
           const mostlyVisible = (entry.isIntersecting && ratio >= 0.5);
-          
-          // Debug logging for Bulbasaur
-          if (pokemon.name === 'bulbasaur') {
-            console.log(`🔍 IntersectionObserver debug - isIntersecting: ${entry.isIntersecting}, ratio: ${ratio.toFixed(2)}, mostlyVisible: ${mostlyVisible}`)
-          }
           
           setIsInfoVisible(mostlyVisible);
         },
@@ -321,7 +309,7 @@ function ModernPokemonCardComponent({
 
   const artWrapperStyle = useMemo<React.CSSProperties>(() => {
     const isDenseGrid = density === '9cols' || density === '10cols' || density === '12cols'
-    const top = density === '3cols' ? 24 : density === '6cols' ? 20 : isDenseGrid ? 6 : 16
+    const top = density === '3cols' ? 36 : density === '6cols' ? 32 : isDenseGrid ? 6 : 28
     const bottom = density === '3cols' ? 12 : density === '6cols' ? 10 : isDenseGrid ? 0 : 8
     const artHeight = density === '3cols' ? '220px' : density === '6cols' ? '160px' : isDenseGrid ? '96px' : '140px'
     return {
@@ -332,7 +320,6 @@ function ModernPokemonCardComponent({
       height: artHeight,
       minHeight: artHeight,
       maxHeight: artHeight,
-      overflow: 'hidden',
       display: 'flex',
       alignItems: isDenseGrid ? 'flex-end' : 'center',
       justifyContent: 'center'

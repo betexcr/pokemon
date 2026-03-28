@@ -28,8 +28,6 @@ const LOADING_MESSAGES = [
 ];
 
 export default function BattleStartDialog({ isOpen, onClose, onBattleStart, roomId, isHost = false }: BattleStartDialogProps) {
-  console.log('🎭 BattleStartDialog rendered with:', { isOpen, isHost, roomId });
-  console.log('🎭 BattleStartDialog starting readiness check for:', isHost ? 'host' : 'guest');
   const [mounted, setMounted] = useState(false);
   
   // Use refs to store the latest function references to avoid dependency issues
@@ -72,7 +70,6 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart, room
 
   // Check battle readiness with dynamic retry and progress tracking
   const checkReadiness = async (allowBattlingStatus: boolean = false) => {
-    console.log('🔍 checkReadiness called for:', isHost ? 'host' : 'guest', { allowBattlingStatus, roomId });
     if (!roomId) return;
     
     try {
@@ -150,7 +147,6 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart, room
   }, []);
 
   useEffect(() => {
-    console.log('🎭 BattleStartDialog main useEffect:', { isOpen, isStarting, isHost });
     let timeout: NodeJS.Timeout | null = null;
     
     if (!isOpen) {
@@ -164,16 +160,12 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart, room
 
     // Only start the battle sequence if not already starting
     if (!isStarting) {
-      console.log('🎭 BattleStartDialog starting battle sequence for:', isHost ? 'host' : 'guest');
       setIsStarting(true);
       setTimeoutReached(false);
-      // Immediately start readiness polling – no artificial delay
-      console.log('🔍 About to call initial checkReadiness for:', isHost ? 'host' : 'guest');
       checkReadiness(true);
       
       // Set a timeout to prevent infinite waiting
       timeout = setTimeout(() => {
-        console.warn('⚠️ Battle start dialog timeout reached');
         setTimeoutReached(true);
         setReadinessStatus(prev => ({
           ...prev,
@@ -184,42 +176,32 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart, room
     }
     
     // Poll readiness every 500ms and start as soon as it's ready (only for host)
-    console.log('🔍 Setting up readiness interval for:', isHost ? 'host' : 'guest');
     const readinessInterval = setInterval(async () => {
-      console.log('🔍 Readiness interval tick for:', isHost ? 'host' : 'guest');
       if (__BATTLE_START_STARTED__) return;
       try {
         const ready = await checkReadiness(true);
-        console.log('🔍 Battle readiness check result:', { ready, readinessStatus, isHost, __BATTLE_START_STARTED__ });
         if (ready && !__BATTLE_START_STARTED__ && isHost) {
-        console.log('✅ Battle is ready, starting battle...');
         __BATTLE_START_STARTED__ = true;
         clearInterval(readinessInterval);
         try {
           await onBattleStartRef.current();
           onCloseRef.current();
         } catch (error) {
-          console.error('❌ Failed to start battle:', error);
-          // Reset the flag so user can try again
+          console.error('Failed to start battle:', error);
           __BATTLE_START_STARTED__ = false;
         }
       } else if (ready && !isHost) {
-        console.log('✅ Battle is ready, guest auto-navigating to battle...');
         __BATTLE_START_STARTED__ = true;
         clearInterval(readinessInterval);
         try {
-          // For guest, we don't call onBattleStart (which creates a battle)
-          // Instead, we just close the dialog and let the room status change effect handle navigation
           onCloseRef.current();
         } catch (error) {
-          console.error('❌ Guest failed to navigate to battle:', error);
+          console.error('Guest failed to navigate to battle:', error);
           __BATTLE_START_STARTED__ = false;
         }
-      } else if (!ready) {
-        console.log('⏳ Battle not ready yet, continuing to wait...');
       }
       } catch (error) {
-        console.error('🔍 Battle readiness check error:', error);
+        console.error('Battle readiness check error:', error);
       }
     }, 500);
 
@@ -615,7 +597,6 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart, room
               <div className="mt-4">
                 <button
                   onClick={() => {
-                    console.log('🔄 Manual retry triggered');
                     setTimeoutReached(false);
                     setReadinessStatus({ isReady: true, errors: [], lastCheck: null });
                     checkReadiness(true);

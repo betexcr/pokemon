@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useId } from 'react'
 
 interface ConfirmDialogProps {
   isOpen: boolean
@@ -24,6 +24,9 @@ export default function ConfirmDialog({
   onCancel,
 }: ConfirmDialogProps) {
   const cancelRef = useRef<HTMLButtonElement>(null)
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const titleId = useId()
+  const descId = useId()
 
   useEffect(() => {
     if (isOpen) {
@@ -34,7 +37,31 @@ export default function ConfirmDialog({
   useEffect(() => {
     if (!isOpen) return
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onCancel()
+      if (e.key === 'Escape') {
+        onCancel()
+        return
+      }
+      if (e.key === 'Tab') {
+        const dialog = dialogRef.current
+        if (!dialog) return
+        const focusable = dialog.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        )
+        if (focusable.length === 0) return
+        const first = focusable[0]
+        const last = focusable[focusable.length - 1]
+        if (e.shiftKey) {
+          if (document.activeElement === first) {
+            e.preventDefault()
+            last.focus()
+          }
+        } else {
+          if (document.activeElement === last) {
+            e.preventDefault()
+            first.focus()
+          }
+        }
+      }
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
@@ -53,13 +80,18 @@ export default function ConfirmDialog({
       onClick={onCancel}
     >
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={descId}
         className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 max-w-sm w-full mx-4"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+        <h3 id={titleId} className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
           {title}
         </h3>
-        <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">
+        <p id={descId} className="text-sm text-gray-600 dark:text-gray-300 mb-6">
           {message}
         </p>
         <div className="flex justify-end gap-3">

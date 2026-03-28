@@ -4,13 +4,13 @@ import {
   addDoc,
   getDoc,
   getDocs,
-  updateDoc,
   onSnapshot,
   query,
   where,
   orderBy,
   serverTimestamp,
   runTransaction,
+  FirestoreError,
   type Unsubscribe,
 } from 'firebase/firestore';
 import { getDb as getClientDb, hasFirebaseClientConfig } from './firebase/client';
@@ -30,6 +30,15 @@ import type {
   ChampionshipMatch,
 } from './championship/types';
 import type { TeamSlot } from './userTeams';
+import { validateTeamMaxGeneration } from '@/lib/pokemon/nationalDexByGeneration';
+
+function assertTeamMatchesMaxGeneration(
+  team: TeamSlot[] | undefined,
+  maxGeneration: number | undefined
+): void {
+  const result = validateTeamMaxGeneration(team, maxGeneration);
+  if (!result.ok) throw new Error(result.message);
+}
 
 function docToChampionship(id: string, data: ChampionshipDocument): Championship {
   return {
@@ -62,7 +71,8 @@ class ChampionshipService {
     name: string,
     size: ChampionshipSize,
     seatMode: SeatMode,
-    hostPhotoURL?: string
+    hostPhotoURL?: string,
+    maxGeneration?: number
   ): Promise<string> {
     const db = this.getDb();
     const totalRounds = getTotalRounds(size);
@@ -80,6 +90,7 @@ class ChampionshipService {
       hostName,
       size,
       seatMode,
+      ...(typeof maxGeneration === 'number' ? { maxGeneration } : {}),
       status: 'open' as const,
       participants: [hostParticipant],
       bracket: [],
@@ -119,6 +130,8 @@ class ChampionshipService {
       if (data.status !== 'open') throw new Error('Championship is not open for joining');
       if (data.participants.length >= data.size) throw new Error('Championship is full');
       if (data.participants.some((p) => p.uid === uid)) throw new Error('Already joined');
+
+      assertTeamMatchesMaxGeneration(team, data.maxGeneration);
 
       const takenSeeds = new Set(data.participants.map((p) => p.seed));
       let nextSeed = 1;
@@ -207,78 +220,128 @@ class ChampionshipService {
   ): Promise<void> {
     const db = this.getDb();
     const ref = doc(db, this.collectionName, id);
-    const snap = await getDoc(ref);
-    if (!snap.exists()) throw new Error('Championship not found');
 
-    const data = snap.data() as ChampionshipDocument;
-    const participants = data.participants.map((p) =>
-      p.uid === uid ? { ...p, teamId, team } : p
-    );
+    await runTransaction(db, async (txn) => {
+      const snap = await txn.get(ref);
+      if (!snap.exists()) throw new Error('Championship not found');
 
-    await updateDoc(ref, { participants, updatedAt: serverTimestamp() });
+      const data = snap.data() as ChampionshipDocument;
+
+      if (data.status !== 'open' && data.status !== 'seeding') {
+        throw new Error('Cannot update team after the championship has started');
+      }
+
+      if (!data.participants.some((p) => p.uid === uid)) {
+        throw new Error('You are not a participant in this championship');
+      }
+
+      assertTeamMatchesMaxGeneration(team, data.maxGeneration);
+
+      const participants = data.participants.map((p) =>
+        p.uid === uid ? { ...p, teamId, team } : p
+      );
+
+      txn.update(ref, { participants, updatedAt: serverTimestamp() });
+    });
   }
 
   async randomizeSeeds(id: string, hostUid: string): Promise<void> {
     const db = this.getDb();
     const ref = doc(db, this.collectionName, id);
-    const snap = await getDoc(ref);
-    if (!snap.exists()) throw new Error('Championship not found');
 
-    const data = snap.data() as ChampionshipDocument;
-    if (data.hostUid !== hostUid) throw new Error('Only the host can randomize seeds');
+    await runTransaction(db, async (txn) => {
+      const snap = await txn.get(ref);
+      if (!snap.exists()) throw new Error('Championship not found');
 
-    const shuffled = [...data.participants];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
+      const data = snap.data() as ChampionshipDocument;
+      if (data.hostUid !== hostUid) throw new Error('Only the host can randomize seeds');
+      if (data.status !== 'open' && data.status !== 'seeding') {
+        throw new Error('Cannot randomize seeds after the championship has started');
+      }
 
-    const participants = shuffled.map((p, idx) => ({ ...p, seed: idx + 1 }));
-    await updateDoc(ref, { participants, updatedAt: serverTimestamp() });
+      const shuffled = [...data.participants];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+
+      const participants = shuffled.map((p, idx) => ({ ...p, seed: idx + 1 }));
+      txn.update(ref, { participants, updatedAt: serverTimestamp() });
+    });
   }
 
   async startChampionship(id: string, hostUid: string): Promise<void> {
     const db = this.getDb();
     const ref = doc(db, this.collectionName, id);
-    const snap = await getDoc(ref);
-    if (!snap.exists()) throw new Error('Championship not found');
 
-    const data = snap.data() as ChampionshipDocument;
-    if (data.hostUid !== hostUid) throw new Error('Only the host can start');
-    if (data.status !== 'open' && data.status !== 'seeding') {
-      throw new Error('Championship cannot be started in its current state');
-    }
-    if (data.participants.length !== data.size) {
-      throw new Error(`Need exactly ${data.size} participants to start (have ${data.participants.length})`);
-    }
+    await runTransaction(db, async (txn) => {
+      const snap = await txn.get(ref);
+      if (!snap.exists()) throw new Error('Championship not found');
 
-    let bracket = generateBracket(data.size);
-    bracket = seedBracket(bracket, data.participants);
+      const data = snap.data() as ChampionshipDocument;
+      if (data.hostUid !== hostUid) throw new Error('Only the host can start');
+      if (data.status !== 'open' && data.status !== 'seeding') {
+        throw new Error('Championship cannot be started in its current state');
+      }
+      if (data.participants.length !== data.size) {
+        throw new Error(`Need exactly ${data.size} participants to start (have ${data.participants.length})`);
+      }
 
-    await updateDoc(ref, {
-      bracket,
-      status: 'in_progress',
-      currentRound: 1,
-      updatedAt: serverTimestamp(),
+      for (const p of data.participants) {
+        const result = validateTeamMaxGeneration(p.team, data.maxGeneration);
+        if (!result.ok) {
+          throw new Error(`${p.name}: ${result.message}`);
+        }
+      }
+
+      let bracket = generateBracket(data.size);
+      bracket = seedBracket(bracket, data.participants);
+
+      txn.update(ref, {
+        bracket,
+        status: 'in_progress',
+        currentRound: 1,
+        updatedAt: serverTimestamp(),
+      });
     });
   }
 
   async setMatchRoom(
     championshipId: string,
     matchId: string,
-    roomId: string
+    roomId: string,
+    callerUid: string
   ): Promise<void> {
     const db = this.getDb();
     const ref = doc(db, this.collectionName, championshipId);
-    const snap = await getDoc(ref);
-    if (!snap.exists()) throw new Error('Championship not found');
 
-    const data = snap.data() as ChampionshipDocument;
-    const bracket = data.bracket.map((m: ChampionshipMatch) =>
-      m.id === matchId ? { ...m, roomId, status: 'in_progress' as const } : m
-    );
+    await runTransaction(db, async (txn) => {
+      const snap = await txn.get(ref);
+      if (!snap.exists()) throw new Error('Championship not found');
 
-    await updateDoc(ref, { bracket, updatedAt: serverTimestamp() });
+      const data = snap.data() as ChampionshipDocument;
+
+      if (data.status !== 'in_progress') {
+        throw new Error('Championship is not in progress');
+      }
+
+      const match = data.bracket.find((m: ChampionshipMatch) => m.id === matchId);
+      if (!match) throw new Error('Match not found');
+
+      if (match.status !== 'ready' && match.status !== 'pending') {
+        throw new Error('Match has already started or completed');
+      }
+
+      if (match.player1Uid !== callerUid && match.player2Uid !== callerUid) {
+        throw new Error('You are not a player in this match');
+      }
+
+      const bracket = data.bracket.map((m: ChampionshipMatch) =>
+        m.id === matchId ? { ...m, roomId, status: 'in_progress' as const } : m
+      );
+
+      txn.update(ref, { bracket, updatedAt: serverTimestamp() });
+    });
   }
 
   async advanceWinner(
@@ -288,42 +351,49 @@ class ChampionshipService {
   ): Promise<void> {
     const db = this.getDb();
     const ref = doc(db, this.collectionName, championshipId);
-    const snap = await getDoc(ref);
-    if (!snap.exists()) throw new Error('Championship not found');
 
-    const data = snap.data() as ChampionshipDocument;
-    const match = data.bracket.find((m: ChampionshipMatch) => m.id === matchId);
-    if (!match) throw new Error('Match not found');
+    await runTransaction(db, async (txn) => {
+      const snap = await txn.get(ref);
+      if (!snap.exists()) throw new Error('Championship not found');
 
-    const winnerParticipant = data.participants.find((p) => p.uid === winnerUid);
-    const winnerSeed = winnerParticipant?.seed;
-
-    let bracket = advanceBracketWinner(data.bracket, matchId, winnerUid, winnerSeed);
-
-    const loserUid = match.player1Uid === winnerUid ? match.player2Uid : match.player1Uid;
-    const participants = data.participants.map((p) =>
-      p.uid === loserUid ? { ...p, eliminatedInRound: match.round } : p
-    );
-
-    const update: Record<string, unknown> = {
-      bracket,
-      participants,
-      updatedAt: serverTimestamp(),
-    };
-
-    const roundDone = isRoundComplete(bracket, data.currentRound);
-    if (roundDone) {
-      const nextRound = data.currentRound + 1;
-      if (nextRound > data.totalRounds) {
-        update.status = 'completed';
-        update.winnerUid = winnerUid;
-        update.winnerName = winnerParticipant?.name ?? 'Unknown';
-      } else {
-        update.currentRound = nextRound;
+      const data = snap.data() as ChampionshipDocument;
+      const match = data.bracket.find((m: ChampionshipMatch) => m.id === matchId);
+      if (!match) throw new Error('Match not found');
+      if (match.status === 'completed') return;
+      if (winnerUid !== match.player1Uid && winnerUid !== match.player2Uid) {
+        throw new Error('Winner must be a participant in the match');
       }
-    }
 
-    await updateDoc(ref, update);
+      const winnerParticipant = data.participants.find((p) => p.uid === winnerUid);
+      const winnerSeed = winnerParticipant?.seed;
+
+      const bracket = advanceBracketWinner(data.bracket, matchId, winnerUid, winnerSeed);
+
+      const loserUid = match.player1Uid === winnerUid ? match.player2Uid : match.player1Uid;
+      const participants = data.participants.map((p) =>
+        p.uid === loserUid ? { ...p, eliminatedInRound: match.round } : p
+      );
+
+      const update: Record<string, unknown> = {
+        bracket,
+        participants,
+        updatedAt: serverTimestamp(),
+      };
+
+      const roundDone = isRoundComplete(bracket, data.currentRound);
+      if (roundDone) {
+        const nextRound = data.currentRound + 1;
+        if (nextRound > data.totalRounds) {
+          update.status = 'completed';
+          update.winnerUid = winnerUid;
+          update.winnerName = winnerParticipant?.name ?? 'Unknown';
+        } else {
+          update.currentRound = nextRound;
+        }
+      }
+
+      txn.update(ref, update);
+    });
   }
 
   onChampionshipChange(id: string, callback: (c: Championship | null) => void): Unsubscribe {
@@ -350,7 +420,10 @@ class ChampionshipService {
       return snap.docs.map((d) =>
         docToChampionship(d.id, d.data() as ChampionshipDocument)
       );
-    } catch {
+    } catch (error) {
+      if (!(error instanceof FirestoreError && error.code === 'failed-precondition')) {
+        throw error;
+      }
       // Composite index may not exist yet; fall back to unordered query
       const q = query(
         collection(db, this.collectionName),
@@ -378,7 +451,10 @@ class ChampionshipService {
       return snap.docs
         .map((d) => docToChampionship(d.id, d.data() as ChampionshipDocument))
         .filter((c) => c.participants.some((p) => p.uid === uid));
-    } catch {
+    } catch (error) {
+      if (!(error instanceof FirestoreError && error.code === 'failed-precondition')) {
+        throw error;
+      }
       // Composite index may not exist yet; fall back to unordered query
       const q = query(
         collection(db, this.collectionName),
@@ -400,50 +476,85 @@ class ChampionshipService {
   ): Promise<void> {
     const db = this.getDb();
     const ref = doc(db, this.collectionName, championshipId);
-    const snap = await getDoc(ref);
-    if (!snap.exists()) throw new Error('Championship not found');
 
-    const data = snap.data() as ChampionshipDocument;
-    if (data.hostUid !== hostUid) throw new Error('Only the host can forfeit a match');
-    if (data.status !== 'in_progress') throw new Error('Championship is not in progress');
+    await runTransaction(db, async (txn) => {
+      const snap = await txn.get(ref);
+      if (!snap.exists()) throw new Error('Championship not found');
 
-    const match = data.bracket.find((m: ChampionshipMatch) => m.id === matchId);
-    if (!match) throw new Error('Match not found');
-    if (match.status === 'completed') throw new Error('Match already completed');
-    if (!match.player1Uid || !match.player2Uid) throw new Error('Match does not have both players');
-    if (loserUid !== match.player1Uid && loserUid !== match.player2Uid) {
-      throw new Error('Specified player is not in this match');
-    }
+      const data = snap.data() as ChampionshipDocument;
+      if (data.hostUid !== hostUid) throw new Error('Only the host can forfeit a match');
+      if (data.status !== 'in_progress') throw new Error('Championship is not in progress');
 
-    const winnerUid = match.player1Uid === loserUid ? match.player2Uid : match.player1Uid;
-    await this.advanceWinner(championshipId, matchId, winnerUid);
+      const match = data.bracket.find((m: ChampionshipMatch) => m.id === matchId);
+      if (!match) throw new Error('Match not found');
+      if (match.status === 'completed') throw new Error('Match already completed');
+      if (!match.player1Uid || !match.player2Uid) throw new Error('Match does not have both players');
+      if (loserUid !== match.player1Uid && loserUid !== match.player2Uid) {
+        throw new Error('Specified player is not in this match');
+      }
+
+      const winnerUid = match.player1Uid === loserUid ? match.player2Uid : match.player1Uid;
+      const winnerParticipant = data.participants.find((p) => p.uid === winnerUid);
+      const winnerSeed = winnerParticipant?.seed;
+
+      const bracket = advanceBracketWinner(data.bracket, matchId, winnerUid, winnerSeed);
+
+      const participants = data.participants.map((p) =>
+        p.uid === loserUid ? { ...p, eliminatedInRound: match.round } : p
+      );
+
+      const update: Record<string, unknown> = {
+        bracket,
+        participants,
+        updatedAt: serverTimestamp(),
+      };
+
+      const roundDone = isRoundComplete(bracket, data.currentRound);
+      if (roundDone) {
+        const nextRound = data.currentRound + 1;
+        if (nextRound > data.totalRounds) {
+          update.status = 'completed';
+          update.winnerUid = winnerUid;
+          update.winnerName = winnerParticipant?.name ?? 'Unknown';
+        } else {
+          update.currentRound = nextRound;
+        }
+      }
+
+      txn.update(ref, update);
+    });
   }
 
   async cancelChampionship(id: string, hostUid: string): Promise<void> {
     const db = this.getDb();
     const ref = doc(db, this.collectionName, id);
-    const snap = await getDoc(ref);
-    if (!snap.exists()) throw new Error('Championship not found');
 
-    const data = snap.data() as ChampionshipDocument;
-    if (data.hostUid !== hostUid) throw new Error('Only the host can cancel');
-    if (data.status === 'completed') throw new Error('Championship already completed');
+    await runTransaction(db, async (txn) => {
+      const snap = await txn.get(ref);
+      if (!snap.exists()) throw new Error('Championship not found');
 
-    await updateDoc(ref, { status: 'cancelled', updatedAt: serverTimestamp() });
+      const data = snap.data() as ChampionshipDocument;
+      if (data.hostUid !== hostUid) throw new Error('Only the host can cancel');
+      if (data.status === 'completed') throw new Error('Championship already completed');
+
+      txn.update(ref, { status: 'cancelled', updatedAt: serverTimestamp() });
+    });
   }
 
   async deleteChampionship(id: string, hostUid: string): Promise<void> {
     const db = this.getDb();
     const ref = doc(db, this.collectionName, id);
-    const snap = await getDoc(ref);
-    if (!snap.exists()) throw new Error('Championship not found');
 
-    const data = snap.data() as ChampionshipDocument;
-    if (data.hostUid !== hostUid) throw new Error('Only the host can delete');
-    if (data.status === 'in_progress') throw new Error('Cancel the championship before deleting');
+    await runTransaction(db, async (txn) => {
+      const snap = await txn.get(ref);
+      if (!snap.exists()) throw new Error('Championship not found');
 
-    const { deleteDoc: firestoreDeleteDoc } = await import('firebase/firestore');
-    await firestoreDeleteDoc(ref);
+      const data = snap.data() as ChampionshipDocument;
+      if (data.hostUid !== hostUid) throw new Error('Only the host can delete');
+      if (data.status === 'in_progress') throw new Error('Cancel the championship before deleting');
+
+      txn.delete(ref);
+    });
   }
 }
 

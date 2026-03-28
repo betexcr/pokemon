@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2, CheckCircle2, Users, AlertCircle, LogOut, PlayCircle } from 'lucide-react'
+import { Loader2, CheckCircle2, Users, AlertCircle, LogOut, PlayCircle, Trash2 } from 'lucide-react'
 import { roomService, type RoomData } from '@/lib/roomService'
 import { useAuth } from '@/contexts/AuthContext'
 import { getUserTeams } from '@/lib/userTeams'
@@ -422,6 +422,22 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
     }
   }
 
+  const handleDeleteRoom = async () => {
+    if (!room || !user || room.hostId !== user.uid) return
+    if (!confirm('Delete this room? This cannot be undone.')) return
+    setBusy(true)
+    setActionError(null)
+    try {
+      await roomService.deleteRoom(roomId)
+      router.push('/lobby')
+    } catch (err) {
+      console.error('Failed to delete room', err)
+      setActionError('Unable to delete the room. Please try again.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const handleStartBattle = async () => {
     if (!room || !isHost) return
     setBusy(true)
@@ -605,16 +621,26 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
               <p className="text-sm text-muted-foreground mb-3">
                 Wait until both trainers are ready, then start the match.
               </p>
-              <button
-                onClick={handleStartBattle}
-                disabled={!bothReady || busy}
-                className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
-                  bothReady ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-muted text-muted-foreground cursor-not-allowed'
-                } ${busy ? 'opacity-60' : ''}`}
-              >
-                <PlayCircle className="w-4 h-4" />
-                Start Battle
-              </button>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={handleStartBattle}
+                  disabled={!bothReady || busy}
+                  className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                    bothReady ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-muted text-muted-foreground cursor-not-allowed'
+                  } ${busy ? 'opacity-60' : ''}`}
+                >
+                  <PlayCircle className="w-4 h-4" />
+                  Start Battle
+                </button>
+                <button
+                  onClick={handleDeleteRoom}
+                  disabled={busy}
+                  className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors bg-red-600 text-white hover:bg-red-700 ${busy ? 'opacity-60 cursor-not-allowed' : ''}`}
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete Room
+                </button>
+              </div>
             </div>
           )}
         </section>

@@ -33,7 +33,6 @@ function BattleRuntimePage() {
   const urlBattleId = searchParams.get("battleId");
   
   const [showChat, setShowChat] = useState(false);
-  const [showBattleResults, setShowBattleResults] = useState(false);
   const [opponentChampion, setOpponentChampion] = useState<Champion | null>(null);
   const [isAIBattle, setIsAIBattle] = useState(false);
   const [battleTypeDetermined, setBattleTypeDetermined] = useState(false);
@@ -185,7 +184,6 @@ function BattleRuntimePage() {
             config={{ opponentChampion }}
             onBattleComplete={(winner) => {
               console.log('AI Battle completed, winner:', winner);
-              setShowBattleResults(true);
             }}
             viewMode="animated"
           />
@@ -195,7 +193,6 @@ function BattleRuntimePage() {
             battleId={urlBattleId}
             onBattleComplete={(winner) => {
               console.log('Battle completed, winner:', winner);
-              setShowBattleResults(true);
             }}
             viewMode="animated"
           />

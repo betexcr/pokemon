@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
-import { onValue, ref } from 'firebase/database';
+import { useEffect, useRef, useState } from 'react';
+import { onValue, ref, Unsubscribe } from 'firebase/database';
 import { rtdb } from '@/lib/firebase';
 
 export function useBattleFeed(battleId?: string) {
   const [pub, setPub] = useState<any>(null);
   const [logs, setLogs] = useState<string[]>([]);
   const [meta, setMeta] = useState<any>(null);
+  const resUnsub = useRef<Unsubscribe | null>(null);
 
   useEffect(() => {
     const database = rtdb;
@@ -17,23 +18,30 @@ export function useBattleFeed(battleId?: string) {
     const metaRef = ref(database, `/battles/${battleId}/meta`);
     
     const unsub1 = onValue(pubRef, snap => setPub(snap.val()));
-    const unsub2 = onValue(metaRef, snap => setMeta(snap.val()));
-    
-    // Watch for turn changes to get resolution logs
-    const unsub3 = onValue(metaRef, async snap => {
+
+    let lastTurn: number | null = null;
+    const unsub2 = onValue(metaRef, snap => {
       const metaData = snap.val();
-      if (!metaData?.turn) return;
-      
-      const resRef = ref(database, `/battles/${battleId}/turns/${metaData.turn}/resolution/logs`);
-      const unsub4 = onValue(resRef, s => setLogs(s.val() || []));
-      
-      return () => unsub4();
+      setMeta(metaData);
+      if (!metaData?.turn || metaData.turn === lastTurn) return;
+      lastTurn = metaData.turn;
+
+      if (resUnsub.current) {
+        resUnsub.current();
+        resUnsub.current = null;
+      }
+
+      const logsRef = ref(database, `/battles/${battleId}/turns/${metaData.turn}/resolution/logs`);
+      resUnsub.current = onValue(logsRef, s => setLogs(s.val() || []));
     });
 
     return () => { 
       unsub1(); 
-      unsub2(); 
-      unsub3(); 
+      unsub2();
+      if (resUnsub.current) {
+        resUnsub.current();
+        resUnsub.current = null;
+      }
     };
   }, [battleId]);
 
