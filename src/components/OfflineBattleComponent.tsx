@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { useOfflineBattleState, type OfflineBattleConfig } from '@/hooks/useOfflineBattleState';
 import Tooltip from '@/components/Tooltip';
 import { getMove } from '@/lib/moveCache';
-import { getPokemonIdFromSpecies, getPokemonBattleImageWithFallback, formatPokemonName, getShowdownAnimatedSprite } from '@/lib/utils';
+import { getPokemonIdFromSpecies, formatPokemonName, getShowdownAnimatedSprite } from '@/lib/utils';
 import { BattleSprite, BattleSpriteRef } from '@/components/battle/BattleSprite';
 import Image from 'next/image';
 import { BattleEndScreen } from '@/components/multiplayer/BattleEndScreen';
@@ -171,7 +171,8 @@ export const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
 
   const renderSpriteImage = (species: string | undefined, opts: { variant?: string; shiny?: boolean; animatedPreferred?: boolean; size?: number; className?: string } = {}) => {
     if (!species) return null;
-    const src = getShowdownAnimatedSprite(species, opts.variant === 'back') || getPokemonBattleImageWithFallback(species, opts.variant === 'back');
+    const variant: 'front' | 'back' = opts.variant === 'back' ? 'back' : 'front';
+    const src = getShowdownAnimatedSprite(species, variant, opts.shiny);
     return <Image src={src} alt={species} width={opts.size || 48} height={opts.size || 48} className={opts.className || 'w-12 h-12 object-contain'} unoptimized />;
   };
 

@@ -1,14 +1,11 @@
 import { TYPE_CHART, TYPES, type TypeName } from './data';
 
 export function calcEffectiveness(attacker: TypeName, defenders: TypeName[]): number {
-  const result = defenders.reduce((mult, def) => {
+  return defenders.reduce((mult, def) => {
     const chart = TYPE_CHART[attacker];
     const val = chart?.[def] ?? 1;
-    console.log(`calcEffectiveness: ${attacker} vs ${def} = ${val} (chart: ${chart?.[def]})`);
     return mult * val;
   }, 1);
-  console.log(`calcEffectiveness final: ${attacker} vs [${defenders.join(',')}] = ${result}`);
-  return result;
 }
 
 export type CategoryBuckets = {

@@ -633,7 +633,6 @@ export default function VirtualizedPokemonGrid({
     const seen = new Set();
     return regularPokemon.filter(pokemon => {
       if (seen.has(pokemon.id)) {
-        console.warn('Duplicate Pokemon found:', pokemon);
         return false;
       }
       seen.add(pokemon.id);

@@ -10,8 +10,10 @@ import { getMove } from './moveCache';
 import {
   resolveSwitch,
   resolveMove,
+  processStartOfTurn,
   processEndOfTurn,
-  processReplacements
+  processReplacements,
+  applyAutoSwitchInEffects,
 } from './team-battle-engine-additional';
 import {
   BattleRng,
@@ -49,7 +51,7 @@ function determineTerrainModifier(
   terrainKind: TerrainKind | undefined,
   moveType: TypeName,
   attackerGrounded: boolean
-): 'None' | 'Electric' | 'Grassy' | 'Psychic' {
+): 'None' | 'Electric' | 'Grassy' | 'Psychic' | 'Misty' {
   if (!terrainKind || terrainKind === 'none' || !attackerGrounded) {
     return 'None';
   }
@@ -63,6 +65,8 @@ function determineTerrainModifier(
       return moveType === 'Grass' ? 'Grassy' : 'None';
     case 'psychic':
       return moveType === 'Psychic' ? 'Psychic' : 'None';
+    case 'misty':
+      return 'Misty';
     default:
       return 'None';
   }
@@ -92,7 +96,7 @@ export type BattlePokemon = {
     encore?: { move: string; turns: number };
     taunt?: { turns: number };
     disable?: { move: string; turns: number };
-    protect?: { counter: number };
+    protect?: { counter: number; active?: boolean };
     perishSong?: { turns: number };
     flinched?: boolean;
     binding?: { kind: string; turnsLeft: number; fraction: number };
@@ -103,6 +107,7 @@ export type BattlePokemon = {
     wish?: { turns: number; heal: number };
     leechSeedSource?: { owner: 'player' | 'opponent'; index: number };
     damageDealtThisTurn?: number;
+    focusSashUsed?: boolean;
   };
   // Ability system
   currentAbility?: string;
@@ -226,7 +231,7 @@ export function getMovePriority(moveId: string): number {
 }
 
 // Calculate effective speed for move ordering
-export function getEffectiveSpeed(pokemon: BattlePokemon): number {
+export function getEffectiveSpeed(pokemon: BattlePokemon, tailwindActive = false): number {
   const baseSpeed = pokemon.pokemon.stats?.find(stat => stat.stat.name === 'speed')?.base_stat || 50;
   let calculatedSpeed = calculateStat(baseSpeed, pokemon.level);
   // Apply nature: +10% to increased stat, -10% to decreased stat
@@ -239,6 +244,10 @@ export function getEffectiveSpeed(pokemon: BattlePokemon): number {
     }
   } catch { }
   let finalSpeed = applyStatModifier(calculatedSpeed, pokemon.statModifiers?.speed || 0);
+  // Tailwind doubles speed (Gen IV+)
+  if (tailwindActive) {
+    finalSpeed = Math.floor(finalSpeed * 2);
+  }
   // Paralysis halves speed (Gen 7+)
   if (pokemon.status === 'paralyzed') {
     finalSpeed = Math.floor(finalSpeed * 0.5);
@@ -280,9 +289,12 @@ export function canUseMove(
       pokemon.volatile.confusion = undefined;
     } else if (rngRollChance(rng, 1 / 3)) {
       const basePower = 40;
-      const atkStat = pokemon.pokemon.stats?.find((s: any) => (s.stat?.name || s.name) === 'attack')?.base_stat ?? 50;
-      const defStat = pokemon.pokemon.stats?.find((s: any) => (s.stat?.name || s.name) === 'defense')?.base_stat ?? 50;
+      const baseAtk = pokemon.pokemon.stats?.find((s: any) => (s.stat?.name || s.name) === 'attack')?.base_stat ?? 50;
+      const baseDef = pokemon.pokemon.stats?.find((s: any) => (s.stat?.name || s.name) === 'defense')?.base_stat ?? 50;
       const level = pokemon.level ?? 50;
+      let atkStat = applyStatModifier(calculateStat(baseAtk, level), pokemon.statModifiers?.attack || 0);
+      const defStat = applyStatModifier(calculateStat(baseDef, level), pokemon.statModifiers?.defense || 0);
+      if (pokemon.status === 'burned') atkStat = Math.floor(atkStat * 0.5);
       const confusionDmg = Math.max(1, Math.floor(((2 * level / 5 + 2) * basePower * atkStat / defStat) / 50 + 2));
       pokemon.currentHp = Math.max(0, pokemon.currentHp - confusionDmg);
       return { canUse: false, reason: 'confused and hurt itself' };
@@ -324,7 +336,10 @@ export function buildActionQueue(state: BattleState, playerAction: BattleAction,
       moveId: 'pursuit',
       target: 'player',
       priority: getMovePriority('pursuit'),
-      speed: getEffectiveSpeed(getCurrentPokemon(state.opponent))
+      speed: getEffectiveSpeed(
+        getCurrentPokemon(state.opponent),
+        !!(state.opponent.sideConditions.tailwind?.turns && state.opponent.sideConditions.tailwind.turns > 0)
+      )
     });
   }
 
@@ -335,7 +350,10 @@ export function buildActionQueue(state: BattleState, playerAction: BattleAction,
       moveId: 'pursuit',
       target: 'opponent',
       priority: getMovePriority('pursuit'),
-      speed: getEffectiveSpeed(getCurrentPokemon(state.player))
+      speed: getEffectiveSpeed(
+        getCurrentPokemon(state.player),
+        !!(state.player.sideConditions.tailwind?.turns && state.player.sideConditions.tailwind.turns > 0)
+      )
     });
   }
 
@@ -355,7 +373,7 @@ export function buildActionQueue(state: BattleState, playerAction: BattleAction,
       moveId: playerAction.moveId,
       target: playerAction.target,
       priority: getMovePriority(playerAction.moveId || ''),
-      speed: getEffectiveSpeed(getCurrentPokemon(state.player))
+      speed: getEffectiveSpeed(getCurrentPokemon(state.player), !!(state.player.sideConditions.tailwind?.turns && state.player.sideConditions.tailwind.turns > 0))
     });
   }
 
@@ -374,7 +392,7 @@ export function buildActionQueue(state: BattleState, playerAction: BattleAction,
       moveId: opponentAction.moveId,
       target: opponentAction.target,
       priority: getMovePriority(opponentAction.moveId || ''),
-      speed: getEffectiveSpeed(getCurrentPokemon(state.opponent))
+      speed: getEffectiveSpeed(getCurrentPokemon(state.opponent), !!(state.opponent.sideConditions.tailwind?.turns && state.opponent.sideConditions.tailwind.turns > 0))
     });
   }
 
@@ -399,11 +417,16 @@ export function buildActionQueue(state: BattleState, playerAction: BattleAction,
 
     // Within same priority, order by speed
     // If Trick Room is active, reverse speed order (slower moves first)
-    if (isTrickRoomActive) {
-      return a.speed - b.speed; // Lower speed first
-    } else {
-      return b.speed - a.speed; // Higher speed first
+    if (a.speed !== b.speed) {
+      if (isTrickRoomActive) {
+        return a.speed - b.speed; // Lower speed first
+      } else {
+        return b.speed - a.speed; // Higher speed first
+      }
     }
+
+    // Speed tie: 50/50 using battle RNG (reproducible / consistent with multiplayer)
+    return rngRollChance(state.rng, 0.5) ? -1 : 1;
   });
 }
 
@@ -497,7 +520,7 @@ export async function applyStatusMoveEffects(
   attacker: BattlePokemon,
   defender: BattlePokemon,
   move: Move | CompiledMove,
-  battleState: { battleLog: BattleLogEntry[] }
+  battleState: { battleLog: BattleLogEntry[]; rng?: BattleRng }
 ): Promise<void> {
   // Handle both old Move type and new CompiledMove type
   let compiledMove: CompiledMove;
@@ -530,38 +553,39 @@ export async function applyStatusMoveEffects(
     'cotton-spore': { stat: 'speed', stages: -2, target: 'opponent' }
   };
 
-  // Stat boosting moves
-  const statBoostingMoves: Record<string, { stat: keyof BattlePokemon['statModifiers'], stages: number, target: 'self' | 'opponent' }> = {
-    'swords-dance': { stat: 'attack', stages: 2, target: 'self' },
-    'dragon-dance': { stat: 'attack', stages: 1, target: 'self' },
-    'bulk-up': { stat: 'attack', stages: 1, target: 'self' },
-    'calm-mind': { stat: 'specialAttack', stages: 1, target: 'self' },
-    'nasty-plot': { stat: 'specialAttack', stages: 2, target: 'self' },
-    'work-up': { stat: 'attack', stages: 1, target: 'self' },
-    'hone-claws': { stat: 'attack', stages: 1, target: 'self' },
-    'defense-curl': { stat: 'defense', stages: 1, target: 'self' },
-    'iron-defense': { stat: 'defense', stages: 2, target: 'self' },
-    'acid-armor': { stat: 'defense', stages: 2, target: 'self' },
-    'barrier': { stat: 'defense', stages: 2, target: 'self' },
-    'amnesia': { stat: 'specialDefense', stages: 2, target: 'self' },
-    'agility': { stat: 'speed', stages: 2, target: 'self' },
-    'rock-polish': { stat: 'speed', stages: 2, target: 'self' },
-    'autotomize': { stat: 'speed', stages: 2, target: 'self' },
-    'shift-gear': { stat: 'speed', stages: 2, target: 'self' },
-    'quiver-dance': { stat: 'specialAttack', stages: 1, target: 'self' },
-    'coil': { stat: 'attack', stages: 1, target: 'self' },
-    'shell-smash': { stat: 'attack', stages: 2, target: 'self' },
-    'belly-drum': { stat: 'attack', stages: 6, target: 'self' },
-    'growth': { stat: 'specialAttack', stages: 1, target: 'self' },
-    'howl': { stat: 'attack', stages: 1, target: 'self' },
-    'meditate': { stat: 'attack', stages: 1, target: 'self' },
-    'sharpen': { stat: 'attack', stages: 1, target: 'self' },
-    'harden': { stat: 'defense', stages: 1, target: 'self' },
-    'withdraw': { stat: 'defense', stages: 1, target: 'self' },
-    'minimize': { stat: 'evasion', stages: 2, target: 'self' },
-    'double-team': { stat: 'evasion', stages: 1, target: 'self' },
-    'focus-energy': { stat: 'accuracy', stages: 1, target: 'self' },
-    'laser-focus': { stat: 'accuracy', stages: 2, target: 'self' }
+  // Stat boosting moves — each entry lists ALL stat changes the move applies
+  type StatModKey = keyof BattlePokemon['statModifiers'];
+  const statBoostingMoves: Record<string, { changes: Array<{ stat: StatModKey, stages: number }>, target: 'self' | 'opponent' }> = {
+    'swords-dance': { changes: [{ stat: 'attack', stages: 2 }], target: 'self' },
+    'dragon-dance': { changes: [{ stat: 'attack', stages: 1 }, { stat: 'speed', stages: 1 }], target: 'self' },
+    'bulk-up': { changes: [{ stat: 'attack', stages: 1 }, { stat: 'defense', stages: 1 }], target: 'self' },
+    'calm-mind': { changes: [{ stat: 'specialAttack', stages: 1 }, { stat: 'specialDefense', stages: 1 }], target: 'self' },
+    'nasty-plot': { changes: [{ stat: 'specialAttack', stages: 2 }], target: 'self' },
+    'work-up': { changes: [{ stat: 'attack', stages: 1 }, { stat: 'specialAttack', stages: 1 }], target: 'self' },
+    'hone-claws': { changes: [{ stat: 'attack', stages: 1 }, { stat: 'accuracy', stages: 1 }], target: 'self' },
+    'defense-curl': { changes: [{ stat: 'defense', stages: 1 }], target: 'self' },
+    'iron-defense': { changes: [{ stat: 'defense', stages: 2 }], target: 'self' },
+    'acid-armor': { changes: [{ stat: 'defense', stages: 2 }], target: 'self' },
+    'barrier': { changes: [{ stat: 'defense', stages: 2 }], target: 'self' },
+    'amnesia': { changes: [{ stat: 'specialDefense', stages: 2 }], target: 'self' },
+    'agility': { changes: [{ stat: 'speed', stages: 2 }], target: 'self' },
+    'rock-polish': { changes: [{ stat: 'speed', stages: 2 }], target: 'self' },
+    'autotomize': { changes: [{ stat: 'speed', stages: 2 }], target: 'self' },
+    'shift-gear': { changes: [{ stat: 'attack', stages: 1 }, { stat: 'speed', stages: 2 }], target: 'self' },
+    'quiver-dance': { changes: [{ stat: 'specialAttack', stages: 1 }, { stat: 'specialDefense', stages: 1 }, { stat: 'speed', stages: 1 }], target: 'self' },
+    'coil': { changes: [{ stat: 'attack', stages: 1 }, { stat: 'defense', stages: 1 }, { stat: 'accuracy', stages: 1 }], target: 'self' },
+    'shell-smash': { changes: [{ stat: 'attack', stages: 2 }, { stat: 'specialAttack', stages: 2 }, { stat: 'speed', stages: 2 }, { stat: 'defense', stages: -1 }, { stat: 'specialDefense', stages: -1 }], target: 'self' },
+    'belly-drum': { changes: [{ stat: 'attack', stages: 6 }], target: 'self' },
+    'growth': { changes: [{ stat: 'attack', stages: 1 }, { stat: 'specialAttack', stages: 1 }], target: 'self' },
+    'howl': { changes: [{ stat: 'attack', stages: 1 }], target: 'self' },
+    'meditate': { changes: [{ stat: 'attack', stages: 1 }], target: 'self' },
+    'sharpen': { changes: [{ stat: 'attack', stages: 1 }], target: 'self' },
+    'harden': { changes: [{ stat: 'defense', stages: 1 }], target: 'self' },
+    'withdraw': { changes: [{ stat: 'defense', stages: 1 }], target: 'self' },
+    'minimize': { changes: [{ stat: 'evasion', stages: 2 }], target: 'self' },
+    'double-team': { changes: [{ stat: 'evasion', stages: 1 }], target: 'self' },
+    'focus-energy': { changes: [{ stat: 'accuracy', stages: 1 }], target: 'self' },
+    'laser-focus': { changes: [{ stat: 'accuracy', stages: 2 }], target: 'self' },
   };
 
   const SELF_STAT_DROP_MOVES = new Set([
@@ -575,7 +599,7 @@ export async function applyStatusMoveEffects(
     const selfDrop = SELF_STAT_DROP_MOVES.has(compiledMove.name?.toLowerCase?.() ?? '');
     for (const statChange of compiledMove.statChanges) {
       // Check if the effect triggers
-      const effectRng = (battleState as any).rng || createBattleRng(Date.now());
+      const effectRng = battleState.rng || createBattleRng(Date.now());
       if (rngRollChance(effectRng, (statChange.chance ?? 100) / 100)) {
         const target = selfDrop ? attacker : (statChange.stages > 0 ? attacker : defender);
         const statName = mapStatName(statChange.stat);
@@ -611,38 +635,41 @@ export async function applyStatusMoveEffects(
     }
   } else {
     // Fallback to hardcoded stat changes for moves not in PokeAPI
-    const statChange = statReductionMoves[moveName] || statBoostingMoves[moveName];
+    const reductionEntry = statReductionMoves[moveName];
+    const boostEntry = statBoostingMoves[moveName];
 
-    if (statChange) {
-      const target = statChange.target === 'self' ? attacker : defender;
-      const statName = statChange.stat;
-      const oldValue = target.statModifiers[statName];
+    const statDisplayNames: Record<string, string> = {
+      attack: 'Attack', defense: 'Defense', specialAttack: 'Special Attack',
+      specialDefense: 'Special Defense', speed: 'Speed', accuracy: 'Accuracy', evasion: 'Evasion',
+    };
 
-      // Apply stat change (clamp between -6 and +6)
-      target.statModifiers[statName] = Math.max(-6, Math.min(6, oldValue + statChange.stages));
-
-      const newValue = target.statModifiers[statName];
-      const change = newValue - oldValue;
-
+    if (reductionEntry) {
+      const target = reductionEntry.target === 'self' ? attacker : defender;
+      const oldValue = target.statModifiers[reductionEntry.stat];
+      target.statModifiers[reductionEntry.stat] = Math.max(-6, Math.min(6, oldValue + reductionEntry.stages));
+      const change = target.statModifiers[reductionEntry.stat] - oldValue;
       if (change !== 0) {
-        const statDisplayName = {
-          attack: 'Attack',
-          defense: 'Defense',
-          specialAttack: 'Special Attack',
-          specialDefense: 'Special Defense',
-          speed: 'Speed',
-          accuracy: 'Accuracy',
-          evasion: 'Evasion'
-        }[statName];
-
-        const direction = change > 0 ? 'rose' : 'fell';
-        const targetName = statChange.target === 'self' ? attacker.pokemon.name : defender.pokemon.name;
-
+        const targetName = target.pokemon.name;
         battleState.battleLog.push({
           type: 'status_effect',
-          message: `${targetName}'s ${statDisplayName} ${direction}!`,
-          pokemon: String(targetName)
+          message: `${targetName}'s ${statDisplayNames[reductionEntry.stat]} ${change > 0 ? 'rose' : 'fell'}!`,
+          pokemon: String(targetName),
         });
+      }
+    } else if (boostEntry) {
+      const target = boostEntry.target === 'self' ? attacker : defender;
+      const targetName = target.pokemon.name;
+      for (const { stat, stages } of boostEntry.changes) {
+        const oldValue = target.statModifiers[stat];
+        target.statModifiers[stat] = Math.max(-6, Math.min(6, oldValue + stages));
+        const change = target.statModifiers[stat] - oldValue;
+        if (change !== 0) {
+          battleState.battleLog.push({
+            type: 'status_effect',
+            message: `${targetName}'s ${statDisplayNames[stat]} ${change > 0 ? 'rose' : 'fell'}!`,
+            pokemon: String(targetName),
+          });
+        }
       }
     }
   }
@@ -721,11 +748,6 @@ export async function calculateDamageDetailed(
   move: Move | CompiledMove,
   state: BattleState
 ): Promise<{ damage: number; effectiveness: number; critical: boolean; statusEffect?: string; flinch?: boolean }> {
-  console.log('⚔️ calculateDamageDetailed START');
-  console.log('Attacker:', attacker.pokemon.name);
-  console.log('Defender:', defender.pokemon.name);
-  console.log('Move:', move.name || (move as any).id);
-
   // Handle both old Move type and new CompiledMove type
   let compiledMove: CompiledMove;
   try {
@@ -753,9 +775,7 @@ export async function calculateDamageDetailed(
         } as unknown as CompiledMove;
       } else {
         // Old Move type - convert to CompiledMove via lookup
-        console.log('Fetching move data for:', move.name);
         compiledMove = await getMove(move.name);
-        console.log('Move data fetched successfully');
       }
   } catch (e) {
       console.error('❌ Error preparing move data:', e);
@@ -797,7 +817,6 @@ export async function calculateDamageDetailed(
       console.error('❌ Error calculating move power:', e);
       power = 0;
   }
-  console.log('Move Power:', power);
 
   // Determine if move is physical or special
   const isPhysical = compiledMove.category === 'Physical';
@@ -855,29 +874,28 @@ export async function calculateDamageDetailed(
   } catch (e) {
     console.error('Error applying nature modifiers:', e);
   }
-  // Use comprehensive damage calculation
-  // Calculate critical hit
-  // Basic Gen 9 crit stages: 0=1/24, 1=1/8, 2=1/2, 3+=always
-  const critStage = compiledMove.critRateStage || 0;
-  // We'll use a simplified check for now or need to implement full crit logic
-  // Note: getCriticalHitChance in damage-calculator expects baseCritRate, hasHighCritMove, etc.
-  // But here we are calling it manually or passing isCrit.
-  // Let's calculate isCrit here to pass it down.
-  // Base rate 1/24 approx 0.0417.
-  // Calculate isCrit here to pass it down.
-  // Base rate 1/24 approx 0.0417.
-  const isCrit = rngRollChance(rng, critStage > 0 ? 0.125 : 0.0417);
-
-  // Define missing variables for damage calculation
-  const attackerAbility = getCurrentAbility(attacker)?.toLowerCase();
-  const defenderAbility = getCurrentAbility(defender)?.toLowerCase();
-
+  // Resolve type arrays early (needed by Sandstorm SpD and damage calc)
   const attackerTypes = attacker.pokemon.types.map(t =>
     normalizeTypeName(typeof t === 'string' ? t : t.type?.name)
   );
   const defenderTypes = defender.pokemon.types.map(t =>
     normalizeTypeName(typeof t === 'string' ? t : t.type?.name)
   );
+
+  // Sandstorm: Rock types raise Special Defense by 1.5× (special moves only)
+  if (weatherContext === 'Sandstorm' && !isPhysical) {
+    const defenderHasRock = defenderTypes.some((t) => String(t).toLowerCase() === 'rock');
+    if (defenderHasRock) {
+      defenseWithNature = Math.floor(defenseWithNature * 1.5);
+    }
+  }
+
+  const CRIT_RATES = [1/24, 1/8, 1/2, 1, 1];
+  const critStage = compiledMove.critRateStage || 0;
+  const isCrit = rngRollChance(rng, CRIT_RATES[Math.min(critStage, 4)]);
+
+  const attackerAbility = getCurrentAbility(attacker)?.toLowerCase();
+  const defenderAbility = getCurrentAbility(defender)?.toLowerCase();
 
   const GUTS_STATUSES: readonly string[] = ['burned', 'paralyzed', 'poisoned', 'badly-poisoned', 'asleep', 'frozen'];
   const hasGuts = attackerAbility === 'guts' && attacker.status != null && GUTS_STATUSES.includes(attacker.status);
@@ -926,6 +944,7 @@ export async function calculateDamageDetailed(
     isHighCritMove,
     hasSuperLuck,
     precomputedCrit: isCrit,
+    defenderGrounded: isGrounded(defender),
     rng
   });
 
@@ -948,7 +967,8 @@ export async function calculateDamageDetailed(
     }
   }
 
-  const flinch = compiledMove.ailment?.kind === 'flinch' && rngRollChance(state.rng, (compiledMove.ailment.chance ?? 0) / 100);
+  const flinchChance = compiledMove.ailment?.chance === 0 ? 1 : (compiledMove.ailment?.chance ?? 0) / 100;
+  const flinch = compiledMove.ailment?.kind === 'flinch' && rngRollChance(state.rng, flinchChance);
 
   return {
     damage: result.damage,
@@ -968,100 +988,48 @@ export function isTeamDefeated(team: BattleTeam): boolean {
 }
 
 export function getNextAvailablePokemon(team: BattleTeam): number | null {
-  console.log('=== GET NEXT AVAILABLE POKEMON DEBUG ===');
-  console.log('Team state:', {
-    currentIndex: team.currentIndex,
-    faintedCount: team.faintedCount,
-    teamSize: team.pokemon.length,
-    pokemon: team.pokemon.map((p, i) => ({
-      index: i,
-      name: p.pokemon.name,
-      hp: p.currentHp,
-      maxHp: p.maxHp,
-      isCurrent: i === team.currentIndex,
-      isFainted: p.currentHp <= 0
-    }))
-  });
-
-  // Find the next available Pokemon (skip the current one if it's fainted)
   for (let i = 0; i < team.pokemon.length; i++) {
     const pokemon = team.pokemon[i];
-    console.log(`Checking Pokemon ${i} (${pokemon.pokemon.name}): HP=${pokemon.currentHp}, Available=${pokemon.currentHp > 0}`);
 
-    // Skip the current Pokemon if it's fainted, look for the next one
     if (i === team.currentIndex && pokemon.currentHp <= 0) {
-      console.log(`Skipping current Pokemon ${i} (${pokemon.pokemon.name}) - it's fainted`);
       continue;
     }
 
     if (pokemon.currentHp > 0) {
-      console.log(`Found available Pokemon at index ${i}: ${pokemon.pokemon.name}`);
       return i;
     }
   }
 
-  console.log('No available Pokemon found');
   return null;
 }
 
 export function switchToPokemon(team: BattleTeam, index: number): void {
-  console.log('=== SWITCH TO POKEMON DEBUG ===');
-  console.log('Attempting to switch to index:', index);
-  console.log('Team size:', team.pokemon.length);
-  console.log('Target Pokemon:', team.pokemon[index] ? {
-    name: team.pokemon[index].pokemon.name,
-    hp: team.pokemon[index].currentHp,
-    maxHp: team.pokemon[index].maxHp
-  } : 'No Pokemon at this index');
-
   if (index >= 0 && index < team.pokemon.length && team.pokemon[index].currentHp > 0) {
-    console.log('Switching successful - old index:', team.currentIndex, 'new index:', index);
     team.currentIndex = index;
-  } else {
-    console.log('Switching failed - conditions not met:', {
-      indexValid: index >= 0 && index < team.pokemon.length,
-      pokemonExists: !!team.pokemon[index],
-      pokemonAlive: team.pokemon[index]?.currentHp > 0
-    });
   }
 }
 
 // Function to handle automatic switching when a Pokémon faints
 export function handleAutomaticSwitching(state: BattleState): BattleState {
-  console.log('=== HANDLE AUTOMATIC SWITCHING DEBUG ===');
   const newState = { ...state };
   const newLog = [...state.battleLog];
 
-  // Check if player's current Pokémon is fainted and switch if needed
   let pokemonSwitched = false;
   const playerCurrent = getCurrentPokemon(state.player);
-  console.log('Player current Pokemon:', {
-    name: playerCurrent.pokemon.name,
-    hp: playerCurrent.currentHp,
-    isFainted: playerCurrent.currentHp <= 0
-  });
 
   if (playerCurrent.currentHp <= 0) {
-    console.log('Player Pokemon fainted, looking for next available...');
     const nextIndex = getNextAvailablePokemon(state.player);
-    console.log('Next available player Pokemon index:', nextIndex);
 
     if (nextIndex !== null && nextIndex !== state.player.currentIndex) {
-      console.log('Switching player to Pokemon at index:', nextIndex);
       switchToPokemon(newState.player, nextIndex);
       const newCurrent = getCurrentPokemon(newState.player);
-      console.log('Player switched to:', newCurrent.pokemon.name);
       newLog.push({
         type: 'pokemon_sent_out',
         message: `Go! ${newCurrent.pokemon.name}!`,
         pokemon: newCurrent.pokemon.name
       });
       pokemonSwitched = true;
-    } else if (nextIndex === state.player.currentIndex) {
-      console.log('ERROR: Trying to switch to the same fainted Pokemon! Skipping switch.');
-    } else {
-      console.log('No available player Pokemon found - team defeated');
-      // Mark battle as complete with opponent victory
+    } else if (nextIndex === null) {
       newState.isComplete = true;
       newState.winner = 'opponent';
       newLog.push({
@@ -1069,39 +1037,24 @@ export function handleAutomaticSwitching(state: BattleState): BattleState {
         message: 'All your Pokemon have fainted! You lose!',
         pokemon: 'defeat'
       });
-      console.log('=== BATTLE COMPLETE - OPPONENT VICTORY ===');
     }
   }
 
-  // Check if opponent's current Pokémon is fainted and switch if needed
   const opponentCurrent = getCurrentPokemon(state.opponent);
-  console.log('Opponent current Pokemon:', {
-    name: opponentCurrent.pokemon.name,
-    hp: opponentCurrent.currentHp,
-    isFainted: opponentCurrent.currentHp <= 0
-  });
 
   if (opponentCurrent.currentHp <= 0) {
-    console.log('Opponent Pokemon fainted, looking for next available...');
     const nextIndex = getNextAvailablePokemon(state.opponent);
-    console.log('Next available opponent Pokemon index:', nextIndex);
 
     if (nextIndex !== null && nextIndex !== state.opponent.currentIndex) {
-      console.log('Switching opponent to Pokemon at index:', nextIndex);
       switchToPokemon(newState.opponent, nextIndex);
       const newCurrent = getCurrentPokemon(newState.opponent);
-      console.log('Opponent switched to:', newCurrent.pokemon.name);
       newLog.push({
         type: 'pokemon_sent_out',
         message: `${newCurrent.pokemon.name} was sent out!`,
         pokemon: newCurrent.pokemon.name
       });
       pokemonSwitched = true;
-    } else if (nextIndex === state.opponent.currentIndex) {
-      console.log('ERROR: Trying to switch to the same fainted Pokemon! Skipping switch.');
-    } else {
-      console.log('No available opponent Pokemon found - team defeated');
-      // Mark battle as complete with player victory
+    } else if (nextIndex === null) {
       newState.isComplete = true;
       newState.winner = 'player';
       newLog.push({
@@ -1109,13 +1062,10 @@ export function handleAutomaticSwitching(state: BattleState): BattleState {
         message: 'All opponent Pokemon have fainted! You win!',
         pokemon: 'victory'
       });
-      console.log('=== BATTLE COMPLETE - PLAYER VICTORY ===');
     }
   }
 
-  // If a Pokémon was switched, recalculate turn order based on new Pokémon's Speed
   if (pokemonSwitched) {
-    console.log('=== RECALCULATING TURN ORDER ===');
     const newPlayerCurrent = getCurrentPokemon(newState.player);
     const newOpponentCurrent = getCurrentPokemon(newState.opponent);
 
@@ -1136,30 +1086,6 @@ export function handleAutomaticSwitching(state: BattleState): BattleState {
         if (n.decreasedStat === 'speed') opponentSpeed = Math.floor(opponentSpeed * 0.9);
       }
     } catch { }
-
-    console.log('Speed comparison:', {
-      playerName: newPlayerCurrent.pokemon.name,
-      playerSpeedStat,
-      playerSpeed,
-      opponentName: newOpponentCurrent.pokemon.name,
-      opponentSpeedStat,
-      opponentSpeed,
-      oldTurn: state.turn
-    });
-
-    // Determine new turn order based on Speed (with tie-breaking)
-    // Note: In the new system, turn order is determined by the action queue
-    // This is just for logging purposes
-    if (playerSpeed > opponentSpeed) {
-      console.log('Player goes first (faster)');
-    } else if (opponentSpeed > playerSpeed) {
-      console.log('Opponent goes first (faster)');
-    } else {
-      // Speed tie - randomize (50/50 chance)
-      console.log('Speed tie - random turn');
-    }
-
-    console.log('New turn order:', newState.turn);
   }
 
   newState.battleLog = newLog;
@@ -1168,31 +1094,18 @@ export function handleAutomaticSwitching(state: BattleState): BattleState {
 
 // Handle Pokemon switching for multiplayer battles (manual selection)
 export function handleMultiplayerSwitching(state: BattleState, isPlayerTurn: boolean): BattleState {
-  console.log('=== HANDLE MULTIPLAYER SWITCHING DEBUG ===');
   const newState = { ...state };
   const newLog = [...state.battleLog];
 
-  // Check if current player's Pokemon is fainted
   const currentPokemon = isPlayerTurn ? getCurrentPokemon(state.player) : getCurrentPokemon(state.opponent);
   const team = isPlayerTurn ? state.player : state.opponent;
 
-  console.log(`${isPlayerTurn ? 'Player' : 'Opponent'} current Pokemon:`, {
-    name: currentPokemon.pokemon.name,
-    hp: currentPokemon.currentHp,
-    isFainted: currentPokemon.currentHp <= 0
-  });
-
   if (currentPokemon.currentHp <= 0) {
-    console.log(`${isPlayerTurn ? 'Player' : 'Opponent'} Pokemon fainted - waiting for manual selection`);
-
-    // Check if there are any available Pokemon
     const availablePokemon = team.pokemon.filter((p, index) =>
       p.currentHp > 0 && index !== team.currentIndex
     );
 
     if (availablePokemon.length === 0) {
-      console.log(`No available ${isPlayerTurn ? 'player' : 'opponent'} Pokemon found - team defeated`);
-      // Mark battle as complete
       newState.isComplete = true;
       newState.winner = isPlayerTurn ? 'opponent' : 'player';
       newLog.push({
@@ -1200,16 +1113,13 @@ export function handleMultiplayerSwitching(state: BattleState, isPlayerTurn: boo
         message: isPlayerTurn ? 'All your Pokemon have fainted! You lose!' : 'All opponent Pokemon have fainted! You win!',
         pokemon: isPlayerTurn ? 'defeat' : 'victory'
       });
-      console.log(`=== BATTLE COMPLETE - ${isPlayerTurn ? 'OPPONENT' : 'PLAYER'} VICTORY ===`);
     } else {
-      // Set a flag to indicate that manual Pokemon selection is needed
       newState.phase = 'replacement';
       newLog.push({
         type: 'pokemon_fainted',
         message: `${currentPokemon.pokemon.name} fainted! Choose your next Pokemon.`,
         pokemon: currentPokemon.pokemon.name
       });
-      console.log(`=== WAITING FOR ${isPlayerTurn ? 'PLAYER' : 'OPPONENT'} TO SELECT POKEMON ===`);
     }
   }
 
@@ -1219,16 +1129,11 @@ export function handleMultiplayerSwitching(state: BattleState, isPlayerTurn: boo
 
 // Manually switch to a selected Pokemon (for multiplayer battles)
 export function switchToSelectedPokemon(state: BattleState, pokemonIndex: number, isPlayer: boolean): BattleState {
-  console.log('=== SWITCH TO SELECTED POKEMON DEBUG ===');
   const newState = { ...state };
   const newLog = [...state.battleLog];
 
   const team = isPlayer ? newState.player : newState.opponent;
-  const teamName = isPlayer ? 'player' : 'opponent';
 
-  console.log(`Switching ${teamName} to Pokemon at index:`, pokemonIndex);
-
-  // Validate the selection
   if (pokemonIndex < 0 || pokemonIndex >= team.pokemon.length) {
     console.error('Invalid Pokemon index:', pokemonIndex);
     return state;
@@ -1246,11 +1151,8 @@ export function switchToSelectedPokemon(state: BattleState, pokemonIndex: number
     return state;
   }
 
-  // Perform the switch
   switchToPokemon(team, pokemonIndex);
   const newCurrent = getCurrentPokemon(team);
-
-  console.log(`${teamName} switched to:`, newCurrent.pokemon.name);
 
   newLog.push({
     type: 'pokemon_sent_out',
@@ -1258,10 +1160,8 @@ export function switchToSelectedPokemon(state: BattleState, pokemonIndex: number
     pokemon: newCurrent.pokemon.name
   });
 
-  // Clear the replacement phase
   newState.phase = 'choice';
 
-  // Recalculate turn order based on Speed
   const playerCurrent = getCurrentPokemon(newState.player);
   const opponentCurrent = getCurrentPokemon(newState.opponent);
 
@@ -1280,27 +1180,6 @@ export function switchToSelectedPokemon(state: BattleState, pokemonIndex: number
       if (n.decreasedStat === 'speed') opponentSpeed = Math.floor(opponentSpeed * 0.9);
     }
   } catch { }
-
-  const playerSpeedMod = applyStatModifier(playerSpeed, playerCurrent.statModifiers.speed);
-  const opponentSpeedMod = applyStatModifier(opponentSpeed, opponentCurrent.statModifiers.speed);
-
-  console.log('Speed comparison:', {
-    playerName: playerCurrent.pokemon.name,
-    playerSpeed,
-    opponentName: opponentCurrent.pokemon.name,
-    opponentSpeed
-  });
-
-  // Determine new turn order based on Speed
-  // Note: In the new system, turn order is determined by the action queue
-  if (playerSpeedMod > opponentSpeedMod) {
-    console.log('Player goes first (faster)');
-  } else if (opponentSpeedMod > playerSpeedMod) {
-    console.log('Opponent goes first (faster)');
-  } else {
-    // Speed tie - randomize (50/50 chance)
-    console.log('Speed tie - random turn');
-  }
 
   newState.battleLog = newLog;
   return newState;
@@ -1409,14 +1288,8 @@ export function initializeTeamBattle(
   const playerSpeed = calculateStat(playerSpeedStat, playerBattlePokemon[0].level);
   const opponentSpeed = calculateStat(opponentSpeedStat, opponentBattlePokemon[0].level);
 
-  console.log('=== TURN ORDER DETERMINATION ===');
-  console.log('Player Pokemon:', playerBattlePokemon[0].pokemon.name, 'Speed stat:', playerSpeedStat, 'Calculated speed:', playerSpeed);
-  console.log('Opponent Pokemon:', opponentBattlePokemon[0].pokemon.name, 'Speed stat:', opponentSpeedStat, 'Calculated speed:', opponentSpeed);
-
   // Faster Pokemon goes first
   const turn = playerSpeed > opponentSpeed ? 'player' : 'opponent';
-
-  console.log('Turn order determined:', turn, '(faster Pokemon goes first)');
 
   const playerCurrent = getCurrentPokemon(player);
   const opponentCurrent = getCurrentPokemon(opponent);
@@ -1455,8 +1328,8 @@ export async function processBattleTurn(
   };
   newState.turn += 1;
 
-  // A) Choice phase - actions are already provided
-  // B) Build & order action queue
+  await processStartOfTurn(newState);
+
   newState.actionQueue = buildActionQueue(newState, playerAction, opponentAction);
   newState.phase = 'resolution';
 
@@ -1476,7 +1349,7 @@ export async function processBattleTurn(
   await processReplacements(newState);
 
   // If an active fainted during resolution or end-of-turn, auto-select next available
-  function ensureReplacement(team: BattleTeam) {
+  async function ensureReplacement(team: BattleTeam, side: 'player' | 'opponent') {
     const cur = team.pokemon[team.currentIndex];
     if (cur && cur.currentHp <= 0) {
       const idx = getNextAvailablePokemon(team);
@@ -1488,11 +1361,12 @@ export async function processBattleTurn(
           message: `Go! ${sent.pokemon.name}!`,
           pokemon: sent.pokemon.name
         });
+        await applyAutoSwitchInEffects(newState, side, sent);
       }
     }
   }
-  ensureReplacement(newState.player);
-  ensureReplacement(newState.opponent);
+  await ensureReplacement(newState.player, 'player');
+  await ensureReplacement(newState.opponent, 'opponent');
 
   // Check if battle is over
   if (isTeamDefeated(newState.player)) {

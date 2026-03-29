@@ -36,7 +36,6 @@ export default function PokemonSearch({
   const [loadingMore, setLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(true)
   const [currentOffset, setCurrentOffset] = useState(INITIAL_LOAD_COUNT)
-  // const [searchLoading, setSearchLoading] = useState(false)
   const observerRef = useRef<IntersectionObserver | null>(null)
   const lastPokemonRef = useRef<HTMLDivElement | null>(null)
 

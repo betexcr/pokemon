@@ -65,7 +65,7 @@ export async function preloadCommonMoves(): Promise<void> {
     'air-slash', 'skull-bash'
   ];
   
-  console.log('Preloading common moves...');
+  
   const promises = commonMoves.map(move => 
     getMove(move).catch(err => {
       console.warn(`Failed to preload move ${move}:`, err);
@@ -73,5 +73,5 @@ export async function preloadCommonMoves(): Promise<void> {
   );
   
   await Promise.allSettled(promises);
-  console.log(`Preloaded ${getCachedMoveCount()} moves`);
+  
 }

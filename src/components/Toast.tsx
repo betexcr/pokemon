@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { X, MessageCircle } from 'lucide-react';
 
 interface Toast {
@@ -22,9 +22,9 @@ interface ToastProps {
 
 function ToastComponent({ toast, onRemove }: ToastProps) {
   const [isVisible, setIsVisible] = useState(false);
+  const exitTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
-    // Trigger animation
     const timer = setTimeout(() => setIsVisible(true), 100);
     return () => clearTimeout(timer);
   }, []);
@@ -38,9 +38,16 @@ function ToastComponent({ toast, onRemove }: ToastProps) {
     }
   }, [toast.duration]);
 
+  useEffect(() => {
+    return () => {
+      if (exitTimerRef.current) clearTimeout(exitTimerRef.current);
+    };
+  }, []);
+
   const handleRemove = () => {
     setIsVisible(false);
-    setTimeout(() => onRemove(toast.id), 300);
+    if (exitTimerRef.current) clearTimeout(exitTimerRef.current);
+    exitTimerRef.current = setTimeout(() => onRemove(toast.id), 300);
   };
 
   const getToastStyles = () => {
@@ -126,6 +133,7 @@ function ToastComponent({ toast, onRemove }: ToastProps) {
           <div className="ml-4 flex-shrink-0 flex">
             <button
               onClick={handleRemove}
+              aria-label="Dismiss notification"
               className="inline-flex text-muted hover:text-text focus:outline-none"
             >
               <X className="h-4 w-4" />
@@ -144,7 +152,7 @@ interface ToastContainerProps {
 
 export function ToastContainer({ toasts, onRemove }: ToastContainerProps) {
   return (
-    <div className="fixed top-4 right-4 z-50 space-y-2">
+    <div className="fixed top-4 right-4 z-50 space-y-2" role="status" aria-live="polite">
       {toasts.map((toast) => (
         <ToastComponent key={toast.id} toast={toast} onRemove={onRemove} />
       ))}

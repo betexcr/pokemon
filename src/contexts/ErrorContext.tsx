@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react'
+import React, { createContext, useContext, useState, useCallback, useEffect, useMemo, ReactNode } from 'react'
 import { setGlobalErrorReporter } from '@/lib/errorReporting'
 
 export interface ErrorInfo {
@@ -105,7 +105,7 @@ export function ErrorProvider({ children }: ErrorProviderProps) {
     const cleanup = setInterval(() => {
       const fiveMinutesAgo = Date.now() - 5 * 60 * 1000
       setErrors(prev => prev.filter(error => error.timestamp > fiveMinutesAgo))
-    }, 60000) // Check every minute
+    }, 60000)
 
     return () => clearInterval(cleanup)
   }, [])
@@ -116,7 +116,7 @@ export function ErrorProvider({ children }: ErrorProviderProps) {
     return () => setGlobalErrorReporter(() => {})
   }, [addError])
 
-  const value: ErrorContextType = {
+  const value = useMemo<ErrorContextType>(() => ({
     errors,
     addError,
     removeError,
@@ -125,8 +125,8 @@ export function ErrorProvider({ children }: ErrorProviderProps) {
     hasErrors,
     hasCriticalErrors,
     getErrorsByType,
-    getErrorsBySeverity
-  }
+    getErrorsBySeverity,
+  }), [errors, addError, removeError, clearErrors, retryError, hasErrors, hasCriticalErrors, getErrorsByType, getErrorsBySeverity])
 
   return (
     <ErrorContext.Provider value={value}>

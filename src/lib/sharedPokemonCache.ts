@@ -235,7 +235,6 @@ export const cacheUtils = {
   async getOrFetchPokemon(id: number): Promise<Pokemon | null> {
     // Check if this request has failed recently
     if (sharedPokemonCache.hasFailed(id)) {
-      console.log(`🚫 Skipping failed request for Pokemon ${id}`)
       return null
     }
     

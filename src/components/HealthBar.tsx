@@ -15,7 +15,7 @@ export default function HealthBar({
   showLabel = false,
   size = 'md'
 }: Props) {
-  const hpPercentage = (currentHp / maxHp) * 100;
+  const hpPercentage = maxHp > 0 ? (currentHp / maxHp) * 100 : 0;
   
   // Determine color based on HP percentage
   const getHealthColor = (percentage: number) => {
@@ -23,12 +23,6 @@ export default function HealthBar({
     if (percentage > 30) return '#eab308'; // yellow-500
     return '#ef4444'; // red-500
   };
-
-  // const getHealthColorClass = (percentage: number) => {
-  //   if (percentage > 60) return 'bg-green-500';
-  //   if (percentage > 30) return 'bg-yellow-500';
-  //   return 'bg-red-500';
-  // };
 
   const fillColor = getHealthColor(hpPercentage);
   

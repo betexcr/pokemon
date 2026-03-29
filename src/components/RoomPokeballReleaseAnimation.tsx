@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 
 interface RoomPokeballReleaseAnimationProps {
@@ -27,6 +27,14 @@ export default function RoomPokeballReleaseAnimation({
   const [localAnimatingBalls, setLocalAnimatingBalls] = useState<Set<number>>(new Set())
   const [localReleasedBalls, setLocalReleasedBalls] = useState<Set<number>>(new Set())
   const [localCatchingBalls, setLocalCatchingBalls] = useState<Set<number>>(new Set())
+  const timersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set())
+
+  useEffect(() => {
+    return () => {
+      timersRef.current.forEach(id => clearTimeout(id))
+      timersRef.current.clear()
+    }
+  }, [])
 
   const POKEBALL_ICON = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png'
   const getPixelSprite = (id: number) => `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`
@@ -44,25 +52,28 @@ export default function RoomPokeballReleaseAnimation({
     if (isReleased) {
       setLocalCatchingBalls(prev => new Set(prev).add(index))
       const catchDuration = 700
-      setTimeout(() => {
+      const catchTimer = setTimeout(() => {
+        timersRef.current.delete(catchTimer)
         setLocalCatchingBalls(prev => { const next = new Set(prev); next.delete(index); return next })
         setLocalReleasedBalls(prev => { const next = new Set(prev); next.delete(index); return next })
         onCatchComplete?.(index)
       }, catchDuration)
+      timersRef.current.add(catchTimer)
       return
     }
 
-    console.log(`${playerType} Pokéball ${index} clicked, releasing Pokémon ${slot.id}`)
     // Start local release animation
     setLocalAnimatingBalls(prev => new Set(prev).add(index))
     // Broadcast
     onBallClick?.(index)
-    const animationDuration = 1650 // 1.65s
-    setTimeout(() => {
+    const animationDuration = 1650
+    const releaseTimer = setTimeout(() => {
+      timersRef.current.delete(releaseTimer)
       setLocalAnimatingBalls(prev => { const next = new Set(prev); next.delete(index); return next })
       setLocalReleasedBalls(prev => new Set(prev).add(index))
       onAnimationComplete?.(index)
     }, animationDuration)
+    timersRef.current.add(releaseTimer)
   }
 
   // Create array of 6 slots (filled or empty)
@@ -95,7 +106,10 @@ export default function RoomPokeballReleaseAnimation({
                 {!isReleased && (
                   <div 
                     className={`ball ${isAnimating ? 'animate' : ''}`}
+                    role={canClick ? 'button' : undefined}
+                    tabIndex={canClick ? 0 : undefined}
                     onClick={() => canClick && handleBallClick(index)}
+                    onKeyDown={(e) => { if (canClick && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); handleBallClick(index) } }}
                     style={{ cursor: canClick ? 'pointer' : 'default' }}
                   >
                     <Image 
@@ -112,7 +126,10 @@ export default function RoomPokeballReleaseAnimation({
                 {isReleased && (
                   <div 
                     className={`sprite-released ${isCatching ? 'animate-capture-out' : 'animate-scale-in'}`}
+                    role={canClick ? 'button' : undefined}
+                    tabIndex={canClick ? 0 : undefined}
                     onClick={() => canClick && handleBallClick(index)}
+                    onKeyDown={(e) => { if (canClick && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); handleBallClick(index) } }}
                     style={{ cursor: canClick ? 'pointer' : 'default', animationDelay: isCatching ? '0.15s' : undefined }}
                   >
                     <Image
@@ -121,7 +138,7 @@ export default function RoomPokeballReleaseAnimation({
                       width={32}
                       height={32}
                       className="w-full h-full object-contain block"
-                      onLoad={() => console.log(`${playerType} Pokémon ${slot.id} gif loaded`)}
+                      onLoad={() => {}}
                       onError={() => {
                         console.error(`${playerType} Failed to load Pokémon ${slot.id} gif, falling back to sprite`);
                         // Fallback to static sprite if GIF fails

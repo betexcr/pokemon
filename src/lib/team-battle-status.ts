@@ -2,6 +2,8 @@ import { BattlePokemon } from './team-battle-engine';
 import { FieldTerrain } from './team-battle-types';
 import type { BattleState } from './team-battle-engine';
 import { BattleRng, rngRollChance } from './battle-rng';
+import { isGrounded } from './team-battle-hazards';
+export { isGrounded } from './team-battle-hazards';
 
 export function applyStatus(pokemon: BattlePokemon, status: BattlePokemon['status']): void {
   pokemon.status = status;
@@ -25,11 +27,6 @@ export function incrementStatusTurns(pokemon: BattlePokemon): void {
   }
 }
 
-export function isGrounded(pokemon: BattlePokemon): boolean {
-  const types = pokemon.pokemon.types.map(t => typeof t === 'string' ? t : t.type?.name || '');
-  return !types.includes('flying');
-}
-
 export function terrainPreventsStatus(terrain: FieldTerrain['kind'] | undefined, pokemon: BattlePokemon, status: BattlePokemon['status']): boolean {
   if (!terrain) return false;
   if (!isGrounded(pokemon)) return false;
@@ -38,7 +35,7 @@ export function terrainPreventsStatus(terrain: FieldTerrain['kind'] | undefined,
     return true;
   }
 
-  if (terrain === 'misty' && ['poisoned', 'badly-poisoned', 'burned', 'paralyzed', 'asleep'].includes(status ?? '')) {
+  if (terrain === 'misty' && ['poisoned', 'badly-poisoned', 'burned', 'paralyzed', 'asleep', 'frozen'].includes(status ?? '')) {
     return true;
   }
 
@@ -77,12 +74,11 @@ export function applyEndOfTurnStatus(state: BattleState, pokemon: BattlePokemon)
   switch (pokemon.status) {
     case 'poisoned':
     case 'badly-poisoned': {
-      pokemon.volatile.toxicCounter = pokemon.volatile.toxicCounter || (pokemon.status === 'badly-poisoned' ? 1 : 0);
-      if (pokemon.status === 'badly-poisoned') {
-        pokemon.volatile.toxicCounter += 1;
+      if (!pokemon.volatile.toxicCounter) {
+        pokemon.volatile.toxicCounter = pokemon.status === 'badly-poisoned' ? 1 : 0;
       }
       const fraction = pokemon.status === 'badly-poisoned'
-        ? Math.min(16, pokemon.volatile.toxicCounter ?? 1) / 16
+        ? Math.min(16, pokemon.volatile.toxicCounter) / 16
         : 1 / 8;
       const damage = Math.floor(pokemon.maxHp * fraction);
       if (damage > 0) {
@@ -93,6 +89,9 @@ export function applyEndOfTurnStatus(state: BattleState, pokemon: BattlePokemon)
           pokemon: pokemon.pokemon.name,
           damage: Math.round((damage / pokemon.maxHp) * 100),
         });
+      }
+      if (pokemon.status === 'badly-poisoned') {
+        pokemon.volatile.toxicCounter += 1;
       }
       break;
     }

@@ -9,7 +9,7 @@ import {
     getNextAvailablePokemon,
     getCurrentPokemon,
 } from './team-battle-engine';
-import { processStartOfTurn, processEndOfTurn, resolveMove, resolveSwitch } from './team-battle-engine-additional';
+import { processStartOfTurn, processEndOfTurn, resolveMove, resolveSwitch, runEntrySequence } from './team-battle-engine-additional';
 import { createBattleRng } from './battle-rng';
 import { RTDBBattleMeta, RTDBBattlePrivate, RTDBBattlePublic, RTDBChoice } from './firebase-rtdb-service';
 
@@ -157,7 +157,7 @@ async function fetchBattleState(battleId: string, ops: RtdbOps): Promise<BattleS
 
     const p1Team: BattleTeam = {
         pokemon: p1HydratedTeam,
-        currentIndex: (p1Private as any).currentIndex ?? 0,
+        currentIndex: p1Private.currentIndex ?? 0,
         faintedCount: p1HydratedTeam.filter(p => p.currentHp <= 0).length,
         sideConditions: {
             screens: mapScreens(publicState?.field?.screens?.p1),
@@ -167,7 +167,7 @@ async function fetchBattleState(battleId: string, ops: RtdbOps): Promise<BattleS
 
     const p2Team: BattleTeam = {
         pokemon: p2HydratedTeam,
-        currentIndex: (p2Private as any).currentIndex ?? 0,
+        currentIndex: p2Private.currentIndex ?? 0,
         faintedCount: p2HydratedTeam.filter(p => p.currentHp <= 0).length,
         sideConditions: {
             screens: mapScreens(publicState?.field?.screens?.p2),
@@ -262,7 +262,7 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
         for (const action of queue) {
             if (action.type === 'switch') {
                 await resolveSwitch(currentState, action);
-            } else if (action.type === 'move' && action.moveId) {
+            } else if ((action.type === 'move' || action.type === 'pursuit') && action.moveId) {
                 await resolveMove(currentState, action);
             }
 
@@ -280,8 +280,7 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
         const p1Active = getCurrentPokemon(currentState.player);
         const p2Active = getCurrentPokemon(currentState.opponent);
 
-        // 8.5. Auto-replace fainted Pokemon
-        // If active Pokemon fainted, automatically send out next available Pokemon
+        // 8.5. Auto-replace fainted Pokemon (with entry hazards/abilities)
         if (p1Active.currentHp <= 0) {
             const nextIndex = getNextAvailablePokemon(currentState.player);
             if (nextIndex !== null && nextIndex !== currentState.player.currentIndex) {
@@ -292,6 +291,7 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
                     message: `Go! ${newPokemon.pokemon.name}!`,
                     pokemon: newPokemon.pokemon.name
                 });
+                await runEntrySequence(currentState, 'player', newPokemon);
             }
         }
 
@@ -305,6 +305,7 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
                     message: `Go! ${newPokemon.pokemon.name}!`,
                     pokemon: newPokemon.pokemon.name
                 });
+                await runEntrySequence(currentState, 'opponent', newPokemon);
             }
         }
 

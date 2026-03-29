@@ -61,7 +61,6 @@ export function useLazyLoading() {
       return // Already loading or loaded
     }
 
-    console.log(`🔄 Loading Pokemon ${id}...`)
     loadingRef.current.add(id)
     
     // Mark as loading
@@ -72,7 +71,6 @@ export function useLazyLoading() {
 
     try {
       const pokemon = await getPokemon(id)
-      console.log(`✅ Loaded Pokemon ${id}: ${pokemon.name}`)
       setState(prev => ({
         ...prev,
         pokemon: new Map(prev.pokemon).set(id, pokemon)
@@ -117,17 +115,14 @@ export function useLazyLoading() {
     
     // Load first 20 Pokemon immediately
     const initialIds = Array.from({ length: 20 }, (_, i) => i + 1)
-    console.log('🔄 Loading initial batch of Pokemon...', initialIds)
     
     for (const id of initialIds) {
       if (!state.pokemon.has(id) && !loadingRef.current.has(id)) {
-        console.log(`🔄 Starting to load Pokemon ${id} in initial batch...`)
         await loadPokemon(id)
         // Small delay to prevent overwhelming the API
         await new Promise(resolve => setTimeout(resolve, 50))
       }
     }
-    console.log('✅ Initial batch loading completed')
   }, [state.totalCount, state.pokemon, loadPokemon])
 
   // Cleanup observer on unmount

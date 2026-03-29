@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import {
   User,
   signInWithEmailAndPassword,
@@ -65,7 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return unsubscribe;
   }, []);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string) => {
     if (!auth) {
       throw new Error('Authentication service is currently unavailable. Please try again later.');
     }
@@ -75,9 +75,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Error signing in:', error);
       throw error;
     }
-  };
+  }, []);
 
-  const signUp = async (email: string, password: string, displayName: string) => {
+  const signUp = useCallback(async (email: string, password: string, displayName: string) => {
     if (!auth) {
       throw new Error('Authentication service is currently unavailable. Please try again later.');
     }
@@ -91,9 +91,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Error signing up:', error);
       throw error;
     }
-  };
+  }, []);
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = useCallback(async () => {
     if (!auth) {
       throw new Error('Authentication service is currently unavailable. Please try again later.');
     }
@@ -129,10 +129,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error(errorObj.message || 'Failed to sign in with Google');
       }
     }
-  };
+  }, []);
 
-
-  const signInWithMicrosoft = async () => {
+  const signInWithMicrosoft = useCallback(async () => {
     if (!auth) {
       throw new Error('Authentication service is currently unavailable. Please try again later.');
     }
@@ -169,9 +168,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error(errorObj.message || 'Failed to sign in with Microsoft');
       }
     }
-  };
+  }, []);
 
-  const signInWithTwitter = async () => {
+  const signInWithTwitter = useCallback(async () => {
     if (!auth) {
       throw new Error('Authentication service is currently unavailable. Please try again later.');
     }
@@ -207,9 +206,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error(errorObj.message || 'Failed to sign in with Twitter');
       }
     }
-  };
+  }, []);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     if (!auth) {
       throw new Error('Authentication service is currently unavailable. Please try again later.');
     }
@@ -219,9 +218,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Error signing out:', error);
       throw error;
     }
-  };
+  }, []);
 
-  const value = {
+  const value = useMemo(() => ({
     user,
     loading,
     signIn,
@@ -230,7 +229,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signInWithMicrosoft,
     signInWithTwitter,
     logout,
-  };
+  }), [user, loading, signIn, signUp, signInWithGoogle, signInWithMicrosoft, signInWithTwitter, logout]);
 
   return (
     <AuthContext.Provider value={value}>

@@ -57,6 +57,7 @@ export type Pokemon = {
 
 type PrivateState = {
   team: Pokemon[];
+  currentIndex?: number;
   choiceLock?: { moveId?: string; locked?: boolean };
   disable?: { moveId?: string; turnsLeft?: number };
   encoreMoveId?: string;
@@ -94,7 +95,7 @@ function isChoosing(meta: Meta | null) {
 function activePrivate(me: PrivateState | null): Pokemon | null {
   if (!me?.team?.length) return null;
   // Use currentIndex if available, otherwise default to 0
-  const activeIndex = typeof (me as any).currentIndex === 'number' ? (me as any).currentIndex : 0;
+  const activeIndex = typeof me.currentIndex === 'number' ? me.currentIndex : 0;
   return me.team[activeIndex] ?? me.team[0] ?? null;
 }
 
@@ -137,6 +138,10 @@ export function useBattleState(battleId: string): UseBattleState {
 
     if (!meUid) {
       setError('User not authenticated');
+      setMeta(null);
+      setPub(null);
+      setMe(null);
+      setLoading(false);
       return;
     }
 
@@ -416,18 +421,6 @@ export function useBattleState(battleId: string): UseBattleState {
       throw new Error(errorMessage);
     }
   }, [battleId, meUid, meta]);
-
-  // Expose writeChoice to global scope for E2E testing
-  useEffect(() => {
-    if (process.env.NEXT_PUBLIC_E2E === 'true') {
-      (window as any).writeChoice = writeChoice;
-    }
-    return () => {
-      if (process.env.NEXT_PUBLIC_E2E === 'true') {
-        delete (window as any).writeChoice;
-      }
-    };
-  }, [writeChoice]);
 
   const chooseMove = useCallback(async (moveId: string, target: "p1" | "p2" = "p2") => {
     if (!meta) throw new Error("No meta");

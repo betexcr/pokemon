@@ -55,11 +55,9 @@ export function convertTeamSlotsToSimple(
       // Prioritize displayPokemonById which has full data, fallback to allPokemon
       const pokemon = displayPokemonById[slot.id!] || allPokemon.find(p => p.id === slot.id);
       if (!pokemon) {
-        console.log(`Pokemon not found for slot ${slot.id}`, { allPokemon: allPokemon.length, displayPokemonById: Object.keys(displayPokemonById) });
         return null;
       }
       
-      console.log(`Converting slot ${slot.id} with Pokemon:`, pokemon.name, 'types:', pokemon.types);
       return convertPokemonToSimple(pokemon, slot.moves);
     })
     .filter(Boolean) as SimplePokemon[];

@@ -35,7 +35,6 @@ class OfflineManager {
     if (typeof window === 'undefined') return
     
     window.addEventListener('online', () => {
-      console.log('Browser reported online event')
       this.isOnline = true
       this.lastOnlineTime = Date.now()
       this.notifyListeners()
@@ -43,7 +42,6 @@ class OfflineManager {
     })
 
     window.addEventListener('offline', () => {
-      console.log('Browser reported offline event')
       // Don't immediately set to offline, verify with connectivity check
       this.verifyConnectivity()
     })
@@ -128,7 +126,6 @@ class OfflineManager {
       
       if (response.ok && !this.isOnline) {
         // We're actually online, update state
-        console.log('Connectivity check: Online')
         this.isOnline = true
         this.lastOnlineTime = Date.now()
         this.notifyListeners()
@@ -137,7 +134,6 @@ class OfflineManager {
         // Only mark as offline if we get a definitive network error
         // Don't mark offline for 4xx errors (client errors)
         if (response.status >= 500 || response.status === 0) {
-          console.log('Connectivity check: Offline (server error)')
           this.isOnline = false
           this.notifyListeners()
         }
@@ -145,7 +141,6 @@ class OfflineManager {
     } catch (error) {
       // Only mark as offline for actual network errors, not timeouts or other issues
       if (this.isOnline && (error instanceof TypeError && error.message.includes('fetch'))) {
-        console.log('Connectivity check: Offline (network error)')
         this.isOnline = false
         this.notifyListeners()
       }

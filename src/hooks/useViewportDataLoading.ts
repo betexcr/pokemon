@@ -15,6 +15,7 @@ export function useViewportDataLoading({
 }: UseViewportDataLoadingProps) {
   const [loadedPokemon, setLoadedPokemon] = useState<Map<number, Pokemon>>(new Map());
   const [loadingPokemon, setLoadingPokemon] = useState<Set<number>>(new Set());
+  const failedPokemonRef = useRef<Set<number>>(new Set());
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isScrollIdleRef = useRef(true);
   const hasUserInteractedRef = useRef(false);
@@ -33,24 +34,24 @@ export function useViewportDataLoading({
 
   // Load Pokemon data
   const loadPokemonData = useCallback(async (pokemonId: number) => {
-    // Use functional updates to get the latest state
+    if (failedPokemonRef.current.has(pokemonId)) return;
+
     setLoadingPokemon(prev => {
       if (prev.has(pokemonId)) {
-        return prev; // Already loading
+        return prev;
       }
       
       setLoadedPokemon(loadedPrev => {
         if (loadedPrev.has(pokemonId)) {
-          return loadedPrev; // Already loaded
+          return loadedPrev;
         }
         
-        // Load the data asynchronously
         getPokemon(pokemonId)
           .then(pokemonData => {
             markPokemonLoaded(pokemonData);
           })
-          .catch(error => {
-            console.error(`Failed to load Pokemon ${pokemonId}:`, error);
+          .catch(() => {
+            failedPokemonRef.current.add(pokemonId);
             setLoadingPokemon(loadingPrev => {
               const newSet = new Set(loadingPrev);
               newSet.delete(pokemonId);
@@ -142,7 +143,7 @@ export function useViewportDataLoading({
       
       if (isVisible) {
         const pokemonId = parseInt(card.getAttribute('data-pokemon-id') || '0');
-        if (pokemonId > 0 && !loadedPokemon.has(pokemonId) && !loadingPokemon.has(pokemonId)) {
+        if (pokemonId > 0 && !loadedPokemon.has(pokemonId) && !loadingPokemon.has(pokemonId) && !failedPokemonRef.current.has(pokemonId)) {
           missedPokemonIds.push(pokemonId);
         }
       }
@@ -226,7 +227,7 @@ export function useViewportDataLoading({
     // Listen for Pokemon type retry events
     const handleTypeRetry = (event: CustomEvent) => {
       const { pokemonId } = event.detail;
-      if (pokemonId && !loadedPokemon.has(pokemonId) && !loadingPokemon.has(pokemonId)) {
+      if (pokemonId && !loadedPokemon.has(pokemonId) && !loadingPokemon.has(pokemonId) && !failedPokemonRef.current.has(pokemonId)) {
         loadPokemonData(pokemonId);
       }
     };

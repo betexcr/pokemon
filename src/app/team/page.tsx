@@ -489,7 +489,6 @@ export default function TeamBuilderPage() {
         // Auto-load Pokemon data if team is already loaded
         const teamPokemon = currentTeam.filter(slot => slot.id !== null)
         if (teamPokemon.length > 0) {
-          console.log('Auto-loading Pokemon data for existing team...')
           const pokemonPromises = teamPokemon.map(async (slot) => {
             try {
               const fullPokemon = await getPokemon(slot.id!)
@@ -498,7 +497,6 @@ export default function TeamBuilderPage() {
                 persistDisplayPokemon(updated)
                 return updated
               })
-              console.log(`Auto-loaded Pokemon ${fullPokemon.name}:`, { types: fullPokemon.types, stats: fullPokemon.stats.length })
               return fullPokemon
             } catch (error) {
               console.error(`Failed to auto-load Pokemon ${slot.id}:`, error)
@@ -541,7 +539,6 @@ export default function TeamBuilderPage() {
           setSyncing(true)
           const firebaseTeams = await getUserTeams(user.uid)
           setSavedTeams(firebaseTeams)
-          console.log('Loaded teams from Firebase:', firebaseTeams.length)
           
           // Also sync any local teams to Firebase
           try {
@@ -597,13 +594,6 @@ export default function TeamBuilderPage() {
   // Team analysis for the analysis panels
   const teamAnalysis = useMemo(() => {
     const simpleTeam = convertTeamSlotsToSimple(teamSlots, allPokemon, displayPokemonById)
-    console.log('Team analysis data:', { 
-      teamSlots: teamSlots.filter(s => s.id !== null).length, 
-      allPokemon: allPokemon.length, 
-      displayPokemonById: Object.keys(displayPokemonById).length, 
-      simpleTeam: simpleTeam.map(p => ({ name: p.name, types: p.types })),
-      analysisTrigger 
-    })
     return analyzeTeam(simpleTeam)
   }, [teamSlots, allPokemon, displayPokemonById, analysisTrigger])
 
@@ -875,7 +865,6 @@ export default function TeamBuilderPage() {
             persistDisplayPokemon(updated)
             return updated
           })
-          console.log(`Loaded Pokemon ${fullPokemon.name}:`, { types: fullPokemon.types, stats: fullPokemon.stats.length })
           return fullPokemon
         } catch (error) {
           console.error(`Failed to fetch Pokemon ${slot.id}:`, error)
@@ -930,7 +919,6 @@ export default function TeamBuilderPage() {
 
     // User is authenticated and team is in Firebase, delete from Firebase
     try {
-      console.log('Deleting team from Firebase:', { teamId: id, userId: user.uid, userEmail: user.email })
       await deleteTeamFromFirebase(id, user.uid)
       setSavedTeams(savedTeams.filter(t => t.id !== id))
     } catch (error) {
@@ -1727,7 +1715,6 @@ export default function TeamBuilderPage() {
                   </p>
                   <button
                     onClick={() => {
-                      console.log('Auth button clicked, setting showAuthModal to true');
                       setShowAuthModal(true);
                     }}
                     className="inline-flex items-center gap-2 px-4 py-2 text-sm text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors"

@@ -7,7 +7,6 @@ export default function DemoBattleDialogPage() {
   const [showDialog, setShowDialog] = useState(false);
 
   const handleBattleStart = () => {
-    console.log('Battle started!');
     alert('Battle would start now!');
   };
 

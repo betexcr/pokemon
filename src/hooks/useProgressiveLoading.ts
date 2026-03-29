@@ -106,11 +106,11 @@ export function useProgressiveLoading() {
       }
       
       const generationSize = range.end - range.start + 1
-      console.log(`🔄 Loading generation ${generation} (${generationSize} Pokemon)...`);
+      
       
       // First load skeletons for immediate display
       const skeletonPokemon = await getPokemonSkeletonsWithPagination(generationSize, range.start - 1)
-      console.log(`✅ Loaded ${skeletonPokemon.length} skeleton Pokemon for generation ${generation}`);
+      
       
       // Update state with skeletons first
       setState(prev => {
@@ -138,9 +138,9 @@ export function useProgressiveLoading() {
       })
       
       // Then hydrate in background
-      console.log(`🔄 Hydrating generation ${generation}...`);
+      
       const pokemon = await hydratePokemonSkeletons(skeletonPokemon)
-      console.log(`✅ Hydrated ${pokemon.length} Pokemon for generation ${generation}`);
+      
       
       setState(prev => {
         const newGenerations = new Map(prev.generations)

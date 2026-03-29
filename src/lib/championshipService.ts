@@ -398,13 +398,20 @@ class ChampionshipService {
 
   onChampionshipChange(id: string, callback: (c: Championship | null) => void): Unsubscribe {
     const db = this.getDb();
-    return onSnapshot(doc(db, this.collectionName, id), (snap) => {
-      if (!snap.exists()) {
+    return onSnapshot(
+      doc(db, this.collectionName, id),
+      (snap) => {
+        if (!snap.exists()) {
+          callback(null);
+          return;
+        }
+        callback(docToChampionship(snap.id, snap.data() as ChampionshipDocument));
+      },
+      (error) => {
+        console.error('Championship subscription error:', error.code);
         callback(null);
-        return;
       }
-      callback(docToChampionship(snap.id, snap.data() as ChampionshipDocument));
-    });
+    );
   }
 
   async getOpenChampionships(): Promise<Championship[]> {

@@ -30,10 +30,8 @@ export class BattleSyncManager {
   }
 
   async initialize(): Promise<void> {
-    console.log('🔥 Initializing Firebase Battle Sync Manager');
     try {
       await this.firebaseSync.initialize();
-      console.log('✅ Battle sync manager initialized with Firebase');
     } catch (error) {
       console.error('❌ Failed to initialize Firebase battle sync:', error);
       throw error;

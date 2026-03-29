@@ -26,7 +26,10 @@ function BattleRuntimePage() {
       addToast({ type: d.type || 'info', title: d.title || 'Move used', message: d.message || '', duration: d.duration ?? 3500 });
     };
     window.addEventListener('battle-toast', handler);
-    return () => { window.removeEventListener('battle-toast', handler); };
+    return () => {
+      window.removeEventListener('battle-toast', handler);
+      delete (window as any).__battle_toast;
+    };
   }, [addToast]);
   
   // Get battle ID from URL
@@ -182,18 +185,14 @@ function BattleRuntimePage() {
         {isAIBattle && opponentChampion ? (
           <OfflineBattleComponent
             config={{ opponentChampion }}
-            onBattleComplete={(winner) => {
-              console.log('AI Battle completed, winner:', winner);
-            }}
+            onBattleComplete={() => {}}
             viewMode="animated"
           />
         ) : (
           /* Regular Battle (Multiplayer over RTDB) */
           <RTDBBattleComponent 
             battleId={urlBattleId}
-            onBattleComplete={(winner) => {
-              console.log('Battle completed, winner:', winner);
-            }}
+            onBattleComplete={() => {}}
             viewMode="animated"
           />
         )}

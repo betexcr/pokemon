@@ -57,9 +57,7 @@ export function useFirebaseErrorLogger(
     const enhancedContext = {
       ...context,
       componentName,
-      userId: userRef.current?.uid,
-      userEmail: userRef.current?.email,
-      userDisplayName: userRef.current?.displayName,
+      isAuthenticated: !!userRef.current,
       timestamp: new Date().toISOString()
     };
 
@@ -103,9 +101,7 @@ export function useFirebaseErrorLogger(
     const enhancedContext = {
       ...context,
       componentName,
-      userId: userRef.current?.uid,
-      userEmail: userRef.current?.email,
-      userDisplayName: userRef.current?.displayName,
+      isAuthenticated: !!userRef.current,
       timestamp: new Date().toISOString()
     };
 
@@ -151,29 +147,7 @@ export function useFirebaseErrorLogger(
     errorCounts.current.clear();
   }, []);
 
-  // Log component mount/unmount for debugging
-  useEffect(() => {
-    if (enableConsoleLogging) {
-      console.log(`🔧 ${componentName} - Firebase Error Logger initialized`);
-    }
-
-    return () => {
-      if (enableConsoleLogging) {
-        console.log(`🔧 ${componentName} - Firebase Error Logger cleanup`);
-      }
-    };
-  }, [componentName, enableConsoleLogging]);
-
-  // Log authentication state changes
-  useEffect(() => {
-    if (enableConsoleLogging) {
-      console.log(`🔐 ${componentName} - Auth state changed:`, {
-        isAuthenticated: !!user,
-        userId: user?.uid,
-        userEmail: user?.email
-      });
-    }
-  }, [user, componentName, enableConsoleLogging]);
+  
 
   return {
     logError,

@@ -97,9 +97,7 @@ export default function UserProfile({ isMobile = false }: UserProfileProps) {
             setImageLoadError(true);
           }}
           referrerPolicy="no-referrer"
-          onLoad={() => {
-            console.log('Profile image loaded successfully');
-          }}
+          onLoad={() => {}}
         />
       );
     }

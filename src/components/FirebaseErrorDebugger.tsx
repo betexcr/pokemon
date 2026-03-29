@@ -78,20 +78,21 @@ export default function FirebaseErrorDebugger({ isOpen, onClose }: FirebaseError
             <button
               onClick={() => setAutoRefresh(!autoRefresh)}
               className={`p-2 rounded-md ${autoRefresh ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'}`}
-              title={autoRefresh ? 'Auto-refresh enabled' : 'Auto-refresh disabled'}
+              aria-label={autoRefresh ? 'Disable auto-refresh' : 'Enable auto-refresh'}
             >
               <RefreshCw className={`w-4 h-4 ${autoRefresh ? 'animate-spin' : ''}`} />
             </button>
             <button
               onClick={() => setShowDetails(!showDetails)}
               className="p-2 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200"
-              title={showDetails ? 'Hide details' : 'Show details'}
+              aria-label={showDetails ? 'Hide details' : 'Show details'}
             >
               {showDetails ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
             <button
               onClick={onClose}
               className="p-2 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200"
+              aria-label="Close error debugger"
             >
               ×
             </button>

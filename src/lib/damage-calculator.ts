@@ -16,9 +16,9 @@ export const TYPE_CHART: Record<TypeName, Partial<Record<TypeName, number>>> = {
   "Electric": {"Water":2,"Electric":0.5,"Grass":0.5,"Ground":0,"Flying":2,"Dragon":0.5},
   "Grass":    {"Fire":0.5,"Water":2,"Grass":0.5,"Poison":0.5,"Ground":2,"Flying":0.5,"Bug":0.5,"Rock":2,"Dragon":0.5,"Steel":0.5},
   "Ice":      {"Fire":0.5,"Water":0.5,"Grass":2,"Ice":0.5,"Ground":2,"Flying":2,"Dragon":2,"Steel":0.5},
-  "Fighting": {"Normal":2,"Ice":2,"Poison":0.5,"Flying":0.5,"Psychic":0.5,"Bug":1,"Rock":2,"Ghost":0,"Dark":2,"Steel":2,"Fairy":0.5},
+  "Fighting": {"Normal":2,"Ice":2,"Poison":0.5,"Flying":0.5,"Psychic":0.5,"Bug":0.5,"Rock":2,"Ghost":0,"Dark":2,"Steel":2,"Fairy":0.5},
   "Poison":   {"Grass":2,"Poison":0.5,"Ground":0.5,"Rock":0.5,"Ghost":0.5,"Steel":0,"Fairy":2},
-  "Ground":   {"Fire":2,"Electric":2,"Grass":0.5,"Poison":2,"Flying":0,"Bug":1,"Rock":2,"Steel":2},
+  "Ground":   {"Fire":2,"Electric":2,"Grass":0.5,"Poison":2,"Flying":0,"Rock":2,"Steel":2},
   "Flying":   {"Electric":0.5,"Grass":2,"Fighting":2,"Bug":2,"Rock":0.5,"Steel":0.5},
   "Psychic":  {"Fighting":2,"Poison":2,"Psychic":0.5,"Dark":0,"Steel":0.5},
   "Bug":      {"Fire":0.5,"Grass":2,"Fighting":0.5,"Poison":0.5,"Flying":0.5,"Psychic":2,"Ghost":0.5,"Dark":2,"Steel":0.5,"Fairy":0.5},
@@ -119,7 +119,8 @@ export function getBurnModifier(isBurned: boolean, isPhysical: boolean, hasGuts:
 
 // STAB calculation
 export function getStabMultiplier(moveType: TypeName, attackerTypes: TypeName[], hasAdaptability: boolean = false): number {
-  const hasStab = attackerTypes.includes(moveType);
+  const moveTypeLower = moveType.toLowerCase();
+  const hasStab = attackerTypes.some(t => t.toLowerCase() === moveTypeLower);
   if (!hasStab) return 1;
   return hasAdaptability ? 2.0 : 1.5;
 }
@@ -172,6 +173,7 @@ export function calculateComprehensiveDamage({
   hasSniper = false,
   isHighCritMove = false,
   hasSuperLuck = false,
+  defenderGrounded = true,
   precomputedCrit,
   rng
 }: {
@@ -206,6 +208,7 @@ export function calculateComprehensiveDamage({
   hasSniper?: boolean;
   isHighCritMove?: boolean;
   hasSuperLuck?: boolean;
+  defenderGrounded?: boolean;
   precomputedCrit?: boolean;
   rng: BattleRng;
 }): { damage: number; effectiveness: number; critical: boolean; effectivenessText: string } {
@@ -255,17 +258,6 @@ export function calculateComprehensiveDamage({
     otherMods *= 1.2;
   }
   
-  // Screens
-  if (hasReflect && isPhysical) {
-    otherMods *= 0.5;
-  }
-  if (hasLightScreen && !isPhysical) {
-    otherMods *= 0.5;
-  }
-  if (hasAuroraVeil) {
-    otherMods *= 0.5;
-  }
-  
   // Multi-target penalty
   if (isMultiTarget) {
     otherMods *= 0.75;
@@ -281,6 +273,9 @@ export function calculateComprehensiveDamage({
   if (terrain === 'Psychic' && moveType === 'Psychic') {
     otherMods *= 1.3;
   }
+  if (terrain === 'Misty' && moveType === 'Dragon' && defenderGrounded) {
+    otherMods *= 0.5;
+  }
   
   // Multiscale/Shadow Shield
   if (hasMultiscale && isFullHp) {
@@ -289,6 +284,19 @@ export function calculateComprehensiveDamage({
   
   // Check for critical hit (use precomputed result if provided to avoid dual rolls)
   const isCrit = precomputedCrit ?? getCriticalHitChance(0.0625, isHighCritMove, hasSuperLuck, rng);
+  
+  // Screens are bypassed on critical hits (Gen VI+ rules)
+  if (!isCrit) {
+    if (hasReflect && isPhysical) {
+      otherMods *= 0.5;
+    }
+    if (hasLightScreen && !isPhysical) {
+      otherMods *= 0.5;
+    }
+    if (hasAuroraVeil) {
+      otherMods *= 0.5;
+    }
+  }
   
   // Apply Sniper ability (extra crit damage)
   let critMultiplier = isCrit ? 1.5 : 1.0;

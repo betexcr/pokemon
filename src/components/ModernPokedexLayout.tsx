@@ -460,9 +460,6 @@ export default function ModernPokedexLayout({
   // Heuristics-driven render-only cap and moving window
   const storage = typeof window !== 'undefined' ? new LocalStorageAdapter() : new MemoryStorage()
   const heur = createHeuristics({ storage })
-  // const [maxRenderCount, setMaxRenderCount] = useState<number>(300)
-  // const [renderWindowStart, setRenderWindowStart] = useState<number>(0)
-
   const computeMaxRenderCount = useCallback(async () => {
     let cap = 300
     try {
@@ -538,8 +535,6 @@ export default function ModernPokedexLayout({
           setTotalPokemonCount(1025);
         }
         
-        // Always use lazy loading - no initial batch needed
-        console.log('🔄 Starting lazy loading...');
         setIsInitialLoading(false);
       } catch (error) {
         console.error('Error in initial Pokemon loading:', error);
@@ -1165,9 +1160,14 @@ export default function ModernPokedexLayout({
           for (const res of results) {
             if (res.status === 'fulfilled' && res.value) {
               fetchedPokemon.push(res.value as Pokemon)
-              // Seed details cache so cards also hydrate correctly
-              detailsCache.set((res.value as Pokemon).id, res.value as Pokemon)
             }
+          }
+          if (fetchedPokemon.length > 0) {
+            setDetailsCache(prev => {
+              const next = new Map(prev)
+              for (const p of fetchedPokemon) next.set(p.id, p)
+              return next
+            })
           }
         }
 
@@ -1305,7 +1305,6 @@ export default function ModernPokedexLayout({
       if (newPokemon.length === 0) {
         // Handle empty batch with retry logic
         const total = totalPokemonCount ?? 0;
-        console.log(`⚠️ Empty batch received: currentOffset=${currentOffset}, total=${total}, retryCount=${emptyBatchCountRef.current}`);
         
         if (total && currentOffset < total && emptyBatchCountRef.current < 3) {
           emptyBatchCountRef.current += 1;
@@ -1319,11 +1318,9 @@ export default function ModernPokedexLayout({
         // If we've tried multiple times and still get empty batches, but we're not at the expected limit,
         // try loading a larger batch to see if there are more Pokémon
         if (emptyBatchCountRef.current >= 3 && currentOffset < 1000) {
-          console.log('🔄 Trying larger batch size to find more Pokémon...');
-          emptyBatchCountRef.current = 0; // Reset retry count
-          const largerBatch = await getPokemonWithPagination(150, currentOffset); // Try larger batch
+          emptyBatchCountRef.current = 0;
+          const largerBatch = await getPokemonWithPagination(150, currentOffset);
           if (largerBatch.length > 0) {
-            console.log(`✅ Found ${largerBatch.length} Pokémon with larger batch`);
             setAllGenerationsPokemon(prev => [...prev, ...largerBatch]);
             setCurrentOffset(prev => prev + 150);
             setIsLoadingMore(false);
@@ -1331,7 +1328,6 @@ export default function ModernPokedexLayout({
           }
         }
         
-        console.log('🛑 No more Pokémon available, stopping infinite scroll');
         setHasMorePokemon(false);
       } else {
         emptyBatchCountRef.current = 0;
@@ -1353,14 +1349,10 @@ export default function ModernPokedexLayout({
         
         // Check if we've reached the limit
         // Use a more reasonable limit based on actual Pokemon count
-        const maxPokemonCount = totalPokemonCount || 1025; // Fallback to known total
-        console.log(`📊 Checking limit: newOffset=${newOffset}, maxPokemonCount=${maxPokemonCount}, hasMorePokemon=${hasMorePokemon}`);
+        const maxPokemonCount = totalPokemonCount || 1025;
         
         if (newOffset >= maxPokemonCount) {
-          console.log('🛑 Reached Pokémon limit, stopping infinite scroll');
           setHasMorePokemon(false);
-        } else {
-          console.log('✅ More Pokémon available, continuing infinite scroll');
         }
       }
     } catch (error) {
@@ -2239,7 +2231,6 @@ export default function ModernPokedexLayout({
                       hasMorePokemon={effectiveHasMorePokemon}
                       onLoadMore={externalLoadMorePokemon || loadMorePokemon}
                       sentinelRef={(node) => {
-                        console.log('🔗 ModernPokedexLayout sentinelRef called with:', !!node, 'externalSentinelRef type:', typeof externalSentinelRef)
                         if (externalSentinelRef) {
                           externalSentinelRef(node)
                         }

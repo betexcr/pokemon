@@ -16,25 +16,20 @@ export default function PokeballReleaseAnimation({
   const [showContent, setShowContent] = useState(false)
 
   useEffect(() => {
-    console.log('PokeballReleaseAnimation mounted with pokemons:', pokemons.length)
     if (pokemons.length > 0) {
-      console.log('Starting Pokéball release animation...')
-      // Start animation
       setIsAnimating(true)
       
-      // Show content after animation completes (longest delay + animation duration)
-      const maxDelay = (pokemons.length - 1) * 0.12 // 0.12s per ball
-      const animationDuration = 1.65 // Total animation duration
+      const maxDelay = (pokemons.length - 1) * 0.12
+      const animationDuration = 1.65
       const totalTime = (maxDelay + animationDuration) * 1000
       
-      console.log('Animation will complete in:', totalTime, 'ms')
-      
-      setTimeout(() => {
-        console.log('Animation completed!')
+      const timer = setTimeout(() => {
         setShowContent(true)
         setIsAnimating(false)
         onAnimationComplete?.()
       }, totalTime)
+
+      return () => clearTimeout(timer)
     }
   }, [pokemons, onAnimationComplete])
 

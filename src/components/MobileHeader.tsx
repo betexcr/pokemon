@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Zap, Users, Menu, X, LogIn } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
@@ -29,6 +29,8 @@ export default function MobileHeader({
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [imageError, setImageError] = useState(false)
   const [showAuthModal, setShowAuthModal] = useState(false)
+
+  useEffect(() => { setImageError(false) }, [user?.uid, user?.photoURL])
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen)
@@ -77,7 +79,6 @@ export default function MobileHeader({
         <Tooltip content="Sign in to save your progress, sync across devices, and access premium features" position="bottom">
           <button 
             onClick={() => {
-              console.log('Mobile profile picture clicked, opening AuthModal');
               setShowAuthModal(true);
             }}
             className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-full overflow-hidden border-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-400 touch-manipulation" 

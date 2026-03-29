@@ -168,10 +168,8 @@ export default function PokemonSelector({
     }
     
     try {
-      console.log('Loading more Pokemon, offset:', offset)
       const pageSize = 100
       const newPokemon = await fetchPokemonForSelector(offset, pageSize)
-      console.log('Fetched Pokemon count:', newPokemon.length)
       
       if (newPokemon.length === 0) {
         setHasMore(false)
@@ -229,18 +227,6 @@ export default function PokemonSelector({
       loadMore()
     }
   }, [showDropdown, allPokemon.length, loadMore])
-
-  // Debug logging
-  useEffect(() => {
-    console.log('PokemonSelector state:', {
-      allPokemonCount: allPokemon.length,
-      loading,
-      hasMore,
-      error,
-      showDropdown,
-      offset
-    })
-  }, [allPokemon.length, loading, hasMore, error, showDropdown, offset])
 
   // Debounced remote search for names/ids beyond the locally loaded window
   useEffect(() => {
@@ -305,7 +291,6 @@ export default function PokemonSelector({
       
       // Load more when within 100px of bottom
       if (distanceFromBottom < 100) {
-        console.log('Loading more Pokemon, current count:', allPokemon.length)
         loadMore()
       }
     }

@@ -131,6 +131,7 @@ export function useSortWorker() {
         URL.revokeObjectURL(blobUrlRef.current)
         blobUrlRef.current = null
       }
+      pendingSorts.current.clear()
     }
   }, [])
 

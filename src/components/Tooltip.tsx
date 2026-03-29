@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useEffect, useRef, useState } from 'react'
+import { ReactNode, useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 interface TooltipProps {
@@ -65,6 +65,7 @@ export default function Tooltip({
   const tipRef = useRef<HTMLDivElement | null>(null)
   // Mount flag to avoid SSR/CSR markup mismatches. We only render the portal after mount.
   const [mounted, setMounted] = useState(false)
+  const tooltipId = useId()
   useEffect(() => { setMounted(true) }, [])
   // Track dark mode from documentElement class list
   useEffect(() => {
@@ -100,11 +101,26 @@ export default function Tooltip({
     }
   }, [isOpen, isLatched])
 
-  // Cleanup hover timer on unmount
+  useEffect(() => {
+    if (!isOpen) return
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsOpen(false)
+        setIsLatched(false)
+      }
+    }
+    document.addEventListener('keydown', handleEscape)
+    return () => document.removeEventListener('keydown', handleEscape)
+  }, [isOpen])
+
+  // Cleanup hover / long-press timers on unmount
   useEffect(() => {
     return () => {
       if (hoverTimerRef.current) {
         clearTimeout(hoverTimerRef.current)
+      }
+      if (longPressTimerRef.current) {
+        window.clearTimeout(longPressTimerRef.current)
       }
     }
   }, [])
@@ -310,6 +326,8 @@ export default function Tooltip({
   const tipElement = (
       <div 
         ref={tipRef}
+        id={tooltipId}
+        role="tooltip"
         className={`pointer-events-auto ${containViewport ? 'fixed' : 'absolute'} z-[2147483647] ${!containViewport ? positionClasses[resolvedPosition] : ''} ${maxWidth} rounded-2xl p-5 text-sm leading-relaxed shadow-2xl ring-1 ${getRingColor()} ${openOpacityClass} ${hoverOpacityClass} ${visibilityClass} transition-opacity duration-200 ease-in-out ${getTypeBackground()} ${getTypeAccent()} ${getTextColor()} ${!containViewport && variant==='move' ? 'left-1/2 -translate-x-1/2' : ''}`}
         style={containViewport && fixedCoords ? { 
           ...getTypeOverlay(), 
@@ -434,6 +452,7 @@ export default function Tooltip({
   const wrapperProps: any = isSVG ? {
     className: `group ${className}`,
     ref: anchorRef as unknown as React.RefObject<SVGGElement>,
+    'aria-describedby': isOpen ? tooltipId : undefined,
     onMouseMove: (e: React.MouseEvent<SVGGElement>) => {
       if (!followCursor || !containViewport) return
       const margin = 12
@@ -481,6 +500,21 @@ export default function Tooltip({
   } : {
     className: `relative inline-block align-baseline group ${className}`,
     ref: anchorRef as unknown as React.RefObject<HTMLSpanElement>,
+    'aria-describedby': isOpen ? tooltipId : undefined,
+    onFocus: () => {
+      if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current)
+      hoverTimerRef.current = window.setTimeout(() => {
+        setFixedCoords(null)
+        setIsOpen(true)
+      }, 500)
+    },
+    onBlur: () => {
+      if (hoverTimerRef.current) {
+        clearTimeout(hoverTimerRef.current)
+        hoverTimerRef.current = null
+      }
+      if (!isLatched) setIsOpen(false)
+    },
     onMouseMove: (e: React.MouseEvent<HTMLSpanElement>) => {
       if (!followCursor || !containViewport) return
       const margin = 12

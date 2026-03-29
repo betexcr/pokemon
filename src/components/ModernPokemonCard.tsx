@@ -301,15 +301,13 @@ function ModernPokemonCardComponent({
   const containerStyle: React.CSSProperties = {
     height: 'auto',
     minHeight: 'fit-content',
-    // Add CSS containment for better performance
-    contain: 'layout style paint',
-    // Add transform3d to enable hardware acceleration
+    contain: 'layout style',
     transform: 'translateZ(0)',
   };
 
   const artWrapperStyle = useMemo<React.CSSProperties>(() => {
     const isDenseGrid = density === '9cols' || density === '10cols' || density === '12cols'
-    const top = density === '3cols' ? 36 : density === '6cols' ? 32 : isDenseGrid ? 6 : 28
+    const top = density === '3cols' ? 36 : density === '6cols' ? 32 : isDenseGrid ? 24 : 28
     const bottom = density === '3cols' ? 12 : density === '6cols' ? 10 : isDenseGrid ? 0 : 8
     const artHeight = density === '3cols' ? '220px' : density === '6cols' ? '160px' : isDenseGrid ? '96px' : '140px'
     return {
@@ -517,8 +515,8 @@ function ModernPokemonCardComponent({
                 </div>
 
                 {/* Image - natural aspect ratio */}
-                <div className="relative flex w-full justify-center items-center card-art" style={artWrapperStyle}>
-                  <div className="relative w-full h-full flex items-center justify-center rounded-xl bg-white/60 dark:bg-slate-900/40 p-2">
+                <div className="relative w-full card-art" style={artWrapperStyle}>
+                  <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-white/60 dark:bg-slate-900/40 p-2 overflow-hidden">
                     {!imageLoaded && !imageError && (
                       <div className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-2 bg-slate-200/80 dark:bg-slate-800/60 rounded-xl">
                         <div className="w-14 h-14 bg-slate-300/60 dark:bg-slate-700/60 rounded-full animate-pulse" />
@@ -535,9 +533,6 @@ function ModernPokemonCardComponent({
                       imgClassName={`object-contain max-w-full max-h-full w-auto h-auto transition-all duration-500 ease-out ${imageLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
                       imgStyle={{
                         viewTransitionName: `pokemon-sprite-${pokemon.id}`,
-                        objectFit: 'contain',
-                        display: 'block',
-                        margin: 'auto'
                       }}
                       rootMargin="150px"
                       threshold={0.01}
@@ -602,8 +597,8 @@ function ModernPokemonCardComponent({
                   </div>
 
                   {/* Image - natural aspect ratio */}
-                  <div className="relative flex w-full justify-center items-center card-art" style={artWrapperStyle}>
-                    <div className="relative w-full h-full flex items-center justify-center rounded-xl bg-white/60 dark:bg-slate-900/40 p-2">
+                  <div className="relative w-full card-art" style={artWrapperStyle}>
+                    <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-white/60 dark:bg-slate-900/40 p-2 overflow-hidden">
                       {!imageLoaded && !imageError && (
                         <div className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-2 bg-slate-200/80 dark:bg-slate-800/60 rounded-xl">
                           <div className="w-14 h-14 bg-slate-300/60 dark:bg-slate-700/60 rounded-full animate-pulse" />
@@ -620,9 +615,6 @@ function ModernPokemonCardComponent({
                         imgClassName={`object-contain max-w-full max-h-full w-auto h-auto transition-all duration-500 ease-out ${imageLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
                         imgStyle={{
                           viewTransitionName: `pokemon-sprite-${pokemon.id}`,
-                          objectFit: 'contain',
-                          display: 'block',
-                          margin: 'auto'
                         }}
                         rootMargin="150px"
                         threshold={0.01}

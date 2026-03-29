@@ -14,8 +14,6 @@ export async function resolveTurn(
   turn: number,
   choices: Record<string, RTDBChoice>
 ): Promise<void> {
-  console.log(`🎮 Resolving turn ${turn} for battle ${battleId}`);
-  
   try {
     // 1. Get current battle state from RTDB
     const battleState = await getBattleStateFromRTDB(battleId);
@@ -54,19 +52,18 @@ export async function resolveTurn(
     
     // 9. Check if battle is complete
     if (updatedState.isComplete) {
-      console.log(`🏁 Battle ${battleId} is complete!`);
       await handleBattleEnd(battleId, updatedState);
     } else {
       // Increment turn and reset phase to 'choosing'
+      const metaNow = await rtdbService.getBattleMeta(battleId);
       await rtdbService.updateBattleMeta(battleId, {
         turn: turn + 1,
         phase: 'choosing',
         deadlineAt: Date.now() + 30000, // 30 second deadline
-        version: (await rtdbService.getBattleMeta(battleId))?.version || 0 + 1
+        version: (metaNow?.version ?? 0) + 1,
       });
     }
     
-    console.log(`✅ Turn ${turn} resolved successfully`);
   } catch (error) {
     console.error(`❌ Failed to resolve turn ${turn}:`, error);
     throw error;

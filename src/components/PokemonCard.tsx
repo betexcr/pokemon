@@ -142,40 +142,39 @@ export default function PokemonCard({
         {isFavorite ? "❤️" : "♡"}
       </button>
 
-      {/* Artwork - full image display without clipping */}
+      {/* Artwork - relative/absolute pattern ensures max-h-full resolves correctly */}
       <div
         className={clsx(
-          "flex items-center justify-center flex-1 p-4",
+          "relative flex-1",
           mode === "grid" ? "w-full" : "w-full"
         )}
         style={{
-          backgroundColor: "transparent",
           minHeight: mode === "grid" ? "200px" : "auto"
         }}
       >
-        <LazyImage
-          srcList={[
-            img,
-            `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`,
-            "/placeholder-pokemon.png"
-          ]}
-          alt={formatPokemonName(pokemon.name)}
-          width={475}
-          height={475}
-          priority={pokemon.id <= 20}
-          imgClassName={clsx(
-            "mx-auto max-h-full max-w-full w-auto h-auto object-contain transition-transform duration-300",
-            "group-hover:scale-[1.04]"
-          )}
-          imgStyle={{
-            viewTransitionName: `pokemon-sprite-${pokemon.id}`,
-            maxWidth: "100%",
-            maxHeight: "100%",
-            margin: "auto"
-          }}
-          rootMargin="200px"
-          threshold={0.01}
-        />
+        <div className="absolute inset-0 flex items-center justify-center pt-8 px-4 pb-2">
+          <LazyImage
+            srcList={[
+              img,
+              `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`,
+              "/placeholder-pokemon.png"
+            ]}
+            alt={formatPokemonName(pokemon.name)}
+            width={475}
+            height={475}
+            priority={pokemon.id <= 20}
+            className="w-full h-full flex items-center justify-center"
+            imgClassName={clsx(
+              "mx-auto max-h-full max-w-full w-auto h-auto object-contain transition-transform duration-300",
+              "group-hover:scale-[1.02]"
+            )}
+            imgStyle={{
+              viewTransitionName: `pokemon-sprite-${pokemon.id}`,
+            }}
+            rootMargin="200px"
+            threshold={0.01}
+          />
+        </div>
       </div>
 
       {/* Info - Positioned at bottom with minimal spacing */}

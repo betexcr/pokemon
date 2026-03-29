@@ -44,10 +44,10 @@ export async function handleBattleEnd(
     
     // 3. Update Firestore battle document
     await battleService.updateBattle(battleId, {
-      status: 'finished',
+      status: 'completed',
       winner: finalState.winner,
       updatedAt: new Date()
-    } as any);
+    });
     
     // 4. Update room status if room exists
     if (battle.roomId) {

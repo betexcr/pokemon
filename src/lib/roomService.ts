@@ -73,7 +73,13 @@ class RoomService {
 
   private getDb() {
     try {
-      return getClientDb();
+      const db = getClientDb();
+      if (!db) {
+        throw new Error(hasFirebaseClientConfig
+          ? 'Firestore client returned null'
+          : 'Firestore configuration missing');
+      }
+      return db;
     } catch (error) {
       const message = hasFirebaseClientConfig
         ? (error instanceof Error ? error.message : 'Failed to initialize Firestore client')
@@ -298,7 +304,7 @@ class RoomService {
       // Check if room is available
       // Check if room already has a guest (but allow if it's the same user)
       if (roomData.guestId && roomData.guestId !== guestId) {
-        throw new Error(`Room already has a guest. Current guest: ${roomData.guestId}`);
+        throw new Error('Room already has an opponent');
       }
 
       // Check room capacity - only if there's no guest yet

@@ -11,8 +11,9 @@ const SELF_STAT_DROP_MOVES = new Set([
 
 // --- Utilities ---
 function hasSTAB(user: BattlePokemon, moveType: TypeName): boolean {
+  const mt = moveType.toLowerCase();
   return user.pokemon.types.some(t => 
-    (typeof t === 'string' ? t : t.type?.name || 'normal') === moveType
+    (typeof t === 'string' ? t : t.type?.name || 'normal').toLowerCase() === mt
   );
 }
 
@@ -55,7 +56,8 @@ function rollCrit(critStage: number): boolean {
 }
 
 function applyAilment(target: BattlePokemon, ailment: { kind: string; chance: number }): { applied: boolean; kind?: string } {
-  if (Math.random() * 100 >= (ailment.chance ?? 0)) return { applied: false };
+  // PokeAPI: chance=0 means guaranteed primary effect; only roll when chance > 0
+  if (ailment.chance !== 0 && Math.random() * 100 >= (ailment.chance ?? 100)) return { applied: false };
   const k = ailment.kind;
   
   // Map common PokeAPI ailments to our status system
@@ -72,7 +74,8 @@ function applyAilment(target: BattlePokemon, ailment: { kind: string; chance: nu
     return { applied: true, kind: "PSN" }; 
   }
   if (k === "toxic" && !target.status) { 
-    target.status = "poisoned"; 
+    target.status = "badly-poisoned"; 
+    target.volatile.toxicCounter = 1;
     return { applied: true, kind: "TOX" }; 
   }
   if (k === "sleep" && !target.status) { 
@@ -196,9 +199,17 @@ export async function executeTurn(opts: ExecuteTurnOptions): Promise<TurnResult>
       if (res.applied) result.appliedAilment = res.kind!;
     }
     if (move.statChanges?.length) {
-      const before: string[] = [];
-      applyStatChanges(defender, move.statChanges, before);
-      if (before.length) result.statChanges = before;
+      const logs: string[] = [];
+      for (const sc of move.statChanges) {
+        if (Math.random() * 100 >= (sc.chance ?? 100)) continue;
+        // Positive stages = self-buff (attacker), negative = debuff (defender)
+        const target = sc.stages > 0 ? attacker : defender;
+        const statName = mapStatName(sc.stat);
+        const oldValue = target.statModifiers[statName];
+        target.statModifiers[statName] = Math.max(-6, Math.min(6, oldValue + sc.stages));
+        logs.push(`stat:${sc.stat} ${sc.stages > 0 ? "+" : ""}${sc.stages}`);
+      }
+      if (logs.length) result.statChanges = logs;
     }
     return result;
   }
@@ -365,7 +376,7 @@ function calculateTypeEffectiveness(attackType: TypeName, defenderTypes: TypeNam
     Electric: { Normal: 1, Fire: 1, Water: 2, Electric: 0.5, Grass: 0.5, Ice: 1, Fighting: 1, Poison: 1, Ground: 0, Flying: 2, Psychic: 1, Bug: 1, Rock: 1, Ghost: 1, Dragon: 0.5, Dark: 1, Steel: 1, Fairy: 1 },
     Grass: { Normal: 1, Fire: 0.5, Water: 2, Electric: 1, Grass: 0.5, Ice: 1, Fighting: 1, Poison: 0.5, Ground: 2, Flying: 0.5, Psychic: 1, Bug: 0.5, Rock: 2, Ghost: 1, Dragon: 0.5, Dark: 1, Steel: 0.5, Fairy: 1 },
     Ice: { Normal: 1, Fire: 0.5, Water: 0.5, Electric: 1, Grass: 2, Ice: 0.5, Fighting: 1, Poison: 1, Ground: 2, Flying: 2, Psychic: 1, Bug: 1, Rock: 1, Ghost: 1, Dragon: 2, Dark: 1, Steel: 0.5, Fairy: 1 },
-    Fighting: { Normal: 2, Fire: 1, Water: 1, Electric: 1, Grass: 1, Ice: 2, Fighting: 1, Poison: 0.5, Ground: 1, Flying: 0.5, Psychic: 0.5, Bug: 1, Rock: 2, Ghost: 0, Dragon: 1, Dark: 2, Steel: 2, Fairy: 0.5 },
+    Fighting: { Normal: 2, Fire: 1, Water: 1, Electric: 1, Grass: 1, Ice: 2, Fighting: 1, Poison: 0.5, Ground: 1, Flying: 0.5, Psychic: 0.5, Bug: 0.5, Rock: 2, Ghost: 0, Dragon: 1, Dark: 2, Steel: 2, Fairy: 0.5 },
     Poison: { Normal: 1, Fire: 1, Water: 1, Electric: 1, Grass: 2, Ice: 1, Fighting: 1, Poison: 0.5, Ground: 0.5, Flying: 1, Psychic: 1, Bug: 1, Rock: 0.5, Ghost: 0.5, Dragon: 1, Dark: 1, Steel: 0, Fairy: 2 },
     Ground: { Normal: 1, Fire: 2, Water: 1, Electric: 2, Grass: 0.5, Ice: 1, Fighting: 1, Poison: 2, Ground: 1, Flying: 0, Psychic: 1, Bug: 1, Rock: 2, Ghost: 1, Dragon: 1, Dark: 1, Steel: 2, Fairy: 1 },
     Flying: { Normal: 1, Fire: 1, Water: 1, Electric: 0.5, Grass: 2, Ice: 1, Fighting: 2, Poison: 1, Ground: 1, Flying: 1, Psychic: 1, Bug: 2, Rock: 0.5, Ghost: 1, Dragon: 1, Dark: 1, Steel: 0.5, Fairy: 1 },

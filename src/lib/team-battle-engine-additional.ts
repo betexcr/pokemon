@@ -1,9 +1,9 @@
 // Additional functions for the Gen-8/9 battle engine
 
 import { BattleState, BattlePokemon, BattleTeam, getCurrentPokemon, switchToPokemon, getEffectiveSpeed, isTeamDefeated, canUseMove, applyStatusMoveEffects } from './team-battle-engine';
-import { calculateComprehensiveDamage } from './damage-calculator';
+import { calculateComprehensiveDamage, TypeName } from './damage-calculator';
 import { getMove } from './moveCache';
-import { applyEntryHazards } from './team-battle-hazards';
+import { applyEntryHazards, isGrounded } from './team-battle-hazards';
 import { handleOnEntryAbilities } from './team-battle-abilities';
 import { applyWeatherResidual, applyTerrainHealing, decrementFieldTimers, applyLeechSeed, applyBindingDamage } from './team-battle-field';
 import { applyEndOfTurnStatus, clearStatus, applyStatus, applyStartOfTurnStatus, terrainPreventsStatus } from './team-battle-status';
@@ -122,8 +122,8 @@ export async function resolveSwitch(state: BattleState, action: BattleState['act
     pokemon: newPokemon.pokemon.name
   });
   
-  // Run on-entry sequence (hazards, abilities, etc.)
-  await runEntrySequence(state, action.user === 'player' ? 'opponent' : 'player', newPokemon);
+  // Run on-entry sequence (hazards from the switching player's own side, abilities, etc.)
+  await runEntrySequence(state, action.user === 'player' ? 'player' : 'opponent', newPokemon);
   newPokemon.volatile.justSwitchedIn = true;
 }
 
@@ -262,9 +262,8 @@ function applyMoveAilment(
   if (move.ailment.kind === 'confusion') {
     if (defender.volatile.confusion) return;
     // Misty Terrain protects grounded Pokemon from confusion
-    if (state.field.terrain?.kind === 'misty') {
-      const types = defender.pokemon.types.map((t: any) => typeof t === 'string' ? t : t.type?.name || t.name || '');
-      if (!types.includes('flying')) return;
+    if (state.field.terrain?.kind === 'misty' && isGrounded(defender)) {
+      return;
     }
     const chance = move.ailment.chance === 0 ? 1 : (move.ailment.chance ?? (isSecondary ? 0 : 100)) / 100;
     if (chance > 0 && !rngRollChance(state.rng, chance)) return;
@@ -333,8 +332,9 @@ function applyMoveSecondaryStatChanges(
 
 function applyMoveFlinch(state: BattleState, move: any, defender: BattlePokemon): void {
   if (move.ailment?.kind !== 'flinch') return;
-  const chance = (move.ailment.chance ?? 0) / 100;
-  if (chance > 0 && rngRollChance(state.rng, chance)) {
+  const raw = move.ailment.chance ?? 0;
+  const chance = raw === 0 ? 1 : raw / 100;
+  if (rngRollChance(state.rng, chance)) {
     defender.volatile.flinched = true;
   }
 }
@@ -404,7 +404,7 @@ export async function executeMoveAction(
     }
 
     // Protect / Detect
-    if (moveLower === 'protect' || moveLower === 'detect' || moveLower === 'baneful-bunker' || moveLower === 'kings-shield' || moveLower === 'spiky-shield') {
+    if (moveLower === 'protect' || moveLower === 'detect' || moveLower === 'baneful-bunker' || moveLower === 'kings-shield' || moveLower === 'king-s-shield' || moveLower === 'spiky-shield') {
       const prot = attacker.volatile.protect;
       const consecutiveUses = prot?.counter ?? 0;
       const successChance = 1 / Math.pow(3, consecutiveUses);
@@ -499,7 +499,19 @@ export async function executeMoveAction(
       return;
     }
 
-    await applyStatusMoveEffects(attacker as any, defender as any, move as any, state as any);
+    if (moveLower === 'trick-room') {
+      if (!state.field.rooms) state.field.rooms = {};
+      if (state.field.rooms.trickRoom) {
+        delete state.field.rooms.trickRoom;
+        state.battleLog.push({ type: 'status_effect', message: `${attacker.pokemon.name} twisted the dimensions back to normal!` });
+      } else {
+        state.field.rooms.trickRoom = { turns: 5 };
+        state.battleLog.push({ type: 'status_effect', message: `${attacker.pokemon.name} twisted the dimensions!` });
+      }
+      return;
+    }
+
+    await applyStatusMoveEffects(attacker, defender, move, state);
     applyMoveAilment(state, move, attacker, defender);
     applyMoveSecondaryStatChanges(state, move, attacker, defender);
     return;
@@ -573,24 +585,35 @@ export async function executeMoveAction(
     }
 
     // Calculate damage using the comprehensive damage calculator
+    const toTypeName = (s: string): TypeName =>
+      (s.charAt(0).toUpperCase() + s.slice(1)) as TypeName;
+
+    const weatherMap: Record<string, 'Rain' | 'Sun' | 'Sandstorm' | 'Hail' | 'None'> = {
+      rain: 'Rain', sun: 'Sun', sandstorm: 'Sandstorm', snow: 'Hail',
+    };
+    const terrainMap: Record<string, 'Electric' | 'Grassy' | 'Psychic' | 'Misty' | 'None'> = {
+      electric: 'Electric', grassy: 'Grassy', psychic: 'Psychic', misty: 'Misty',
+    };
+
     const damageResult = calculateComprehensiveDamage({
       level: attacker.level,
       movePower: move.power || 0,
-      moveType: move.type as any,
+      moveType: toTypeName(move.type),
       attackerTypes: attacker.pokemon.types.map(type => 
-        (typeof type === 'string' ? type : type.type?.name || 'normal') as any
+        toTypeName(typeof type === 'string' ? type : type.type?.name || 'normal')
       ),
       defenderTypes: defender.pokemon.types.map(type => 
-        (typeof type === 'string' ? type : type.type?.name || 'normal') as any
+        toTypeName(typeof type === 'string' ? type : type.type?.name || 'normal')
       ),
       attackStat: attackStat,
       defenseStat: defenseStat,
-      weather: (state.field.weather?.kind === 'rain' ? 'Rain' : state.field.weather?.kind === 'sun' ? 'Sun' : state.field.weather?.kind === 'sandstorm' ? 'Sandstorm' : state.field.weather?.kind === 'snow' ? 'Hail' : 'None') as any,
-      terrain: (state.field.terrain?.kind === 'electric' ? 'Electric' : state.field.terrain?.kind === 'grassy' ? 'Grassy' : state.field.terrain?.kind === 'psychic' ? 'Psychic' : state.field.terrain?.kind === 'misty' ? 'Misty' : 'None') as any,
+      weather: weatherMap[state.field.weather?.kind ?? ''] ?? 'None',
+      terrain: terrainMap[state.field.terrain?.kind ?? ''] ?? 'None',
       isPhysical: move.category === 'Physical',
       hasReflect: !!defenderSideConditions?.screens?.reflect,
       hasLightScreen: !!defenderSideConditions?.screens?.lightScreen,
       hasAuroraVeil: !!defenderSideConditions?.screens?.auroraVeil,
+      defenderGrounded: isGrounded(defender),
       rng: state.rng,
     });
     
@@ -843,12 +866,12 @@ export async function executeMoveAction(
   }
 }
 
-// Run on-entry sequence for a Pokemon
-export async function runEntrySequence(state: BattleState, opponentSide: 'player' | 'opponent', incomingPokemon: BattlePokemon): Promise<void> {
-  const opponentTeam = opponentSide === 'player' ? state.player : state.opponent;
+// Run on-entry sequence for a Pokemon (switchingSide = the side whose Pokemon is switching in)
+export async function runEntrySequence(state: BattleState, switchingSide: 'player' | 'opponent', incomingPokemon: BattlePokemon): Promise<void> {
+  const switchingTeam = switchingSide === 'player' ? state.player : state.opponent;
 
-  // Check for entry hazards
-  const hazards = opponentTeam.sideConditions.hazards;
+  // Hazards are on the switching player's own side of the field
+  const hazards = switchingTeam.sideConditions.hazards;
   const result = applyEntryHazards(incomingPokemon, hazards);
 
   if (result.damage > 0) {
@@ -889,7 +912,17 @@ export async function runEntrySequence(state: BattleState, opponentSide: 'player
     });
   }
 
-  handleOnEntryAbilities(state, opponentSide === 'player' ? 'opponent' : 'player', incomingPokemon);
+  handleOnEntryAbilities(state, switchingSide, incomingPokemon);
+}
+
+/** After an automatic switch to the next unfainted Pokémon (mid-turn faint), apply hazards and on-entry abilities. */
+export async function applyAutoSwitchInEffects(
+  state: BattleState,
+  side: 'player' | 'opponent',
+  incoming: BattlePokemon
+): Promise<void> {
+  await runEntrySequence(state, side, incoming);
+  incoming.volatile.justSwitchedIn = true;
 }
 
 // Process end-of-turn effects
@@ -1229,8 +1262,8 @@ export async function processReplacements(state: BattleState): Promise<void> {
   
   // If both sides need replacements, determine order by speed
   if (playerNeedsReplacement && opponentNeedsReplacement) {
-    const playerSpeed = getEffectiveSpeed(getCurrentPokemon(state.player));
-    const opponentSpeed = getEffectiveSpeed(getCurrentPokemon(state.opponent));
+    const playerSpeed = getEffectiveSpeed(getCurrentPokemon(state.player), !!(state.player.sideConditions.tailwind?.turns && state.player.sideConditions.tailwind.turns > 0));
+    const opponentSpeed = getEffectiveSpeed(getCurrentPokemon(state.opponent), !!(state.opponent.sideConditions.tailwind?.turns && state.opponent.sideConditions.tailwind.turns > 0));
     
     if (playerSpeed > opponentSpeed) {
       // Player chooses first

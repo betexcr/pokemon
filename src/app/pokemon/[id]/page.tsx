@@ -15,7 +15,6 @@ async function preloadEvolutionChain(pokemon: any) {
       // Preload Pokemon in the evolution chain
       const evolutionIds = evolutionChain.map((evo: any) => evo.id).filter(Boolean)
       if (evolutionIds.length > 0) {
-        console.log(`🔄 Preloading evolution chain Pokemon: ${evolutionIds.join(', ')}`)
         await cacheUtils.preloadForDetailPage(evolutionIds[0]) // Preload first evolution
       }
     }

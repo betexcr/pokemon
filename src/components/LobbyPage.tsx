@@ -87,8 +87,6 @@ export default function LobbyPage() {
         selectedTeam // Pass the full team object
       );
       
-      console.log('Created room with ID:', roomId);
-      
       // Redirect to the room
       router.push(`/lobby/${roomId}`);
     } catch (error) {
@@ -228,9 +226,10 @@ export default function LobbyPage() {
               <p className="text-gray-600 mb-4">Select your team and start a battle</p>
               
               <div className="relative max-w-md">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Select Team</label>
+                <label htmlFor="lobby-team-select" className="block text-sm font-medium text-gray-700 mb-1">Select Team</label>
                 <div className="relative">
                   <select
+                    id="lobby-team-select"
                     value={selectedTeamId}
                     onChange={(e) => setSelectedTeamId(e.target.value)}
                     className="block w-full pl-3 pr-10 py-3 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-lg border bg-gray-50"

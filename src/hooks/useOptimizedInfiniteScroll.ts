@@ -90,22 +90,16 @@ export function useOptimizedInfiniteScroll<T>(
 
   // Optimized load more function with batching and preloading
   const loadMore = useCallback(async () => {
-    console.log('🔍 loadMore called:', { enabled, isLoading: isLoadingRef.current, hasMore, offset })
-    
     if (!enabled || isLoadingRef.current || !hasMore) {
-      console.log('🔍 loadMore early return:', { enabled, isLoading: isLoadingRef.current, hasMore })
       return
     }
 
-    // Protection against rapid calls
     const now = Date.now()
     if (now - lastLoadTimeRef.current < 100) {
-      console.log('🔍 loadMore rate limited:', { timeSinceLastLoad: now - lastLoadTimeRef.current })
       return
     }
     lastLoadTimeRef.current = now
 
-    console.log('🔍 loadMore proceeding with fetch:', { offset, fetchSize })
     isLoadingRef.current = true
     setLoading(true)
     setError(null)
@@ -119,9 +113,7 @@ export function useOptimizedInfiniteScroll<T>(
       const currentBatchSize = fetchSize > 0 ? fetchSize : batchSize
 
       while (attempts < 3) {
-        console.log(`🔍 Fetching batch: offset=${pageOffset}, limit=${currentBatchSize}, attempt=${attempts + 1}`)
         const batch = await fetchFunction(pageOffset, currentBatchSize)
-        console.log(`🔍 Batch result: received ${batch.length} items`)
         if (batch.length > 0) {
           newData = batch
           break
@@ -140,12 +132,9 @@ export function useOptimizedInfiniteScroll<T>(
       if (newData.length === 0) {
         // Only set hasMore to false if we actually got no data and we've tried multiple times
         if (attempts >= 3) {
-          console.log('🛑 No more data available after multiple attempts, setting hasMore to false')
           setHasMore(false)
         } else {
-          // Try next offset
           const nextOffset = pageOffset + currentBatchSize
-          console.log('🔄 No data in this batch, trying next offset:', nextOffset)
           setOffset(nextOffset)
         }
         return
@@ -295,11 +284,8 @@ export function useOptimizedInfiniteScroll<T>(
   // Intersection observer for automatic loading
   useEffect(() => {
     if (!enabled || !hasMore || loading) {
-      console.log('🔍 IntersectionObserver setup skipped:', { enabled, hasMore, loading })
       return
     }
-    
-    console.log('🔍 Setting up IntersectionObserver:', { enabled, hasMore, loading, dataLength: data.length })
 
     const setupObserver = () => {
       if (observerRef.current) {
@@ -309,17 +295,7 @@ export function useOptimizedInfiniteScroll<T>(
       observerRef.current = new IntersectionObserver(
         (entries) => {
           const [entry] = entries
-          console.log('🔍 IntersectionObserver triggered:', { 
-            isIntersecting: entry.isIntersecting, 
-            ratio: entry.intersectionRatio.toFixed(2),
-            mostlyVisible: entry.intersectionRatio > 0.5,
-            isLoading: isLoadingRef.current,
-            hasMore,
-            dataLength: data.length,
-            offset
-          })
           if (entry.isIntersecting && !isLoadingRef.current && hasMore) {
-            console.log('🔍 Calling loadMore from IntersectionObserver')
             loadMore()
           }
         },
@@ -332,7 +308,6 @@ export function useOptimizedInfiniteScroll<T>(
 
       if (sentinelNode) {
         observerRef.current.observe(sentinelNode)
-        console.log('🔍 IntersectionObserver observing sentinel node')
       }
     }
 

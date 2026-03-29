@@ -10,15 +10,18 @@ export function getPokemonTypes(pokemon: BattlePokemon): TypeName[] {
 
 export function stealthRockDamage(pokemon: BattlePokemon): number {
   const effectiveness = calculateTypeEffectiveness('Rock', getPokemonTypes(pokemon));
+  if (effectiveness === 0) return 0;
   const fraction = (1 / 8) * effectiveness;
   return Math.max(1, Math.floor(pokemon.maxHp * fraction));
 }
 
 export function isGrounded(pokemon: BattlePokemon): boolean {
-  return !pokemon.pokemon.types.some(typeEntry => {
+  const isFlying = pokemon.pokemon.types.some(typeEntry => {
     const type = typeof typeEntry === 'string' ? typeEntry : typeEntry.type?.name || '';
-    return type === 'Flying';
+    return type.toLowerCase() === 'flying';
   });
+  const hasLevitate = pokemon.currentAbility?.toLowerCase() === 'levitate';
+  return !isFlying && !hasLevitate;
 }
 
 export function spikesDamage(pokemon: BattlePokemon, layers: number): number {
@@ -53,15 +56,17 @@ export function applyEntryHazards(pokemon: BattlePokemon, hazards: SideHazards):
   }
 
   if (hazards.toxicSpikes > 0 && isGrounded(pokemon)) {
-    const isPoisonType = pokemon.pokemon.types.some(typeEntry => {
+    const typeNames = pokemon.pokemon.types.map(typeEntry => {
       const type = typeof typeEntry === 'string' ? typeEntry : typeEntry.type?.name || '';
-      return type === 'Poison';
+      return type.toLowerCase();
     });
+    const isPoisonType = typeNames.includes('poison');
+    const isSteelType = typeNames.includes('steel');
 
     if (isPoisonType) {
       hazards.toxicSpikes = 0;
       absorbedToxicSpikes = true;
-    } else if (!pokemon.status) {
+    } else if (!isSteelType && !pokemon.status) {
       poisonStatus = hazards.toxicSpikes === 2 ? 'badly-poisoned' : 'poisoned';
       pokemon.volatile.toxicCounter = poisonStatus === 'badly-poisoned' ? 1 : 0;
     }

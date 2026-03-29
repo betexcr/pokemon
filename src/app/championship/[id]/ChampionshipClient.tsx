@@ -48,14 +48,20 @@ function ChampionshipDetailContent({ championshipId }: Props) {
   const [teamsLoading, setTeamsLoading] = useState(true);
 
   useEffect(() => {
-    const unsub = championshipService.onChampionshipChange(
-      championshipId,
-      (c) => {
-        setChampionship(c);
-        setLoading(false);
-      }
-    );
-    return () => unsub();
+    let unsub: (() => void) | undefined;
+    try {
+      unsub = championshipService.onChampionshipChange(
+        championshipId,
+        (c) => {
+          setChampionship(c);
+          setLoading(false);
+        }
+      );
+    } catch {
+      setChampionship(null);
+      setLoading(false);
+    }
+    return () => unsub?.();
   }, [championshipId]);
 
   useEffect(() => {

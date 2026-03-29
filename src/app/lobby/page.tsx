@@ -144,9 +144,6 @@ function LobbyPage() {
         selectedTeam
       );
 
-      // setRoomCode(roomId);
-      console.log('Created room with ID:', roomId);
-
       // Redirect to the room with lobby transition
       lobbyTransition(roomId);
     } catch (error) {

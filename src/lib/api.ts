@@ -48,7 +48,7 @@ async function getCache(key: string): Promise<any> {
   if (!isClientOffline()) {
     const negativeCached = negativeCache.get(key)
     if (negativeCached && Date.now() - negativeCached.timestamp < negativeCached.ttl) {
-      console.log('🚫 Negative cache hit - skipping failed request:', key)
+      // Negative cache hit - skip failed request
       throw new Error(`Request failed (cached): ${negativeCached.error}`)
     }
   }
@@ -136,7 +136,7 @@ class CircuitBreaker {
       } else {
         // Reset circuit after recovery timeout
         this.failures = 0
-        console.log('Circuit breaker reset - attempting to recover')
+        // Circuit breaker reset
       }
     }
     return false
@@ -162,8 +162,7 @@ async function fetchFromAPI<T>(url: string, signal?: AbortSignal): Promise<T> {
   const startTime = Date.now();
   const maxAttempts = 5 // Increased from 3 to 5 for better resilience
   const baseDelayMs = 500 // Increased base delay for 503 errors
-  // Retry on common transient statuses; include 404 because PokeAPI/CDN can occasionally 404 briefly
-  const retryStatuses = new Set([404, 408, 425, 429, 500, 502, 503, 504])
+  const retryStatuses = new Set([408, 425, 429, 500, 502, 503, 504])
 
   // Special handling for 503 errors (Service Unavailable)
   const is503Error = (status: number) => status === 503
@@ -309,7 +308,7 @@ async function performFetchWithRetry<T>(
       } else if (error instanceof TypeError && error.message.includes('fetch')) {
         // Only report actual network errors, not other TypeErrors
         reportNetworkError(`Network request failed: ${error.message}`)
-      } else {
+      } else if (!error?.message?.includes('404')) {
         reportApiError(`API request failed: ${error.message}`)
       }
 
@@ -476,7 +475,6 @@ export async function getPokemon(id: number | string, signal?: AbortSignal): Pro
   // Check cache first
   const cached = await getCache(cacheKey)
   if (cached) {
-    console.log(`📦 Cache hit for Pokemon ${numericId}`)
     return cached
   }
 
@@ -514,12 +512,12 @@ export async function getPokemon(id: number | string, signal?: AbortSignal): Pro
   // Always use numeric ID for API calls (no zero-padding)
   const url = `${API_BASE_URL}/pokemon/${numericId}/`
   try {
-    console.log(`🌐 Fetching Pokemon ${numericId} from API`)
+    
     const data = await fetchFromAPI<Pokemon>(url, signal)
 
     // Cache with longer TTL for detail pages (24 hours)
     await setCache(cacheKey, data, CACHE_TTL.POKEMON_DETAIL * 2)
-    console.log(`✅ Cached Pokemon ${numericId} data`)
+    
 
     return data
   } catch (error: any) {
@@ -562,19 +560,18 @@ export async function getPokemonSpecies(id: number | string): Promise<any> {
   const cacheKey = getCacheKey('pokemon-species', { id: numericId })
   const cached = await getCache(cacheKey)
   if (cached) {
-    console.log(`📦 Cache hit for Pokemon species ${numericId}`)
     return cached
   }
 
   // Always use numeric ID for API calls (no zero-padding)
   const url = `${API_BASE_URL}/pokemon-species/${numericId}/`
   try {
-    console.log(`🌐 Fetching Pokemon species ${numericId} from API`)
+    
     const data = await fetchFromAPI(url)
 
     // Cache species data for longer (species data rarely changes)
     await setCache(cacheKey, data, CACHE_TTL.POKEMON_SPECIES * 2)
-    console.log(`✅ Cached Pokemon species ${numericId} data`)
+    
 
     return data
   } catch (error: any) {
@@ -585,7 +582,6 @@ export async function getPokemonSpecies(id: number | string): Promise<any> {
         const pokemon = await getPokemon(id)
         if (pokemon.species?.url) {
           const speciesId = pokemon.species.url.split('/').slice(-2, -1)[0]
-          console.log(`Pokemon ${id} has no direct species, using base species ${speciesId}`)
           return await getPokemonSpecies(speciesId)
         }
       } catch (pokemonError) {

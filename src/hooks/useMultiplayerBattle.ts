@@ -21,14 +21,10 @@ export function useChoiceTimeout(
     
     // Already past deadline
     if (remaining <= 0) {
-      console.warn('⏰ Deadline already passed');
       return;
     }
     
-    // Set timeout
-    console.log(`⏰ Setting timeout for ${Math.round(remaining / 1000)}s`);
     timerRef.current = setTimeout(() => {
-      console.warn(`⏰ Choice timeout - auto-forfeiting player ${userId}`);
       handleTimeout(battleId, userId).catch(err => {
         console.error('Failed to handle timeout:', err);
       });
@@ -50,7 +46,6 @@ export function useForfeit(battleId: string, userId: string) {
   
   const forfeit = useCallback(async () => {
     if (forfeiting.current) {
-      console.warn('Already forfeiting...');
       return;
     }
     
@@ -59,7 +54,6 @@ export function useForfeit(battleId: string, userId: string) {
     
     try {
       forfeiting.current = true;
-      console.log(`🏳️ Forfeiting battle ${battleId}`);
       await handleForfeit(battleId, userId);
     } catch (error) {
       console.error('Failed to forfeit:', error);

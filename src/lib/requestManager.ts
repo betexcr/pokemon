@@ -301,7 +301,7 @@ class RequestManager {
     
     if (toDelete.length > 0) {
       toDelete.forEach(id => this.requests.delete(id));
-      console.log(`[RequestManager] Pruned ${toDelete.length} old requests`);
+      
       this.notifyObservers();
     }
   }

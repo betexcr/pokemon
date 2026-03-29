@@ -121,7 +121,6 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
   onBattleComplete,
   viewMode = 'classic'
 }) => {
-  console.log('🎮 RTDBBattleComponent viewMode:', viewMode);
   const {
     loading,
     error,
@@ -137,18 +136,6 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
     chooseSwitch,
     forfeit
   } = useBattleState(battleId);
-
-  useEffect(() => {
-    console.log('RTDBBattleComponent: Battle state updated:', {
-      hasMeta: !!meta,
-      hasPublic: !!pub,
-      hasPrivate: !!me,
-      phase: meta?.phase,
-      turn: meta?.turn,
-      publicTurn: pub?.lastResultSummary
-    });
-  }, [meta, pub, me]);
-
 
   // duplicate state/effects removed (using direct imports below)
 
@@ -259,18 +246,14 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
   }, [meta?.phase, meta?.winnerUid, onBattleComplete]);
 
 const handleMoveSelection = async (moveId: string, target?: 'p1' | 'p2') => {
-  console.log('🎮 handleMoveSelection called:', { moveId, target, hasPub: !!pub, hasMyActive: !!(mySideEarly && (pub as any)?.[mySideEarly]?.active) });
     try {
       if (!meta) {
-        console.warn('No battle meta available; cannot select move.');
         return;
       }
       if (meta.phase !== 'choosing') {
-        console.warn('Battle not in selection phase; ignoring move input.');
         return;
       }
       if (waitingForResolution && pendingAction && pendingAction.turn === meta.turn) {
-        console.warn('Move already selected for this turn; awaiting resolution.');
         return;
       }
       setPendingAction({ turn: meta.turn, type: 'move', id: moveId });
@@ -315,14 +298,12 @@ const handleMoveSelection = async (moveId: string, target?: 'p1' | 'p2') => {
   useEffect(() => {
     if (process.env.NEXT_PUBLIC_E2E === 'true') {
       const handleCustomMoveEvent = (event: CustomEvent) => {
-        console.log('🎮 Received custom move event:', event.detail);
         if (event.detail && event.detail.moveId) {
           handleMoveSelection(event.detail.moveId);
         }
       };
       
       document.addEventListener('move-selected', handleCustomMoveEvent as EventListener);
-      console.log('🎮 Added custom move event listener for E2E testing');
       
       return () => {
         document.removeEventListener('move-selected', handleCustomMoveEvent as EventListener);
@@ -333,15 +314,12 @@ const handleMoveSelection = async (moveId: string, target?: 'p1' | 'p2') => {
   const handlePokemonSwitch = async (pokemonIndex: number) => {
     try {
       if (!meta) {
-        console.warn('No battle meta available; cannot switch.');
         return;
       }
       if (meta.phase !== 'choosing') {
-        console.warn('Battle not in selection phase; ignoring switch input.');
         return;
       }
       if (waitingForResolution && pendingAction && pendingAction.turn === meta.turn) {
-        console.warn('Action already submitted; awaiting resolution.');
         return;
       }
       setPendingAction({ turn: meta.turn, type: 'switch', id: pokemonIndex });

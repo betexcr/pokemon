@@ -84,6 +84,7 @@ export interface RTDBBattlePublic {
 
 export interface RTDBBattlePrivate {
   team: any; // Full secret team info
+  currentIndex?: number;
   choiceLock?: {
     moveId?: string;
     target?: string;

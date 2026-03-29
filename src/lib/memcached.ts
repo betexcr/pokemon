@@ -45,6 +45,7 @@ export class BrowserCache {
     try {
       // Update access time for LRU tracking
       this.accessTimes.set(key, Date.now())
+      this.pruneAccessTimesIfNeeded()
       
       if (this.useIndexedDB) {
         return await this.getFromIndexedDB<T>(key)
@@ -74,6 +75,7 @@ export class BrowserCache {
       
       // Update access time for LRU tracking
       this.accessTimes.set(key, Date.now())
+      this.pruneAccessTimesIfNeeded()
       
       if (this.useIndexedDB) {
         return await this.setToIndexedDB(key, cacheItem)
@@ -90,11 +92,13 @@ export class BrowserCache {
     if (typeof window === 'undefined') return false
     
     try {
-      if (this.useIndexedDB) {
-        return await this.delFromIndexedDB(key)
-      } else {
-        return this.delFromLocalStorage(key)
+      const ok: boolean = this.useIndexedDB
+        ? await this.delFromIndexedDB(key)
+        : this.delFromLocalStorage(key)
+      if (ok) {
+        this.accessTimes.delete(key)
       }
+      return ok
     } catch (error) {
       console.error('Browser cache DEL error:', error)
       return false
@@ -251,6 +255,17 @@ export class BrowserCache {
     // Browser storage doesn't need explicit closing
   }
 
+  /** Prevent unbounded growth of the in-memory LRU map (IndexedDB path skips storage eviction). */
+  private pruneAccessTimesIfNeeded(): void {
+    const cap = this.maxItems * 3
+    if (this.accessTimes.size <= cap) return
+    const entries = [...this.accessTimes.entries()].sort((a, b) => a[1] - b[1])
+    const removeCount = this.accessTimes.size - this.maxItems
+    for (let i = 0; i < removeCount && i < entries.length; i++) {
+      this.accessTimes.delete(entries[i][0])
+    }
+  }
+
   // Cache management methods
   private async ensureCacheSpace(key: string, newItem: CacheItem): Promise<void> {
     if (typeof window === 'undefined') return
@@ -308,7 +323,6 @@ export class BrowserCache {
         }
       }
 
-      console.log(`Evicted ${freedSpace} bytes from cache`)
     } catch (error) {
       console.warn('LRU eviction error:', error)
     }
@@ -467,7 +481,10 @@ export class BrowserCache {
           })
           
           Promise.all(deletePromises)
-            .then(() => resolve(true))
+            .then(() => {
+              matchingKeys.forEach(key => this.accessTimes.delete(key))
+              resolve(true)
+            })
             .catch(reject)
         }
       }
@@ -540,7 +557,6 @@ export class BrowserCache {
         this.accessTimes.delete(key)
       }
 
-      console.log(`Cleared ${sortedKeys.length} oldest cache items`)
     } catch (error) {
       console.warn('Error clearing oldest items:', error)
     }
@@ -560,7 +576,10 @@ export class BrowserCache {
     try {
       const keys = Object.keys(localStorage)
       const matchingKeys = keys.filter(key => key.includes(pattern))
-      matchingKeys.forEach(key => localStorage.removeItem(key))
+      matchingKeys.forEach((key) => {
+        localStorage.removeItem(key)
+        this.accessTimes.delete(key)
+      })
       return true
     } catch (error) {
       console.error('localStorage clear pattern error:', error)

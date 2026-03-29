@@ -52,8 +52,6 @@ export function useRequestCancellation(options: UseRequestCancellationOptions = 
     if (skipNavigation) return;
 
     if (prevPathnameRef.current !== pathname) {
-      console.log(`🛑 Route changed from ${prevPathnameRef.current} to ${pathname}, cancelling requests`);
-
       if (contexts) {
         contexts.forEach(context => requestManager.cancelContext(context));
       } else {

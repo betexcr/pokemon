@@ -76,13 +76,9 @@ export class FirebaseBattleSyncManager {
   }
 
   async initialize(): Promise<void> {
-    console.log('🔥 Initializing Firebase Battle Sync Manager');
-    
     try {
-      // Set up Firebase real-time listeners
       this.setupFirebaseListeners();
       this.updateSyncStatus({ isConnected: true });
-      console.log('✅ Firebase Battle Sync Manager initialized');
     } catch (error) {
       console.error('❌ Failed to initialize Firebase battle sync:', error);
       this.updateSyncStatus({ isConnected: false });
@@ -103,13 +99,6 @@ export class FirebaseBattleSyncManager {
   }
 
   private handleBattleUpdate(battle: MultiplayerBattleState): void {
-    console.log('📥 Received battle update from Firebase:', {
-      turnNumber: battle.turnNumber,
-      status: battle.status,
-      phase: battle.phase,
-      actionsCount: battle.actions?.length || 0
-    });
-
     // Extract battle state from battle data
     if (battle.battleData) {
       const serializedState = deserializeBattleStateFromFirestore(battle.battleData as Record<string, unknown>);
@@ -126,12 +115,6 @@ export class FirebaseBattleSyncManager {
   }
 
   private handleBattleStateUpdate(state: BattleState): void {
-    console.log('🔄 Processing battle state update:', {
-      turn: state.turn,
-      phase: state.phase,
-      isComplete: state.isComplete
-    });
-
     // Check for conflicts
     if (this.currentState && this.hasStateConflict(this.currentState, state)) {
       console.warn('⚠️ State conflict detected, resolving...');
@@ -143,8 +126,6 @@ export class FirebaseBattleSyncManager {
   }
 
   private handleActionsUpdate(actions: any[]): void {
-    console.log('🎯 Processing actions update:', actions.length, 'actions');
-    
     // Find actions for current turn
     const currentTurnActions = actions.filter(action => 
       action.turn === this.currentState?.turn
@@ -188,18 +169,15 @@ export class FirebaseBattleSyncManager {
 
     switch (this.conflictResolutionStrategy) {
       case 'server':
-        console.log('🔄 Resolving conflict: using server state');
         this.currentState = serverState;
         this.notifyStateChange(serverState);
         break;
 
       case 'client':
-        console.log('🔄 Resolving conflict: using client state');
         this.syncStateToFirebase(localState);
         break;
 
       case 'merge':
-        console.log('🔄 Resolving conflict: merging states');
         this.mergeStates(localState, serverState);
         break;
     }
@@ -254,12 +232,8 @@ export class FirebaseBattleSyncManager {
 
   private async syncStateToFirebase(state: BattleState): Promise<void> {
     try {
-      console.log('📤 Syncing battle state to Firebase');
-      
-      // Check if battle still exists before attempting to sync
       const battleExists = await battleService.getBattle(this.config.battleId);
       if (!battleExists) {
-        console.log('⏭️ Skipping sync - battle document no longer exists');
         return;
       }
       
@@ -280,9 +254,7 @@ export class FirebaseBattleSyncManager {
     } catch (error) {
       console.error('❌ Failed to sync state to Firebase:', error);
       
-      // If it's a permission error, the battle might have been deleted
       if (error instanceof Error && error.message.includes('permission-denied')) {
-        console.log('⚠️ Battle may have been deleted, stopping sync attempts');
         this.disconnect();
       }
     }
@@ -292,8 +264,6 @@ export class FirebaseBattleSyncManager {
     if (!this.currentState) {
       throw new Error('No battle state available');
     }
-
-    console.log('🎯 Selecting move:', moveName, 'for turn', this.currentState.turn);
 
     const action: BattleAction = {
       type: 'move',
@@ -316,7 +286,6 @@ export class FirebaseBattleSyncManager {
         moveName
       });
 
-      console.log('✅ Move selection sent to Firebase');
     } catch (error) {
       console.error('❌ Failed to send move selection:', error);
       this.pendingActions.delete(actionId);
@@ -329,8 +298,6 @@ export class FirebaseBattleSyncManager {
     if (!this.currentState) {
       throw new Error('No battle state available');
     }
-
-    console.log('🔄 Switching to Pokemon:', pokemonIndex);
 
     const action: BattleAction = {
       type: 'switch',
@@ -352,9 +319,8 @@ export class FirebaseBattleSyncManager {
         switchIndex: pokemonIndex
       });
 
-      console.log('✅ Pokemon switch action sent to Firebase');
     } catch (error) {
-      console.error('❌ Failed to send pokemon switch:', error);
+      console.error('Failed to send pokemon switch:', error);
       this.pendingActions.delete(actionId);
       this.updateSyncStatus({ pendingActions: this.pendingActions.size });
       throw error;
@@ -372,8 +338,6 @@ export class FirebaseBattleSyncManager {
   }
 
   private async notifyActionsReady(actions: any[]): Promise<void> {
-    console.log('⚡ Both actions ready - triggering resolution:', actions);
-    
     if (this.currentState) {
       // Convert Firebase actions to BattleActions
       const playerAction = actions.find(action => action.playerId === this.config.playerId);
@@ -393,8 +357,6 @@ export class FirebaseBattleSyncManager {
           switchIndex: opponentAction.switchIndex,
           target: opponentAction.type === 'move' ? 'player' : 'opponent'
         };
-        
-        console.log('🔄 Processing battle turn with actions:', { playerAction: playerBattleAction, opponentAction: opponentBattleAction });
         
         try {
           // Process the battle turn using the new Gen-8/9 battle flow
@@ -454,7 +416,6 @@ export class FirebaseBattleSyncManager {
       this.battleUnsubscribe = null;
     }
     this.updateSyncStatus({ isConnected: false });
-    console.log('🔥 Disconnected from Firebase Battle Sync');
   }
 }
 

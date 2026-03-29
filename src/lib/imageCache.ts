@@ -72,14 +72,13 @@ class ImageCache {
     }
     
     if (entriesToDelete.length > 0) {
-      console.log(`[ImageCache] Cleaned up ${entriesToDelete.length} old cached images`)
     }
   }
 
   private async checkServiceWorkerSupport() {
     try {
       if ('serviceWorker' in navigator && 'caches' in window) {
-        console.log('Service Worker and Cache API available for image caching')
+        
       } else {
         console.warn('Service Worker or Cache API not available, falling back to memory-only cache')
         this.useServiceWorker = false
@@ -108,7 +107,7 @@ class ImageCache {
         this.memoryCache.delete(url)
       }
       
-      console.log(`[ImageCache] Memory cleanup: removed ${itemsToRemove} oldest images (cache size: ${this.memoryCache.size}/${this.config.maxMemoryItems})`)
+      
     }
   }
 
@@ -137,7 +136,7 @@ class ImageCache {
           this.manageMemoryCache()
           
           measureLoad() // Record load time
-          console.log(`[ImageCache] Served from SW: ${url}`)
+          
           return objectURL
         }
       } catch (error) {
@@ -171,7 +170,7 @@ class ImageCache {
       this.manageMemoryCache()
 
       measureLoad() // Record successful load
-      console.log(`[ImageCache] Fetched: ${url} (${(blob.size / 1024).toFixed(2)} KB)`)
+      
       return objectURL
 
     } catch (error) {
@@ -185,7 +184,7 @@ class ImageCache {
   async preloadImages(urls: string[], maxConcurrent = 5): Promise<void> {
     // Check if we should preload based on connection
     if (!shouldPreloadImage()) {
-      console.log('[ImageCache] Skipping preload on slow connection or data saver mode')
+      
       return
     }
     
@@ -264,7 +263,7 @@ class ImageCache {
       }).catch(err => console.warn('[ImageCache] Failed to open SW cache:', err))
     }
     
-    console.log('[ImageCache] Cleared all cached images')
+    
   }
 
   // Destructor-like cleanup
@@ -314,11 +313,11 @@ const POPULAR_POKEMON_IDS = [
 export async function preloadPopularPokemon(): Promise<void> {
   // Check if we should preload
   if (!shouldPreloadImage()) {
-    console.log('🚫 Skipping preload on slow connection')
+    
     return
   }
   
-  console.log('🚀 Preloading popular Pokemon images...')
+  
   const startTime = performance.now()
   
   // Preload based on connection quality
@@ -327,27 +326,27 @@ export async function preloadPopularPokemon(): Promise<void> {
   await preloadPokemonImages(popularIds)
   
   const endTime = performance.now()
-  console.log(`✅ Preloaded ${popularIds.length} popular Pokemon in ${(endTime - startTime).toFixed(2)}ms`)
+  
 }
 
 // Preload Pokemon based on current viewport and scroll position
 export async function preloadVisiblePokemon(visibleIds: number[]): Promise<void> {
   if (visibleIds.length === 0) return
   
-  console.log(`🔍 Preloading ${visibleIds.length} visible Pokemon images...`)
+  
   const startTime = performance.now()
   
   await preloadPokemonImages(visibleIds)
   
   const endTime = performance.now()
-  console.log(`✅ Preloaded visible Pokemon images in ${(endTime - startTime).toFixed(2)}ms`)
+  
 }
 
 // Preload Pokemon based on search patterns
 export async function preloadSearchResults(searchTerm: string, resultIds: number[]): Promise<void> {
   if (resultIds.length === 0) return
   
-  console.log(`🔍 Preloading search results for "${searchTerm}": ${resultIds.length} Pokemon`)
+  
   const startTime = performance.now()
   
   // Preload first 10 search results
@@ -355,12 +354,12 @@ export async function preloadSearchResults(searchTerm: string, resultIds: number
   await preloadPokemonImages(idsToPreload)
   
   const endTime = performance.now()
-  console.log(`✅ Preloaded search results in ${(endTime - startTime).toFixed(2)}ms`)
+  
 }
 
 // Cache warming for frequently accessed Pokemon
 export async function warmCache(): Promise<void> {
-  console.log('🔥 Warming image cache...')
+  
   const startTime = performance.now()
   
   try {
@@ -386,11 +385,11 @@ export async function warmCache(): Promise<void> {
     }
     
     const endTime = performance.now()
-    console.log(`🔥 Cache warming completed in ${(endTime - startTime).toFixed(2)}ms`)
+    
     
     // Log cache stats after warming
     const stats = imageCache.getStats()
-    console.log('📊 Cache stats after warming:', stats)
+    
     
   } catch (error) {
     console.error('❌ Cache warming failed:', error)
@@ -410,8 +409,5 @@ export function startProgressiveCacheWarming(): void {
     }
   }, 2000) // 2 second delay
   
-  console.log('🚀 Progressive cache warming started')
+  
 }
-
-// Cache test utility available in development
-// Access via: import { CacheTest } from '@/lib/cacheTest'

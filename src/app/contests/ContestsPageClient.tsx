@@ -98,8 +98,9 @@ export default function ContestsPageClient() {
     const category = contestState.selectedCategory
     if (!category) return
 
-    // Get the relevant stat for this category
-    const statValue = contestState.pokemonStats[category as keyof ContestStats]
+    // Map category id to the matching stat key (e.g. 'cool' → 'coolness')
+    const statKey = contestData.categories.find(c => c.id === category)?.stat as keyof ContestStats | undefined
+    const statValue = statKey ? contestState.pokemonStats[statKey] ?? 0 : 0
     
     // Calculate stars based on stat value (following actual contest mechanics)
     // 0-49: 1 star, 50-99: 2 stars, 100-149: 3 stars, 150-199: 4 stars, 200+: 5 stars

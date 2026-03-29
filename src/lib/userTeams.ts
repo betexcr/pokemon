@@ -9,6 +9,7 @@ import {
   query,
   where,
   orderBy,
+  limit as firestoreLimit,
   serverTimestamp,
   type DocumentData,
   type QueryDocumentSnapshot,
@@ -62,11 +63,19 @@ export interface TeamDocument {
   description?: string;
 }
 
+function normalizeLevel(raw: unknown): number {
+  const fallback = 50;
+  if (raw == null) return fallback;
+  const n = typeof raw === 'number' ? raw : Number(raw);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(100, Math.max(1, Math.round(n)));
+}
+
 function normalizeSlot(slot: StoredTeamSlot | null | undefined): TeamSlot {
   const normalized = slot || { id: null, level: 50, moves: [] };
   return {
     id: normalized.id ?? null,
-    level: normalized.level ?? 50,
+    level: normalizeLevel(normalized.level),
     moves: Array.isArray(normalized.moves) ? normalized.moves : [],
     nature: normalized.nature ?? DEFAULT_NATURE,
     isShiny: normalized.isShiny ?? false,
@@ -304,11 +313,12 @@ export async function getPublicTeams(limit: number = 20): Promise<SavedTeam[]> {
     const publicTeamsQuery = query(
       collection(db, 'userTeams'),
       where('isPublic', '==', true),
-      orderBy('updatedAt', 'desc')
+      orderBy('updatedAt', 'desc'),
+      firestoreLimit(limit)
     )
 
     const querySnapshot = await getDocs(publicTeamsQuery)
-    return querySnapshot.docs.slice(0, limit).map(docToSavedTeam)
+    return querySnapshot.docs.map(docToSavedTeam)
   } catch (error) {
     console.error('Error fetching public teams from Firebase:', error)
     throw new Error('Failed to fetch public teams')

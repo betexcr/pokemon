@@ -15,8 +15,10 @@ export async function GET(request: NextRequest) {
   const methods = methodRaw
     ? methodRaw.split(',').filter(Boolean)
     : undefined;
-  const offset = offsetRaw ? parseInt(offsetRaw, 10) : 0;
-  const limit = limitRaw ? parseInt(limitRaw, 10) : 20;
+  const rawOffset = offsetRaw ? parseInt(offsetRaw, 10) : 0;
+  const rawLimit = limitRaw ? parseInt(limitRaw, 10) : 20;
+  const offset = Number.isFinite(rawOffset) ? Math.max(0, rawOffset) : 0;
+  const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(1, rawLimit), 200) : 20;
 
   try {
     const data = await buildEvoGraph({ gens, methods, offset, limit });

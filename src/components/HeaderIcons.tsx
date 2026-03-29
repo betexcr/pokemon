@@ -38,7 +38,12 @@ export default function HeaderIcons({
       if (!insightsRef.current.contains(target)) setOpenInsights(false)
     }
     document.addEventListener('click', onDocClick)
-    return () => document.removeEventListener('click', onDocClick)
+    return () => {
+      document.removeEventListener('click', onDocClick)
+      if (closeInsightsTimeoutRef.current) {
+        window.clearTimeout(closeInsightsTimeoutRef.current)
+      }
+    }
   }, [])
 
 	// Helpers to make hover more forgiving between button and dropdown

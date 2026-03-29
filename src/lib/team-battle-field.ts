@@ -83,6 +83,7 @@ export function applyTerrainHealing(state: BattleState): void {
     [state.player, state.opponent].forEach(team => {
       const pokemon = getCurrentPokemon(team);
       if (pokemon.currentHp <= 0) return;
+      if (!isGrounded(pokemon)) return;
       const healed = Math.floor(pokemon.maxHp / 16);
       if (healed > 0 && pokemon.currentHp < pokemon.maxHp) {
         pokemon.currentHp = Math.min(pokemon.maxHp, pokemon.currentHp + healed);

@@ -135,7 +135,7 @@ export function printTurnLog(
   res: TurnResult,
   opts?: PrintOptions
 ) {
-  console.log(formatTurnLog(attacker, defender, beforeAHP, beforeBHP, res, opts));
+  // No-op in production; use formatTurnLog() directly for structured logging
 }
 
 /** Build a plain object summary suitable for JSON storage. */

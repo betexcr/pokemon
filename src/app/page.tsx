@@ -1,15 +1,11 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Pokemon, FilterState } from '@/types/pokemon'
-import ViewportPriorityLoader from '@/lib/viewportPriorityLoader'
-import { getPokemonTotalCount, generateAllPokemonSkeletons, getPokemonList, getPokemonSkeletonsWithPagination, generateSpecialFormsPokemon, getPokemonFallbackImage, getPokemonMainPageImage, getPokemonShinyImage } from '@/lib/api'
+import { getPokemonTotalCount, generateAllPokemonSkeletons, generateSpecialFormsPokemon, getPokemonFallbackImage, getPokemonMainPageImage, getPokemonShinyImage } from '@/lib/api'
 import { useTheme } from '@/components/ThemeProvider'
 import { useRequestCancellation } from '@/hooks/useRequestCancellation'
 import { useViewportCancellation } from '@/hooks/useViewportCancellation'
-import { useRequestAnalytics } from '@/hooks/useRequestAnalytics'
-// Removed PokemonPreloader import to avoid HMR issues
-// Removed sharedPokemonCache import to avoid HMR issues - implementing cache logic inline
 import RedPokedexLayout from '@/components/RedPokedexLayout'
 import GoldPokedexLayout from '@/components/GoldPokedexLayout'
 import RubyPokedexLayout from '@/components/RubyPokedexLayout'
@@ -28,15 +24,6 @@ export default function Home() {
     contextPrefix: 'viewport'
   })
 
-  // Setup request analytics for monitoring
-  const analytics = useRequestAnalytics({
-    autoPrune: true,
-    updateInterval: 2000
-  })
-  
-  // Analytics are being tracked but not logged to reduce console noise
-  // To view analytics, check the requestManager.getAnalytics() in dev tools
-  
   useEffect(() => {
     document.documentElement.setAttribute('data-page', 'pokedex-main')
     return () => {
@@ -70,9 +57,9 @@ export default function Home() {
   const hasMorePokemonRef = useRef(true)
   const currentOffsetRef = useRef(0)
   const totalCountRef = useRef(0)
-  const isTriggeredRef = useRef(false) // Prevent multiple intersection observer triggers
-  // Viewport priority loader for smart Pokemon loading
-  const viewportLoaderRef = useRef<ViewportPriorityLoader | null>(null)
+  const isTriggeredRef = useRef(false)
+  const observerRef = useRef<IntersectionObserver | null>(null)
+  const sentinelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   
   // Update refs when state changes
   useEffect(() => {
@@ -106,37 +93,13 @@ export default function Home() {
     return Math.min(Math.max(itemsPerChunk, 40), 220)
   }, [])
   
-  // Initialize viewport priority loader
-  useEffect(() => {
-    if (!viewportLoaderRef.current) {
-      viewportLoaderRef.current = new ViewportPriorityLoader((pokemon) => {
-        // Update Pokemon in the list when it's loaded
-        setPokemonList(prev => prev.map(p => p.id === pokemon.id ? pokemon : p))
-      })
-    }
-  }, [])
+  // Load initial Pokemon data
 
-  // Auto-retry failed Pokemon when API recovers
-  useEffect(() => {
-    const retryInterval = setInterval(() => {
-      if (viewportLoaderRef.current) {
-        viewportLoaderRef.current.retryFailedPokemon().catch(err => 
-          console.warn('Error retrying failed Pokemon:', err)
-        )
-      }
-    }, 30000) // Retry every 30 seconds
-
-    return () => clearInterval(retryInterval)
-  }, [])
-  
-  // Load initial Pokemon data - FAST SCROLL VERSION
   useEffect(() => {
     const loadInitialPokemon = async () => {
       try {
         setLoading(true)
-        console.log('🚀 Loading initial Pokemon batch - FAST SCROLL...')
         
-        // Load total count first
         const total = await getPokemonTotalCount()
         setTotalCount(total)
         
@@ -147,9 +110,6 @@ export default function Home() {
         setPokemonList(initialBatch)
         setCurrentOffset(initialBatchSize)
         setLoading(false)
-        
-        console.log(`✅ Initial batch loaded: ${initialBatch.length} Pokemon (total: ${total})`)
-        
         setError(null)
       } catch (err) {
         console.error('❌ Error loading initial Pokemon:', err)
@@ -170,11 +130,9 @@ export default function Home() {
   // Load to end - load all remaining Pokemon at once
   const loadToEnd = useCallback(async () => {
     if (isLoadingMoreRef.current || !hasMorePokemonRef.current || loading) {
-      console.log(`🚫 Skipping loadToEnd - already loading or no more Pokemon`)
       return
     }
 
-    console.log(`🚀 Loading ALL remaining Pokemon to end...`)
     setIsLoadingMore(true)
 
     try {
@@ -187,8 +145,6 @@ export default function Home() {
         return
       }
 
-      console.log(`📦 Loading ${remaining} remaining Pokemon`)
-      
       // Generate all remaining skeletons at once
       const newBatch = generateAllPokemonSkeletons(remaining).map((pokemon, index) => ({
         ...pokemon,
@@ -211,8 +167,6 @@ export default function Home() {
       setCurrentOffset(totalCountRef.current)
       setHasMorePokemon(false)
 
-      // Load special forms
-      console.log('🎯 Loading special forms...')
       try {
         const specialForms = await generateSpecialFormsPokemon()
         if (specialForms.length > 0) {
@@ -224,7 +178,6 @@ export default function Home() {
         console.error('❌ Error loading special forms:', err)
       }
 
-      console.log('✅ Loaded all Pokemon to end!')
     } catch (err) {
       console.error('❌ Error loading to end:', err)
     } finally {
@@ -259,8 +212,6 @@ export default function Home() {
       if (cappedLoad <= 0) {
         return
       }
-      
-      console.log(`📦 Loading ${cappedLoad} Pokemon to reach index ${safeTargetIndex}`)
       
       const newBatch = generateAllPokemonSkeletons(cappedLoad).map((pokemon, index) => ({
         ...pokemon,
@@ -298,18 +249,15 @@ export default function Home() {
 
   // Load more Pokemon function for infinite scroll
   const loadMorePokemon = useCallback(async () => {
-    // Use refs to avoid dependency issues
     if (isLoadingMoreRef.current || !hasMorePokemonRef.current || loading) {
-      console.log(`🚫 Skipping loadMorePokemon - isLoadingMore: ${isLoadingMoreRef.current}, hasMore: ${hasMorePokemonRef.current}, loading: ${loading}`)
       return
     }
     
-    console.log(`🚀 Starting loadMorePokemon - offset: ${currentOffsetRef.current}`)
+    isLoadingMoreRef.current = true
     setIsLoadingMore(true)
     
     try {
       const currentOffsetValue = currentOffsetRef.current
-      console.log(`📦 Loading more Pokemon: offset=${currentOffsetValue}`)
       const batchSize = getViewportBatchSize()
       
       // Generate skeletons instantly without API calls for faster loading
@@ -335,32 +283,19 @@ export default function Home() {
       
       if (newBatch.length === 0) {
         setHasMorePokemon(false)
-        console.log('🛑 No more Pokemon to load')
       } else {
-        console.log(`📥 Adding ${newBatch.length} new Pokemon to list`)
-        setPokemonList(prev => {
-          const newList = [...prev, ...newBatch]
-          console.log(`📊 Pokemon list updated: ${prev.length} -> ${newList.length}`)
-          return newList
-        })
+        setPokemonList(prev => [...prev, ...newBatch])
         const newOffset = currentOffsetValue + newBatch.length
         setCurrentOffset(newOffset)
         
         // Check if we've reached the end
         if (newOffset >= totalCountRef.current) {
           setHasMorePokemon(false)
-          console.log('🛑 Reached total Pokemon count')
           
-          // Load special forms after regular Pokemon are loaded
-          console.log('🎯 Loading special forms...')
           try {
             const specialForms = await generateSpecialFormsPokemon()
             if (specialForms.length > 0) {
-              setPokemonList(prev => {
-                const newList = [...prev, ...specialForms]
-                console.log(`🎯 Added ${specialForms.length} special forms (total: ${newList.length})`)
-                return newList
-              })
+              setPokemonList(prev => [...prev, ...specialForms])
               // Update total count to include special forms
               setTotalCount(prev => prev + specialForms.length)
             }
@@ -369,15 +304,15 @@ export default function Home() {
           }
         }
         
-        console.log(`✅ Loaded ${newBatch.length} more Pokemon (total: ${newOffset}/${totalCountRef.current})`)
       }
     } catch (err) {
       console.error('❌ Error loading more Pokemon:', err)
       setError('Failed to load more Pokemon')
     } finally {
+      isLoadingMoreRef.current = false
       setIsLoadingMore(false)
     }
-  }, [loading, getViewportBatchSize]) // Only depend on loading state
+  }, [loading, getViewportBatchSize])
 
   // Reset function for error recovery
   const resetPokemonList = useCallback(() => {
@@ -394,51 +329,62 @@ export default function Home() {
     setLoading(false)
   }, [getViewportBatchSize])
 
-  // Ref for infinite scroll sentinel with balanced preloading
   const sentinelRef = useCallback((node: HTMLDivElement | null) => {
+    if (sentinelTimerRef.current) {
+      clearTimeout(sentinelTimerRef.current)
+      sentinelTimerRef.current = null
+    }
+    if (observerRef.current) {
+      observerRef.current.disconnect()
+      observerRef.current = null
+    }
+
     if (!node) return
-    
-    // Find the correct scroll container
+
     const scrollContainer = document.querySelector('[data-main-scroll]')
-    
+
     const observer = new IntersectionObserver(
       entries => {
         const entry = entries[0]
-        
+
         if (entry.isIntersecting && !isLoadingMoreRef.current && hasMorePokemonRef.current && !isTriggeredRef.current) {
           isTriggeredRef.current = true
-          
-          // Temporarily disconnect observer to prevent multiple triggers
           observer.disconnect()
-          
+
           loadMorePokemon().finally(() => {
-            // Reconnect observer after loading completes
-            setTimeout(() => {
+            sentinelTimerRef.current = setTimeout(() => {
+              sentinelTimerRef.current = null
               isTriggeredRef.current = false
-              observer.observe(node)
-            }, 100) // Reduced delay for faster reconnection
+              if (observerRef.current === observer) {
+                observer.observe(node)
+              }
+            }, 100)
           })
         }
       },
       {
-        root: scrollContainer, // Use the correct scroll container
-        rootMargin: '500px', // Increased margin for earlier triggering
+        root: scrollContainer,
+        rootMargin: '500px',
         threshold: 0.1
       }
     )
-    
+
+    observerRef.current = observer
     observer.observe(node)
-    
-    return () => {
-      observer.disconnect()
-    }
-  }, [loadMorePokemon]) // Only depend on loadMorePokemon
+  }, [loadMorePokemon])
 
   // Load comparison list from localStorage
   useEffect(() => {
-    const savedComparison = localStorage.getItem('pokemon-comparison')
-    if (savedComparison) {
-      setComparisonList(JSON.parse(savedComparison))
+    try {
+      const savedComparison = localStorage.getItem('pokemon-comparison')
+      if (savedComparison) {
+        const parsed = JSON.parse(savedComparison)
+        if (Array.isArray(parsed)) {
+          setComparisonList(parsed)
+        }
+      }
+    } catch {
+      localStorage.removeItem('pokemon-comparison')
     }
   }, [])
 
@@ -477,13 +423,7 @@ export default function Home() {
   // Determine layout mode based on theme
   const isModernTheme = theme === 'light' || theme === 'dark';
   
-  console.log('🎨 Theme check:', { theme, isModernTheme });
-
-  // No console logging in production to avoid noise
-
-  // Render modern layout for light/dark themes
   if (isModernTheme) {
-    console.log('✅ Rendering ModernPokedexLayout');
     return (
       <ModernPokedexLayout
         pokemonList={pokemonList}
@@ -513,8 +453,6 @@ export default function Home() {
     );
   }
 
-  // Render retro layouts for game themes
-  console.log('🔴 Rendering RedPokedexLayout');
   if (theme === 'red') {
     if (loading) {
       return (
@@ -539,7 +477,6 @@ export default function Home() {
     );
   }
 
-  console.log('🟡 Rendering GoldPokedexLayout');
   if (theme === 'gold') {
     if (loading) {
       return (
@@ -564,7 +501,6 @@ export default function Home() {
     );
   }
 
-  console.log('🔴 Rendering RubyPokedexLayout');
   if (theme === 'ruby') {
     if (loading) {
       return (

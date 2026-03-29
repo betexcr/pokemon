@@ -233,14 +233,10 @@ export class BattleFlowEngine {
     );
   }
 
-  private handleBattleStateChange(state: BattleState): void {
-    // Handle battle state changes
-    console.log('Battle state changed:', state);
+  private handleBattleStateChange(_state: BattleState): void {
   }
 
-  private handlePhaseChange(phase: string): void {
-    // Handle phase changes
-    console.log('Phase changed to:', phase);
+  private handlePhaseChange(_phase: string): void {
   }
 
   // Submit a move choice

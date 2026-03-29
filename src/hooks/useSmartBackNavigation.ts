@@ -19,7 +19,6 @@ export function useNavigationTracker() {
   useEffect(() => {
     // Store the current path as referrer when navigating away
     const handleBeforeUnload = () => {
-      console.log('Navigation tracker - storing referrer:', pathname)
       sessionStorage.setItem('navigation_referrer', pathname)
     }
 
@@ -28,7 +27,6 @@ export function useNavigationTracker() {
       const target = event.target as HTMLElement
       const link = target.closest('a')
       if (link && link.href && !link.href.startsWith('javascript:')) {
-        console.log('Navigation tracker - link clicked, storing referrer:', pathname)
         sessionStorage.setItem('navigation_referrer', pathname)
       }
     }
@@ -39,7 +37,6 @@ export function useNavigationTracker() {
     // Also store when the component unmounts (navigation)
     return () => {
       document.removeEventListener('click', handleLinkClick)
-      console.log('Navigation tracker - component unmounting, storing referrer:', pathname)
       sessionStorage.setItem('navigation_referrer', pathname)
     }
   }, [pathname])

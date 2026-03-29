@@ -11,14 +11,10 @@ import TrainerRoster from "@/components/battle/TrainerRoster";
 import TeamSelector from "@/components/TeamSelector";
 import OfflineBanner from "@/components/OfflineBanner";
 
-// Saved teams storage key reused from team builder
-// const STORAGE_KEY = "pokemon-team-builder";
-
 type SavedTeam = { id: string; name: string; slots: Array<{ id: number | null; level: number }>; };
 
 function BattlePage() {
   const router = useRouter();
-  // const [savedTeams, setSavedTeams] = useState<SavedTeam[]>([]);
   const [selectedPlayerTeam, setSelectedPlayerTeam] = useState<SavedTeam | null>(null);
   const [selectedOpponentTeam, setSelectedOpponentTeam] = useState<SavedTeam | null>(null);
   const [opponentType, setOpponentType] = useState<"champion" | "team">("champion");
@@ -41,16 +37,6 @@ function BattlePage() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-
-  // useEffect(() => {
-  //   try {
-  //     const raw = localStorage.getItem(STORAGE_KEY);
-  //     if (raw) setSavedTeams(JSON.parse(raw));
-  //   } catch {}
-  // }, []);
-
-  // const playerTeamsOptions = useMemo(() => savedTeams.map(t => ({ id: t.id, name: t.name })), [savedTeams]);
-
   // Handle trainer selection with mobile/desktop interactions
   const handleTrainerClick = (championId: string) => {
     const currentTime = new Date().getTime();
@@ -68,7 +54,6 @@ function BattlePage() {
         // Double tap - start battle
         const champion = GYM_CHAMPIONS.find(c => c.id === championId);
         if (champion) {
-          console.log('Starting battle with champion:', champion.name);
           startBattleWithOpponent(selectedPlayerTeam, champion);
         } else {
           console.error('Champion not found:', championId);
@@ -84,7 +69,6 @@ function BattlePage() {
       // Desktop: Single click starts battle
       const champion = GYM_CHAMPIONS.find(c => c.id === championId);
       if (champion) {
-        console.log('Starting battle with champion:', champion.name);
         startBattleWithOpponent(selectedPlayerTeam, champion);
       } else {
         console.error('Champion not found:', championId);
@@ -106,12 +90,6 @@ function BattlePage() {
   };
 
   const startBattleWithOpponent = (playerTeam: SavedTeam, champion: any) => {
-    console.log('Starting battle with opponent:', {
-      playerTeam: playerTeam.name,
-      champion: champion.name,
-      championId: champion.id
-    });
-
     setIsStartingBattle(true);
     const opponent = champion.team;
     
@@ -139,7 +117,6 @@ function BattlePage() {
         nature: (slot as any).nature || 'hardy'
       }));
       localStorage.setItem('pokemon-current-team', JSON.stringify(currentTeamData));
-      console.log('Stored current team data:', currentTeamData);
     } catch (error) {
       console.error('Failed to store current team:', error);
       alert("Error saving team data. Please try again.");
@@ -149,7 +126,6 @@ function BattlePage() {
 
     // Generate a battle ID for AI battles
     const battleId = generateBattleId();
-    console.log('Generated battle ID:', battleId);
 
     // Navigate to battle runtime with battle ID and encoded settings
     const params = new URLSearchParams({
@@ -160,7 +136,6 @@ function BattlePage() {
     });
     
     const battleUrl = `/battle/runtime?${params.toString()}`;
-    console.log('Navigating to battle URL:', battleUrl);
     
     try {
       router.push(battleUrl);
