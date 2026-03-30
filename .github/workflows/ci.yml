@@ -23,7 +23,7 @@ jobs:
         run: npm ci
 
       - name: Lint
-        run: npm run lint -- src/ --max-warnings=1000
+        run: npx eslint src/ --max-warnings=1000
 
       - name: Test
         run: npm test -- --ci --passWithNoTests

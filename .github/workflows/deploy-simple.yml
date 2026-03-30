@@ -24,6 +24,7 @@ jobs:
       - name: Build with static export
         run: |
           sed -i "s|  // output: 'export',|  output: 'export',|" next.config.ts
+          mv src/app/api src/app/_api_disabled
           npm run build
         env:
           NEXT_PUBLIC_FIREBASE_API_KEY: ${{ vars.NEXT_PUBLIC_FIREBASE_API_KEY }}
