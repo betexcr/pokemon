@@ -4,6 +4,7 @@ import { forwardRef, useMemo } from 'react'
 import Image from 'next/image'
 import { getPokemonBattleImageWithFallback, formatPokemonName, getPokemonIdFromSpecies, getShowdownAnimatedSprite } from '@/lib/utils'
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface BattleSpriteRef {}
 
 interface BattleSpriteProps {

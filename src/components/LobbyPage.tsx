@@ -247,7 +247,7 @@ export default function LobbyPage() {
                 </div>
                 {userTeams.length === 0 && (
                   <p className="mt-2 text-sm text-red-500">
-                    You don't have any teams yet! Go to the Team Builder to create one.
+                    You don&apos;t have any teams yet! Go to the Team Builder to create one.
                   </p>
                 )}
               </div>
