@@ -37,21 +37,11 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: SITE_URL,
     siteName: 'PokéDex',
-    images: [
-      {
-        url: '/pokedex.jpg',
-        width: 1224,
-        height: 650,
-        alt: 'PokéDex - Modern Pokémon Database',
-        type: 'image/jpeg',
-      },
-    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'PokéDex - Modern Pokémon Database',
     description: 'Explore the world of Pokémon with our modern, high-performance PokéDex application. Search, discover, and learn about your favorite Pokémon with beautiful UI and real-time data from PokeAPI.',
-    images: ['/pokedex.jpg'],
   },
   robots: {
     index: true,
