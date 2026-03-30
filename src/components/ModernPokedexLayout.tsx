@@ -2230,11 +2230,7 @@ export default function ModernPokedexLayout({
                       isLoadingMore={effectiveIsLoadingMore}
                       hasMorePokemon={effectiveHasMorePokemon}
                       onLoadMore={externalLoadMorePokemon || loadMorePokemon}
-                      sentinelRef={(node) => {
-                        if (externalSentinelRef) {
-                          externalSentinelRef(node)
-                        }
-                      }}
+                      sentinelRef={externalSentinelRef}
                       favoritesList={favoritesList}
                       onToggleFavorite={handleToggleFavorite}
                     />

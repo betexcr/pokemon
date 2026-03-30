@@ -901,12 +901,7 @@ export default function VirtualizedPokemonGrid({
 
       {/* Infinite scroll sentinel for non-virtualized content */}
         <div
-          ref={(node) => {
-            // Call the external sentinelRef if provided
-            if (sentinelRef) {
-              sentinelRef(node)
-            }
-          }}
+          ref={sentinelRef}
         style={{
           width: '100%',
           height: '100px', // Larger height for better detection

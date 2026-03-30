@@ -57,7 +57,6 @@ export default function Home() {
   const hasMorePokemonRef = useRef(true)
   const currentOffsetRef = useRef(0)
   const totalCountRef = useRef(0)
-  const isTriggeredRef = useRef(false)
   const observerRef = useRef<IntersectionObserver | null>(null)
   const sentinelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   
@@ -346,31 +345,43 @@ export default function Home() {
     const observer = new IntersectionObserver(
       entries => {
         const entry = entries[0]
-
-        if (entry.isIntersecting && !isLoadingMoreRef.current && hasMorePokemonRef.current && !isTriggeredRef.current) {
-          isTriggeredRef.current = true
-          observer.disconnect()
-
-          loadMorePokemon().finally(() => {
-            sentinelTimerRef.current = setTimeout(() => {
-              sentinelTimerRef.current = null
-              isTriggeredRef.current = false
-              if (observerRef.current === observer) {
-                observer.observe(node)
-              }
-            }, 100)
-          })
+        if (entry.isIntersecting && !isLoadingMoreRef.current && hasMorePokemonRef.current) {
+          loadMorePokemon()
         }
       },
       {
         root: scrollContainer,
-        rootMargin: '500px',
-        threshold: 0.1
+        rootMargin: '600px',
+        threshold: 0
       }
     )
 
     observerRef.current = observer
     observer.observe(node)
+  }, [loadMorePokemon])
+
+  // Scroll-based fallback: IntersectionObserver can miss events during iOS
+  // momentum scrolling, so also check distance from bottom on scroll.
+  useEffect(() => {
+    const scrollEl = document.querySelector('[data-main-scroll]')
+    if (!scrollEl) return
+
+    let ticking = false
+    const onScroll = () => {
+      if (ticking) return
+      ticking = true
+      requestAnimationFrame(() => {
+        ticking = false
+        if (isLoadingMoreRef.current || !hasMorePokemonRef.current) return
+        const { scrollTop, scrollHeight, clientHeight } = scrollEl
+        if (scrollHeight - scrollTop - clientHeight < 800) {
+          loadMorePokemon()
+        }
+      })
+    }
+
+    scrollEl.addEventListener('scroll', onScroll, { passive: true })
+    return () => scrollEl.removeEventListener('scroll', onScroll)
   }, [loadMorePokemon])
 
   // Load comparison list from localStorage
