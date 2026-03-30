@@ -26,7 +26,7 @@ jobs:
         run: npx eslint src/ --max-warnings=1000
 
       - name: Test
-        run: npm test -- --ci --passWithNoTests
+        run: npx vitest run --passWithNoTests
 
       - name: Build
         run: npm run build
