@@ -93,6 +93,7 @@ export default function ModernPokedexLayout({
   const SCROLL_POSITION_KEY = 'pokedex.scrollPosition'
   
   // Advanced filters state
+  const filtersLoadedRef = useRef(false)
   const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilters>({
     types: [],
     generation: 'all',
@@ -152,6 +153,7 @@ export default function ModernPokedexLayout({
             })
           }
         }
+        filtersLoadedRef.current = true
       }
     } catch (error) {
       console.error('Error loading advanced filters from localStorage:', error)
@@ -160,6 +162,7 @@ export default function ModernPokedexLayout({
 
   // Save advanced filters to localStorage whenever they change
   useEffect(() => {
+    if (!filtersLoadedRef.current) return
     try {
       if (typeof window !== 'undefined') {
         localStorage.setItem('pokedex.advancedFilters', JSON.stringify(advancedFilters))
@@ -721,6 +724,7 @@ export default function ModernPokedexLayout({
   // Filtering timeout ref to prevent multiple simultaneous calls
   const filteringTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isFilteringRef = useRef(false)
+  const pendingFilterRef = useRef(false)
   const lastFilterHashRef = useRef<string>('')
 
 
@@ -738,8 +742,8 @@ export default function ModernPokedexLayout({
       clearTimeout(filteringTimeoutRef.current)
     }
 
-    // Skip if already filtering to prevent multiple calls
     if (isFilteringRef.current) {
+      pendingFilterRef.current = true
       return
     }
 

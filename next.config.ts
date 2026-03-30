@@ -13,6 +13,19 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  serverExternalPackages: ['firebase-admin'],
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        'firebase-admin': false,
+        'firebase-admin/app': false,
+        'firebase-admin/database': false,
+        'firebase-admin/auth': false,
+      };
+    }
+    return config;
+  },
   // Use static export for Firebase hosting
   // output: 'export',
   trailingSlash: true,

@@ -1,4 +1,4 @@
-import { getRtdbOps, type RtdbOps } from '@/lib/rtdb-access';
+import type { RtdbOps } from '@/lib/rtdb-access';
 import type { RTDBBattleMeta } from '@/lib/firebase-rtdb-service';
 
 type EndReason = 'victory' | 'forfeit' | 'timeout' | 'resolution_failed';
@@ -10,6 +10,9 @@ type EndReason = 'victory' | 'forfeit' | 'timeout' | 'resolution_failed';
 function resolveOps(provided?: RtdbOps): RtdbOps | null {
   if (provided) return provided;
   try {
+    // Dynamic require to avoid pulling rtdb-access (and firebase-admin) into client bundles
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { getRtdbOps } = require('@/lib/rtdb-access') as typeof import('@/lib/rtdb-access');
     return getRtdbOps();
   } catch {
     return null;
