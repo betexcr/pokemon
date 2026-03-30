@@ -31,7 +31,7 @@ interface ContestStats {
 }
 
 interface ContestState {
-  selectedCategory: string | null
+  selectedCategory: 'cool' | 'beauty' | 'cute' | 'clever' | 'tough' | null
   currentRound: 'intro' | 'talent' | 'results'
   pokemonStats: ContestStats
   exciteMeter: number
@@ -85,11 +85,12 @@ export default function ContestsPageClient() {
   }
 
   // Handle category selection
-  const handleCategorySelect = (category: string) => {
+  type ContestCategory = NonNullable<ContestState['selectedCategory']>
+  const handleCategorySelect = (category: ContestCategory) => {
     setContestState(prev => ({
       ...prev,
       selectedCategory: category,
-      currentRound: 'intro'
+      currentRound: 'intro' as const
     }))
   }
 
@@ -141,7 +142,7 @@ export default function ContestsPageClient() {
     let comboBonus = 0
     if (contestState.lastMove) {
       const combo = checkCombo(contestState.lastMove, move)
-      if (combo.triggered) {
+      if (combo.isCombo) {
         comboBonus = 2
         heartsGained += comboBonus
       }
@@ -379,7 +380,7 @@ export default function ContestsPageClient() {
                 <CategoryTooltip key={category.id}>
                   <ContestCategory
                     category={category}
-                    onSelect={() => handleCategorySelect(category.id)}
+                    onSelect={() => handleCategorySelect(category.id as ContestCategory)}
                   />
                 </CategoryTooltip>
               ))}

@@ -17,7 +17,7 @@ app.get('/test-firebase', async (_req, res) => {
     ensureAdmin();
     const status = {
       initialized: admin.apps.length > 0,
-      apps: admin.apps.map((appItem) => appItem.name)
+      apps: admin.apps.map((appItem) => appItem?.name)
     };
 
     return res.status(200).json({ status: 'ok', firebase: status });

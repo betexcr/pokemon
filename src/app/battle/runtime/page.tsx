@@ -191,7 +191,7 @@ function BattleRuntimePage() {
         ) : (
           /* Regular Battle (Multiplayer over RTDB) */
           <RTDBBattleComponent 
-            battleId={urlBattleId}
+            battleId={urlBattleId!}
             onBattleComplete={() => {}}
             viewMode="animated"
           />
