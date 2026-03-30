@@ -230,16 +230,16 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
 
     const p1Action: BattleAction = {
         type: p1Choice.action as 'move' | 'switch',
-        moveId: p1Choice.payload.moveId,
-        switchIndex: p1Choice.payload.switchToIndex,
-        target: 'opponent' // Default target (relative to p1)
+        moveId: p1Choice.payload?.moveId,
+        switchIndex: p1Choice.payload?.switchToIndex,
+        target: 'opponent'
     };
 
     const p2Action: BattleAction = {
         type: p2Choice.action as 'move' | 'switch',
-        moveId: p2Choice.payload.moveId,
-        switchIndex: p2Choice.payload.switchToIndex,
-        target: 'player' // Default target (relative to p2)
+        moveId: p2Choice.payload?.moveId,
+        switchIndex: p2Choice.payload?.switchToIndex,
+        target: 'player'
     };
 
     // 6. Build Action Queue
@@ -311,11 +311,17 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
         }
 
         // 9. Check Win Condition
-        if (isTeamDefeated(currentState.player)) {
+        const playerDefeated = isTeamDefeated(currentState.player);
+        const opponentDefeated = isTeamDefeated(currentState.opponent);
+        if (playerDefeated && opponentDefeated) {
+            currentState.isComplete = true;
+            currentState.winner = undefined;
+            currentState.battleLog.push({ type: 'battle_end', message: 'Both teams fainted! The battle is a draw!' });
+        } else if (playerDefeated) {
             currentState.isComplete = true;
             currentState.winner = 'opponent';
             currentState.battleLog.push({ type: 'battle_end', message: `${meta.players.p2.name} won!` });
-        } else if (isTeamDefeated(currentState.opponent)) {
+        } else if (opponentDefeated) {
             currentState.isComplete = true;
             currentState.winner = 'player';
             currentState.battleLog.push({ type: 'battle_end', message: `${meta.players.p1.name} won!` });
@@ -371,12 +377,28 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
                 weather: currentState.field?.weather ?? null,
                 terrain: currentState.field?.terrain ?? null,
                 screens: {
-                    p1: currentState.player.sideConditions.screens,
-                    p2: currentState.opponent.sideConditions.screens
+                    p1: {
+                        reflect: currentState.player.sideConditions.screens.reflect?.turns ?? 0,
+                        lightScreen: currentState.player.sideConditions.screens.lightScreen?.turns ?? 0,
+                    },
+                    p2: {
+                        reflect: currentState.opponent.sideConditions.screens.reflect?.turns ?? 0,
+                        lightScreen: currentState.opponent.sideConditions.screens.lightScreen?.turns ?? 0,
+                    }
                 },
                 hazards: {
-                    p1: currentState.player.sideConditions.hazards,
-                    p2: currentState.opponent.sideConditions.hazards
+                    p1: {
+                        sr: !!currentState.player.sideConditions.hazards.stealthRock,
+                        spikes: currentState.player.sideConditions.hazards.spikes ?? 0,
+                        tSpikes: currentState.player.sideConditions.hazards.toxicSpikes ?? 0,
+                        web: !!currentState.player.sideConditions.hazards.stickyWeb,
+                    },
+                    p2: {
+                        sr: !!currentState.opponent.sideConditions.hazards.stealthRock,
+                        spikes: currentState.opponent.sideConditions.hazards.spikes ?? 0,
+                        tSpikes: currentState.opponent.sideConditions.hazards.toxicSpikes ?? 0,
+                        web: !!currentState.opponent.sideConditions.hazards.stickyWeb,
+                    }
                 }
             },
             p1: {

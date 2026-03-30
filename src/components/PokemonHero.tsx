@@ -9,10 +9,10 @@ import TypeBadge from "@/components/TypeBadge";
 import AbilityBadge from "@/components/AbilityBadge";
 import { useReducedMotionPref } from "@/hooks/useReducedMotionPref";
 import Tooltip from './Tooltip'
-import { generateBasicRomaji, getPokemonJapaneseName, getJapaneseNameInfo } from '@/lib/japaneseNames'
+import { getPokemonJapaneseName } from '@/lib/japaneseNames'
 import { getMatchup } from "@/lib/getMatchup";
-import TypeBadgeWithTooltip from "@/components/TypeBadgeWithTooltip";
-import { getBestPokemonDBSprite, getPokemonDBFallbackURLs, hasPokemonDBShinySprite } from "@/lib/pokemonDbSprites";
+
+import { getBestPokemonDBSprite } from "@/lib/pokemonDbSprites";
 import { getAvailablePortraits, getPortraitURL, PortraitExpression } from "@/lib/pmdPortraits";
 import { isSpecialForm, getSpecialFormInfo } from '@/lib/specialForms';
 import { usePmdAnimations } from '@/components/HeroPmdSprite';
@@ -1259,22 +1259,20 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
               <Image 
                 src={imageSrc}
                 alt={pokemon.name}
-                width={140} 
-                height={140} 
-                className={`h-24 w-24 sm:h-28 sm:w-28 lg:h-32 lg:w-32 object-contain`} 
+                width={288} 
+                height={288} 
+                className={`h-40 w-40 sm:h-52 sm:w-52 lg:h-64 lg:w-64 object-contain`} 
                 priority 
                 onError={() => {
-                  // Fallback to PokeAPI sprite if PokemonDB sprite fails
-                  // Respect the current shiny state
                   const fallbackPath = isShiny ? `shiny/${pokemon.id}` : `${pokemon.id}`;
                   setImageSrc(`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${fallbackPath}.png`);
                 }}
               />
             )}
             {style === 'pmd' && (
-              <div className="h-24 w-24 sm:h-28 sm:w-28 lg:h-32 lg:w-32 flex items-center justify-center">
+              <div className="h-40 w-40 sm:h-52 sm:w-52 lg:h-64 lg:w-64 flex items-center justify-center">
                 {selectedPmdAnim ? (
-                  <HeroPmdSprite pokemonId={pokemon.id} animName={selectedPmdAnim} scale={2} />
+                  <HeroPmdSprite pokemonId={pokemon.id} animName={selectedPmdAnim} scale={3} />
                 ) : (
                   <div className="text-muted text-xs text-center">
                     {pmdError ? 'Animations unavailable' : pmdAnims === null ? 'Loading...' : 'No animations found'}

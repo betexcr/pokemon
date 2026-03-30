@@ -31,6 +31,11 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
   const navigationTriggeredRef = useRef(false)
   const [cachedTeam, setCachedTeam] = useState<StoredSlot[] | null>(null)
 
+  useEffect(() => {
+    joinAttemptedRef.current = false
+    navigationTriggeredRef.current = false
+  }, [roomId])
+
   const extractRawSlots = useCallback((source: unknown): any[] | null => {
     if (!source) return null
     let payload = source

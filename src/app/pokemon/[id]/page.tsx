@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import PokemonPageClient from './PokemonPageClient'
-import { getPokemonById, getAllValidPokemonIds } from '@/lib/api'
+import { getAllValidPokemonIds } from '@/lib/api'
 import { cacheUtils } from '@/lib/sharedPokemonCache'
 
 // Preload evolution chain Pokemon for faster navigation

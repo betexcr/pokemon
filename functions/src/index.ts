@@ -63,6 +63,12 @@ app.post('/battles/:id/submit', async (req, res) => {
     if (!action || !['move', 'switch', 'forfeit'].includes(action)) {
       return res.status(400).json({ error: 'Invalid action' });
     }
+    if (action === 'move' && (typeof moveId !== 'string' && typeof moveId !== 'number')) {
+      return res.status(400).json({ error: 'Missing or invalid moveId' });
+    }
+    if (action === 'switch' && typeof switchToIndex !== 'number') {
+      return res.status(400).json({ error: 'Missing or invalid switchToIndex' });
+    }
 
     const db = admin.database();
     const metaRef = db.ref(`battles/${battleId}/meta`);
@@ -77,12 +83,19 @@ app.post('/battles/:id/submit', async (req, res) => {
       return res.status(400).json({ error: 'Battle already ended' });
     }
 
-    if (uid !== meta.players?.p1?.uid && uid !== meta.players?.p2?.uid) {
+    const p1Uid = meta.players?.p1?.uid;
+    const p2Uid = meta.players?.p2?.uid;
+
+    if (!p1Uid || !p2Uid) {
+      return res.status(400).json({ error: 'Battle data is corrupted (missing player info)' });
+    }
+
+    if (uid !== p1Uid && uid !== p2Uid) {
       return res.status(403).json({ error: 'Not a participant in this battle' });
     }
 
     if (action === 'forfeit') {
-      const winner: 'player' | 'opponent' = uid === meta.players.p1.uid ? 'opponent' : 'player';
+      const winner: 'player' | 'opponent' = uid === p1Uid ? 'opponent' : 'player';
       await handleBattleEnd(battleId, winner, 'forfeit', meta);
       return res.status(200).json({ success: true, forfeit: true });
     }
@@ -117,20 +130,17 @@ app.post('/battles/:id/submit', async (req, res) => {
     const choicesSnap = await choicesRef.once('value');
     const choices = choicesSnap.val() || {};
 
-    const p1Submitted = choices[meta.players.p1.uid];
-    const p2Submitted = choices[meta.players.p2.uid];
+    const p1Submitted = choices[p1Uid];
+    const p2Submitted = choices[p2Uid];
 
     if (p1Submitted && p2Submitted) {
-      resolveTurn(battleId).catch((error) => {
-        console.error('Error resolving turn:', error);
-      });
+      await resolveTurn(battleId);
     }
 
     return res.status(200).json({ success: true });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Internal Server Error';
-    console.error('Error in submit route:', message);
-    return res.status(500).json({ error: message });
+    console.error('Error in submit route:', error);
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 

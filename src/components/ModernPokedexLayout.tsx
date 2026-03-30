@@ -15,8 +15,6 @@ import { Dices } from 'lucide-react'
 import UserDropdown from './UserDropdown'
 import AuthModal from './auth/AuthModal'
 import { useAuth } from '@/contexts/AuthContext'
-import { createHeuristics } from '@/lib/heuristics/core'
-import { LocalStorageAdapter, MemoryStorage } from '@/lib/heuristics/storage'
 import Image from 'next/image'
 import HeaderIcons, { HamburgerMenu } from '@/components/HeaderIcons'
 import AppHeader from '@/components/AppHeader'
@@ -421,52 +419,6 @@ export default function ModernPokedexLayout({
     }
   }, [isFiltersCollapsed, isFiltersHydrated])
 
-  // Heuristics-driven render-only cap and moving window
-  const storage = typeof window !== 'undefined' ? new LocalStorageAdapter() : new MemoryStorage()
-  const heur = createHeuristics({ storage })
-  const computeMaxRenderCount = useCallback(async () => {
-    let cap = 300
-    try {
-      const state = await heur.load()
-      const dm = state.signals.deviceMemoryGB
-      if (typeof dm === 'number') {
-        if (dm <= 1) cap = 150
-        else if (dm <= 2) cap = 220
-        else if (dm <= 4) cap = 300
-        else cap = 420
-      }
-    } catch {}
-
-    const perfMem: { jsHeapSizeLimit: number } | null = (typeof performance !== 'undefined' && (performance as unknown as { memory?: { jsHeapSizeLimit: number } }).memory) ? (performance as unknown as { memory: { jsHeapSizeLimit: number } }).memory : null
-    if (perfMem && typeof perfMem.jsHeapSizeLimit === 'number') {
-      const estimatedPerCard = 35 * 1024
-      const budget = Math.floor(perfMem.jsHeapSizeLimit * 0.015)
-      const capByHeap = Math.max(120, Math.floor(budget / estimatedPerCard))
-      cap = Math.min(cap, capByHeap)
-    }
-
-    const dpr = typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1
-    if (dpr >= 3) cap = Math.floor(cap * 0.7)
-    else if (dpr >= 2) cap = Math.floor(cap * 0.85)
-
-    // cap = Math.max(120, Math.min(cap, 1500))
-    // console.log('Setting maxRenderCount to:', cap);
-    // setMaxRenderCount(cap)
-    
-    // Suppress unused variable warning - this function is called for side effects
-    void cap
-  }, [heur])
-
-  useEffect(() => {
-    computeMaxRenderCount()
-    const onResize = () => { computeMaxRenderCount() }
-    window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
-  }, [computeMaxRenderCount])
-
-  // Removed updateRenderWindow - not needed for inner scroll only
-
-  // Removed window scroll listener - not needed for inner scroll only
 
   // Initialize filteredPokemon with pokemonList on first load
   useEffect(() => {
@@ -1012,8 +964,12 @@ export default function ModernPokedexLayout({
       } finally {
         isFilteringRef.current = false
         setIsFiltering(false)
+        if (pendingFilterRef.current) {
+          pendingFilterRef.current = false
+          lastFilterHashRef.current = ''
+        }
       }
-    }, 200) // Increased debounce to 200ms for better stability
+    }, 200)
 
     return () => {
       if (filteringTimeoutRef.current) {
@@ -2341,7 +2297,7 @@ export default function ModernPokedexLayout({
                       onChange={(e) => {
                         setAdvancedFilters(prev => ({
                           ...prev, 
-                          heightRange: [parseFloat(e.target.value), prev.heightRange[1]] as [number, number]
+                          heightRange: [Math.min(parseFloat(e.target.value), prev.heightRange[1]), prev.heightRange[1]] as [number, number]
                         }))
                       }}
                       className="w-full"
@@ -2355,7 +2311,7 @@ export default function ModernPokedexLayout({
                       onChange={(e) => {
                         setAdvancedFilters(prev => ({
                           ...prev, 
-                          heightRange: [prev.heightRange[0], parseFloat(e.target.value)] as [number, number]
+                          heightRange: [prev.heightRange[0], Math.max(parseFloat(e.target.value), prev.heightRange[0])] as [number, number]
                         }))
                       }}
                       className="w-full"
@@ -2378,7 +2334,7 @@ export default function ModernPokedexLayout({
                       onChange={(e) => {
                         setAdvancedFilters(prev => ({
                           ...prev, 
-                          weightRange: [parseInt(e.target.value), prev.weightRange[1]] as [number, number]
+                          weightRange: [Math.min(parseInt(e.target.value), prev.weightRange[1]), prev.weightRange[1]] as [number, number]
                         }))
                       }}
                       className="w-full"
@@ -2392,7 +2348,7 @@ export default function ModernPokedexLayout({
                       onChange={(e) => {
                         setAdvancedFilters(prev => ({
                           ...prev, 
-                          weightRange: [prev.weightRange[0], parseInt(e.target.value)] as [number, number]
+                          weightRange: [prev.weightRange[0], Math.max(parseInt(e.target.value), prev.weightRange[0])] as [number, number]
                         }))
                       }}
                       className="w-full"

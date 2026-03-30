@@ -31,12 +31,12 @@ export function useNavigationTracker() {
       }
     }
 
-    // Listen for link clicks
     document.addEventListener('click', handleLinkClick)
+    window.addEventListener('beforeunload', handleBeforeUnload)
 
-    // Also store when the component unmounts (navigation)
     return () => {
       document.removeEventListener('click', handleLinkClick)
+      window.removeEventListener('beforeunload', handleBeforeUnload)
       sessionStorage.setItem('navigation_referrer', pathname)
     }
   }, [pathname])

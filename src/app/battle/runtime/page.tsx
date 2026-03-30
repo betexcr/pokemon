@@ -38,6 +38,7 @@ function BattleRuntimePage() {
   const [showChat, setShowChat] = useState(false);
   const [opponentChampion, setOpponentChampion] = useState<Champion | null>(null);
   const [isAIBattle, setIsAIBattle] = useState(false);
+  const [aiBattleError, setAiBattleError] = useState<string | null>(null);
   const [battleTypeDetermined, setBattleTypeDetermined] = useState(false);
 
   // Load AI battle data from URL parameters
@@ -49,6 +50,11 @@ function BattleRuntimePage() {
     if (opponentKind === "champion" && opponentId) {
       setIsAIBattle(true);
       const champion = GYM_CHAMPIONS.find(c => c.id === opponentId) || null;
+      if (!champion) {
+        setAiBattleError(`Champion "${opponentId}" not found`);
+        setBattleTypeDetermined(true);
+        return;
+      }
       setOpponentChampion(champion);
       setBattleTypeDetermined(true);
     } else {
@@ -91,6 +97,19 @@ function BattleRuntimePage() {
     event.preventDefault();
     handleBackFromBattle();
   }, [handleBackFromBattle]);
+
+  // Show error if AI battle champion was not found
+  if (aiBattleError) {
+    return (
+      <div className="fixed inset-0 bg-bg text-text flex items-center justify-center">
+        <div className="text-center px-4">
+          <p className="text-red-500 text-lg font-semibold mb-2">Battle Error</p>
+          <p className="text-muted mb-4">{aiBattleError}</p>
+          <a href="/battle" className="text-pokemon-blue hover:underline">Back to Battle</a>
+        </div>
+      </div>
+    );
+  }
 
   // Show loading state (AI battles skip auth check)
   if ((!isAIBattle && authLoading) || !battleTypeDetermined || (isAIBattle && !opponentChampion)) {
@@ -157,7 +176,7 @@ function BattleRuntimePage() {
                 className="flex items-center space-x-1 sm:space-x-2 text-muted hover:text-text transition-colors cursor-pointer flex-shrink-0"
               >
                 <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-                <span className="font-medium text-sm sm:text-base hidden sm:inline">Back to Lobby</span>
+                <span className="font-medium text-sm sm:text-base hidden sm:inline">{isAIBattle ? 'Back to Battle' : 'Back to Lobby'}</span>
               </a>
               <div className="flex items-center gap-2">
                 <div className="p-1.5 sm:p-2 rounded-lg bg-red-100 text-red-600">

@@ -92,7 +92,7 @@ class RequestAnalyticsManager {
       requestsByPriority[m.priority] = (requestsByPriority[m.priority] || 0) + 1;
     });
 
-    const sortedTimes = responseTimes.sort((a, b) => a - b);
+    const sortedCompleted = [...completed].sort((a, b) => (a.responseTime || 0) - (b.responseTime || 0));
 
     return {
       totalRequests: metrics.length,
@@ -102,11 +102,11 @@ class RequestAnalyticsManager {
       averageResponseTime: responseTimes.length > 0
         ? responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length
         : 0,
-      slowestRequest: sortedTimes.length > 0
-        ? { url: completed[completed.length - 1]?.url, time: sortedTimes[sortedTimes.length - 1] }
+      slowestRequest: sortedCompleted.length > 0
+        ? { url: sortedCompleted[sortedCompleted.length - 1]?.url, time: sortedCompleted[sortedCompleted.length - 1]?.responseTime }
         : null,
-      fastestRequest: sortedTimes.length > 0
-        ? { url: completed[0]?.url, time: sortedTimes[0] }
+      fastestRequest: sortedCompleted.length > 0
+        ? { url: sortedCompleted[0]?.url, time: sortedCompleted[0]?.responseTime }
         : null,
       requestsByContext,
       requestsByPriority,

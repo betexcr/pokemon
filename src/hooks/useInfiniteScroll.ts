@@ -57,6 +57,7 @@ export function useInfiniteScroll<T>(
   const isLoadingRef = useRef(false)
   const lastLoadTimeRef = useRef(0)
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const loadMoreRef = useRef<() => Promise<void>>(null!)
 
   const expectedTotal = useMemo(() => {
     if (typeof totalCount === 'number') return totalCount
@@ -132,7 +133,7 @@ export function useInfiniteScroll<T>(
         const delay = retryDelay * Math.pow(2, retryCount)
         if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current)
         retryTimeoutRef.current = setTimeout(() => {
-          loadMore()
+          loadMoreRef.current()
         }, delay)
         return
       }
@@ -144,6 +145,8 @@ export function useInfiniteScroll<T>(
       isLoadingRef.current = false
     }
   }, [enabled, hasMore, offset, fetchSize, fetchFunction, retryCount, retryAttempts, retryDelay, expectedTotal])
+
+  loadMoreRef.current = loadMore
 
   // Reset function to clear all data and start fresh
   const reset = useCallback(() => {

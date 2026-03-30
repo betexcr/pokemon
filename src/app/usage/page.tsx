@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import Script from 'next/script';
 import UsagePageClient from './UsagePageClient';
-import UsageOverview from '@/components/usage/UsageOverview';
 import UsagePhaseBook from '@/components/usage/UsagePhaseBook';
 import { UsageFilters } from '@/types/usage';
 

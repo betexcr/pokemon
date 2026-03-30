@@ -44,9 +44,21 @@ export function useSearch(options: UseSearchOptions = {}) {
     return null
   }, [])
 
-  // Cache search results
   const cacheResults = useCallback((term: string, results: Pokemon[]) => {
-    searchCache.current[term.toLowerCase()] = {
+    const cache = searchCache.current
+    const keys = Object.keys(cache)
+    if (keys.length >= 50) {
+      let oldestKey = keys[0]
+      let oldestTime = cache[oldestKey].timestamp
+      for (const k of keys) {
+        if (cache[k].timestamp < oldestTime) {
+          oldestTime = cache[k].timestamp
+          oldestKey = k
+        }
+      }
+      delete cache[oldestKey]
+    }
+    cache[term.toLowerCase()] = {
       results,
       timestamp: Date.now(),
       ttl: cacheTtl
@@ -66,6 +78,7 @@ export function useSearch(options: UseSearchOptions = {}) {
     const cached = getCachedResults(term)
     if (cached) {
       setResults(cached)
+      setError(null)
       setIsLoading(false)
       return
     }
@@ -74,7 +87,8 @@ export function useSearch(options: UseSearchOptions = {}) {
     if (abortController.current) {
       abortController.current.abort()
     }
-    abortController.current = new AbortController()
+    const myController = new AbortController()
+    abortController.current = myController
 
     // Throttle requests with improved timing
     const now = Date.now()
@@ -84,8 +98,8 @@ export function useSearch(options: UseSearchOptions = {}) {
     }
     lastRequestTime.current = Date.now()
 
-    // Check if request was cancelled during throttle delay
-    if (abortController.current.signal.aborted) {
+    // Check if this request was superseded during throttle delay
+    if (myController.signal.aborted) {
       return
     }
 
@@ -93,9 +107,10 @@ export function useSearch(options: UseSearchOptions = {}) {
       setIsLoading(true)
       setError(null)
       
-      const searchResults = await searchPokemonByName(term, abortController.current.signal)
+      const searchResults = await searchPokemonByName(term, myController.signal)
       
-      // Cache the results
+      if (myController.signal.aborted) return
+
       cacheResults(term, searchResults)
       
       setResults(searchResults)

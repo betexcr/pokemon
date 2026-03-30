@@ -10,10 +10,8 @@ export async function generateStaticParams() {
   ]
 }
 
-export default function RoomPage(props: any) {
-  const roomId = props?.params?.roomId
-  if (!roomId) {
-    return null
-  }
+export default async function RoomPage({ params }: { params: Promise<{ roomId: string }> }) {
+  const { roomId } = await params
+  if (!roomId) return null
   return <RoomPageClient roomId={roomId} />
 }

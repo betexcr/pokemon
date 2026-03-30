@@ -84,6 +84,8 @@ function SpriteJsTile({ meta, speedMul = 1, scale = 2 }: { meta: AnimMeta; speed
 				g.WebGLRenderingContext = undefined
 				g.WebGL2RenderingContext = undefined
 				const { Scene, Sprite } = await import('spritejs')
+				g.WebGLRenderingContext = prevGL
+				g.WebGL2RenderingContext = prevGL2
 				if (!containerRef.current) return
 				// Ensure a clean container (StrictMode mounts can double-invoke effects)
 				try { containerRef.current.innerHTML = '' } catch {}

@@ -73,10 +73,16 @@ export default function ShareModal() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [open]);
 
+  const [copied, setCopied] = useState(false);
+
   async function copy() {
     try {
       await navigator.clipboard.writeText(shareUrl);
-    } catch {}
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy to clipboard:', err);
+    }
   }
 
   return (
@@ -115,7 +121,7 @@ export default function ShareModal() {
             <p id={descId} className="text-sm text-gray-600 dark:text-gray-300 mb-2">Copy this link to share your progress:</p>
             <div className="flex gap-2 mb-3">
               <input className="flex-1 text-sm rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-1" readOnly value={shareUrl} aria-label="Share link URL" />
-              <button className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-sm" onClick={copy} type="button">Copy</button>
+              <button className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-sm" onClick={copy} type="button">{copied ? 'Copied!' : 'Copy'}</button>
             </div>
             <p className="text-xs text-gray-500">This uses a URL-encoded snapshot. No server needed.</p>
           </div>

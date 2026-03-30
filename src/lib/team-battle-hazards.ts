@@ -31,6 +31,7 @@ export function spikesDamage(pokemon: BattlePokemon, layers: number): number {
 
   const fractions = [0, 1 / 8, 1 / 6, 1 / 4];
   const fraction = fractions[Math.max(0, Math.min(layers, 3))];
+  if (fraction === 0) return 0;
   return Math.max(1, Math.floor(pokemon.maxHp * fraction));
 }
 

@@ -196,7 +196,7 @@ export default function AdvancedFilters({
                           onChange={(e) => {
                             setAdvancedFilters(prev => ({
                               ...prev, 
-                              heightRange: [parseFloat(e.target.value), prev.heightRange[1]] as [number, number]
+                              heightRange: [Math.min(parseFloat(e.target.value), prev.heightRange[1]), prev.heightRange[1]] as [number, number]
                             }))
                           }}
                           className="w-full dark:accent-poke-blue"
@@ -211,7 +211,7 @@ export default function AdvancedFilters({
                           onChange={(e) => {
                             setAdvancedFilters(prev => ({
                               ...prev, 
-                              heightRange: [prev.heightRange[0], parseFloat(e.target.value)] as [number, number]
+                              heightRange: [prev.heightRange[0], Math.max(parseFloat(e.target.value), prev.heightRange[0])] as [number, number]
                             }))
                           }}
                           className="w-full dark:accent-poke-blue"
@@ -235,7 +235,7 @@ export default function AdvancedFilters({
                           onChange={(e) => {
                             setAdvancedFilters(prev => ({
                               ...prev, 
-                              weightRange: [parseInt(e.target.value), prev.weightRange[1]] as [number, number]
+                              weightRange: [Math.min(parseInt(e.target.value), prev.weightRange[1]), prev.weightRange[1]] as [number, number]
                             }))
                           }}
                           className="w-full dark:accent-poke-blue"
@@ -250,7 +250,7 @@ export default function AdvancedFilters({
                           onChange={(e) => {
                             setAdvancedFilters(prev => ({
                               ...prev, 
-                              weightRange: [prev.weightRange[0], parseInt(e.target.value)] as [number, number]
+                              weightRange: [prev.weightRange[0], Math.max(parseInt(e.target.value), prev.weightRange[0])] as [number, number]
                             }))
                           }}
                           className="w-full dark:accent-poke-blue"

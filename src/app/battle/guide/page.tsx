@@ -79,8 +79,6 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
 }
 
 function TypeEffectivenessSection() {
-  const [hovered, setHovered] = useState<string | null>(null)
-
   return (
     <Card title="Type Effectiveness">
       <p className="text-sm text-muted mb-4">
@@ -113,8 +111,6 @@ function TypeEffectivenessSection() {
                     <td
                       key={def}
                       className={`p-1 text-center font-mono ${bg}`}
-                      onMouseEnter={() => setHovered(`${atk}->${def}`)}
-                      onMouseLeave={() => setHovered(null)}
                       title={`${atk} vs ${def}: ${eff}x`}
                     >
                       {eff === 1 ? '' : eff === 0 ? '0' : `${eff}`}
@@ -300,7 +296,7 @@ function DamageFormulaSection() {
     <Card title="Damage Formula">
       <p className="text-sm text-muted mb-4">The core damage formula used since Generation V:</p>
       <div className="rounded-lg border border-border bg-gray-50 dark:bg-gray-800/50 p-4 font-mono text-sm text-center mb-4">
-        Damage = ((2*Level/5 + 2) * Power * A/D) / 50 + 2) * Modifier
+        Damage = (((2*Level/5 + 2) * Power * A/D) / 50 + 2) * Modifier
       </div>
       <h3 className="font-semibold text-sm mb-2">Key Modifiers</h3>
       <div className="grid gap-3 sm:grid-cols-2">

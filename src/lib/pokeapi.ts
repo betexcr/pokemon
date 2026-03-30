@@ -40,7 +40,5 @@ export async function fetchType(idOrName: number | string): Promise<unknown> {
 
 /** utility: lowercase-with-hyphens -> TitleCase */
 export function toTitleName(s: string): string {
-  return s.split("-").map(p => p.charAt(0).toUpperCase()+p.slice(1)).join("")  // "thunder-punch" -> "ThunderPunch"
-           .replace(/Fairy|Steel|Dark|Dragon|Ghost|Rock|Bug|Psychic|Flying|Ground|Poison|Fighting|Ice|Grass|Electric|Water|Fire|Normal/,
-                    (m)=>m); // keep type words intact
+  return s.split("-").map(p => p.charAt(0).toUpperCase()+p.slice(1)).join("");
 }

@@ -35,35 +35,12 @@ export default {
           yellow: "var(--color-poke-yellow)",
           blue: "var(--color-poke-blue)",
         },
-      },
-      spacing: {
-        'standard': '2rem',
-        'compact': '1rem',
-        'minimal': '0.5rem',
-      },
-      borderRadius: {
-        'capsule': '999px',
-      },
-      boxShadow: {
-        'card': '0 8px 24px rgba(0,0,0,0.15)',
-        'card-compact': '0 4px 16px rgba(0,0,0,0.1)',
-        'card-minimal': '0 2px 8px rgba(0,0,0,0.08)',
-      },
-      fontSize: {
-        'helper': '0.85rem',
-        'helper-compact': '0.8rem',
-      },
-      lineHeight: {
-        'helper': '1.4',
-        'helper-compact': '1.3',
-      },
         gold: {
           accent: "var(--color-accent)",
           "accent-dark": "var(--color-accent-dark)",
           highlight: "var(--color-highlight)",
           shadow: "var(--color-shadow)",
         },
-
         red: {
           accent: "var(--color-accent)",
           "accent-dark": "var(--color-accent-dark)",
@@ -100,18 +77,35 @@ export default {
           fairy: "var(--type-fairy)",
         },
       },
-      boxShadow: { 
-        card: "0 6px 20px rgba(0,0,0,0.08)",
-        "card-dark": "0 6px 20px rgba(0,0,0,0.3)",
-        "gold-card": "0 4px 12px rgba(10, 61, 31, 0.4)",
-        "gold-button": "0 2px 4px rgba(10, 61, 31, 0.3)",
-
-        "red-card": "0 4px 12px rgba(139, 0, 0, 0.4)",
-        "red-button": "0 2px 4px rgba(139, 0, 0, 0.3)",
-        "ruby-card": "0 4px 12px rgba(47, 27, 20, 0.4)",
-        "ruby-button": "0 2px 4px rgba(47, 27, 20, 0.3)",
+      spacing: {
+        'standard': '2rem',
+        'compact': '1rem',
+        'minimal': '0.5rem',
       },
-      borderRadius: { xl2: "1.25rem" },
+      borderRadius: {
+        'capsule': '999px',
+        'xl2': '1.25rem',
+      },
+      boxShadow: {
+        'card': '0 8px 24px rgba(0,0,0,0.15)',
+        'card-compact': '0 4px 16px rgba(0,0,0,0.1)',
+        'card-minimal': '0 2px 8px rgba(0,0,0,0.08)',
+        'card-dark': '0 6px 20px rgba(0,0,0,0.3)',
+        'gold-card': '0 4px 12px rgba(10, 61, 31, 0.4)',
+        'gold-button': '0 2px 4px rgba(10, 61, 31, 0.3)',
+        'red-card': '0 4px 12px rgba(139, 0, 0, 0.4)',
+        'red-button': '0 2px 4px rgba(139, 0, 0, 0.3)',
+        'ruby-card': '0 4px 12px rgba(47, 27, 20, 0.4)',
+        'ruby-button': '0 2px 4px rgba(47, 27, 20, 0.3)',
+      },
+      fontSize: {
+        'helper': '0.85rem',
+        'helper-compact': '0.8rem',
+      },
+      lineHeight: {
+        'helper': '1.4',
+        'helper-compact': '1.3',
+      },
       fontFamily: {
         'retro': ['Courier New', 'monospace'],
         'pixel': ['Press Start 2P', 'monospace'],
@@ -122,7 +116,6 @@ export default {
       backgroundImage: {
         'gold-gradient': 'linear-gradient(135deg, var(--color-bg) 0%, var(--color-surface) 100%)',
         'gold-card': 'linear-gradient(180deg, var(--color-surface) 0%, var(--color-bg) 100%)',
-
         'red-gradient': 'linear-gradient(135deg, var(--color-bg) 0%, var(--color-surface) 100%)',
         'red-card': 'linear-gradient(180deg, var(--color-surface) 0%, var(--color-bg) 100%)',
         'ruby-gradient': 'linear-gradient(135deg, var(--color-bg) 0%, var(--color-surface) 100%)',
@@ -195,5 +188,6 @@ export default {
         },
       },
     },
+  },
   plugins: [],
 } satisfies Config;

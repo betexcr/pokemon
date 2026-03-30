@@ -48,7 +48,7 @@ async function updateFirestore(
       });
       if (data.roomId) {
         try {
-          await db.collection('rooms').doc(data.roomId).update({
+          await db.collection('battle_rooms').doc(data.roomId).update({
             status: 'finished',
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
           });

@@ -3,14 +3,12 @@ import {
   doc, 
   addDoc, 
   getDoc, 
-  getDocs,
   updateDoc, 
   deleteDoc, 
   setDoc,
   onSnapshot, 
-  query,
-  where,
   serverTimestamp,
+  arrayUnion,
   type Unsubscribe,
   type DocumentSnapshot
 } from 'firebase/firestore';
@@ -68,7 +66,7 @@ class BattleService {
   private battlesCollection = 'battles';
   private auth = auth;
   
-  private ensureAuthenticated(): void {
+  private async ensureAuthenticated(): Promise<void> {
     if (!this.auth?.currentUser?.uid) {
       console.error('❌ Authentication check failed: No current user');
       console.error('❌ Auth object exists:', !!this.auth);
@@ -77,12 +75,13 @@ class BattleService {
       throw new Error('User not authenticated. Please sign in to access battle features.');
     }
     
-    // Check if the user's token is still valid
     if (this.auth.currentUser) {
-      this.auth.currentUser.getIdToken().catch(error => {
+      try {
+        await this.auth.currentUser.getIdToken();
+      } catch (error) {
         console.error('❌ User token validation failed:', error);
         throw new Error('Authentication token expired. Please sign in again.');
-      });
+      }
     }
   }
 
@@ -199,7 +198,7 @@ class BattleService {
         // Ensure name and id are present
         if (!pokemonUpdates.name) pokemonUpdates.name = data.name;
         if (!pokemonUpdates.id) pokemonUpdates.id = data.id;
-        if (!pokemonUpdates.types) pokemonUpdates.types = data.types.map((t: any) => t.type.name);
+        if (!pokemonUpdates.types && data.types) pokemonUpdates.types = data.types.map((t: any) => t.type?.name).filter(Boolean);
 
         // If the slot didn't have a pokemon property, it might be a flat structure.
         // But for the battle engine, we usually want the nested 'pokemon' object.
@@ -228,7 +227,7 @@ class BattleService {
   // Create a new battle
   async createBattle(roomId: string, hostId: string, hostName: string, hostTeam: unknown, guestId: string, guestName: string, guestTeam: unknown): Promise<string> {
     if (!db) throw new Error('Firebase not initialized');
-    this.ensureAuthenticated();
+    await this.ensureAuthenticated();
     
     const hydratedHostTeam = await this.hydrateTeam(hostTeam);
     const hydratedGuestTeam = await this.hydrateTeam(guestTeam);
@@ -271,7 +270,7 @@ class BattleService {
   // Get battle by ID
   async getBattle(battleId: string): Promise<MultiplayerBattleState | null> {
     if (!db) throw new Error('Firebase not initialized');
-    this.ensureAuthenticated();
+    await this.ensureAuthenticated();
     
     const docRef = doc(db, this.battlesCollection, battleId);
     const docSnap = await getDoc(docRef);
@@ -292,7 +291,7 @@ class BattleService {
   // Update battle state
   async updateBattle(battleId: string, updates: BattleUpdate): Promise<void> {
     if (!db) throw new Error('Firebase not initialized');
-    this.ensureAuthenticated();
+    await this.ensureAuthenticated();
     
     const currentUserId = this.getCurrentUserId();
     
@@ -401,7 +400,7 @@ class BattleService {
   // Add an action to the battle (move or switch)
   async addAction(battleId: string, action: BattleAction): Promise<void> {
     if (!db) throw new Error('Firebase not initialized');
-    this.ensureAuthenticated();
+    await this.ensureAuthenticated();
     
     const currentUserId = this.getCurrentUserId();
     
@@ -430,22 +429,14 @@ class BattleService {
       timestamp: Date.now()
     };
     
-    // Add the action to the actions array (sanitize to avoid undefined in nested fields)
-    const updatedActionsRaw = [...(battleData.actions || []), newAction];
-    const updatedActions = this.sanitizeForFirestore(updatedActionsRaw);
-    
-    // Update the battle document (single write to reduce contention)
-    const updateData = {
-      actions: updatedActions,
-      lastActionAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    } as const;
-
-    // Final defensive sanitation of the whole payload
-    const cleanedUpdateData = this.sanitizeForFirestore(updateData as unknown as Record<string, unknown>);
+    const sanitizedAction = this.sanitizeForFirestore(newAction);
     
     try {
-      await updateDoc(battleRef, cleanedUpdateData as any);
+      await updateDoc(battleRef, {
+        actions: arrayUnion(sanitizedAction),
+        lastActionAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
     } catch (error) {
       console.error('❌ Failed to add action:', error);
       
@@ -481,7 +472,7 @@ class BattleService {
   // Start the battle (initialize battle data)
   async startBattle(battleId: string, initialBattleData: unknown): Promise<void> {
     if (!db) throw new Error('Firebase not initialized');
-    this.ensureAuthenticated();
+    await this.ensureAuthenticated();
     
     const battleRef = doc(db, this.battlesCollection, battleId);
     
@@ -583,7 +574,7 @@ class BattleService {
   // Leave battle (cleanup when user leaves)
   async leaveBattle(battleId: string, userId: string): Promise<void> {
     if (!db) throw new Error('Firebase not initialized');
-    this.ensureAuthenticated();
+    await this.ensureAuthenticated();
     
     const currentUserId = this.getCurrentUserId();
     
@@ -724,7 +715,7 @@ class BattleService {
   // Recover corrupted battle by recreating it with proper data
   async recoverBattle(battleId: string, roomId: string, hostId: string, hostName: string, hostTeam: unknown, guestId: string, guestName: string, guestTeam: unknown): Promise<void> {
     if (!db) throw new Error('Firebase not initialized');
-    this.ensureAuthenticated();
+    await this.ensureAuthenticated();
     
     const currentUserId = this.getCurrentUserId();
     if (currentUserId !== hostId) {
@@ -772,7 +763,7 @@ class BattleService {
   // Delete battle
   async deleteBattle(battleId: string): Promise<void> {
     if (!db) throw new Error('Firebase not initialized');
-    this.ensureAuthenticated();
+    await this.ensureAuthenticated();
     
     const currentUserId = this.getCurrentUserId();
     

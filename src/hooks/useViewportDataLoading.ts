@@ -115,14 +115,12 @@ export function useViewportDataLoading({
     }, 25); // Further reduced debounce to 25ms for even faster response
   }, [loadPokemonData]);
 
-  // Load initial batch of Pokemon immediately (only first 6 Pokemon)
   const loadInitialBatch = useCallback(() => {
-    // Load only the first 6 Pokemon immediately for better performance
-    const initialBatchSize = 6;
-    for (let i = 1; i <= Math.min(initialBatchSize, pokemonList.length); i++) {
-      loadPokemonData(i);
+    const initialBatchSize = Math.min(6, pokemonList.length);
+    for (let i = 0; i < initialBatchSize; i++) {
+      loadPokemonData(pokemonList[i].id);
     }
-  }, [loadPokemonData, pokemonList.length]);
+  }, [loadPokemonData, pokemonList]);
 
   // Catch-up loading for fast scrolling scenarios
   const loadCatchUpData = useCallback(() => {

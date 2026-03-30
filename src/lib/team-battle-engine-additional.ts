@@ -1,6 +1,6 @@
 // Additional functions for the Gen-8/9 battle engine
 
-import { BattleState, BattlePokemon, BattleTeam, getCurrentPokemon, switchToPokemon, getEffectiveSpeed, isTeamDefeated, canUseMove, applyStatusMoveEffects } from './team-battle-engine';
+import { BattleState, BattlePokemon, BattleTeam, getCurrentPokemon, switchToPokemon, getEffectiveSpeed, isTeamDefeated, canUseMove, applyStatusMoveEffects, calculateStat } from './team-battle-engine';
 import { calculateComprehensiveDamage, TypeName } from './damage-calculator';
 import { getMove } from './moveCache';
 import { applyEntryHazards, isGrounded } from './team-battle-hazards';
@@ -171,7 +171,7 @@ export async function resolveMove(state: BattleState, action: BattleState['actio
     return;
   }
 
-  if (move.accuracy !== null && !move.bypassAccuracyCheck) {
+  if (move.accuracy != null && !move.bypassAccuracyCheck) {
     const accStage = attacker.statModifiers?.accuracy ?? 0;
     const evaStage = defender.statModifiers?.evasion ?? 0;
     const mult = getAccuracyMultiplier(accStage - evaStage);
@@ -552,15 +552,19 @@ export async function executeMoveAction(
     const defenderSideConditions = isPlayer ? state.opponent.sideConditions : state.player.sideConditions;
 
     // Get stats from the Pokemon data structure
-    const attackerAttackStat = attacker.pokemon.stats.find(s => s.stat.name === 'attack')?.base_stat || 50;
-    const attackerSpecialAttackStat = attacker.pokemon.stats.find(s => s.stat.name === 'special-attack')?.base_stat || 50;
-    const defenderDefenseStat = defender.pokemon.stats.find(s => s.stat.name === 'defense')?.base_stat || 50;
-    const defenderSpecialDefenseStat = defender.pokemon.stats.find(s => s.stat.name === 'special-defense')?.base_stat || 50;
+    const attackerAttackStat = attacker.pokemon.stats?.find((s: any) => (s.stat?.name || s.name) === 'attack')?.base_stat || 50;
+    const attackerSpecialAttackStat = attacker.pokemon.stats?.find((s: any) => (s.stat?.name || s.name) === 'special-attack')?.base_stat || 50;
+    const defenderDefenseStat = defender.pokemon.stats?.find((s: any) => (s.stat?.name || s.name) === 'defense')?.base_stat || 50;
+    const defenderSpecialDefenseStat = defender.pokemon.stats?.find((s: any) => (s.stat?.name || s.name) === 'special-defense')?.base_stat || 50;
     
     // Determine if this is a physical or special move
     const isPhysical = move.category === 'Physical';
-    const attackStat = isPhysical ? attackerAttackStat : attackerSpecialAttackStat;
-    const defenseStat = isPhysical ? defenderDefenseStat : defenderSpecialDefenseStat;
+    const attackStat = isPhysical
+      ? calculateStat(attackerAttackStat, attacker.level)
+      : calculateStat(attackerSpecialAttackStat, attacker.level);
+    const defenseStat = isPhysical
+      ? calculateStat(defenderDefenseStat, defender.level)
+      : calculateStat(defenderSpecialDefenseStat, defender.level);
     
     // Fixed-damage moves bypass the normal formula
     const FIXED_DAMAGE_MOVES: Record<string, (atk: BattlePokemon, def: BattlePokemon) => number> = {

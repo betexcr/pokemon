@@ -62,5 +62,6 @@ export function trackEvent(name: EventName, props?: EventProps): void {
 }
 
 export function trackPageView(path?: string): void {
-  trackEvent('page_view', { path: path ?? window.location.pathname });
+  const resolvedPath = path ?? (typeof window !== 'undefined' ? window.location.pathname : '/');
+  trackEvent('page_view', { path: resolvedPath });
 }

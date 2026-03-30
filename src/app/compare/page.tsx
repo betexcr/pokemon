@@ -40,7 +40,10 @@ export default function ComparePage() {
         return
       }
 
-      const comparisonIds: number[] = JSON.parse(savedComparison)
+      const parsed = JSON.parse(savedComparison)
+      const comparisonIds: number[] = Array.isArray(parsed)
+        ? parsed.filter((id: unknown): id is number => typeof id === 'number' && Number.isInteger(id))
+        : []
       if (comparisonIds.length === 0) {
         setPokemons([])
         setLoading(false)

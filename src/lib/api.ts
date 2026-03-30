@@ -825,6 +825,7 @@ export async function getPokemonMoves(id: number | string): Promise<Array<{ name
 }
 
 // Move functions
+const MOVE_CACHE_MAX = 200
 const moveMemoryCache = new Map<string, any>()
 
 export async function getMove(id: number | string): Promise<any> {
@@ -836,12 +837,18 @@ export async function getMove(id: number | string): Promise<any> {
   const cached = await getCache(cacheKey)
   if (cached) {
     moveMemoryCache.set(memKey, cached)
+    if (moveMemoryCache.size > MOVE_CACHE_MAX) {
+      moveMemoryCache.delete(moveMemoryCache.keys().next().value!)
+    }
     return cached
   }
 
   const url = `${API_BASE_URL}/move/${id}/`
   const data = await fetchFromAPI(url)
   moveMemoryCache.set(memKey, data)
+  if (moveMemoryCache.size > MOVE_CACHE_MAX) {
+    moveMemoryCache.delete(moveMemoryCache.keys().next().value!)
+  }
   await setCache(cacheKey, data, CACHE_TTL.MOVE)
   return data
 }

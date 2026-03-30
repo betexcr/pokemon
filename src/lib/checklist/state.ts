@@ -13,19 +13,24 @@ export async function hydrateState(uid: string | null): Promise<ProgressState> {
   const local = loadLocal() ?? nowState();
   if (!uid) return local;
 
-  const cloud = await loadCloud(uid);
-  if (!cloud) {
-    await saveCloud(uid, local);
+  try {
+    const cloud = await loadCloud(uid);
+    if (!cloud) {
+      await saveCloud(uid, local);
+      return local;
+    }
+    const merged: ProgressState = {
+      caught: unionMaps(local.caught, cloud.caught),
+      seen: unionMaps(local.seen ?? {}, cloud.seen ?? {}),
+      updatedAt: Math.max(local.updatedAt, cloud.updatedAt),
+    };
+    saveLocal(merged);
+    await saveCloud(uid, merged);
+    return merged;
+  } catch (err) {
+    console.error('Failed to hydrate from cloud, falling back to local state:', err);
     return local;
   }
-  const merged: ProgressState = {
-    caught: unionMaps(local.caught, cloud.caught),
-    seen: unionMaps(local.seen ?? {}, cloud.seen ?? {}),
-    updatedAt: Math.max(local.updatedAt, cloud.updatedAt),
-  };
-  saveLocal(merged);
-  await saveCloud(uid, merged);
-  return merged;
 }
 
 export function toggleCaught(state: ProgressState, id: number, on: boolean): ProgressState {

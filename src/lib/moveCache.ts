@@ -21,7 +21,7 @@ function normalizeMoveIdentifier(idOrName: number | string): number | string {
   return slug || trimmed.toLowerCase();
 }
 
-// Simple in-memory cache for moves
+const MOVE_CACHE_MAX = 500;
 const moveCache = new Map<string, CompiledMove>();
 
 export async function getMove(idOrName: number | string): Promise<CompiledMove> {
@@ -38,12 +38,22 @@ export async function getMove(idOrName: number | string): Promise<CompiledMove> 
 
   try {
     const move = await loadMoveFromPokeAPI(normalized);
+    if (moveCache.size >= MOVE_CACHE_MAX) {
+      const oldest = moveCache.keys().next().value;
+      if (oldest !== undefined) moveCache.delete(oldest);
+    }
     moveCache.set(key, move);
     return move;
   } catch (error) {
     console.error(`Failed to load move ${idOrName}:`, error);
     throw error;
   }
+}
+
+export function getCachedMove(idOrName: number | string): CompiledMove | undefined {
+  const normalized = normalizeMoveIdentifier(idOrName);
+  const key = typeof normalized === 'number' ? String(normalized) : normalized;
+  return moveCache.get(key);
 }
 
 export function clearMoveCache(): void {

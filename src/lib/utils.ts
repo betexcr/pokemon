@@ -263,7 +263,7 @@ export function getPokemonDescription(pokemon: { name: string; types?: Array<{ t
   };
 
   const pokemonName = pokemon.name.toLowerCase();
-  return descriptions[pokemonName] || `A ${pokemon.types?.map((t: { type: { name: string } }) => formatPokemonName(t.type.name)).join('/')} type Pokémon with unique abilities.`;
+  return descriptions[pokemonName] || `A ${pokemon.types?.map((t: { type: { name: string } }) => formatPokemonName(t.type.name)).join('/') ?? 'unknown'} type Pokémon with unique abilities.`;
 }
 
 // Debounce function
@@ -380,9 +380,9 @@ export function getPokemonBattleImageUrl(pokemonId: number | null, variant: 'fro
   
   // PokeAPI PNG battle sprites for reliable fallback
   const baseUrl = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon';
-  const shinyPrefix = shiny ? 'shiny/' : '';
   const direction = variant === 'back' ? 'back' : '';
-  const parts = [baseUrl, shinyPrefix, direction].filter(Boolean);
+  const shinyPrefix = shiny ? 'shiny' : '';
+  const parts = [baseUrl, direction, shinyPrefix].filter(Boolean);
   return `${parts.join('/')}/${pokemonId}.png`;
 }
 

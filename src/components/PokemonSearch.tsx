@@ -33,18 +33,18 @@ export default function PokemonSearch({
   const [search, setSearch] = useState('')
   const [allPokemon, setAllPokemon] = useState<Pokemon[]>([])
   const [loading, setLoading] = useState(false)
+  const [loadError, setLoadError] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(true)
   const [currentOffset, setCurrentOffset] = useState(INITIAL_LOAD_COUNT)
   const observerRef = useRef<IntersectionObserver | null>(null)
   const lastPokemonRef = useRef<HTMLDivElement | null>(null)
 
-  // Load initial 50 Pokémon
-  useEffect(() => {
-    const loadInitialPokemon = async () => {
-      try {
-        setLoading(true)
-        const pokemonList = await getPokemonList(INITIAL_LOAD_COUNT, 0)
+  const loadInitialPokemon = useCallback(async () => {
+    try {
+      setLoading(true)
+      setLoadError(false)
+      const pokemonList = await getPokemonList(INITIAL_LOAD_COUNT, 0)
         
         // Fetch full Pokémon data for the first 50
         const pokemonPromises = pokemonList.results.map(async (pokemonRef) => {
@@ -137,13 +137,16 @@ export default function PokemonSearch({
         setAllPokemon(loadedPokemon)
       } catch (err) {
         console.error('Failed to load initial Pokémon:', err)
-      } finally {
-        setLoading(false)
-      }
+        setLoadError(true)
+    } finally {
+      setLoading(false)
     }
-
-    loadInitialPokemon()
   }, [])
+
+  // Load initial 50 Pokémon
+  useEffect(() => {
+    loadInitialPokemon()
+  }, [loadInitialPokemon])
 
   // Load more Pokémon when scrolling
   const loadMorePokemon = useCallback(async () => {
@@ -340,7 +343,14 @@ export default function PokemonSearch({
 
       {/* Results */}
       <div className={`overflow-y-auto ${maxHeight} divide-y divide-border`}>
-        {filteredPokemon.length === 0 && search.trim() ? (
+        {filteredPokemon.length === 0 && loadError ? (
+          <div className="py-4 text-center text-muted">
+            Failed to load Pokémon.{' '}
+            <button onClick={loadInitialPokemon} className="underline hover:text-text transition-colors">
+              Retry
+            </button>
+          </div>
+        ) : filteredPokemon.length === 0 && search.trim() ? (
           <div className="py-4 text-center text-muted">
             No Pokémon found. Try a different search term.
           </div>

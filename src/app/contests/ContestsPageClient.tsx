@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import AppHeader from '@/components/AppHeader'
+import { useState } from 'react'
 import ContestCategory from '@/components/contests/ContestCategory'
 import PokeblockFeeder from '@/components/contests/PokeblockFeeder'
 import ExciteMeter from '@/components/contests/ExciteMeter'
@@ -262,14 +261,6 @@ export default function ContestsPageClient() {
         currentRound={contestState.currentRound}
         exciteMeter={contestState.exciteMeter}
         isSpectacular={contestState.exciteMeter >= 100}
-      />
-
-      <AppHeader
-        title="Pokémon Contests"
-        subtitle="Kawaii Performance Competition"
-        iconKey="contests"
-        showIcon={true}
-        showToolbar={true}
       />
 
       {/* Interactive Mascot */}

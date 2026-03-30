@@ -150,8 +150,6 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
   }>>({});
   
   // Transition effects state
-  const [playerShakeKey, setPlayerShakeKey] = useState(0);
-  const [opponentShakeKey, setOpponentShakeKey] = useState(0);
   const [statusEvents, setStatusEvents] = useState<StatusEvent[]>([]);
   const [activeMoveFX, setActiveMoveFX] = useState<{ kind: FxKind; key: number } | null>(null);
   const [pendingAction, setPendingAction] = useState<{ turn: number; type: 'move' | 'switch'; id: string | number } | null>(null);
@@ -269,13 +267,6 @@ const handleMoveSelection = async (moveId: string, target?: 'p1' | 'p2') => {
           
           // Trigger move FX
           setActiveMoveFX({ kind: fxKind, key: Date.now() });
-          
-          // Trigger shake on target (simplified - in real battle this would be determined by the move)
-          if (target === 'p2') {
-            setOpponentShakeKey(Date.now());
-          } else {
-            setPlayerShakeKey(Date.now());
-          }
           
           // Add status effects based on move type (simplified)
           const statusEffects: StatusEvent[] = [];

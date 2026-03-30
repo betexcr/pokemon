@@ -268,10 +268,10 @@ export const cacheUtils = {
    * Preload for main dex page
    */
   async preloadForMainDex(visibleIds: number[]): Promise<void> {
-    // Preload visible Pokemon and some ahead
+    if (visibleIds.length === 0) return;
+    
     const idsToPreload = [...visibleIds]
     
-    // Add some Pokemon ahead of the visible ones
     const maxId = Math.max(...visibleIds)
     const aheadIds = Array.from({ length: 20 }, (_, i) => maxId + i + 1)
     idsToPreload.push(...aheadIds)

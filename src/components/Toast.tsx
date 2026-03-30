@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { X, MessageCircle } from 'lucide-react';
 
 interface Toast {
@@ -164,21 +164,21 @@ export function ToastContainer({ toasts, onRemove }: ToastContainerProps) {
 export function useToast() {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const addToast = (toast: Omit<Toast, 'id'>) => {
+  const addToast = useCallback((toast: Omit<Toast, 'id'>) => {
     const id = Date.now().toString() + Math.random().toString(36).substr(2, 9);
     const newToast: Toast = {
       id,
-      duration: 5000, // Default 5 seconds
+      duration: 5000,
       ...toast,
     };
     setToasts(prev => [...prev, newToast]);
-  };
+  }, []);
 
-  const removeToast = (id: string) => {
+  const removeToast = useCallback((id: string) => {
     setToasts(prev => prev.filter(toast => toast.id !== id));
-  };
+  }, []);
 
-  const showChatNotification = (message: string, onClick?: () => void) => {
+  const showChatNotification = useCallback((message: string, onClick?: () => void) => {
     addToast({
       type: 'info',
       title: 'New Chat Message',
@@ -189,7 +189,7 @@ export function useToast() {
         onClick
       } : undefined
     });
-  };
+  }, [addToast]);
 
   return {
     toasts,

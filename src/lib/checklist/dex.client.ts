@@ -61,7 +61,7 @@ function useDexDataStore() {
     try {
       const { start, end } = getRangeForGen(gen);
       const limit = end - start + 1;
-      const offset = start - 1; // API is zero-indexed by national dex order
+      const offset = start - 1;
       const batch = await getPokemonWithPagination(limit, offset);
       const mapped: DexEntry[] = batch.map((p) => ({
         id: p.id,
@@ -71,10 +71,8 @@ function useDexDataStore() {
         sprite: getPokemonFallbackImage(p.id),
       }));
       setDex((prev) => {
-        // Avoid duplicates if called twice
         const seen = new Set(prev.map((d) => d.id));
         const merged = [...prev, ...mapped.filter((m) => !seen.has(m.id))];
-        // Keep list sorted by id for stable UI
         merged.sort((a, b) => a.id - b.id);
         return merged;
       });
@@ -84,6 +82,8 @@ function useDexDataStore() {
         next.add(gen);
         return next;
       });
+    } catch (err) {
+      console.error(`Failed to load generation ${gen}:`, err);
     } finally {
       loadingGensRef.current.delete(gen);
       setLoadingCount((c) => Math.max(0, c - 1));
@@ -104,7 +104,10 @@ function useDexDataStore() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return { dex, gens, types, loading, loadedGens, loadGeneration, loadAll } as const;
+  return useMemo(
+    () => ({ dex, gens, types, loading, loadedGens, loadGeneration, loadAll }),
+    [dex, gens, types, loading, loadedGens, loadGeneration, loadAll]
+  );
 }
 
 type DexDataContextValue = ReturnType<typeof useDexDataStore>;

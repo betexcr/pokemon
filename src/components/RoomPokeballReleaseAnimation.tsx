@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 
+const EMPTY_SET = new Set<number>()
+
 interface RoomPokeballReleaseAnimationProps {
   slots: Array<{ id?: number | null }>
   onAnimationComplete?: (ballIndex: number) => void
@@ -20,8 +22,8 @@ export default function RoomPokeballReleaseAnimation({
   onCatchComplete,
   onBallClick,
   playerType,
-  remoteAnimatingBalls = new Set(),
-  remoteReleasedBalls = new Set(),
+  remoteAnimatingBalls = EMPTY_SET,
+  remoteReleasedBalls = EMPTY_SET,
   isLocalPlayer = false
 }: RoomPokeballReleaseAnimationProps) {
   const [localAnimatingBalls, setLocalAnimatingBalls] = useState<Set<number>>(new Set())

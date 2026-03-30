@@ -185,7 +185,7 @@ class FirebaseRTDBService {
       },
       phase: 'choosing',
       turn: 1,
-      deadlineAt: serverTimestamp(),
+      deadlineAt: deadlineAt,
       version: 1
     });
 

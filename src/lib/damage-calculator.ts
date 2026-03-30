@@ -83,8 +83,9 @@ export function calculateDamage({
   const rand = 0.85 + rngNextFloat(rng) * 0.15;
   
   // Base damage calculation
+  const safeDef = Math.max(1, defenseStat);
   const base = Math.floor(
-    Math.floor(((2 * level / 5 + 2) * movePower * attackStat / defenseStat) / 50) + 2
+    Math.floor(((2 * level / 5 + 2) * movePower * attackStat / safeDef) / 50) + 2
   );
   
   // Final modifier

@@ -19,8 +19,10 @@ export function useChoiceTimeout(
     
     const remaining = deadlineAt - Date.now();
     
-    // Already past deadline
     if (remaining <= 0) {
+      handleTimeout(battleId, userId).catch(err => {
+        console.error('Failed to handle overdue timeout:', err);
+      });
       return;
     }
     

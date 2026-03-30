@@ -6,7 +6,7 @@ import {
   TypeName,
   calculateTypeEffectiveness
 } from './damage-calculator';
-import { getMove } from './moveCache';
+import { getMove, getCachedMove } from './moveCache';
 import {
   resolveSwitch,
   resolveMove,
@@ -232,7 +232,7 @@ export function getMovePriority(moveId: string): number {
 
 // Calculate effective speed for move ordering
 export function getEffectiveSpeed(pokemon: BattlePokemon, tailwindActive = false): number {
-  const baseSpeed = pokemon.pokemon.stats?.find(stat => stat.stat.name === 'speed')?.base_stat || 50;
+  const baseSpeed = pokemon.pokemon.stats?.find((stat: any) => (stat.stat?.name || stat.name) === 'speed')?.base_stat || 50;
   let calculatedSpeed = calculateStat(baseSpeed, pokemon.level);
   // Apply nature: +10% to increased stat, -10% to decreased stat
   try {
@@ -242,7 +242,7 @@ export function getEffectiveSpeed(pokemon: BattlePokemon, tailwindActive = false
       if (n.increasedStat === 'speed') calculatedSpeed = Math.floor(calculatedSpeed * 1.1);
       if (n.decreasedStat === 'speed') calculatedSpeed = Math.floor(calculatedSpeed * 0.9);
     }
-  } catch { }
+  } catch (e) { console.warn('Failed to load natures for speed calc:', e); }
   let finalSpeed = applyStatModifier(calculatedSpeed, pokemon.statModifiers?.speed || 0);
   // Tailwind doubles speed (Gen IV+)
   if (tailwindActive) {
@@ -303,11 +303,8 @@ export function canUseMove(
 
   // Check volatile conditions
   if (pokemon.volatile.taunt && pokemon.volatile.taunt.turns > 0) {
-    const isStatusMove =
-      move.damage_class?.name === 'status' ||
-      (move as any).category === 'status' ||
-      (!move.power && move.power !== undefined);
-    if (isStatusMove) {
+    const fullMove = getCachedMove(moveId);
+    if (fullMove?.category === 'Status') {
       return { canUse: false, reason: 'taunted' };
     }
   }
@@ -318,7 +315,9 @@ export function canUseMove(
   }
 
   if (pokemon.volatile.disable && pokemon.volatile.disable.turns > 0) {
-    return { canUse: moveId !== pokemon.volatile.disable.move, reason: 'disabled' };
+    if (moveId === pokemon.volatile.disable.move) {
+      return { canUse: false, reason: 'disabled' };
+    }
   }
 
   return { canUse: true };
@@ -442,6 +441,7 @@ export function applyStatModifier(baseStat: number, modifier: number): number {
 
 // Calculate damage percentage
 export function calculateDamagePercentage(damage: number, maxHp: number): number {
+  if (maxHp <= 0) return 0;
   return Math.round((damage / maxHp) * 100);
 }
 
@@ -980,7 +980,11 @@ export async function calculateDamageDetailed(
 }
 
 export function getCurrentPokemon(team: BattleTeam): BattlePokemon {
-  return team.pokemon[team.currentIndex];
+  const pokemon = team.pokemon[team.currentIndex];
+  if (!pokemon) {
+    throw new Error(`No pokemon at index ${team.currentIndex} (team size: ${team.pokemon.length})`);
+  }
+  return pokemon;
 }
 
 export function isTeamDefeated(team: BattleTeam): boolean {
@@ -1069,8 +1073,8 @@ export function handleAutomaticSwitching(state: BattleState): BattleState {
     const newPlayerCurrent = getCurrentPokemon(newState.player);
     const newOpponentCurrent = getCurrentPokemon(newState.opponent);
 
-    const playerSpeedStat = newPlayerCurrent.pokemon.stats.find(stat => stat.stat.name === 'speed')?.base_stat || 50;
-    const opponentSpeedStat = newOpponentCurrent.pokemon.stats.find(stat => stat.stat.name === 'speed')?.base_stat || 50;
+    const playerSpeedStat = newPlayerCurrent.pokemon.stats.find((stat: any) => (stat.stat?.name || stat.name) === 'speed')?.base_stat || 50;
+    const opponentSpeedStat = newOpponentCurrent.pokemon.stats.find((stat: any) => (stat.stat?.name || stat.name) === 'speed')?.base_stat || 50;
     let playerSpeed = calculateStat(playerSpeedStat, newPlayerCurrent.level);
     let opponentSpeed = calculateStat(opponentSpeedStat, newOpponentCurrent.level);
     try {
@@ -1085,7 +1089,7 @@ export function handleAutomaticSwitching(state: BattleState): BattleState {
         if (n.increasedStat === 'speed') opponentSpeed = Math.floor(opponentSpeed * 1.1);
         if (n.decreasedStat === 'speed') opponentSpeed = Math.floor(opponentSpeed * 0.9);
       }
-    } catch { }
+    } catch (e) { console.warn('Failed to load natures for speed calc:', e); }
   }
 
   newState.battleLog = newLog;
@@ -1179,7 +1183,7 @@ export function switchToSelectedPokemon(state: BattleState, pokemonIndex: number
       if (n.increasedStat === 'speed') opponentSpeed = Math.floor(opponentSpeed * 1.1);
       if (n.decreasedStat === 'speed') opponentSpeed = Math.floor(opponentSpeed * 0.9);
     }
-  } catch { }
+  } catch (e) { console.warn('Failed to load natures for speed calc:', e); }
 
   newState.battleLog = newLog;
   return newState;
@@ -1194,7 +1198,7 @@ export function initializeTeamBattle(
 ): BattleState {
   // Convert team data to BattlePokemon arrays
   const playerBattlePokemon: BattlePokemon[] = playerTeam.map(teamMember => {
-    const hpStat = teamMember.pokemon.stats.find(stat => stat.stat.name === 'hp')?.base_stat || 50;
+    const hpStat = teamMember.pokemon.stats.find((stat: any) => (stat.stat?.name || stat.name) === 'hp')?.base_stat || 50;
     
     // Use existing calculated HP if available (from team builder), otherwise calculate from base stats
     const existingHp = (teamMember as any).currentHp;
@@ -1228,7 +1232,7 @@ export function initializeTeamBattle(
   });
 
   const opponentBattlePokemon: BattlePokemon[] = opponentTeam.map(teamMember => {
-    const hpStat = teamMember.pokemon.stats.find(stat => stat.stat.name === 'hp')?.base_stat || 50;
+    const hpStat = teamMember.pokemon.stats.find((stat: any) => (stat.stat?.name || stat.name) === 'hp')?.base_stat || 50;
     
     // Use existing calculated HP if available
     const existingHp = (teamMember as any).currentHp;
@@ -1283,8 +1287,8 @@ export function initializeTeamBattle(
   };
 
   // Determine turn order based on speed of first Pokémon
-  const playerSpeedStat = playerBattlePokemon[0].pokemon.stats.find(stat => stat.stat.name === 'speed')?.base_stat || 50;
-  const opponentSpeedStat = opponentBattlePokemon[0].pokemon.stats.find(stat => stat.stat.name === 'speed')?.base_stat || 50;
+  const playerSpeedStat = playerBattlePokemon[0]?.pokemon.stats.find((stat: any) => (stat.stat?.name || stat.name) === 'speed')?.base_stat || 50;
+  const opponentSpeedStat = opponentBattlePokemon[0]?.pokemon.stats.find((stat: any) => (stat.stat?.name || stat.name) === 'speed')?.base_stat || 50;
   const playerSpeed = calculateStat(playerSpeedStat, playerBattlePokemon[0].level);
   const opponentSpeed = calculateStat(opponentSpeedStat, opponentBattlePokemon[0].level);
 

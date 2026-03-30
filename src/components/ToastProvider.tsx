@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, ReactNode } from 'react';
+import { createContext, useContext, useMemo, ReactNode } from 'react';
 import { ToastContainer, useToast } from './Toast';
 
 interface ToastContextType {
@@ -14,8 +14,10 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined);
 export function ToastProvider({ children }: { children: ReactNode }) {
   const { toasts, addToast, removeToast, showChatNotification } = useToast();
 
+  const value = useMemo(() => ({ addToast, removeToast, showChatNotification }), [addToast, removeToast, showChatNotification]);
+
   return (
-    <ToastContext.Provider value={{ addToast, removeToast, showChatNotification }}>
+    <ToastContext.Provider value={value}>
       {children}
       <ToastContainer toasts={toasts} onRemove={removeToast} />
     </ToastContext.Provider>

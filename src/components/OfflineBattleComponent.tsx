@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { useOfflineBattleState, type OfflineBattleConfig } from '@/hooks/useOfflineBattleState';
 import Tooltip from '@/components/Tooltip';
 import { getMove } from '@/lib/moveCache';
-import { getPokemonIdFromSpecies, formatPokemonName, getShowdownAnimatedSprite } from '@/lib/utils';
+import { formatPokemonName, getShowdownAnimatedSprite } from '@/lib/utils';
 import { BattleSprite, BattleSpriteRef } from '@/components/battle/BattleSprite';
 import Image from 'next/image';
 import { BattleEndScreen } from '@/components/multiplayer/BattleEndScreen';

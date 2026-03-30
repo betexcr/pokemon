@@ -71,6 +71,7 @@ export default function PokemonDetails({ pokemon, showHeader = true, className =
         setError(null)
         
         // Load critical data first (species for flavor text and genus)
+        // No .catch() here -- failures propagate to the outer catch so setError fires
         const speciesPromise = getPokemonSpecies(pokemon.id).then(speciesData => {
           const englishFlavorText = speciesData.flavor_text_entries?.find((entry: any) => entry.language.name === 'en')?.flavor_text || ''
           setFlavorText(englishFlavorText)
@@ -80,9 +81,6 @@ export default function PokemonDetails({ pokemon, showHeader = true, className =
           setIsLegendary(speciesData.is_legendary || false)
           setIsMythical(speciesData.is_mythical || false)
           return speciesData
-        }).catch(error => {
-          console.warn('Failed to load species data:', error)
-          return null
         })
 
         // Load abilities data (important for hero section)
@@ -96,10 +94,8 @@ export default function PokemonDetails({ pokemon, showHeader = true, className =
         })
 
         // Wait for critical data to load before showing content
-        await Promise.allSettled([speciesPromise, abilitiesPromise])
-        
-        // Allow UI to render with basic data while loading secondary data
-        setLoading(false)
+        // Using Promise.all so a species failure propagates to the outer catch
+        await Promise.all([speciesPromise, abilitiesPromise])
 
         // Load moves data separately for progressive loading
         const movesPromise = getPokemonMoves(pokemon.id).then(data => {
@@ -136,9 +132,7 @@ export default function PokemonDetails({ pokemon, showHeader = true, className =
         setLoadingMatchups(false)
 
         // Don't wait for secondary data - let it load in background
-        Promise.allSettled([movesPromise, evolutionPromise]).catch(error => {
-          console.warn('Failed to load secondary data:', error)
-        })
+        Promise.allSettled([movesPromise, evolutionPromise])
         
         // Group by effectiveness with separate categories
         const doubleWeak = matchups.x4.map(type => type.toLowerCase())

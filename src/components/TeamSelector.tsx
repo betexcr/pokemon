@@ -46,6 +46,8 @@ export default function TeamSelector({
   const [isOpen, setIsOpen] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<SavedTeam | LocalTeam | null>(null);
   const [isUsingLocalStorage, setIsUsingLocalStorage] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   // Helper: load teams from localStorage with robust fallbacks
@@ -85,6 +87,7 @@ export default function TeamSelector({
     const loadTeams = async () => {
       try {
         setLoading(true);
+        setLoadError(false);
         if (user) {
           const userTeams = await getUserTeams(user.uid);
           setTeams(userTeams);
@@ -116,7 +119,9 @@ export default function TeamSelector({
           }
         }
       } catch (error) {
+        console.error('Failed to load teams:', error);
         setTeams([]);
+        setLoadError(true);
       } finally {
         setLoading(false);
       }
@@ -138,7 +143,7 @@ export default function TeamSelector({
     };
     window.addEventListener('storage', onStorage);
     return () => window.removeEventListener('storage', onStorage);
-  }, [user, authLoading, selectedTeamId]);
+  }, [user, authLoading, selectedTeamId, retryCount]);
 
   // Notify parent when loading completes to avoid flicker
   useEffect(() => {
@@ -179,6 +184,22 @@ export default function TeamSelector({
         </label>
         <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-3 bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-300 text-sm">
           No teams saved. <a href="/team" className="text-blue-600 dark:text-blue-400 hover:underline">Create a team</a> or <button onClick={() => setShowAuthModal(true)} className="text-blue-600 dark:text-blue-400 hover:underline bg-transparent border-none cursor-pointer p-0 m-0 font-inherit text-inherit">sign in</button> to access cloud teams.
+        </div>
+      </div>
+    );
+  }
+
+  if (loadError && teams.length === 0) {
+    return (
+      <div className="w-full">
+        <label className="block text-sm font-medium text-black dark:text-gray-100 mb-2">
+          {label}
+        </label>
+        <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-3 bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-300 text-sm">
+          Failed to load teams.{' '}
+          <button onClick={() => setRetryCount(c => c + 1)} className="text-blue-600 dark:text-blue-400 hover:underline bg-transparent border-none cursor-pointer p-0 m-0 font-inherit text-inherit">
+            Retry
+          </button>
         </div>
       </div>
     );

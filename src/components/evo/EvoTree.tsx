@@ -232,7 +232,7 @@ export default function EvoTree({ data, filters }: Props) {
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [families.length]);
 
   const displayItems = visible;
 

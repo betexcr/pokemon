@@ -45,7 +45,8 @@ export function normalizeBattleRng(value?: BattleRng | number | null): BattleRng
 }
 
 export function advance(rng: BattleRng): number {
-  const next = (rng.state * RNG_MULT) % RNG_MOD;
+  let next = (rng.state * RNG_MULT) % RNG_MOD;
+  if (next === 0) next = rng.seed || 1;
   rng.state = next;
   rng.calls += 1;
   return next;

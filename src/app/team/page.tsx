@@ -693,7 +693,11 @@ export default function TeamBuilderPage() {
       setLoadingMovesSlots(prev => new Set(prev).add(idx))
       void getAvailableMoves(selectedId, selectedLevel)
         .then(moves => {
-          setAvailableMoves(prev => ({ ...prev, [idx]: moves }))
+          setTeamSlots(current => {
+            if (current[idx]?.id !== selectedId) return current
+            setAvailableMoves(prev => ({ ...prev, [idx]: moves }))
+            return current
+          })
         })
         .catch(error => {
           console.error('Failed to load available moves:', error)

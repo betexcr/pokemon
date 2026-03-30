@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from "react";
 import { httpsCallable } from "firebase/functions";
-import { onValue, ref as dbRef } from "firebase/database";
 import { auth, functions, rtdb } from "../lib/firebase";
 import type { Team } from "../types/battle";
 
@@ -44,17 +43,6 @@ export default function StartBattleButton({ opponentUid, myTeam, opponentTeam, o
         p2Team: opponentTeam
       });
       const battleId: string = res.data.battleId;
-
-      // Optional: attach listeners immediately so UI reacts live
-      const metaRef = dbRef(rtdb, `/battles/${battleId}/meta`);
-      const publicRef = dbRef(rtdb, `/battles/${battleId}/public`);
-      const privateRef = dbRef(rtdb, `/battles/${battleId}/private/${user.uid}`);
-
-      const unsubscribers: Array<() => void> = [];
-      unsubscribers.push(onValue(metaRef, () => {}, { onlyOnce: false }));
-      unsubscribers.push(onValue(publicRef, () => {}, { onlyOnce: false }));
-      unsubscribers.push(onValue(privateRef, () => {}, { onlyOnce: false }));
-
       onStarted(battleId);
     } catch (e: any) {
       setBattleError(e.message ?? "Failed to start battle");

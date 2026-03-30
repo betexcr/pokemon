@@ -267,13 +267,11 @@ export class CacheManager<T> {
       case 'localStorage':
         return this.localStorageCache.get(key)
       case 'hybrid':
-        // Try memory first, then localStorage
         let data = this.memoryCache.get(key)
-        if (data) return data
+        if (data != null) return data
         
         data = this.localStorageCache.get(key)
-        if (data) {
-          // Promote to memory cache
+        if (data != null) {
           this.memoryCache.set(key, data)
           return data
         }

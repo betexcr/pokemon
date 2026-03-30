@@ -416,7 +416,7 @@ function calculateDamage(params: {
   if (typeEffect === 0) return 0; // Immunity
   
   const levelFactor = (2 * level + 10) / 250;
-  const statRatio = attackStat / defenseStat;
+  const statRatio = attackStat / Math.max(1, defenseStat);
   const baseDamage = Math.floor(levelFactor * statRatio * movePower + 2);
   
   const critMod = isCrit ? 1.5 : 1;

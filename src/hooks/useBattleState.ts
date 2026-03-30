@@ -223,10 +223,10 @@ export function useBattleState(battleId: string): UseBattleState {
       setLoading(true);
     } else if (error) {
       setLoading(false);
-    } else if (meta && pub && me) {
+    } else if (meta && pub) {
       setLoading(false);
     }
-  }, [meta, pub, me, authLoading, error]);
+  }, [meta, pub, authLoading, error]);
 
   const timeLeftSec = useMemo(() => {
     if (!meta || meta.phase !== "choosing" || !meta.deadlineAt) return 0;
