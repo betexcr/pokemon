@@ -13,6 +13,7 @@ interface AdvancedFilters {
   weightRange: [number, number]
   legendary: boolean
   mythical: boolean
+  ultraBeast: boolean
 }
 
 interface AdvancedFiltersProps {
@@ -258,7 +259,7 @@ export default function AdvancedFilters({
                       </div>
                     </div>
 
-                    {/* Legendary and Mythical Filters */}
+                    {/* Legendary, Mythical, and Ultra Beast Filters */}
                     <div className="space-y-3">
                       <label className="block text-sm font-medium">Special Categories</label>
                       <div className="space-y-2">
@@ -291,6 +292,21 @@ export default function AdvancedFilters({
                             style={{ backgroundColor: 'var(--color-input-bg)' }}
                           />
                           <span className="text-sm text-text dark:text-gray-200">Mythical Pokémon</span>
+                        </label>
+                        <label className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            checked={advancedFilters.ultraBeast}
+                            onChange={(e) => {
+                              setAdvancedFilters(prev => ({
+                                ...prev,
+                                ultraBeast: e.target.checked
+                              }))
+                            }}
+                            className="w-4 h-4 text-poke-blue border-border rounded focus:ring-poke-blue focus:ring-2 dark:bg-gray-700 dark:border-gray-500 dark:checked:bg-poke-blue dark:checked:border-poke-blue"
+                            style={{ backgroundColor: 'var(--color-input-bg)' }}
+                          />
+                          <span className="text-sm text-text dark:text-gray-200">Ultra Beast</span>
                         </label>
                       </div>
                     </div>

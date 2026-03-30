@@ -5908,9 +5908,9 @@ const japaneseNames: Record<string, JapaneseNameInfo> = {
   },
   'テツノイワオ': {
     japanese: 'テツノイワオ',
-    romaji: '*Tetsunoiwao*',
-    meaning: 'Iron Boulders',
-    explanation: '鉄 (*tetsu*, iron) + 岩男 (*iwao*, rock-man). Paradox Tyranitar.'
+    romaji: 'Tetsunoiwao',
+    meaning: 'Iron Crag',
+    explanation: 'From 鉄 (tetsu, iron) + の (no) + 巌 (iwao, crag/boulder). A Paradox form of Terrakion.'
   },
   'セビエ': {
     japanese: 'セビエ',
@@ -6004,202 +6004,171 @@ const japaneseNames: Record<string, JapaneseNameInfo> = {
   },
   'カミツオロチ': {
     japanese: 'カミツオロチ',
-    romaji: '*Kamitsurochi*',
-    meaning: 'God + Yamata-no-Orochi (Serpent)',
-    explanation: 'From 神 (*kami*, god) + 八岐大蛇 (*yamata no orochi*, serpent). Candy apple serpent.'
+    romaji: 'Kamitsuorochi',
+    meaning: 'Biting Nectar Serpent',
+    explanation: 'From 噛みつく (kamitsuku, to bite) + 蜜 (mitsu, nectar) + 大蛇 (orochi, great serpent). References the mythological Yamata no Orochi; seven syrup wyrms inside an apple.'
   },
   'チャデス': {
     japanese: 'チャデス',
-    romaji: '*Chadesu*',
+    romaji: 'Chadesu',
     meaning: 'Tea + Death',
-    explanation: '茶 (*cha*, tea) + death. A haunted tea bowl.'
+    explanation: 'From 茶 (cha, tea) + デス (desu, death). A phantom that possesses tea utensils.'
   },
   'ヤバソチャ': {
     japanese: 'ヤバソチャ',
-    romaji: '*Yabasocha*',
-    meaning: 'Dangerous + Tea',
-    explanation: 'やばい (*yabai*, strange/dangerous) + 茶 (*ocha*, tea). Haunted tea pot.'
+    romaji: 'Yabasocha',
+    meaning: 'Looks Dangerous Tea',
+    explanation: 'From やばそう (yabasou, looks dangerous) + 茶 (cha, tea). Evolution of Poltchageist; a matcha tea that is not what it seems.'
   },
   'イイネイヌ': {
     japanese: 'イイネイヌ',
-    romaji: '*Iineinu*',
+    romaji: 'Iineinu',
     meaning: 'Good Dog',
-    explanation: 'いいね (*iine*, good) + 犬 (*inu*, dog). Loyal dog.'
+    explanation: 'From いいね (iine, good/likeable) + 犬 (inu, dog). One of the ironically named Loyal Three — all carry words meaning "good" despite being villainous.'
   },
   'マシマシラ': {
     japanese: 'マシマシラ',
-    romaji: '*Mashimashira*',
-    meaning: 'Evil Monkey',
-    explanation: 'From 真っ黒 (*makkuro*, dark) + 猿 (*saru*, monkey). A scheming monkey.'
+    romaji: 'Mashimashira',
+    meaning: 'Even Better Monkey',
+    explanation: 'From 増し (mashi, more/better) repeated + ましら (mashira, archaic for monkey). The doubled "mashi" implies excess; one of the ironically named Loyal Three.'
   },
   'キチキギス': {
     japanese: 'キチキギス',
-    romaji: '*Kichikigisu*',
-    meaning: 'Pheasant + Mischief',
-    explanation: 'From 雉 (*kiji*, pheasant) + sound play. A flashy bird.'
+    romaji: 'Kichikigisu',
+    meaning: 'Lucky Pheasant',
+    explanation: 'From 吉 (kichi, good fortune) + キギス (kigisu, archaic for pheasant, from its cry). One of the ironically named Loyal Three; English name Fezandipiti = pheasant + serendipity.'
   },
   'オーガポン': {
     japanese: 'オーガポン',
-    romaji: '*Ōgapon*',
-    meaning: 'Ogre + Mask',
-    explanation: 'From “ogre” + mask. A masked ogre spirit.'
+    romaji: 'Ōgapon',
+    meaning: 'Ogre + Ponkan',
+    explanation: 'From English ogre (referencing oni from the Momotarō tale) + ポンカン (ponkan, a mandarin citrus). Its true face beneath the mask resembles the fruit.'
   },
   'ブリジュラス': {
     japanese: 'ブリジュラス',
-    romaji: '*Burijurasu*',
-    meaning: 'Bridge + Duraludon',
-    explanation: 'From “bridge” + Duraludon. A suspension-bridge dragon.'
-  },
-  'カグヤドン': {
-    japanese: 'カグヤドン',
-    romaji: '*Kaguyadon*',
-    meaning: 'Kaguya + Fire',
-    explanation: 'From 火 (*hi*) + legend. Paradox Entei.'
-  },
-  'テツノカミ': {
-    japanese: 'テツノカミ',
-    romaji: '*Tetsunokami*',
-    meaning: 'Iron God',
-    explanation: '鉄 (*tetsu*, iron) + 神 (*kami*, god). Paradox Raikou.'
-  },
-  'テツノイワ': {
-    japanese: 'テツノイワ',
-    romaji: '*Tetsunoiwa*',
-    meaning: 'Iron Boulder',
-    explanation: '鉄 (*tetsu*, iron) + 岩 (*iwa*, rock). Paradox Terrakion.'
-  },
-  'テツノカンムリ': {
-    japanese: 'テツノカンムリ',
-    romaji: '*Tetsunokan-muri*',
-    meaning: 'Iron Crown',
-    explanation: '鉄 (*tetsu*, iron) + 冠 (*kanmuri*, crown). Paradox Cobalion.'
+    romaji: 'Burijurasu',
+    meaning: 'Bridge + Duralumin',
+    explanation: 'From ブリッジ (burijji, bridge) + ジュラルミン (jurarumin, duralumin alloy) + -ス (-su, Latin -us suffix). Evolves from Duraludon; its body forms an arch bridge.'
   },
   'テラパゴス': {
     japanese: 'テラパゴス',
-    romaji: '*Terapagosu*',
-    meaning: 'Terastal + Tortoise',
-    explanation: 'From “terastal” + tortoise. A crystal turtle.'
+    romaji: 'Terapagosu',
+    meaning: 'Tera + Galapagos',
+    explanation: 'Triple pun: Terastal (the crystallization mechanic) + terra (Latin for earth) + Galápagos (from Spanish galápago, tortoise). The primordial turtle at the origin of Terastallization.'
   },
-  'モモロウ': {
-    japanese: 'モモロウ',
-    romaji: '*Momorō*',
-    meaning: 'Peach + Servant',
-    explanation: '桃 (*momo*, peach) + servant suffix. A peach-bound chain ghost.'
-  },
-
   'チョンチー': {
     japanese: 'チョンチー',
-    romaji: 'Chonchi-',
-    meaning: 'Chinchou',
-    explanation: 'Japanese name for Chinchou.'
+    romaji: 'Chonchii',
+    meaning: 'Lantern',
+    explanation: 'From 提灯 (chōchin, paper lantern), rearranged. An anglerfish that lures prey with light.'
   },
   'マッシブーン': {
     japanese: 'マッシブーン',
-    romaji: 'Mashibu-n',
-    meaning: 'Buzzwole',
-    explanation: 'Japanese name for Buzzwole.'
+    romaji: 'Masshibūn',
+    meaning: 'Massive + Buzz',
+    explanation: 'From マッシブ (masshibu, massive) + ブーン (būn, buzzing sound). A muscular mosquito Ultra Beast.'
   },
   'フェローチェ': {
     japanese: 'フェローチェ',
-    romaji: 'Fuero-chie',
-    meaning: 'Pheromosa',
-    explanation: 'Japanese name for Pheromosa.'
+    romaji: 'Ferōche',
+    meaning: 'Pheromone + Fierce',
+    explanation: 'From フェロモン (feromon, pheromone) + Italian feroce (fierce). An elegant cockroach Ultra Beast.'
   },
   'デンジュモク': {
     japanese: 'デンジュモク',
     romaji: 'Denjumoku',
-    meaning: 'Xurkitree',
-    explanation: 'Japanese name for Xurkitree.'
+    meaning: 'Electric Pole + Tree',
+    explanation: 'From 電柱 (denchū, electric pole) + 樹木 (jumoku, tree). A living wiring Ultra Beast.'
   },
   'テッカグヤ': {
     japanese: 'テッカグヤ',
-    romaji: 'Tekaguya',
-    meaning: 'Celesteela',
-    explanation: 'Japanese name for Celesteela.'
+    romaji: 'Tekkaguya',
+    meaning: 'Steel + Kaguya',
+    explanation: 'From 鉄 (tetsu, steel/iron) + かぐや (Kaguya, from the Tale of the Bamboo Cutter). A bamboo rocket Ultra Beast.'
   },
   'カミツルギ': {
     japanese: 'カミツルギ',
     romaji: 'Kamitsurugi',
-    meaning: 'Kartana',
-    explanation: 'Japanese name for Kartana.'
+    meaning: 'Paper + Sword',
+    explanation: 'From 紙 (kami, paper) + 剣 (tsurugi, sword). An origami Ultra Beast.'
   },
   'アクジキング': {
     japanese: 'アクジキング',
     romaji: 'Akujikingu',
-    meaning: 'Guzzlord',
-    explanation: 'Japanese name for Guzzlord.'
+    meaning: 'Indiscriminate Eater King',
+    explanation: 'From 悪食 (akujiki, indiscriminate eating) + キング (kingu, king). A gluttonous Ultra Beast.'
   },
   'ネクロズマ': {
     japanese: 'ネクロズマ',
     romaji: 'Nekurozuma',
-    meaning: 'Necrozma',
-    explanation: 'Japanese name for Necrozma.'
+    meaning: 'Dark + Prism',
+    explanation: 'From Greek nekro- (dead/dark) + プリズマ (purizuma, prism). A light-absorbing prism legendary.'
   },
   'ウオノラゴン': {
     japanese: 'ウオノラゴン',
     romaji: 'Uonoragon',
-    meaning: 'Dracovish',
-    explanation: 'Japanese name for Dracovish.'
+    meaning: 'Fish + Dragon',
+    explanation: 'From 魚 (uo, fish) + の (no, possessive) + ドラゴン (doragon, dragon). A chimera fossil Pokémon.'
   },
   'ウオチルドン': {
     japanese: 'ウオチルドン',
     romaji: 'Uochirudon',
-    meaning: 'Arctovish',
-    explanation: 'Japanese name for Arctovish.'
+    meaning: 'Fish + Chilled',
+    explanation: 'From 魚 (uo, fish) + チルド (chirudo, chilled). A chimera fossil Pokémon.'
   },
   'ハリーマン': {
     japanese: 'ハリーマン',
-    romaji: 'Hari-man',
-    meaning: 'Overqwil',
-    explanation: 'Japanese name for Overqwil.'
+    romaji: 'Harīman',
+    meaning: 'Needle + Man',
+    explanation: 'From 針 (hari, needle/spine) + マン (man). A spiny venomous pufferfish.'
   },
   'シガロコ': {
     japanese: 'シガロコ',
     romaji: 'Shigaroko',
-    meaning: 'Rellor',
-    explanation: 'Japanese name for Rellor.'
+    meaning: 'Dung Roller',
+    explanation: 'From 糞転がし (funkorogashi, dung beetle) + コロコロ (korokoro, rolling sound). A dung-rolling beetle.'
   },
   'オトシドリ': {
     japanese: 'オトシドリ',
     romaji: 'Otoshidori',
-    meaning: 'Bombirdier',
-    explanation: 'Japanese name for Bombirdier.'
+    meaning: 'Dropping + Bird',
+    explanation: 'From 落とし (otoshi, dropping) + 鳥 (tori/dori, bird). A stork that drops things from the sky.'
   },
   'テツノイバラ': {
     japanese: 'テツノイバラ',
     romaji: 'Tetsunoibara',
     meaning: 'Iron Thorns',
-    explanation: 'Japanese name for Iron Thorns.'
+    explanation: 'From 鉄 (tetsu, iron) + の (no) + 茨 (ibara, thorns). A Paradox form of Tyranitar.'
   },
   'カミッチュ': {
     japanese: 'カミッチュ',
-    romaji: 'Kamichu',
-    meaning: 'Dipplin',
-    explanation: 'Japanese name for Dipplin.'
+    romaji: 'Kamicchu',
+    meaning: 'Bite + Apple',
+    explanation: 'From 噛みつく (kamitsuku, to bite) + a diminutive form. An apple wyrm Pokémon.'
   },
   'ウガツホムラ': {
     japanese: 'ウガツホムラ',
     romaji: 'Ugatsuhomura',
-    meaning: 'Gouging Fire',
-    explanation: 'Japanese name for Gouging Fire.'
+    meaning: 'Gouge + Flame',
+    explanation: 'From 穿つ (ugatsu, to gouge/pierce) + 焔 (homura, flame). A Paradox form of Entei.'
   },
   'タケルライコ': {
     japanese: 'タケルライコ',
     romaji: 'Takeruraiko',
-    meaning: 'Raging Bolt',
-    explanation: 'Japanese name for Raging Bolt.'
+    meaning: 'Rage + Lightning',
+    explanation: 'From 猛る (takeru, to rage) + 雷光 (raikō, lightning). A Paradox form of Raikou.'
   },
   'テツノカシラ': {
     japanese: 'テツノカシラ',
     romaji: 'Tetsunokashira',
-    meaning: 'Iron Crown',
-    explanation: 'Japanese name for Iron Crown.'
+    meaning: 'Iron Head/Chief',
+    explanation: 'From 鉄 (tetsu, iron) + の (no) + 頭 (kashira, head/chief). A Paradox form of Cobalion.'
   },
   'モモワロウ': {
     japanese: 'モモワロウ',
-    romaji: 'Momowarou',
-    meaning: 'Pecharunt',
-    explanation: 'Japanese name for Pecharunt.'
+    romaji: 'Momowarō',
+    meaning: 'Peach + Wicked',
+    explanation: 'From 桃 (momo, peach) + 悪 (waru, wicked) + 郎 (rō, male name suffix). A poisonous peach mythical Pokémon.'
   }
 }
 

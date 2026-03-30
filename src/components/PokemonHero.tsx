@@ -27,10 +27,11 @@ interface PokemonHeroProps {
   hasGenderDifferences?: boolean;
   isLegendary?: boolean;
   isMythical?: boolean;
+  isUltraBeast?: boolean;
   loading?: boolean;
 }
 
-export default function PokemonHero({ pokemon, abilities, flavorText, genus, hasGenderDifferences = false, isLegendary = false, isMythical = false, loading = false }: PokemonHeroProps) {
+export default function PokemonHero({ pokemon, abilities, flavorText, genus, hasGenderDifferences = false, isLegendary = false, isMythical = false, isUltraBeast = false, loading = false }: PokemonHeroProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -1299,8 +1300,8 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
                 {pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)}
               </h1>
               
-              {/* Legendary / Mythical Badges */}
-              {(isLegendary || isMythical) && (
+              {/* Legendary / Mythical / Ultra Beast Badges */}
+              {(isLegendary || isMythical || isUltraBeast) && (
                 <div className="mt-2 flex flex-wrap gap-2 justify-center lg:justify-start">
                   {isLegendary && (
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border border-amber-200 dark:border-amber-700/50">
@@ -1312,6 +1313,12 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300 border border-violet-200 dark:border-violet-700/50">
                       <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
                       Mythical
+                    </span>
+                  )}
+                  {isUltraBeast && (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300 border border-teal-200 dark:border-teal-700/50">
+                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm0 14c-2.76 0-5-2.24-5-5h2c0 1.66 1.34 3 3 3s3-1.34 3-3h2c0 2.76-2.24 5-5 5z"/></svg>
+                      Ultra Beast
                     </span>
                   )}
                 </div>

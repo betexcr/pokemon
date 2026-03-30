@@ -12,6 +12,7 @@ import {
 import { processStartOfTurn, processEndOfTurn, resolveMove, resolveSwitch, runEntrySequence } from './team-battle-engine-additional';
 import { createBattleRng } from './battle-rng';
 import { RTDBBattleMeta, RTDBBattlePrivate, RTDBBattlePublic, RTDBChoice } from './firebase-rtdb-service';
+import { handleBattleEnd } from './multiplayer/handleBattleEnd';
 
 const POKEAPI_BASE = 'https://pokeapi.co/api/v2';
 
@@ -324,15 +325,6 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
         // We need to map BattleState back to RTDB structure
         // This is the reverse of fetchBattleState
 
-        // Prepare updates for meta
-        const metaUpdates: any = {
-            turn: meta.turn + 1,
-            phase: currentState.isComplete ? 'ended' : 'choosing',
-            ...(currentState.isComplete && currentState.winner && {
-                winnerUid: currentState.winner === 'player' ? meta.players.p1.uid : meta.players.p2.uid
-            })
-        };
-
         // Prepare updates for private nodes (team state)
         const p1Updates = {
             team: currentState.player.pokemon,
@@ -400,22 +392,37 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
                 : ''
         };
 
-        await Promise.all([
-            ops.update(`battles/${battleId}/meta`, metaUpdates),
-            ops.update(`battles/${battleId}/private/${meta.players.p1.uid}`, p1Updates),
-            ops.update(`battles/${battleId}/private/${meta.players.p2.uid}`, p2Updates),
-            ops.update(`battles/${battleId}/public`, publicUpdates),
-            ops.set(`battles/${battleId}/turns/${meta.turn}/choices`, null),
-        ]);
+        if (currentState.isComplete) {
+            // Write state updates (private, public, clear choices) but let
+            // handleBattleEnd own the meta + Firestore + room transition.
+            await Promise.all([
+                ops.update(`battles/${battleId}/private/${meta.players.p1.uid}`, p1Updates),
+                ops.update(`battles/${battleId}/private/${meta.players.p2.uid}`, p2Updates),
+                ops.update(`battles/${battleId}/public`, publicUpdates),
+                ops.set(`battles/${battleId}/turns/${meta.turn}/choices`, null),
+            ]);
+
+            await handleBattleEnd(battleId, currentState.winner, 'victory', undefined, ops);
+        } else {
+            const metaUpdates: any = {
+                turn: meta.turn + 1,
+                phase: 'choosing',
+            };
+
+            await Promise.all([
+                ops.update(`battles/${battleId}/meta`, metaUpdates),
+                ops.update(`battles/${battleId}/private/${meta.players.p1.uid}`, p1Updates),
+                ops.update(`battles/${battleId}/private/${meta.players.p2.uid}`, p2Updates),
+                ops.update(`battles/${battleId}/public`, publicUpdates),
+                ops.set(`battles/${battleId}/turns/${meta.turn}/choices`, null),
+            ]);
+        }
 
     } catch (error: any) {
         console.error('Error during turn resolution:', error);
         
         try {
-            await ops.update(`battles/${battleId}/meta`, {
-                phase: 'ended',
-                endedReason: 'resolution_failed'
-            });
+            await handleBattleEnd(battleId, undefined, 'resolution_failed', undefined, ops);
         } catch (cleanupError) {
             console.error('Failed to terminate battle:', cleanupError);
         }

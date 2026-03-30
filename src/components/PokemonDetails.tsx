@@ -11,6 +11,7 @@ import { Pokemon } from '@/types/pokemon'
 import { getPokemonSpecies, getPokemonAbilities, getPokemonMoves, getEvolutionChainNodes } from '@/lib/api'
 import { getMatchup } from '@/lib/getMatchup'
 import { PokemonDetailsSkeleton, StatsSectionSkeleton, MovesSectionSkeleton, EvolutionSectionSkeleton, MatchupsSectionSkeleton } from '@/components/skeletons/PokemonDetailsSkeleton'
+import { ULTRA_BEAST_POKEMON } from '@/lib/pokemon-categories'
 
 interface PokemonDetailsProps {
   pokemon: Pokemon
@@ -204,6 +205,7 @@ export default function PokemonDetails({ pokemon, showHeader = true, className =
           hasGenderDifferences={hasGenderDifferences}
           isLegendary={isLegendary}
           isMythical={isMythical}
+          isUltraBeast={ULTRA_BEAST_POKEMON.has(pokemon.id)}
           loading={loading}
         />
       )}

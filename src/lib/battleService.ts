@@ -58,6 +58,8 @@ export interface BattleUpdate {
   battleData?: unknown;
   status?: 'waiting' | 'active' | 'completed';
   winner?: string;
+  winnerUid?: string;
+  endReason?: 'victory' | 'forfeit' | 'timeout' | 'resolution_failed';
   phase?: 'choice' | 'resolution' | 'end_of_turn' | 'replacement';
   updatedAt?: unknown;
 }
@@ -524,27 +526,6 @@ class BattleService {
     await updateDoc(battleRef, {
       battleData: this.sanitizeForFirestore(initialBattleData),
       status: 'active',
-      updatedAt: serverTimestamp()
-    });
-  }
-
-  // End the battle
-  async endBattle(battleId: string, winner: string, finalBattleData: unknown): Promise<void> {
-    if (!db) throw new Error('Firebase not initialized');
-    this.ensureAuthenticated();
-    
-    const battleRef = doc(db, this.battlesCollection, battleId);
-    const snap = await getDoc(battleRef);
-    if (snap.exists()) {
-      const data = snap.data();
-      if (data.status === 'completed' && data.winner === winner && this.isEqual(data.battleData, finalBattleData)) {
-        return; // No change
-      }
-    }
-    await updateDoc(battleRef, {
-      battleData: finalBattleData,
-      status: 'completed',
-      winner,
       updatedAt: serverTimestamp()
     });
   }

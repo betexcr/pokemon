@@ -75,97 +75,22 @@ async updateBattleMeta(
 }
 ```
 
-#### Step 2: Create Turn Resolution Logic
+#### Step 2: Turn Resolution
 
-Create [src/lib/multiplayer/resolveTurn.ts](../src/lib/multiplayer/):
+Turn resolution lives in [src/lib/battle-resolution.ts](../src/lib/battle-resolution.ts).
+The `resolveTurn(battleId, authToken?)` function:
+
+1. Reads both players' choices and the full battle state from RTDB
+2. Hydrates teams and executes the turn via the battle engine
+3. Writes updated private/public state back to RTDB
+4. On battle completion, delegates to `handleBattleEnd` (RTDB meta + Firestore + room)
+5. On error, marks the battle as ended with `resolution_failed`
 
 ```typescript
-import { executeTurn } from '@/server/executeTurn';
-import { rtdbService, RTDBChoice, RTDBResolution } from '@/lib/firebase-rtdb-service';
-import { BattleState } from '@/lib/team-battle-engine';
+import { resolveTurn } from '@/lib/battle-resolution';
 
-export async function resolveTurn(
-  battleId: string,
-  turn: number,
-  choices: Record<string, RTDBChoice>
-): Promise<void> {
-  console.log(`🎮 Resolving turn ${turn} for battle ${battleId}`);
-  
-  try {
-    // 1. Get current battle state from RTDB
-    const battleState = await rtdbService.getBattleState(battleId);
-    
-    // 2. Add choices to battle state as actions
-    battleState.actionQueue = convertChoicesToActions(choices, battleState);
-    
-    // 3. Execute turn using server logic
-    const updatedState = await executeTurn(battleState);
-    
-    // 4. Create resolution record
-    const resolution: RTDBResolution = {
-      by: 'client-host',
-      committedAt: Date.now(),
-      rngSeedUsed: battleState.rng,
-      diffs: calculateStateDiffs(battleState, updatedState),
-      logs: updatedState.battleLog.slice(-10), // Last 10 log entries
-      stateHashAfter: hashBattleState(updatedState)
-    };
-    
-    // 5. Write resolution to RTDB
-    await rtdbService.writeResolution(battleId, turn, resolution);
-    
-    // 6. Update public state with new HP, status, etc
-    await rtdbService.updatePublicState(battleId, {
-      p1: convertToPublicPokemon(updatedState.player),
-      p2: convertToPublicPokemon(updatedState.opponent),
-      field: updatedState.field,
-      lastResultSummary: getLastMoveResult(updatedState.battleLog)
-    });
-    
-    // 7. Update private states for both players
-    await updatePrivateStates(battleId, updatedState);
-    
-    // 8. Check if battle is complete
-    if (updatedState.isComplete) {
-      await handleBattleEnd(battleId, updatedState);
-    } else {
-      // Increment turn and reset phase to 'choosing'
-      await rtdbService.updateBattleMeta(battleId, {
-        turn: turn + 1,
-        phase: 'choosing',
-        deadlineAt: Date.now() + 30000 // 30 second deadline
-      });
-    }
-    
-    console.log(`✅ Turn ${turn} resolved successfully`);
-  } catch (error) {
-    console.error(`❌ Failed to resolve turn ${turn}:`, error);
-    throw error;
-  }
-}
-
-// Helper functions
-function convertChoicesToActions(
-  choices: Record<string, RTDBChoice>,
-  state: BattleState
-): BattleAction[] {
-  // Implementation: Convert RTDB choices to battle actions
-  return [];
-}
-
-function calculateStateDiffs(before: BattleState, after: BattleState) {
-  // Implementation: Calculate what changed
-  return [];
-}
-
-function hashBattleState(state: BattleState): string {
-  // Implementation: Create hash of state for validation
-  return '';
-}
-
-async function updatePrivateStates(battleId: string, state: BattleState) {
-  // Implementation: Update each player's private state
-}
+// Called from the submit API route / Cloud Function when both players have chosen
+await resolveTurn(battleId, authToken);
 ```
 
 #### Step 3: Create Turn Manager Component
@@ -177,7 +102,7 @@ Create [src/components/multiplayer/BattleTurnManager.tsx](../src/components/mult
 
 import { useEffect, useState, useRef } from 'react';
 import { rtdbService, RTDBChoice } from '@/lib/firebase-rtdb-service';
-import { resolveTurn } from '@/lib/multiplayer/resolveTurn';
+import { resolveTurn } from '@/lib/battle-resolution';
 
 interface Props {
   battleId: string;
@@ -219,7 +144,7 @@ export function BattleTurnManager({ battleId, isHost, userId }: Props) {
     setResolving(true);
     lastResolvedTurn.current = currentTurn;
     
-    resolveTurn(battleId, currentTurn, choices)
+    resolveTurn(battleId)
       .then(() => {
         console.log(`✅ Turn ${currentTurn} resolved`);
         setResolving(false);

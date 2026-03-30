@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getRtdbOps, verifyAuthToken } from '@/lib/rtdb-access';
 import { resolveTurn } from '@/lib/battle-resolution';
+import { handleBattleEnd } from '@/lib/multiplayer/handleBattleEnd';
 
 export async function POST(
     request: NextRequest,
@@ -53,14 +54,8 @@ export async function POST(
 
         // Handle forfeit immediately — no need to wait for opponent
         if (action === 'forfeit') {
-            const winnerUid = uid === meta.players.p1.uid
-                ? meta.players.p2.uid
-                : meta.players.p1.uid;
-            await ops.update(`battles/${battleId}/meta`, {
-                phase: 'ended',
-                winnerUid,
-                endedReason: 'forfeit',
-            });
+            const winner = uid === meta.players.p1.uid ? 'opponent' : 'player';
+            await handleBattleEnd(battleId, winner, 'forfeit', meta, ops);
             return NextResponse.json({ success: true, forfeit: true });
         }
 

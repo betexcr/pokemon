@@ -28,7 +28,7 @@ export interface RTDBBattleMeta {
   deadlineAt: number;
   version: number;
   winnerUid?: string;
-  endedReason?: 'forfeit' | 'timeout' | 'victory';
+  endedReason?: 'forfeit' | 'timeout' | 'victory' | 'resolution_failed';
 }
 
 export interface RTDBBattlePublic {

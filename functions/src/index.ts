@@ -2,6 +2,7 @@ import express from 'express';
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import { resolveTurn } from '../../src/lib/battle-resolution';
+import { handleBattleEnd } from '../../src/lib/multiplayer/handleBattleEnd';
 
 const app = express();
 app.use(express.json());
@@ -70,6 +71,20 @@ app.post('/battles/:id/submit', async (req, res) => {
 
     if (!meta) {
       return res.status(404).json({ error: 'Battle not found' });
+    }
+
+    if (meta.phase === 'ended') {
+      return res.status(400).json({ error: 'Battle already ended' });
+    }
+
+    if (uid !== meta.players?.p1?.uid && uid !== meta.players?.p2?.uid) {
+      return res.status(403).json({ error: 'Not a participant in this battle' });
+    }
+
+    if (action === 'forfeit') {
+      const winner: 'player' | 'opponent' = uid === meta.players.p1.uid ? 'opponent' : 'player';
+      await handleBattleEnd(battleId, winner, 'forfeit', meta);
+      return res.status(200).json({ success: true, forfeit: true });
     }
 
     if (meta.phase !== 'choosing') {

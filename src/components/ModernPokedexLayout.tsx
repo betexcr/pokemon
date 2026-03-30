@@ -24,49 +24,7 @@ import Tooltip from '@/components/Tooltip'
 import SearchInput from '@/components/SearchInput'
 import PokedexScrollbar from '@/components/PokedexScrollbar'
 import RecentlyViewedSection from '@/components/RecentlyViewedSection'
-
-// Legendary and Mythical Pokémon lists
-const LEGENDARY_POKEMON = new Set([
-  // Gen 1
-  144, 145, 146, 150, 151,
-  // Gen 2
-  243, 244, 245, 249, 250, 251,
-  // Gen 3
-  377, 378, 379, 380, 381, 382, 383, 384, 385, 386,
-  // Gen 4
-  480, 481, 482, 483, 484, 485, 486, 487, 488, 489, 490, 491, 492, 493,
-  // Gen 5
-  638, 639, 640, 641, 642, 643, 644, 645, 646, 647, 648, 649,
-  // Gen 6
-  716, 717, 718, 719, 720, 721,
-  // Gen 7
-  772, 773, 774, 775, 776, 777, 778, 779, 780, 781, 782, 783, 784, 785, 786, 787, 788, 789, 790, 791, 792, 793, 794, 795, 796, 797, 798, 799, 800, 801, 802, 807, 808,
-  // Gen 8
-  888, 889, 890, 891, 892, 893, 894, 895, 896, 897, 898,
-  // Gen 9
-  999, 1000, 1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009, 1010, 1011, 1012, 1013, 1014, 1015, 1016, 1017, 1018, 1019, 1020, 1021, 1022, 1023, 1024, 1025
-])
-
-const MYTHICAL_POKEMON = new Set([
-  // Gen 1
-  151, // Mew
-  // Gen 2
-  251, // Celebi
-  // Gen 3
-  385, // Jirachi
-  // Gen 4
-  489, 490, 491, 492, 493, // Phione, Manaphy, Darkrai, Shaymin, Arceus
-  // Gen 5
-  647, 648, 649, // Keldeo, Meloetta, Genesect
-  // Gen 6
-  719, 720, 721, // Diancie, Hoopa, Volcanion
-  // Gen 7
-  801, 802, 807, 808, // Magearna, Marshadow, Zeraora, Meltan, Melmetal
-  // Gen 8
-  890, 891, 892, 893, 894, 895, 896, 897, 898, // Kubfu, Urshifu, Zarude, Regieleki, Regidrago, Glastrier, Spectrier, Calyrex
-  // Gen 9
-  1007, 1008, 1009, 1010, 1011, 1012, 1013, 1014, 1015, 1016, 1017, 1018, 1019, 1020, 1021, 1022, 1023, 1024, 1025 // Various Gen 9 Mythicals
-])
+import { LEGENDARY_POKEMON, MYTHICAL_POKEMON, ULTRA_BEAST_POKEMON } from '@/lib/pokemon-categories'
 
 interface ModernPokedexLayoutProps {
   pokemonList: Pokemon[]
@@ -100,6 +58,7 @@ interface AdvancedFilters {
   weightRange: [number, number]
   legendary: boolean
   mythical: boolean
+  ultraBeast: boolean
 }
 
 export default function ModernPokedexLayout({
@@ -136,12 +95,13 @@ export default function ModernPokedexLayout({
   // Advanced filters state
   const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilters>({
     types: [],
-    generation: 'all', // Default to "All Generations" to enable infinite scroll
+    generation: 'all',
     habitat: '',
     heightRange: [0, 20],
     weightRange: [0, 1000],
     legendary: false,
-    mythical: false
+    mythical: false,
+    ultraBeast: false
   })
   
   const [showSidebar, setShowSidebar] = useState(false) // Always start with false to match server
@@ -187,7 +147,8 @@ export default function ModernPokedexLayout({
                 ? parsedFilters.weightRange as [number, number] 
                 : [0, 1000],
               legendary: typeof parsedFilters.legendary === 'boolean' ? parsedFilters.legendary : false,
-              mythical: typeof parsedFilters.mythical === 'boolean' ? parsedFilters.mythical : false
+              mythical: typeof parsedFilters.mythical === 'boolean' ? parsedFilters.mythical : false,
+              ultraBeast: typeof parsedFilters.ultraBeast === 'boolean' ? parsedFilters.ultraBeast : false
             })
           }
         }
@@ -802,6 +763,7 @@ export default function ModernPokedexLayout({
                                  (advancedFilters.generation && advancedFilters.generation !== 'all') ||
                                  advancedFilters.legendary || 
                                  advancedFilters.mythical ||
+                                 advancedFilters.ultraBeast ||
                                  debouncedHeightRange[0] > 0 || debouncedHeightRange[1] < 20 ||
                                  debouncedWeightRange[0] > 0 || debouncedWeightRange[1] < 1000
 
@@ -848,9 +810,9 @@ export default function ModernPokedexLayout({
             })
           }
         } else if (advancedFilters.generation === 'all') {
-          // Check if legendary/mythical filters are active
-          if (advancedFilters.legendary || advancedFilters.mythical) {
-            // "All Generations" with legendary/mythical filters - efficient filtering approach
+          // Check if category filters are active
+          if (advancedFilters.legendary || advancedFilters.mythical || advancedFilters.ultraBeast) {
+            // "All Generations" with category filters - efficient filtering approach
             setIsAllGenerations(false) // Override infinite scroll for this case
             setHasMorePokemon(false) // Disable infinite scroll for filtered results
             
@@ -858,23 +820,24 @@ export default function ModernPokedexLayout({
               // Get total count first
               const totalCount = await getPokemonTotalCount();
               
-              // Step 1: Fetch basic Pokémon list (without full data/images) to identify legendary/mythical
+              // Step 1: Fetch basic Pokémon list (without full data/images) to identify matches
               const basicPokemonList = await getPokemonList(totalCount, 0);
               
-              // Step 2: Filter for legendary/mythical Pokémon IDs
+              // Step 2: Filter for matching Pokémon IDs
               const legendaryMythicalIds: number[] = [];
               basicPokemonList.results.forEach((pokemonRef) => {
                 if (!pokemonRef.url) return;
                 const pokemonId = parseInt(pokemonRef.url.split('/').slice(-2)[0]);
                 const isLegendary = LEGENDARY_POKEMON.has(pokemonId);
                 const isMythical = MYTHICAL_POKEMON.has(pokemonId);
+                const isUltraBeast = ULTRA_BEAST_POKEMON.has(pokemonId);
                 
-                if (advancedFilters.legendary && advancedFilters.mythical) {
-                  // When both filters are selected, show only Pokémon that are BOTH legendary AND mythical
-                  if (isLegendary && isMythical) legendaryMythicalIds.push(pokemonId);
-                } else if (advancedFilters.legendary && isLegendary) {
-                  legendaryMythicalIds.push(pokemonId);
-                } else if (advancedFilters.mythical && isMythical) {
+                const activeCategories: boolean[] = [];
+                if (advancedFilters.legendary) activeCategories.push(isLegendary);
+                if (advancedFilters.mythical) activeCategories.push(isMythical);
+                if (advancedFilters.ultraBeast) activeCategories.push(isUltraBeast);
+                
+                if (activeCategories.length > 0 && activeCategories.some(Boolean)) {
                   legendaryMythicalIds.push(pokemonId);
                 }
               });
@@ -994,23 +957,14 @@ export default function ModernPokedexLayout({
           })
         }
 
-        // Legendary and Mythical filters - apply only if not already filtered at data level
-        if ((advancedFilters.legendary || advancedFilters.mythical) && advancedFilters.generation !== 'all') {
-          
-          
+        // Category filters - apply only if not already filtered at data level
+        if ((advancedFilters.legendary || advancedFilters.mythical || advancedFilters.ultraBeast) && advancedFilters.generation !== 'all') {
           results = results.filter(pokemon => {
-            const isLegendary = LEGENDARY_POKEMON.has(pokemon.id)
-            const isMythical = MYTHICAL_POKEMON.has(pokemon.id)
-            
-            if (advancedFilters.legendary && advancedFilters.mythical) {
-              // When both filters are selected, show only Pokémon that are BOTH legendary AND mythical
-              return isLegendary && isMythical
-            } else if (advancedFilters.legendary) {
-              return isLegendary
-            } else if (advancedFilters.mythical) {
-              return isMythical
-            }
-            return true
+            const activeCategories: boolean[] = [];
+            if (advancedFilters.legendary) activeCategories.push(LEGENDARY_POKEMON.has(pokemon.id));
+            if (advancedFilters.mythical) activeCategories.push(MYTHICAL_POKEMON.has(pokemon.id));
+            if (advancedFilters.ultraBeast) activeCategories.push(ULTRA_BEAST_POKEMON.has(pokemon.id));
+            return activeCategories.length === 0 || activeCategories.some(Boolean)
           })
           
           
@@ -1380,12 +1334,13 @@ export default function ModernPokedexLayout({
   const clearAllFilters = useCallback(() => {
     setAdvancedFilters({
       types: [],
-      generation: 'all', // Reset to "All Generations" to maintain infinite scroll
+      generation: 'all',
       habitat: '',
       heightRange: [0, 20],
       weightRange: [0, 1000],
       legendary: false,
-      mythical: false
+      mythical: false,
+      ultraBeast: false
     })
     // Reset debounced values
     setDebouncedHeightRange([0, 20])
@@ -1524,7 +1479,7 @@ export default function ModernPokedexLayout({
                 <span className="text-xs text-muted font-medium whitespace-nowrap">
                   {isFiltering ? 'Filtering...' : ''}
                 </span>
-                {(advancedFilters.types.length > 0 || searchTerm || (advancedFilters.generation && advancedFilters.generation !== '') || advancedFilters.legendary || advancedFilters.mythical || showFavoritesOnly) && (
+                {(advancedFilters.types.length > 0 || searchTerm || (advancedFilters.generation && advancedFilters.generation !== '') || advancedFilters.legendary || advancedFilters.mythical || advancedFilters.ultraBeast || showFavoritesOnly) && (
                   <button
                     onClick={clearAllFilters}
                     disabled={isFiltering}
@@ -1690,7 +1645,7 @@ export default function ModernPokedexLayout({
                   <div className="flex items-center space-x-2">
                     <div className={`w-2 h-2 rounded-full ${isFiltering ? 'bg-poke-yellow animate-pulse' : 'bg-green-500'}`}></div>
                   </div>
-                  {(advancedFilters.types.length > 0 || searchTerm || (advancedFilters.generation && advancedFilters.generation !== '') || advancedFilters.legendary || advancedFilters.mythical) && (
+                  {(advancedFilters.types.length > 0 || searchTerm || (advancedFilters.generation && advancedFilters.generation !== '') || advancedFilters.legendary || advancedFilters.mythical || advancedFilters.ultraBeast) && (
                     <button
                       onClick={() => {
                         clearAllFilters()
@@ -2441,7 +2396,7 @@ export default function ModernPokedexLayout({
                   </div>
                 </div>
 
-                {/* Legendary and Mythical Filters - Mobile */}
+                {/* Legendary, Mythical, and Ultra Beast Filters - Mobile */}
                 <div className="space-y-3">
                   <label className="block text-sm font-medium">Special Categories</label>
                   <div className="space-y-2">
@@ -2472,6 +2427,20 @@ export default function ModernPokedexLayout({
                         className="w-4 h-4 text-poke-blue bg-surface border-border rounded focus:ring-poke-blue focus:ring-2"
                       />
                       <span className="text-sm text-text">Mythical Pokémon</span>
+                    </label>
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        checked={advancedFilters.ultraBeast}
+                        onChange={(e) => {
+                          setAdvancedFilters(prev => ({
+                            ...prev,
+                            ultraBeast: e.target.checked
+                          }))
+                        }}
+                        className="w-4 h-4 text-poke-blue bg-surface border-border rounded focus:ring-poke-blue focus:ring-2"
+                      />
+                      <span className="text-sm text-text">Ultra Beast</span>
                     </label>
                   </div>
                 </div>

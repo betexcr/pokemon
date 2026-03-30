@@ -9,13 +9,15 @@ let _adminReady = false;
 
 function ensureAdmin(): boolean {
     if (_adminReady) return true;
-    if (!process.env.FIREBASE_SERVICE_ACCOUNT_KEY) return false;
     try {
         const { getApps, initializeApp, cert } = require('firebase-admin/app') as typeof import('firebase-admin/app');
-        if (!getApps().length) {
-            const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
-            initializeApp({ credential: cert(sa), databaseURL: RTDB_URL });
+        if (getApps().length) {
+            _adminReady = true;
+            return true;
         }
+        if (!process.env.FIREBASE_SERVICE_ACCOUNT_KEY) return false;
+        const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+        initializeApp({ credential: cert(sa), databaseURL: RTDB_URL });
         _adminReady = true;
         return true;
     } catch (e: any) {
@@ -38,6 +40,12 @@ async function adminSet(path: string, value: any) {
 async function adminUpdate(path: string, value: Record<string, any>) {
     const { getDatabase } = require('firebase-admin/database') as typeof import('firebase-admin/database');
     await getDatabase().ref(path).update(value);
+}
+
+async function adminTransaction(path: string, transform: (current: any) => any): Promise<{ committed: boolean; snapshot: any }> {
+    const { getDatabase } = require('firebase-admin/database') as typeof import('firebase-admin/database');
+    const result = await getDatabase().ref(path).transaction(transform);
+    return { committed: result.committed, snapshot: result.snapshot?.val() };
 }
 
 // --- REST helpers ---
@@ -73,6 +81,12 @@ export interface RtdbOps {
     get(path: string): Promise<any>;
     set(path: string, value: any): Promise<void>;
     update(path: string, value: Record<string, any>): Promise<void>;
+    /**
+     * Run a transaction on the value at `path`. Return `undefined` from
+     * `transform` to abort. Only available with the admin SDK; callers
+     * should check for existence before use and fall back to read-then-write.
+     */
+    transaction?(path: string, transform: (current: any) => any): Promise<{ committed: boolean; snapshot: any }>;
 }
 
 /**
@@ -83,7 +97,7 @@ export function getRtdbOps(authToken?: string): RtdbOps {
     const useAdmin = ensureAdmin();
 
     if (useAdmin) {
-        return { get: adminGet, set: adminSet, update: adminUpdate };
+        return { get: adminGet, set: adminSet, update: adminUpdate, transaction: adminTransaction };
     }
 
     if (!authToken) {
