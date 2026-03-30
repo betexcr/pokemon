@@ -59,6 +59,8 @@ export default function Home() {
   const totalCountRef = useRef(0)
   const observerRef = useRef<IntersectionObserver | null>(null)
   const sentinelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const scrollSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pendingScrollRestoreRef = useRef<number | null>(null)
   
   // Update refs when state changes
   useEffect(() => {
@@ -92,7 +94,7 @@ export default function Home() {
     return Math.min(Math.max(itemsPerChunk, 40), 220)
   }, [])
   
-  // Load initial Pokemon data
+  // Load initial Pokemon data, restoring session state if returning from a detail page
 
   useEffect(() => {
     const loadInitialPokemon = async () => {
@@ -101,23 +103,38 @@ export default function Home() {
         
         const total = await getPokemonTotalCount()
         setTotalCount(total)
-        
-        // Load a smaller initial batch of skeletons for faster initial render (50 instead of 200)
-        // This dramatically improves Time to First Paint and First Contentful Paint
-        const initialBatchSize = getViewportBatchSize()
+
+        let initialBatchSize = getViewportBatchSize()
+
+        // Restore session state if the user is returning from a detail page
+        try {
+          const saved = sessionStorage.getItem('pokedex-scroll-state')
+          if (saved) {
+            const parsed = JSON.parse(saved)
+            if (typeof parsed.offset === 'number' && parsed.offset > initialBatchSize) {
+              initialBatchSize = Math.min(parsed.offset, total)
+            }
+            if (typeof parsed.scrollTop === 'number') {
+              pendingScrollRestoreRef.current = parsed.scrollTop
+            }
+          }
+        } catch { /* ignore corrupt storage */ }
+
         const initialBatch = generateAllPokemonSkeletons(initialBatchSize)
         setPokemonList(initialBatch)
         setCurrentOffset(initialBatchSize)
+        if (initialBatchSize >= total) {
+          setHasMorePokemon(false)
+        }
         setLoading(false)
         setError(null)
       } catch (err) {
         console.error('❌ Error loading initial Pokemon:', err)
         setError('Failed to load Pokemon list')
-        // Fallback to larger skeleton batch
         const fallbackBatchSize = Math.max(getViewportBatchSize(), 120)
         const skeletons = generateAllPokemonSkeletons(fallbackBatchSize)
         setPokemonList(skeletons)
-        setTotalCount(1025) // Fallback count
+        setTotalCount(1025)
         setCurrentOffset(fallbackBatchSize)
         setLoading(false)
       }
@@ -383,6 +400,47 @@ export default function Home() {
     scrollEl.addEventListener('scroll', onScroll, { passive: true })
     return () => scrollEl.removeEventListener('scroll', onScroll)
   }, [loadMorePokemon])
+
+  // Restore scroll position after the initial render with restored items
+  useEffect(() => {
+    if (loading || pendingScrollRestoreRef.current === null) return
+
+    const target = pendingScrollRestoreRef.current
+    pendingScrollRestoreRef.current = null
+
+    // Wait for the virtualizer / DOM to settle, then restore
+    const raf = requestAnimationFrame(() => {
+      const scrollEl = document.querySelector('[data-main-scroll]')
+      if (scrollEl) scrollEl.scrollTop = target
+    })
+    return () => cancelAnimationFrame(raf)
+  }, [loading])
+
+  // Persist scroll position + loaded count to sessionStorage on scroll
+  useEffect(() => {
+    const scrollEl = document.querySelector('[data-main-scroll]')
+    if (!scrollEl) return
+
+    const saveState = () => {
+      try {
+        sessionStorage.setItem('pokedex-scroll-state', JSON.stringify({
+          offset: currentOffsetRef.current,
+          scrollTop: scrollEl.scrollTop
+        }))
+      } catch { /* quota exceeded, ignore */ }
+    }
+
+    const onScroll = () => {
+      if (scrollSaveTimerRef.current) clearTimeout(scrollSaveTimerRef.current)
+      scrollSaveTimerRef.current = setTimeout(saveState, 300)
+    }
+
+    scrollEl.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      scrollEl.removeEventListener('scroll', onScroll)
+      if (scrollSaveTimerRef.current) clearTimeout(scrollSaveTimerRef.current)
+    }
+  }, [])
 
   // Load comparison list from localStorage
   useEffect(() => {
