@@ -235,38 +235,55 @@ export default function PokedexScrollbar({
     await scrollToPercentage(percentage)
   }, [isDragging, scrollToPercentage, hoverPercentage])
 
-  // Handle thumb drag
+  // Handle thumb drag (mouse)
   const handleThumbMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
+    setIsDragging(true)
+  }, [])
+
+  // Handle thumb drag (touch)
+  const handleThumbTouchStart = useCallback((e: React.TouchEvent) => {
+    e.stopPropagation()
     setIsDragging(true)
   }, [])
 
   useEffect(() => {
     if (!isDragging || !trackRef.current) return
 
-    const handleMouseMove = async (e: MouseEvent) => {
-      if (!trackRef.current) return
-      
+    const getPercentageFromY = (clientY: number) => {
+      if (!trackRef.current) return virtualScrollPercentage
       const rect = trackRef.current.getBoundingClientRect()
-      const y = e.clientY - rect.top
-      const percentage = Math.min(100, Math.max(0, (y / rect.height) * 100))
-      
-      // Update visual position immediately for responsiveness
-      setVirtualScrollPercentage(percentage)
+      const y = clientY - rect.top
+      return Math.min(100, Math.max(0, (y / rect.height) * 100))
     }
 
-    const handleMouseUp = async () => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setVirtualScrollPercentage(getPercentageFromY(e.clientY))
+    }
+
+    const handleTouchMove = (e: TouchEvent) => {
+      e.preventDefault()
+      const touch = e.touches[0]
+      if (touch) setVirtualScrollPercentage(getPercentageFromY(touch.clientY))
+    }
+
+    const handleEnd = async () => {
       setIsDragging(false)
-      // When drag ends, load Pokemon if needed and scroll to final position
       await scrollToPercentage(virtualScrollPercentage)
     }
 
     document.addEventListener('mousemove', handleMouseMove)
-    document.addEventListener('mouseup', handleMouseUp)
+    document.addEventListener('mouseup', handleEnd)
+    document.addEventListener('touchmove', handleTouchMove, { passive: false })
+    document.addEventListener('touchend', handleEnd)
+    document.addEventListener('touchcancel', handleEnd)
 
     return () => {
       document.removeEventListener('mousemove', handleMouseMove)
-      document.removeEventListener('mouseup', handleMouseUp)
+      document.removeEventListener('mouseup', handleEnd)
+      document.removeEventListener('touchmove', handleTouchMove)
+      document.removeEventListener('touchend', handleEnd)
+      document.removeEventListener('touchcancel', handleEnd)
     }
   }, [isDragging, virtualScrollPercentage, scrollToPercentage])
 
@@ -310,13 +327,14 @@ export default function PokedexScrollbar({
           className="absolute left-1/2 -translate-x-1/2 w-7 h-8 bg-white dark:bg-gray-800 border-2 border-poke-blue rounded-full shadow-lg cursor-grab active:cursor-grabbing hover:scale-105 transition-all flex items-center justify-center"
           style={{ top: `${virtualScrollPercentage}%`, transform: 'translate(-50%, -50%)' }}
           onMouseDown={handleThumbMouseDown}
+          onTouchStart={handleThumbTouchStart}
         >
           <div className="w-1.5 h-4 bg-poke-blue rounded-full" />
         </div>
 
         {/* Position Indicator */}
         <div
-          className="absolute right-full mr-8 min-w-[3.5rem] bg-poke-blue text-white text-[11px] font-semibold tabular-nums leading-none text-center px-2.5 py-2 rounded-lg shadow-md whitespace-nowrap pointer-events-none border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+          className={`absolute right-full mr-8 min-w-[3.5rem] bg-poke-blue text-white text-[11px] font-semibold tabular-nums leading-none text-center px-2.5 py-2 rounded-lg shadow-md whitespace-nowrap pointer-events-none border border-white/20 transition-opacity duration-150 ${isDragging ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
           style={{ 
             top: `${virtualScrollPercentage}%`, 
             transform: 'translateY(-50%)'
