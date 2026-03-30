@@ -53,6 +53,7 @@ export default function Tooltip({
   const longPressActiveRef = useRef(false)
   const hoverTimerRef = useRef<number | null>(null)
   const wasDismissedByClickRef = useRef(false)
+  const touchEndedRecentlyRef = useRef(false)
   const lastMousePositionRef = useRef<{ x: number; y: number } | null>(null)
 
   // Runtime-resolved position and fixed coordinates for viewport containment
@@ -484,13 +485,13 @@ export default function Tooltip({
     },
     onMouseEnter: handleMouseEnter,
     onMouseLeave: handleMouseLeave,
-    onClick: () => { 
+    onClick: () => {
+      if (touchEndedRecentlyRef.current) return
       setIsOpen(prev => {
         const next = !prev
         if (next) {
           setFixedCoords(null)
         } else {
-          // Tooltip was dismissed by clicking
           wasDismissedByClickRef.current = true
         }
         return next
@@ -546,13 +547,13 @@ export default function Tooltip({
     },
     onMouseEnter: handleMouseEnter,
     onMouseLeave: handleMouseLeave,
-    onClick: () => { 
+    onClick: () => {
+      if (touchEndedRecentlyRef.current) return
       setIsOpen(prev => {
         const next = !prev
         if (next) {
           setFixedCoords(null)
         } else {
-          // Tooltip was dismissed by clicking
           wasDismissedByClickRef.current = true
         }
         return next
@@ -568,19 +569,20 @@ export default function Tooltip({
           longPressActiveRef.current = true
           setFixedCoords(null)
           setIsOpen(true)
-          setIsLatched(false) // temporary while holding
+          setIsLatched(false)
         }
       }, 350)
     },
     onTouchEnd: () => {
       isTouchingRef.current = false
+      touchEndedRecentlyRef.current = true
+      setTimeout(() => { touchEndedRecentlyRef.current = false }, 400)
       if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current)
       if (longPressActiveRef.current) {
         longPressActiveRef.current = false
         setIsOpen(false)
         setIsLatched(false)
       } else {
-        // Single tap on mobile - show tooltip and latch it
         setFixedCoords(null)
         setIsOpen(true)
         setIsLatched(true)
