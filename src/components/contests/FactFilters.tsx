@@ -24,6 +24,7 @@ export function FactFilters({
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search fun facts…"
+          aria-label="Search fun facts"
           className="
             w-full rounded-xl border border-border bg-input-bg text-input-text placeholder-input-placeholder
             px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400
@@ -33,6 +34,7 @@ export function FactFilters({
       <div className="flex flex-wrap gap-2">
         {ALL_TAGS.map(t => (
           <button
+            type="button"
             key={t}
             onClick={() => toggle(t)}
             className={`rounded-full text-xs px-2 py-1 border transition
@@ -45,6 +47,7 @@ export function FactFilters({
           </button>
         ))}
         <button
+          type="button"
           onClick={onClear}
           className="rounded-full text-xs px-3 py-1 border border-border hover:bg-surface/60"
         >

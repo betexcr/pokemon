@@ -55,12 +55,15 @@ export default function OfflineIndicator() {
             : 'Limited features available.'}
         </span>
         <button
+          type="button"
           onClick={() => setExpanded(!expanded)}
           className="ml-1 text-xs bg-red-700 hover:bg-red-800 px-2 py-1 rounded transition-colors"
+          aria-expanded={expanded}
         >
           {expanded ? 'Less' : 'Details'}
         </button>
         <button
+          type="button"
           onClick={handleManualCheck}
           disabled={isChecking}
           className="ml-1 text-xs bg-red-700 hover:bg-red-800 disabled:opacity-50 px-2 py-1 rounded transition-colors"
@@ -68,6 +71,7 @@ export default function OfflineIndicator() {
           {isChecking ? 'Checking...' : 'Check Connection'}
         </button>
         <button
+          type="button"
           onClick={() => window.location.reload()}
           className="ml-1 text-xs bg-red-700 hover:bg-red-800 px-2 py-1 rounded transition-colors"
         >

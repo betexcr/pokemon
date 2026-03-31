@@ -11,7 +11,7 @@ export default function ServiceWorkerRegistration() {
     if (process.env.NODE_ENV === 'development') {
       navigator.serviceWorker.getRegistrations().then(registrations => {
         registrations.forEach(registration => registration.unregister().catch(() => {}))
-      })
+      }).catch(() => {})
       if ('caches' in window) {
         caches.keys().then(keys => Promise.all(keys.map(key => caches.delete(key)))).catch(() => {})
       }

@@ -10,7 +10,7 @@ interface TooltipProps {
   position?: 'top' | 'bottom' | 'left' | 'right'
   maxWidth?: string
   type?: string // For type-based styling
-  variant?: 'default' | 'ability' | 'move' | 'stat' | 'japanese'
+  variant?: 'default' | 'ability' | 'move' | 'stat' | 'japanese' | 'info'
   containViewport?: boolean
   damageClass?: 'physical' | 'special' | 'status'
   followCursor?: boolean

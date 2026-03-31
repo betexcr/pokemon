@@ -6,11 +6,11 @@ import OptimizedLink from '@/components/OptimizedLink'
 export const metadata: Metadata = {
   title: 'Pokémon Contests - Interactive Simulator',
   description: 'Experience Pokemon Contests with interactive gameplay, pokeblock feeding, talent rounds, and kawaii visuals.',
-  alternates: { canonical: 'https://pokemon-indol-tau.vercel.app/contests' },
+  alternates: { canonical: '/contests' },
   openGraph: {
     title: 'Pokémon Contests - Interactive Simulator',
     description: 'Experience Pokemon Contests with interactive gameplay, pokeblock feeding, talent rounds, and kawaii visuals.',
-    url: 'https://pokemon-indol-tau.vercel.app/contests',
+    url: '/contests',
     type: 'website'
   }
 }

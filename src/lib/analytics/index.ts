@@ -24,7 +24,7 @@ type EventProps = Record<string, string | number | boolean>;
 const isDev = typeof window !== 'undefined' && window.location.hostname === 'localhost';
 const analyticsEndpoint = typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_ANALYTICS_URL : undefined;
 
-export function trackEvent(name: EventName, props?: EventProps): void {
+function trackEvent(name: EventName, props?: EventProps): void {
   if (typeof window === 'undefined') return;
 
   if (isDev) {

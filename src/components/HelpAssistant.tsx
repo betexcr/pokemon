@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { usePathname } from 'next/navigation'
-import { ChevronLeft, ChevronRight, X, HelpCircle } from 'lucide-react'
+import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { useError } from '@/contexts/ErrorContext'
 import { getPokemon } from '@/lib/api'
 
@@ -1003,17 +1003,21 @@ export default function HelpAssistant({ className = '' }: HelpAssistantProps) {
     }
   }, [])
 
-  // Update current Pokemon name when it changes
   useEffect(() => {
+    let cancelled = false
     const pokemonId = parseInt(currentPokemon.id)
     if (!pokemonNames.has(pokemonId)) {
-      fetchPokemonName(pokemonId)
+      fetchPokemonName(pokemonId).then((name) => {
+        if (cancelled) return
+        setCurrentPokemon(prev => ({ ...prev, name }))
+      }).catch(() => {})
     } else {
       setCurrentPokemon(prev => ({
         ...prev,
         name: pokemonNames.get(pokemonId) || prev.name
       }))
     }
+    return () => { cancelled = true }
   }, [currentPokemon.id, pokemonNames, fetchPokemonName])
   const [clippyStyle, setClippyStyle] = useState(CLIPPY_STYLES[Math.floor(Math.random() * CLIPPY_STYLES.length)])
   const [quotesForPage, setQuotesForPage] = useState<string[]>(() => {
@@ -1185,10 +1189,12 @@ export default function HelpAssistant({ className = '' }: HelpAssistantProps) {
 
   // Navigation functions
   const nextTip = useCallback(() => {
+    if (currentTips.length === 0) return
     setCurrentTipIndex(prev => (prev + 1) % currentTips.length)
   }, [currentTips.length])
 
   const prevTip = useCallback(() => {
+    if (currentTips.length === 0) return
     setCurrentTipIndex(prev => (prev - 1 + currentTips.length) % currentTips.length)
   }, [currentTips.length])
 
@@ -1248,6 +1254,7 @@ export default function HelpAssistant({ className = '' }: HelpAssistantProps) {
       {/* Help Assistant Button */}
       {!isExpanded && (
         <button
+          type="button"
           onClick={toggleHelp}
           className="group relative bg-white dark:bg-gray-800 border-2 border-yellow-400 rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110"
           aria-label={`Open ${currentPokemon.name} help assistant`}
@@ -1305,6 +1312,7 @@ export default function HelpAssistant({ className = '' }: HelpAssistantProps) {
               </div>
             </div>
             <button
+              type="button"
               onClick={closeHelp}
               className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
               aria-label="Close help"
@@ -1361,6 +1369,7 @@ export default function HelpAssistant({ className = '' }: HelpAssistantProps) {
           {currentTips.length > 1 && (
             <div className="flex items-center justify-between p-4 border-t border-gray-200 dark:border-gray-700">
               <button
+                type="button"
                 onClick={prevTip}
                 className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
                 aria-label="Previous tip"
@@ -1373,6 +1382,7 @@ export default function HelpAssistant({ className = '' }: HelpAssistantProps) {
               <div className="flex gap-1">
                 {currentTips.map((_, index) => (
                   <button
+                    type="button"
                     key={index}
                     onClick={() => {
                       setCurrentTipIndex(index)
@@ -1388,6 +1398,7 @@ export default function HelpAssistant({ className = '' }: HelpAssistantProps) {
               </div>
 
               <button
+                type="button"
                 onClick={nextTip}
                 className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
                 aria-label="Next tip"
@@ -1402,6 +1413,7 @@ export default function HelpAssistant({ className = '' }: HelpAssistantProps) {
           <div className="px-4 pb-4 -mt-1">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
               <button
+                type="button"
                 onClick={() => {
                   try { localStorage.setItem(`help-assistant-hide:${pathname}`, '1') } catch {}
                   setIsExpanded(false)
@@ -1413,6 +1425,7 @@ export default function HelpAssistant({ className = '' }: HelpAssistantProps) {
                 🥚 {currentPokemon.name} will stay in the Poké Ball here
               </button>
               <button
+                type="button"
                 onClick={() => {
                   try { localStorage.setItem('help-assistant-hide-forever', '1') } catch {}
                   setIsExpanded(false)

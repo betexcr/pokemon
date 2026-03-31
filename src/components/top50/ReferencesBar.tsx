@@ -49,6 +49,7 @@ export default function ReferencesBar({ pokemon, selectedRank, onSelectRank }: R
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search rank or name"
+              aria-label="Search by rank or name"
               className="h-10 w-full rounded-full border border-border bg-white/70 pl-10 pr-4 text-sm outline-none transition focus:border-poke-blue focus:ring-2 focus:ring-poke-blue/40 dark:bg-slate-900/70"
             />
           </div>
@@ -100,7 +101,7 @@ export default function ReferencesBar({ pokemon, selectedRank, onSelectRank }: R
                 className={`group relative min-w-[16rem] min-h-[5.75rem] overflow-hidden rounded-2xl border px-3 py-3 text-left transition ${
                   isSelected
                     ? 'border-poke-blue bg-poke-blue/10 shadow-md shadow-poke-blue/20'
-                    : 'border-border bg-white/70 hover:border-poke-blue/60 hover:bg-white dark:bg-slate-900/70'
+                    : 'border-border bg-white/70 hover:border-poke-blue/60 hover:bg-white dark:bg-slate-900/70 dark:hover:bg-slate-800'
                 }`}
               >
                 {isSelected && (

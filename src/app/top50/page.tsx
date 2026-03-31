@@ -7,14 +7,16 @@ import { top50Pokemon } from '@/data/top50Pokemon'
 export const metadata: Metadata = {
   title: 'Pokémon Top 50 Popularity Popup Book',
   description: 'Flip through an interactive popup book that showcases the 50 most beloved Pokémon with animated spreads, type atlases, and trend insights.',
-  alternates: { canonical: 'https://pokemon-indol-tau.vercel.app/top50' },
+  alternates: { canonical: '/top50' },
   openGraph: {
     title: 'Pokémon Top 50 Popularity Popup Book',
     description: 'An interactive Quinpart-inspired experience that turns community Pokémon rankings into a popup book journey.',
-    url: 'https://pokemon-indol-tau.vercel.app/top50',
+    url: '/top50',
     type: 'website'
   }
 }
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://pokemon-indol-tau.vercel.app'
 
 export default function Top50Page() {
   return (
@@ -30,14 +32,14 @@ export default function Top50Page() {
             name: 'Top 50 Pokémon Popularity',
             description: 'Interactive popup book of the 50 most beloved Pokémon with animated spreads and insights.',
             itemListOrder: 'http://schema.org/ItemListOrderAscending',
-            url: 'https://pokemon-indol-tau.vercel.app/top50',
+            url: `${SITE_URL}/top50`,
             numberOfItems: Array.isArray(top50Pokemon) ? top50Pokemon.length : undefined,
             itemListElement: Array.isArray(top50Pokemon)
               ? top50Pokemon.map((p: any, idx: number) => ({
                   '@type': 'ListItem',
                   position: idx + 1,
                   name: typeof p === 'string' ? p : (p?.name ?? `Rank ${idx + 1}`),
-                  url: `https://pokemon-indol-tau.vercel.app/top50?rank=${idx + 1}`
+                  url: `${SITE_URL}/top50?rank=${idx + 1}`
                 }))
               : []
           })

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import TeamBuilderApp from '@/components/team/TeamBuilderApp';
 import AppHeader from '@/components/AppHeader';
 
@@ -20,7 +21,9 @@ export default function Page() {
           <h1 className="text-3xl font-bold tracking-tight">Team Builder & Synergy Analyzer</h1>
           <p className="text-sm text-gray-600 dark:text-gray-300">Drag Pokémon into slots, then see coverage and suggestions update live. Motion respects system preferences.</p>
         </header>
-        <TeamBuilderApp initialNames={initialNames} />
+        <Suspense>
+          <TeamBuilderApp initialNames={initialNames} />
+        </Suspense>
       </main>
     </>
   );

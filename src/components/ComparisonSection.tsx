@@ -1,6 +1,6 @@
 "use client";
 
-import { X, Scale, ArrowRight } from 'lucide-react';
+import { X, ArrowRight } from 'lucide-react';
 import { Pokemon } from '@/types/pokemon';
 import { formatPokemonName, getShowdownAnimatedSprite } from '@/lib/utils';
 
@@ -25,17 +25,19 @@ export default function ComparisonSection({
         {/* Action buttons */}
         <div className="mb-4 flex items-center justify-end space-x-2">
           <button
+            type="button"
             onClick={onGoToComparison}
-            className={`p-2 rounded-lg bg-surface border border-border transition-all duration-200 shadow-sm text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30 hover:shadow-md`}
+            className={`p-2 rounded-lg bg-surface border border-border transition-all duration-200 shadow-sm text-muted hover:text-text hover:bg-white/50 dark:hover:bg-white/10 hover:border-poke-blue/30 hover:shadow-md`}
             title={'Go to Comparison'}
             aria-label="Go to Comparison"
           >
             <ArrowRight className="h-4 w-4" />
           </button>
           <button
+            type="button"
             onClick={onClearComparison}
             disabled={comparisonList.length === 0}
-            className={`p-2 rounded-lg bg-surface border border-border transition-all duration-200 shadow-sm ${comparisonList.length === 0 ? 'opacity-50 cursor-not-allowed' : 'text-muted hover:text-text hover:bg-white/50 hover:border-poke-blue/30'}`}
+            className={`p-2 rounded-lg bg-surface border border-border transition-all duration-200 shadow-sm ${comparisonList.length === 0 ? 'opacity-50 cursor-not-allowed' : 'text-muted hover:text-text hover:bg-white/50 dark:hover:bg-white/10 hover:border-poke-blue/30'}`}
             title="Clear Comparison"
             aria-label="Clear Comparison"
           >
@@ -53,13 +55,13 @@ export default function ComparisonSection({
         ) : (
           <div className="flex-1 min-h-0 flex flex-col space-y-2">
             {/* Selected Pokémon List */}
-            <div data-testid="comparison-scroll" className="flex-1 min-h-0 overflow-y-auto bg-gray-800 rounded-lg border border-gray-700 scroll-pb-24 pb-4 pr-1 overscroll-contain">
+            <div data-testid="comparison-scroll" className="flex-1 min-h-0 overflow-y-auto bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 scroll-pb-24 pb-4 pr-1 overscroll-contain">
               {comparisonPokemon.map((pokemon, index) => (
                 <div
                   key={`${pokemon.id}-${index}`}
                   className={`flex items-center px-3 py-2 ${
                     index < comparisonPokemon.length - 1 
-                      ? 'border-b border-gray-700' 
+                      ? 'border-b border-gray-200 dark:border-gray-700' 
                       : ''
                   }`}
                 >
@@ -77,10 +79,11 @@ export default function ComparisonSection({
                       decoding="async"
                     />
                   </picture>
-                  <span className="text-white text-sm">
+                  <span className="text-gray-900 dark:text-white text-sm">
                     {formatPokemonName(pokemon.name)}
                   </span>
                   <button
+                    type="button"
                     onClick={() => onToggleComparison(pokemon.id)}
                     className="ml-auto p-1 rounded hover:bg-red-600 transition-colors"
                     aria-label={`Remove ${formatPokemonName(pokemon.name)} from comparison`}

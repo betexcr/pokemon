@@ -23,6 +23,7 @@ export default function RecentlyViewedSection() {
             <h3 className="text-sm font-medium text-muted uppercase tracking-wider">Recently Viewed</h3>
           </div>
           <button
+            type="button"
             onClick={clearRecentlyViewed}
             className="text-xs text-muted hover:text-text transition-colors"
           >
@@ -37,9 +38,10 @@ export default function RecentlyViewedSection() {
               tabIndex={0}
               onClick={() => router.push(`/pokemon/${item.id}`)}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/pokemon/${item.id}`) } }}
-              className="group relative flex-shrink-0 flex flex-col items-center gap-1 p-2 rounded-lg border border-border bg-surface hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer"
+              className="group relative flex-shrink-0 flex flex-col items-center gap-1 p-2 rounded-lg border border-border bg-surface hover:bg-white/50 dark:hover:bg-white/10 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer"
             >
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation()
                   removeRecentlyViewed(item.id)

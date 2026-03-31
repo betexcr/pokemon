@@ -93,10 +93,12 @@ function ModernPokemonCardComponent({
     }
   }, []);
 
-  // Use reliable sprite URLs with fallbacks
-  const primaryImageUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.id}.png`;
-  const fallbackImageUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`;
-  const animatedUrl = `https://play.pokemonshowdown.com/sprites/ani/${pokemon.id}.gif`;
+  // Prefer API-provided sprite URLs (correct for alternate forms), fall back to ID-based construction
+  const apiArtwork = pokemon.sprites?.other?.['official-artwork']?.front_default;
+  const apiHome = pokemon.sprites?.other?.home?.front_default;
+  const primaryImageUrl = apiArtwork || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.id}.png`;
+  const fallbackImageUrl = apiHome || pokemon.sprites?.front_default || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`;
+  const animatedUrl = `https://play.pokemonshowdown.com/sprites/ani/${pokemon.name || pokemon.id}.gif`;
   const placeholderImageUrl = "/placeholder-pokemon.png";
 
   const handleClick = (e: React.MouseEvent) => {
@@ -382,7 +384,7 @@ function ModernPokemonCardComponent({
 
             {/* Error state */}
             {imageError && (
-              <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-white/80 text-muted">
+              <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-white/80 dark:bg-gray-900/80 text-muted">
                 <span className="text-xs">?</span>
               </div>
             )}
@@ -436,6 +438,7 @@ function ModernPokemonCardComponent({
               {/* Favorite button */}
               {onToggleFavorite && (
                 <button
+                  type="button"
                   onClick={handleFavoriteClick}
                   className={`
                     p-1.5 rounded-full transition-all duration-200 border
@@ -460,6 +463,7 @@ function ModernPokemonCardComponent({
 
               {/* Comparison button */}
               <button
+                type="button"
                 onClick={handleComparisonClick}
                 className={`
                   p-1.5 rounded-full transition-all duration-200 border
@@ -504,11 +508,11 @@ function ModernPokemonCardComponent({
                   </div>
                   <div className="flex items-center gap-1">
                     {onToggleFavorite && (
-                      <button onClick={handleFavoriteClick} className={`p-1 sm:p-1.5 rounded-full transition-all duration-200 border ${isFavorite ? 'bg-red-500 text-white border-red-500 shadow-md' : 'bg-white dark:bg-gray-700 text-gray-400 dark:text-gray-300 border-gray-200 dark:border-gray-500 hover:bg-red-500 hover:text-white hover:border-red-500'} focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 card-control`} aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}>
+                      <button type="button" onClick={handleFavoriteClick} className={`p-1 sm:p-1.5 rounded-full transition-all duration-200 border ${isFavorite ? 'bg-red-500 text-white border-red-500 shadow-md' : 'bg-white dark:bg-gray-700 text-gray-400 dark:text-gray-300 border-gray-200 dark:border-gray-500 hover:bg-red-500 hover:text-white hover:border-red-500'} focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 card-control`} aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}>
                         <Heart className={`h-3 w-3 sm:h-4 sm:w-4 ${isFavorite ? 'fill-current' : ''}`} />
                       </button>
                     )}
-                    <button onClick={handleComparisonClick} className={`p-1 sm:p-1.5 rounded-full transition-all duration-200 border ${isInComparison ? 'bg-blue-500 text-white border-blue-500 shadow-md' : 'bg-white dark:bg-gray-700 text-gray-400 dark:text-gray-300 border-gray-200 dark:border-gray-500 hover:bg-blue-500 hover:text-white hover:border-blue-500'} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 card-control`} aria-label={isInComparison ? 'Remove from comparison' : 'Add to comparison'}>
+                    <button type="button" onClick={handleComparisonClick} className={`p-1 sm:p-1.5 rounded-full transition-all duration-200 border ${isInComparison ? 'bg-blue-500 text-white border-blue-500 shadow-md' : 'bg-white dark:bg-gray-700 text-gray-400 dark:text-gray-300 border-gray-200 dark:border-gray-500 hover:bg-blue-500 hover:text-white hover:border-blue-500'} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 card-control`} aria-label={isInComparison ? 'Remove from comparison' : 'Add to comparison'}>
                       <Scale className={`h-3 w-3 sm:h-4 sm:w-4 ${isInComparison ? 'fill-current' : ''}`} />
                     </button>
                   </div>
@@ -550,7 +554,7 @@ function ModernPokemonCardComponent({
 
                 {/* Footer with types */}
                 <div ref={infoRef} className="relative bottom-0 left-0 right-0 z-20 bg-white/95 dark:bg-gray-900/80 backdrop-blur-sm rounded-lg px-1 py-1 shadow-sm mx-0.5 mb-0.5">
-                  <h3 className={`font-semibold text-center card-name mb-0 dark:text-gray-100 ${(density === '9cols' || density === '12cols') ? 'text-xs mb-1' : density === '6cols' ? 'text-sm' : 'text-sm'}`} style={{ color: '#111827', fontWeight: 600, marginBlockStart: '0', marginBlockEnd: '0px' }}>
+                  <h3 className={`font-semibold text-center card-name mb-0 text-gray-900 dark:text-gray-100 ${(density === '9cols' || density === '12cols') ? 'text-xs mb-1' : density === '6cols' ? 'text-sm' : 'text-sm'}`} style={{ fontWeight: 600, marginBlockStart: '0', marginBlockEnd: '0px' }}>
                     {hasRealName ? (
                       formatPokemonName(pokemon.name)
                     ) : (
@@ -586,11 +590,11 @@ function ModernPokemonCardComponent({
                     <span className="text-slate-800 dark:text-gray-200 font-semibold text-xs sm:text-sm">{pokemon.id !== 0 && `#${String(pokemon.id).padStart(3, '0')}`}</span>
                     <div className="flex items-center gap-1">
                       {onToggleFavorite && (
-                        <button onClick={handleFavoriteClick} className={`p-1 sm:p-1.5 rounded-full transition-all duration-200 border ${isFavorite ? 'bg-red-500 text-white border-red-500 shadow-md' : 'bg-white dark:bg-gray-700 text-gray-400 dark:text-gray-300 border-gray-200 dark:border-gray-500 hover:bg-red-500 hover:text-white hover:border-red-500'} focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 card-control`} aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}>
+                        <button type="button" onClick={handleFavoriteClick} className={`p-1 sm:p-1.5 rounded-full transition-all duration-200 border ${isFavorite ? 'bg-red-500 text-white border-red-500 shadow-md' : 'bg-white dark:bg-gray-700 text-gray-400 dark:text-gray-300 border-gray-200 dark:border-gray-500 hover:bg-red-500 hover:text-white hover:border-red-500'} focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 card-control`} aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}>
                           <Heart className={`h-3 w-3 sm:h-4 sm:w-4 ${isFavorite ? 'fill-current' : ''}`} />
                         </button>
                       )}
-                      <button onClick={handleComparisonClick} className={`p-1 sm:p-1.5 rounded-full transition-all duration-200 border ${isInComparison ? 'bg-blue-500 text-white border-blue-500 shadow-md' : 'bg-white dark:bg-gray-700 text-gray-400 dark:text-gray-300 border-gray-200 dark:border-gray-500 hover:bg-blue-500 hover:text-white hover:border-blue-500'} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 card-control`} aria-label={isInComparison ? 'Remove from comparison' : 'Add to comparison'}>
+                      <button type="button" onClick={handleComparisonClick} className={`p-1 sm:p-1.5 rounded-full transition-all duration-200 border ${isInComparison ? 'bg-blue-500 text-white border-blue-500 shadow-md' : 'bg-white dark:bg-gray-700 text-gray-400 dark:text-gray-300 border-gray-200 dark:border-gray-500 hover:bg-blue-500 hover:text-white hover:border-blue-500'} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 card-control`} aria-label={isInComparison ? 'Remove from comparison' : 'Add to comparison'}>
                         <Scale className={`h-3 w-3 sm:h-4 sm:w-4 ${isInComparison ? 'fill-current' : ''}`} />
                       </button>
                     </div>
@@ -632,7 +636,7 @@ function ModernPokemonCardComponent({
 
                   {/* Footer with types */}
                   <div ref={infoRef} className="relative bottom-0 left-0 right-0 z-20 bg-white/95 dark:bg-gray-900/80 backdrop-blur-sm rounded-lg px-1 py-1 shadow-sm mx-0.5 mb-0.5">
-                    <h3 className={`font-semibold text-center card-name mb-0 dark:text-gray-100 ${(density === '9cols' || density === '12cols') ? 'text-xs' : density === '6cols' ? 'text-sm' : 'text-sm'}`} style={{ color: '#111827', fontWeight: 600, marginBlockStart: '0', marginBlockEnd: '0px' }}>
+                    <h3 className={`font-semibold text-center card-name mb-0 text-gray-900 dark:text-gray-100 ${(density === '9cols' || density === '12cols') ? 'text-xs' : density === '6cols' ? 'text-sm' : 'text-sm'}`} style={{ fontWeight: 600, marginBlockStart: '0', marginBlockEnd: '0px' }}>
                       {hasRealName ? (
                         formatPokemonName(pokemon.name)
                       ) : (

@@ -50,7 +50,7 @@ const getPokemonTypeTransition = (pokemonType?: string): TransitionType => {
   }
 }
 
-export default function ViewTransitions({ children }: ViewTransitionsProps) {
+function ViewTransitions({ children }: ViewTransitionsProps) {
   const pathname = usePathname()
   const previousPathname = useRef<string>('')
   const transitionClass = useRef<string>('')
@@ -180,16 +180,3 @@ export function triggerViewTransition(
   }
 }
 
-// Utility function to set shared element names for smooth transitions
-export function setSharedElementName(element: HTMLElement, name: string) {
-  if (element) {
-    element.style.viewTransitionName = name
-  }
-}
-
-// Utility function to clear shared element names
-export function clearSharedElementName(element: HTMLElement) {
-  if (element) {
-    element.style.viewTransitionName = 'none'
-  }
-}

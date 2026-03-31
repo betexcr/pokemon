@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import dynamic from 'next/dynamic';
 import { UsageFilters, UsagePhase, UsagePhaseState } from '@/types/usage';
 import UsageFiltersComponent from './UsageFilters';
 import UsageSnapshotPhase from './phases/UsageSnapshotPhase';
-import UsageTrendsPhase from './phases/UsageTrendsPhase';
-import UsageDeepDivePhase from './phases/UsageDeepDivePhase';
 import { useRouter, useSearchParams } from 'next/navigation';
+
+const UsageTrendsPhase = dynamic(() => import('./phases/UsageTrendsPhase'));
+const UsageDeepDivePhase = dynamic(() => import('./phases/UsageDeepDivePhase'));
 
 interface UsagePhaseBookProps {
   initialFilters: UsageFilters;

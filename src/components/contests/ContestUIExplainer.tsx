@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Info, X, ArrowRight, Star, Heart, Zap, Sparkles, Trophy } from 'lucide-react'
+import { Info, ArrowRight, Star, Zap, Sparkles, Trophy } from 'lucide-react'
 
 interface UIElement {
   id: string
@@ -147,6 +147,7 @@ export default function ContestUIExplainer({ currentRound, selectedCategory }: C
     return (
       <div className="fixed bottom-4 left-20 z-40">
         <button
+          type="button"
           onClick={startExplainer}
           className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-4 py-2 rounded-full shadow-lg transition-all duration-300 hover:scale-105 flex items-center gap-2 text-sm"
         >
@@ -217,6 +218,7 @@ export default function ContestUIExplainer({ currentRound, selectedCategory }: C
           {/* Navigation */}
           <div className="flex items-center justify-between">
             <button
+              type="button"
               onClick={prevElement}
               disabled={currentElement === 0}
               className="flex items-center gap-2 px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -226,12 +228,14 @@ export default function ContestUIExplainer({ currentRound, selectedCategory }: C
             
             <div className="flex gap-2">
               <button
+                type="button"
                 onClick={skipExplainer}
                 className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
               >
                 Skip
               </button>
               <button
+                type="button"
                 onClick={currentElement === elements.length - 1 ? skipExplainer : nextElement}
                 className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-6 py-2 rounded-lg transition-all duration-300 hover:scale-105 flex items-center gap-2"
               >

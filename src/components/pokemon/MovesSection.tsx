@@ -100,15 +100,18 @@ export default function MovesSection({ moves, pokemonTypes = [], loading = false
         <input
           className="h-10 w-full sm:w-72 rounded-xl border border-border bg-white dark:bg-surface px-3 text-sm"
           placeholder="Search moves…"
+          aria-label="Search moves"
           value={q}
           onChange={(e)=>setQ(e.target.value)}
         />
         <select className="h-10 rounded-xl border border-border bg-surface px-3 text-sm"
+                aria-label="Filter by damage category"
                 value={cat ?? ""} onChange={(e)=>setCat((e.target.value||null) as Move["damage_class"] | null)}>
           <option value="">All categories</option>
           {categories.map(c => <option key={c} value={c}>{capitalize(c)}</option>)}
         </select>
         <select className="h-10 rounded-xl border border-border bg-surface px-3 text-sm"
+                aria-label="Filter by type"
                 value={type} onChange={(e)=>setType(e.target.value)}>
           <option value="">All types</option>
           {TYPE_ORDER.map(t => <option key={t} value={t}>{capitalize(t)}</option>)}

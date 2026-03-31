@@ -21,6 +21,12 @@ export function useViewportDataLoading({
   const hasUserInteractedRef = useRef(false);
   const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const initialLoadTriggeredRef = useRef(false);
+  const unmountedRef = useRef(false);
+
+  useEffect(() => {
+    unmountedRef.current = false;
+    return () => { unmountedRef.current = true; };
+  }, []);
 
   // Mark Pokemon as loaded
   const markPokemonLoaded = useCallback((pokemon: Pokemon) => {
@@ -48,15 +54,17 @@ export function useViewportDataLoading({
         
         getPokemon(pokemonId)
           .then(pokemonData => {
-            markPokemonLoaded(pokemonData);
+            if (!unmountedRef.current) markPokemonLoaded(pokemonData);
           })
           .catch(() => {
             failedPokemonRef.current.add(pokemonId);
-            setLoadingPokemon(loadingPrev => {
-              const newSet = new Set(loadingPrev);
-              newSet.delete(pokemonId);
-              return newSet;
-            });
+            if (!unmountedRef.current) {
+              setLoadingPokemon(loadingPrev => {
+                const newSet = new Set(loadingPrev);
+                newSet.delete(pokemonId);
+                return newSet;
+              });
+            }
           });
         
         return loadedPrev;

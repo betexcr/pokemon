@@ -279,12 +279,12 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
   // Initialise battle
   useEffect(() => {
     if (!config || initialized.current) return;
+    let cancelled = false;
 
     (async () => {
       try {
         setLoading(true);
 
-        // Resolve player team: use provided team or load from localStorage
         let rawTeam = config.playerTeam;
         if (!rawTeam || rawTeam.length === 0) {
           rawTeam = loadPlayerTeamFromStorage();
@@ -293,26 +293,26 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
           throw new Error('No player team found. Please build a team first.');
         }
 
-        // Hydrate player team
         const playerSlots = await Promise.all(
           rawTeam.map(async (slot) => {
             const moves = (slot.moves || []).map(name => ({ id: name || 'tackle', name: name || 'tackle', pp: 20, maxPp: 20 }));
             return hydrateSlot({ id: slot.id, level: slot.level || 50, moves, nature: slot.nature });
           }),
         );
+        if (cancelled) return;
 
-        // Hydrate champion team
         const championSlots = await Promise.all(
           config.opponentChampion.team.slots.map(async (slot) => {
             return hydrateSlot({ id: slot.id, level: slot.level || 50 });
           }),
         );
+        if (cancelled) return;
 
-        // Give champion Pokemon auto-generated moves from PokeAPI
         for (const slot of championSlots) {
           if (slot.moves.length <= 1 && slot.moves[0]?.id === 'tackle') {
             try {
               const apiData = await getPokemon(slot.pokemon.id);
+              if (cancelled) return;
               const learnedMoves = (apiData.moves || [])
                 .filter((m: any) => {
                   const vg = m.version_group_details || [];
@@ -327,6 +327,7 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
             } catch { /* keep tackle */ }
           }
         }
+        if (cancelled) return;
 
         const playerTeam: BattleTeam = {
           pokemon: playerSlots,
@@ -377,11 +378,14 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
         setLoading(false);
         initialized.current = true;
       } catch (err: any) {
+        if (cancelled) return;
         console.error('Offline battle init error:', err);
         setError(err.message || 'Failed to initialize battle');
         setLoading(false);
       }
     })();
+
+    return () => { cancelled = true; };
   }, [config]);
 
   // ---------------------------------------------------------------------------

@@ -17,10 +17,13 @@ export default function DebugSpritesPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
     const testSpriteLoading = async () => {
       try {
         const response = await fetch('https://pokeapi.co/api/v2/pokemon/74');
+        if (cancelled) return;
         const data = await response.json();
+        if (cancelled) return;
         setPokemonName(data.name);
         setSprites({
           front_default: data.sprites?.front_default ?? null,
@@ -30,12 +33,14 @@ export default function DebugSpritesPage() {
         });
         setLoading(false);
       } catch (err) {
+        if (cancelled) return;
         setError(err instanceof Error ? err.message : 'Unknown error');
         setLoading(false);
       }
     };
 
     testSpriteLoading();
+    return () => { cancelled = true; };
   }, []);
 
   if (loading) return <div className="p-8">Loading...</div>;

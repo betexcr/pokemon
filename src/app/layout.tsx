@@ -3,7 +3,9 @@ import './globals.css'
 import ThemeProvider from '@/components/ThemeProvider'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { ErrorProvider } from '@/contexts/ErrorContext'
-import HelpAssistant from '@/components/HelpAssistant'
+import dynamic from 'next/dynamic'
+
+const HelpAssistant = dynamic(() => import('@/components/HelpAssistant'))
 import ErrorTip from '@/components/ErrorTip'
 import GlobalErrorCatcher from '@/components/GlobalErrorCatcher'
 import RoutePreloader from '@/components/RoutePreloader'
@@ -17,7 +19,7 @@ import OfflineDownloadPanel from '@/components/OfflineDownloadPanel'
 import AnalyticsProvider from '@/components/AnalyticsProvider'
 
 
-const SITE_URL = 'https://pokemon-indol-tau.vercel.app'
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://pokemon-indol-tau.vercel.app'
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

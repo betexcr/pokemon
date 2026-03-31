@@ -36,6 +36,7 @@ export default function SeatPicker({
 
           return (
             <button
+              type="button"
               key={seed}
               onClick={() => !disabled && !isTaken && onPickSeat(seed)}
               disabled={disabled || (isTaken && !isMe)}
@@ -53,7 +54,7 @@ export default function SeatPicker({
                   {occupant.photoURL ? (
                     <img
                       src={occupant.photoURL}
-                      alt=""
+                      alt={occupant.name}
                       className="w-6 h-6 rounded-full"
                     />
                   ) : (

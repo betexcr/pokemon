@@ -109,9 +109,9 @@ export function useViewportCancellation(options: UseViewportCancellationOptions 
     }
 
     processDebounceRef.current = setTimeout(() => {
-      processViewport();
+      void processViewport().catch(() => {});
       lastProcessTimeRef.current = Date.now();
-    }, 300); // Debounce by 300ms
+    }, 300);
   }, [processViewport]);
 
   /**
@@ -132,8 +132,7 @@ export function useViewportCancellation(options: UseViewportCancellationOptions 
 
     scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
 
-    // Initial process
-    processViewport();
+    void processViewport().catch(() => {});
 
     return () => {
       scrollContainer.removeEventListener('scroll', handleScroll);
@@ -180,5 +179,3 @@ export function useViewportCancellation(options: UseViewportCancellationOptions 
     }
   };
 }
-
-export default useViewportCancellation;

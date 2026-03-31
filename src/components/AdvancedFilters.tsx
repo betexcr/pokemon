@@ -110,16 +110,28 @@ export default function AdvancedFilters({
 
   return (
     <>
-      {/* Desktop Sidebar - Advanced Filters */}
+      {/* Sidebar backdrop overlay for tablet */}
+      {showSidebar && (
+        <div
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
+          onClick={() => setShowSidebar(false)}
+        />
+      )}
+
+      {/* Advanced Filters Sidebar - overlay on mobile/tablet, inline on desktop */}
       <div className={`${
-        showSidebar ? 'block' : 'hidden'
-      } flex-none shrink-0 w-80 min-w-[20rem] border-r border-border bg-surface`}>
-        <div className="h-screen flex flex-col relative sidebar-stable">
+        showSidebar ? 'translate-x-0' : '-translate-x-full lg:hidden'
+      } fixed inset-y-0 left-0 z-50 w-80 max-w-[85vw] transition-transform duration-300 ease-in-out
+        lg:relative lg:inset-auto lg:z-auto lg:translate-x-0 lg:max-w-none lg:transition-none
+        ${showSidebar ? 'lg:block' : 'lg:hidden'}
+        flex-none shrink-0 border-r border-border bg-surface shadow-2xl lg:shadow-none`}>
+        <div className="h-full lg:h-screen flex flex-col relative sidebar-stable">
           {/* Header - Fixed */}
           <div className="flex-shrink-0 p-6 border-b border-border bg-surface sticky top-0 z-10">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">Advanced Filters</h2>
               <button
+                type="button"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -139,7 +151,9 @@ export default function AdvancedFilters({
             <div className="border-b border-border">
               {/* Filters Header */}
               <button
+                type="button"
                 onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
+                aria-expanded={isFiltersExpanded}
                 className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
               >
                 <h3 className="text-lg font-semibold">Advanced Filters</h3>
@@ -319,11 +333,13 @@ export default function AdvancedFilters({
             <div className="flex-1 min-h-0 overflow-hidden">
               {/* Comparison Header */}
               <button
+                type="button"
                 onClick={() => setIsComparisonExpanded(!isComparisonExpanded)}
+                aria-expanded={isComparisonExpanded}
                 className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border-b border-border"
               >
                 <h3 className="text-lg font-semibold flex items-center">
-                  <span className="text-blue-500 mr-2">⚖️</span>
+                  <span className="text-blue-500 mr-2" aria-hidden="true">⚖️</span>
                   Comparison ({comparisonList.length})
                 </h3>
                 {isComparisonExpanded ? (

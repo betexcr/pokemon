@@ -38,31 +38,18 @@ export default function EvoTree({ data, filters }: Props) {
 
   // Track which filter combo the current families were fetched for so we know
   // when a client-side fetch is needed and can ignore stale server re-renders.
-  // Initialised to '1_' because the server pre-fetches gen 1 data.
-  const fetchedFilterKey = useRef<string | null>('1_');
+  const fetchedFilterKey = useRef<string>('1_');
 
-  // Sync server data only on first mount (or if we haven't done a client fetch yet).
-  // After a client-side gen/method fetch we must NOT overwrite with stale server data
-  // that can arrive via an RSC refetch triggered by router.replace().
   useEffect(() => {
-    if (fetchedFilterKey.current !== null) return;
-    setFamilies(data.families);
-    setLoaded({ offset: data.families.length, hasMore: true });
-  }, [data.families]);
-
-  // Fetch families when the selected generations change.
-  // We skip the fetch only when the current families were already fetched for
-  // this exact genKey (avoids re-fetching the same data).
-  useEffect(() => {
-    if (!genKey) return;
-    if (fetchedFilterKey.current === `${genKey}_${methodKey}`) return;
+    const filterKey = `${genKey}_${methodKey}`;
+    if (fetchedFilterKey.current === filterKey) return;
 
     let aborted = false;
     setIsLoading(true);
     (async () => {
       try {
         const usp = new URLSearchParams();
-        usp.set('gen', genKey);
+        if (genKey) usp.set('gen', genKey);
         if (methodKey) usp.set('method', methodKey);
         usp.set('limit', '300');
         usp.set('offset', '0');
@@ -71,46 +58,17 @@ export default function EvoTree({ data, filters }: Props) {
         const json: NormalizedEvoGraph = await res.json();
         if (aborted) return;
         const next = normalizeEvoGraph(json as any);
-        fetchedFilterKey.current = `${genKey}_${methodKey}`;
+        fetchedFilterKey.current = filterKey;
         setFamilies(next.families || []);
         setLoaded({ offset: next.families.length, hasMore: true });
-      } catch {} finally {
+      } catch (err) {
+        console.error('[EvoTree] Failed to fetch evolution data:', err);
+      } finally {
         if (!aborted) setIsLoading(false);
       }
     })();
     return () => { aborted = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [genKey]);
-
-  // Fetch families when the selected methods change.
-  useEffect(() => {
-    if (!methodKey) return;
-    if (fetchedFilterKey.current === `${genKey}_${methodKey}`) return;
-
-    let aborted = false;
-    setIsLoading(true);
-    (async () => {
-      try {
-        const usp = new URLSearchParams();
-        if (genKey) usp.set('gen', genKey);
-        usp.set('method', methodKey);
-        usp.set('limit', '300');
-        usp.set('offset', '0');
-        const res = await fetch(`/api/evolutions?${usp.toString()}`);
-        if (!res.ok || aborted) return;
-        const json: NormalizedEvoGraph = await res.json();
-        if (aborted) return;
-        const next = normalizeEvoGraph(json as any);
-        fetchedFilterKey.current = `${genKey}_${methodKey}`;
-        setFamilies(next.families || []);
-        setLoaded({ offset: next.families.length, hasMore: true });
-      } catch {} finally {
-        if (!aborted) setIsLoading(false);
-      }
-    })();
-    return () => { aborted = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [methodKey]);
+  }, [genKey, methodKey]);
 
   const filteredFamilies = useMemo(() => {
     let fams = families.slice();
@@ -246,6 +204,17 @@ export default function EvoTree({ data, filters }: Props) {
 
   return (
     <div className="flex flex-col gap-4" role="list" aria-label="Evolution families">
+      {isLoading && families.length > 0 && (
+        <div className="flex items-center justify-center gap-2 py-3 px-4 rounded-md border bg-blue-50/80 dark:bg-blue-900/20 text-sm text-blue-700 dark:text-blue-300" role="status">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            className="w-4 h-4 rounded-full border-2 border-blue-500 border-t-transparent"
+          />
+          <span>Loading evolution data...</span>
+        </div>
+      )}
+
       {displayItems.map((fam) => {
         const famIsOpen = open.some((id) => fam.bases.includes(id));
         return (
@@ -407,8 +376,8 @@ const FamilyEdges = React.memo(function FamilyEdges({
         result.push(
           <div key={key} className="flex items-center gap-2 p-2">
             <EvoCard species={from} onClick={() => onPokemonClick(from.id)} />
-            <svg width="80" height="8" aria-hidden>
-              <line x1="4" y1="4" x2="76" y2="4" stroke="#9CA3AF" strokeWidth="2" strokeDasharray="72" strokeDashoffset={reduce ? 0 : 72}>
+            <svg width="80" height="8" aria-hidden className="text-gray-400 dark:text-gray-500">
+              <line x1="4" y1="4" x2="76" y2="4" stroke="currentColor" strokeWidth="2" strokeDasharray="72" strokeDashoffset={reduce ? 0 : 72}>
                 {!reduce && <animate attributeName="stroke-dashoffset" from="72" to="0" dur="0.35s" fill="freeze" />}
               </line>
             </svg>

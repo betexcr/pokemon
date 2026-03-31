@@ -27,16 +27,6 @@ export const typeColors: Record<string, { bg: string; text: string; border: stri
   fairy: { bg: 'bg-type-fairy', text: 'text-black', border: 'border-type-fairy/20' },
 }
 
-// Stat colors
-export const statColors: Record<string, string> = {
-  hp: 'bg-red-500',
-  attack: 'bg-orange-500',
-  defense: 'bg-yellow-500',
-  'special-attack': 'bg-purple-500',
-  'special-defense': 'bg-blue-500',
-  speed: 'bg-green-500',
-}
-
 // Format Pokémon name
 export function formatPokemonName(name?: string | null): string {
   if (!name) return 'Unknown Pokémon';
@@ -72,13 +62,6 @@ export function formatPokemonName(name?: string | null): string {
     .join(' ');
 }
 
-// Format Pokémon number
-export function formatPokemonNumber(id: number): string {
-  // Don't display numbers for Pokemon with ID 0 (placeholder/unknown Pokemon)
-  if (id === 0) return '';
-  return `#${id.toString().padStart(3, '0')}`;
-}
-
 // Normalize Pokemon ID for API calls (removes zero-padding)
 export function normalizePokemonId(id: number | string): number {
   const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
@@ -88,15 +71,6 @@ export function normalizePokemonId(id: number | string): number {
   }
   
   return numericId;
-}
-
-// Format height and weight
-export function formatHeight(height: number): string {
-  return `${(height / 10).toFixed(1)} m`;
-}
-
-export function formatWeight(weight: number): string {
-  return `${(weight / 10).toFixed(1)} kg`;
 }
 
 // Generate battle ID for AI battles
@@ -266,18 +240,6 @@ export function getPokemonDescription(pokemon: { name: string; types?: Array<{ t
   return descriptions[pokemonName] || `A ${pokemon.types?.map((t: { type: { name: string } }) => formatPokemonName(t.type.name)).join('/') ?? 'unknown'} type Pokémon with unique abilities.`;
 }
 
-// Debounce function
-export function debounce<T extends (...args: unknown[]) => unknown>(
-  func: T,
-  wait: number
-): (...args: Parameters<T>) => void {
-  let timeout: ReturnType<typeof setTimeout>;
-  return (...args: Parameters<T>) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), wait);
-  };
-}
-
 // Pokemon species name to ID mapping (for battle context)
 const POKEMON_SPECIES_TO_ID: Record<string, number> = {
   'bulbasaur': 1, 'ivysaur': 2, 'venusaur': 3,
@@ -372,7 +334,7 @@ export function getPokemonIdFromSpecies(species?: string | null): number | null 
 }
 
 // Pokemon image utilities for battle context
-export function getPokemonBattleImageUrl(pokemonId: number | null, variant: 'front' | 'back' = 'front', shiny: boolean = false): string {
+function getPokemonBattleImageUrl(pokemonId: number | null, variant: 'front' | 'back' = 'front', shiny: boolean = false): string {
   if (!pokemonId) {
     // Return a placeholder if no pokemonId
     return '/placeholder-pokemon.png';
@@ -493,33 +455,3 @@ export function getShowdownAnimatedSprite(species?: string | null, variant: 'fro
   const folderWithShiny = shiny ? `${folder}-shiny` : folder;
   return `https://play.pokemonshowdown.com/sprites/${folderWithShiny}/${mapped}.gif`;
 }
-
-// Local storage utilities
-type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
-export const storage = {
-  get: (key: string): JsonValue | null => {
-    if (typeof window === 'undefined') return null;
-    try {
-      const item = window.localStorage.getItem(key);
-      return item ? (JSON.parse(item) as JsonValue) : null;
-    } catch {
-      return null;
-    }
-  },
-  set: (key: string, value: JsonValue): void => {
-    if (typeof window === 'undefined') return;
-    try {
-      window.localStorage.setItem(key, JSON.stringify(value));
-    } catch {
-      // Ignore errors
-    }
-  },
-  remove: (key: string): void => {
-    if (typeof window === 'undefined') return;
-    try {
-      window.localStorage.removeItem(key);
-    } catch {
-      // Ignore errors
-    }
-  },
-};

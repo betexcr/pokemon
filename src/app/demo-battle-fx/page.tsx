@@ -30,7 +30,6 @@ export default function DemoBattleFXPage() {
         backLink="/"
         backLabel="Back to PokéDex"
         showToolbar={false}
-        showThemeToggle={false}
         iconKey="battle"
         showIcon={true}
       />
@@ -108,7 +107,6 @@ export default function DemoBattleFXPage() {
                 to={currentPosition.to}
                 playKey={fx.key}
                 power={selectedPower}
-                onDone={() => {}}
               />
             )}
           </div>

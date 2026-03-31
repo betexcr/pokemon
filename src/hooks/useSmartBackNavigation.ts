@@ -13,7 +13,7 @@ export function useSmartBackNavigation(_options?: SmartBackNavigationOptions) {
 }
 
 // Hook to track navigation for smart back navigation
-export function useNavigationTracker() {
+function useNavigationTracker() {
   const pathname = usePathname()
 
   useEffect(() => {

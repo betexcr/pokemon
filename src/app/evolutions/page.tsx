@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import type { NormalizedEvoGraph } from '@/lib/evo/types';
 import { buildEvoGraph } from '@/lib/evo/build';
 import EvoLegend from '@/components/evo/EvoLegend';
@@ -8,11 +9,11 @@ import EvoClient from './EvoClient';
 export const metadata: Metadata = {
   title: 'Evolution Journeys',
   description: 'Interactive visualization of Pokémon evolution families with filters and accessibility-first design.',
-  alternates: { canonical: 'https://pokemon-indol-tau.vercel.app/evolutions' },
+  alternates: { canonical: '/evolutions' },
   openGraph: {
     title: 'Evolution Journeys',
     description: 'Explore Pokémon evolution families with interactive graphs and filters.',
-    url: 'https://pokemon-indol-tau.vercel.app/evolutions',
+    url: '/evolutions',
     type: 'website',
   },
   twitter: {
@@ -51,7 +52,9 @@ export default async function EvolutionsPage() {
         </div>
       </header>
 
-      <EvoClient data={normalized} serverList={serverList} />
+      <Suspense fallback={<div className="text-muted animate-pulse p-4">Loading evolution data...</div>}>
+        <EvoClient data={normalized} serverList={serverList} />
+      </Suspense>
 
       <footer className="lg:col-span-2 mt-8 text-xs text-gray-500">
         <p>Accessibility: Full keyboard nav, visible focus rings, prefers-reduced-motion respected. Data powered by PokeAPI with caching.</p>

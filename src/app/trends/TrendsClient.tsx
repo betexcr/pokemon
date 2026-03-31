@@ -330,6 +330,7 @@ export default function TrendsClient() {
                 type="text"
                 value={searchQuery}
                 placeholder="Search Pokémon..."
+                aria-label="Search Pokémon"
                 className="w-full rounded-md border border-slate-300 bg-white/80 px-3 py-2 text-sm shadow-inner focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-900/60 dark:text-slate-100 dark:focus:ring-slate-600"
                 onChange={(event) => setSearchQuery(event.target.value)}
                 onFocus={() => setShowSearchDropdown(true)}

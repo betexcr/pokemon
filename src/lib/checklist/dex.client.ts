@@ -100,7 +100,13 @@ function useDexDataStore() {
 
   // Initial: load only Gen 1
   useEffect(() => {
-    loadGeneration(1);
+    let cancelled = false;
+    const load = async () => {
+      await loadGeneration(1);
+      if (cancelled) return;
+    };
+    load();
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

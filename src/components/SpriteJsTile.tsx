@@ -44,7 +44,7 @@ export default function SpriteJsTile({ meta, speedMul = 1, scale = 2 }: { meta: 
 				g.WebGLRenderingContext = undefined
 				g.WebGL2RenderingContext = undefined
 				const { Scene, Sprite } = await import('spritejs')
-				if (!containerRef.current) return
+				if (disposed || !containerRef.current) return
 				// Ensure a clean container (StrictMode mounts can double-invoke effects)
 				try { containerRef.current.innerHTML = '' } catch {}
 				const width = Math.max(1, Math.round(meta.frameWidth * scale))

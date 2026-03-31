@@ -27,8 +27,12 @@ export function ChecklistProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true;
     (async () => {
-      const merged = await hydrateState(uid);
-      if (mounted) setState(merged);
+      try {
+        const merged = await hydrateState(uid);
+        if (mounted) setState(merged);
+      } catch (err) {
+        console.warn('Failed to hydrate checklist state:', err);
+      }
     })();
     return () => {
       mounted = false;
@@ -46,6 +50,9 @@ export function ChecklistProvider({ children }: { children: React.ReactNode }) {
         enqueueSync({ type: 'checklist', payload: { uid, state } });
       });
     }, 1000);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
   }, [state, uid]);
 
   // Process queued cloud writes when back online

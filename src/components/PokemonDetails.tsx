@@ -65,14 +65,15 @@ export default function PokemonDetails({ pokemon, showHeader = true, className =
   }, [activeTab])
 
   useEffect(() => {
+    let cancelled = false
+
     const loadPokemonDetails = async () => {
       try {
         setLoading(true)
         setError(null)
         
-        // Load critical data first (species for flavor text and genus)
-        // No .catch() here -- failures propagate to the outer catch so setError fires
         const speciesPromise = getPokemonSpecies(pokemon.id).then(speciesData => {
+          if (cancelled) return speciesData
           const englishFlavorText = speciesData.flavor_text_entries?.find((entry: any) => entry.language.name === 'en')?.flavor_text || ''
           setFlavorText(englishFlavorText)
           const englishGenus = speciesData.genera?.find((genus: any) => genus.language.name === 'en')?.genus || ''
@@ -81,48 +82,50 @@ export default function PokemonDetails({ pokemon, showHeader = true, className =
           setIsLegendary(speciesData.is_legendary || false)
           setIsMythical(speciesData.is_mythical || false)
           return speciesData
+        }).catch(error => {
+          console.warn('Failed to load species data:', error)
+          return null
         })
 
-        // Load abilities data (important for hero section)
         const abilitiesPromise = getPokemonAbilities(pokemon.id).then(data => {
-          setAbilities(data)
+          if (!cancelled) setAbilities(data)
           return data
         }).catch(error => {
           console.warn('Failed to load abilities data:', error)
-          setAbilities([])
+          if (!cancelled) setAbilities([])
           return []
         })
 
-        // Wait for critical data to load before showing content
-        // Using Promise.all so a species failure propagates to the outer catch
         await Promise.all([speciesPromise, abilitiesPromise])
+        if (cancelled) return
 
-        // Load moves data separately for progressive loading
         const movesPromise = getPokemonMoves(pokemon.id).then(data => {
+          if (cancelled) return data
           setMoves(data)
           setLoadingMoves(false)
           return data
         }).catch(error => {
           console.warn('Failed to load moves data:', error)
-          setMoves([])
-          setLoadingMoves(false)
+          if (!cancelled) {
+            setMoves([])
+            setLoadingMoves(false)
+          }
         })
 
-        // Load evolution data separately for progressive loading
         const evolutionPromise = getEvolutionChainNodes(pokemon.id).then(data => {
+          if (cancelled) return data
           setEvolutionChain(data)
           setLoadingEvolution(false)
           return data
         }).catch(error => {
           console.warn('Failed to load evolution data:', error)
-          setEvolutionChain([])
-          setLoadingEvolution(false)
+          if (!cancelled) {
+            setEvolutionChain([])
+            setLoadingEvolution(false)
+          }
         })
 
-        // Calculate type matchups immediately (no API call needed)
         const pokemonTypes = pokemon.types.map(t => t.type.name)
-        
-        // Convert to proper case for getMatchup function
         const defendingTypes = pokemonTypes.map(type => 
           type.charAt(0).toUpperCase() + type.slice(1).toLowerCase()
         )
@@ -131,10 +134,8 @@ export default function PokemonDetails({ pokemon, showHeader = true, className =
         setTypeMatchups(matchups)
         setLoadingMatchups(false)
 
-        // Don't wait for secondary data - let it load in background
         Promise.allSettled([movesPromise, evolutionPromise])
         
-        // Group by effectiveness with separate categories
         const doubleWeak = matchups.x4.map(type => type.toLowerCase())
         const weakTo = matchups.x2.map(type => type.toLowerCase())
         const resists = matchups.x0_5.map(type => type.toLowerCase())
@@ -149,22 +150,23 @@ export default function PokemonDetails({ pokemon, showHeader = true, className =
           ...(immune.length > 0 ? [{ title: "Immune (0×)", types: immune, tone: "immune" as const }] : [])
         ]
         
-        setTypeMatchups(matchupGroups)
+        if (!cancelled) setTypeMatchups(matchupGroups)
         
       } catch (error) {
+        if (cancelled) return
         console.error('Failed to load Pokemon details:', error)
-        // Only set error if it's a critical failure, not just missing optional data
         if (error instanceof Error && error.message.includes('does not exist')) {
           setError('This Pokemon does not exist.')
         } else {
           setError('Failed to load some Pokemon details. Some information may be missing.')
         }
       } finally {
-        setLoading(false)
+        if (!cancelled) setLoading(false)
       }
     }
 
     loadPokemonDetails()
+    return () => { cancelled = true }
   }, [pokemon.id, pokemon.types])
 
   const renderTabContent = () => {
@@ -221,6 +223,7 @@ export default function PokemonDetails({ pokemon, showHeader = true, className =
               <div className="text-red-500 text-lg mb-2">⚠️</div>
               <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
               <button 
+                type="button"
                 onClick={() => window.location.reload()} 
                 className="px-4 py-2 bg-poke-blue text-white rounded-lg hover:bg-poke-blue/80 transition-colors"
               >

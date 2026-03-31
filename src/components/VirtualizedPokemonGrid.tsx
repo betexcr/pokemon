@@ -69,7 +69,7 @@ export default function VirtualizedPokemonGrid({
   // Calculate layout based on density - responsive column counts that adapt to screen size
   const getLayoutClasses = () => {
     switch (density) {
-      case '3cols': return 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'
+      case '3cols': return 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4'
       case '6cols': return 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3'
       case '9cols':  return 'grid grid-cols-3 sm:grid-cols-6 md:grid-cols-9 gap-2'
       case '12cols': return 'grid grid-cols-3 sm:grid-cols-6 md:grid-cols-9 lg:grid-cols-12 gap-2'

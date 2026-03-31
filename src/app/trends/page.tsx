@@ -1,14 +1,15 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import TrendsClient from './TrendsClient'
 
 export const metadata: Metadata = {
   title: 'Popularity Trends Explorer',
   description: 'Explore Pokémon popularity over time with animated lines and a bubble timeline, with accessible fallbacks.',
-  alternates: { canonical: 'https://pokemon-indol-tau.vercel.app/trends' },
+  alternates: { canonical: '/trends' },
   openGraph: {
     title: 'Popularity Trends Explorer',
     description: 'Interactive popularity trends with motion-aware, accessible visualizations.',
-    url: 'https://pokemon-indol-tau.vercel.app/trends',
+    url: '/trends',
     type: 'website'
   },
   twitter: {
@@ -19,5 +20,9 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  return <TrendsClient />
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><p className="text-muted animate-pulse">Loading trends...</p></div>}>
+      <TrendsClient />
+    </Suspense>
+  )
 }

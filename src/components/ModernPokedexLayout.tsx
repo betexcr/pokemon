@@ -5,7 +5,7 @@ import { Pokemon, FilterState } from '@/types/pokemon'
 import { formatPokemonName, typeColors } from '@/lib/utils'
 import { useSearch } from '@/hooks/useSearch'
 import { useRouter } from 'next/navigation'
-import { getPokemonByGeneration, getPokemonByType, getPokemon, getPokemonWithPagination, getPokemonTotalCount, getPokemonList } from '@/lib/api'
+import { getPokemonByGeneration, getPokemonByType, getPokemon, getPokemonWithPagination, getPokemonTotalCount, getPokemonList, fetchAllPokemonIds } from '@/lib/api'
 import ThemeToggle from './ThemeToggle'
 import VirtualizedPokemonGrid from './VirtualizedPokemonGrid'
 import AdvancedFilters from './AdvancedFilters'
@@ -341,6 +341,7 @@ export default function ModernPokedexLayout({
   const [totalPokemonCount, setTotalPokemonCount] = useState<number | null>(null)
   const emptyBatchCountRef = useRef<number>(0)
   const lastLoadTimeRef = useRef<number>(0)
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout>>()
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login')
   
@@ -441,25 +442,29 @@ export default function ModernPokedexLayout({
 
   // Load initial Pokemon data when component mounts (always use lazy loading)
   useEffect(() => {
+    let cancelled = false;
     const loadInitialPokemon = async () => {
       try {
-        // Fetch total count
         try {
           const count = await getPokemonTotalCount();
+          if (cancelled) return;
           setTotalPokemonCount(count || null);
         } catch (error) {
+          if (cancelled) return;
           setTotalPokemonCount(1025);
         }
         
-        setIsInitialLoading(false);
+        if (!cancelled) setIsInitialLoading(false);
       } catch (error) {
+        if (cancelled) return;
         console.error('Error in initial Pokemon loading:', error);
-        setIsInitialLoading(false); // Still set to false even on error
+        setIsInitialLoading(false);
       }
     };
 
     loadInitialPokemon();
-  }, []); // Run once on mount
+    return () => { cancelled = true; };
+  }, []);
 
   // Close mobile menu when clicking outside
   useEffect(() => {
@@ -1000,9 +1005,10 @@ export default function ModernPokedexLayout({
 
   // Fetch comparison Pokémon that aren't in current filtered results
   useEffect(() => {
+    let cancelled = false
     const fetchComparisonPokemon = async () => {
       if (comparisonList.length === 0) {
-        setComparisonPokemon([])
+        if (!cancelled) setComparisonPokemon([])
         return
       }
 
@@ -1061,7 +1067,7 @@ export default function ModernPokedexLayout({
 
       if (missingIds.length === 0) {
         // All comparison Pokémon are available in current results
-        setComparisonPokemon(availableComparison)
+        if (!cancelled) setComparisonPokemon(availableComparison)
         return
       }
 
@@ -1071,30 +1077,38 @@ export default function ModernPokedexLayout({
         if (missingIds.length > 0) {
           const BATCH = missingIds.slice(0, 20)
           const results = await Promise.allSettled(BATCH.map((id) => getPokemon(id)))
+          if (cancelled) return
           for (const res of results) {
             if (res.status === 'fulfilled' && res.value) {
               fetchedPokemon.push(res.value as Pokemon)
             }
           }
           if (fetchedPokemon.length > 0) {
-            setDetailsCache(prev => {
-              const next = new Map(prev)
-              for (const p of fetchedPokemon) next.set(p.id, p)
-              return next
-            })
+            if (!cancelled) {
+              setDetailsCache(prev => {
+                const next = new Map(prev)
+                for (const p of fetchedPokemon) next.set(p.id, p)
+                return next
+              })
+            }
           }
         }
 
         // Combine with available comparison Pokémon (already de-duplicated)
-        setComparisonPokemon([...availableComparison, ...fetchedPokemon])
+        if (!cancelled) {
+          setComparisonPokemon([...availableComparison, ...fetchedPokemon])
+        }
       } catch (error) {
         
         // Fallback to only available Pokémon (already de-duplicated)
-        setComparisonPokemon(availableComparison)
+        if (!cancelled) setComparisonPokemon(availableComparison)
       }
     }
 
     fetchComparisonPokemon()
+    return () => {
+      cancelled = true
+    }
   }, [comparisonList, displayPokemon, pokemonList])
 
   // Sort filtered results efficiently (compute sort key once per item)
@@ -1224,8 +1238,7 @@ export default function ModernPokedexLayout({
           emptyBatchCountRef.current += 1;
           setCurrentOffset(prev => prev + pageSize);
           setIsLoadingMore(false);
-          // Retry with exponential backoff
-          setTimeout(() => loadMorePokemon(), Math.pow(2, emptyBatchCountRef.current) * 100);
+          retryTimerRef.current = setTimeout(() => loadMorePokemon(), Math.pow(2, emptyBatchCountRef.current) * 100);
           return;
         }
         
@@ -1276,7 +1289,7 @@ export default function ModernPokedexLayout({
       if (emptyBatchCountRef.current < 3) {
         emptyBatchCountRef.current += 1;
         setIsLoadingMore(false);
-        setTimeout(() => loadMorePokemon(), Math.pow(2, emptyBatchCountRef.current) * 1000);
+        retryTimerRef.current = setTimeout(() => loadMorePokemon(), Math.pow(2, emptyBatchCountRef.current) * 1000);
         return;
       }
       
@@ -1286,6 +1299,10 @@ export default function ModernPokedexLayout({
       setIsLoadingMore(false);
     }
   }, [isLoadingMore, hasMorePokemon, currentOffset, totalPokemonCount]);
+
+  useEffect(() => {
+    return () => { if (retryTimerRef.current) clearTimeout(retryTimerRef.current); };
+  }, []);
 
   // Note: Intersection observer is handled by the main page component to avoid conflicts
   // This component only passes the sentinel ref to child components
@@ -1379,179 +1396,20 @@ export default function ModernPokedexLayout({
         showIcon={true}
       />
 
-      {/* Old header temporarily disabled */}
-      {false && (
-      <header className="sticky top-0 z-50 bg-gradient-to-r from-surface via-surface to-surface border-b border-border shadow-lg">
-        <div className="w-full max-w-full px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-20 lg:h-24 py-3 list-none min-w-0">
-            <div className="flex items-center space-x-3 lg:space-x-6">
-              <div className="absolute left-4 top-3 lg:top-4 z-10">
-                <h1 className="font-['Pocket_Monk'] text-2xl lg:text-3xl font-bold text-poke-blue tracking-wider drop-shadow-lg">
-                  POKÉDEX
-                </h1>
-              </div>
-              <div className="flex items-center space-x-2 lg:space-x-3 mx-auto">
-                <div className="flex flex-col">
-                  <h2 className="text-lg lg:text-xl font-bold bg-gradient-to-r from-poke-blue via-poke-red to-poke-blue bg-clip-text text-transparent animate-pulse">
-                    PokéDex
-                  </h2>
-                  <span className="text-xs text-muted font-medium hidden sm:block">
-                    {pokemonList.length} Pokémon discovered
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Enhanced Search Bar */}
-            <div className="hidden lg:flex flex-1 max-w-md mx-4">
-              <div className="relative group w-full">
-                <div className="absolute inset-0 bg-gradient-to-r from-poke-blue/20 to-poke-red/20 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-300 opacity-0 group-hover:opacity-100"></div>
-                <div className="relative bg-surface border border-border rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:border-poke-blue/30">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted group-hover:text-poke-blue transition-colors duration-200" />
-                  <input
-                    type="text"
-                    placeholder="Search Pokémon by name, number, or type..."
-                    value={searchTerm}
-                    onChange={(e) => {
-                      handleSearchChange(e.target.value)
-                    }}
-                    className="w-full pl-10 pr-4 py-2 bg-transparent text-text placeholder:text-muted/60 focus:outline-none text-sm font-medium"
-                  />
-                  {searchLoading && (
-                    <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
-                      <img src="/loading.gif" alt="Loading" width={20} height={20} className="opacity-80" />
-                    </div>
-                  )}
-                  {searchTerm && (
-                    <button
-                      onClick={() => handleSearchChange('')}
-                      className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 rounded-full hover:bg-white/20 transition-colors"
-                    >
-                      <X className="h-4 w-4 text-muted hover:text-text" />
-                    </button>
-                  )}
-                </div>
-              </div>
-              
-              {/* Desktop Status Indicator */}
-              <div className="ml-2 flex items-center space-x-1">
-                <div className={`w-1.5 h-1.5 rounded-full ${isFiltering ? 'bg-poke-yellow animate-pulse' : 'bg-green-500'}`}></div>
-                <span className="text-xs text-muted font-medium whitespace-nowrap">
-                  {isFiltering ? 'Filtering...' : ''}
-                </span>
-                {(advancedFilters.types.length > 0 || searchTerm || (advancedFilters.generation && advancedFilters.generation !== '') || advancedFilters.legendary || advancedFilters.mythical || advancedFilters.ultraBeast || showFavoritesOnly) && (
-                  <button
-                    onClick={clearAllFilters}
-                    disabled={isFiltering}
-                    className="text-xs text-poke-blue hover:text-poke-blue/80 hover:underline font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                    title={isFiltering ? 'Filtering in progress...' : 'Clear all filters'}
-                  >
-                    Clear all
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Enhanced Desktop Controls Section - Hidden on mobile */}
-            {!isMobile && (
-              <div className="flex items-center space-x-6 min-w-0 flex-shrink-0">
-              {/* Theme Toggle */}
-              <ThemeToggle />
-
-              {/* Quick Type Filters - Desktop */}
-              <div className="hidden xl:flex items-center space-x-2 min-w-0">
-                <span className="text-xs font-medium text-muted uppercase tracking-wider flex-shrink-0">Types</span>
-                <div 
-                  className="flex items-center space-x-1 overflow-x-auto max-w-32 lg:max-w-48 xl:max-w-64 type-filters-scroll"
-                  style={{
-                    scrollbarWidth: 'thin',
-                    scrollbarColor: 'rgba(156, 163, 175, 0.5) transparent'
-                  }}
-                >
-                  <div className="flex items-center space-x-1 min-w-max">
-                    {Object.keys(typeColors).map(type => (
-                      <button
-                        key={type}
-                        onClick={() => !isFiltering && toggleTypeFilter(type)}
-                        disabled={isFiltering}
-                        className={`px-2 py-1 rounded-lg text-xs font-medium transition-all duration-200 flex-shrink-0 ${
-                          advancedFilters.types.includes(type) 
-                            ? 'ring-2 ring-white shadow-lg scale-105' 
-                            : 'opacity-80 hover:opacity-100'
-                        } ${isFiltering ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        style={{
-                          backgroundColor: `var(--type-${type})`,
-                          color: typeColors[type].text === 'text-white' ? 'white' : 'black',
-                        }}
-                        title={isFiltering ? 'Filtering in progress...' : `Filter by ${formatPokemonName(type)} type`}
-                      >
-                        {formatPokemonName(type)}
-                      </button>
-                    ))}
-                    {advancedFilters.types.length > 0 && (
-                      <button
-                        onClick={() => setAdvancedFilters(prev => ({ ...prev, types: [] }))}
-                        className="px-2 py-1 text-xs text-poke-blue hover:text-poke-blue/80 hover:underline font-medium flex-shrink-0"
-                        title="Clear type filters"
-                      >
-                        Clear
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-
-              {/* Theme Toggle */}
-              <div className="hidden md:flex items-center">
-                <ThemeToggle />
-              </div>
-
-              {/* Profile Picture Button (desktop) */}
-              <div className="hidden md:flex items-center space-x-2">
-                <UserDropdown />
-              </div>
-
-              {/* Action Buttons - PokéDex Toolbar Style */}
-              <div className="pk-toolbar">
-                <HeaderIcons 
-                  comparisonList={comparisonList}
-                  showSidebar={showSidebar}
-                  onFiltersClick={() => setShowSidebar(!showSidebar)}
-                />
-              </div>
-
-            </div>
-            )}
-
-            {/* Mobile Toolbar - All buttons distributed across available space */}
-            {isMobile && (
-              <div className="pk-toolbar flex-1 justify-between">
-                <HeaderIcons 
-                  comparisonList={comparisonList}
-                  showSidebar={showSidebar}
-                  onFiltersClick={() => setShowSidebar(!showSidebar)}
-                />
-                <HamburgerMenu onClick={() => setShowMobileMenu(!showMobileMenu)} />
-                <UserDropdown isMobile={true} />
-              </div>
-            )}
-
-            {/* Mobile Menu Button removed - now part of desktop controls */}
-          </div>
-        </div>
-      </header>
-      )}
-
       {/* Fallback marker removed; no desktop drawer */}
 
       {/* Mobile Menu Overlay - Only on small screens */}
       {showMobileMenu && isMobile && (
-        <div id="mobile-drawer" className="md:hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+        <div
+          id="mobile-drawer"
+          className="md:hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200"
+          onKeyDown={(e) => { if (e.key === 'Escape') setShowMobileMenu(false); }}
+        >
           {/* Backdrop - click to close */}
           <div 
             className="absolute inset-0"
             onClick={() => setShowMobileMenu(false)}
+            aria-hidden="true"
           />
           <div
             className="mobile-menu fixed right-0 top-0 h-full w-80 max-w-[85vw] bg-bg border-l border-border shadow-2xl animate-in slide-in-from-right duration-300"
@@ -1562,7 +1420,8 @@ export default function ModernPokedexLayout({
                 <h3 className="text-lg font-semibold text-text">Quick Actions</h3>
                 <button
                   onClick={() => setShowMobileMenu(false)}
-                  className="p-2 rounded-lg hover:bg-white/20 transition-all duration-200 hover:scale-110"
+                  className="p-2 rounded-lg hover:bg-white/20 dark:hover:bg-white/10 transition-all duration-200 hover:scale-110"
+                  aria-label="Close menu"
                 >
                   <X className="h-5 w-5" />
                 </button>
@@ -1646,7 +1505,7 @@ export default function ModernPokedexLayout({
                         onClearComparison()
                         setShowMobileMenu(false)
                       }}
-                      className="w-full p-2 rounded-lg bg-white border border-border text-text hover:bg-gray-50 transition-all duration-200 text-sm"
+                      className="w-full p-2 rounded-lg bg-white dark:bg-gray-800 border border-border text-text hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 text-sm"
                     >
                       Clear Comparison
                     </button>
@@ -1767,7 +1626,7 @@ export default function ModernPokedexLayout({
               <div className="pt-6 border-t border-border">
                 <button
                   onClick={() => setShowMobileMenu(false)}
-                  className="w-full p-3 rounded-xl bg-white border border-border text-text hover:bg-gray-50 transition-all duration-200 font-medium"
+                  className="w-full p-3 rounded-xl bg-white dark:bg-gray-800 border border-border text-text hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 font-medium"
                 >
                   Close Menu
                 </button>
@@ -1791,7 +1650,7 @@ export default function ModernPokedexLayout({
               className={`flex-shrink-0 flex items-center gap-2 px-3 py-2.5 rounded-lg border text-sm font-semibold transition-all duration-200 shadow-sm hover:shadow-md ${
                 showSidebar
                   ? 'bg-poke-blue/10 border-poke-blue text-poke-blue'
-                  : 'bg-surface border-border hover:bg-white/50 hover:border-poke-blue/30 text-text'
+                  : 'bg-surface border-border hover:bg-white/50 dark:hover:bg-white/10 hover:border-poke-blue/30 text-text'
               }`}
             >
               <Image src="/header-icons/advanced_filters.png" alt="Filters" width={18} height={18} className="w-4 h-4" />
@@ -1837,11 +1696,11 @@ export default function ModernPokedexLayout({
 
         {/* Collapsible Content */}
         <div id="search-filters-panel" className={`overflow-hidden transition-all duration-300 ease-in-out ${
-          isFiltersCollapsed ? 'max-h-0 opacity-0' : 'max-h-[600px] opacity-100'
+          isFiltersCollapsed ? 'max-h-0 opacity-0' : 'max-h-[50vh] sm:max-h-[600px] opacity-100'
         }`}>
           {/* Search Bar */}
-          <div className="px-4 py-3">
-            <div className="flex items-center gap-3 relative">
+          <div className="px-3 sm:px-4 py-2 sm:py-3">
+            <div className="flex items-center gap-2 sm:gap-3 relative">
               <SearchInput
                 onSearchChange={handleSearchChange}
                 placeholder="Search Pokémon..."
@@ -1878,11 +1737,15 @@ export default function ModernPokedexLayout({
                 </div>
               )}
               <button
-                onClick={() => {
-                  // Get random Pokemon ID from filtered list or total count
-                  const maxId = totalCount || 1025
-                  const randomId = Math.floor(Math.random() * maxId) + 1
-                  router.push(`/pokemon/${randomId}`)
+                onClick={async () => {
+                  try {
+                    const allIds = await fetchAllPokemonIds()
+                    const randomId = allIds[Math.floor(Math.random() * allIds.length)]
+                    router.push(`/pokemon/${randomId}`)
+                  } catch {
+                    const randomId = Math.floor(Math.random() * (totalCount || 1025)) + 1
+                    router.push(`/pokemon/${randomId}`)
+                  }
                 }}
                 className="flex-shrink-0 p-3 rounded-xl bg-gradient-to-r from-poke-yellow to-poke-red text-white hover:shadow-lg transition-all duration-200 hover:scale-105 group"
                 title="Random Pokémon"
@@ -1894,16 +1757,16 @@ export default function ModernPokedexLayout({
 
           {/* Enhanced Type Filter Ribbon */}
           <div className="border-t border-border bg-gradient-to-r from-surface via-surface to-surface">
-        <div className="w-full max-w-full px-0 py-4">
-          <div className="flex items-center justify-between">
+        <div className="w-full max-w-full px-3 sm:px-4 py-3">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             {/* Type Filter Buttons */}
-            <div className="flex items-center space-x-3 overflow-x-auto pb-2 type-filters-scroll">
+            <div className="flex items-center flex-wrap gap-1.5 sm:gap-2 pb-1 type-filters-scroll">
               {Object.keys(typeColors).map(type => (
                 <button
                   key={type}
                   onClick={() => !isFiltering && toggleTypeFilter(type)}
                   disabled={isFiltering}
-                  className={`px-1.5 py-1.5 rounded-xl text-sm font-semibold border-2 transition-all duration-300 whitespace-nowrap shadow-sm hover:shadow-md transform hover:scale-105 ${
+                  className={`px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold border-2 transition-all duration-300 whitespace-nowrap shadow-sm hover:shadow-md transform hover:scale-105 ${
                     advancedFilters.types.includes(type) 
                       ? 'border-white shadow-lg scale-105' 
                       : 'border-transparent opacity-60 hover:opacity-80'
@@ -1911,7 +1774,6 @@ export default function ModernPokedexLayout({
                   style={{
                     backgroundColor: `var(--type-${type})`,
                     color: typeColors[type].text === 'text-white' ? 'white' : 'black',
-                    padding: '6px 6px'
                   }}
                   title={isFiltering ? 'Filtering in progress...' : formatPokemonName(type)}
                   onMouseEnter={(e) => {
@@ -1933,7 +1795,7 @@ export default function ModernPokedexLayout({
             </div>
             
             {/* Filter Status & Actions */}
-            <div className="flex items-center space-x-4 ml-6">
+            <div className="flex items-center space-x-4 ml-2 sm:ml-6 flex-shrink-0">
               <div className="flex items-center space-x-3">
                 {/* Favorites Filter Toggle */}
                 {favoritesList.length > 0 && (
@@ -1943,14 +1805,14 @@ export default function ModernPokedexLayout({
                     className={`px-3 py-1.5 text-sm font-semibold rounded-lg border-2 transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-105 flex items-center gap-2 ${
                       showFavoritesOnly 
                         ? 'bg-red-500 text-white border-white shadow-lg scale-105' 
-                        : 'bg-white text-red-500 border-red-200 hover:border-red-300'
+                        : 'bg-white dark:bg-gray-800 text-red-500 border-red-200 dark:border-red-400/30 hover:border-red-300 dark:hover:border-red-400'
                     } ${isFiltering ? 'opacity-50 cursor-not-allowed' : ''}`}
                     title={showFavoritesOnly ? 'Show all Pokémon' : `Show only favorites (${favoritesList.length})`}
                   >
                     <Heart className={`w-4 h-4 ${showFavoritesOnly ? 'fill-current' : ''}`} />
                     <span>Favorites</span>
                     {favoritesList.length > 0 && (
-                      <span className={`text-xs px-1.5 py-0.5 rounded-full ${showFavoritesOnly ? 'bg-white/20' : 'bg-red-100'}`}>
+                      <span className={`text-xs px-1.5 py-0.5 rounded-full ${showFavoritesOnly ? 'bg-white/20' : 'bg-red-100 dark:bg-red-900/30'}`}>
                         {favoritesList.length}
                       </span>
                     )}
@@ -1964,8 +1826,8 @@ export default function ModernPokedexLayout({
           </div>
 
           {/* Size, Sort & Advanced Filters Controls */}
-          <div className="border-t border-border px-4 py-3">
-            <div className="flex flex-row items-center justify-between gap-4">
+          <div className="border-t border-border px-3 sm:px-4 py-2 sm:py-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-4">
               {/* Left: Size */}
               <div className="flex items-center space-x-3">
                 {/* Card Density Controls */}
@@ -1985,7 +1847,7 @@ export default function ModernPokedexLayout({
                         className={`px-2 py-2 text-xs font-medium rounded-full transition-all duration-200 flex items-center space-x-1 ${
                           cardDensity === target
                             ? 'bg-poke-blue text-white shadow-lg scale-105'
-                            : 'text-muted hover:text-text hover:bg-white/50'
+                            : 'text-muted hover:text-text hover:bg-white/50 dark:hover:bg-white/10'
                         }`}
                         style={{ borderRadius: '9999px', padding: '8px 8px' }}
                       >
@@ -2025,7 +1887,7 @@ export default function ModernPokedexLayout({
                   </select>
                   <button
                     onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-                    className="flex items-center gap-1 px-2 py-2 rounded-full bg-surface border border-border hover:bg-white/50 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md group control-keep"
+                    className="flex items-center gap-1 px-2 py-2 rounded-full bg-surface border border-border hover:bg-white/50 dark:hover:bg-white/10 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md group control-keep"
                     style={{ borderRadius: '9999px', padding: '8px 8px' }}
                     title={`Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`}
                   >
@@ -2047,7 +1909,7 @@ export default function ModernPokedexLayout({
       </div>
 
       {/* Main Content */}
-      <div className="flex w-full max-w-full flex-1 min-h-0 overflow-x-hidden pl-0 pr-0 sm:pl-0 sm:pr-0 lg:pl-0 lg:pr-0 gap-0">
+      <div className="flex w-full max-w-full flex-1 min-h-0 overflow-x-hidden gap-0">
         {/* Advanced Filters Component */}
         <AdvancedFilters
           advancedFilters={advancedFilters}
@@ -2067,7 +1929,7 @@ export default function ModernPokedexLayout({
           data-main-scroll
           className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scroll-stable scrollbar-hide relative"
         >
-          <div className={`${showSidebar ? 'pl-0 pr-0' : 'pl-0 pr-4 sm:pl-0 sm:pr-6 lg:pl-0 lg:pr-8'} min-h-full w-full max-w-full pt-4 relative`}>
+          <div className="px-2 sm:px-4 lg:px-6 min-h-full w-full max-w-full pt-4 relative">
             {/* Pokémon Grid */}
             
         {isInitialLoading ? (
@@ -2243,174 +2105,6 @@ export default function ModernPokedexLayout({
         </div>
       </div>
 
-      {/* Mobile Filter Overlay - Now handled by AdvancedFilters component */}
-      {false && (
-        <div className="md:hidden fixed inset-0 bg-black/50 z-50" onClick={() => setShowSidebar(false)}>
-          <div className="absolute right-0 top-0 h-full w-80 bg-surface" onClick={e => e.stopPropagation()}>
-            <div className="h-full flex flex-col">
-              {/* Mobile Header - Fixed */}
-              <div className="flex-shrink-0 p-6 border-b border-border bg-surface">
-             
-                
-              </div>
-              
-              {/* Mobile Scrollable Content */}
-              <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 space-y-6 min-h-0" style={{maxHeight: 'calc(100vh - 20rem)'}}>
-                {/* Generation Filter */}
-                <div>
-                  <label className="block text-sm font-medium mb-2">Generation</label>
-                  <select
-                    value={advancedFilters.generation}
-                    onChange={(e) => {
-                      setAdvancedFilters(prev => ({
-                        ...prev, 
-                        generation: e.target.value 
-                      }))
-                    }}
-                    className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text"
-                  >
-                    <option value="all">All Generations</option>
-                    <option value="1">Generation 1</option>
-                    <option value="2">Generation 2</option>
-                    <option value="3">Generation 3</option>
-                    <option value="4">Generation 4</option>
-                    <option value="5">Generation 5</option>
-                    <option value="6">Generation 6</option>
-                    <option value="7">Generation 7</option>
-                    <option value="8">Generation 8</option>
-                    <option value="9">Generation 9</option>
-                  </select>
-                </div>
-
-                {/* Height Range */}
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Height: {advancedFilters.heightRange[0]}m - {advancedFilters.heightRange[1]}m
-                  </label>
-                  <div className="space-y-2">
-                    <input
-                      type="range"
-                      min="0"
-                      max="20"
-                      step="0.1"
-                      value={advancedFilters.heightRange[0]}
-                      onChange={(e) => {
-                        setAdvancedFilters(prev => ({
-                          ...prev, 
-                          heightRange: [Math.min(parseFloat(e.target.value), prev.heightRange[1]), prev.heightRange[1]] as [number, number]
-                        }))
-                      }}
-                      className="w-full"
-                    />
-                    <input
-                      type="range"
-                      min="0"
-                      max="20"
-                      step="0.1"
-                      value={advancedFilters.heightRange[1]}
-                      onChange={(e) => {
-                        setAdvancedFilters(prev => ({
-                          ...prev, 
-                          heightRange: [prev.heightRange[0], Math.max(parseFloat(e.target.value), prev.heightRange[0])] as [number, number]
-                        }))
-                      }}
-                      className="w-full"
-                    />
-                  </div>
-                </div>
-
-                {/* Weight Range */}
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Weight: {advancedFilters.weightRange[0]}kg - {advancedFilters.weightRange[1]}kg
-                  </label>
-                  <div className="space-y-2">
-                    <input
-                      type="range"
-                      min="0"
-                      max="1000"
-                      step="1"
-                      value={advancedFilters.weightRange[0]}
-                      onChange={(e) => {
-                        setAdvancedFilters(prev => ({
-                          ...prev, 
-                          weightRange: [Math.min(parseInt(e.target.value), prev.weightRange[1]), prev.weightRange[1]] as [number, number]
-                        }))
-                      }}
-                      className="w-full"
-                    />
-                    <input
-                      type="range"
-                      min="0"
-                      max="1000"
-                      step="1"
-                      value={advancedFilters.weightRange[1]}
-                      onChange={(e) => {
-                        setAdvancedFilters(prev => ({
-                          ...prev, 
-                          weightRange: [prev.weightRange[0], Math.max(parseInt(e.target.value), prev.weightRange[0])] as [number, number]
-                        }))
-                      }}
-                      className="w-full"
-                    />
-                  </div>
-                </div>
-
-                {/* Legendary, Mythical, and Ultra Beast Filters - Mobile */}
-                <div className="space-y-3">
-                  <label className="block text-sm font-medium">Special Categories</label>
-                  <div className="space-y-2">
-                    <label className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        checked={advancedFilters.legendary}
-                        onChange={(e) => {
-                          setAdvancedFilters(prev => ({
-                            ...prev,
-                            legendary: e.target.checked
-                          }))
-                        }}
-                        className="w-4 h-4 text-poke-blue bg-surface border-border rounded focus:ring-poke-blue focus:ring-2"
-                      />
-                      <span className="text-sm text-text">Legendary Pokémon</span>
-                    </label>
-                    <label className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        checked={advancedFilters.mythical}
-                        onChange={(e) => {
-                          setAdvancedFilters(prev => ({
-                            ...prev,
-                            mythical: e.target.checked
-                          }))
-                        }}
-                        className="w-4 h-4 text-poke-blue bg-surface border-border rounded focus:ring-poke-blue focus:ring-2"
-                      />
-                      <span className="text-sm text-text">Mythical Pokémon</span>
-                    </label>
-                    <label className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        checked={advancedFilters.ultraBeast}
-                        onChange={(e) => {
-                          setAdvancedFilters(prev => ({
-                            ...prev,
-                            ultraBeast: e.target.checked
-                          }))
-                        }}
-                        className="w-4 h-4 text-poke-blue bg-surface border-border rounded focus:ring-poke-blue focus:ring-2"
-                      />
-                      <span className="text-sm text-text">Ultra Beast</span>
-                    </label>
-                  </div>
-                </div>
-
-              </div>
-              
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Auth Modal */}
       <AuthModal 

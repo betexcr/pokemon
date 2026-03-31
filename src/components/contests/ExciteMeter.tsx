@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Sparkles, Star } from 'lucide-react'
 
 interface ExciteMeterProps {
@@ -10,15 +10,20 @@ interface ExciteMeterProps {
 export default function ExciteMeter({ value }: ExciteMeterProps) {
   const [isSpectacular, setIsSpectacular] = useState(false)
   const [showSparkles, setShowSparkles] = useState(false)
+  const sparkleTimerRef = useRef<ReturnType<typeof setTimeout>>()
 
   useEffect(() => {
+    if (sparkleTimerRef.current) clearTimeout(sparkleTimerRef.current)
+
     if (value >= 100) {
       setIsSpectacular(true)
       setShowSparkles(true)
-      setTimeout(() => setShowSparkles(false), 2000)
+      sparkleTimerRef.current = setTimeout(() => setShowSparkles(false), 2000)
     } else {
       setIsSpectacular(false)
     }
+
+    return () => { if (sparkleTimerRef.current) clearTimeout(sparkleTimerRef.current) }
   }, [value])
 
   const getMeterColor = () => {

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
 import PokemonPageClient from './PokemonPageClient'
 import { getAllValidPokemonIds } from '@/lib/api'
@@ -41,7 +42,7 @@ export async function generateStaticParams() {
   }
 }
 
-export async function generateMetadata(props: any): Promise<Metadata> {
+export async function generateMetadata(props: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const params = await props.params
   const pokemonId = parseInt(params?.id ?? '', 10)
   
@@ -98,7 +99,7 @@ export async function generateMetadata(props: any): Promise<Metadata> {
   }
 }
 
-export default async function PokemonPage(props: any) {
+export default async function PokemonPage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params
   const pokemonId = parseInt(params?.id ?? '', 10)
   
@@ -121,7 +122,7 @@ export default async function PokemonPage(props: any) {
     // Preload evolution chain Pokemon for faster navigation
     preloadEvolutionChain(pokemon)
     
-    return <PokemonPageClient pokemon={pokemon} />
+    return <Suspense><PokemonPageClient pokemon={pokemon} /></Suspense>
   } catch (error) {
     console.error('Failed to load Pokemon:', pokemonId, error)
     // Log the error for debugging in production

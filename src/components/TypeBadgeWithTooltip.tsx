@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createPortal } from "react-dom";
 import TypeBadge from "./TypeBadge";
@@ -31,6 +31,35 @@ export default function TypeBadgeWithTooltip({ type, className }: TypeBadgeWithT
     <>
       <div 
         ref={badgeRef}
+        tabIndex={0}
+        onFocus={(e) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          const tooltipHeight = 240;
+          const tooltipWidth = 448;
+          const margin = 16;
+          let x = rect.left + rect.width / 2;
+          let y = rect.top;
+          if (rect.top < tooltipHeight + 20) {
+            setTooltipPosition('bottom');
+            y = rect.bottom;
+          } else {
+            setTooltipPosition('top');
+            y = rect.top;
+          }
+          const viewportWidth = window.innerWidth;
+          if (x + tooltipWidth / 2 > viewportWidth - margin) {
+            setTooltipAlignment('right');
+            x = rect.right;
+          } else if (x - tooltipWidth / 2 < margin) {
+            setTooltipAlignment('left');
+            x = rect.left;
+          } else {
+            setTooltipAlignment('center');
+          }
+          setTooltipCoords({ x, y });
+          setShowTooltip(true);
+        }}
+        onBlur={() => setShowTooltip(false)}
         onMouseEnter={(e) => {
           const rect = e.currentTarget.getBoundingClientRect();
           const tooltipHeight = 240; // Taller to accommodate relaxed spacing

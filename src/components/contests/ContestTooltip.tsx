@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Info, Star, Heart, Zap, Sparkles } from 'lucide-react'
+import { Star, Heart, Zap, Sparkles } from 'lucide-react'
 
 interface ContestTooltipProps {
   content: string
@@ -27,6 +27,10 @@ export default function ContestTooltip({
   const triggerRef = useRef<HTMLDivElement>(null)
   const tooltipRef = useRef<HTMLDivElement>(null)
   const timeoutRef = useRef<NodeJS.Timeout>()
+
+  useEffect(() => {
+    return () => { if (timeoutRef.current) clearTimeout(timeoutRef.current) }
+  }, [])
 
   const showTooltip = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current)

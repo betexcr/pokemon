@@ -204,14 +204,12 @@ function BattleRuntimePage() {
         {isAIBattle && opponentChampion ? (
           <OfflineBattleComponent
             config={{ opponentChampion }}
-            onBattleComplete={() => {}}
             viewMode="animated"
           />
         ) : (
           /* Regular Battle (Multiplayer over RTDB) */
           <RTDBBattleComponent 
             battleId={urlBattleId!}
-            onBattleComplete={() => {}}
             viewMode="animated"
           />
         )}

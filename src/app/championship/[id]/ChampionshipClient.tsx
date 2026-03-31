@@ -66,18 +66,22 @@ function ChampionshipDetailContent({ championshipId }: Props) {
 
   useEffect(() => {
     if (!user) { setTeamsLoading(false); return; }
+    let cancelled = false;
     async function loadTeams() {
       try {
         const teams = await getUserTeams(user!.uid);
+        if (cancelled) return;
         setUserTeams(teams);
         if (teams.length > 0) setSelectedTeamId(teams[0].id);
       } catch (err) {
+        if (cancelled) return;
         console.error('Failed to load teams:', err);
       } finally {
-        setTeamsLoading(false);
+        if (!cancelled) setTeamsLoading(false);
       }
     }
     loadTeams();
+    return () => { cancelled = true; };
   }, [user]);
 
   const championshipId_ = championship?.id;
@@ -432,6 +436,7 @@ function ChampionshipDetailContent({ championshipId }: Props) {
                         )}
                     </div>
                     <button
+                      type="button"
                       onClick={handleJoin}
                       disabled={
                         actionLoading || isFull || !selectedTeamId || teamChoices.length === 0
@@ -482,6 +487,7 @@ function ChampionshipDetailContent({ championshipId }: Props) {
                         )}
                     </div>
                     <button
+                      type="button"
                       onClick={handleUpdateTeam}
                       disabled={
                         actionLoading || !selectedTeamId || teamChoices.length === 0
@@ -527,6 +533,7 @@ function ChampionshipDetailContent({ championshipId }: Props) {
                   <div className="flex flex-wrap gap-2">
                     {c.seatMode === 'random' && (
                       <button
+                        type="button"
                         onClick={handleRandomize}
                         disabled={actionLoading}
                         className="flex-1 min-w-[140px] bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white py-2.5 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
@@ -536,6 +543,7 @@ function ChampionshipDetailContent({ championshipId }: Props) {
                       </button>
                     )}
                     <button
+                      type="button"
                       onClick={handleStart}
                       disabled={actionLoading || !isFull}
                       className="flex-1 min-w-[140px] bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white py-2.5 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
@@ -544,6 +552,7 @@ function ChampionshipDetailContent({ championshipId }: Props) {
                       {isFull ? 'Start Championship' : `Waiting (${c.participants.length}/${c.size})`}
                     </button>
                     <button
+                      type="button"
                       onClick={handleDelete}
                       disabled={actionLoading}
                       className="px-4 py-2.5 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
@@ -558,6 +567,7 @@ function ChampionshipDetailContent({ championshipId }: Props) {
               {/* Leave button for non-hosts */}
               {isJoined && !isHost && (
                 <button
+                  type="button"
                   onClick={handleLeave}
                   disabled={actionLoading}
                   className="w-full py-2.5 border border-red-500/40 text-red-400 rounded-lg font-medium hover:bg-red-500/10 transition-colors flex items-center justify-center gap-2"
@@ -617,6 +627,7 @@ function ChampionshipDetailContent({ championshipId }: Props) {
                               {p1?.name} vs {p2?.name}
                             </span>
                             <button
+                              type="button"
                               onClick={() => handleForfeit(m, m.player1Uid!)}
                               disabled={actionLoading}
                               className="px-2.5 py-1.5 text-xs bg-orange-600 hover:bg-orange-700 disabled:bg-orange-400 text-white rounded-md flex items-center gap-1"
@@ -625,6 +636,7 @@ function ChampionshipDetailContent({ championshipId }: Props) {
                               Forfeit {p1?.name?.split(' ')[0]}
                             </button>
                             <button
+                              type="button"
                               onClick={() => handleForfeit(m, m.player2Uid!)}
                               disabled={actionLoading}
                               className="px-2.5 py-1.5 text-xs bg-orange-600 hover:bg-orange-700 disabled:bg-orange-400 text-white rounded-md flex items-center gap-1"
@@ -636,6 +648,7 @@ function ChampionshipDetailContent({ championshipId }: Props) {
                         );
                       })}
                     <button
+                      type="button"
                       onClick={handleCancel}
                       disabled={actionLoading}
                       className="w-full py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
@@ -663,6 +676,7 @@ function ChampionshipDetailContent({ championshipId }: Props) {
                     Host Controls
                   </h3>
                   <button
+                    type="button"
                     onClick={handleDelete}
                     disabled={actionLoading}
                     className="w-full py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
@@ -684,6 +698,7 @@ function ChampionshipDetailContent({ championshipId }: Props) {
                 <p className="text-muted text-sm mt-1">This championship was cancelled by the host.</p>
                 {isHost && (
                   <button
+                    type="button"
                     onClick={handleDelete}
                     disabled={actionLoading}
                     className="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors"

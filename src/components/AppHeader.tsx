@@ -19,7 +19,6 @@ interface AppHeaderProps {
   onToggleSidebar?: () => void
   rightContent?: ReactNode
   showToolbar?: boolean
-  showThemeToggle?: boolean
   iconKey?: string
   showIcon?: boolean
   onBackClick?: () => void
@@ -35,7 +34,6 @@ export default function AppHeader({
   onToggleSidebar,
   rightContent,
   showToolbar = true,
-  showThemeToggle = true,
   iconKey,
   showIcon = true,
   onBackClick
@@ -90,7 +88,7 @@ export default function AppHeader({
   return (
     <header className="sticky top-0 z-50 bg-gradient-to-r from-surface via-surface to-surface border-b border-border shadow-lg" suppressHydrationWarning>
       <div className="w-full max-w-full px-2 sm:px-4 md:px-6 lg:px-8" suppressHydrationWarning>
-        <div className="flex items-center justify-between h-14 sm:h-16 md:h-16 lg:h-18 xl:h-20 py-1 sm:py-2 md:py-3 list-none min-w-0" suppressHydrationWarning>
+        <div className="flex items-center justify-between h-14 sm:h-16 md:h-[4.25rem] lg:h-[4.5rem] xl:h-20 py-1 sm:py-1.5 md:py-2 min-w-0" suppressHydrationWarning>
           <div className="flex items-center space-x-2 sm:space-x-3 lg:space-x-4 min-w-0 flex-1">
             {backLink && (
               <Tooltip content={`Go back to ${backLabel}`} position="bottom">

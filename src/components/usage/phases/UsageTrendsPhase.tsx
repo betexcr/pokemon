@@ -52,149 +52,135 @@ export default function UsageTrendsPhase({
     return months.reverse(); // Reverse to get chronological order
   };
 
-  // Fetch historical data for trends
-  const fetchTrendsData = async () => {
+  useEffect(() => {
     if (!filters.platforms[0] || !filters.generations[0] || !filters.formats[0]) {
       return;
     }
 
+    let cancelled = false;
     setLoading(true);
     setError(null);
 
-    try {
-      // Try the new trends API first
+    const fetchTrendsData = async () => {
       try {
-        const response = await fetch(
-          `/api/usage/trends?platform=${filters.platforms[0]}&generation=${filters.generations[0]}&format=${filters.formats[0]}&months=6`
-        );
-        
-        if (response.ok) {
-          const result = await response.json();
-          if (result.historicalData && result.historicalData.length > 0) {
-            const historicalData = result.historicalData;
-            
-            // Get top 6 Pokémon from the most recent month
-            const latestData = historicalData[historicalData.length - 1];
-            const topPokemon = latestData.data
-              .slice(0, 6)
-              .map((pokemon: any) => pokemon.name);
-            
-            setAvailablePokemon(topPokemon);
-            if (topPokemon.length > 0 && !topPokemon.includes(selectedPokemon)) {
-              setSelectedPokemon(topPokemon[0]);
-            }
-
-            // Transform data for charts
-            const trendChartData: TrendDataPoint[] = historicalData.map((monthData: any) => {
-              const dataPoint: TrendDataPoint = { month: monthData.month };
-              
-              topPokemon.forEach((pokemonName: string) => {
-                const pokemonData = monthData.data.find((p: any) => p.name === pokemonName);
-                dataPoint[pokemonName] = pokemonData ? pokemonData.usagePercent : 0;
-              });
-              
-              return dataPoint;
-            });
-
-            const rankChartData: TrendDataPoint[] = historicalData.map((monthData: any) => {
-              const dataPoint: TrendDataPoint = { month: monthData.month };
-              
-              topPokemon.forEach((pokemonName: string) => {
-                const pokemonData = monthData.data.find((p: any) => p.name === pokemonName);
-                dataPoint[pokemonName] = pokemonData ? pokemonData.rank : 0;
-              });
-              
-              return dataPoint;
-            });
-
-            setTrendData(trendChartData);
-            setRankData(rankChartData);
-            setLoading(false);
-            return;
-          }
-        }
-      } catch (trendsApiErr) {
-        console.warn('Trends API failed, falling back to monthly API:', trendsApiErr);
-      }
-
-      // Fallback to individual monthly API calls
-      const months = getRecentMonths(6);
-      const historicalData: HistoricalData[] = [];
-      
-      // Fetch data for each month
-      for (const month of months) {
         try {
           const response = await fetch(
-            `/api/usage/monthly?platform=${filters.platforms[0]}&generation=${filters.generations[0]}&format=${filters.formats[0]}&month=${month}`
+            `/api/usage/trends?platform=${filters.platforms[0]}&generation=${filters.generations[0]}&format=${filters.formats[0]}&months=6`
           );
-          
+          if (cancelled) return;
+
           if (response.ok) {
             const result = await response.json();
-            if (result.data && result.data.length > 0) {
-              historicalData.push({
-                month,
-                data: result.data
+            if (cancelled) return;
+            if (result.historicalData && result.historicalData.length > 0) {
+              const historicalData = result.historicalData;
+              const latestData = historicalData[historicalData.length - 1];
+              const topPokemon = latestData.data.slice(0, 6).map((pokemon: any) => pokemon.name);
+
+              setAvailablePokemon(topPokemon);
+              if (topPokemon.length > 0 && !topPokemon.includes(selectedPokemon)) {
+                setSelectedPokemon(topPokemon[0]);
+              }
+
+              const trendChartData: TrendDataPoint[] = historicalData.map((monthData: any) => {
+                const dataPoint: TrendDataPoint = { month: monthData.month };
+                topPokemon.forEach((pokemonName: string) => {
+                  const pokemonData = monthData.data.find((p: any) => p.name === pokemonName);
+                  dataPoint[pokemonName] = pokemonData ? pokemonData.usagePercent : 0;
+                });
+                return dataPoint;
               });
+
+              const rankChartData: TrendDataPoint[] = historicalData.map((monthData: any) => {
+                const dataPoint: TrendDataPoint = { month: monthData.month };
+                topPokemon.forEach((pokemonName: string) => {
+                  const pokemonData = monthData.data.find((p: any) => p.name === pokemonName);
+                  dataPoint[pokemonName] = pokemonData ? pokemonData.rank : 0;
+                });
+                return dataPoint;
+              });
+
+              setTrendData(trendChartData);
+              setRankData(rankChartData);
+              setLoading(false);
+              return;
             }
           }
-        } catch (err) {
-          console.warn(`Failed to fetch data for ${month}:`, err);
+        } catch (trendsApiErr) {
+          if (cancelled) return;
+          console.warn('Trends API failed, falling back to monthly API:', trendsApiErr);
         }
-      }
 
-      if (historicalData.length === 0) {
-        setError('No historical data available for the selected filters');
-        setLoading(false);
-        return;
-      }
+        const months = getRecentMonths(6);
+        const historicalData: HistoricalData[] = [];
 
-      // Get top 6 Pokémon from the most recent month
-      const latestData = historicalData[historicalData.length - 1];
-      const topPokemon = latestData.data
-        .slice(0, 6)
-        .map((pokemon: any) => pokemon.name);
-      
-      setAvailablePokemon(topPokemon);
-      if (topPokemon.length > 0 && !topPokemon.includes(selectedPokemon)) {
-        setSelectedPokemon(topPokemon[0]);
-      }
+        for (const month of months) {
+          if (cancelled) return;
+          try {
+            const response = await fetch(
+              `/api/usage/monthly?platform=${filters.platforms[0]}&generation=${filters.generations[0]}&format=${filters.formats[0]}&month=${month}`
+            );
+            if (cancelled) return;
+            if (response.ok) {
+              const result = await response.json();
+              if (cancelled) return;
+              if (result.data && result.data.length > 0) {
+                historicalData.push({ month, data: result.data });
+              }
+            }
+          } catch (err) {
+            if (cancelled) return;
+            console.warn(`Failed to fetch data for ${month}:`, err);
+          }
+        }
 
-      // Transform data for charts
-      const trendChartData: TrendDataPoint[] = historicalData.map(monthData => {
-        const dataPoint: TrendDataPoint = { month: monthData.month };
-        
-        topPokemon.forEach((pokemonName: string) => {
-          const pokemonData = monthData.data.find((p: any) => p.name === pokemonName);
-          dataPoint[pokemonName] = pokemonData ? pokemonData.usagePercent : 0;
+        if (cancelled) return;
+        if (historicalData.length === 0) {
+          setError('No historical data available for the selected filters');
+          setLoading(false);
+          return;
+        }
+
+        const latestData = historicalData[historicalData.length - 1];
+        const topPokemon = latestData.data.slice(0, 6).map((pokemon: any) => pokemon.name);
+
+        setAvailablePokemon(topPokemon);
+        if (topPokemon.length > 0 && !topPokemon.includes(selectedPokemon)) {
+          setSelectedPokemon(topPokemon[0]);
+        }
+
+        const trendChartData: TrendDataPoint[] = historicalData.map(monthData => {
+          const dataPoint: TrendDataPoint = { month: monthData.month };
+          topPokemon.forEach((pokemonName: string) => {
+            const pokemonData = monthData.data.find((p: any) => p.name === pokemonName);
+            dataPoint[pokemonName] = pokemonData ? pokemonData.usagePercent : 0;
+          });
+          return dataPoint;
         });
-        
-        return dataPoint;
-      });
 
-      const rankChartData: TrendDataPoint[] = historicalData.map(monthData => {
-        const dataPoint: TrendDataPoint = { month: monthData.month };
-        
-        topPokemon.forEach((pokemonName: string) => {
-          const pokemonData = monthData.data.find((p: any) => p.name === pokemonName);
-          dataPoint[pokemonName] = pokemonData ? pokemonData.rank : 0;
+        const rankChartData: TrendDataPoint[] = historicalData.map(monthData => {
+          const dataPoint: TrendDataPoint = { month: monthData.month };
+          topPokemon.forEach((pokemonName: string) => {
+            const pokemonData = monthData.data.find((p: any) => p.name === pokemonName);
+            dataPoint[pokemonName] = pokemonData ? pokemonData.rank : 0;
+          });
+          return dataPoint;
         });
-        
-        return dataPoint;
-      });
 
-      setTrendData(trendChartData);
-      setRankData(rankChartData);
-      
-    } catch (err) {
-      setError('Failed to fetch trends data');
-      console.error('Trends data fetch error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+        setTrendData(trendChartData);
+        setRankData(rankChartData);
+      } catch (err) {
+        if (cancelled) return;
+        setError('Failed to fetch trends data');
+        console.error('Trends data fetch error:', err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
 
-  useEffect(() => {
     fetchTrendsData();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.platforms, filters.generations, filters.formats]);
 
   const CustomTooltip = ({ active, payload, label }: any) => {

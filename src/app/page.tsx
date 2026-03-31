@@ -2,14 +2,16 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Pokemon, FilterState } from '@/types/pokemon'
-import { getPokemonTotalCount, generateAllPokemonSkeletons, generateSpecialFormsPokemon, getPokemonFallbackImage, getPokemonMainPageImage, getPokemonShinyImage } from '@/lib/api'
+import { fetchAllPokemonIds, generatePokemonSkeletonsForIds, generateAllPokemonSkeletons } from '@/lib/api'
 import { useTheme } from '@/components/ThemeProvider'
 import { useRequestCancellation } from '@/hooks/useRequestCancellation'
 import { useViewportCancellation } from '@/hooks/useViewportCancellation'
-import RedPokedexLayout from '@/components/RedPokedexLayout'
-import GoldPokedexLayout from '@/components/GoldPokedexLayout'
-import RubyPokedexLayout from '@/components/RubyPokedexLayout'
+import dynamic from 'next/dynamic'
 import ModernPokedexLayout from '@/components/ModernPokedexLayout'
+
+const RedPokedexLayout = dynamic(() => import('@/components/RedPokedexLayout'))
+const GoldPokedexLayout = dynamic(() => import('@/components/GoldPokedexLayout'))
+const RubyPokedexLayout = dynamic(() => import('@/components/RubyPokedexLayout'))
 
 export default function Home() {
   // Setup automatic request cancellation on navigation
@@ -57,6 +59,7 @@ export default function Home() {
   const hasMorePokemonRef = useRef(true)
   const currentOffsetRef = useRef(0)
   const totalCountRef = useRef(0)
+  const allIdsRef = useRef<number[]>([])
   const observerRef = useRef<IntersectionObserver | null>(null)
   const sentinelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const scrollSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -97,16 +100,19 @@ export default function Home() {
   // Load initial Pokemon data, restoring session state if returning from a detail page
 
   useEffect(() => {
+    let cancelled = false
     const loadInitialPokemon = async () => {
       try {
         setLoading(true)
         
-        const total = await getPokemonTotalCount()
+        const allIds = await fetchAllPokemonIds()
+        if (cancelled) return
+        allIdsRef.current = allIds
+        const total = allIds.length
         setTotalCount(total)
 
         let initialBatchSize = getViewportBatchSize()
 
-        // Restore session state if the user is returning from a detail page
         try {
           const saved = sessionStorage.getItem('pokedex-scroll-state')
           if (saved) {
@@ -120,7 +126,8 @@ export default function Home() {
           }
         } catch { /* ignore corrupt storage */ }
 
-        const initialBatch = generateAllPokemonSkeletons(initialBatchSize)
+        const initialIds = allIds.slice(0, initialBatchSize)
+        const initialBatch = generatePokemonSkeletonsForIds(initialIds)
         setPokemonList(initialBatch)
         setCurrentOffset(initialBatchSize)
         if (initialBatchSize >= total) {
@@ -129,6 +136,7 @@ export default function Home() {
         setLoading(false)
         setError(null)
       } catch (err) {
+        if (cancelled) return
         console.error('❌ Error loading initial Pokemon:', err)
         setError('Failed to load Pokemon list')
         const fallbackBatchSize = Math.max(getViewportBatchSize(), 120)
@@ -141,9 +149,11 @@ export default function Home() {
     }
 
     loadInitialPokemon()
+    return () => {
+      cancelled = true
+    }
   }, [getViewportBatchSize])
 
-  // Load to end - load all remaining Pokemon at once
   const loadToEnd = useCallback(async () => {
     if (isLoadingMoreRef.current || !hasMorePokemonRef.current || loading) {
       return
@@ -153,46 +163,20 @@ export default function Home() {
 
     try {
       const currentOffsetValue = currentOffsetRef.current
-      const remaining = totalCountRef.current - currentOffsetValue
+      const allIds = allIdsRef.current
+      const remainingIds = allIds.slice(currentOffsetValue)
       
-      if (remaining <= 0) {
+      if (remainingIds.length <= 0) {
         setHasMorePokemon(false)
         setIsLoadingMore(false)
         return
       }
 
-      // Generate all remaining skeletons at once
-      const newBatch = generateAllPokemonSkeletons(remaining).map((pokemon, index) => ({
-        ...pokemon,
-        id: currentOffsetValue + index + 1,
-        name: `pokemon-${currentOffsetValue + index + 1}`,
-        sprites: {
-          ...pokemon.sprites,
-          front_default: getPokemonFallbackImage(currentOffsetValue + index + 1),
-          other: {
-            ...pokemon.sprites.other,
-            'official-artwork': {
-              front_default: getPokemonMainPageImage(currentOffsetValue + index + 1),
-              front_shiny: getPokemonShinyImage(currentOffsetValue + index + 1),
-            }
-          }
-        }
-      }))
+      const newBatch = generatePokemonSkeletonsForIds(remainingIds)
 
       setPokemonList(prev => [...prev, ...newBatch])
-      setCurrentOffset(totalCountRef.current)
+      setCurrentOffset(allIds.length)
       setHasMorePokemon(false)
-
-      try {
-        const specialForms = await generateSpecialFormsPokemon()
-        if (specialForms.length > 0) {
-          setPokemonList(prev => [...prev, ...specialForms])
-          // Update total count to include special forms
-          setTotalCount(prev => prev + specialForms.length)
-        }
-      } catch (err) {
-        console.error('❌ Error loading special forms:', err)
-      }
 
     } catch (err) {
       console.error('❌ Error loading to end:', err)
@@ -201,20 +185,15 @@ export default function Home() {
     }
   }, [loading])
 
-  // Jump to specific Pokemon index - load up to that point if needed
   const jumpToPokemonIndex = useCallback(async (targetIndex: number) => {
     if (loading) return
 
     const safeTargetIndex = Math.max(0, targetIndex)
-    
+    const allIds = allIdsRef.current
     const currentLoadedCount = currentOffsetRef.current
     const jumpBuffer = Math.max(getViewportBatchSize(), 80)
-    const effectiveTotalCount = Math.max(
-      totalCountRef.current > 0 ? totalCountRef.current : 1025,
-      safeTargetIndex + jumpBuffer + 1
-    )
+    const effectiveTotalCount = allIds.length > 0 ? allIds.length : (totalCountRef.current > 0 ? totalCountRef.current : 1025)
     
-    // If already loaded, no need to load more
     if (safeTargetIndex < currentLoadedCount) {
       return
     }
@@ -222,29 +201,17 @@ export default function Home() {
     setIsLoadingMore(true)
     
     try {
-      const pokemonToLoad = safeTargetIndex - currentLoadedCount + jumpBuffer // Load surrounding rows for smooth jump landing
+      const pokemonToLoad = safeTargetIndex - currentLoadedCount + jumpBuffer
       const cappedLoad = Math.min(pokemonToLoad, effectiveTotalCount - currentLoadedCount)
       
       if (cappedLoad <= 0) {
         return
       }
       
-      const newBatch = generateAllPokemonSkeletons(cappedLoad).map((pokemon, index) => ({
-        ...pokemon,
-        id: currentLoadedCount + index + 1,
-        name: `pokemon-${currentLoadedCount + index + 1}`,
-        sprites: {
-          ...pokemon.sprites,
-          front_default: getPokemonFallbackImage(currentLoadedCount + index + 1),
-          other: {
-            ...pokemon.sprites.other,
-            'official-artwork': {
-              front_default: getPokemonMainPageImage(currentLoadedCount + index + 1),
-              front_shiny: getPokemonShinyImage(currentLoadedCount + index + 1),
-            }
-          }
-        }
-      }))
+      const nextIds = allIds.slice(currentLoadedCount, currentLoadedCount + cappedLoad)
+      const newBatch = nextIds.length > 0
+        ? generatePokemonSkeletonsForIds(nextIds)
+        : generateAllPokemonSkeletons(cappedLoad)
       
       setPokemonList(prev => [...prev, ...newBatch])
       const newOffset = currentLoadedCount + newBatch.length
@@ -263,7 +230,6 @@ export default function Home() {
     }
   }, [loading, getViewportBatchSize])
 
-  // Load more Pokemon function for infinite scroll
   const loadMorePokemon = useCallback(async () => {
     if (isLoadingMoreRef.current || !hasMorePokemonRef.current || loading) {
       return
@@ -275,26 +241,13 @@ export default function Home() {
     try {
       const currentOffsetValue = currentOffsetRef.current
       const batchSize = getViewportBatchSize()
+      const allIds = allIdsRef.current
       
-      // Generate skeletons instantly without API calls for faster loading
-      const newBatch = generateAllPokemonSkeletons(batchSize).map((pokemon, index) => ({
-        ...pokemon,
-        id: currentOffsetValue + index + 1,
-        name: `pokemon-${currentOffsetValue + index + 1}`,
-        sprites: {
-          ...pokemon.sprites,
-          front_default: getPokemonFallbackImage(currentOffsetValue + index + 1),
-          other: {
-            ...pokemon.sprites.other,
-            'official-artwork': {
-              front_default: getPokemonMainPageImage(currentOffsetValue + index + 1),
-              front_shiny: getPokemonShinyImage(currentOffsetValue + index + 1),
-            }
-          }
-        }
-      }))
+      const nextIds = allIds.slice(currentOffsetValue, currentOffsetValue + batchSize)
+      const newBatch = nextIds.length > 0
+        ? generatePokemonSkeletonsForIds(nextIds)
+        : generateAllPokemonSkeletons(batchSize)
       
-      // Add a minimal delay to make the loading feel more natural
       await new Promise(resolve => setTimeout(resolve, 10))
       
       if (newBatch.length === 0) {
@@ -304,22 +257,9 @@ export default function Home() {
         const newOffset = currentOffsetValue + newBatch.length
         setCurrentOffset(newOffset)
         
-        // Check if we've reached the end
         if (newOffset >= totalCountRef.current) {
           setHasMorePokemon(false)
-          
-          try {
-            const specialForms = await generateSpecialFormsPokemon()
-            if (specialForms.length > 0) {
-              setPokemonList(prev => [...prev, ...specialForms])
-              // Update total count to include special forms
-              setTotalCount(prev => prev + specialForms.length)
-            }
-          } catch (err) {
-            console.error('❌ Error loading special forms:', err)
-          }
         }
-        
       }
     } catch (err) {
       console.error('❌ Error loading more Pokemon:', err)
@@ -330,16 +270,17 @@ export default function Home() {
     }
   }, [loading, getViewportBatchSize])
 
-  // Reset function for error recovery
   const resetPokemonList = useCallback(() => {
     setPokemonList([])
     setCurrentOffset(0)
     setHasMorePokemon(true)
     setError(null)
     setLoading(true)
-    // Reload initial batch with optimized size (50 for fast render)
     const initialBatchSize = getViewportBatchSize()
-    const initialBatch = generateAllPokemonSkeletons(initialBatchSize)
+    const allIds = allIdsRef.current
+    const initialBatch = allIds.length > 0
+      ? generatePokemonSkeletonsForIds(allIds.slice(0, initialBatchSize))
+      : generateAllPokemonSkeletons(initialBatchSize)
     setPokemonList(initialBatch)
     setCurrentOffset(initialBatchSize)
     setLoading(false)

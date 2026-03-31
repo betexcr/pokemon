@@ -243,7 +243,7 @@ export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
     }
   }, [meta?.phase, meta?.winnerUid, onBattleComplete]);
 
-const handleMoveSelection = async (moveId: string, target?: 'p1' | 'p2') => {
+const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | 'p2') => {
     try {
       if (!meta) {
         return;
@@ -255,20 +255,15 @@ const handleMoveSelection = async (moveId: string, target?: 'p1' | 'p2') => {
         return;
       }
       setPendingAction({ turn: meta.turn, type: 'move', id: moveId });
-      // Classic view: give immediate feedback on action
       playAnim(playerAnimRef, 'animate-bounce');
       
-      // Animated view: trigger transition effects
       if (viewMode === 'animated') {
         const move = moveInfo[moveId];
         if (move) {
-          // Map move type to FX kind
           const fxKind: FxKind = (move.type as FxKind) || 'electric';
           
-          // Trigger move FX
           setActiveMoveFX({ kind: fxKind, key: Date.now() });
           
-          // Add status effects based on move type (simplified)
           const statusEffects: StatusEvent[] = [];
           if (move.type === 'electric') statusEffects.push({ code: 'PAR', side: target === 'p2' ? 'foe' : 'ally' });
           if (move.type === 'fire') statusEffects.push({ code: 'BRN', side: target === 'p2' ? 'foe' : 'ally' });
@@ -283,7 +278,7 @@ const handleMoveSelection = async (moveId: string, target?: 'p1' | 'p2') => {
       console.error('Failed to submit move:', err);
       setPendingAction(null);
     }
-  };
+  }, [meta, waitingForResolution, pendingAction, viewMode, moveInfo, chooseMove]);
 
   // Listen for custom move events from E2E testing
   useEffect(() => {
@@ -626,7 +621,8 @@ const handleMoveSelection = async (moveId: string, target?: 'p1' | 'p2') => {
                 ) : null;
                 return (
                   <button
-                    key={index}
+                    type="button"
+                    key={move.id}
                     onClick={() => handleMoveSelection(move.id)}
                     disabled={buttonDisabled}
                     aria-pressed={isSelected}
@@ -693,7 +689,8 @@ const handleMoveSelection = async (moveId: string, target?: 'p1' | 'p2') => {
 
                 return (
                   <button
-                    key={index}
+                    type="button"
+                    key={speciesName || `slot-${index}`}
                     onClick={() => handlePokemonSwitch(index)}
                     disabled={switchDisabled}
                     aria-pressed={isPendingSwitch}
@@ -734,6 +731,7 @@ const handleMoveSelection = async (moveId: string, target?: 'p1' | 'p2') => {
           {/* Forfeit Button */}
           <div className="text-center">
             <button
+              type="button"
               onClick={handleForfeit}
               className="inline-flex items-center justify-center rounded-md border border-red-600/60 bg-red-600/10 px-4 py-2 text-sm font-semibold text-red-400 hover:bg-red-600/15 hover:text-red-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
               data-testid="forfeit-button"

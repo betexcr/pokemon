@@ -649,21 +649,36 @@ body.pokedex-main-page .flex-1.min-h-0.overflow-y-auto::-webkit-scrollbar {
 
 /* Ensure sidebar fits within viewport */
 body.pokedex-main-page .h-screen {
-  height: calc(100vh - 5rem) !important; /* Balanced height for proper scrolling */
+  height: calc(100dvh - 5rem) !important;
+  height: calc(100vh - 5rem) !important;
+  max-height: calc(100dvh - 5rem) !important;
   max-height: calc(100vh - 5rem) !important;
+}
+@supports (height: 100dvh) {
+  body.pokedex-main-page .h-screen {
+    height: calc(100dvh - 5rem) !important;
+    max-height: calc(100dvh - 5rem) !important;
+  }
 }
 
 /* Ensure root container can truly fill the viewport when needed */
 /* Stronger override so the main app wrapper fills the viewport */
+/* Use dvh for iOS Safari / iPadOS where 100vh includes browser chrome */
 .root-full {
+  height: 100dvh !important;
   height: 100vh !important;
+  min-height: 100dvh !important;
   min-height: 100vh !important;
+  max-height: 100dvh !important;
   max-height: 100vh !important;
 }
-body.pokedex-main-page .root-full {
-  height: 100vh !important;
-  min-height: 100vh !important;
-  max-height: 100vh !important;
+
+@supports (height: 100dvh) {
+  .root-full {
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    max-height: 100dvh !important;
+  }
 }
 
 /* Ensure sidebar content can scroll properly */

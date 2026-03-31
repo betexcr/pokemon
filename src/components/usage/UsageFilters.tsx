@@ -423,10 +423,11 @@ export default function UsageFiltersComponent({
 
         {/* Sort Options */}
         <div className="flex items-center gap-4">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label htmlFor="usage-sort-by" className="text-sm font-medium text-gray-700 dark:text-gray-300">
             Sort by:
           </label>
           <select
+            id="usage-sort-by"
             value={filters.sortBy}
             onChange={(e) => updateFilters({ sortBy: e.target.value as any })}
             className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm"

@@ -307,7 +307,7 @@ function getSpeciesSummarySync(
 function generationNumber(name?: string | null): number | null {
   if (!name) return null;
   // Match the full generation string and prefer longer numerals first to avoid partial matches (e.g., 'v' in 'vii')
-  const m = name.match(/^generation-(ix|viii|vii|vi|iv|iii|ii|i)$/);
+  const m = name.match(/^generation-(ix|viii|vii|vi|v|iv|iii|ii|i)$/);
   if (!m) return null;
   const roman = m[1];
   const map: Record<string, number> = { i: 1, ii: 2, iii: 3, iv: 4, v: 5, vi: 6, vii: 7, viii: 8, ix: 9 };

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Swords } from "lucide-react";
+import { Swords } from "lucide-react";
 import { GYM_CHAMPIONS } from "@/lib/gym_champions";
 import { generateBattleId } from "@/lib/utils";
 import { getTrainerSpriteUrl } from "@/lib/trainerSprites";
@@ -187,7 +187,6 @@ function BattlePage() {
         backLink="/"
         backLabel="Back to PokéDex"
         showToolbar={true}
-        showThemeToggle={false}
         iconKey="battle"
         showIcon={true}
       />

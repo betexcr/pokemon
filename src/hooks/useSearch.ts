@@ -1,7 +1,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { Pokemon } from '@/types/pokemon'
 import { searchPokemonByName } from '@/lib/api'
-import { debounce, type DebouncedFunc } from 'lodash'
+import debounce from 'lodash/debounce'
+import type { DebouncedFunc } from 'lodash'
 
 interface SearchCache {
   [key: string]: {

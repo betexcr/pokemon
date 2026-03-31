@@ -56,6 +56,7 @@ export default function OfflineDownloadPanel() {
   return (
     <>
       <button
+        type="button"
         onClick={() => setIsOpen(true)}
         className="fixed bottom-4 right-4 z-40 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg transition-colors"
         title="Offline data manager"
@@ -67,12 +68,13 @@ export default function OfflineDownloadPanel() {
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => !isDownloading && setIsOpen(false)}>
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full p-6" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onKeyDown={(e) => { if (e.key === 'Escape' && !isDownloading) setIsOpen(false); }}>
+          <div className="absolute inset-0" onClick={() => !isDownloading && setIsOpen(false)} aria-hidden="true" />
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full p-6 relative z-10" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-gray-900 dark:text-white">Offline Data Manager</h2>
               {!isDownloading && (
-                <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                <button type="button" onClick={() => setIsOpen(false)} aria-label="Close" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
@@ -123,6 +125,7 @@ export default function OfflineDownloadPanel() {
               {!isDownloading ? (
                 <>
                   <button
+                    type="button"
                     onClick={handleStart}
                     disabled={!networkState.isOnline}
                     className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-2.5 px-4 rounded-lg font-medium transition-colors text-sm"
@@ -134,6 +137,7 @@ export default function OfflineDownloadPanel() {
                         : 'Download for Offline Use'}
                   </button>
                   <button
+                    type="button"
                     onClick={handleClearCache}
                     className="w-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 py-2 px-4 rounded-lg text-sm transition-colors"
                   >
@@ -142,6 +146,7 @@ export default function OfflineDownloadPanel() {
                 </>
               ) : (
                 <button
+                  type="button"
                   onClick={handleCancel}
                   className="w-full bg-red-600 hover:bg-red-700 text-white py-2.5 px-4 rounded-lg font-medium transition-colors text-sm"
                 >

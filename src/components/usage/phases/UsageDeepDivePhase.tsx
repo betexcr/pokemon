@@ -36,13 +36,45 @@ export default function UsageDeepDivePhase({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedPokemon, setSelectedPokemon] = useState<UsageRow | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
+    const fetchDeepDiveData = async () => {
+      try {
+        const params = new URLSearchParams();
+        if (filters.platforms.length > 0) params.set('platform', filters.platforms[0]);
+        if (filters.generations.length > 0) params.set('generation', filters.generations[0]);
+        if (filters.formats.length > 0) params.set('format', filters.formats[0]);
+        if (filters.month) params.set('month', filters.month);
+        if (filters.top50Only) params.set('top50Only', 'true');
+
+        const response = await fetch(`/api/usage/monthly?${params.toString()}`);
+        if (cancelled) return;
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+
+        const result = await response.json();
+        if (cancelled) return;
+        setData(result);
+      } catch (err) {
+        if (cancelled) return;
+        setError(err instanceof Error ? err.message : 'Failed to fetch data');
+        setData(null);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
     fetchDeepDiveData();
-  }, [filters]);
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters, retryKey]);
 
   useEffect(() => {
-    // Set selected pokemon when data loads
     if (data) {
       const rows = data.data || data.rows || [];
       if (rows.length > 0 && !selectedPokemon) {
@@ -50,46 +82,6 @@ export default function UsageDeepDivePhase({
       }
     }
   }, [data, selectedPokemon]);
-
-  const fetchDeepDiveData = async () => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const params = new URLSearchParams();
-      
-      if (filters.platforms.length > 0) {
-        params.set('platform', filters.platforms[0]); // Single-select
-      }
-      if (filters.generations.length > 0) {
-        params.set('generation', filters.generations[0]); // Single-select
-      }
-      if (filters.formats.length > 0) {
-        params.set('format', filters.formats[0]); // Single-select
-      }
-      if (filters.month) {
-        params.set('month', filters.month);
-      }
-      if (filters.top50Only) {
-        params.set('top50Only', 'true');
-      }
-      
-      const response = await fetch(`/api/usage/monthly?${params.toString()}`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      const result = await response.json();
-      setData(result);
-      
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch data');
-      setData(null);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -131,7 +123,8 @@ export default function UsageDeepDivePhase({
           <div className="text-red-600 dark:text-red-400 mb-2">No Data Available</div>
           <div className="text-gray-600 dark:text-gray-400 text-sm mb-4">{error}</div>
           <button
-            onClick={fetchDeepDiveData}
+            type="button"
+            onClick={() => setRetryKey(k => k + 1)}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             Retry

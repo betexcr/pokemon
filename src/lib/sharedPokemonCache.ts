@@ -9,7 +9,8 @@ class SharedPokemonCache {
   private cacheTimestamps = new Map<number, number>()
   private preloadQueue = new Set<number>()
   private inFlightFetches = new Set<number>()
-  private failedRequests = new Set<number>() // Track failed requests to prevent retries
+  private failedRequests = new Set<number>()
+  private failedTimers = new Map<number, ReturnType<typeof setTimeout>>()
   
   // Cache TTL: 10 minutes for in-memory cache
   private readonly CACHE_TTL = 10 * 60 * 1000
@@ -64,10 +65,14 @@ class SharedPokemonCache {
   markFailed(id: number): void {
     this.failedRequests.add(id)
     
-    // Clean up failed requests after 5 minutes
-    setTimeout(() => {
+    const existing = this.failedTimers.get(id)
+    if (existing) clearTimeout(existing)
+    
+    const timerId = setTimeout(() => {
       this.failedRequests.delete(id)
+      this.failedTimers.delete(id)
     }, 5 * 60 * 1000)
+    this.failedTimers.set(id, timerId)
   }
   
   /**
@@ -128,6 +133,8 @@ class SharedPokemonCache {
     this.preloadQueue.clear()
     this.inFlightFetches.clear()
     this.failedRequests.clear()
+    this.failedTimers.forEach(id => clearTimeout(id))
+    this.failedTimers.clear()
   }
   
   /**
@@ -185,7 +192,7 @@ class SharedPokemonCache {
    */
   async preloadAroundId(id: number, range = 10): Promise<void> {
     const startId = Math.max(1, id - range)
-    const endId = Math.min(1025, id + range)
+    const endId = id + range
     const idsToPreload = Array.from({ length: endId - startId + 1 }, (_, i) => startId + i)
     
     await this.preloadPokemon(idsToPreload, 4)

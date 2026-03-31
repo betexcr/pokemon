@@ -420,7 +420,7 @@ function PhaseContent({
                             <button
                               key={poke.rank}
                               onClick={() => onSelectPokemon(poke.rank)}
-                              className="group flex w-full items-center justify-between rounded-xl border border-border bg-white/70 px-3 py-2 text-left shadow-sm transition hover:border-poke-blue hover:bg-white dark:bg-slate-900/60"
+                              className="group flex w-full items-center justify-between rounded-xl border border-border bg-white/70 px-3 py-2 text-left shadow-sm transition hover:border-poke-blue hover:bg-white dark:bg-slate-900/60 dark:hover:bg-slate-800"
                             >
                               <div className="flex items-center gap-3">
                                 <PortraitIcon id={poke.nationalNumber} name={poke.name} size={28} />
@@ -1037,7 +1037,7 @@ function PhaseContent({
                       className={`group flex w-full items-center justify-between rounded-2xl border px-3 py-2 md:py-2.5 text-left transition dark:bg-slate-900/60 ${
                         isCurrent
                           ? 'border-poke-blue bg-white/90 ring-1 ring-poke-blue/40 cursor-default'
-                          : 'border-border bg-white/60 hover:border-poke-blue hover:bg-white'
+                          : 'border-border bg-white/60 hover:border-poke-blue hover:bg-white dark:bg-slate-900/60 dark:hover:bg-slate-800'
                       }`}
                     >
                       <div className="flex items-center gap-3">
@@ -1130,7 +1130,7 @@ function PhaseContent({
                           <button
                             key={poke.rank}
                             onClick={() => onSelectPokemon(poke.rank)}
-                            className="group flex w-full items-center justify-between rounded-xl border border-border bg-white/70 px-3 py-2 text-left shadow-sm transition hover:border-poke-blue hover:bg-white dark:bg-slate-900/60"
+                            className="group flex w-full items-center justify-between rounded-xl border border-border bg-white/70 px-3 py-2 text-left shadow-sm transition hover:border-poke-blue hover:bg-white dark:bg-slate-900/60 dark:hover:bg-slate-800"
                           >
                             <div className="flex items-center gap-3">
                               <PortraitIcon id={poke.nationalNumber} name={poke.name} size={28} />
@@ -1533,7 +1533,7 @@ function TrendsPhase({
                 data-rank={poke.rank}
                 ref={getRowRefCallback(poke.rank)}
                 onClick={() => onSelectPokemon(poke.rank)}
-                className="group flex h-16 w-full items-center justify-between rounded-xl border border-border bg-white/80 px-4 text-left shadow-sm transition hover:border-poke-blue hover:bg-white dark:bg-slate-900/60"
+                className="group flex h-16 w-full items-center justify-between rounded-xl border border-border bg-white/80 px-4 text-left shadow-sm transition hover:border-poke-blue hover:bg-white dark:bg-slate-900/60 dark:hover:bg-slate-800"
               >
                 <div className="flex items-center gap-3">
                   <PortraitIcon id={poke.nationalNumber} name={poke.name} size={32} />

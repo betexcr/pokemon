@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Trophy, Medal, ArrowLeft, RotateCcw } from 'lucide-react';
+import { Trophy, Medal, ArrowLeft } from 'lucide-react';
 
 interface Props {
   winner: 'player' | 'opponent' | null;

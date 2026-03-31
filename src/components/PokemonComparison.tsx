@@ -140,7 +140,9 @@ export default function PokemonComparison({ pokemonList, className = '' }: Pokem
     <div className={className}>
       {/* Comparison Button */}
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
         className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
           isRetro 
             ? theme === 'red' 
@@ -177,23 +179,25 @@ export default function PokemonComparison({ pokemonList, className = '' }: Pokem
                 : theme === 'gold'
                 ? 'bg-yellow-50 border-4 border-yellow-600'
                 : 'bg-pink-50 border-4 border-pink-600'
-              : 'bg-white border border-gray-200'
+              : 'bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700'
           }`}>
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <h2 className={`text-2xl font-bold ${
                 isRetro 
                   ? theme === 'red' ? 'text-red-800' : theme === 'gold' ? 'text-yellow-800' : 'text-pink-800'
-                  : 'text-gray-900'
+                  : 'text-gray-900 dark:text-gray-100'
               }`}>
                 Pokémon Comparison
               </h2>
               <button
+                type="button"
                 onClick={() => setIsOpen(false)}
+                aria-label="Close comparison"
                 className={`p-2 rounded-full ${
                   isRetro 
                     ? theme === 'red' ? 'hover:bg-red-200' : theme === 'gold' ? 'hover:bg-yellow-200' : 'hover:bg-pink-200'
-                    : 'hover:bg-gray-100'
+                    : 'hover:bg-gray-100 dark:hover:bg-gray-800'
                 }`}
               >
                 <X size={24} />
@@ -206,19 +210,20 @@ export default function PokemonComparison({ pokemonList, className = '' }: Pokem
                 <h3 className={`text-lg font-semibold ${
                   isRetro 
                     ? theme === 'red' ? 'text-red-700' : theme === 'gold' ? 'text-yellow-700' : 'text-pink-700'
-                    : 'text-gray-700'
+                    : 'text-gray-700 dark:text-gray-300'
                 }`}>
                   Selected Pokémon ({selectedPokemon.length}/{maxPokemon})
                 </h3>
                 {selectedPokemon.length > 0 && (
                   <button
+                    type="button"
                     onClick={clearAll}
                     className={`px-3 py-1 rounded text-sm ${
                       isRetro 
                         ? theme === 'red' ? 'bg-red-200 text-red-800 hover:bg-red-300' 
                         : theme === 'gold' ? 'bg-yellow-200 text-yellow-800 hover:bg-yellow-300'
                         : 'bg-pink-200 text-pink-800 hover:bg-pink-300'
-                        : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                        : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'
                     }`}
                   >
                     Clear All
@@ -235,11 +240,13 @@ export default function PokemonComparison({ pokemonList, className = '' }: Pokem
                         ? theme === 'red' ? 'border-red-400 bg-red-100' 
                         : theme === 'gold' ? 'border-yellow-400 bg-yellow-100'
                         : 'border-pink-400 bg-pink-100'
-                        : 'border-gray-300 bg-gray-50'
+                        : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800'
                     }`}
                   >
                     <button
+                      type="button"
                       onClick={() => removePokemon(pokemon.id)}
+                      aria-label={`Remove ${pokemon.name}`}
                       className={`absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center ${
                         isRetro 
                           ? theme === 'red' ? 'bg-red-600 text-white' 
@@ -265,7 +272,7 @@ export default function PokemonComparison({ pokemonList, className = '' }: Pokem
                     <p className={`text-center text-sm font-medium capitalize ${
                       isRetro 
                         ? theme === 'red' ? 'text-red-800' : theme === 'gold' ? 'text-yellow-800' : 'text-pink-800'
-                        : 'text-gray-800'
+                        : 'text-gray-800 dark:text-gray-200'
                     }`}>
                       {pokemon.name}
                     </p>
@@ -279,13 +286,15 @@ export default function PokemonComparison({ pokemonList, className = '' }: Pokem
                 {/* Add Pokémon Button */}
                 {selectedPokemon.length < maxPokemon && (
                   <button
+                    type="button"
                     onClick={() => setShowSelector(v => !v)}
+                    aria-expanded={showSelector}
                     className={`p-4 rounded-lg border-2 border-dashed flex flex-col items-center justify-center ${
                       isRetro 
                         ? theme === 'red' ? 'border-red-400 text-red-600 hover:bg-red-100' 
                         : theme === 'gold' ? 'border-yellow-400 text-yellow-600 hover:bg-yellow-100'
                         : 'border-pink-400 text-pink-600 hover:bg-pink-100'
-                        : 'border-gray-300 text-gray-600 hover:bg-gray-100'
+                        : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                     }`}
                   >
                     <Plus size={24} />
@@ -297,22 +306,24 @@ export default function PokemonComparison({ pokemonList, className = '' }: Pokem
 
             {/* Selector (minimized by default) */}
             {showSelector && (
-              <div className={`mb-6 rounded-lg border ${isRetro ? 'border-gray-300' : 'border-gray-200'} bg-white p-4`}> 
+              <div className={`mb-6 rounded-lg border ${isRetro ? 'border-gray-300' : 'border-gray-200 dark:border-gray-700'} bg-white dark:bg-slate-900 p-4`}> 
                 <div className="flex items-center gap-2 mb-3">
                   <input
                     value={search}
                     onChange={(e)=>setSearch(e.target.value)}
                     placeholder="Search by name or # (e.g., 'Lugia', '249', 'char')"
+                    aria-label="Search Pokémon to compare"
                     className="w-full h-10 rounded-md border border-border px-3 text-sm"
                   />
                   <button
+                    type="button"
                     onClick={()=> setShowSelector(false)}
                     className="h-10 px-3 rounded-md border border-border text-sm"
                   >
                     Close
                   </button>
                 </div>
-                <div className="max-h-80 overflow-y-auto divide-y divide-gray-100">
+                <div className="max-h-80 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700">
                   {pokemonList
                     .filter(p => {
                       if (!search) return true
@@ -321,8 +332,9 @@ export default function PokemonComparison({ pokemonList, className = '' }: Pokem
                     })
                     .map(p => (
                       <button
+                        type="button"
                         key={p.id}
-                        className="w-full text-left py-2 px-2 hover:bg-gray-50 flex items-center gap-3"
+                        className="w-full text-left py-2 px-2 hover:bg-gray-50 dark:hover:bg-gray-800/50 flex items-center gap-3"
                         onClick={() => { addPokemon(p); setShowSelector(false); setSearch('') }}
                       >
                         <img
@@ -359,7 +371,7 @@ export default function PokemonComparison({ pokemonList, className = '' }: Pokem
                     ? theme === 'red' ? 'border-red-600' 
                     : theme === 'gold' ? 'border-yellow-600'
                     : 'border-pink-600'
-                    : 'border-gray-300'
+                    : 'border-gray-300 dark:border-gray-700'
                 }`}>
                   <thead>
                     <tr className={`${
@@ -367,7 +379,7 @@ export default function PokemonComparison({ pokemonList, className = '' }: Pokem
                         ? theme === 'red' ? 'bg-red-200' 
                         : theme === 'gold' ? 'bg-yellow-200'
                         : 'bg-pink-200'
-                        : 'bg-gray-100'
+                        : 'bg-gray-100 dark:bg-gray-800'
                     }`}>
                       <th 
                         className={`p-3 text-left border cursor-pointer hover:bg-opacity-80 transition-colors ${
@@ -375,9 +387,12 @@ export default function PokemonComparison({ pokemonList, className = '' }: Pokem
                             ? theme === 'red' ? 'border-red-600 hover:bg-red-300' 
                             : theme === 'gold' ? 'border-yellow-600 hover:bg-yellow-300'
                             : 'border-pink-600 hover:bg-pink-300'
-                            : 'border-gray-300 hover:bg-gray-200'
+                            : 'border-gray-300 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700'
                         }`}
                         onClick={() => handleSort('name')}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('name'); } }}
+                        role="button"
+                        tabIndex={0}
                         title="Click to sort by name"
                       >
                         <div className="flex items-center gap-1">
@@ -391,9 +406,12 @@ export default function PokemonComparison({ pokemonList, className = '' }: Pokem
                             ? theme === 'red' ? 'border-red-600 hover:bg-red-300' 
                             : theme === 'gold' ? 'border-yellow-600 hover:bg-yellow-300'
                             : 'border-pink-600 hover:bg-pink-300'
-                            : 'border-gray-300 hover:bg-gray-200'
+                            : 'border-gray-300 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700'
                         }`}
                         onClick={() => handleSort('hp')}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('hp'); } }}
+                        role="button"
+                        tabIndex={0}
                         title="Click to sort by HP"
                       >
                         <div className="flex items-center justify-center gap-1">
@@ -407,9 +425,12 @@ export default function PokemonComparison({ pokemonList, className = '' }: Pokem
                             ? theme === 'red' ? 'border-red-600 hover:bg-red-300' 
                             : theme === 'gold' ? 'border-yellow-600 hover:bg-yellow-300'
                             : 'border-pink-600 hover:bg-pink-300'
-                            : 'border-gray-300 hover:bg-gray-200'
+                            : 'border-gray-300 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700'
                         }`}
                         onClick={() => handleSort('attack')}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('attack'); } }}
+                        role="button"
+                        tabIndex={0}
                         title="Click to sort by Attack"
                       >
                         <div className="flex items-center justify-center gap-1">
@@ -423,9 +444,12 @@ export default function PokemonComparison({ pokemonList, className = '' }: Pokem
                             ? theme === 'red' ? 'border-red-600 hover:bg-red-300' 
                             : theme === 'gold' ? 'border-yellow-600 hover:bg-yellow-300'
                             : 'border-pink-600 hover:bg-pink-300'
-                            : 'border-gray-300 hover:bg-gray-200'
+                            : 'border-gray-300 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700'
                         }`}
                         onClick={() => handleSort('defense')}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('defense'); } }}
+                        role="button"
+                        tabIndex={0}
                         title="Click to sort by Defense"
                       >
                         <div className="flex items-center justify-center gap-1">
@@ -439,9 +463,12 @@ export default function PokemonComparison({ pokemonList, className = '' }: Pokem
                             ? theme === 'red' ? 'border-red-600 hover:bg-red-300' 
                             : theme === 'gold' ? 'border-yellow-600 hover:bg-yellow-300'
                             : 'border-pink-600 hover:bg-pink-300'
-                            : 'border-gray-300 hover:bg-gray-200'
+                            : 'border-gray-300 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700'
                         }`}
                         onClick={() => handleSort('special-attack')}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('special-attack'); } }}
+                        role="button"
+                        tabIndex={0}
                         title="Click to sort by Special Attack"
                       >
                         <div className="flex items-center justify-center gap-1">
@@ -455,9 +482,12 @@ export default function PokemonComparison({ pokemonList, className = '' }: Pokem
                             ? theme === 'red' ? 'border-red-600 hover:bg-red-300' 
                             : theme === 'gold' ? 'border-yellow-600 hover:bg-yellow-300'
                             : 'border-pink-600 hover:bg-pink-300'
-                            : 'border-gray-300 hover:bg-gray-200'
+                            : 'border-gray-300 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700'
                         }`}
                         onClick={() => handleSort('special-defense')}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('special-defense'); } }}
+                        role="button"
+                        tabIndex={0}
                         title="Click to sort by Special Defense"
                       >
                         <div className="flex items-center justify-center gap-1">
@@ -471,9 +501,12 @@ export default function PokemonComparison({ pokemonList, className = '' }: Pokem
                             ? theme === 'red' ? 'border-red-600 hover:bg-red-300' 
                             : theme === 'gold' ? 'border-yellow-600 hover:bg-yellow-300'
                             : 'border-pink-600 hover:bg-pink-300'
-                            : 'border-gray-300 hover:bg-gray-200'
+                            : 'border-gray-300 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700'
                         }`}
                         onClick={() => handleSort('speed')}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('speed'); } }}
+                        role="button"
+                        tabIndex={0}
                         title="Click to sort by Speed"
                       >
                         <div className="flex items-center justify-center gap-1">
@@ -487,9 +520,12 @@ export default function PokemonComparison({ pokemonList, className = '' }: Pokem
                             ? theme === 'red' ? 'border-red-600 hover:bg-red-300' 
                             : theme === 'gold' ? 'border-yellow-600 hover:bg-yellow-300'
                             : 'border-pink-600 hover:bg-pink-300'
-                            : 'border-gray-300 hover:bg-gray-200'
+                            : 'border-gray-300 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700'
                         }`}
                         onClick={() => handleSort('total')}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('total'); } }}
+                        role="button"
+                        tabIndex={0}
                         title="Click to sort by Total Stats"
                       >
                         <div className="flex items-center justify-center gap-1">
@@ -503,13 +539,13 @@ export default function PokemonComparison({ pokemonList, className = '' }: Pokem
                     {sortedComparisonData.map((pokemon, index) => {
                       const total = Object.values(pokemon.stats).reduce((sum: number, stat: number) => sum + stat, 0)
                       return (
-                        <tr key={pokemon.name} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                        <tr key={pokemon.name} className={index % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-gray-50 dark:bg-gray-800/50'}>
                           <td className={`p-3 border ${
                             isRetro 
                               ? theme === 'red' ? 'border-red-600' 
                               : theme === 'gold' ? 'border-yellow-600'
                               : 'border-pink-600'
-                              : 'border-gray-300'
+                              : 'border-gray-300 dark:border-gray-700'
                           }`}>
                             <div className="flex items-center gap-2">
                               <div 
@@ -525,7 +561,7 @@ export default function PokemonComparison({ pokemonList, className = '' }: Pokem
                                 ? theme === 'red' ? 'border-red-600' 
                                 : theme === 'gold' ? 'border-yellow-600'
                                 : 'border-pink-600'
-                                : 'border-gray-300'
+                                : 'border-gray-300 dark:border-gray-700'
                             }`}>
                               {stat}
                             </td>
@@ -535,7 +571,7 @@ export default function PokemonComparison({ pokemonList, className = '' }: Pokem
                               ? theme === 'red' ? 'border-red-600' 
                               : theme === 'gold' ? 'border-yellow-600'
                               : 'border-pink-600'
-                              : 'border-gray-300'
+                              : 'border-gray-300 dark:border-gray-700'
                           }`}>
                             {total}
                           </td>

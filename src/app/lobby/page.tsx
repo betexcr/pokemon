@@ -100,24 +100,28 @@ function LobbyPage() {
 
   // Load user teams
   useEffect(() => {
+    let cancelled = false;
     async function loadTeams() {
       if (user) {
         try {
           const teams = await getUserTeams(user.uid);
+          if (cancelled) return;
           setUserTeams(teams);
           if (teams.length > 0) {
             setSelectedTeamId(teams[0].id);
           }
         } catch (error) {
+          if (cancelled) return;
           console.error('Failed to load teams:', error);
         } finally {
-          setTeamsLoading(false);
+          if (!cancelled) setTeamsLoading(false);
         }
       } else {
         setTeamsLoading(false);
       }
     }
     loadTeams();
+    return () => { cancelled = true; };
   }, [user]);
 
   const createRoom = async () => {
@@ -211,7 +215,6 @@ function LobbyPage() {
         backLink="/"
         backLabel="Back to PokéDex"
         showToolbar={true}
-        showThemeToggle={false}
         iconKey="battle"
         showIcon={true}
       />

@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { UsageRow } from '@/types/usage';
-import { ChevronUp, ChevronDown, Info, ExternalLink } from 'lucide-react';
+import { ChevronUp, ChevronDown, Info } from 'lucide-react';
 import SourceTooltip from './SourceTooltip';
 import LazyImage from '@/components/LazyImage';
 import { getPokemonImageUrl, getPokemonFallbackImage } from '@/lib/api';
@@ -31,7 +31,7 @@ export default function UsageTable({
     if (!sortable) return rows;
 
     return [...rows].sort((a, b) => {
-      let aValue: any, bValue: any;
+      let aValue: string | number, bValue: string | number;
 
       switch (sortField) {
         case 'rank':
@@ -103,6 +103,7 @@ export default function UsageTable({
                 sortable ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800' : ''
               }`}
               onClick={() => handleSort('rank')}
+              {...(sortable ? { role: 'button' as const, tabIndex: 0, onKeyDown: (e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('rank'); } } } : {})}
             >
               <div className="flex items-center gap-2">
                 Rank
@@ -114,6 +115,7 @@ export default function UsageTable({
                 sortable ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800' : ''
               }`}
               onClick={() => handleSort('name')}
+              {...(sortable ? { role: 'button' as const, tabIndex: 0, onKeyDown: (e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('name'); } } } : {})}
             >
               <div className="flex items-center gap-2">
                 Pokémon
@@ -125,6 +127,7 @@ export default function UsageTable({
                 sortable ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800' : ''
               }`}
               onClick={() => handleSort('usage')}
+              {...(sortable ? { role: 'button' as const, tabIndex: 0, onKeyDown: (e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('usage'); } } } : {})}
             >
               <div className="flex items-center gap-2">
                 Usage
@@ -157,6 +160,7 @@ export default function UsageTable({
               onClick={() => onRowClick?.(row)}
               onMouseEnter={() => setHoveredRow(index)}
               onMouseLeave={() => setHoveredRow(null)}
+              {...(onRowClick ? { role: 'button' as const, tabIndex: 0, onKeyDown: (e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onRowClick(row); } } } : {})}
             >
               <td className="py-3 px-4">
                 <span className={`${getRankColor(row.rank)}`}>
@@ -218,7 +222,7 @@ export default function UsageTable({
               </td>
               <td className="py-3 px-4">
                 <SourceTooltip source={row.source}>
-                  <button className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
+                  <button type="button" className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded" aria-label="View data source">
                     <Info className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                   </button>
                 </SourceTooltip>

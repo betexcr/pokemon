@@ -106,7 +106,6 @@ const Top50Experience = forwardRef<Top50ExperienceRef, Top50ExperienceProps>(({ 
   // Initialize from URL if a rank is specified (e.g., /top50?rank=46 or hash like #rank=46)
   useEffect(() => {
     if (typeof window === 'undefined') return
-    // Prefer explicit prop
     let rank: number | undefined = initialRank
     if (!rank) {
       try {
@@ -119,13 +118,13 @@ const Top50Experience = forwardRef<Top50ExperienceRef, Top50ExperienceProps>(({ 
         }
       } catch {}
     }
+    let timerId: ReturnType<typeof setTimeout> | undefined
     if (rank && Number.isFinite(rank)) {
       setSelectedRank(rank)
       setCurrentPhase(1)
-      // Delay scroll slightly to ensure spotlight rendered
-      setTimeout(() => scrollToSpotlight(), 50)
+      timerId = setTimeout(() => scrollToSpotlight(), 50)
     }
-  // Only run on mount or when initialRank changes
+    return () => { if (timerId) clearTimeout(timerId) }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialRank])
 

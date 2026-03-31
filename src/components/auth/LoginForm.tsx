@@ -249,6 +249,7 @@ export default function LoginForm({ onToggleMode, onSuccess }: LoginFormProps) {
 
       {/* Footer */}
       <button
+        type="button"
         onClick={onToggleMode}
         className="w-full h-12 sm:h-14 md:h-16 rounded-xl sm:rounded-2xl border border-border bg-surface hover:bg-surface/80 flex items-center justify-center gap-2 sm:gap-3 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 mt-4 hover:scale-[1.01] active:scale-[0.99]"
       >

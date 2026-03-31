@@ -269,12 +269,12 @@ export default function RedPokedexLayout({
 
       {/* Desktop Drawer (Retro) */}
       {typeof window !== 'undefined' && showDesktopMenu && createPortal(
-        <div id="desktop-drawer" className="fixed inset-0" style={{ zIndex: 2147483000 }}>
-          <div className="fixed inset-0" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 2147483000 }} onClick={() => setShowDesktopMenu(false)} />
+        <div id="desktop-drawer" className="fixed inset-0" style={{ zIndex: 2147483000 }} onKeyDown={(e) => { if (e.key === 'Escape') setShowDesktopMenu(false); }}>
+          <div className="fixed inset-0" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 2147483000 }} onClick={() => setShowDesktopMenu(false)} aria-hidden="true" />
           <aside className="fixed right-0 top-0 h-full w-[320px] overflow-y-auto bg-white border-l-4 border-red-600 p-4 space-y-4" style={{ zIndex: 2147483001 }}>
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold text-red-800">MENU</h3>
-              <button onClick={() => setShowDesktopMenu(false)} className="px-2 py-1 border-2 border-red-600 text-red-800 rounded">CLOSE</button>
+              <button type="button" onClick={() => setShowDesktopMenu(false)} className="px-2 py-1 border-2 border-red-600 text-red-800 rounded">CLOSE</button>
             </div>
             <div>
               <label className="block text-sm font-bold text-red-800 mb-1">Search</label>
@@ -300,6 +300,9 @@ export default function RedPokedexLayout({
                 setSearchLoading(true);
                 searchPokemonByName(e.target.value).then(results => {
                   setFilteredPokemon(results);
+                }).catch(err => {
+                  console.warn('Search failed:', err);
+                }).finally(() => {
                   setSearchLoading(false);
                 });
               } else {

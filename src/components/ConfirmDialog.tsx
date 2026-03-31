@@ -96,6 +96,7 @@ export default function ConfirmDialog({
         </p>
         <div className="flex justify-end gap-3">
           <button
+            type="button"
             ref={cancelRef}
             onClick={onCancel}
             className="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400"
@@ -103,6 +104,7 @@ export default function ConfirmDialog({
             {cancelLabel}
           </button>
           <button
+            type="button"
             onClick={onConfirm}
             className={`px-4 py-2 text-sm rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${confirmColors}`}
           >

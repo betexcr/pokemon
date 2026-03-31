@@ -43,10 +43,9 @@ export default function StatsSlider({
         aria-valuemin={min}
         aria-valuemax={max}
         aria-valuenow={clamped}
-        className="relative flex-1 min-w-0 overflow-hidden rounded-full border-2 border-gray-300 dark:border-gray-600 shadow-inner"
+        className="relative flex-1 min-w-0 overflow-hidden rounded-full border-2 border-gray-300 dark:border-gray-600 shadow-inner bg-gray-100 dark:bg-gray-700"
         style={{
           height: `${TRACK_HEIGHT_PX}px`,
-          backgroundColor: '#f3f4f6',
           backgroundClip: 'padding-box'
         }}
       >

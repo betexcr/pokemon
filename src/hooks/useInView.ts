@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export type InViewOptions = {
   root?: Element | null;
@@ -10,15 +10,17 @@ export type InViewOptions = {
 
 export function useInView<T extends Element = Element>(options: InViewOptions = {}) {
   const { root = null, rootMargin = "200px", threshold = 0, once = true } = options;
-  const ref = useRef<T | null>(null);
+  const [node, setNode] = useState<T | null>(null);
   const [inView, setInView] = useState(false);
+
+  const ref = useCallback((el: T | null) => {
+    setNode(el);
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const node = ref.current;
     if (!node) return;
 
-    // If IntersectionObserver is not supported, consider it in view
     if (!("IntersectionObserver" in window)) {
       setInView(true);
       return;
@@ -39,9 +41,7 @@ export function useInView<T extends Element = Element>(options: InViewOptions = 
 
     observer.observe(node);
     return () => observer.disconnect();
-  }, [root, rootMargin, threshold, once]);
+  }, [node, root, rootMargin, threshold, once]);
 
   return { ref, inView } as const;
 }
-
-

@@ -57,7 +57,7 @@ function requestBackgroundSync() {
   if ('serviceWorker' in navigator && 'SyncManager' in window) {
     navigator.serviceWorker.ready.then(reg => {
       (reg as any).sync?.register('pokemon-pending-writes').catch(() => {})
-    })
+    }).catch(() => {})
   }
 }
 

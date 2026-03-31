@@ -1,6 +1,6 @@
 'use client'
 
-import { Trophy, Star, Heart, Ribbon, Sparkles } from 'lucide-react'
+import { Trophy, Star, Heart, Ribbon } from 'lucide-react'
 import { contestData } from '@/data/contestData'
 
 interface ContestRankProps {

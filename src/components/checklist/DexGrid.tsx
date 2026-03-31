@@ -107,6 +107,7 @@ export default function DexGrid() {
         <div className="mt-4 flex items-center justify-center">
           <div ref={loadMoreRef} className="h-2 w-full" aria-hidden />
           <button
+            type="button"
             onClick={() => setVisibleCount((prev) => Math.min(list.length, prev + LOAD_MORE_STEP))}
             className="text-xs rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-1"
           >

@@ -8,11 +8,11 @@ import { UsageFilters } from '@/types/usage';
 export const metadata: Metadata = {
   title: 'Usage Meta Dashboard',
   description: 'Comprehensive competitive usage statistics across all major platforms and generations',
-  alternates: { canonical: 'https://pokemon-indol-tau.vercel.app/usage' },
+  alternates: { canonical: '/usage' },
   openGraph: {
     title: 'Usage Meta Dashboard',
     description: 'Comprehensive competitive usage statistics across Smogon, VGC, and more.',
-    url: 'https://pokemon-indol-tau.vercel.app/usage',
+    url: '/usage',
     type: 'website'
   },
   twitter: {

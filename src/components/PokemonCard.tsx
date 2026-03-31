@@ -42,7 +42,8 @@ export default function PokemonCard({
   onToggleComparison?: (id: number) => void;
 }) {
   const title = `${formatPokemonName(pokemon.name)}${pokemon.id === 0 ? '' : ` #${String(pokemon.id).padStart(4, "0")}`}`;
-  const img = getPokemonMainPageImage(pokemon.id);
+  const apiArtwork = pokemon.sprites?.other?.['official-artwork']?.front_default;
+  const img = apiArtwork || getPokemonMainPageImage(pokemon.id);
   const types = pokemon.types.map(t => t.type.name);
 
   // primary type color -> use as accent + gradient
@@ -111,6 +112,7 @@ export default function PokemonCard({
         {/* Comparison button */}
         {onToggleComparison && (
           <button
+            type="button"
             onClick={handleComparisonClick}
             className={clsx(
               "px-2 py-1 rounded-full text-xs font-medium transition-all duration-200 border flex items-center gap-1.5",
@@ -128,6 +130,7 @@ export default function PokemonCard({
 
       {/* Favorite heart */}
       <button
+        type="button"
         onClick={(e: React.MouseEvent) => {
           e.preventDefault();
           onToggleFavorite(pokemon.id);
@@ -156,7 +159,7 @@ export default function PokemonCard({
           <LazyImage
             srcList={[
               img,
-              `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`,
+              pokemon.sprites?.front_default || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`,
               "/placeholder-pokemon.png"
             ]}
             alt={formatPokemonName(pokemon.name)}
@@ -179,7 +182,7 @@ export default function PokemonCard({
 
       {/* Info - Positioned at bottom with minimal spacing */}
       <div className={clsx(
-        "bg-white/90 backdrop-blur-sm rounded-lg p-2 shadow-sm flex-shrink-0",
+        "bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-lg p-2 shadow-sm flex-shrink-0",
         mode === "list" && "pr-3 sm:pr-5"
       )}>
         <div className="flex items-baseline justify-between gap-2">

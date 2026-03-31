@@ -202,15 +202,15 @@ export default function PokemonSelector({
     const ensureTypes = async () => {
       const updates: Record<number, string[]> = {}
       for (const p of selectedPokemon) {
-        const existing = (p.types || []) as any
+        const existing = p.types || []
         if (Array.isArray(existing) && existing.length > 0) {
-          const names = existing.map((t: any) => (typeof t === 'string' ? t : t.type?.name)).filter(Boolean)
+          const names = existing.map((t) => (typeof t === 'string' ? t : (t as { type?: { name?: string } }).type?.name)).filter(Boolean) as string[]
           updates[p.id] = names
           continue
         }
         try {
           const full = await getPokemon(p.id)
-          const names = (full.types || []).map((t: any) => (typeof t === 'string' ? t : t.type?.name)).filter(Boolean)
+          const names = (full.types || []).map((t) => (typeof t === 'string' ? t : (t as { type?: { name?: string } }).type?.name)).filter(Boolean) as string[]
           updates[p.id] = names
         } catch {}
       }
@@ -298,6 +298,7 @@ export default function PokemonSelector({
             This might be due to network connectivity or API issues. Please try again.
           </div>
           <button
+            type="button"
             onClick={() => window.location.reload()}
             className="px-3 py-1 bg-red-100 text-red-700 rounded text-xs hover:bg-red-200 transition-colors"
           >
@@ -365,6 +366,7 @@ export default function PokemonSelector({
           ref={inputRef}
           type="text"
           placeholder={placeholder}
+          aria-label="Search Pokémon"
           value={searchTerm}
           onChange={(e) => {
             setSearchTerm(e.target.value)
@@ -464,6 +466,7 @@ export default function PokemonSelector({
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => onPokemonRemove(pokemon.id)}
                 className="text-blue-600 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-100 ml-1"
                 aria-label={`Remove ${formatPokemonName(pokemon.name)}`}

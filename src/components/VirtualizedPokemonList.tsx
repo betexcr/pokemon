@@ -1,7 +1,7 @@
 'use client'
 
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { Pokemon } from '@/types/pokemon'
 import { formatPokemonName } from '@/lib/utils'
 import { useTheme } from './ThemeProvider'
@@ -45,6 +45,13 @@ export default function VirtualizedPokemonList({
 
   const virtualItems = virtualizer.getVirtualItems()
 
+  const handleKeyDown = useCallback((e: React.KeyboardEvent, pokemon: Pokemon) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onSelectPokemon(pokemon);
+    }
+  }, [onSelectPokemon]);
+
   const getItemStyle = (pokemon: Pokemon) => {
     const baseStyle = `flex items-center cursor-pointer p-2 transition-colors ${
       selectedPokemon?.id === pokemon.id 
@@ -52,12 +59,12 @@ export default function VirtualizedPokemonList({
           ? theme === 'red' ? 'bg-red-200 border-2 border-red-600' 
           : theme === 'gold' ? 'bg-yellow-300 border-2 border-yellow-600'
           : 'bg-pink-300 border-2 border-pink-600'
-        : 'hover:bg-gray-100'
+        : 'hover:bg-gray-100 dark:hover:bg-gray-800'
         : isRetro
         ? theme === 'red' ? 'hover:bg-red-100' 
         : theme === 'gold' ? 'hover:bg-yellow-100'
         : 'hover:bg-pink-100'
-        : 'hover:bg-gray-50'
+        : 'hover:bg-gray-50 dark:hover:bg-gray-800'
     }`
 
     return baseStyle
@@ -69,7 +76,7 @@ export default function VirtualizedPokemonList({
         : theme === 'gold' ? 'text-yellow-800 font-gbc'
         : 'text-pink-800 font-gba'
     }
-    return 'text-gray-800'
+    return 'text-gray-800 dark:text-gray-100'
   }
 
   return (
@@ -100,7 +107,10 @@ export default function VirtualizedPokemonList({
                   transform: `translateY(${virtualItem.start}px)`,
                 }}
                 className={getItemStyle(pokemon)}
+                role="button"
+                tabIndex={0}
                 onClick={() => onSelectPokemon(pokemon)}
+                onKeyDown={(e) => handleKeyDown(e, pokemon)}
               >
                 <div className="flex items-center space-x-3 w-full">
                   {/* Pokémon Sprite */}

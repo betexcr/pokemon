@@ -4,14 +4,10 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef } from 'react'
 
-interface OptimizedLinkProps {
-  href: string
-  children: React.ReactNode
-  className?: string
+interface OptimizedLinkProps extends Omit<React.ComponentProps<typeof Link>, 'onClick' | 'prefetch'> {
   onClick?: () => void
   prefetch?: boolean
   priority?: boolean
-  [key: string]: any
 }
 
 export default function OptimizedLink({

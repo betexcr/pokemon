@@ -136,19 +136,18 @@ export default function LazyImage({
   // Load cached image when in view - IMMEDIATE loading for better perceived performance
   useEffect(() => {
     if (currentSrc && isInView) {
-      // For priority images or fast connections, skip caching overhead
       if (priority || !isSlowNet.current) {
         setCachedSrc(currentSrc);
       } else {
-        // Use cache for slow connections
+        let cancelled = false;
         getCachedImageUrl(currentSrc)
           .then(cachedUrl => {
-            setCachedSrc(cachedUrl);
+            if (!cancelled) setCachedSrc(cachedUrl);
           })
-          .catch(error => {
-            console.warn('Failed to get cached image URL:', error);
-            setCachedSrc(currentSrc); // Fallback to original URL
+          .catch(() => {
+            if (!cancelled) setCachedSrc(currentSrc);
           });
+        return () => { cancelled = true; };
       }
     }
   }, [currentSrc, isInView, priority]);

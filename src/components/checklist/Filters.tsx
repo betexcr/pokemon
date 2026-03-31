@@ -95,6 +95,7 @@ export default function Filters() {
           const isLoaded = loadedGens.has(g);
           return (
             <button
+              type="button"
               key={g}
               onClick={() => onGenClick(g)}
               className={`text-xs rounded border px-2 py-1 transition-colors ${
@@ -151,6 +152,7 @@ export default function Filters() {
           className="text-sm rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-1"
         />
         <button
+          type="button"
           onClick={() => void loadAll()}
           className="text-xs rounded bg-blue-600 text-white px-2 py-1 hover:bg-blue-700"
         >

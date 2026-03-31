@@ -405,6 +405,7 @@ export default function TeamBuilderPage() {
 
   // Load initial data
   useEffect(() => {
+    let cancelled = false
     const load = async () => {
       try {
         setLoading(true)
@@ -432,6 +433,7 @@ export default function TeamBuilderPage() {
         
         // Get first 50 Pokémon (count included in list response)
         const pokemonList = await getPokemonList(50, 0)
+        if (cancelled) return
         const totalCount = typeof (pokemonList as { count?: number }).count === 'number'
           ? (pokemonList as { count?: number }).count!
           : 0
@@ -492,6 +494,7 @@ export default function TeamBuilderPage() {
           const pokemonPromises = teamPokemon.map(async (slot) => {
             try {
               const fullPokemon = await getPokemon(slot.id!)
+              if (cancelled) return null
               setDisplayPokemonById(prev => {
                 const updated = { ...prev, [fullPokemon.id]: fullPokemon }
                 persistDisplayPokemon(updated)
@@ -504,19 +507,26 @@ export default function TeamBuilderPage() {
             }
           })
           await Promise.all(pokemonPromises)
+          if (cancelled) return
           
           // Trigger analysis after auto-loading
           setAnalysisTrigger(prev => prev + 1)
         }
       } catch (e) {
+        if (cancelled) return
         console.error('Error loading Pokémon:', e)
         setError('Failed to load Pokémon list')
       } finally {
-        setLoading(false)
-        setDraftHydrated(true)
+        if (!cancelled) {
+          setLoading(false)
+          setDraftHydrated(true)
+        }
       }
     }
     load()
+    return () => {
+      cancelled = true
+    }
   }, [loadCurrentDraft, loadDisplayPokemon])
 
   // Persist unsaved team draft continuously after initial hydration
@@ -532,12 +542,14 @@ export default function TeamBuilderPage() {
 
   // Load saved teams from Firebase or localStorage
   useEffect(() => {
+    let cancelled = false
     const loadTeams = async () => {
       if (user) {
         // User is authenticated, load from Firebase
         try {
           setSyncing(true)
           const firebaseTeams = await getUserTeams(user.uid)
+          if (cancelled) return
           setSavedTeams(firebaseTeams)
           
           // Also sync any local teams to Firebase
@@ -546,6 +558,7 @@ export default function TeamBuilderPage() {
             if (localTeamsRaw) {
               const localTeams = JSON.parse(localTeamsRaw) as FirebaseSavedTeam[]
               await syncTeamsWithFirebase(user.uid, localTeams)
+              if (cancelled) return
               // Clear local storage after sync
               localStorage.removeItem(STORAGE_KEY)
             }
@@ -553,6 +566,7 @@ export default function TeamBuilderPage() {
             console.error('Error syncing local teams:', error)
           }
         } catch (error) {
+          if (cancelled) return
           console.error('Error loading teams from Firebase:', error)
           // Fallback to localStorage
           try {
@@ -560,7 +574,7 @@ export default function TeamBuilderPage() {
             if (raw) setSavedTeams(JSON.parse(raw))
           } catch {}
         } finally {
-          setSyncing(false)
+          if (!cancelled) setSyncing(false)
         }
       } else {
         // User not authenticated, load from localStorage
@@ -572,6 +586,9 @@ export default function TeamBuilderPage() {
     }
 
     loadTeams()
+    return () => {
+      cancelled = true
+    }
   }, [user])
 
   const persistTeams = useCallback((teams: FirebaseSavedTeam[]) => {
@@ -1134,7 +1151,6 @@ export default function TeamBuilderPage() {
         backLink="/"
         backLabel="Back to PokéDex"
         showToolbar={true}
-        showThemeToggle={true}
         iconKey="team-builder"
         showIcon={true}
       />
@@ -1249,7 +1265,7 @@ export default function TeamBuilderPage() {
                 </button>
                 <button 
                   onClick={clearTeam} 
-                  className="px-4 py-2 rounded-lg border border-border text-text hover:bg-white/50 transition-colors text-sm font-medium"
+                  className="px-4 py-2 rounded-lg border border-border text-text hover:bg-white/50 dark:hover:bg-white/10 transition-colors text-sm font-medium"
                 >
                   Clear
                 </button>
@@ -1270,10 +1286,12 @@ export default function TeamBuilderPage() {
             {teamSlots.map((slot, idx) => {
               const poke = (slot.id ? (displayPokemonById[slot.id] || allPokemon.find(p => p.id === slot.id)) : null) || null
               return (
-                <div key={idx} ref={el => { slotRefs.current[idx] = el }} className="border border-border rounded-lg bg-white/50 w-full min-w-0 overflow-hidden">
+                <div key={idx} ref={el => { slotRefs.current[idx] = el }} className="border border-border rounded-lg bg-white/50 dark:bg-white/5 w-full min-w-0 overflow-hidden">
                   {/* Collapsible Header */}
                   <div 
-                    className="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50 transition-colors gap-3"
+                    className="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors gap-3"
+                    role="button"
+                    tabIndex={0}
                     onClick={() => {
                       if (!poke) {
                         setActiveSlotIndex(idx)
@@ -1281,6 +1299,18 @@ export default function TeamBuilderPage() {
                         selectorInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
                       } else {
                         toggleSlotCollapse(idx)
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        if (!poke) {
+                          setActiveSlotIndex(idx)
+                          selectorInputRef.current?.focus()
+                          selectorInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                        } else {
+                          toggleSlotCollapse(idx)
+                        }
                       }
                     }}
                   >
@@ -1380,11 +1410,23 @@ export default function TeamBuilderPage() {
                   {!poke && (
                     <div
                       className="text-sm mb-3 h-16 flex items-center justify-center text-muted border-2 border-dashed border-border rounded cursor-pointer hover:border-blue-400 hover:text-blue-600 transition-colors"
+                      role="button"
+                      tabIndex={0}
                       onClick={() => {
                         if (!slot.id) {
                           setActiveSlotIndex(idx)
                           selectorInputRef.current?.focus()
                           selectorInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          if (!slot.id) {
+                            setActiveSlotIndex(idx)
+                            selectorInputRef.current?.focus()
+                            selectorInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                          }
                         }
                       }}
                     >
@@ -1482,16 +1524,16 @@ export default function TeamBuilderPage() {
                       
                       {/* Selected Moves Table */}
                       {!collapsedMovesSections.has(idx) && slot.moves.length > 0 && (
-                        <div className="overflow-x-auto rounded-lg border border-gray-200 w-full">
+                        <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 w-full">
                           <table className="w-full text-xs min-w-max">
-                            <thead className="bg-gray-50 border-b border-gray-200">
+                            <thead className="bg-gray-50 dark:bg-gray-800/80 border-b border-gray-200 dark:border-gray-700">
                               <tr className="[&>th]:px-2 [&>th]:py-1 text-left text-muted">
                                 <th>Move</th><th>Type</th><th>Cat.</th><th>Power</th><th>Acc.</th><th>PP</th>
                               </tr>
                             </thead>
                             <tbody>
                               {slot.moves.map((move) => (
-                                <tr key={move.name} className="[&>td]:px-2 [&>td]:py-1 border-b border-gray-100">
+                                <tr key={move.name} className="[&>td]:px-2 [&>td]:py-1 border-b border-gray-100 dark:border-gray-700">
                                   <td className="font-medium capitalize text-text">
                                     <div className="flex items-center gap-2">
                                       {move.short_effect ? (
@@ -1581,9 +1623,9 @@ export default function TeamBuilderPage() {
                             </label>
                           </div>
                           {!collapsedAvailableMovesSections.has(idx) && (
-                            <div className="overflow-x-auto rounded-lg border border-gray-200 w-full max-h-80 overflow-y-auto">
+                            <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 w-full max-h-80 overflow-y-auto">
                               <table className="w-full text-xs min-w-max">
-                                <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
+                                <thead className="bg-gray-50 dark:bg-gray-800/80 border-b border-gray-200 dark:border-gray-700 sticky top-0">
                                   <tr className="[&>th]:px-2 [&>th]:py-1 text-left text-muted">
                                     <th>Move</th><th>Type</th><th>Cat.</th><th>Power</th><th>Acc.</th><th>PP</th><th>Lvl</th><th>Method</th><th></th>
                                   </tr>
@@ -1624,7 +1666,7 @@ export default function TeamBuilderPage() {
                                     .map((move) => (
                                       <tr 
                                         key={move.name} 
-                                        className="[&>td]:px-2 [&>td]:py-1 border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+                                        className="[&>td]:px-2 [&>td]:py-1 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer"
                                         onClick={() => toggleMove(idx, move)}
                                         title={slot.moves.length >= 4 ? 'Maximum 4 moves reached' : 'Click to add move'}
                                       >
@@ -1647,11 +1689,11 @@ export default function TeamBuilderPage() {
                                         <td>{move.level_learned_at ?? '—'}</td>
                                         <td className="capitalize text-xs">
                                           <span className={`px-1 py-0.5 rounded text-xs ${
-                                            move.learn_method === 'level-up' ? 'bg-blue-100 text-blue-800' :
-                                            move.learn_method === 'machine' ? 'bg-purple-100 text-purple-800' :
-                                            move.learn_method === 'egg' ? 'bg-green-100 text-green-800' :
-                                            move.learn_method === 'tutor' ? 'bg-orange-100 text-orange-800' :
-                                            'bg-gray-100 text-gray-800'
+                                            move.learn_method === 'level-up' ? 'bg-blue-100 text-blue-800 dark:bg-blue-950/50 dark:text-blue-300' :
+                                            move.learn_method === 'machine' ? 'bg-purple-100 text-purple-800 dark:bg-purple-950/50 dark:text-purple-300' :
+                                            move.learn_method === 'egg' ? 'bg-green-100 text-green-800 dark:bg-green-950/50 dark:text-green-300' :
+                                            move.learn_method === 'tutor' ? 'bg-orange-100 text-orange-800 dark:bg-orange-950/50 dark:text-orange-300' :
+                                            'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
                                           }`}>
                                             {move.learn_method}
                                           </span>
@@ -1732,7 +1774,7 @@ export default function TeamBuilderPage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {savedTeams.map(team => (
-                <div key={team.id} className="border border-border rounded-lg p-3 bg-white/50">
+                <div key={team.id} className="border border-border rounded-lg p-3 bg-white/50 dark:bg-white/5">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2 gap-2">
                     <div className="flex items-center gap-2 min-w-0">
                       <span className="font-medium truncate">{team.name}</span>
@@ -1832,7 +1874,7 @@ export default function TeamBuilderPage() {
                   <button
                     type="button"
                     onClick={() => setIsAnalysisColumnCollapsed(false)}
-                    className="inline-flex items-center justify-center w-8 h-8 rounded-md border border-border hover:bg-white/60"
+                    className="inline-flex items-center justify-center w-8 h-8 rounded-md border border-border hover:bg-white/60 dark:hover:bg-white/10"
                     title="Expand analysis panel"
                     aria-label="Expand analysis panel"
                   >
@@ -1846,7 +1888,7 @@ export default function TeamBuilderPage() {
                     <button
                       type="button"
                       onClick={() => setIsAnalysisColumnCollapsed(true)}
-                      className="inline-flex items-center gap-1 px-2 py-1 text-xs border border-border rounded-md hover:bg-white/60"
+                      className="inline-flex items-center gap-1 px-2 py-1 text-xs border border-border rounded-md hover:bg-white/60 dark:hover:bg-white/10"
                       title="Collapse analysis panel"
                     >
                       <ChevronRight className="h-3 w-3 rotate-180" />

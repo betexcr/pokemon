@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Sparkles, Heart, Star, Flower, Zap, Mountain, Book } from 'lucide-react'
+import { Sparkles, Heart, Star, Flower } from 'lucide-react'
 import { getShowdownAnimatedSprite } from '@/lib/utils'
 
 interface ContestBackgroundProps {

@@ -101,9 +101,11 @@ export default function SourceTooltip({ source, children }: SourceTooltipProps) 
               </div>
               {source.url && (
                 <button
+                  type="button"
                   onClick={handleSourceClick}
                   className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
                   title="Open source link"
+                  aria-label="Open source link"
                 >
                   <ExternalLink className="h-3 w-3 text-gray-500 dark:text-gray-400" />
                 </button>

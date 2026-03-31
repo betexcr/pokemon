@@ -216,6 +216,7 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
         return;
     }
 
+    try {
     await ops.update(`battles/${battleId}/meta`, { phase: 'resolving' });
 
     // 4. Fetch Current State
@@ -243,15 +244,12 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
     };
 
     // 6. Build Action Queue
-    // Note: buildActionQueue expects actions relative to the state's player/opponent
-    // So p1Action is for state.player, p2Action is for state.opponent
     const queue = buildActionQueue(battleState, p1Action, p2Action);
     battleState.actionQueue = queue;
 
     // 7. Execute Actions
     let currentState = battleState;
 
-    try {
         // Phase is already set to 'resolving' by the transaction above
         
         // Clear battle log for the new turn calculation to avoid duplicating old logs

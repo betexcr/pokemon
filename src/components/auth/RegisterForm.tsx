@@ -160,6 +160,7 @@ export default function RegisterForm({ onToggleMode, onSuccess }: RegisterFormPr
 
       {/* Footer */}
       <button
+        type="button"
         onClick={onToggleMode}
         className="w-full h-12 sm:h-14 rounded-2xl sm:rounded-[18px] border border-border bg-surface flex items-center justify-center gap-2 sm:gap-3 shadow-sm hover:bg-surface/80 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 mt-4"
       >

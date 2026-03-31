@@ -66,8 +66,10 @@ export default function SearchInput({
       />
       {localValue && (
         <button
+          type="button"
           onClick={handleClear}
-          className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 transition-colors"
+          className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          aria-label="Clear search"
         >
           <X className="h-4 w-4 text-text hover:text-poke-blue" />
         </button>

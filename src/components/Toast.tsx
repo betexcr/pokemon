@@ -29,6 +29,12 @@ function ToastComponent({ toast, onRemove }: ToastProps) {
     return () => clearTimeout(timer);
   }, []);
 
+  const handleRemove = useCallback(() => {
+    setIsVisible(false);
+    if (exitTimerRef.current) clearTimeout(exitTimerRef.current);
+    exitTimerRef.current = setTimeout(() => onRemove(toast.id), 300);
+  }, [onRemove, toast.id]);
+
   useEffect(() => {
     if (toast.duration) {
       const timer = setTimeout(() => {
@@ -36,19 +42,13 @@ function ToastComponent({ toast, onRemove }: ToastProps) {
       }, toast.duration);
       return () => clearTimeout(timer);
     }
-  }, [toast.duration]);
+  }, [toast.duration, handleRemove]);
 
   useEffect(() => {
     return () => {
       if (exitTimerRef.current) clearTimeout(exitTimerRef.current);
     };
   }, []);
-
-  const handleRemove = () => {
-    setIsVisible(false);
-    if (exitTimerRef.current) clearTimeout(exitTimerRef.current);
-    exitTimerRef.current = setTimeout(() => onRemove(toast.id), 300);
-  };
 
   const getToastStyles = () => {
     // Base uses design tokens for dark/light modes
@@ -122,6 +122,7 @@ function ToastComponent({ toast, onRemove }: ToastProps) {
             {toast.action && (
               <div className="mt-2">
                 <button
+                  type="button"
                   onClick={toast.action.onClick}
                   className={`text-sm font-medium underline hover:no-underline ${getAccentText()}`}
                 >
@@ -132,6 +133,7 @@ function ToastComponent({ toast, onRemove }: ToastProps) {
           </div>
           <div className="ml-4 flex-shrink-0 flex">
             <button
+              type="button"
               onClick={handleRemove}
               aria-label="Dismiss notification"
               className="inline-flex text-muted hover:text-text focus:outline-none"

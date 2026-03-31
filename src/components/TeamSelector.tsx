@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { getUserTeams, type SavedTeam } from '@/lib/userTeams';
 import { ChevronDown, Users, Check, Cloud, CloudOff, Wifi } from 'lucide-react';
@@ -49,6 +49,30 @@ export default function TeamSelector({
   const [loadError, setLoadError] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const selectedTeamRef = useRef(selectedTeam);
+  selectedTeamRef.current = selectedTeam;
+
+  const stableOnTeamSelect = useCallback(onTeamSelect, [onTeamSelect]);
+
+  // Close dropdown on Escape or outside click
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsOpen(false);
+    };
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('keydown', handleKey);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('keydown', handleKey);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
 
   // Helper: load teams from localStorage with robust fallbacks
   const loadLocalTeams = (): LocalTeam[] => {
@@ -82,7 +106,9 @@ export default function TeamSelector({
   };
 
   useEffect(() => {
-    if (authLoading) return; // wait for auth to resolve to avoid flashing "No teams"
+    if (authLoading) return;
+
+    let cancelled = false;
 
     const loadTeams = async () => {
       try {
@@ -90,6 +116,7 @@ export default function TeamSelector({
         setLoadError(false);
         if (user) {
           const userTeams = await getUserTeams(user.uid);
+          if (cancelled) return;
           setTeams(userTeams);
           setIsUsingLocalStorage(false);
           if (selectedTeamId) {
@@ -98,7 +125,7 @@ export default function TeamSelector({
           } else if (userTeams.length > 0 && !selectedTeam) {
             const firstTeam = userTeams[0];
             setSelectedTeam(firstTeam);
-            onTeamSelect(firstTeam);
+            stableOnTeamSelect(firstTeam);
           }
         } else {
           const localTeams: LocalTeam[] = loadLocalTeams();
@@ -108,10 +135,10 @@ export default function TeamSelector({
             if (selectedTeamId) {
               const team = localTeams.find(t => t.id === selectedTeamId);
               setSelectedTeam(team || null);
-            } else if (localTeams.length > 0 && !selectedTeam) {
+            } else if (localTeams.length > 0 && !selectedTeamRef.current) {
               const firstTeam = localTeams[0];
               setSelectedTeam(firstTeam);
-              onTeamSelect(firstTeam);
+              stableOnTeamSelect(firstTeam);
             }
           } else {
             setTeams([]);
@@ -119,11 +146,12 @@ export default function TeamSelector({
           }
         }
       } catch (error) {
+        if (cancelled) return;
         console.error('Failed to load teams:', error);
         setTeams([]);
         setLoadError(true);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
@@ -134,16 +162,19 @@ export default function TeamSelector({
         setLoading(true);
         const locals = loadLocalTeams();
         setTeams(locals);
-        if (locals.length > 0 && !selectedTeam) {
+        if (locals.length > 0 && !selectedTeamRef.current) {
           setSelectedTeam(locals[0]);
-          onTeamSelect(locals[0]);
+          stableOnTeamSelect(locals[0]);
         }
         setLoading(false);
       }
     };
     window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
-  }, [user, authLoading, selectedTeamId, retryCount]);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('storage', onStorage);
+    };
+  }, [user, authLoading, selectedTeamId, retryCount, stableOnTeamSelect]);
 
   // Notify parent when loading completes to avoid flicker
   useEffect(() => {
@@ -241,11 +272,13 @@ export default function TeamSelector({
         )}
       </div>
       
-      <div className="relative">
+      <div className="relative" ref={dropdownRef}>
         <button
           type="button"
           onClick={() => !disabled && setIsOpen(!isOpen)}
           disabled={disabled}
+          aria-expanded={isOpen}
+          aria-haspopup="listbox"
           className="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 bg-white dark:bg-gray-800 text-left focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 dark:disabled:bg-gray-700 disabled:cursor-not-allowed flex items-center justify-between"
         >
           <div className="flex items-center space-x-3">
@@ -255,7 +288,7 @@ export default function TeamSelector({
                 <div className="flex -space-x-1">
                   {selectedTeam.slots.slice(0, 6).map((slot, index) => (
                     <div
-                      key={index}
+                      key={slot.id ?? `empty-${index}`}
                       className="relative w-5 h-5 rounded-full border border-white bg-gray-100 overflow-hidden"
                     >
                       {slot.id ? (
@@ -299,9 +332,10 @@ export default function TeamSelector({
         </button>
 
         {isOpen && (
-          <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg dark:shadow-2xl max-h-60 overflow-auto">
+          <div role="listbox" className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg dark:shadow-2xl max-h-60 overflow-auto">
             <div className="p-2">
               <button
+                type="button"
                 onClick={handleClearSelection}
                 className="w-full text-left px-3 py-2 text-sm text-gray-800 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center space-x-2"
               >
@@ -312,6 +346,7 @@ export default function TeamSelector({
             {teams.map((team) => (
               <div key={team.id} className="p-2">
                 <button
+                  type="button"
                   onClick={() => handleTeamSelect(team)}
                   className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center justify-between"
                 >
@@ -320,7 +355,7 @@ export default function TeamSelector({
                     <div className="flex -space-x-1">
                       {team.slots.slice(0, 6).map((slot, index) => (
                         <div
-                          key={index}
+                          key={slot.id ?? `empty-${index}`}
                           className="relative w-6 h-6 rounded-full border border-white bg-gray-100 overflow-hidden"
                         >
                           {slot.id ? (
@@ -369,6 +404,7 @@ export default function TeamSelector({
             {!user && (
               <div className="border-t border-gray-200 dark:border-gray-700 pt-2 mt-2">
                 <button
+                  type="button"
                   onClick={() => {
                     setShowAuthModal(true);
                     setIsOpen(false);

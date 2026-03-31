@@ -77,7 +77,6 @@ export default function DemoCompleteBattlePage() {
         backLink="/"
         backLabel="Back to PokéDex"
         showToolbar={false}
-        showThemeToggle={false}
         iconKey="battle"
         showIcon={true}
       />
@@ -97,7 +96,6 @@ export default function DemoCompleteBattlePage() {
                 to={currentPosition.to}
                 playKey={fx.key}
                 power={selectedPower}
-                onDone={() => {}}
               />
             )}
           </div>

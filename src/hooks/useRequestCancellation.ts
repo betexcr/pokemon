@@ -69,5 +69,3 @@ export function useRequestCancellation(options: UseRequestCancellationOptions = 
     getStats: () => requestManager.getRequestStats(),
   };
 }
-
-export default useRequestCancellation;

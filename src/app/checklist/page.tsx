@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import AuthGate from "@/components/checklist/AuthGate";
 import Filters from "@/components/checklist/Filters";
 import DexGrid from "@/components/checklist/DexGrid";
@@ -20,6 +20,7 @@ export default function ChecklistPage() {
       <AppHeader title="Pokédex Checklist" backLink="/" backLabel="Back to PokéDex" showToolbar={true} />
       <div className="container mx-auto px-4 py-6">
         <OfflineBanner cachedMessage="You're offline. Checklist changes will sync when you reconnect." />
+        <Suspense>
         <ChecklistProvider>
           <DexDataProvider>
             <div className="flex items-center justify-between mb-4">
@@ -44,6 +45,7 @@ export default function ChecklistPage() {
             </div>
           </DexDataProvider>
         </ChecklistProvider>
+        </Suspense>
       </div>
     </>
   );

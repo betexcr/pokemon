@@ -48,7 +48,7 @@ export default function ParticipantList({
               {p.photoURL ? (
                 <img
                   src={p.photoURL}
-                  alt=""
+                  alt={p.name}
                   className="w-7 h-7 rounded-full"
                 />
               ) : (

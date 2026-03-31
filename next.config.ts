@@ -8,7 +8,7 @@ const CDN_URL = process.env.NEXT_PUBLIC_CDN_URL;
 const nextConfig: NextConfig = {
   ...(CDN_URL ? { assetPrefix: CDN_URL } : {}),
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
   },
   typescript: {
     ignoreBuildErrors: true,

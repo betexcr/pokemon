@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Play, SkipForward, RotateCcw, CheckCircle } from 'lucide-react'
 
 interface TutorialStep {
@@ -21,6 +21,7 @@ export default function ContestTutorial({ onComplete, onSkip }: ContestTutorialP
   const [isActive, setIsActive] = useState(false)
   const [currentStep, setCurrentStep] = useState(0)
   const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set())
+  const advanceTimerRef = useRef<ReturnType<typeof setTimeout>>()
 
   const tutorialSteps: TutorialStep[] = [
     {
@@ -137,17 +138,20 @@ export default function ContestTutorial({ onComplete, onSkip }: ContestTutorialP
       const expectedAction = currentStepData.action
       if (expectedAction && action.includes(expectedAction.toLowerCase())) {
         setCompletedSteps(prev => new Set([...prev, currentStepData.id]))
-        setTimeout(() => nextStep(), 1000)
+        if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current)
+        advanceTimerRef.current = setTimeout(() => nextStep(), 1000)
       }
     }
 
-    // Listen for tutorial-triggered events
     const handleTutorialEvent = (e: CustomEvent) => {
       handleUserAction(e.detail.action)
     }
 
     window.addEventListener('tutorial-action', handleTutorialEvent as EventListener)
-    return () => window.removeEventListener('tutorial-action', handleTutorialEvent as EventListener)
+    return () => {
+      window.removeEventListener('tutorial-action', handleTutorialEvent as EventListener)
+      if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current)
+    }
   }, [isActive, currentStep, currentStepData])
 
   if (!isActive) {

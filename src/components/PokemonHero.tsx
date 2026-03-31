@@ -5,19 +5,122 @@ import { motion, AnimatePresence } from "framer-motion";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Pokemon } from "@/types/pokemon";
-import TypeBadge from "@/components/TypeBadge";
 import AbilityBadge from "@/components/AbilityBadge";
 import { useReducedMotionPref } from "@/hooks/useReducedMotionPref";
 import Tooltip from './Tooltip'
 import { getPokemonJapaneseName } from '@/lib/japaneseNames'
-import { getMatchup } from "@/lib/getMatchup";
+import TypeBadgeWithTooltip from "@/components/TypeBadgeWithTooltip";
 
 import { getBestPokemonDBSprite } from "@/lib/pokemonDbSprites";
 import { getAvailablePortraits, getPortraitURL, PortraitExpression } from "@/lib/pmdPortraits";
 import { isSpecialForm, getSpecialFormInfo } from '@/lib/specialForms';
+import { fetchAllPokemonIds } from '@/lib/api';
 import { usePmdAnimations } from '@/components/HeroPmdSprite';
 import HeroPmdSprite from '@/components/HeroPmdSprite';
 import { AbilitySkeleton, DescriptionSkeleton, GenusSkeleton } from '@/components/skeletons/PokemonDetailsSkeleton';
+
+const showdownExceptions: Record<string, string> = {
+  'mr-mime': 'mr.mime', 'mime-jr': 'mimejr', 'mr-rime': 'mr.rime',
+  'ho-oh': 'hooh', 'type-null': 'typenull',
+  'jangmo-o': 'jangmoo', 'hakamo-o': 'hakamo-o', 'kommo-o': 'kommoo',
+  'porygon-z': 'porygonz', 'nidoran-f': 'nidoranf', 'nidoran-m': 'nidoranm',
+  'deoxys-attack': 'deoxysattack', 'deoxys-defense': 'deoxysdefense', 'deoxys-speed': 'deoxysspeed',
+  'wormadam-plant': 'wormadam', 'wormadam-sandy': 'wormadamsandy', 'wormadam-trash': 'wormadamtrash',
+  'rotom-heat': 'rotomheat', 'rotom-wash': 'rotomwash', 'rotom-frost': 'rotomfrost',
+  'rotom-fan': 'rotomfan', 'rotom-mow': 'rotommow',
+  'giratina-origin': 'giratinaorigin', 'shaymin-sky': 'shayminsky',
+  'arceus-fighting': 'arceus', 'arceus-flying': 'arceus', 'arceus-poison': 'arceus',
+  'arceus-ground': 'arceus', 'arceus-rock': 'arceus', 'arceus-bug': 'arceus',
+  'arceus-ghost': 'arceus', 'arceus-steel': 'arceus', 'arceus-fire': 'arceus',
+  'arceus-water': 'arceus', 'arceus-grass': 'arceus', 'arceus-electric': 'arceus',
+  'arceus-psychic': 'arceus', 'arceus-ice': 'arceus', 'arceus-dragon': 'arceus',
+  'arceus-dark': 'arceus', 'arceus-fairy': 'arceus',
+  'basculin-red-striped': 'basculin', 'basculin-blue-striped': 'basculinbluestriped',
+  'darmanitan-zen': 'darmanitanzen', 'darmanitan-galar': 'darmanitangalar',
+  'darmanitan-galar-zen': 'darmanitangalarzen',
+  'deerling-summer': 'deerling', 'deerling-autumn': 'deerlingautumn', 'deerling-winter': 'deerlingwinter',
+  'sawsbuck-summer': 'sawsbuck', 'sawsbuck-autumn': 'sawsbuckautumn', 'sawsbuck-winter': 'sawsbuckwinter',
+  'tornadus-therian': 'tornadustherian', 'thundurus-therian': 'thundurustherian',
+  'landorus-therian': 'landorustherian',
+  'kyurem-black': 'kyuremblack', 'kyurem-white': 'kyuremwhite',
+  'keldeo-resolute': 'keldeoresolute', 'meloetta-pirouette': 'meloettapirouette',
+  'genesect-douse': 'genesectdouse', 'genesect-shock': 'genesectshock',
+  'genesect-burn': 'genesectburn', 'genesect-chill': 'genesectchill',
+  'vivillon-polar': 'vivillon', 'vivillon-tundra': 'vivillon', 'vivillon-continental': 'vivillon',
+  'vivillon-garden': 'vivillon', 'vivillon-elegant': 'vivillon', 'vivillon-meadow': 'vivillon',
+  'vivillon-modern': 'vivillon', 'vivillon-marine': 'vivillon', 'vivillon-archipelago': 'vivillon',
+  'vivillon-high-plains': 'vivillon', 'vivillon-sandstorm': 'vivillon', 'vivillon-river': 'vivillon',
+  'vivillon-monsoon': 'vivillon', 'vivillon-savanna': 'vivillon', 'vivillon-sun': 'vivillon',
+  'vivillon-ocean': 'vivillon', 'vivillon-jungle': 'vivillon', 'vivillon-fancy': 'vivillon',
+  'vivillon-pokeball': 'vivillon',
+  'flabebe-yellow': 'flabebeyellow', 'flabebe-orange': 'flabebeorange',
+  'flabebe-blue': 'flabebeblue', 'flabebe-white': 'flabebewhite',
+  'floette-yellow': 'floetteyellow', 'floette-orange': 'floetteorange',
+  'floette-blue': 'floetteblue', 'floette-white': 'floettewhite', 'floette-eternal': 'floetteeternal',
+  'florges-yellow': 'florgesyellow', 'florges-orange': 'florgesorange',
+  'florges-blue': 'florgesblue', 'florges-white': 'florgeswhite',
+  'furfrou-heart': 'furfrou', 'furfrou-star': 'furfrou', 'furfrou-diamond': 'furfrou',
+  'furfrou-debutante': 'furfrou', 'furfrou-matron': 'furfrou', 'furfrou-dandy': 'furfrou',
+  'furfrou-la-reine': 'furfrou', 'furfrou-kabuki': 'furfrou', 'furfrou-pharaoh': 'furfrou',
+  'meowstic-female': 'meowsticf', 'aegislash-blade': 'aegislashblade',
+  'pumpkaboo-small': 'pumpkaboosmall', 'pumpkaboo-large': 'pumpkaboolarge', 'pumpkaboo-super': 'pumpkaboosuper',
+  'gourgeist-small': 'gourgeistsmall', 'gourgeist-large': 'gourgeistlarge', 'gourgeist-super': 'gourgeistsuper',
+  'xerneas-neutral': 'xerneas', 'zygarde-10': 'zygarde10', 'zygarde-complete': 'zygardecomplete',
+  'hoopa-unbound': 'hoopaunbound',
+  'oricorio-pom-pom': 'oricoriopompom', 'oricorio-pau': 'oricoriopau', 'oricorio-sensu': 'oricoriosensu',
+  'lycanroc-midnight': 'lycanrocmidnight', 'lycanroc-dusk': 'lycanrocdusk',
+  'wishiwashi-school': 'wishiwashischool',
+  'silvally-fighting': 'silvally', 'silvally-flying': 'silvally', 'silvally-poison': 'silvally',
+  'silvally-ground': 'silvally', 'silvally-rock': 'silvally', 'silvally-bug': 'silvally',
+  'silvally-ghost': 'silvally', 'silvally-steel': 'silvally', 'silvally-fire': 'silvally',
+  'silvally-water': 'silvally', 'silvally-grass': 'silvally', 'silvally-electric': 'silvally',
+  'silvally-psychic': 'silvally', 'silvally-ice': 'silvally', 'silvally-dragon': 'silvally',
+  'silvally-dark': 'silvally', 'silvally-fairy': 'silvally',
+  'minior-red-meteor': 'minior', 'minior-orange-meteor': 'minior', 'minior-yellow-meteor': 'minior',
+  'minior-green-meteor': 'minior', 'minior-blue-meteor': 'minior', 'minior-indigo-meteor': 'minior',
+  'minior-violet-meteor': 'minior',
+  'minior-red': 'miniorred', 'minior-orange': 'miniororange', 'minior-yellow': 'minioryellow',
+  'minior-green': 'miniorgreen', 'minior-blue': 'miniorblue', 'minior-indigo': 'miniorindigo',
+  'minior-violet': 'miniorviolet',
+  'mimikyu-busted': 'mimikyubusted',
+  'necrozma-dawn-wings': 'necrozmadawnwings', 'necrozma-dusk-mane': 'necrozmaduskmane',
+  'necrozma-ultra': 'necrozmaultra', 'magearna-original': 'magearnaoriginal',
+  'cramorant-gulping': 'cramorantgulping', 'cramorant-gorging': 'cramorantgorging',
+  'toxtricity-low-key': 'toxtricitylowkey',
+  'sinistea-antique': 'sinisteaantique', 'polteageist-antique': 'polteageistantique',
+  'alcremie-vanilla-cream': 'alcremie', 'alcremie-ruby-cream': 'alcremie',
+  'alcremie-matcha-cream': 'alcremie', 'alcremie-mint-cream': 'alcremie',
+  'alcremie-lemon-cream': 'alcremie', 'alcremie-salted-cream': 'alcremie',
+  'alcremie-ruby-swirl': 'alcremie', 'alcremie-caramel-swirl': 'alcremie',
+  'alcremie-rainbow-swirl': 'alcremie',
+  'eiscue-noice': 'eiscuenoice', 'indeedee-female': 'indeedee', 'morpeko-hangry': 'morpekohangry',
+  'zacian-crowned': 'zaciancrowned', 'zamazenta-crowned': 'zamazentacrowned',
+  'eternatus-eternamax': 'eternatuseternamax', 'urshifu-rapid-strike': 'urshifurapidstrike',
+  'zarude-dada': 'zarudedada', 'calyrex-ice': 'calyrexice', 'calyrex-shadow': 'calyrexshadow',
+  'enamorus-therian': 'enamorustherian', 'basculegion-female': 'basculegionf',
+  'oinkologne-female': 'oinkolognef', 'dudunsparce-three-segment': 'dudunsparcethreesegment',
+  'tatsugiri-droopy': 'tatsugiridroopy', 'tatsugiri-stretchy': 'tatsugiristretchy',
+  'palafin-hero': 'palafinhero', 'maushold-family-of-three': 'mausholdfamilyofthree',
+  'squawkabilly-yellow': 'squawkabillyyellow', 'squawkabilly-white': 'squawkabillywhite',
+  'gimmighoul-roaming': 'gimmighoulroaming', 'gholdengo-chest': 'gholdengochest',
+  'wooper-paldea': 'wooperpaldea',
+  'tauros-paldea-combat': 'taurospaldeacombat', 'tauros-paldea-blaze': 'taurospaldeablaze',
+  'tauros-paldea-aqua': 'taurospaldeaaqua',
+  'girafarig-farigiraf': 'girafarigfarigiraf', 'primeape-annihilape': 'primeapeannihilape',
+  'dunsparce-dudunsparce': 'dunsparcedudunsparce', 'dudunsparce-two-segment': 'dudunsparcetwosegment',
+  'poltchageist-artisan': 'poltchageistartisan', 'sinistcha-masterpiece': 'sinistchamasterpiece',
+  'okidogi-loyal-three': 'okidogiloyalthree', 'munkidori-loyal-three': 'munkidoriloyalthree',
+  'fezandipiti-loyal-three': 'fezandipitiloyalthree',
+  'ogerpon-wellspring': 'ogerponwellspring', 'ogerpon-hearthflame': 'ogerponhearthflame',
+  'ogerpon-cornerstone': 'ogerponcornerstone',
+  'terapagos-terastal': 'terapagosterastal', 'terapagos-stellar': 'terapagostellar',
+  'pecharunt-malicious': 'pecharuntmalicious',
+};
+
+function mapPokemonNameToShowdown(name: string): string {
+  const hyphenated = name.toLowerCase().trim().replace(/\s+/g, '-');
+  return showdownExceptions[hyphenated] || hyphenated;
+}
 
 interface PokemonHeroProps {
   pokemon: Pokemon;
@@ -52,6 +155,7 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
   const { anims: pmdAnims, error: pmdError } = usePmdAnimations(pokemon.id);
   const [selectedPmdAnim, setSelectedPmdAnim] = useState<string>('');
   const [showPmdDropdown, setShowPmdDropdown] = useState(false);
+  const allIdsRef = useRef<number[]>([]);
   const pmdDropdownRef = useRef<HTMLDivElement>(null);
   // Helper function to get the appropriate default generation for a Pokemon
   const getDefaultGeneration = (pokemonId: number): 'gen1' | 'gen1rb' | 'gen1rg' | 'gen1frlg' | 'gen2' | 'gen2g' | 'gen2s' | 'gen3' | 'gen3rs' | 'gen3frlg' | 'gen4' | 'gen4dp' | 'gen5' | 'gen5ani' | 'gen6' | 'gen6ani' | 'gen7' | 'gen8' | 'gen9' | 'home' | 'go' => {
@@ -308,22 +412,25 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
 
   // Fetch available portraits when Pokemon changes
   useEffect(() => {
+    let cancelled = false;
     const fetchPortraits = async () => {
       try {
         const portraits = await getAvailablePortraits(pokemon.id);
+        if (cancelled) return;
         setAvailablePortraits(portraits);
         const requestedPortrait = parseArtParam(searchParams.get('art')).portrait || searchParams.get('art_portrait');
         const hasRequestedPortrait = requestedPortrait && portraits.some(p => p.filename === requestedPortrait);
         setSelectedPortrait(hasRequestedPortrait ? requestedPortrait : 'Normal.png');
       } catch (error) {
+        if (cancelled) return;
         console.error('Failed to fetch portraits:', error);
-        // Set default portrait on error
         setAvailablePortraits([{ name: 'normal', filename: 'Normal.png', displayName: 'Normal' }]);
         setSelectedPortrait(parseArtParam(searchParams.get('art')).portrait || searchParams.get('art_portrait') || 'Normal.png');
       }
     };
 
     fetchPortraits();
+    return () => { cancelled = true; };
   }, [pokemon.id, searchParams]);
 
   // Initialize PMD animation when available
@@ -340,6 +447,10 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
       setSelectedPmdAnim(pmdAnims[0].name);
     }
   }, [pmdAnims, selectedPmdAnim, searchParams]);
+
+  useEffect(() => {
+    fetchAllPokemonIds().then(ids => { allIdsRef.current = ids; }).catch(() => {});
+  }, []);
 
   // Handle click outside to close dropdowns
   useEffect(() => {
@@ -370,550 +481,28 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
   };
 
   const goToPrevious = () => {
-    if (pokemon.id > 1) {
+    const ids = allIdsRef.current;
+    if (ids.length > 0) {
+      const idx = ids.indexOf(pokemon.id);
+      if (idx > 0) navigateToPokemon(ids[idx - 1]);
+    } else if (pokemon.id > 1) {
       navigateToPokemon(pokemon.id - 1);
     }
   };
 
   const goToNext = () => {
-    // Handle navigation for special forms and regular Pokemon
-    if (isSpecialForm(pokemon.id)) {
-      // If we're at the last special form (10082), go to next regular Pokemon
-      if (pokemon.id >= 10082) {
-        navigateToPokemon(1026); // Go to next regular Pokemon after special forms
-      } else {
-        navigateToPokemon(pokemon.id + 1);
-      }
-    } else {
-      // Regular Pokemon navigation
-      if (pokemon.id < 1025) {
-        navigateToPokemon(pokemon.id + 1);
-      }
+    const ids = allIdsRef.current;
+    if (ids.length > 0) {
+      const idx = ids.indexOf(pokemon.id);
+      if (idx >= 0 && idx < ids.length - 1) navigateToPokemon(ids[idx + 1]);
+    } else if (pokemon.id < 1025) {
+      navigateToPokemon(pokemon.id + 1);
     }
-  };
-
-  // Function to get type effectiveness for all types against the Pokemon's types
-  const getTypeEffectiveness = () => {
-    const pokemonTypes = pokemon.types.map(t => t.type.name.charAt(0).toUpperCase() + t.type.name.slice(1));
-    const matchups = getMatchup(pokemonTypes);
-    
-    // Combine all effectiveness data
-    const allEffectiveness = [
-      ...matchups.x4.map(t => ({ type: t.toLowerCase(), effectiveness: 4, multiplier: 'x4' })),
-      ...matchups.x2.map(t => ({ type: t.toLowerCase(), effectiveness: 2, multiplier: 'x2' })),
-      ...matchups.x0_5.map(t => ({ type: t.toLowerCase(), effectiveness: 0.5, multiplier: 'x0.5' })),
-      ...matchups.x0_25.map(t => ({ type: t.toLowerCase(), effectiveness: 0.25, multiplier: 'x0.25' })),
-      ...matchups.x0.map(t => ({ type: t.toLowerCase(), effectiveness: 0, multiplier: 'x0' }))
-    ];
-    
-    return allEffectiveness;
-  };
-
-  // TypeBadge with tooltip component
-  const TypeBadgeWithTooltip = ({ type, className }: { type: string; className?: string }) => {
-    const [showTooltip, setShowTooltip] = useState(false);
-    const [tooltipPosition, setTooltipPosition] = useState<'top' | 'bottom'>('top');
-    const [tooltipAlignment, setTooltipAlignment] = useState<'left' | 'center' | 'right'>('center');
-    
-    // Get type weaknesses using the getMatchup function
-    const matchups = getMatchup([type.charAt(0).toUpperCase() + type.slice(1)]);
-    
-    // Categorize what types are effective against this type
-    const weakTo = matchups.x4.concat(matchups.x2).map(t => ({ type: t.toLowerCase(), multiplier: matchups.x4.includes(t) ? '4x' : '2x' }));
-    const resists = matchups.x0_5.map(t => ({ type: t.toLowerCase(), multiplier: '0.5x' }));
-    const quarterResists = matchups.x0_25.map(t => ({ type: t.toLowerCase(), multiplier: '0.25x' }));
-    const immune = matchups.x0.map(t => ({ type: t.toLowerCase(), multiplier: '0x' }));
-    
-    return (
-      <div className="relative inline-block">
-        <div
-          onMouseEnter={(e) => {
-            const rect = e.currentTarget.getBoundingClientRect();
-            const tooltipHeight = 200; // Approximate tooltip height
-            const tooltipWidth = 256; // w-64 = 16rem = 256px
-            const margin = 16; // 1rem margin from edge
-            
-            // Check vertical positioning
-            if (rect.top < tooltipHeight + 20) {
-              setTooltipPosition('bottom');
-            } else {
-              setTooltipPosition('top');
-            }
-            
-            // Find the actual content container bounds - try multiple selectors
-            let contentContainer = e.currentTarget.closest('.max-w-7xl, .container, main, [class*="max-w"]');
-            
-            // If no container found, try to find the main content area
-            if (!contentContainer) {
-              contentContainer = e.currentTarget.closest('[class*="grid"], [class*="flex"], .pokemon-details, .pokemon-hero') || document.body;
-            }
-            
-            const containerRect = contentContainer.getBoundingClientRect();
-            
-            // Check horizontal positioning within the viewport
-            const tooltipCenterX = rect.left + rect.width / 2;
-            const tooltipLeft = tooltipCenterX - tooltipWidth / 2;
-            const tooltipRight = tooltipCenterX + tooltipWidth / 2;
-            
-            // Use viewport bounds for better alignment
-            const viewportLeft = margin;
-            const viewportRight = window.innerWidth - margin;
-            
-            if (tooltipLeft < viewportLeft) {
-              // Too far left, align to left edge of viewport
-              setTooltipAlignment('left');
-            } else if (tooltipRight > viewportRight) {
-              // Too far right, align to right edge of viewport
-              setTooltipAlignment('right');
-            } else {
-              // Center is fine
-              setTooltipAlignment('center');
-            }
-            
-            setShowTooltip(true);
-          }}
-          onMouseLeave={() => setShowTooltip(false)}
-          className="inline-block"
-        >
-          <TypeBadge type={type} className={className} />
-        </div>
-        
-        {showTooltip && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className={`absolute z-50 max-w-[min(16rem,calc(100vw-4rem))] ${
-              tooltipPosition === 'top' 
-                ? 'bottom-full mb-2' 
-                : 'top-full mt-2'
-            } ${
-              tooltipAlignment === 'left'
-                ? 'left-0'
-                : tooltipAlignment === 'right'
-                ? 'right-0'
-                : 'left-1/2 transform -translate-x-1/2'
-            }`}
-          >
-            <div className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-xs rounded-lg p-2 shadow-xl border border-gray-200 dark:border-gray-600 w-64 max-w-[min(16rem,calc(100vw-4rem))]">
-              {/* Header */}
-              <div className="flex items-center gap-2 mb-3">
-                <TypeBadge type={type} className="text-sm px-2 py-1" />
-                <span className="text-gray-600 dark:text-gray-400 text-xs font-medium">Type Weaknesses</span>
-              </div>
-              
-              {/* Four panels layout */}
-              <div className="grid grid-cols-4 gap-1">
-                {/* Double Weak (4x) */}
-                <div className="bg-red-50 dark:bg-red-900/20 rounded p-1.5">
-                  <h4 className="font-semibold text-xs mb-1 text-red-800 dark:text-red-200">Double Weak (4x)</h4>
-                  <div className="space-y-0.5">
-                    {matchups.x4.length > 0 ? (
-                      matchups.x4.map((type) => (
-                        <div key={type} className="flex items-center">
-                          <TypeBadge type={type.toLowerCase()} className="text-xs px-1 py-0.5" />
-                        </div>
-                      ))
-                    ) : (
-                      <span className="text-xs text-gray-500 dark:text-gray-400">None</span>
-                    )}
-                  </div>
-                </div>
-                
-                {/* Weak to (2x) */}
-                <div className="bg-orange-50 dark:bg-orange-900/20 rounded p-1.5">
-                  <h4 className="font-semibold text-xs mb-1 text-orange-800 dark:text-orange-200">Weak to (2x)</h4>
-                  <div className="space-y-0.5">
-                    {matchups.x2.length > 0 ? (
-                      matchups.x2.map((type) => (
-                        <div key={type} className="flex items-center">
-                          <TypeBadge type={type.toLowerCase()} className="text-xs px-1 py-0.5" />
-                        </div>
-                      ))
-                    ) : (
-                      <span className="text-xs text-gray-500 dark:text-gray-400">None</span>
-                    )}
-                  </div>
-                </div>
-                
-                {/* Resists (0.5x) */}
-                <div className="bg-green-50 dark:bg-green-900/20 rounded p-1.5">
-                  <h4 className="font-semibold text-xs mb-1 text-green-800 dark:text-green-200">Resists (0.5x)</h4>
-                  <div className="space-y-0.5">
-                    {matchups.x0_5.length > 0 ? (
-                      matchups.x0_5.map((type) => (
-                        <div key={type} className="flex items-center">
-                          <TypeBadge type={type.toLowerCase()} className="text-xs px-1 py-0.5" />
-                        </div>
-                      ))
-                    ) : (
-                      <span className="text-xs text-gray-500 dark:text-gray-400">None</span>
-                    )}
-                  </div>
-                </div>
-                
-                {/* Quarter Resists (0.25x) */}
-                <div className="bg-blue-50 dark:bg-blue-900/20 rounded p-1.5">
-                  <h4 className="font-semibold text-xs mb-1 text-blue-800 dark:text-blue-200">Quarter Resists (0.25x)</h4>
-                  <div className="space-y-0.5">
-                    {matchups.x0_25.length > 0 ? (
-                      matchups.x0_25.map((type) => (
-                        <div key={type} className="flex items-center">
-                          <TypeBadge type={type.toLowerCase()} className="text-xs px-1 py-0.5" />
-                        </div>
-                      ))
-                    ) : (
-                      <span className="text-xs text-gray-500 dark:text-gray-400">None</span>
-                    )}
-                  </div>
-                </div>
-                
-                {/* Immune (0x) */}
-                <div className="bg-gray-50 dark:bg-gray-700/50 rounded p-1.5">
-                  <h4 className="font-semibold text-xs mb-1 text-gray-800 dark:text-gray-200">Immune (0x)</h4>
-                  <div className="space-y-0.5">
-                    {matchups.x0.length > 0 ? (
-                      matchups.x0.map((type) => (
-                        <div key={type} className="flex items-center">
-                          <TypeBadge type={type.toLowerCase()} className="text-xs px-1 py-0.5" />
-                        </div>
-                      ))
-                    ) : (
-                      <span className="text-xs text-gray-500 dark:text-gray-400">None</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-            {/* Tooltip arrow */}
-            <div className={`absolute w-0 h-0 ${
-              tooltipAlignment === 'left'
-                ? 'left-4'
-                : tooltipAlignment === 'right'
-                ? 'right-4'
-                : 'left-1/2 transform -translate-x-1/2'
-            } ${
-              tooltipPosition === 'top'
-                ? 'top-full border-l-4 border-r-4 border-t-4 border-transparent border-t-white dark:border-t-gray-800'
-                : 'bottom-full border-l-4 border-r-4 border-b-4 border-transparent border-b-white dark:border-b-gray-800'
-            }`}></div>
-          </motion.div>
-        )}
-      </div>
-    );
-  };
-
-  // Helper function to map Pokémon names to Showdown sprite names
-  const mapPokemonNameToShowdown = (name: string): string => {
-    const base = name.toLowerCase().trim();
-    const exceptions: Record<string, string> = {
-      // Showdown uses a dot for Mr. Mime
-      'mr-mime': 'mr.mime',
-      // Mime Jr. drops hyphen and dot
-      'mime-jr': 'mimejr',
-      // Mr. Rime (Galar) uses a dot
-      'mr-rime': 'mr.rime',
-      // Ho-Oh uses "hooh" in Showdown
-      'ho-oh': 'hooh',
-      // Type: Null variations
-      'type-null': 'typenull',
-      // Jangmo-o family
-      'jangmo-o': 'jangmoo',
-      'hakamo-o': 'hakamo-o',
-      'kommo-o': 'kommoo',
-      // Porygon-Z
-      'porygon-z': 'porygonz',
-      // Nidoran variations
-      'nidoran-f': 'nidoranf',
-      'nidoran-m': 'nidoranm',
-      // Deoxys forms
-      'deoxys-attack': 'deoxysattack',
-      'deoxys-defense': 'deoxysdefense',
-      'deoxys-speed': 'deoxysspeed',
-      // Wormadam forms
-      'wormadam-plant': 'wormadam',
-      'wormadam-sandy': 'wormadamsandy',
-      'wormadam-trash': 'wormadamtrash',
-      // Rotom forms
-      'rotom-heat': 'rotomheat',
-      'rotom-wash': 'rotomwash',
-      'rotom-frost': 'rotomfrost',
-      'rotom-fan': 'rotomfan',
-      'rotom-mow': 'rotommow',
-      // Giratina forms
-      'giratina-origin': 'giratinaorigin',
-      // Shaymin forms
-      'shaymin-sky': 'shayminsky',
-      // Arceus forms (simplified - just use base form for most)
-      'arceus-fighting': 'arceus',
-      'arceus-flying': 'arceus',
-      'arceus-poison': 'arceus',
-      'arceus-ground': 'arceus',
-      'arceus-rock': 'arceus',
-      'arceus-bug': 'arceus',
-      'arceus-ghost': 'arceus',
-      'arceus-steel': 'arceus',
-      'arceus-fire': 'arceus',
-      'arceus-water': 'arceus',
-      'arceus-grass': 'arceus',
-      'arceus-electric': 'arceus',
-      'arceus-psychic': 'arceus',
-      'arceus-ice': 'arceus',
-      'arceus-dragon': 'arceus',
-      'arceus-dark': 'arceus',
-      'arceus-fairy': 'arceus',
-      // Basculin forms
-      'basculin-red-striped': 'basculin',
-      'basculin-blue-striped': 'basculinbluestriped',
-      // Darmanitan forms
-      'darmanitan-zen': 'darmanitanzen',
-      'darmanitan-galar': 'darmanitangalar',
-      'darmanitan-galar-zen': 'darmanitangalarzen',
-      // Deerling forms
-      'deerling-summer': 'deerling',
-      'deerling-autumn': 'deerlingautumn',
-      'deerling-winter': 'deerlingwinter',
-      // Sawsbuck forms
-      'sawsbuck-summer': 'sawsbuck',
-      'sawsbuck-autumn': 'sawsbuckautumn',
-      'sawsbuck-winter': 'sawsbuckwinter',
-      // Tornadus forms
-      'tornadus-therian': 'tornadustherian',
-      // Thundurus forms
-      'thundurus-therian': 'thundurustherian',
-      // Landorus forms
-      'landorus-therian': 'landorustherian',
-      // Kyurem forms
-      'kyurem-black': 'kyuremblack',
-      'kyurem-white': 'kyuremwhite',
-      // Keldeo forms
-      'keldeo-resolute': 'keldeoresolute',
-      // Meloetta forms
-      'meloetta-pirouette': 'meloettapirouette',
-      // Genesect forms
-      'genesect-douse': 'genesectdouse',
-      'genesect-shock': 'genesectshock',
-      'genesect-burn': 'genesectburn',
-      'genesect-chill': 'genesectchill',
-      // Vivillon forms (simplified - use base form)
-      'vivillon-polar': 'vivillon',
-      'vivillon-tundra': 'vivillon',
-      'vivillon-continental': 'vivillon',
-      'vivillon-garden': 'vivillon',
-      'vivillon-elegant': 'vivillon',
-      'vivillon-meadow': 'vivillon',
-      'vivillon-modern': 'vivillon',
-      'vivillon-marine': 'vivillon',
-      'vivillon-archipelago': 'vivillon',
-      'vivillon-high-plains': 'vivillon',
-      'vivillon-sandstorm': 'vivillon',
-      'vivillon-river': 'vivillon',
-      'vivillon-monsoon': 'vivillon',
-      'vivillon-savanna': 'vivillon',
-      'vivillon-sun': 'vivillon',
-      'vivillon-ocean': 'vivillon',
-      'vivillon-jungle': 'vivillon',
-      'vivillon-fancy': 'vivillon',
-      'vivillon-pokeball': 'vivillon',
-      // Flabébé forms
-      'flabebe-yellow': 'flabebeyellow',
-      'flabebe-orange': 'flabebeorange',
-      'flabebe-blue': 'flabebeblue',
-      'flabebe-white': 'flabebewhite',
-      // Floette forms
-      'floette-yellow': 'floetteyellow',
-      'floette-orange': 'floetteorange',
-      'floette-blue': 'floetteblue',
-      'floette-white': 'floettewhite',
-      'floette-eternal': 'floetteeternal',
-      // Florges forms
-      'florges-yellow': 'florgesyellow',
-      'florges-orange': 'florgesorange',
-      'florges-blue': 'florgesblue',
-      'florges-white': 'florgeswhite',
-      // Furfrou forms (simplified - use base form)
-      'furfrou-heart': 'furfrou',
-      'furfrou-star': 'furfrou',
-      'furfrou-diamond': 'furfrou',
-      'furfrou-debutante': 'furfrou',
-      'furfrou-matron': 'furfrou',
-      'furfrou-dandy': 'furfrou',
-      'furfrou-la-reine': 'furfrou',
-      'furfrou-kabuki': 'furfrou',
-      'furfrou-pharaoh': 'furfrou',
-      // Meowstic forms
-      'meowstic-female': 'meowsticf',
-      // Aegislash forms
-      'aegislash-blade': 'aegislashblade',
-      // Pumpkaboo forms
-      'pumpkaboo-small': 'pumpkaboosmall',
-      'pumpkaboo-large': 'pumpkaboolarge',
-      'pumpkaboo-super': 'pumpkaboosuper',
-      // Gourgeist forms
-      'gourgeist-small': 'gourgeistsmall',
-      'gourgeist-large': 'gourgeistlarge',
-      'gourgeist-super': 'gourgeistsuper',
-      // Xerneas forms
-      'xerneas-neutral': 'xerneas',
-      // Zygarde forms
-      'zygarde-10': 'zygarde10',
-      'zygarde-complete': 'zygardecomplete',
-      // Hoopa forms
-      'hoopa-unbound': 'hoopaunbound',
-      // Oricorio forms
-      'oricorio-pom-pom': 'oricoriopompom',
-      'oricorio-pau': 'oricoriopau',
-      'oricorio-sensu': 'oricoriosensu',
-      // Lycanroc forms
-      'lycanroc-midnight': 'lycanrocmidnight',
-      'lycanroc-dusk': 'lycanrocdusk',
-      // Wishiwashi forms
-      'wishiwashi-school': 'wishiwashischool',
-      // Silvally forms
-      'silvally-fighting': 'silvally',
-      'silvally-flying': 'silvally',
-      'silvally-poison': 'silvally',
-      'silvally-ground': 'silvally',
-      'silvally-rock': 'silvally',
-      'silvally-bug': 'silvally',
-      'silvally-ghost': 'silvally',
-      'silvally-steel': 'silvally',
-      'silvally-fire': 'silvally',
-      'silvally-water': 'silvally',
-      'silvally-grass': 'silvally',
-      'silvally-electric': 'silvally',
-      'silvally-psychic': 'silvally',
-      'silvally-ice': 'silvally',
-      'silvally-dragon': 'silvally',
-      'silvally-dark': 'silvally',
-      'silvally-fairy': 'silvally',
-      // Minior forms
-      'minior-red-meteor': 'minior',
-      'minior-orange-meteor': 'minior',
-      'minior-yellow-meteor': 'minior',
-      'minior-green-meteor': 'minior',
-      'minior-blue-meteor': 'minior',
-      'minior-indigo-meteor': 'minior',
-      'minior-violet-meteor': 'minior',
-      'minior-red': 'miniorred',
-      'minior-orange': 'miniororange',
-      'minior-yellow': 'minioryellow',
-      'minior-green': 'miniorgreen',
-      'minior-blue': 'miniorblue',
-      'minior-indigo': 'miniorindigo',
-      'minior-violet': 'miniorviolet',
-      // Mimikyu forms
-      'mimikyu-busted': 'mimikyubusted',
-      // Necrozma forms
-      'necrozma-dawn-wings': 'necrozmadawnwings',
-      'necrozma-dusk-mane': 'necrozmaduskmane',
-      'necrozma-ultra': 'necrozmaultra',
-      // Magearna forms
-      'magearna-original': 'magearnaoriginal',
-      // Cramorant forms
-      'cramorant-gulping': 'cramorantgulping',
-      'cramorant-gorging': 'cramorantgorging',
-      // Toxtricity forms
-      'toxtricity-low-key': 'toxtricitylowkey',
-      // Sinistea forms
-      'sinistea-antique': 'sinisteaantique',
-      // Polteageist forms
-      'polteageist-antique': 'polteageistantique',
-      // Alcremie forms (simplified - use base form)
-      'alcremie-vanilla-cream': 'alcremie',
-      'alcremie-ruby-cream': 'alcremie',
-      'alcremie-matcha-cream': 'alcremie',
-      'alcremie-mint-cream': 'alcremie',
-      'alcremie-lemon-cream': 'alcremie',
-      'alcremie-salted-cream': 'alcremie',
-      'alcremie-ruby-swirl': 'alcremie',
-      'alcremie-caramel-swirl': 'alcremie',
-      'alcremie-rainbow-swirl': 'alcremie',
-      // Eiscue forms
-      'eiscue-noice': 'eiscuenoice',
-      // Indeedee forms
-      'indeedee-female': 'indeedee',
-      // Morpeko forms
-      'morpeko-hangry': 'morpekohangry',
-      // Zacian forms
-      'zacian-crowned': 'zaciancrowned',
-      // Zamazenta forms
-      'zamazenta-crowned': 'zamazentacrowned',
-      // Eternatus forms
-      'eternatus-eternamax': 'eternatuseternamax',
-      // Urshifu forms
-      'urshifu-rapid-strike': 'urshifurapidstrike',
-      // Zarude forms
-      'zarude-dada': 'zarudedada',
-      // Calyrex forms
-      'calyrex-ice': 'calyrexice',
-      'calyrex-shadow': 'calyrexshadow',
-      // Enamorus forms
-      'enamorus-therian': 'enamorustherian',
-      // Basculegion forms
-      'basculegion-female': 'basculegionf',
-      // Oinkologne forms
-      'oinkologne-female': 'oinkolognef',
-      // Dudunsparce forms
-      'dudunsparce-three-segment': 'dudunsparcethreesegment',
-      // Tatsugiri forms
-      'tatsugiri-droopy': 'tatsugiridroopy',
-      'tatsugiri-stretchy': 'tatsugiristretchy',
-      // Palafin forms
-      'palafin-hero': 'palafinhero',
-      // Maushold forms
-      'maushold-family-of-three': 'mausholdfamilyofthree',
-      // Squawkabilly forms
-      'squawkabilly-yellow': 'squawkabillyyellow',
-      'squawkabilly-white': 'squawkabillywhite',
-      // Gimmighoul forms
-      'gimmighoul-roaming': 'gimmighoulroaming',
-      // Gholdengo forms
-      'gholdengo-chest': 'gholdengochest',
-      // Wooper forms
-      'wooper-paldea': 'wooperpaldea',
-      // Tauros forms
-      'tauros-paldea-combat': 'taurospaldeacombat',
-      'tauros-paldea-blaze': 'taurospaldeablaze',
-      'tauros-paldea-aqua': 'taurospaldeaaqua',
-      // Girafarig forms
-      'girafarig-farigiraf': 'girafarigfarigiraf',
-      // Primeape forms
-      'primeape-annihilape': 'primeapeannihilape',
-      // Dunsparce forms
-      'dunsparce-dudunsparce': 'dunsparcedudunsparce',
-      // Dudunsparce forms
-      'dudunsparce-two-segment': 'dudunsparcetwosegment',
-      // Poltchageist forms
-      'poltchageist-artisan': 'poltchageistartisan',
-      // Sinistcha forms
-      'sinistcha-masterpiece': 'sinistchamasterpiece',
-      // Okidogi forms
-      'okidogi-loyal-three': 'okidogiloyalthree',
-      // Munkidori forms
-      'munkidori-loyal-three': 'munkidoriloyalthree',
-      // Fezandipiti forms
-      'fezandipiti-loyal-three': 'fezandipitiloyalthree',
-      // Ogerpon forms
-      'ogerpon-wellspring': 'ogerponwellspring',
-      'ogerpon-hearthflame': 'ogerponhearthflame',
-      'ogerpon-cornerstone': 'ogerponcornerstone',
-      // Terapagos forms
-      'terapagos-terastal': 'terapagosterastal',
-      'terapagos-stellar': 'terapagostellar',
-      // Pecharunt forms
-      'pecharunt-malicious': 'pecharuntmalicious'
-    };
-    
-    const hyphenated = base.replace(/\s+/g, '-');
-    return exceptions[hyphenated] || hyphenated;
   };
 
   // Helper function to check if a sprite is available for a specific generation
   const isSpriteAvailable = (gen: string, pokemonName: string, orientation: 'front' | 'back', shiny: boolean, gender: 'male' | 'female'): boolean => {
-    // Some generations don't have certain Pokémon
     const pokemonId = pokemon.id;
-    const mappedName = mapPokemonNameToShowdown(pokemonName);
     
     // Special handling for Gen 6 - newer Pokemon use PokemonDB GO sprites
     if (gen === 'gen6' && pokemonId > 721) {
@@ -1232,10 +821,12 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
           {/* Navigation Buttons - Desktop Only */}
           <div className="hidden lg:flex items-center gap-4 order-1">
             <button
+              type="button"
               onClick={goToPrevious}
               disabled={pokemon.id <= 1}
               className="group flex items-center justify-center w-12 h-12 rounded-full border border-border bg-surface hover:bg-surface/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-105 disabled:hover:scale-100"
               title={`Previous Pokémon (#${String(pokemon.id - 1).padStart(4, "0")})`}
+              aria-label={`Previous Pokémon (#${String(pokemon.id - 1).padStart(4, "0")})`}
             >
               <ChevronLeft className="h-6 w-6 text-muted group-hover:text-text transition-colors" />
             </button>
@@ -1244,10 +835,12 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
           {/* Pokemon Image — on mobile wrapped in a row with nav buttons */}
           <div className="flex lg:contents items-center gap-3 order-2">
             <button
+              type="button"
               onClick={goToPrevious}
               disabled={pokemon.id <= 1}
               className="lg:hidden group flex items-center justify-center w-10 h-10 rounded-full border border-border bg-surface hover:bg-surface/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-105 disabled:hover:scale-100 flex-shrink-0"
               title={`Previous Pokémon (#${String(pokemon.id - 1).padStart(4, "0")})`}
+              aria-label={`Previous Pokémon (#${String(pokemon.id - 1).padStart(4, "0")})`}
             >
               <ChevronLeft className="h-5 w-5 text-muted group-hover:text-text transition-colors" />
             </button>
@@ -1282,10 +875,12 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
             )}
           </div>
             <button
+              type="button"
               onClick={goToNext}
-              disabled={pokemon.id >= 1025}
+              disabled={allIdsRef.current.length > 0 ? allIdsRef.current.indexOf(pokemon.id) >= allIdsRef.current.length - 1 : pokemon.id >= 1025}
               className="lg:hidden group flex items-center justify-center w-10 h-10 rounded-full border border-border bg-surface hover:bg-surface/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-105 disabled:hover:scale-100 flex-shrink-0"
-              title={`Next Pokémon (#${String(pokemon.id + 1).padStart(4, "0")})`}
+              title="Next Pokémon"
+              aria-label="Next Pokémon"
             >
               <ChevronRight className="h-5 w-5 text-muted group-hover:text-text transition-colors" />
             </button>
@@ -1417,6 +1012,7 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
                       }
                     }}
                     className={`px-3 py-1 text-sm flex items-center gap-1 relative ${style === opt.key ? 'bg-surface text-text' : 'bg-transparent text-muted'}`}
+                    {...(opt.key === 'portrait' ? { 'aria-expanded': showPortraitDropdown } : opt.key === 'pmd' ? { 'aria-expanded': showPmdDropdown } : {})}
                   >
                     {opt.label}
                     {opt.hasDropdown && (
@@ -1639,10 +1235,12 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
           {/* Navigation Buttons - Desktop Only */}
           <div className="hidden lg:flex items-center gap-4 order-4">
             <button
+              type="button"
               onClick={goToNext}
-              disabled={pokemon.id >= 1025}
+              disabled={allIdsRef.current.length > 0 ? allIdsRef.current.indexOf(pokemon.id) >= allIdsRef.current.length - 1 : pokemon.id >= 1025}
               className="group flex items-center justify-center w-12 h-12 rounded-full border border-border bg-surface hover:bg-surface/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-105 disabled:hover:scale-100"
-              title={`Next Pokémon (#${String(pokemon.id + 1).padStart(4, "0")})`}
+              title="Next Pokémon"
+              aria-label="Next Pokémon"
             >
               <ChevronRight className="h-6 w-6 text-muted group-hover:text-text transition-colors" />
             </button>

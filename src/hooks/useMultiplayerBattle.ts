@@ -1,44 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
-import { handleForfeit, handleTimeout } from '@/lib/multiplayer/handleBattleEnd';
-
-/**
- * Hook to watch for choice timeout and auto-forfeit
- */
-export function useChoiceTimeout(
-  battleId: string,
-  userId: string,
-  deadlineAt: number,
-  enabled: boolean = true
-) {
-  const timerRef = useRef<NodeJS.Timeout>();
-  
-  useEffect(() => {
-    if (!enabled || !deadlineAt || deadlineAt === 0) return;
-    
-    const remaining = deadlineAt - Date.now();
-    
-    if (remaining <= 0) {
-      handleTimeout(battleId, userId).catch(err => {
-        console.error('Failed to handle overdue timeout:', err);
-      });
-      return;
-    }
-    
-    timerRef.current = setTimeout(() => {
-      handleTimeout(battleId, userId).catch(err => {
-        console.error('Failed to handle timeout:', err);
-      });
-    }, remaining);
-    
-    return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
-    };
-  }, [battleId, userId, deadlineAt, enabled]);
-}
+import { useRef, useCallback } from 'react';
+import { handleForfeit } from '@/lib/multiplayer/handleBattleEnd';
 
 /**
  * Hook to provide forfeit functionality

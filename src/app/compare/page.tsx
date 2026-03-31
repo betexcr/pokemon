@@ -24,42 +24,46 @@ export default function ComparePage() {
   const [highlightedPokemonId, setHighlightedPokemonId] = useState<number | null>(null)
 
   useEffect(() => {
-    loadSelectedPokemon()
-  }, [])
+    let cancelled = false
 
-  const loadSelectedPokemon = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      
-      // Get comparison list from localStorage
-      const savedComparison = localStorage.getItem('pokemon-comparison')
-      if (!savedComparison) {
-        setPokemons([])
-        setLoading(false)
-        return
+    const loadSelectedPokemon = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        
+        const savedComparison = localStorage.getItem('pokemon-comparison')
+        if (!savedComparison) {
+          setPokemons([])
+          setLoading(false)
+          return
+        }
+
+        const parsed = JSON.parse(savedComparison)
+        const comparisonIds: number[] = Array.isArray(parsed)
+          ? parsed.filter((id: unknown): id is number => typeof id === 'number' && Number.isInteger(id))
+          : []
+        if (comparisonIds.length === 0) {
+          setPokemons([])
+          setLoading(false)
+          return
+        }
+
+        const pokemonPromises = comparisonIds.map(id => getPokemon(id))
+        const loadedPokemons = await Promise.all(pokemonPromises)
+        if (cancelled) return
+        setPokemons(loadedPokemons)
+      } catch (err) {
+        if (cancelled) return
+        console.error('Failed to load Pokémon:', err)
+        setError('Failed to load selected Pokémon')
+      } finally {
+        if (!cancelled) setLoading(false)
       }
-
-      const parsed = JSON.parse(savedComparison)
-      const comparisonIds: number[] = Array.isArray(parsed)
-        ? parsed.filter((id: unknown): id is number => typeof id === 'number' && Number.isInteger(id))
-        : []
-      if (comparisonIds.length === 0) {
-        setPokemons([])
-        setLoading(false)
-        return
-      }
-
-      const pokemonPromises = comparisonIds.map(id => getPokemon(id))
-      const loadedPokemons = await Promise.all(pokemonPromises)
-      setPokemons(loadedPokemons)
-    } catch (err) {
-      console.error('Failed to load Pokémon:', err)
-      setError('Failed to load selected Pokémon')
-    } finally {
-      setLoading(false)
     }
-  }
+
+    loadSelectedPokemon()
+    return () => { cancelled = true }
+  }, [])
 
   const removePokemon = (pokemonId: number) => {
     const newPokemons = pokemons.filter(p => p.id !== pokemonId)
@@ -127,7 +131,7 @@ export default function ComparePage() {
 
   if (loading) {
     return (
-      <div className="h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+      <div className="h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-950 dark:to-slate-900 flex items-center justify-center">
         <div className="text-center">
           <img src="/loading.gif" alt="Loading comparison" width={100} height={100} className="mx-auto mb-4" />
           <p className="text-muted">Loading comparison...</p>
@@ -138,12 +142,13 @@ export default function ComparePage() {
 
   if (error) {
     return (
-      <div className="h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+      <div className="h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-950 dark:to-slate-900 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-6">
-          <p className="text-red-500 font-semibold mb-4">{error}</p>
+          <p className="text-red-500 dark:text-red-400 font-semibold mb-4">{error}</p>
           <button
+            type="button"
             onClick={() => loadSelectedPokemon()}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition-colors"
           >
             Try Again
           </button>
@@ -188,6 +193,7 @@ export default function ComparePage() {
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-text dark:text-slate-100">Pokémon Stats Comparison</h3>
             <button
+              type="button"
               onClick={clearAll}
               className="bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-2"
             >
@@ -202,97 +208,29 @@ export default function ComparePage() {
               <thead>
                 <tr className="border-b border-gray-200 dark:border-gray-700">
                   <th className="text-left py-3 px-4 font-semibold text-text dark:text-slate-200">Pokémon</th>
-                  <th 
-                    className="text-center py-3 px-2 font-semibold text-text dark:text-slate-200 cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
-                    onClick={() => handleSort('total')}
-                  >
-                    <div className="flex items-center justify-center gap-1">
-                      Total
-                      {sortBy === 'total' && (
-                        <span className="text-xs">
-                          {sortOrder === 'asc' ? '↑' : '↓'}
-                        </span>
-                      )}
-                    </div>
-                  </th>
-                  <th 
-                    className="text-center py-3 px-2 font-semibold text-text dark:text-slate-200 cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
-                    onClick={() => handleSort('hp')}
-                  >
-                    <div className="flex items-center justify-center gap-1">
-                      HP
-                      {sortBy === 'hp' && (
-                        <span className="text-xs">
-                          {sortOrder === 'asc' ? '↑' : '↓'}
-                        </span>
-                      )}
-                    </div>
-                  </th>
-                  <th 
-                    className="text-center py-3 px-2 font-semibold text-text dark:text-slate-200 cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
-                    onClick={() => handleSort('attack')}
-                  >
-                    <div className="flex items-center justify-center gap-1">
-                      ATK
-                      {sortBy === 'attack' && (
-                        <span className="text-xs">
-                          {sortOrder === 'asc' ? '↑' : '↓'}
-                        </span>
-                      )}
-                    </div>
-                  </th>
-                  <th 
-                    className="text-center py-3 px-2 font-semibold text-text cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                    onClick={() => handleSort('defense')}
-                  >
-                    <div className="flex items-center justify-center gap-1">
-                      DEF
-                      {sortBy === 'defense' && (
-                        <span className="text-xs">
-                          {sortOrder === 'asc' ? '↑' : '↓'}
-                        </span>
-                      )}
-                    </div>
-                  </th>
-                  <th 
-                    className="text-center py-3 px-2 font-semibold text-text cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                    onClick={() => handleSort('special-attack')}
-                  >
-                    <div className="flex items-center justify-center gap-1">
-                      SPA
-                      {sortBy === 'special-attack' && (
-                        <span className="text-xs">
-                          {sortOrder === 'asc' ? '↑' : '↓'}
-                        </span>
-                      )}
-                    </div>
-                  </th>
-                  <th 
-                    className="text-center py-3 px-2 font-semibold text-text cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                    onClick={() => handleSort('special-defense')}
-                  >
-                    <div className="flex items-center justify-center gap-1">
-                      SPD
-                      {sortBy === 'special-defense' && (
-                        <span className="text-xs">
-                          {sortOrder === 'asc' ? '↑' : '↓'}
-                        </span>
-                      )}
-                    </div>
-                  </th>
-                  <th 
-                    className="text-center py-3 px-2 font-semibold text-text cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                    onClick={() => handleSort('speed')}
-                  >
-                    <div className="flex items-center justify-center gap-1">
-                      SPE
-                      {sortBy === 'speed' && (
-                        <span className="text-xs">
-                          {sortOrder === 'asc' ? '↑' : '↓'}
-                        </span>
-                      )}
-                    </div>
-                  </th>
+                  {(['total', 'hp', 'attack', 'defense', 'special-attack', 'special-defense', 'speed'] as const).map((stat) => {
+                    const labels: Record<string, string> = { total: 'Total', hp: 'HP', attack: 'ATK', defense: 'DEF', 'special-attack': 'SPA', 'special-defense': 'SPD', speed: 'SPE' }
+                    return (
+                      <th
+                        key={stat}
+                        className="text-center py-3 px-2 font-semibold text-text dark:text-slate-200 cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+                        onClick={() => handleSort(stat)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort(stat); } }}
+                        aria-sort={sortBy === stat ? (sortOrder === 'asc' ? 'ascending' : 'descending') : undefined}
+                      >
+                        <div className="flex items-center justify-center gap-1">
+                          {labels[stat]}
+                          {sortBy === stat && (
+                            <span className="text-xs">
+                              {sortOrder === 'asc' ? '↑' : '↓'}
+                            </span>
+                          )}
+                        </div>
+                      </th>
+                    )
+                  })}
                   <th className="text-center py-3 px-4 font-semibold text-text">Actions</th>
                 </tr>
               </thead>
@@ -360,6 +298,7 @@ export default function ComparePage() {
                       </td>
                       <td className="text-center py-3 px-4">
                         <button
+                          type="button"
                           onClick={() => removePokemon(pokemon.id)}
                           className="p-2 rounded hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors"
                           aria-label={`Remove ${formatPokemonName(pokemon.name)} from comparison`}
@@ -417,6 +356,7 @@ export default function ComparePage() {
                       </div>
                     </div>
                     <button
+                      type="button"
                       onClick={() => removePokemon(pokemon.id)}
                       className="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors"
                       aria-label={`Remove ${formatPokemonName(pokemon.name)} from comparison`}
@@ -431,81 +371,37 @@ export default function ComparePage() {
                       <div className="text-xs text-muted mb-1">Total</div>
                       <div className="font-mono font-bold text-lg">{total}</div>
                     </div>
-                    <div 
-                      className={`text-center p-3 bg-gray-50 dark:bg-slate-700 rounded-lg cursor-pointer transition-colors ${sortBy === 'hp' ? 'bg-blue-100 dark:bg-blue-900/30' : 'hover:bg-gray-100 dark:hover:bg-slate-600'}`}
-                      onClick={() => handleSort('hp')}
-                    >
-                      <div className="text-xs text-muted mb-1">HP</div>
-                      <div className="font-mono font-semibold">{stats.hp}</div>
-                      {sortBy === 'hp' && (
-                        <div className="text-xs mt-1">
-                          {sortOrder === 'asc' ? '↑' : '↓'}
-                        </div>
-                      )}
-                    </div>
-                    <div 
-                      className={`text-center p-3 bg-gray-50 dark:bg-slate-700 rounded-lg cursor-pointer transition-colors ${sortBy === 'attack' ? 'bg-blue-100 dark:bg-blue-900/30' : 'hover:bg-gray-100 dark:hover:bg-slate-600'}`}
-                      onClick={() => handleSort('attack')}
-                    >
-                      <div className="text-xs text-muted mb-1">ATK</div>
-                      <div className="font-mono font-semibold">{stats.attack}</div>
-                      {sortBy === 'attack' && (
-                        <div className="text-xs mt-1">
-                          {sortOrder === 'asc' ? '↑' : '↓'}
-                        </div>
-                      )}
-                    </div>
-                    <div 
-                      className={`text-center p-3 bg-gray-50 dark:bg-slate-700 rounded-lg cursor-pointer transition-colors ${sortBy === 'defense' ? 'bg-blue-100 dark:bg-blue-900/30' : 'hover:bg-gray-100 dark:hover:bg-slate-600'}`}
-                      onClick={() => handleSort('defense')}
-                    >
-                      <div className="text-xs text-muted mb-1">DEF</div>
-                      <div className="font-mono font-semibold">{stats.defense}</div>
-                      {sortBy === 'defense' && (
-                        <div className="text-xs mt-1">
-                          {sortOrder === 'asc' ? '↑' : '↓'}
-                        </div>
-                      )}
-                    </div>
-                    <div 
-                      className={`text-center p-3 bg-gray-50 dark:bg-slate-700 rounded-lg cursor-pointer transition-colors ${sortBy === 'special-attack' ? 'bg-blue-100 dark:bg-blue-900/30' : 'hover:bg-gray-100 dark:hover:bg-slate-600'}`}
-                      onClick={() => handleSort('special-attack')}
-                    >
-                      <div className="text-xs text-muted mb-1">SPA</div>
-                      <div className="font-mono font-semibold">{stats['special-attack']}</div>
-                      {sortBy === 'special-attack' && (
-                        <div className="text-xs mt-1">
-                          {sortOrder === 'asc' ? '↑' : '↓'}
-                        </div>
-                      )}
-                    </div>
-                    <div 
-                      className={`text-center p-3 bg-gray-50 dark:bg-slate-700 rounded-lg cursor-pointer transition-colors ${sortBy === 'special-defense' ? 'bg-blue-100 dark:bg-blue-900/30' : 'hover:bg-gray-100 dark:hover:bg-slate-600'}`}
-                      onClick={() => handleSort('special-defense')}
-                    >
-                      <div className="text-xs text-muted mb-1">SPD</div>
-                      <div className="font-mono font-semibold">{stats['special-defense']}</div>
-                      {sortBy === 'special-defense' && (
-                        <div className="text-xs mt-1">
-                          {sortOrder === 'asc' ? '↑' : '↓'}
-                        </div>
-                      )}
-                    </div>
-                    <div 
-                      className={`text-center p-3 bg-gray-50 dark:bg-slate-700 rounded-lg cursor-pointer transition-colors ${sortBy === 'speed' ? 'bg-blue-100 dark:bg-blue-900/30' : 'hover:bg-gray-100 dark:hover:bg-slate-600'}`}
-                      onClick={() => handleSort('speed')}
-                    >
-                      <div className="text-xs text-muted mb-1">SPE</div>
-                      <div className="font-mono font-semibold">{stats.speed}</div>
-                      {sortBy === 'speed' && (
-                        <div className="text-xs mt-1">
-                          {sortOrder === 'asc' ? '↑' : '↓'}
-                        </div>
-                      )}
-                    </div>
+                    {([
+                      { key: 'hp' as const, label: 'HP', value: stats.hp },
+                      { key: 'attack' as const, label: 'ATK', value: stats.attack },
+                      { key: 'defense' as const, label: 'DEF', value: stats.defense },
+                      { key: 'special-attack' as const, label: 'SPA', value: stats['special-attack'] },
+                      { key: 'special-defense' as const, label: 'SPD', value: stats['special-defense'] },
+                      { key: 'speed' as const, label: 'SPE', value: stats.speed },
+                    ]).map(({ key, label, value }) => (
+                      <div
+                        key={key}
+                        className={`text-center p-3 bg-gray-50 dark:bg-slate-700 rounded-lg cursor-pointer transition-colors ${sortBy === key ? 'bg-blue-100 dark:bg-blue-900/30' : 'hover:bg-gray-100 dark:hover:bg-slate-600'}`}
+                        onClick={() => handleSort(key)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort(key); } }}
+                      >
+                        <div className="text-xs text-muted mb-1">{label}</div>
+                        <div className="font-mono font-semibold">{value}</div>
+                        {sortBy === key && (
+                          <div className="text-xs mt-1">
+                            {sortOrder === 'asc' ? '↑' : '↓'}
+                          </div>
+                        )}
+                      </div>
+                    ))}
                     <div 
                       className={`text-center p-3 bg-gray-50 dark:bg-slate-700 rounded-lg cursor-pointer transition-colors ${sortBy === 'total' ? 'bg-blue-100 dark:bg-blue-900/30' : 'hover:bg-gray-100 dark:hover:bg-slate-600'}`}
                       onClick={() => handleSort('total')}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('total'); } }}
                     >
                       <div className="text-xs text-muted mb-1">Sort</div>
                       <div className="text-lg">↕️</div>

@@ -3,11 +3,80 @@
 
 import { Pokemon } from '@/types/pokemon'
 import { reportApiError, reportNetworkError, reportDataLoadingError } from '@/lib/errorReporting'
-import { isSpecialForm, getSpecialFormInfo, getBasePokemonId } from '@/lib/specialForms'
+import { getSpecialFormInfo } from '@/lib/specialForms'
 import { browserCache, getCacheKey, CACHE_TTL } from '@/lib/memcached'
 import { normalizePokemonId } from '@/lib/utils'
 import { analyticsManager } from '@/lib/requestAnalytics'
 import { getGenerationExclusiveDexRange } from '@/lib/pokemon/nationalDexByGeneration'
+
+export interface PokemonSpeciesData {
+  id: number
+  name: string
+  order: number
+  gender_rate: number
+  capture_rate: number
+  base_happiness: number
+  is_baby: boolean
+  is_legendary: boolean
+  is_mythical: boolean
+  hatch_counter: number
+  has_gender_differences: boolean
+  forms_switchable: boolean
+  growth_rate: { name: string; url: string }
+  pokedex_numbers: Array<{ entry_number: number; pokedex: { name: string; url: string } }>
+  egg_groups: Array<{ name: string; url: string }>
+  color: { name: string; url: string }
+  shape: { name: string; url: string } | null
+  evolves_from_species: { name: string; url: string } | null
+  evolution_chain: { url: string }
+  habitat: { name: string; url: string } | null
+  generation: { name: string; url: string }
+  names: Array<{ name: string; language: { name: string; url: string } }>
+  flavor_text_entries: Array<{ flavor_text: string; language: { name: string; url: string }; version: { name: string; url: string } }>
+  genera: Array<{ genus: string; language: { name: string; url: string } }>
+  varieties: Array<{ is_default: boolean; pokemon: { name: string; url: string } }>
+  [key: string]: unknown
+}
+
+export interface EvolutionChainData {
+  id: number
+  baby_trigger_item: { name: string; url: string } | null
+  chain: EvolutionChainLink
+  [key: string]: unknown
+}
+
+export interface EvolutionChainLink {
+  is_baby: boolean
+  species: { name: string; url: string }
+  evolution_details: Array<Record<string, unknown>>
+  evolves_to: EvolutionChainLink[]
+}
+
+export interface PokemonTypeData {
+  id: number
+  name: string
+  damage_relations: {
+    no_damage_to: Array<{ name: string; url: string }>
+    half_damage_to: Array<{ name: string; url: string }>
+    double_damage_to: Array<{ name: string; url: string }>
+    no_damage_from: Array<{ name: string; url: string }>
+    half_damage_from: Array<{ name: string; url: string }>
+    double_damage_from: Array<{ name: string; url: string }>
+  }
+  pokemon: Array<{ pokemon: { name: string; url: string }; slot: number }>
+  moves: Array<{ name: string; url: string }>
+  [key: string]: unknown
+}
+
+export interface PokemonAbilityData {
+  id: number
+  name: string
+  is_main_series: boolean
+  effect_entries: Array<{ effect: string; short_effect: string; language: { name: string; url: string } }>
+  flavor_text_entries: Array<{ flavor_text: string; language: { name: string; url: string }; version_group: { name: string; url: string } }>
+  pokemon: Array<{ is_hidden: boolean; slot: number; pokemon: { name: string; url: string } }>
+  [key: string]: unknown
+}
 
 function isClientOffline(): boolean {
   if (typeof window === 'undefined') return false
@@ -105,7 +174,8 @@ async function getMainlinePokemonMaxId(): Promise<number | null> {
 
   mainlinePokemonMaxIdPromise = (async () => {
     try {
-      const total = await getPokemonTotalCount()
+      const data = await fetchFromAPI<{ count: number }>(`${API_BASE_URL}/pokemon-species?limit=1`)
+      const total = data.count
       if (Number.isFinite(total) && total > 0) {
         cachedMainlinePokemonMaxId = total
         return total
@@ -119,6 +189,42 @@ async function getMainlinePokemonMaxId(): Promise<number | null> {
   })()
 
   return mainlinePokemonMaxIdPromise
+}
+
+let allPokemonIdsCache: number[] | null = null
+let allPokemonIdsPromise: Promise<number[]> | null = null
+
+export async function fetchAllPokemonIds(): Promise<number[]> {
+  if (allPokemonIdsCache) return allPokemonIdsCache
+  if (allPokemonIdsPromise) return allPokemonIdsPromise
+
+  allPokemonIdsPromise = (async () => {
+    const cacheKey = getCacheKey('all-pokemon-ids-v2', {})
+    const cached = await getCache(cacheKey)
+    if (cached) {
+      allPokemonIdsCache = cached
+      return cached
+    }
+
+    try {
+      const data = await fetchFromAPI<{ results: Array<{ name: string; url: string }>; count: number }>(`${API_BASE_URL}/pokemon?limit=2000`)
+      const ids = data.results
+        .map(p => parseInt(p.url.split('/').filter(Boolean).pop()!))
+        .filter(id => !isNaN(id))
+        .sort((a, b) => a - b)
+
+      allPokemonIdsCache = ids
+      await setCache(cacheKey, ids, CACHE_TTL.POKEMON_LIST)
+      return ids
+    } catch (error) {
+      console.error('Failed to fetch all Pokemon IDs:', error)
+      return Array.from({ length: 1025 }, (_, i) => i + 1)
+    } finally {
+      allPokemonIdsPromise = null
+    }
+  })()
+
+  return allPokemonIdsPromise
 }
 
 // Circuit breaker for handling 503 errors
@@ -379,12 +485,12 @@ export function getPokemonMainPageImage(id: number): string {
   return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`
 }
 
-export function getPokemonCardImage(id: number): string {
+function getPokemonCardImage(id: number): string {
   // Optimized for card displays
   return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${id}.png`
 }
 
-export function getPokemonShinyImage(id: number): string {
+function getPokemonShinyImage(id: number): string {
   // Shiny variant
   return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/shiny/${id}.png`
 }
@@ -407,12 +513,11 @@ export async function getPokemonList(limit = 100, offset = 0, signal?: AbortSign
 }
 
 export async function getPokemonTotalCount(): Promise<number> {
-  const cacheKey = getCacheKey('pokemon-total-count', {})
+  const cacheKey = getCacheKey('pokemon-total-count-v2', {})
   const cached = await getCache(cacheKey)
   if (cached) return cached
 
-  // Use pokemon-species to get the total count as it's more stable for "valid" pokemon
-  const data = await fetchFromAPI<{ count: number }>(`${API_BASE_URL}/pokemon-species/?limit=1`)
+  const data = await fetchFromAPI<{ count: number }>(`${API_BASE_URL}/pokemon?limit=1`)
   await setCache(cacheKey, data.count, CACHE_TTL.POKEMON_TOTAL_COUNT)
   return data.count
 }
@@ -445,9 +550,8 @@ export async function getAllValidPokemonIds(): Promise<number[]> {
       allPokemonIds.push(...ids)
     }
 
-    // Add special form IDs (10033-10082)
-    const specialFormIds = Array.from({ length: 50 }, (_, i) => 10033 + i)
-    allPokemonIds.push(...specialFormIds)
+    // PokeAPI's paginated /pokemon list already includes alternate form IDs (mega, primal, gmax, etc.)
+    // so no need to append them separately
 
     await setCache(cacheKey, allPokemonIds, CACHE_TTL.POKEMON_LIST)
     return allPokemonIds
@@ -463,7 +567,7 @@ export async function getPokemon(id: number | string, signal?: AbortSignal): Pro
   // Ensure we always use numeric ID for API calls, removing any zero-padding
   const numericId = normalizePokemonId(id)
 
-  if (!isSpecialForm(numericId)) {
+  if (numericId < 10001) {
     const maxMainlinePokemonId = await getMainlinePokemonMaxId()
     if (maxMainlinePokemonId !== null && numericId > maxMainlinePokemonId) {
       throw new Error(`Pokemon with ID ${id} does not exist`)
@@ -478,23 +582,15 @@ export async function getPokemon(id: number | string, signal?: AbortSignal): Pro
     return cached
   }
 
-  // Handle special forms (Mega Evolutions, Primal Reversions)
-  if (isSpecialForm(numericId)) {
+  // Always fetch from PokeAPI directly (including alternate forms like Mega/Primal/Gmax)
+  const url = `${API_BASE_URL}/pokemon/${numericId}/`
+  try {
+    const data = await fetchFromAPI<Pokemon>(url, signal)
+
+    // Augment with special form metadata if available (Japanese names, descriptions)
     const specialFormInfo = getSpecialFormInfo(numericId)
-    if (!specialFormInfo) {
-      throw new Error(`Special form with ID ${id} does not exist`)
-    }
-
-    // Get the base Pokemon data
-    const basePokemon = await getPokemon(specialFormInfo.basePokemonId, signal)
-
-    // Create a modified Pokemon object for the special form
-    const specialFormPokemon: Pokemon = {
-      ...basePokemon,
-      id: numericId,
-      name: specialFormInfo.name,
-      // Add special form metadata
-      special_form: {
+    if (specialFormInfo) {
+      data.special_form = {
         type: specialFormInfo.formType,
         variant: specialFormInfo.variant,
         base_pokemon_id: specialFormInfo.basePokemonId,
@@ -504,20 +600,7 @@ export async function getPokemon(id: number | string, signal?: AbortSignal): Pro
       }
     }
 
-    // Cache the special form Pokemon with longer TTL
-    await setCache(cacheKey, specialFormPokemon, CACHE_TTL.POKEMON_DETAIL * 2)
-    return specialFormPokemon
-  }
-
-  // Always use numeric ID for API calls (no zero-padding)
-  const url = `${API_BASE_URL}/pokemon/${numericId}/`
-  try {
-    
-    const data = await fetchFromAPI<Pokemon>(url, signal)
-
-    // Cache with longer TTL for detail pages (24 hours)
     await setCache(cacheKey, data, CACHE_TTL.POKEMON_DETAIL * 2)
-    
 
     return data
   } catch (error: any) {
@@ -532,28 +615,7 @@ export async function getPokemon(id: number | string, signal?: AbortSignal): Pro
   }
 }
 
-export async function getPokemonById(id: number | string): Promise<Pokemon> {
-  return getPokemon(id)
-}
-
-// Generate special forms Pokemon for the main list
-export async function generateSpecialFormsPokemon(): Promise<Pokemon[]> {
-  const specialFormIds = Array.from({ length: 50 }, (_, i) => 10033 + i)
-  const specialFormsPokemon: Pokemon[] = []
-
-  for (const id of specialFormIds) {
-    try {
-      const pokemon = await getPokemon(id)
-      specialFormsPokemon.push(pokemon)
-    } catch (error) {
-      console.warn(`Failed to load special form Pokemon ${id}:`, error)
-    }
-  }
-
-  return specialFormsPokemon
-}
-
-export async function getPokemonSpecies(id: number | string): Promise<any> {
+export async function getPokemonSpecies(id: number | string): Promise<PokemonSpeciesData> {
   // Ensure we always use numeric ID for API calls, removing any zero-padding
   const numericId = normalizePokemonId(id)
 
@@ -594,7 +656,7 @@ export async function getPokemonSpecies(id: number | string): Promise<any> {
 }
 
 // Evolution chain functions
-export async function getEvolutionChain(id: number | string): Promise<any> {
+export async function getEvolutionChain(id: number | string): Promise<EvolutionChainData> {
   // Ensure we always use numeric ID for API calls, removing any zero-padding
   const numericId = normalizePokemonId(id)
 
@@ -698,7 +760,7 @@ export async function getEvolutionChainNodes(pokemonId: number | string): Promis
 }
 
 // Type functions
-export async function getType(id: number | string): Promise<any> {
+export async function getType(id: number | string): Promise<PokemonTypeData> {
   // For types, we can accept both numeric IDs and string names
   const cacheKey = getCacheKey('type', { id })
   const cached = await getCache(cacheKey)
@@ -712,7 +774,7 @@ export async function getType(id: number | string): Promise<any> {
 }
 
 // Ability functions
-export async function getAbility(id: number | string): Promise<any> {
+export async function getAbility(id: number | string): Promise<PokemonAbilityData> {
   // For abilities, we can accept both numeric IDs and string names
   const cacheKey = getCacheKey('ability', { id })
   const cached = await getCache(cacheKey)
@@ -828,7 +890,7 @@ export async function getPokemonMoves(id: number | string): Promise<Array<{ name
 const MOVE_CACHE_MAX = 200
 const moveMemoryCache = new Map<string, any>()
 
-export async function getMove(id: number | string): Promise<any> {
+async function getMove(id: number | string): Promise<any> {
   const memKey = String(id).toLowerCase()
   const memHit = moveMemoryCache.get(memKey)
   if (memHit) return memHit
@@ -933,17 +995,17 @@ export async function searchPokemonByName(query: string, signal?: AbortSignal): 
       return await searchFromLocalIndex(trimmedQuery)
     }
 
-    // Check for exact ID match in the valid main Pokédex range - prioritize exact matches
     if (/^\d+$/.test(trimmedQuery)) {
       const id = parseInt(trimmedQuery)
       const maxMainlinePokemonId = await getMainlinePokemonMaxId()
-      if (id >= 1 && (maxMainlinePokemonId === null || id <= maxMainlinePokemonId)) {
+      const isValidMainline = id >= 1 && (maxMainlinePokemonId === null || id <= maxMainlinePokemonId)
+      const isValidForm = id >= 10001
+      if (isValidMainline || isValidForm) {
         try {
           const exactMatch = await getPokemon(id)
           await setCache(cacheKey, [exactMatch], CACHE_TTL.POKEMON_LIST)
           return [exactMatch]
         } catch (error) {
-          // If exact ID doesn't exist, fall through to partial matching
           console.debug(`Exact ID match failed for "${trimmedQuery}":`, error instanceof Error ? error.message : 'Unknown error')
         }
       }
@@ -1260,110 +1322,49 @@ export function generateAllPokemonSkeletons(count: number): Pokemon[] {
   }))
 }
 
-export async function getPokemonSkeletonsWithPagination(limit = 100, offset = 0): Promise<Pokemon[]> {
-  const cacheKey = getCacheKey('pokemon-skeletons', { limit, offset })
-  const cached = await getCache(cacheKey)
-  if (cached) return cached
-
-  try {
-    const pokemonList = await getPokemonList(limit, offset)
-    const refs = (pokemonList.results as { name: string; url: string }[]) || []
-
-    if (refs.length === 0) return []
-
-    const skeletonPokemon: Pokemon[] = refs.map((pokemonRef) => {
-      const url = pokemonRef.url || ''
-      const pokemonId = url.split('/').slice(-2)[0]
-      const id = parseInt(pokemonId)
-
-      return {
-        id,
-        name: pokemonRef.name,
-        base_experience: 0,
-        height: 0,
-        weight: 0,
-        is_default: true,
-        order: id,
-        abilities: [],
-        forms: [],
-        game_indices: [],
-        held_items: [],
-        location_area_encounters: '',
-        moves: [],
-        sprites: {
-          front_default: getPokemonFallbackImage(id),
-          front_shiny: getPokemonShinyImage(id),
+export function generatePokemonSkeletonsForIds(ids: number[]): Pokemon[] {
+  return ids.map(id => ({
+    id,
+    name: `pokemon-${id}`,
+    base_experience: 0,
+    height: 0,
+    weight: 0,
+    is_default: true,
+    order: id,
+    abilities: [],
+    forms: [],
+    game_indices: [],
+    held_items: [],
+    location_area_encounters: '',
+    moves: [],
+    sprites: {
+      front_default: getPokemonFallbackImage(id),
+      front_shiny: getPokemonShinyImage(id),
+      front_female: null,
+      front_shiny_female: null,
+      back_default: null,
+      back_shiny: null,
+      back_female: null,
+      back_shiny_female: null,
+      other: {
+        dream_world: { front_default: getPokemonDreamWorldImage(id), front_female: null },
+        home: {
+          front_default: getPokemonCardImage(id),
           front_female: null,
-          front_shiny_female: null,
-          back_default: null,
-          back_shiny: null,
-          back_female: null,
-          back_shiny_female: null,
-          other: {
-            dream_world: { front_default: getPokemonDreamWorldImage(id), front_female: null },
-            home: {
-              front_default: getPokemonCardImage(id),
-              front_female: null,
-              front_shiny: getPokemonShinyImage(id),
-              front_shiny_female: null
-            },
-            'official-artwork': {
-              front_default: getPokemonMainPageImage(id),
-              front_shiny: getPokemonShinyImage(id),
-            },
-          },
+          front_shiny: getPokemonShinyImage(id),
+          front_shiny_female: null
         },
-        stats: [],
-        types: [],
-        species: { name: '', url: '' },
-        evolution_chain: { name: '', url: '' } as any,
-      }
-    })
-
-    await setCache(cacheKey, skeletonPokemon, CACHE_TTL.POKEMON_SKELETONS)
-    return skeletonPokemon
-  } catch (error) {
-    console.error('Error fetching skeleton Pokemon:', error)
-    reportDataLoadingError(`Failed to load skeleton Pokémon data`, {
-      error: error instanceof Error ? error.message : String(error)
-    })
-    return []
-  }
-}
-
-export async function hydratePokemonSkeletons(
-  skeletonPokemon: Pokemon[],
-  onProgress?: (loaded: number, total: number) => void
-): Promise<Pokemon[]> {
-  const hydratedPokemon: Pokemon[] = []
-  const batchSize = 5
-  let loaded = 0
-
-  for (let i = 0; i < skeletonPokemon.length; i += batchSize) {
-    const batch = skeletonPokemon.slice(i, i + batchSize)
-
-    const batchPromises = batch.map(async (skeleton) => {
-      try {
-        const fullPokemon = await getPokemon(skeleton.id)
-        return fullPokemon
-      } catch (error) {
-        console.warn(`Failed to hydrate Pokemon ${skeleton.id}:`, error)
-        return skeleton
-      }
-    })
-
-    const batchResults = await Promise.all(batchPromises)
-    hydratedPokemon.push(...batchResults)
-
-    loaded += batch.length
-    onProgress?.(loaded, skeletonPokemon.length)
-
-    if (i + batchSize < skeletonPokemon.length) {
-      await new Promise(resolve => setTimeout(resolve, 100))
-    }
-  }
-
-  return hydratedPokemon
+        'official-artwork': {
+          front_default: getPokemonMainPageImage(id),
+          front_shiny: getPokemonShinyImage(id),
+        },
+      },
+    },
+    stats: [],
+    types: [],
+    species: { name: '', url: '' },
+    evolution_chain: { name: '', url: '' } as any,
+  }))
 }
 
 // Page skeleton functions

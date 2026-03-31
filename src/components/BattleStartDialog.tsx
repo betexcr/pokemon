@@ -176,15 +176,18 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart, room
     }
     
     // Poll readiness every 500ms and start as soon as it's ready (only for host)
+    let cancelled = false;
     const readinessInterval = setInterval(async () => {
-      if (__BATTLE_START_STARTED__) return;
+      if (cancelled || __BATTLE_START_STARTED__) return;
       try {
         const ready = await checkReadiness(true);
+        if (cancelled) return;
         if (ready && !__BATTLE_START_STARTED__ && isHost) {
         __BATTLE_START_STARTED__ = true;
         clearInterval(readinessInterval);
         try {
           await onBattleStartRef.current();
+          if (cancelled) return;
           onCloseRef.current();
         } catch (error) {
           console.error('Failed to start battle:', error);
@@ -194,6 +197,7 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart, room
         __BATTLE_START_STARTED__ = true;
         clearInterval(readinessInterval);
         try {
+          if (cancelled) return;
           onCloseRef.current();
         } catch (error) {
           console.error('Guest failed to navigate to battle:', error);
@@ -205,9 +209,6 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart, room
       }
     }, 500);
 
-    // Progress bar will be updated by checkReadiness function
-    // No need for timer-based progress animation
-
     // Loading messages rotation
     const messageInterval = setInterval(() => {
       setCurrentMessage((prev) => {
@@ -218,14 +219,14 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart, room
         }
         return next;
       });
-    }, 400); // Change message every 400ms
+    }, 400);
 
     // Cleanup
     return () => {
+      cancelled = true;
       clearInterval(readinessInterval);
       clearInterval(messageInterval);
       if (timeout) clearTimeout(timeout);
-      // If dialog closes without starting, allow future starts
       if (!readinessStatus.isReady) {
         __BATTLE_START_STARTED__ = false;
       }
@@ -314,14 +315,14 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart, room
       >
       {/* Modal Content */}
       <div 
-        className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden z-[1000000] mx-auto transform transition-all duration-300 ease-out"
+        className="relative w-full max-w-2xl bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden z-[1000000] mx-auto transform transition-all duration-300 ease-out"
         style={{
           animation: isOpen ? 'slideInUp 0.3s ease-out' : 'slideOutDown 0.3s ease-in',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1)'
         }}
       >
         {/* Hero GIF */}
-        <div className="w-full overflow-hidden rounded-t-2xl bg-gradient-to-b from-blue-100 to-blue-200">
+        <div className="w-full overflow-hidden rounded-t-2xl bg-gradient-to-b from-blue-100 to-blue-200 dark:from-gray-800 dark:to-gray-900">
           <div className="relative w-full h-48 flex items-center justify-center">
             <Image
               src="/gen1/battle_start.gif"
@@ -340,7 +341,7 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart, room
           {/* Title */}
           <div className="text-center mb-6">
             <h2 
-              className="text-3xl font-bold text-gray-900 mb-2"
+              className="text-3xl font-bold text-gray-900 dark:text-gray-50 mb-2"
               style={{ 
                 fontFamily: 'Pocket Monk, monospace',
                 textShadow: '2px 2px 0px #000',
@@ -349,7 +350,7 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart, room
             >
               BATTLE STARTING!
             </h2>
-            <p className="text-gray-600 text-sm">
+            <p className="text-gray-600 dark:text-gray-300 text-sm">
               Prepare for an epic Pokemon battle
             </p>
           </div>
@@ -371,7 +372,7 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart, room
           {/* Loading Message */}
           <div className="text-center mb-6">
             <p 
-              className="text-lg font-semibold text-gray-700 min-h-[1.5rem]"
+              className="text-lg font-semibold text-gray-700 dark:text-gray-200 min-h-[1.5rem]"
               style={{ 
                 fontFamily: 'Pocket Monk, monospace',
                 textShadow: '1px 1px 0px #000',
@@ -391,7 +392,7 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart, room
               <div className="mt-2 text-sm">
                 {readinessStatus.isReady ? (
                   <span 
-                    className="text-green-600 font-semibold"
+                    className="text-green-600 dark:text-green-400 font-semibold"
                     style={{ 
                       fontFamily: 'Pocket Monk, monospace',
                       textShadow: '1px 1px 0px #000',
@@ -403,7 +404,7 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart, room
                 ) : (
                   <div>
                     <span 
-                      className="text-red-600 font-semibold"
+                      className="text-red-600 dark:text-red-400 font-semibold"
                       style={{ 
                         fontFamily: 'Pocket Monk, monospace',
                         textShadow: '1px 1px 0px #000',
@@ -413,7 +414,7 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart, room
                       ❌ NOT READY
                     </span>
                     {readinessStatus.errors.length > 0 && (
-                      <div className="mt-1 text-xs text-red-500">
+                      <div className="mt-1 text-xs text-red-500 dark:text-red-400">
                         <div className="font-semibold">Issues found:</div>
                         {readinessStatus.errors.map((error, index) => (
                           <div key={index} className="ml-2">• {error}</div>
@@ -448,7 +449,7 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart, room
           <div className="mb-6">
             <div className="flex items-center justify-between mb-2">
               <span 
-                className="text-sm font-semibold text-gray-700"
+                className="text-sm font-semibold text-gray-700 dark:text-gray-200"
                 style={{ 
                   fontFamily: 'Pocket Monk, monospace',
                   textShadow: '1px 1px 0px #000',
@@ -458,7 +459,7 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart, room
                 BATTLE LOADING
               </span>
               <span 
-                className="text-sm font-semibold text-gray-700"
+                className="text-sm font-semibold text-gray-700 dark:text-gray-200"
                 style={{ 
                   fontFamily: 'Pocket Monk, monospace',
                   textShadow: '1px 1px 0px #000',
@@ -483,7 +484,7 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart, room
                   className={`w-3 h-3 rounded-full transition-all duration-300 ${
                     progressSteps[step.key as keyof typeof progressSteps] 
                       ? step.color 
-                      : 'bg-gray-300'
+                      : 'bg-gray-300 dark:bg-gray-600'
                   }`}
                   style={{
                     imageRendering: 'pixelated',
@@ -500,7 +501,7 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart, room
             <div className="relative">
               {/* Background */}
               <div 
-                className="w-full h-8 border-2 border-gray-800 bg-gray-300"
+                className="w-full h-8 border-2 border-gray-800 bg-gray-300 dark:bg-gray-700"
                 style={{
                   imageRendering: 'pixelated'
                 }}
@@ -565,7 +566,7 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart, room
               <div
                 key={index}
                 className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                  progress > (index + 1) * 25 ? 'bg-poke-yellow' : 'bg-gray-300'
+                  progress > (index + 1) * 25 ? 'bg-poke-yellow' : 'bg-gray-300 dark:bg-gray-600'
                 }`}
                 style={{
                   imageRendering: 'pixelated',
@@ -578,7 +579,7 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart, room
           {/* Battle preparation text */}
           <div className="text-center">
             <p 
-              className="text-sm text-gray-600"
+              className="text-sm text-gray-600 dark:text-gray-400"
               style={{ 
                 fontFamily: 'Pocket Monk, monospace',
                 textShadow: '1px 1px 0px #000',

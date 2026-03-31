@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { HelpCircle, X, ArrowRight, Star, Heart, Zap, Sparkles } from 'lucide-react'
+import { HelpCircle, X, Sparkles } from 'lucide-react'
 
 interface ContestHelpGuideProps {
   currentRound?: 'intro' | 'talent' | 'results'
@@ -94,9 +94,12 @@ export default function ContestHelpGuide({ currentRound, selectedCategory }: Con
     <>
       {/* Help Button */}
       <button
-        onClick={() => setIsOpen(true)}
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
         className="fixed top-20 right-4 z-40 bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110"
         title="Open Help Guide"
+        aria-label="Toggle help guide"
+        aria-expanded={isOpen}
       >
         <HelpCircle className="w-6 h-6" />
       </button>
@@ -111,8 +114,10 @@ export default function ContestHelpGuide({ currentRound, selectedCategory }: Con
                 Contest Help Guide
               </h2>
               <button
+                type="button"
                 onClick={() => setIsOpen(false)}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+                aria-label="Close help guide"
               >
                 <X className="w-6 h-6" />
               </button>
@@ -204,6 +209,7 @@ export default function ContestHelpGuide({ currentRound, selectedCategory }: Con
                 <span>Need more help? Check the fun facts below!</span>
               </div>
               <button
+                type="button"
                 onClick={() => setIsOpen(false)}
                 className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-colors"
               >

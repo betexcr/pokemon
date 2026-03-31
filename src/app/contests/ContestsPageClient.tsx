@@ -17,7 +17,7 @@ import { PokeblockTooltip, MoveTooltip, ExciteMeterTooltip, CategoryTooltip } fr
 import ContestPokemonDisplay from '@/components/contests/ContestPokemonDisplay'
 import PokemonSelector from '@/components/PokemonSelector'
 import { contestData } from '@/data/contestData'
-import { Heart, Star, Sparkles, Trophy, Ribbon, Users } from 'lucide-react'
+import { Heart, Star, Trophy, Users } from 'lucide-react'
 import { Pokemon } from '@/types/pokemon'
 import { CONTEST_MOVES, checkCombo, ContestMoveData } from '@/data/contestMoves'
 

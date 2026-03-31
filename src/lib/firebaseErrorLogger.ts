@@ -375,7 +375,3 @@ export const logPermissionError = (
   context: Record<string, any> = {}
 ) => firebaseErrorLogger.logPermissionError(error, permissionDetails, context);
 
-export const getFirebaseErrorSummary = () => firebaseErrorLogger.getErrorSummary();
-
-export const exportFirebaseErrorLogs = () => firebaseErrorLogger.exportLogs();
-

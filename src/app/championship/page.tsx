@@ -100,6 +100,7 @@ function ChampionshipHubPage() {
   useEffect(() => {
     if (!user) { setLoading(false); return; }
 
+    let cancelled = false;
     async function load() {
       try {
         setLoadError(null);
@@ -107,16 +108,19 @@ function ChampionshipHubPage() {
           championshipService.getOpenChampionships(),
           championshipService.getUserChampionships(user!.uid),
         ]);
+        if (cancelled) return;
         setOpenChampionships(open);
         setMyChampionships(mine);
       } catch (err) {
+        if (cancelled) return;
         console.error('Failed to load championships:', err);
         setLoadError('Failed to load championships. Please try again.');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
     load();
+    return () => { cancelled = true; };
   }, [user]);
 
   const handleCreate = async () => {
@@ -151,7 +155,6 @@ function ChampionshipHubPage() {
         backLink="/"
         backLabel="Back to PokéDex"
         showToolbar={true}
-        showThemeToggle={false}
         iconKey="championship"
         showIcon={true}
       />
@@ -534,15 +537,19 @@ function ChampionshipCard({
   const isJoined = c.participants.some((p) => p.uid === currentUserId);
 
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
-      className="w-full text-left border border-border rounded-lg p-4 hover:shadow-md transition-shadow bg-surface"
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
+      className="w-full text-left border border-border rounded-lg p-4 hover:shadow-md transition-shadow bg-surface cursor-pointer"
     >
       <div className="flex items-center justify-between mb-2">
         <h3 className="font-semibold text-text truncate mr-2">{c.name}</h3>
         <div className="flex items-center gap-2 flex-shrink-0">
           {isHost && onDelete && c.status !== 'in_progress' && (
             <button
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 onDelete();
@@ -589,7 +596,7 @@ function ChampionshipCard({
           <Crown className="w-3.5 h-3.5" /> Champion: {c.winnerName}
         </div>
       )}
-    </button>
+    </div>
   );
 }
 

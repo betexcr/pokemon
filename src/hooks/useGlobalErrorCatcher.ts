@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useCallback } from 'react'
+import { useEffect, useCallback, useRef } from 'react'
 import { useErrorReporter } from '@/contexts/ErrorContext'
 
 interface GlobalErrorCatcherOptions {
@@ -19,11 +19,13 @@ export function useGlobalErrorCatcher(options: GlobalErrorCatcherOptions = {}) {
   } = options
 
   const { reportError, reportApiError, reportNetworkError, reportDataLoadingError } = useErrorReporter()
+  const pendingTimers = useRef(new Set<ReturnType<typeof setTimeout>>())
 
   // Capture console errors
   useEffect(() => {
     if (!enableConsoleCapture) return
 
+    const timers = pendingTimers.current
     const originalError = console.error
     const originalWarn = console.warn
 
@@ -31,7 +33,8 @@ export function useGlobalErrorCatcher(options: GlobalErrorCatcherOptions = {}) {
       originalError.apply(console, args)
       
       // Defer error reporting to avoid setState during render
-      setTimeout(() => {
+      const id = setTimeout(() => {
+        timers.delete(id)
         // Try to extract meaningful error information
         const errorMessage = args.find(arg => 
           typeof arg === 'string' || 
@@ -71,21 +74,20 @@ export function useGlobalErrorCatcher(options: GlobalErrorCatcherOptions = {}) {
           })
         }
       }, 0)
+      timers.add(id)
     }
 
     console.warn = (...args) => {
       originalWarn.apply(console, args)
       
-      // Defer error reporting to avoid setState during render
-      setTimeout(() => {
+      const warnId = setTimeout(() => {
+        timers.delete(warnId)
         const warningMessage = args.find(arg => typeof arg === 'string')
         if (warningMessage && warningMessage.includes('Pokemon')) {
-          // Skip reporting deduplication warnings as they're not actual errors
           if (warningMessage.includes('Duplicate Pokemon found')) {
             return
           }
           
-          // Only report warnings that indicate actual data loading problems
           if (warningMessage.includes('failed to load') || 
               warningMessage.includes('loading error') ||
               warningMessage.includes('data error') ||
@@ -96,11 +98,14 @@ export function useGlobalErrorCatcher(options: GlobalErrorCatcherOptions = {}) {
           }
         }
       }, 0)
+      timers.add(warnId)
     }
 
     return () => {
       console.error = originalError
       console.warn = originalWarn
+      timers.forEach(id => clearTimeout(id))
+      timers.clear()
     }
   }, [enableConsoleCapture, reportError])
 
@@ -108,9 +113,11 @@ export function useGlobalErrorCatcher(options: GlobalErrorCatcherOptions = {}) {
   useEffect(() => {
     if (!enableUnhandledRejection) return
 
+    const pendingTimers = new Set<ReturnType<typeof setTimeout>>()
+
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-      // Defer error reporting to avoid setState during render
-      setTimeout(() => {
+      const id = setTimeout(() => {
+        pendingTimers.delete(id)
         const error = event.reason
         let message = 'Unhandled promise rejection'
         let type: 'data_loading' | 'api_error' | 'network_error' | 'validation_error' | 'unknown' = 'unknown'
@@ -138,22 +145,26 @@ export function useGlobalErrorCatcher(options: GlobalErrorCatcherOptions = {}) {
           data: error instanceof Error ? error.stack : undefined
         })
       }, 0)
+      pendingTimers.add(id)
     }
 
     window.addEventListener('unhandledrejection', handleUnhandledRejection)
-    return () => window.removeEventListener('unhandledrejection', handleUnhandledRejection)
+    return () => {
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection)
+      pendingTimers.forEach(id => clearTimeout(id))
+    }
   }, [enableUnhandledRejection, reportError])
 
   // Capture network errors via fetch interception
   useEffect(() => {
     if (!enableNetworkErrorCapture) return
 
+    const pendingTimers = new Set<ReturnType<typeof setTimeout>>()
     const originalFetch = window.fetch
     window.fetch = async (...args) => {
       try {
         const response = await originalFetch(...args)
         
-        // Check for HTTP error status codes
         if (!response.ok) {
           const url = typeof args[0] === 'string' ? args[0] : (args[0] as Request).url
           const isPokemonApi = url.includes('pokeapi.co') || url.includes('pokemon')
@@ -163,7 +174,8 @@ export function useGlobalErrorCatcher(options: GlobalErrorCatcherOptions = {}) {
               return response
             }
             
-            setTimeout(() => {
+            const id = setTimeout(() => {
+              pendingTimers.delete(id)
               reportApiError(
                 `API request failed: ${response.status} ${response.statusText}`,
                 {
@@ -172,6 +184,7 @@ export function useGlobalErrorCatcher(options: GlobalErrorCatcherOptions = {}) {
                 }
               )
             }, 0)
+            pendingTimers.add(id)
           }
         }
         
@@ -181,8 +194,8 @@ export function useGlobalErrorCatcher(options: GlobalErrorCatcherOptions = {}) {
         const isPokemonApi = url.includes('pokeapi.co') || url.includes('pokemon')
         
         if (isPokemonApi) {
-          // Defer error reporting to avoid setState during render
-          setTimeout(() => {
+          const id = setTimeout(() => {
+            pendingTimers.delete(id)
             reportNetworkError(
               `Network request failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
               {
@@ -191,6 +204,7 @@ export function useGlobalErrorCatcher(options: GlobalErrorCatcherOptions = {}) {
               }
             )
           }, 0)
+          pendingTimers.add(id)
         }
         
         throw error
@@ -199,6 +213,7 @@ export function useGlobalErrorCatcher(options: GlobalErrorCatcherOptions = {}) {
 
     return () => {
       window.fetch = originalFetch
+      pendingTimers.forEach(id => clearTimeout(id))
     }
   }, [enableNetworkErrorCapture, reportApiError, reportNetworkError])
 

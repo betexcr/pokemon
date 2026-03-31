@@ -96,6 +96,7 @@ export default function MatchCard({
 
       {canBattle && onStartBattle && (
         <button
+          type="button"
           onClick={() => onStartBattle(match)}
           className="mt-2.5 w-full bg-yellow-600 hover:bg-yellow-700 text-white py-1.5 rounded-md text-sm font-medium transition-colors flex items-center justify-center gap-1.5"
         >

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Heart, Star, Sparkles, Zap, Frown, Smile } from 'lucide-react'
 
 interface ContestMascotProps {
@@ -27,32 +27,36 @@ export default function ContestMascot({
   const [currentMood, setCurrentMood] = useState<'neutral' | 'happy' | 'excited' | 'bored' | 'spectacular'>('neutral')
   const [showReaction, setShowReaction] = useState(false)
   const [reactionText, setReactionText] = useState('')
+  const reactionTimerRef = useRef<ReturnType<typeof setTimeout>>()
 
-  // Determine mascot mood based on game state
   useEffect(() => {
+    if (reactionTimerRef.current) clearTimeout(reactionTimerRef.current)
+
     if (isSpectacular) {
       setCurrentMood('spectacular')
       setReactionText('🎆 SPECTACULAR! 🎆')
       setShowReaction(true)
-      setTimeout(() => setShowReaction(false), 3000)
+      reactionTimerRef.current = setTimeout(() => setShowReaction(false), 3000)
     } else if (isRepeatedMove) {
       setCurrentMood('bored')
       setReactionText('😴 The audience is getting bored...')
       setShowReaction(true)
-      setTimeout(() => setShowReaction(false), 2000)
+      reactionTimerRef.current = setTimeout(() => setShowReaction(false), 2000)
     } else if (exciteMeter >= 75) {
       setCurrentMood('excited')
       setReactionText('⭐ Almost spectacular! ⭐')
       setShowReaction(true)
-      setTimeout(() => setShowReaction(false), 2000)
+      reactionTimerRef.current = setTimeout(() => setShowReaction(false), 2000)
     } else if (hearts > 0 || stars > 0) {
       setCurrentMood('happy')
       setReactionText('✨ Great performance! ✨')
       setShowReaction(true)
-      setTimeout(() => setShowReaction(false), 1500)
+      reactionTimerRef.current = setTimeout(() => setShowReaction(false), 1500)
     } else {
       setCurrentMood('neutral')
     }
+
+    return () => { if (reactionTimerRef.current) clearTimeout(reactionTimerRef.current) }
   }, [isSpectacular, isRepeatedMove, exciteMeter, hearts, stars])
 
   const getMascotEmoji = () => {

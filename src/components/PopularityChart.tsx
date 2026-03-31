@@ -228,7 +228,7 @@ export function PopularityChart({ pokemon, activeRegion }: Props) {
             {pokemon.length === 1 ? (
               <img
                 src={getSpriteUrl(pokemon[0])}
-                alt=""
+                alt={pokemon[0]}
                 width={48}
                 height={48}
                 className="h-12 w-12"
@@ -273,4 +273,3 @@ function clampTooltipPosition(x: number, width: number) {
   return x
 }
 
-export default PopularityChart

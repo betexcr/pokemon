@@ -56,32 +56,3 @@ export function getCachedMove(idOrName: number | string): CompiledMove | undefin
   return moveCache.get(key);
 }
 
-export function clearMoveCache(): void {
-  moveCache.clear();
-}
-
-export function getCachedMoveCount(): number {
-  return moveCache.size;
-}
-
-// Preload common moves for better performance
-export async function preloadCommonMoves(): Promise<void> {
-  const commonMoves = [
-    'tackle', 'scratch', 'growl', 'leer', 'smokescreen', 'thunderbolt', 'flamethrower',
-    'ice-beam', 'surf', 'earthquake', 'psychic', 'shadow-ball', 'dragon-pulse',
-    'dark-pulse', 'flash-cannon', 'dazzling-gleam', 'close-combat', 'stone-edge',
-    'iron-head', 'play-rough', 'sludge-bomb', 'energy-ball', 'thunder', 'fire-blast',
-    'blizzard', 'hydro-pump', 'solar-beam', 'hyper-beam', 'giga-impact',
-    'air-slash', 'skull-bash'
-  ];
-  
-  
-  const promises = commonMoves.map(move => 
-    getMove(move).catch(err => {
-      console.warn(`Failed to preload move ${move}:`, err);
-    })
-  );
-  
-  await Promise.allSettled(promises);
-  
-}

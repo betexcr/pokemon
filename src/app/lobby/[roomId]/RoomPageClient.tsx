@@ -239,30 +239,34 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
   }
 
   useEffect(() => {
+    let cancelled = false
     let unsubscribe: (() => void) | undefined
 
     const loadRoom = async () => {
       try {
         setLoading(true)
         const initial = await roomService.getRoom(roomId)
+        if (cancelled) return
         if (initial) {
           setRoom(initial)
         }
         unsubscribe = roomService.onRoomChange(roomId, (nextRoom) => {
-          setRoom(nextRoom)
+          if (!cancelled) setRoom(nextRoom)
         })
         setError(null)
       } catch (err) {
+        if (cancelled) return
         console.error('Failed to load room', err)
         setError('Failed to load battle room. Please try again later.')
       } finally {
-        setLoading(false)
+        if (!cancelled) setLoading(false)
       }
     }
 
     loadRoom()
 
     return () => {
+      cancelled = true
       if (unsubscribe) unsubscribe()
     }
   }, [roomId])
@@ -500,6 +504,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
           <p className="text-lg font-semibold">{error || 'Battle room not found.'}</p>
           <button
+            type="button"
             onClick={() => router.push('/lobby')}
             className="px-4 py-2 bg-poke-blue text-white rounded-lg shadow hover:bg-poke-blue/90"
           >
@@ -517,6 +522,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
       <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
         <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         <button
+          type="button"
           onClick={() => router.push('/lobby')}
           className="text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
@@ -589,6 +595,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
           <div className="flex flex-wrap gap-3">
             {(isHost || isGuest) && (
               <button
+                type="button"
                 onClick={handleReadyToggle}
                 disabled={busy}
                 className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
@@ -603,6 +610,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
             )}
 
             <button
+              type="button"
               onClick={handleLeaveRoom}
               disabled={busy}
               className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors bg-muted hover:bg-muted/80 ${busy ? 'opacity-60 cursor-not-allowed' : ''}`}
@@ -612,6 +620,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
 
             {room.battleId && (
               <button
+                type="button"
                 onClick={goToBattle}
                 className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors bg-green-600 text-white hover:bg-green-700"
               >
@@ -628,6 +637,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
               </p>
               <div className="flex flex-wrap gap-3">
                 <button
+                  type="button"
                   onClick={handleStartBattle}
                   disabled={!bothReady || busy}
                   className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
@@ -638,6 +648,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
                   Start Battle
                 </button>
                 <button
+                  type="button"
                   onClick={handleDeleteRoom}
                   disabled={busy}
                   className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors bg-red-600 text-white hover:bg-red-700 ${busy ? 'opacity-60 cursor-not-allowed' : ''}`}

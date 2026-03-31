@@ -5,14 +5,11 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useRef } from 'react'
 import { triggerViewTransition, TransitionType } from './ViewTransitions'
 
-interface TransitionLinkProps {
+interface TransitionLinkProps extends Omit<React.ComponentProps<typeof Link>, 'onClick' | 'href'> {
   href: string
   children: React.ReactNode
   transitionType?: TransitionType
-  className?: string
   onClick?: () => void
-  prefetch?: boolean
-  [key: string]: any
 }
 
 export default function TransitionLink({
@@ -78,77 +75,11 @@ export default function TransitionLink({
   )
 }
 
-// Specialized transition link components for different page types
-export function PokeballLink({ href, children, className, ...props }: Omit<TransitionLinkProps, 'transitionType'>) {
-  return (
-    <TransitionLink
-      href={href}
-      transitionType="pokeball"
-      className={className}
-      {...props}
-    >
-      {children}
-    </TransitionLink>
-  )
-}
-
-export function BattleLink({ href, children, className, ...props }: Omit<TransitionLinkProps, 'transitionType'>) {
-  return (
-    <TransitionLink
-      href={href}
-      transitionType="battle-flash"
-      className={className}
-      {...props}
-    >
-      {children}
-    </TransitionLink>
-  )
-}
-
 export function PokedexLink({ href, children, className, ...props }: Omit<TransitionLinkProps, 'transitionType'>) {
   return (
     <TransitionLink
       href={href}
       transitionType="pokedex-swipe"
-      className={className}
-      {...props}
-    >
-      {children}
-    </TransitionLink>
-  )
-}
-
-export function TileLink({ href, children, className, ...props }: Omit<TransitionLinkProps, 'transitionType'>) {
-  return (
-    <TransitionLink
-      href={href}
-      transitionType="tile-flip"
-      className={className}
-      {...props}
-    >
-      {children}
-    </TransitionLink>
-  )
-}
-
-export function TrainerCardLink({ href, children, className, ...props }: Omit<TransitionLinkProps, 'transitionType'>) {
-  return (
-    <TransitionLink
-      href={href}
-      transitionType="trainer-card"
-      className={className}
-      {...props}
-    >
-      {children}
-    </TransitionLink>
-  )
-}
-
-export function EnergyAuraLink({ href, children, className, ...props }: Omit<TransitionLinkProps, 'transitionType'>) {
-  return (
-    <TransitionLink
-      href={href}
-      transitionType="energy-aura"
       className={className}
       {...props}
     >

@@ -37,39 +37,19 @@ export function usePreloadAroundId(pokemonId: number, range = 5) {
   useEffect(() => {
     if (!pokemonId || typeof window === 'undefined') return
 
+    let cancelled = false
     const preloadAround = async () => {
       try {
         await sharedPokemonCache.preloadAroundId(pokemonId, range)
       } catch (error) {
+        if (cancelled) return
         console.warn(`Failed to preload Pokemon around ID ${pokemonId}:`, error)
       }
     }
 
-    // Preload after component mounts
     preloadAround()
+    return () => { cancelled = true }
   }, [pokemonId, range])
 }
 
-/**
- * Hook for preloading visible Pokemon in a list
- * Useful for main dex page
- */
-export function usePreloadVisiblePokemon(visibleIds: number[]) {
-  useEffect(() => {
-    if (!visibleIds.length || typeof window === 'undefined') return
-
-    const preloadVisible = async () => {
-      try {
-        await sharedPokemonCache.preloadPokemon(visibleIds, 6)
-      } catch (error) {
-        console.warn('Failed to preload visible Pokemon:', error)
-      }
-    }
-
-    // Debounce preloading to avoid excessive calls
-    const timeoutId = setTimeout(preloadVisible, 500)
-
-    return () => clearTimeout(timeoutId)
-  }, [visibleIds])
-}
 

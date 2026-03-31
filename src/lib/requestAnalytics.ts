@@ -3,7 +3,7 @@
  * Tracks request patterns, timing, and performance metrics for debugging and optimization
  */
 
-export interface RequestAnalytics {
+interface RequestAnalytics {
   totalRequests: number;
   completedRequests: number;
   cancelledRequests: number;
@@ -168,5 +168,3 @@ class RequestAnalyticsManager {
 
 // Global singleton instance
 export const analyticsManager = new RequestAnalyticsManager(process.env.NODE_ENV === 'development');
-
-export default analyticsManager;
