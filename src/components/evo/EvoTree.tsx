@@ -38,7 +38,7 @@ export default function EvoTree({ data, filters }: Props) {
 
   // Track which filter combo the current families were fetched for so we know
   // when a client-side fetch is needed and can ignore stale server re-renders.
-  const fetchedFilterKey = useRef<string>('1_');
+  const fetchedFilterKey = useRef<string>('_');
   const mountedRef = useRef(true);
   useEffect(() => { return () => { mountedRef.current = false; }; }, []);
 

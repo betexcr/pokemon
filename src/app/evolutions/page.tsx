@@ -27,7 +27,6 @@ export const revalidate = 3600;
 
 export default async function EvolutionsPage() {
   const normalized: NormalizedEvoGraph = await buildEvoGraph({
-    gens: [1],
     offset: 0,
     limit: 80,
   });

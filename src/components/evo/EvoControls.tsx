@@ -58,7 +58,10 @@ export default function EvoControls({ filters, onFiltersChange }: Props) {
 
       <fieldset>
         <legend className="text-sm font-medium mb-1">Generations</legend>
-        <div className="flex flex-wrap gap-2">
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+          Leave all unchecked to include every generation. Select one or more to narrow the list.
+        </p>
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Filter by generation">
           {GENS.map((g) => (
             <button
               key={g}
@@ -67,8 +70,8 @@ export default function EvoControls({ filters, onFiltersChange }: Props) {
               aria-pressed={gens.includes(g)}
               className={
                 gens.includes(g)
-                  ? 'px-2.5 py-1.5 rounded-md border text-sm bg-blue-600 border-blue-600 text-white hover:bg-blue-600/90 transition'
-                  : 'px-2.5 py-1.5 rounded-md border text-sm bg-white/80 dark:bg-gray-900/60 text-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition'
+                  ? 'px-2.5 py-1.5 rounded-md border text-sm bg-blue-600 border-blue-600 text-white hover:bg-blue-600/90 transition outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900'
+                  : 'px-2.5 py-1.5 rounded-md border text-sm bg-white/80 dark:bg-gray-900/60 text-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900'
               }
             >
               Gen {g}

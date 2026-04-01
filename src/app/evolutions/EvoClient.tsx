@@ -5,8 +5,6 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import type { NormalizedEvoGraph, NormalizedFamily, Edge, Species, EvoFilters } from '@/lib/evo/types';
 
-const DEFAULT_GENS = ['1'];
-
 const EvoControls = dynamic(() => import('@/components/evo/EvoControls'), {
   ssr: false,
   loading: () => <div className="h-64 rounded-md border bg-gray-100/60 dark:bg-gray-900/20 animate-pulse" />,
@@ -57,7 +55,7 @@ function readFiltersFromParams(sp: URLSearchParams): EvoFilters {
   const methodParam = sp.get('method');
   return {
     search: sp.get('search') || '',
-    gens: genParam ? genParam.split(',').filter(Boolean) : DEFAULT_GENS,
+    gens: genParam ? genParam.split(',').filter(Boolean) : [],
     methods: methodParam ? methodParam.split(',').filter(Boolean) : [],
     branchingOnly: sp.get('branchingOnly') === '1' || sp.get('branchingOnly') === 'true',
   };
@@ -82,15 +80,16 @@ export default function EvoClient({ data, serverList }: Props) {
     setFilters(readFiltersFromParams(searchParams));
   }, [searchParams]);
 
-  // Sync state → URL as a non-blocking side effect
+  // Sync state → URL as a non-blocking side effect (omit trailing ? when there are no params)
   useEffect(() => {
     const sp = new URLSearchParams();
     if (filters.search) sp.set('search', filters.search);
     if (filters.gens.length) sp.set('gen', filters.gens.join(','));
     if (filters.methods.length) sp.set('method', filters.methods.join(','));
     if (filters.branchingOnly) sp.set('branchingOnly', '1');
+    const qs = sp.toString();
     weUpdatedUrl.current = true;
-    router.replace(`${pathname}?${sp.toString()}`, { scroll: false });
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   }, [filters, pathname, router]);
 
   const onFiltersChange = useCallback((next: EvoFilters) => {
