@@ -8,7 +8,7 @@ export function calcEffectiveness(attacker: TypeName, defenders: TypeName[]): nu
   }, 1);
 }
 
-export type CategoryBuckets = {
+type CategoryBuckets = {
   immune: TypeName[];
   notVery: TypeName[]; // 0.5
   neutral: TypeName[]; // 1

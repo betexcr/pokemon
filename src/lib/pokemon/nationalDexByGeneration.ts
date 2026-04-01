@@ -1,7 +1,7 @@
 import type { TeamSlot } from '@/lib/userTeams';
 
 /** Cumulative National Dex maximum at the end of each generation (inclusive cap for "through Gen N"). */
-export const NATIONAL_DEX_MAX_BY_GENERATION: Record<number, number> = {
+const NATIONAL_DEX_MAX_BY_GENERATION: Record<number, number> = {
   1: 151,
   2: 251,
   3: 386,
@@ -16,7 +16,7 @@ export const NATIONAL_DEX_MAX_BY_GENERATION: Record<number, number> = {
 const MIN_GEN = 1;
 const MAX_GEN = 9;
 
-export function getMaxNationalDexForGeneration(gen: number): number {
+function getMaxNationalDexForGeneration(gen: number): number {
   if (!Number.isInteger(gen) || gen < MIN_GEN || gen > MAX_GEN) {
     throw new Error(`Invalid generation: ${gen}`);
   }

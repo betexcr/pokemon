@@ -278,6 +278,7 @@ function ModernPokemonCardComponent({
 
     return () => {
       window.removeEventListener('resize', onWin);
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
       if (ro) ro.disconnect();
       if (io) io.disconnect();
     };

@@ -20,6 +20,7 @@ export default function BattleLiteApp() {
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {GYM_CHAMPIONS.map((champion) => (
             <button
+              type="button"
               key={champion.id}
               onClick={() => setSelectedChampionId(champion.id)}
               className={`rounded-xl border px-4 py-3 text-left text-sm transition-colors ${

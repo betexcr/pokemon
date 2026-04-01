@@ -1,5 +1,5 @@
 // Japanese Pokemon names with romaji and meaning
-export interface JapaneseNameInfo {
+interface JapaneseNameInfo {
   japanese: string
   romaji: string
   meaning: string
@@ -6172,7 +6172,7 @@ const japaneseNames: Record<string, JapaneseNameInfo> = {
   }
 }
 
-export function getJapaneseNameInfo(japaneseName: string): JapaneseNameInfo | null {
+function getJapaneseNameInfo(japaneseName: string): JapaneseNameInfo | null {
   return japaneseNames[japaneseName] || null
 }
 
@@ -7214,7 +7214,7 @@ export function getPokemonJapaneseName(pokemonId: number): JapaneseNameInfo | nu
 }
 
 // Fallback function to generate basic romaji from Japanese text
-export function generateBasicRomaji(japaneseText: string): string {
+function generateBasicRomaji(japaneseText: string): string {
   // This is a very basic conversion - in a real app you'd want a proper Japanese-to-romaji library
   const basicConversions: Record<string, string> = {
     'たね': 'Tane',

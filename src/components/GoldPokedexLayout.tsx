@@ -46,8 +46,8 @@ export default function GoldPokedexLayout({
         <h1 className="font-['Pocket_Monk'] text-xl font-bold text-center text-yellow-800 tracking-wider">POKéDEX</h1>
         <div className="absolute top-2 right-2 flex items-center gap-2">
           <UserDropdown />
-          <button onClick={() => router.push('/team')} className="px-3 py-1 bg-white text-yellow-800 border-2 border-yellow-600 rounded font-bold" title="Go to Team Builder">🎮 TEAM</button>
-          <button onClick={() => setShowDesktopMenu(true)} className="md:hidden px-3 py-1 bg-white text-yellow-800 border-2 border-yellow-600 rounded font-bold">MENU</button>
+          <button type="button" onClick={() => router.push('/team')} className="px-3 py-1 bg-white text-yellow-800 border-2 border-yellow-600 rounded font-bold" title="Go to Team Builder">🎮 TEAM</button>
+          <button type="button" onClick={() => setShowDesktopMenu(true)} className="md:hidden px-3 py-1 bg-white text-yellow-800 border-2 border-yellow-600 rounded font-bold">MENU</button>
         </div>
       </div>
 
@@ -100,6 +100,7 @@ export default function GoldPokedexLayout({
               <select
                 value={sortBy}
                 onChange={(e)=>setSortBy(e.target.value as typeof sortBy)}
+                aria-label="Sort by"
                 className="px-2 py-1 bg-yellow-100 border-2 border-yellow-600 text-yellow-800 text-xs font-bold control-keep"
               >
                 <option value="id">Number</option>
@@ -113,6 +114,7 @@ export default function GoldPokedexLayout({
                 <option value="speed">Speed</option>
               </select>
               <button
+                type="button"
                 onClick={()=>setSortOrder(prev=>prev==='asc'?'desc':'asc')}
                 className="px-2 py-1 border-2 border-yellow-600 bg-yellow-100 text-yellow-800 text-xs font-bold flex items-center gap-2 control-keep"
                 title={`Sort ${sortOrder==='asc'?'Descending':'Ascending'}`}
@@ -161,6 +163,7 @@ export default function GoldPokedexLayout({
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-bold text-yellow-800">POKéMON DATA</h3>
             <button
+              type="button"
               onClick={() => setShowComparison(!showComparison)}
               className={`px-3 py-1 rounded text-sm ${
                 showComparison ? 'bg-yellow-600 text-white' : 'bg-yellow-200 text-yellow-800'
@@ -233,10 +236,10 @@ export default function GoldPokedexLayout({
             </div>
             <div>
               <label className="block text-sm font-bold text-yellow-800 mb-1">Search</label>
-              <input type="text" className="w-full border-2 border-yellow-600 p-2" placeholder="Search..." style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }} />
+              <input type="text" className="w-full border-2 border-yellow-600 p-2" placeholder="Search..." aria-label="Search Pokémon" style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }} />
             </div>
             <div>
-              <button onClick={()=>window.location.href='/compare'} className="w-full px-3 py-2 bg-yellow-600 text-white font-bold">GO TO COMPARISON</button>
+              <button type="button" onClick={()=>window.location.href='/compare'} className="w-full px-3 py-2 bg-yellow-600 text-white font-bold">GO TO COMPARISON</button>
             </div>
           </aside>
         </div>, document.body)
@@ -244,7 +247,7 @@ export default function GoldPokedexLayout({
 
       {/* Bottom Controls */}
       <div className="absolute bottom-4 left-4 space-y-2">
-        <button className="bg-red-600 text-white px-4 py-2 rounded-l-lg border border-gray-600 flex items-center">
+        <button type="button" className="bg-red-600 text-white px-4 py-2 rounded-l-lg border border-gray-600 flex items-center">
           <div className="w-4 h-4 bg-gray-600 rounded-full mr-2"></div>
           <div className="text-xs">
             <div>START</div>
@@ -252,7 +255,7 @@ export default function GoldPokedexLayout({
           </div>
         </button>
         
-        <button className="bg-red-600 text-white px-4 py-2 rounded-l-lg border border-gray-600 flex items-center">
+        <button type="button" className="bg-red-600 text-white px-4 py-2 rounded-l-lg border border-gray-600 flex items-center">
           <div className="w-4 h-4 bg-gray-600 rounded-full mr-2"></div>
           <div className="text-xs">
             <div>SELECT</div>

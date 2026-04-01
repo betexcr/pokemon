@@ -1,6 +1,6 @@
 const QUEUE_KEY = 'pokemon-sync-queue'
 
-export interface SyncItem {
+interface SyncItem {
   id: string
   type: 'checklist' | 'team'
   payload: any
@@ -39,16 +39,16 @@ export function enqueueSync(item: Omit<SyncItem, 'id' | 'createdAt'>) {
   requestBackgroundSync()
 }
 
-export function getPendingItems(): SyncItem[] {
+function getPendingItems(): SyncItem[] {
   return loadQueue()
 }
 
-export function clearCompleted(ids: string[]) {
+function clearCompleted(ids: string[]) {
   const queue = loadQueue().filter(q => !ids.includes(q.id))
   saveQueue(queue)
 }
 
-export function clearAll() {
+function clearAll() {
   saveQueue([])
 }
 

@@ -17,16 +17,16 @@ export default function UsagePagination({ total, pageSize, page, sort }: { total
   return (
     <div className="flex items-center justify-between p-2 text-sm border-t">
       <div className="flex items-center gap-2">
-        <button className="px-2 py-1 border rounded" disabled={page <= 1} onClick={() => setParam('page', String(page - 1))}>Prev</button>
+        <button type="button" className="px-2 py-1 border rounded" disabled={page <= 1} onClick={() => setParam('page', String(page - 1))}>Prev</button>
         <span>
           Page {page} / {pages}
         </span>
-        <button className="px-2 py-1 border rounded" disabled={page >= pages} onClick={() => setParam('page', String(page + 1))}>Next</button>
+        <button type="button" className="px-2 py-1 border rounded" disabled={page >= pages} onClick={() => setParam('page', String(page + 1))}>Next</button>
       </div>
       <div className="flex items-center gap-2">
         <span>Sort:</span>
-        <button className={`px-2 py-1 border rounded ${sort === 'usage' ? 'bg-blue-600 text-white border-blue-600' : ''}`} onClick={() => setParam('sort', 'usage')}>Usage</button>
-        <button className={`px-2 py-1 border rounded ${sort === 'winrate' ? 'bg-blue-600 text-white border-blue-600' : ''}`} onClick={() => setParam('sort', 'winrate')}>Winrate</button>
+        <button type="button" className={`px-2 py-1 border rounded ${sort === 'usage' ? 'bg-blue-600 text-white border-blue-600' : ''}`} onClick={() => setParam('sort', 'usage')}>Usage</button>
+        <button type="button" className={`px-2 py-1 border rounded ${sort === 'winrate' ? 'bg-blue-600 text-white border-blue-600' : ''}`} onClick={() => setParam('sort', 'winrate')}>Winrate</button>
       </div>
     </div>
   );

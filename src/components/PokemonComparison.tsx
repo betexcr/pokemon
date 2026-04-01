@@ -306,7 +306,7 @@ export default function PokemonComparison({ pokemonList, className = '' }: Pokem
 
             {/* Selector (minimized by default) */}
             {showSelector && (
-              <div className={`mb-6 rounded-lg border ${isRetro ? 'border-gray-300' : 'border-gray-200 dark:border-gray-700'} bg-white dark:bg-slate-900 p-4`}> 
+              <div className={`mb-6 rounded-lg border ${isRetro ? 'border-gray-300 dark:border-gray-600' : 'border-gray-200 dark:border-gray-700'} bg-white dark:bg-slate-900 p-4`}> 
                 <div className="flex items-center gap-2 mb-3">
                   <input
                     value={search}

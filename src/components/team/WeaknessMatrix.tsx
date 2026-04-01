@@ -18,7 +18,10 @@ export default function WeaknessMatrix({ analysis, isCollapsed = true, onToggleC
     <div className="border border-border rounded-xl bg-surface p-4">
       <div 
         className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded p-1 -m-1 transition-colors"
+        role="button"
+        tabIndex={0}
         onClick={onToggleCollapse}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggleCollapse?.(); } }}
       >
         {isCollapsed ? (
           <ChevronRight className="h-4 w-4 text-muted" />

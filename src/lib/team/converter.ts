@@ -6,7 +6,7 @@ import type { TypeName } from '@/lib/type/data';
 /**
  * Converts a Pokemon from the API format to SimplePokemon format for team analysis
  */
-export function convertPokemonToSimple(pokemon: Pokemon, moves: MoveData[] = []): SimplePokemon {
+function convertPokemonToSimple(pokemon: Pokemon, moves: MoveData[] = []): SimplePokemon {
   const types: TypeName[] = pokemon.types.map(t => {
     const typeName = t.type.name;
     return (typeName.charAt(0).toUpperCase() + typeName.slice(1)) as TypeName;

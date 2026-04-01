@@ -9,7 +9,7 @@ import { normalizePokemonId } from '@/lib/utils'
 import { analyticsManager } from '@/lib/requestAnalytics'
 import { getGenerationExclusiveDexRange } from '@/lib/pokemon/nationalDexByGeneration'
 
-export interface PokemonSpeciesData {
+interface PokemonSpeciesData {
   id: number
   name: string
   order: number
@@ -38,21 +38,21 @@ export interface PokemonSpeciesData {
   [key: string]: unknown
 }
 
-export interface EvolutionChainData {
+interface EvolutionChainData {
   id: number
   baby_trigger_item: { name: string; url: string } | null
   chain: EvolutionChainLink
   [key: string]: unknown
 }
 
-export interface EvolutionChainLink {
+interface EvolutionChainLink {
   is_baby: boolean
   species: { name: string; url: string }
   evolution_details: Array<Record<string, unknown>>
   evolves_to: EvolutionChainLink[]
 }
 
-export interface PokemonTypeData {
+interface PokemonTypeData {
   id: number
   name: string
   damage_relations: {
@@ -68,7 +68,7 @@ export interface PokemonTypeData {
   [key: string]: unknown
 }
 
-export interface PokemonAbilityData {
+interface PokemonAbilityData {
   id: number
   name: string
   is_main_series: boolean
@@ -318,9 +318,9 @@ async function fetchFromAPI<T>(url: string, signal?: AbortSignal): Promise<T> {
       // Clean up the in-flight request
       inFlightRequests.delete(requestKey)
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Record error in analytics
-    if (error?.name === 'AbortError') {
+    if (error instanceof Error && error.name === 'AbortError') {
       analyticsManager.recordComplete(requestId, 'cancelled', 'AbortError');
     } else {
       analyticsManager.recordComplete(requestId, 'failed', error instanceof Error ? error.message : String(error));
@@ -402,41 +402,35 @@ async function performFetchWithRetry<T>(
       const result = await response.json()
       circuitBreaker.recordSuccess() // Record successful request
       return result
-    } catch (error: any) {
+    } catch (error: unknown) {
       clearTimeout(timeout)
 
-      // Better error handling for different types of failures
-      if (error?.name === 'AbortError') {
-        // Don't report abort errors as they're usually intentional timeouts
-        console.warn('Request aborted (likely timeout):', error.message)
-        // Don't record this as a circuit breaker failure or retry
-        throw error // Re-throw to prevent retry and circuit breaker failure
+      const errMsg = error instanceof Error ? error.message : String(error)
+      const isAbort = error instanceof Error && error.name === 'AbortError'
+
+      if (isAbort) {
+        console.warn('Request aborted (likely timeout):', errMsg)
+        throw error
       } else if (error instanceof TypeError && error.message.includes('fetch')) {
-        // Only report actual network errors, not other TypeErrors
-        reportNetworkError(`Network request failed: ${error.message}`)
-      } else if (!error?.message?.includes('404')) {
-        reportApiError(`API request failed: ${error.message}`)
+        reportNetworkError(`Network request failed: ${errMsg}`)
+      } else if (!errMsg.includes('404')) {
+        reportApiError(`API request failed: ${errMsg}`)
       }
 
-      // Record failure for circuit breaker (only for non-abort errors)
       circuitBreaker.recordFailure()
 
-      // Retry on network errors if attempts remain (but not on aborts)
-      const isAbort = error?.name === 'AbortError'
       if (!isAbort && error instanceof TypeError && attempt < maxAttempts) {
         const backoff = baseDelayMs * Math.pow(2, attempt - 1)
-        const jitter = Math.floor(Math.random() * 200) // Increased jitter
+        const jitter = Math.floor(Math.random() * 200)
         console.warn(`Network error (attempt ${attempt}/${maxAttempts}), retrying in ${backoff}ms...`)
         await new Promise(res => setTimeout(res, backoff + jitter))
         continue
       }
 
-      // Only log non-404 errors as they might be unexpected
-      if (!error?.message?.includes('404')) {
+      if (!errMsg.includes('404')) {
         console.error('API fetch error:', error)
-        // Don't report API errors for network issues that are already handled
         if (!(error instanceof TypeError && error.message.includes('fetch'))) {
-          reportApiError(`API request failed: ${error?.message || 'Unknown error'}`, {
+          reportApiError(`API request failed: ${errMsg || 'Unknown error'}`, {
             url: absoluteUrl,
             attempt,
             maxAttempts
@@ -444,7 +438,6 @@ async function performFetchWithRetry<T>(
         }
       }
 
-      // Don't poison the negative cache when we're just offline
       if (!isClientOffline()) {
         const errorMessage = error instanceof Error ? error.message : 'Network error'
         setNegativeCache(absoluteUrl, errorMessage, 300)
@@ -603,11 +596,10 @@ export async function getPokemon(id: number | string, signal?: AbortSignal): Pro
     await setCache(cacheKey, data, CACHE_TTL.POKEMON_DETAIL * 2)
 
     return data
-  } catch (error: any) {
-    // Don't report errors for cached failures (already reported)
+  } catch (error: unknown) {
     if (!(error instanceof Error && error.message.includes('Request failed (cached)'))) {
-      // Handle 404 errors specifically for non-existent Pokemon
-      if (error?.message?.includes('404')) {
+      const errMsg = error instanceof Error ? error.message : String(error)
+      if (errMsg.includes('404')) {
         throw new Error(`Pokemon with ID ${id} does not exist`)
       }
     }
@@ -636,9 +628,9 @@ export async function getPokemonSpecies(id: number | string): Promise<PokemonSpe
     
 
     return data
-  } catch (error: any) {
-    // Handle 404 errors specifically for non-existent Pokemon species
-    if (error?.message?.includes('404')) {
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : String(error)
+    if (errMsg.includes('404')) {
       // For regional variants and special forms, try to get the base species
       try {
         const pokemon = await getPokemon(id)
@@ -1368,7 +1360,7 @@ export function generatePokemonSkeletonsForIds(ids: number[]): Pokemon[] {
 }
 
 // Page skeleton functions
-export function getPokemonPageSkeleton(count: number): Pokemon[] {
+function getPokemonPageSkeleton(count: number): Pokemon[] {
   return generateAllPokemonSkeletons(count)
 }
 

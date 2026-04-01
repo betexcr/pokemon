@@ -26,7 +26,7 @@ interface CacheItem {
 }
 
 // Browser cache operations (using localStorage/IndexedDB as Memcached alternative)
-export class BrowserCache {
+class BrowserCache {
   private useIndexedDB: boolean
   private dbName = 'pokemon-cache'
   private dbVersion = 1

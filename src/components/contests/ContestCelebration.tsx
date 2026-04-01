@@ -52,6 +52,9 @@ export default function ContestCelebration({
       }, type === 'spectacular' ? 4000 : type === 'completion' ? 5000 : 2000)
       
       return () => clearTimeout(timer)
+    } else {
+      setIsVisible(false)
+      setParticles([])
     }
   }, [trigger, type, onComplete])
 

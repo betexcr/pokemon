@@ -1,4 +1,4 @@
-export type BattleTeam = {
+type BattleTeam = {
   name: string;
   slots: Array<{ id: number; level: number; name?: string }>;
 };

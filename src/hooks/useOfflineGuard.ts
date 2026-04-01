@@ -2,7 +2,7 @@
 
 import { useNetworkState, type NetworkState } from '@/lib/offlineManager'
 
-export interface OfflineGuardState {
+interface OfflineGuardState {
   isOffline: boolean
   isSlowConnection: boolean
   networkState: NetworkState

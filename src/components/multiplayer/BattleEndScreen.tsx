@@ -124,6 +124,7 @@ export function BattleEndScreen({
         {/* Actions */}
         <div className="space-y-2">
           <button
+            type="button"
             onClick={() => router.push(returnTo.path)}
             className="w-full px-4 py-3 bg-poke-blue text-white rounded-lg hover:bg-poke-blue/90 transition-colors flex items-center justify-center gap-2 font-semibold"
           >

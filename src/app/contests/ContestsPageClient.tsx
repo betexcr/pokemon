@@ -414,6 +414,7 @@ export default function ContestsPageClient() {
             
             <div className="text-center mt-6">
               <button
+                type="button"
                 id="intro-button"
                 onClick={handleIntroComplete}
                 className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-8 py-3 rounded-full font-bold text-lg hover:from-pink-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
@@ -454,6 +455,7 @@ export default function ContestsPageClient() {
             
             <div className="text-center mt-6">
               <button
+                type="button"
                 id="complete-button"
                 onClick={handleTalentComplete}
                 className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-8 py-3 rounded-full font-bold text-lg hover:from-purple-600 hover:to-blue-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
@@ -476,6 +478,7 @@ export default function ContestsPageClient() {
             
             <div className="text-center mt-6">
               <button
+                type="button"
                 onClick={resetContest}
                 className="bg-gradient-to-r from-green-500 to-teal-500 text-white px-8 py-3 rounded-full font-bold text-lg hover:from-green-600 hover:to-teal-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
               >

@@ -8,7 +8,7 @@ interface GenerationRange {
   color: string
 }
 
-export const GENERATIONS: GenerationRange[] = [
+const GENERATIONS: GenerationRange[] = [
   { min: 1, max: 151, roman: 'I', label: 'Gen I', color: 'from-red-500 to-red-600' },
   { min: 152, max: 251, roman: 'II', label: 'Gen II', color: 'from-yellow-500 to-yellow-600' },
   { min: 252, max: 386, roman: 'III', label: 'Gen III', color: 'from-green-500 to-green-600' },
@@ -23,7 +23,7 @@ export const GENERATIONS: GenerationRange[] = [
 /**
  * Get the generation information for a Pokemon by its ID
  */
-export function getPokemonGeneration(pokemonId: number): GenerationRange | null {
+function getPokemonGeneration(pokemonId: number): GenerationRange | null {
   // Handle special forms (IDs >= 10001) by using the base ID
   const baseId = pokemonId >= 10001 ? (pokemonId % 10000) : pokemonId
   
@@ -34,7 +34,7 @@ export function getPokemonGeneration(pokemonId: number): GenerationRange | null 
 /**
  * Get the generation number (1-9) for a Pokemon
  */
-export function getGenerationNumber(pokemonId: number): number {
+function getGenerationNumber(pokemonId: number): number {
   const gen = getPokemonGeneration(pokemonId)
   if (!gen) return 0
   

@@ -74,12 +74,18 @@ export default function ShareModal() {
   }, [open]);
 
   const [copied, setCopied] = useState(false);
+  const copiedTimerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  useEffect(() => {
+    return () => { if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current) }
+  }, [])
 
   async function copy() {
     try {
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+      copiedTimerRef.current = setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error('Failed to copy to clipboard:', err);
     }
@@ -123,7 +129,7 @@ export default function ShareModal() {
               <input className="flex-1 text-sm rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-1" readOnly value={shareUrl} aria-label="Share link URL" />
               <button className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-sm" onClick={copy} type="button">{copied ? 'Copied!' : 'Copy'}</button>
             </div>
-            <p className="text-xs text-gray-500">This uses a URL-encoded snapshot. No server needed.</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">This uses a URL-encoded snapshot. No server needed.</p>
           </div>
         </div>
       )}

@@ -1,6 +1,6 @@
 // Utility for dynamic retry logic with exponential backoff and jitter
 
-export interface RetryConfig {
+interface RetryConfig {
   maxAttempts: number;
   baseDelayMs: number;
   maxDelayMs: number;
@@ -9,7 +9,7 @@ export interface RetryConfig {
   shouldRetry?: (error: any, attempt: number) => boolean;
 }
 
-export const DEFAULT_RETRY_CONFIG: RetryConfig = {
+const DEFAULT_RETRY_CONFIG: RetryConfig = {
   maxAttempts: 10,
   baseDelayMs: 500,
   maxDelayMs: 30000, // 30 seconds max

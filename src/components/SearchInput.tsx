@@ -55,6 +55,7 @@ export default function SearchInput({
         ref={inputRef}
         type="text"
         placeholder={placeholder}
+        aria-label="Search"
         value={localValue}
         onChange={handleInputChange}
         className={`w-full pl-11 pr-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-poke-blue focus:border-poke-blue focus:outline-none transition-all duration-200 ${className}`}

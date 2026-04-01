@@ -56,7 +56,7 @@ export default async function EvolutionsPage() {
         <EvoClient data={normalized} serverList={serverList} />
       </Suspense>
 
-      <footer className="lg:col-span-2 mt-8 text-xs text-gray-500">
+      <footer className="lg:col-span-2 mt-8 text-xs text-gray-500 dark:text-gray-400">
         <p>Accessibility: Full keyboard nav, visible focus rings, prefers-reduced-motion respected. Data powered by PokeAPI with caching.</p>
       </footer>
     </main>

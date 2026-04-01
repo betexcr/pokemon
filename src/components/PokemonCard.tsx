@@ -118,7 +118,7 @@ export default function PokemonCard({
               "px-2 py-1 rounded-full text-xs font-medium transition-all duration-200 border flex items-center gap-1.5",
               isInComparison 
                 ? 'bg-poke-blue text-white border-poke-blue shadow-md' 
-                : 'bg-white/90 dark:bg-black/40 text-gray-500 border-gray-200 hover:bg-poke-blue hover:text-white hover:border-poke-blue sm:backdrop-blur'
+                : 'bg-white/90 dark:bg-black/40 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-poke-blue hover:text-white hover:border-poke-blue sm:backdrop-blur'
             )}
             aria-label={isInComparison ? 'Remove from comparison' : 'Add to comparison'}
           >

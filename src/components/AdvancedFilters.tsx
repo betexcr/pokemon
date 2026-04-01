@@ -179,6 +179,7 @@ export default function AdvancedFilters({
                             generation: e.target.value 
                           }))
                         }}
+                        aria-label="Filter by generation"
                         className="w-full px-3 py-2 border border-border rounded-lg dark:bg-gray-700 dark:border-gray-500 dark:text-white"
                         style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
                       >

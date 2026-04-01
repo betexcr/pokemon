@@ -282,7 +282,7 @@ export default function PokemonSelector({
   if (isInitialLoading) {
     return (
       <div className={`pokemon-selector-container ${className}`}>
-        <div className="animate-pulse bg-gray-200 rounded-lg h-12 w-full"></div>
+        <div className="animate-pulse bg-gray-200 dark:bg-gray-700 rounded-lg h-12 w-full"></div>
       </div>
     )
   }
@@ -290,17 +290,17 @@ export default function PokemonSelector({
   if (error && allPokemon.length === 0) {
     return (
       <div className={`pokemon-selector-container ${className}`}>
-        <div className="text-red-600 text-sm p-4 border border-red-300 rounded-lg">
+        <div className="text-red-600 dark:text-red-400 text-sm p-4 border border-red-300 dark:border-red-700 rounded-lg">
           <div className="mb-2">
             <strong>Error loading Pokémon:</strong> {error}
           </div>
-          <div className="mb-3 text-xs text-gray-600">
+          <div className="mb-3 text-xs text-gray-600 dark:text-gray-400">
             This might be due to network connectivity or API issues. Please try again.
           </div>
           <button
             type="button"
             onClick={() => window.location.reload()}
-            className="px-3 py-1 bg-red-100 text-red-700 rounded text-xs hover:bg-red-200 transition-colors"
+            className="px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded text-xs hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
           >
             Retry
           </button>
@@ -321,7 +321,7 @@ export default function PokemonSelector({
       }`}
       style={{ height: `${DROPDOWN_ROW_HEIGHT}px` }}
     >
-      <div className="relative w-8 h-8 flex-shrink-0 bg-gray-100 rounded overflow-hidden">
+      <div className="relative w-8 h-8 flex-shrink-0 bg-gray-100 dark:bg-gray-800 rounded overflow-hidden">
         <img
           src={getShowdownSprite(pokemon.name)}
           alt={pokemon.name}

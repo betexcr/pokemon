@@ -42,8 +42,8 @@ type PublicState = {
   lastResultSummary?: string;
 } & IdMap<{ active: PublicMon; benchPublic: Array<{ species: string; fainted: boolean; revealedMoves: string[] }> }>;
 
-export type Move = { id: string; pp: number };
-export type Pokemon = {
+type Move = { id: string; pp: number };
+type Pokemon = {
   species: string;
   level: number;
   types: string[];

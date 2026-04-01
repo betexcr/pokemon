@@ -1,6 +1,6 @@
 import type { TypeName } from '@/lib/type/data';
 
-export type Move = { name: string; type: TypeName; power: number; damageClass?: 'physical' | 'special' | 'status' };
+type Move = { name: string; type: TypeName; power: number; damageClass?: 'physical' | 'special' | 'status' };
 export type SimplePokemon = {
   id: number;
   name: string;

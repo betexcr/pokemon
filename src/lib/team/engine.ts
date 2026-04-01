@@ -4,7 +4,7 @@ import type { SimplePokemon } from '@/lib/battle/sampleData';
 
 // --- Role Types ---
 
-export type PokemonRole =
+type PokemonRole =
   | 'Physical Sweeper'
   | 'Special Sweeper'
   | 'Mixed Attacker'

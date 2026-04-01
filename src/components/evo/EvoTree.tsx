@@ -39,6 +39,8 @@ export default function EvoTree({ data, filters }: Props) {
   // Track which filter combo the current families were fetched for so we know
   // when a client-side fetch is needed and can ignore stale server re-renders.
   const fetchedFilterKey = useRef<string>('1_');
+  const mountedRef = useRef(true);
+  useEffect(() => { return () => { mountedRef.current = false; }; }, []);
 
   useEffect(() => {
     const filterKey = `${genKey}_${methodKey}`;
@@ -123,11 +125,13 @@ export default function EvoTree({ data, filters }: Props) {
       usp.set('limit', String(PAGE_SIZE));
 
       const res = await fetch(`/api/evolutions?${usp.toString()}`);
+      if (!mountedRef.current) return;
       if (!res.ok) {
         setLoaded((s) => ({ ...s, hasMore: false }));
         return;
       }
       const json: NormalizedEvoGraph = await res.json();
+      if (!mountedRef.current) return;
       const next = normalizeEvoGraph(json as any);
       const nextFamilies = next.families || [];
 
@@ -148,9 +152,9 @@ export default function EvoTree({ data, filters }: Props) {
         hasMore: nextFamilies.length >= PAGE_SIZE,
       }));
     } catch {
-      setLoaded((s) => ({ ...s, hasMore: false }));
+      if (mountedRef.current) setLoaded((s) => ({ ...s, hasMore: false }));
     } finally {
-      setIsLoadingMore(false);
+      if (mountedRef.current) setIsLoadingMore(false);
     }
   }
 

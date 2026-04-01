@@ -66,6 +66,7 @@ export function FactModal({
         <div className="flex items-start justify-between">
           <h3 className="text-lg font-semibold text-text">Fun Fact</h3>
           <button
+            type="button"
             onClick={onClose}
             aria-label="Close dialog"
             className="rounded-full px-3 py-1 text-xs border border-border hover:bg-surface/60"
@@ -80,12 +81,14 @@ export function FactModal({
           </div>
           <div className="flex gap-2">
             <button
+              type="button"
               onClick={() => copyToClipboard(fact.text)}
               className="rounded-full px-3 py-1 text-xs border border-border hover:bg-surface/60"
             >
               Copy
             </button>
             <button
+              type="button"
               onClick={share}
               className="rounded-full px-3 py-1 text-xs border border-border hover:bg-surface/60"
             >

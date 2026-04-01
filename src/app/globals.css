@@ -16,6 +16,7 @@
   /* Chart label colors for light mode */
   --chart-text: #374151;
   --chart-bg: #ffffff;
+  --tooltip-bg: rgba(255, 255, 255, 0.85);
   
   /* Input Colors */
   --color-input-bg: #E0E0E0;
@@ -62,6 +63,7 @@
   /* Chart label colors for dark mode */
   --chart-text: #D1D5DB;
   --chart-bg: #1F2937;
+  --tooltip-bg: rgba(31, 41, 55, 0.9);
   
   /* Input Colors - improved for dark mode */
   --color-input-bg: #1F2937;

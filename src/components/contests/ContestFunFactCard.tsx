@@ -1,6 +1,6 @@
 'use client'
 
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { useRotatingFact } from "@/hooks/useRotatingFact";
 import { Sparkles, Heart, Star, Ribbon } from 'lucide-react'
 
@@ -67,12 +67,20 @@ export default function ContestFunFactCard({ variant = "all", className = "" }: 
   const bucketIds = bucketByVariant[variant];
   const { fact, index, total } = useRotatingFact({ intervalMs: 12000, bucketIds });
   const styles = variantStyles[variant];
+  const sparkleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (sparkleTimerRef.current) clearTimeout(sparkleTimerRef.current);
+    };
+  }, []);
 
   const handleSparkle = (e: React.MouseEvent) => {
     const card = e.currentTarget.closest("div") as HTMLDivElement;
     if (!card) return;
     card.style.transform = "scale(1.02)";
-    setTimeout(() => (card.style.transform = ""), 150);
+    if (sparkleTimerRef.current) clearTimeout(sparkleTimerRef.current);
+    sparkleTimerRef.current = setTimeout(() => (card.style.transform = ""), 150);
   };
 
   return (
@@ -117,6 +125,7 @@ export default function ContestFunFactCard({ variant = "all", className = "" }: 
           </div>
         </div>
         <button
+          type="button"
           onClick={handleSparkle}
           className={`
             ml-2 rounded-full px-3 py-1 text-xs border transition-all duration-200

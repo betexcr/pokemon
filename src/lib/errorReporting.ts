@@ -7,7 +7,7 @@ export function setGlobalErrorReporter(reporter: (error: any) => void) {
   globalErrorReporter = reporter
 }
 
-export function reportError(error: any) {
+function reportError(error: any) {
   if (globalErrorReporter) {
     // Defer error reporting to avoid setState during render
     setTimeout(() => {

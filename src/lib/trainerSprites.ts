@@ -192,11 +192,11 @@ export function getTrainerSpriteUrl(champion: Champion): string {
   return `${BASE}/${filename}`
 }
 
-export function getTrainerSpriteUrlByKey(trainerKey: string): string {
+function getTrainerSpriteUrlByKey(trainerKey: string): string {
   const filename = resolveFilename(trainerKey)
   return `${BASE}/${filename}`
 }
 
-export function getTrainerSpriteUrls(champion: Champion): { primary: string; fallback?: string } {
+function getTrainerSpriteUrls(champion: Champion): { primary: string; fallback?: string } {
   return { primary: getTrainerSpriteUrl(champion) }
 }

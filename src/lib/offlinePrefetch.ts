@@ -12,7 +12,7 @@ export interface PrefetchProgress {
   error?: string
 }
 
-export interface PrefetchState {
+interface PrefetchState {
   lastFullPrefetch: number | null
   cachedPokemonCount: number
   cachedSpeciesCount: number
@@ -162,14 +162,15 @@ export async function prefetchAllData(
     state.lastFullPrefetch = Date.now()
     saveState(state)
     onProgress({ ...progress })
-  } catch (err: any) {
-    if (err.message === 'Cancelled') {
+  } catch (err: unknown) {
+    const errMsg = err instanceof Error ? err.message : String(err)
+    if (errMsg === 'Cancelled') {
       progress.phase = 'idle'
       progress.message = 'Cancelled'
     } else {
       progress.phase = 'error'
-      progress.message = err.message || 'Download failed'
-      progress.error = err.message
+      progress.message = errMsg || 'Download failed'
+      progress.error = errMsg
     }
     saveState(state)
     onProgress({ ...progress })

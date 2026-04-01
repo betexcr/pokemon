@@ -63,7 +63,7 @@ function scoreMoveAgainst(move: any, attacker: BattlePokemon, defender: BattlePo
   return score;
 }
 
-export type AIAction = 
+type AIAction = 
   | { type: 'move'; moveId: string }
   | { type: 'switch'; switchIndex: number };
 

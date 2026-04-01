@@ -224,6 +224,7 @@ export default function PopupBook({
 
           <div className="flex items-center gap-2">
             <button
+              type="button"
               onClick={handlePrev}
               className="flex items-center gap-2 rounded-full border border-border bg-white/60 px-4 py-2 text-sm font-medium shadow-sm transition hover:-translate-x-0.5 hover:bg-white focus:outline-none focus:ring-2 focus:ring-poke-blue dark:bg-slate-800/70 dark:hover:bg-slate-800"
             >
@@ -231,6 +232,7 @@ export default function PopupBook({
               Prev
             </button>
             <button
+              type="button"
               onClick={handleNext}
               className="flex items-center gap-2 rounded-full border border-border bg-white/60 px-4 py-2 text-sm font-medium shadow-sm transition hover:translate-x-0.5 hover:bg-white focus:outline-none focus:ring-2 focus:ring-poke-blue dark:bg-slate-800/70 dark:hover:bg-slate-800"
             >
@@ -244,6 +246,7 @@ export default function PopupBook({
           {phases.map((phase, index) => (
             <button
               key={phase.id}
+              type="button"
               onClick={() => onPhaseChange(index)}
               className={`relative overflow-hidden rounded-2xl border px-4 py-3 text-left transition focus:outline-none focus:ring-2 focus:ring-poke-blue ${
                 index === currentPhase
@@ -395,6 +398,7 @@ function PhaseContent({
                 return (
                   <div key={gen.generation} className="rounded-2xl border border-border bg-surface p-0 shadow-sm overflow-hidden">
                     <button
+                      type="button"
                       onClick={() => setOpenGens(prev => ({ ...prev, [gen.generation]: !prev[gen.generation] }))}
                       className="w-full px-4 py-3 text-left flex items-center justify-between"
                     >
@@ -419,6 +423,7 @@ function PhaseContent({
                           {members.map(poke => (
                             <button
                               key={poke.rank}
+                              type="button"
                               onClick={() => onSelectPokemon(poke.rank)}
                               className="group flex w-full items-center justify-between rounded-xl border border-border bg-white/70 px-3 py-2 text-left shadow-sm transition hover:border-poke-blue hover:bg-white dark:bg-slate-900/60 dark:hover:bg-slate-800"
                             >
@@ -464,8 +469,9 @@ function PhaseContent({
               {trendLeaders.slice(0, 3).map(poke => (
                 <button
                   key={poke.rank}
+                  type="button"
                   onClick={() => onSelectPokemon(poke.rank)}
-                  className="group flex w-full items-center justify-between rounded-xl border px-3 py-2 text-left transition border-amber-200/70 bg-white/90 hover:bg-amber-50 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
+                  className="group flex w-full items-center justify-between rounded-xl border px-3 py-2 text-left transition border-amber-200/70 bg-white/90 hover:bg-amber-50 dark:border-white/10 dark:bg-slate-800/90 dark:hover:bg-white/10"
                 >
                   <div className="flex items-center gap-3">
                     <PortraitIcon id={poke.nationalNumber} name={poke.name} size={32} />
@@ -528,7 +534,7 @@ function PhaseContent({
                 {Array.from({ length: 10 }).map((_, index) => (
                   <div
                     key={`skeleton-${index}`}
-                    className="flex w-full items-center justify-between rounded-2xl border border-border bg-white/60 px-3 py-2 md:py-2.5 animate-pulse"
+                    className="flex w-full items-center justify-between rounded-2xl border border-border bg-white/60 dark:bg-gray-800/60 px-3 py-2 md:py-2.5 animate-pulse"
                   >
                     <div className="flex items-center gap-3">
                       <div className="h-7 w-7 rounded-full bg-gray-200 dark:bg-gray-700" />
@@ -1009,7 +1015,7 @@ function PhaseContent({
                 Array.from({ length: 10 }).map((_, index) => (
                   <div
                     key={`skeleton-${index}`}
-                    className="flex w-full items-center justify-between rounded-2xl border border-border bg-white/60 px-3 py-2 md:py-2.5 animate-pulse"
+                    className="flex w-full items-center justify-between rounded-2xl border border-border bg-white/60 dark:bg-gray-800/60 px-3 py-2 md:py-2.5 animate-pulse"
                   >
                     <div className="flex items-center gap-3">
                       <div className="h-7 w-7 rounded-full bg-gray-200 dark:bg-gray-700" />
@@ -1031,12 +1037,13 @@ function PhaseContent({
                   return (
                     <button
                       key={poke.rank}
+                      type="button"
                       data-rank={poke.rank}
                       onClick={() => !isCurrent && onSelectPokemon(poke.rank)}
                       disabled={isCurrent}
                       className={`group flex w-full items-center justify-between rounded-2xl border px-3 py-2 md:py-2.5 text-left transition dark:bg-slate-900/60 ${
                         isCurrent
-                          ? 'border-poke-blue bg-white/90 ring-1 ring-poke-blue/40 cursor-default'
+                          ? 'border-poke-blue bg-white/90 dark:bg-slate-800/90 ring-1 ring-poke-blue/40 cursor-default'
                           : 'border-border bg-white/60 hover:border-poke-blue hover:bg-white dark:bg-slate-900/60 dark:hover:bg-slate-800'
                       }`}
                     >
@@ -1102,6 +1109,7 @@ function PhaseContent({
               return (
                 <div key={t} className="rounded-2xl border border-border bg-surface p-0 shadow-sm overflow-hidden">
                   <button
+                    type="button"
                     onClick={() => setOpenTypes(prev => ({ ...prev, [t]: !prev[t] }))}
                     className="w-full px-4 py-3 text-left flex items-center justify-between"
                   >
@@ -1129,6 +1137,7 @@ function PhaseContent({
                         {members.map(poke => (
                           <button
                             key={poke.rank}
+                            type="button"
                             onClick={() => onSelectPokemon(poke.rank)}
                             className="group flex w-full items-center justify-between rounded-xl border border-border bg-white/70 px-3 py-2 text-left shadow-sm transition hover:border-poke-blue hover:bg-white dark:bg-slate-900/60 dark:hover:bg-slate-800"
                           >
@@ -1173,6 +1182,7 @@ function PhaseContent({
                 return (
                   <button
                     key={entry.type}
+                    type="button"
                     onClick={() => {
                       const match = pokemon.find(p => p.types.includes(entry.type))
                       if (match) onSelectPokemon(match.rank)
@@ -1530,6 +1540,7 @@ function TrendsPhase({
             {rows.map(poke => (
               <button
                 key={poke.rank}
+                type="button"
                 data-rank={poke.rank}
                 ref={getRowRefCallback(poke.rank)}
                 onClick={() => onSelectPokemon(poke.rank)}

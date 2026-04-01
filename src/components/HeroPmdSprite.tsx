@@ -96,7 +96,7 @@ export function usePmdAnimations(pokemonId: number): { anims: AnimMeta[] | null;
 					setList(out)
 					setError(null)
 				}
-			} catch (e: any) {
+			} catch (e: unknown) {
 				if (!cancelled) {
 					if (out.length > 0) {
 						setList(out)
@@ -136,7 +136,7 @@ export default function HeroPmdSprite({ pokemonId, animName, scale = 2, speedMul
 		return <div className="text-red-500 text-xs text-center">{error}</div>
 	}
 	if (!meta) {
-		return <div className="text-gray-500 text-xs text-center">Loading animation...</div>
+		return <div className="text-gray-500 dark:text-gray-400 text-xs text-center">Loading animation...</div>
 	}
 
 	// Convert AnimMeta to the format expected by SpriteJsTile

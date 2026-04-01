@@ -227,6 +227,7 @@ export default function UsageSnapshotPhase({
       {/* Quick Actions */}
       <div className="flex flex-wrap gap-3">
         <button
+          type="button"
           onClick={() => onPhaseChange('trends')}
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >

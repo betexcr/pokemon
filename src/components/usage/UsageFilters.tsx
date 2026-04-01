@@ -181,6 +181,7 @@ export default function UsageFiltersComponent({
         const currentGen = filters.generations[0];
         const currentFmt = filters.formats[0];
         const monthsForCurrent = data.availability?.[currentFmt]?.[currentGen] || [];
+        if (cancelled) return;
         if (!monthsForCurrent.length) {
           const picked = findFirstValid();
           if (picked) {
@@ -273,6 +274,7 @@ export default function UsageFiltersComponent({
         <div className="flex items-center gap-2">
           {hasActiveFilters && (
             <button
+              type="button"
               onClick={clearFilters}
               className="flex items-center gap-1 px-3 py-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
             >
@@ -281,6 +283,7 @@ export default function UsageFiltersComponent({
             </button>
           )}
           <button
+            type="button"
             onClick={() => setIsExpanded(!isExpanded)}
             className="flex items-center gap-1 px-3 py-1 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
           >
@@ -299,6 +302,7 @@ export default function UsageFiltersComponent({
           <div className="flex flex-wrap gap-2">
             {PLATFORM_OPTIONS.map(platform => (
               <button
+                type="button"
                 key={platform.value}
                 onClick={() => {
                   // Single select: only allow one platform at a time
@@ -334,6 +338,7 @@ export default function UsageFiltersComponent({
               });
             }).map(generation => (
               <button
+                type="button"
                 key={generation.value}
                 onClick={() => {
                   // Single select: only allow one generation at a time
@@ -362,6 +367,7 @@ export default function UsageFiltersComponent({
           <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
             {availableFormats.map(format => (
               <button
+                type="button"
                 key={format.value}
                 onClick={() => {
                   // Single select: only allow one format at a time
@@ -413,7 +419,7 @@ export default function UsageFiltersComponent({
               type="checkbox"
               checked={filters.top50Only}
               onChange={(e) => updateFilters({ top50Only: e.target.checked })}
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
             />
             <span className="text-sm text-gray-700 dark:text-gray-300">
               Only Top 50 Pokémon
@@ -439,6 +445,7 @@ export default function UsageFiltersComponent({
           <select
             value={filters.sortOrder}
             onChange={(e) => updateFilters({ sortOrder: e.target.value as any })}
+            aria-label="Sort order"
             className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm"
           >
             <option value="asc">Ascending</option>

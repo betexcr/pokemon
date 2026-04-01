@@ -985,14 +985,14 @@ export default function HelpAssistant({ className = '' }: HelpAssistantProps) {
   )
 
   // Function to fetch Pokemon name by ID
-  const fetchPokemonName = useCallback(async (pokemonId: number): Promise<string> => {
-    // Check cache first
+  const fetchPokemonName = useCallback(async (pokemonId: number, signal?: { cancelled: boolean }): Promise<string> => {
     if (pokemonNameCache.has(pokemonId)) {
       return pokemonNameCache.get(pokemonId)!
     }
 
     try {
       const pokemon = await getPokemon(pokemonId)
+      if (signal?.cancelled) return `Pokemon #${pokemonId}`
       const name = capitalizePokemonName(pokemon.name)
       pokemonNameCache.set(pokemonId, name)
       setPokemonNames(prev => new Map(prev).set(pokemonId, name))
@@ -1004,11 +1004,11 @@ export default function HelpAssistant({ className = '' }: HelpAssistantProps) {
   }, [])
 
   useEffect(() => {
-    let cancelled = false
+    const signal = { cancelled: false }
     const pokemonId = parseInt(currentPokemon.id)
     if (!pokemonNames.has(pokemonId)) {
-      fetchPokemonName(pokemonId).then((name) => {
-        if (cancelled) return
+      fetchPokemonName(pokemonId, signal).then((name) => {
+        if (signal.cancelled) return
         setCurrentPokemon(prev => ({ ...prev, name }))
       }).catch(() => {})
     } else {
@@ -1017,7 +1017,7 @@ export default function HelpAssistant({ className = '' }: HelpAssistantProps) {
         name: pokemonNames.get(pokemonId) || prev.name
       }))
     }
-    return () => { cancelled = true }
+    return () => { signal.cancelled = true }
   }, [currentPokemon.id, pokemonNames, fetchPokemonName])
   const [clippyStyle, setClippyStyle] = useState(CLIPPY_STYLES[Math.floor(Math.random() * CLIPPY_STYLES.length)])
   const [quotesForPage, setQuotesForPage] = useState<string[]>(() => {

@@ -9,7 +9,7 @@ import { FirebaseError } from 'firebase/app';
 import { AuthError } from 'firebase/auth';
 import { FirestoreError } from 'firebase/firestore';
 
-export interface FirebaseErrorLog {
+interface FirebaseErrorLog {
   timestamp: string;
   errorType: 'auth' | 'firestore' | 'general';
   errorCode: string;
@@ -362,16 +362,4 @@ class FirebaseErrorLogger {
 // Export singleton instance
 export const firebaseErrorLogger = new FirebaseErrorLogger();
 
-// Export helper functions for common error logging scenarios
-export const logFirebaseError = (
-  error: Error,
-  operation: string,
-  context: Record<string, any> = {}
-) => firebaseErrorLogger.logError(error, operation, context);
-
-export const logPermissionError = (
-  error: FirestoreError,
-  permissionDetails: PermissionErrorDetails,
-  context: Record<string, any> = {}
-) => firebaseErrorLogger.logPermissionError(error, permissionDetails, context);
 

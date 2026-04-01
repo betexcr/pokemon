@@ -5,7 +5,7 @@
  * Limits concurrent requests to prevent overwhelming the API
  */
 
-export type RequestPriority = 'critical' | 'high' | 'normal' | 'low' | 'background';
+type RequestPriority = 'critical' | 'high' | 'normal' | 'low' | 'background';
 
 interface RequestEntry {
   controller: AbortController;
@@ -322,4 +322,4 @@ class RequestManager {
 // Global singleton instance
 export const requestManager = new RequestManager();
 
-export default requestManager;
+// Only named export `requestManager` is used

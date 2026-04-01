@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Heart, Star, Sparkles } from 'lucide-react'
 
 interface ContestStats {
@@ -18,6 +18,13 @@ interface PokeblockFeederProps {
 
 export default function PokeblockFeeder({ pokemonStats, onPokeblockFeed }: PokeblockFeederProps) {
   const [showAnimation, setShowAnimation] = useState<string | null>(null)
+  const animTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (animTimerRef.current) clearTimeout(animTimerRef.current)
+    }
+  }, [])
 
   const pokeblocks = [
     { color: 'Red', stat: 'coolness' as keyof ContestStats, bgColor: 'bg-red-400', hoverColor: 'hover:bg-red-500' },
@@ -41,7 +48,8 @@ export default function PokeblockFeeder({ pokemonStats, onPokeblockFeed }: Pokeb
     }
     
     setShowAnimation(color)
-    setTimeout(() => setShowAnimation(null), 1000)
+    if (animTimerRef.current) clearTimeout(animTimerRef.current)
+    animTimerRef.current = setTimeout(() => setShowAnimation(null), 1000)
   }
 
   return (
@@ -76,6 +84,7 @@ export default function PokeblockFeeder({ pokemonStats, onPokeblockFeed }: Pokeb
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {pokeblocks.map((block) => (
           <button
+            type="button"
             key={block.color}
             onClick={() => handlePokeblockClick(block.color, block.stat)}
             className={`relative group ${block.bgColor} ${block.hoverColor} rounded-xl p-4 text-white font-bold transition-all duration-300 hover:scale-105 hover:shadow-lg transform`}

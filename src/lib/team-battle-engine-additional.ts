@@ -340,7 +340,7 @@ function applyMoveFlinch(state: BattleState, move: any, defender: BattlePokemon)
 }
 
 // Execute a move action with multi-hit support
-export async function executeMoveAction(
+async function executeMoveAction(
   state: BattleState,
   attacker: BattlePokemon,
   defender: BattlePokemon,
@@ -958,12 +958,12 @@ export async function processEndOfTurn(state: BattleState): Promise<void> {
   checkResidualFaints(state);
 }
 
-export function processResidualDamage(_state: BattleState): void {
+function processResidualDamage(_state: BattleState): void {
   // Status residual damage (poison, burn) is handled by applyEndOfTurnStatus
 }
 
 // Process item residuals
-export function processItemResiduals(state: BattleState): void {
+function processItemResiduals(state: BattleState): void {
   const processItem = (team: BattleTeam) => {
     const pokemon = getCurrentPokemon(team);
     if (pokemon.currentHp <= 0) return;
@@ -1020,7 +1020,7 @@ export function processItemResiduals(state: BattleState): void {
 }
 
 // Process end-of-turn abilities
-export function processEndOfTurnAbilities(state: BattleState): void {
+function processEndOfTurnAbilities(state: BattleState): void {
   [state.player, state.opponent].forEach(team => {
     const pokemon = getCurrentPokemon(team);
     if (pokemon.currentHp <= 0) return;
@@ -1140,7 +1140,7 @@ export function processEndOfTurnAbilities(state: BattleState): void {
 }
 
 // Process volatile decrements
-export function processVolatileDecrements(state: BattleState): void {
+function processVolatileDecrements(state: BattleState): void {
   const playerPokemon = getCurrentPokemon(state.player);
   const opponentPokemon = getCurrentPokemon(state.opponent);
   
@@ -1220,7 +1220,7 @@ export function processVolatileDecrements(state: BattleState): void {
 }
 
 // Check for faints from residuals and resync faintedCount from HP
-export function checkResidualFaints(state: BattleState): void {
+function checkResidualFaints(state: BattleState): void {
   const checkSide = (team: BattleTeam) => {
     const pokemon = getCurrentPokemon(team);
     const prevFaintedCount = team.faintedCount;

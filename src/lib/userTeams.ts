@@ -40,7 +40,7 @@ export interface TeamSlot {
   isShiny?: boolean;
 }
 
-export type StoredTeamSlot = Omit<TeamSlot, 'nature'> & { nature?: NatureName };
+type StoredTeamSlot = Omit<TeamSlot, 'nature'> & { nature?: NatureName };
 
 export interface SavedTeam {
   id: string;
@@ -53,7 +53,7 @@ export interface SavedTeam {
   description?: string;
 }
 
-export interface TeamDocument {
+interface TeamDocument {
   name: string;
   slots: StoredTeamSlot[];
   userId: string;
@@ -280,7 +280,7 @@ export async function getUserTeams(userId: string): Promise<SavedTeam[]> {
 }
 
 // Get a specific team by ID
-export async function getTeamById(teamId: string, userId: string): Promise<SavedTeam | null> {
+async function getTeamById(teamId: string, userId: string): Promise<SavedTeam | null> {
   const db = ensureDb()
 
   try {
@@ -306,7 +306,7 @@ export async function getTeamById(teamId: string, userId: string): Promise<Saved
 }
 
 // Get public teams (for sharing/community features)
-export async function getPublicTeams(limit: number = 20): Promise<SavedTeam[]> {
+async function getPublicTeams(limit: number = 20): Promise<SavedTeam[]> {
   const db = ensureDb()
 
   try {

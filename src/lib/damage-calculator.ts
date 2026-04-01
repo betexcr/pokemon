@@ -9,7 +9,7 @@ export type TypeName =
   | "Rock" | "Ghost" | "Dragon" | "Dark" | "Steel" | "Fairy";
 
 // Complete type effectiveness chart (Gen VI+)
-export const TYPE_CHART: Record<TypeName, Partial<Record<TypeName, number>>> = {
+const TYPE_CHART: Record<TypeName, Partial<Record<TypeName, number>>> = {
   "Normal":   {"Rock":0.5,"Ghost":0,"Steel":0.5},
   "Fire":     {"Fire":0.5,"Water":0.5,"Grass":2,"Ice":2,"Bug":2,"Rock":0.5,"Dragon":0.5,"Steel":2,"Poison":0.5},
   "Water":    {"Fire":2,"Water":0.5,"Grass":0.5,"Ground":2,"Rock":2,"Dragon":0.5},
@@ -43,7 +43,7 @@ export function calculateTypeEffectiveness(attackType: TypeName, defenderTypes: 
 }
 
 // Convert stat stages to multipliers
-export function getStatStageMultiplier(stage: number): number {
+function getStatStageMultiplier(stage: number): number {
   if (stage >= 0) {
     return (2 + stage) / 2;
   } else {
@@ -52,7 +52,7 @@ export function getStatStageMultiplier(stage: number): number {
 }
 
 // Main damage calculation function
-export function calculateDamage({
+function calculateDamage({
   level,
   movePower,
   attackStat,
@@ -111,7 +111,7 @@ export function getWeatherModifier(moveType: TypeName, weather: 'None' | 'Rain' 
 }
 
 // Burn modifier
-export function getBurnModifier(isBurned: boolean, isPhysical: boolean, hasGuts: boolean = false): number {
+function getBurnModifier(isBurned: boolean, isPhysical: boolean, hasGuts: boolean = false): number {
   if (isBurned && isPhysical && !hasGuts) {
     return 0.5;
   }
@@ -119,7 +119,7 @@ export function getBurnModifier(isBurned: boolean, isPhysical: boolean, hasGuts:
 }
 
 // STAB calculation
-export function getStabMultiplier(moveType: TypeName, attackerTypes: TypeName[], hasAdaptability: boolean = false): number {
+function getStabMultiplier(moveType: TypeName, attackerTypes: TypeName[], hasAdaptability: boolean = false): number {
   const moveTypeLower = moveType.toLowerCase();
   const hasStab = attackerTypes.some(t => t.toLowerCase() === moveTypeLower);
   if (!hasStab) return 1;
@@ -127,7 +127,7 @@ export function getStabMultiplier(moveType: TypeName, attackerTypes: TypeName[],
 }
 
 // Critical hit chance calculation
-export function getCriticalHitChance(baseCritRate: number = 0.0625, hasHighCritMove: boolean = false, hasSuperLuck: boolean = false, rng: BattleRng): boolean {
+function getCriticalHitChance(baseCritRate: number = 0.0625, hasHighCritMove: boolean = false, hasSuperLuck: boolean = false, rng: BattleRng): boolean {
   let critRate = baseCritRate;
   
   if (hasHighCritMove) {

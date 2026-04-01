@@ -348,7 +348,7 @@ function getPokemonBattleImageUrl(pokemonId: number | null, variant: 'front' | '
   return `${parts.join('/')}/${pokemonId}.png`;
 }
 
-export function getPokemonBattleSpriteUrl(pokemonId: number | null, variant: 'front' | 'back' = 'front', shiny: boolean = false): string {
+function getPokemonBattleSpriteUrl(pokemonId: number | null, variant: 'front' | 'back' = 'front', shiny: boolean = false): string {
   // For battle view, use the regular sprites which are smaller and more appropriate
   return getPokemonBattleImageUrl(pokemonId, variant, shiny);
 }

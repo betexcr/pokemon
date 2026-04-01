@@ -19,7 +19,7 @@ export async function POST(
         let uid: string;
         try {
             uid = await verifyAuthToken(token);
-        } catch (authError: any) {
+        } catch (authError: unknown) {
             console.error('Token Verification Failed:', authError);
             return NextResponse.json({ error: 'Invalid Token' }, { status: 401 });
         }
@@ -88,7 +88,7 @@ export async function POST(
         if (p1Submitted && p2Submitted) {
             try {
                 await resolveTurn(battleId, token);
-            } catch (err: any) {
+            } catch (err: unknown) {
                 console.error('Error resolving turn:', err);
                 return NextResponse.json(
                     { error: 'Failed to resolve turn. Please try again.' },
@@ -98,7 +98,7 @@ export async function POST(
         }
 
         return NextResponse.json({ success: true });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Error in submit route:', error);
         return NextResponse.json(
             { error: 'Internal Server Error' },

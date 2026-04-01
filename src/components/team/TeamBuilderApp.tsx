@@ -123,19 +123,19 @@ export default function TeamBuilderApp({ initialNames = [] as string[] }: { init
       <div className="space-y-6">
         <TeamGrid team={team} onChange={setTeam} />
         <div className="flex gap-2 flex-wrap">
-          <button className="btn" onClick={exportJSON}>
+          <button type="button" className="btn" onClick={exportJSON}>
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 7v10a2 2 0 0 0 2 2h8"/><path d="M14 22l-7-7 7-7"/></svg>
             JSON
           </button>
-          <button className="btn" onClick={exportCSV}>
+          <button type="button" className="btn" onClick={exportCSV}>
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>
             CSV
           </button>
-          <button className="btn" onClick={exportRadarPNG}>
+          <button type="button" className="btn" onClick={exportRadarPNG}>
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="14" x="3" y="5" rx="2" ry="2"/><circle cx="9" cy="10" r="2"/><path d="M15 8h.01"/><path d="M17 10h.01"/><path d="M15 12h.01"/></svg>
             Radar PNG
           </button>
-          <button className="btn-primary" onClick={copyShare}>
+          <button type="button" className="btn-primary" onClick={copyShare}>
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8a3 3 0 0 0-3-3"/><path d="M6 11v-1a7 7 0 0 1 14 0v1"/><rect width="20" height="8" x="2" y="11" rx="2"/></svg>
             Share
           </button>
@@ -181,12 +181,12 @@ function RecentTeams({ onLoad, onSave, current }: { onLoad: (names: string[]) =>
   }
   return (
     <div className="flex items-center gap-2">
-      <button className="px-3 py-2 rounded border" onClick={save}>Save Team</button>
+      <button type="button" className="px-3 py-2 rounded border" onClick={save}>Save Team</button>
       {list.length > 0 && (
         <div className="flex items-center gap-2 overflow-auto">
-          <span className="text-xs text-gray-600">Recent:</span>
+          <span className="text-xs text-gray-600 dark:text-gray-400">Recent:</span>
           {list.map((e) => (
-            <button key={e.name} className="text-xs px-2 py-1 rounded border" onClick={() => onLoad(e.team)}>{e.name}</button>
+            <button type="button" key={e.name} className="text-xs px-2 py-1 rounded border" onClick={() => onLoad(e.team)}>{e.name}</button>
           ))}
         </div>
       )}

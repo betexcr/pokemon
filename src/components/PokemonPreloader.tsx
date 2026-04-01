@@ -11,10 +11,14 @@ export default function PokemonPreloader() {
   useEffect(() => {
     if (typeof window === 'undefined') return
 
+    let cancelled = false
+
     const preloadEssentials = async () => {
       try {
         const { preloadTypeData, buildSearchIndex } = await import('@/lib/offlinePrefetch')
+        if (cancelled) return
         await preloadTypeData()
+        if (cancelled) return
         await buildSearchIndex()
       } catch {
         // non-critical
@@ -22,7 +26,10 @@ export default function PokemonPreloader() {
     }
 
     const timeoutId = setTimeout(preloadEssentials, 3000)
-    return () => clearTimeout(timeoutId)
+    return () => {
+      cancelled = true
+      clearTimeout(timeoutId)
+    }
   }, [])
 
   // This component doesn't render anything

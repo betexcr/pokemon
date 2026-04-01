@@ -56,12 +56,12 @@ export default function AuthGate() {
           <span className="inline-flex items-center gap-1 text-green-600 text-sm" aria-label="Sync on">
             <span className="h-2 w-2 rounded-full bg-green-500" /> Sync on
           </span>
-          <button className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-sm" onClick={handleSignOut}>
+          <button type="button" className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-sm" onClick={handleSignOut}>
             Sign out
           </button>
         </>
       ) : (
-        <button className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white text-sm" onClick={handleSignIn}>
+        <button type="button" className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white text-sm" onClick={handleSignIn}>
           Sign in with Google
         </button>
       )}

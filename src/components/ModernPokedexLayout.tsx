@@ -704,8 +704,10 @@ export default function ModernPokedexLayout({
       return
     }
 
+    let cancelled = false
+
     filteringTimeoutRef.current = setTimeout(async () => {
-      if (isFilteringRef.current) return // Double check
+      if (cancelled || isFilteringRef.current) return
       
       isFilteringRef.current = true
       setIsFiltering(true)
@@ -733,6 +735,7 @@ export default function ModernPokedexLayout({
           // Fetch by generation only if not "all" and not empty (All Generations)
           setIsAllGenerations(false)
           results = await getPokemonByGeneration(parseInt(advancedFilters.generation))
+          if (cancelled) return
           
           // Apply type filters to generation results
           if (advancedFilters.types.length > 0 && results.length > 0) {
@@ -748,11 +751,13 @@ export default function ModernPokedexLayout({
           if (advancedFilters.types.length === 1) {
             // Single type - fetch all Pokémon of that type
             results = await getPokemonByType(advancedFilters.types[0])
+            if (cancelled) return
           } else {
             // Multiple types - fetch all Pokémon of each type and find intersection
             const typePokemonLists = await Promise.all(
               advancedFilters.types.map(type => getPokemonByType(type))
             )
+            if (cancelled) return
             
             // Find Pokémon that appear in ALL selected types (AND logic)
             const pokemonCounts = new Map<number, number>()
@@ -780,11 +785,11 @@ export default function ModernPokedexLayout({
             try {
               // Get total count first
               const totalCount = await getPokemonTotalCount();
+              if (cancelled) return
               
-              // Step 1: Fetch basic Pokémon list (without full data/images) to identify matches
               const basicPokemonList = await getPokemonList(totalCount, 0);
+              if (cancelled) return
               
-              // Step 2: Filter for matching Pokémon IDs
               const legendaryMythicalIds: number[] = [];
               basicPokemonList.results.forEach((pokemonRef) => {
                 if (!pokemonRef.url) return;
@@ -804,11 +809,12 @@ export default function ModernPokedexLayout({
               });
               
               
-              // Fetch the actual legendary/mythical Pokémon data
               const legendaryMythicalPokemon: Pokemon[] = [];
               for (const pokemonId of legendaryMythicalIds) {
+                if (cancelled) return
                 try {
                   const pokemon = await getPokemon(pokemonId);
+                  if (cancelled) return
                   if (pokemon) {
                     legendaryMythicalPokemon.push(pokemon);
                   }
@@ -844,20 +850,20 @@ export default function ModernPokedexLayout({
             setHasMorePokemon(false) // Disable infinite scroll for filtered results
             
             try {
-              // Get total count first
               const totalCount = await getPokemonTotalCount();
+              if (cancelled) return
               
-              // Step 1: Fetch basic Pokémon list (without full data/images) to identify candidates
               const basicPokemonList = await getPokemonList(totalCount, 0);
+              if (cancelled) return
               
-              // Step 2: For weight/height filtering, we need full data, so fetch all Pokémon
-              // For sorting, we also need full data
               const allPokemon: Pokemon[] = [];
               const batchSize = 50;
               let offset = 0;
               
               while (offset < totalCount) {
+                if (cancelled) return
                 const batch = await getPokemonWithPagination(batchSize, offset);
+                if (cancelled) return
                 if (batch.length === 0) break;
                 allPokemon.push(...batch);
                 offset += batchSize;
@@ -949,6 +955,7 @@ export default function ModernPokedexLayout({
         })
         setIsInFilteredState(true)
       } catch (error) {
+        if (cancelled) return
         
         // On error, fallback to pokemonList instead of empty array
         // Only update if different to prevent unnecessary re-renders
@@ -968,7 +975,7 @@ export default function ModernPokedexLayout({
         
       } finally {
         isFilteringRef.current = false
-        setIsFiltering(false)
+        if (!cancelled) setIsFiltering(false)
         if (pendingFilterRef.current) {
           pendingFilterRef.current = false
           lastFilterHashRef.current = ''
@@ -977,6 +984,7 @@ export default function ModernPokedexLayout({
     }, 200)
 
     return () => {
+      cancelled = true
       if (filteringTimeoutRef.current) {
         clearTimeout(filteringTimeoutRef.current)
       }
@@ -1418,7 +1426,7 @@ export default function ModernPokedexLayout({
             <div className="p-6 space-y-6">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-text">Quick Actions</h3>
-                <button
+                <button type="button"
                   onClick={() => setShowMobileMenu(false)}
                   className="p-2 rounded-lg hover:bg-white/20 dark:hover:bg-white/10 transition-all duration-200 hover:scale-110"
                   aria-label="Close menu"
@@ -1434,7 +1442,7 @@ export default function ModernPokedexLayout({
                 <h4 className="text-sm font-semibold text-text uppercase tracking-wider">Quick Type Filters</h4>
                 <div className="grid grid-cols-3 gap-2 max-h-32 overflow-y-auto">
                   {Object.keys(typeColors).slice(0, 9).map(type => (
-                    <button
+                    <button type="button"
                       key={type}
                       onClick={() => {
                         if (!isFiltering) {
@@ -1465,7 +1473,7 @@ export default function ModernPokedexLayout({
                     <div className={`w-2 h-2 rounded-full ${isFiltering ? 'bg-poke-yellow animate-pulse' : 'bg-green-500'}`}></div>
                   </div>
                   {(advancedFilters.types.length > 0 || searchTerm || (advancedFilters.generation && advancedFilters.generation !== '') || advancedFilters.legendary || advancedFilters.mythical || advancedFilters.ultraBeast) && (
-                    <button
+                    <button type="button"
                       onClick={() => {
                         clearAllFilters()
                         setShowMobileMenu(false)
@@ -1484,7 +1492,7 @@ export default function ModernPokedexLayout({
               {/* Mobile Comparison Section */}
               <div className="space-y-3">
                 <div className="space-y-2">
-                  <button
+                  <button type="button"
                     onClick={() => { if (comparisonList.length > 0) { router.push('/compare'); setShowMobileMenu(false) } }}
                     disabled={comparisonList.length === 0}
                     className={`w-full p-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center space-x-2 ${comparisonList.length === 0 ? 'bg-poke-blue/40 text-white/80 cursor-not-allowed' : 'bg-poke-blue text-white hover:bg-poke-blue/80'}`}
@@ -1500,7 +1508,7 @@ export default function ModernPokedexLayout({
                     <span>Go to Comparison</span>
                   </button>
                   {comparisonList.length > 0 && (
-                    <button
+                    <button type="button"
                       onClick={() => {
                         onClearComparison()
                         setShowMobileMenu(false)
@@ -1517,7 +1525,7 @@ export default function ModernPokedexLayout({
               <div className="space-y-3">
                 <h4 className="text-sm font-semibold text-text uppercase tracking-wider">Team Builder</h4>
                 <div className="space-y-2">
-                  <button
+                  <button type="button"
                     onClick={() => {
                       router.push('/team')
                       setShowMobileMenu(false)
@@ -1540,7 +1548,7 @@ export default function ModernPokedexLayout({
               <div className="space-y-3">
                 <h4 className="text-sm font-semibold text-text uppercase tracking-wider">AI Battle</h4>
                 <div className="space-y-2">
-                  <button
+                  <button type="button"
                     onClick={() => {
                       router.push('/battle')
                       setShowMobileMenu(false)
@@ -1574,7 +1582,7 @@ export default function ModernPokedexLayout({
               <div className="space-y-3">
                 <h4 className="text-sm font-semibold text-text uppercase tracking-wider">Test Auth Dialog</h4>
                 <div className="space-y-2">
-                  <button
+                  <button type="button"
                     onClick={() => {
                       openAuthModal('login')
                       setShowMobileMenu(false)
@@ -1583,7 +1591,7 @@ export default function ModernPokedexLayout({
                   >
                     <span>Test Sign In Dialog</span>
                   </button>
-                  <button
+                  <button type="button"
                     onClick={() => {
                       openAuthModal('register')
                       setShowMobileMenu(false)
@@ -1600,7 +1608,7 @@ export default function ModernPokedexLayout({
                 <div className="space-y-3">
                   <h4 className="text-sm font-semibold text-text uppercase tracking-wider">Authentication</h4>
                   <div className="space-y-2">
-                    <button
+                    <button type="button"
                       onClick={() => {
                         openAuthModal('login')
                         setShowMobileMenu(false)
@@ -1609,7 +1617,7 @@ export default function ModernPokedexLayout({
                     >
                       <span>Sign In</span>
                     </button>
-                    <button
+                    <button type="button"
                       onClick={() => {
                         openAuthModal('register')
                         setShowMobileMenu(false)
@@ -1624,7 +1632,7 @@ export default function ModernPokedexLayout({
 
               {/* Mobile Close Button */}
               <div className="pt-6 border-t border-border">
-                <button
+                <button type="button"
                   onClick={() => setShowMobileMenu(false)}
                   className="w-full p-3 rounded-xl bg-white dark:bg-gray-800 border border-border text-text hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 font-medium"
                 >
@@ -1644,7 +1652,7 @@ export default function ModernPokedexLayout({
         <div className="w-full px-4 py-2 flex items-center gap-2">
           {/* Advanced Filters button — always visible */}
           <Tooltip content="Open advanced filters" position="bottom">
-            <button
+            <button type="button"
               onClick={() => setShowSidebar(prev => !prev)}
               aria-pressed={showSidebar}
               className={`flex-shrink-0 flex items-center gap-2 px-3 py-2.5 rounded-lg border text-sm font-semibold transition-all duration-200 shadow-sm hover:shadow-md ${
@@ -1659,7 +1667,7 @@ export default function ModernPokedexLayout({
           </Tooltip>
 
           {/* Expand/collapse toggle */}
-          <button
+          <button type="button"
             onClick={() => setIsFiltersCollapsed(!isFiltersCollapsed)}
             aria-expanded={!isFiltersCollapsed}
             aria-controls="search-filters-panel"
@@ -1723,7 +1731,7 @@ export default function ModernPokedexLayout({
                   className="w-20 h-10 rounded-xl border border-poke-blue/30 bg-white dark:bg-gray-800 px-2 text-sm text-center font-semibold text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-poke-blue/50"
                   title="Jump to Pokédex number"
                 />
-                <button
+                <button type="button"
                   onClick={() => void handleJumpToPokemonNumber()}
                   className="h-10 px-3 rounded-xl border border-poke-blue/30 bg-white dark:bg-gray-800 text-sm font-semibold text-poke-blue hover:border-poke-blue/60 transition-colors"
                   title="Go to Pokédex number"
@@ -1736,7 +1744,7 @@ export default function ModernPokedexLayout({
                   <img src="/loading.gif" alt="Loading" width={20} height={20} className="opacity-80" />
                 </div>
               )}
-              <button
+              <button type="button"
                 onClick={async () => {
                   try {
                     const allIds = await fetchAllPokemonIds()
@@ -1762,7 +1770,7 @@ export default function ModernPokedexLayout({
             {/* Type Filter Buttons */}
             <div className="flex items-center flex-wrap gap-1.5 sm:gap-2 pb-1 type-filters-scroll">
               {Object.keys(typeColors).map(type => (
-                <button
+                <button type="button"
                   key={type}
                   onClick={() => !isFiltering && toggleTypeFilter(type)}
                   disabled={isFiltering}
@@ -1799,7 +1807,7 @@ export default function ModernPokedexLayout({
               <div className="flex items-center space-x-3">
                 {/* Favorites Filter Toggle */}
                 {favoritesList.length > 0 && (
-                  <button
+                  <button type="button"
                     onClick={() => setShowFavoritesOnly(prev => !prev)}
                     disabled={isFiltering}
                     className={`px-3 py-1.5 text-sm font-semibold rounded-lg border-2 transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-105 flex items-center gap-2 ${
@@ -1841,7 +1849,7 @@ export default function ModernPokedexLayout({
                       { visual: '12cols', label: '12 Cols', target: '12cols' },
                       { visual: 'list', label: 'List', target: 'list' }
                     ].map(({ visual, label, target }) => (
-                      <button
+                      <button type="button"
                         key={visual}
                         onClick={() => setCardDensity(target as '3cols' | '6cols' | '9cols' | '12cols' | 'list')}
                         className={`px-2 py-2 text-xs font-medium rounded-full transition-all duration-200 flex items-center space-x-1 ${
@@ -1872,6 +1880,7 @@ export default function ModernPokedexLayout({
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                    aria-label="Sort by"
                     className="px-3 py-2 border border-border rounded-xl text-sm font-medium focus:ring-2 focus:ring-poke-blue focus:border-poke-blue focus:outline-none transition-all duration-200 shadow-sm hover:shadow-md control-keep"
                     style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }}
                   >
@@ -1885,7 +1894,7 @@ export default function ModernPokedexLayout({
                     <option value="special-defense">Sp. Defense</option>
                     <option value="speed">Speed</option>
                   </select>
-                  <button
+                  <button type="button"
                     onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
                     className="flex items-center gap-1 px-2 py-2 rounded-full bg-surface border border-border hover:bg-white/50 dark:hover:bg-white/10 hover:border-poke-blue/30 transition-all duration-200 shadow-sm hover:shadow-md group control-keep"
                     style={{ borderRadius: '9999px', padding: '8px 8px' }}
@@ -2055,7 +2064,7 @@ export default function ModernPokedexLayout({
                 {/* Manual load more button - only show on API error */}
                 {isAllGenerations && hasMorePokemon && !isLoadingMore && emptyBatchCountRef.current > 0 && (
                   <div className="text-center py-8">
-                    <button
+                    <button type="button"
                       onClick={loadMorePokemon}
                       className="px-6 py-3 bg-poke-red text-white rounded-lg hover:bg-poke-red/90 transition-colors font-medium"
                     >
@@ -2079,7 +2088,7 @@ export default function ModernPokedexLayout({
                 <p className="text-muted mb-4">
                   Try adjusting your search terms or filters
                 </p>
-                <button
+                <button type="button"
                   onClick={clearAllFilters}
                   className="px-4 py-2 bg-poke-blue text-white rounded-lg hover:bg-poke-blue/90 transition-colors"
                 >

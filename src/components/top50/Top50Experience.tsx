@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState, useCallback, forwardRef, useImperativeHandle } from 'react'
+import { useEffect, useMemo, useRef, useState, useCallback, forwardRef, useImperativeHandle } from 'react'
 import PopupBook from './PopupBook'
 import ReferencesBar from './ReferencesBar'
 import type { PopularPokemon } from '@/data/top50Pokemon'
@@ -11,7 +11,7 @@ interface Top50ExperienceProps {
   onInteraction?: () => void
 }
 
-export interface Top50ExperienceRef {
+interface Top50ExperienceRef {
   resetToCover: () => void
 }
 
@@ -73,25 +73,27 @@ const Top50Experience = forwardRef<Top50ExperienceRef, Top50ExperienceProps>(({ 
     onInteraction?.()
   }, [onInteraction])
 
-  const scrollToSpotlight = () => {
+  const scrollTimersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set())
+
+  const scrollToSpotlight = useCallback(() => {
     if (typeof window === 'undefined') return
 
     let retries = 0
     const maxRetries = 60
+    const timers = scrollTimersRef.current
 
-    // Poll until the spotlight card is mounted in the DOM
-    // (handles AnimatePresence "wait" mode where the exit runs
-    // before the enter, so the card may not exist for ~500ms).
+    const addTimer = (fn: () => void, ms: number) => {
+      const id = setTimeout(() => { timers.delete(id); fn() }, ms)
+      timers.add(id)
+    }
+
     const waitForCard = () => {
       const card = document.getElementById('top50-spotlight-card') as HTMLElement | null
       if (!card || card.getBoundingClientRect().height === 0) {
-        if (retries++ < maxRetries) {
-          setTimeout(waitForCard, 50)
-        }
+        if (retries++ < maxRetries) addTimer(waitForCard, 50)
         return
       }
-      // Card is mounted — wait for the spring enter animation to settle
-      setTimeout(() => {
+      addTimer(() => {
         const header = document.querySelector('header.sticky') as HTMLElement | null
         const headerHeight = header ? Math.ceil(header.getBoundingClientRect().height) : 0
         card.style.scrollMarginTop = `${headerHeight + 8}px`
@@ -100,8 +102,8 @@ const Top50Experience = forwardRef<Top50ExperienceRef, Top50ExperienceProps>(({ 
       }, 550)
     }
 
-    setTimeout(waitForCard, 30)
-  }
+    addTimer(waitForCard, 30)
+  }, [])
 
   // Initialize from URL if a rank is specified (e.g., /top50?rank=46 or hash like #rank=46)
   useEffect(() => {
@@ -118,13 +120,16 @@ const Top50Experience = forwardRef<Top50ExperienceRef, Top50ExperienceProps>(({ 
         }
       } catch {}
     }
-    let timerId: ReturnType<typeof setTimeout> | undefined
     if (rank && Number.isFinite(rank)) {
       setSelectedRank(rank)
       setCurrentPhase(1)
-      timerId = setTimeout(() => scrollToSpotlight(), 50)
+      const id = setTimeout(() => scrollToSpotlight(), 50)
+      scrollTimersRef.current.add(id)
     }
-    return () => { if (timerId) clearTimeout(timerId) }
+    return () => {
+      scrollTimersRef.current.forEach(id => clearTimeout(id))
+      scrollTimersRef.current.clear()
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialRank])
 

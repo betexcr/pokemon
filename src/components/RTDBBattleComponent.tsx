@@ -116,7 +116,7 @@ interface RTDBBattleComponentProps {
 }
 
 
-export const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
+const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
   battleId,
   onBattleComplete,
   viewMode = 'classic'

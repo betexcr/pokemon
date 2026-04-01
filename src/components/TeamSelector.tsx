@@ -214,7 +214,7 @@ export default function TeamSelector({
           {label}
         </label>
         <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-3 bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-300 text-sm">
-          No teams saved. <a href="/team" className="text-blue-600 dark:text-blue-400 hover:underline">Create a team</a> or <button onClick={() => setShowAuthModal(true)} className="text-blue-600 dark:text-blue-400 hover:underline bg-transparent border-none cursor-pointer p-0 m-0 font-inherit text-inherit">sign in</button> to access cloud teams.
+          No teams saved. <a href="/team" className="text-blue-600 dark:text-blue-400 hover:underline">Create a team</a> or <button type="button" onClick={() => setShowAuthModal(true)} className="text-blue-600 dark:text-blue-400 hover:underline bg-transparent border-none cursor-pointer p-0 m-0 font-inherit text-inherit">sign in</button> to access cloud teams.
         </div>
       </div>
     );
@@ -228,7 +228,7 @@ export default function TeamSelector({
         </label>
         <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-3 bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-300 text-sm">
           Failed to load teams.{' '}
-          <button onClick={() => setRetryCount(c => c + 1)} className="text-blue-600 dark:text-blue-400 hover:underline bg-transparent border-none cursor-pointer p-0 m-0 font-inherit text-inherit">
+          <button type="button" onClick={() => setRetryCount(c => c + 1)} className="text-blue-600 dark:text-blue-400 hover:underline bg-transparent border-none cursor-pointer p-0 m-0 font-inherit text-inherit">
             Retry
           </button>
         </div>
@@ -289,7 +289,7 @@ export default function TeamSelector({
                   {selectedTeam.slots.slice(0, 6).map((slot, index) => (
                     <div
                       key={slot.id ?? `empty-${index}`}
-                      className="relative w-5 h-5 rounded-full border border-white bg-gray-100 overflow-hidden"
+                      className="relative w-5 h-5 rounded-full border border-white bg-gray-100 dark:bg-gray-800 overflow-hidden"
                     >
                       {slot.id ? (
                         <>
@@ -312,8 +312,8 @@ export default function TeamSelector({
                           <img src="/loading.gif" alt="Loading" className="absolute inset-0 m-auto w-2.5 h-2.5 opacity-80" data-img-loader />
                         </>
                       ) : (
-                        <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                          <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                        <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                          <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full"></div>
                         </div>
                       )}
                     </div>
@@ -356,7 +356,7 @@ export default function TeamSelector({
                       {team.slots.slice(0, 6).map((slot, index) => (
                         <div
                           key={slot.id ?? `empty-${index}`}
-                          className="relative w-6 h-6 rounded-full border border-white bg-gray-100 overflow-hidden"
+                          className="relative w-6 h-6 rounded-full border border-white bg-gray-100 dark:bg-gray-800 overflow-hidden"
                         >
                           {slot.id ? (
                             <>
@@ -379,8 +379,8 @@ export default function TeamSelector({
                               <img src="/loading.gif" alt="Loading" className="absolute inset-0 m-auto w-3 h-3 opacity-80" data-img-loader />
                             </>
                           ) : (
-                            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                              <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                            <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                              <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full"></div>
                             </div>
                           )}
                         </div>

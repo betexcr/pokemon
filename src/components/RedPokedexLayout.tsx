@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { Pokemon, FilterState } from '@/types/pokemon';
@@ -36,6 +36,7 @@ export default function RedPokedexLayout({
   const [searchTerm, setSearchTerm] = useState('');
   const [searchLoading, setSearchLoading] = useState(false);
   const [filteredPokemon, setFilteredPokemon] = useState<Pokemon[]>(pokemonList);
+  const searchRequestIdRef = useRef(0);
   const [showDesktopMenu, setShowDesktopMenu] = useState(false);
   const [sortBy, setSortBy] = useState<'id'|'name'|'stats'|'hp'|'attack'|'defense'|'special-attack'|'special-defense'|'speed'>('id');
   const [sortOrder, setSortOrder] = useState<'asc'|'desc'>('asc');
@@ -58,12 +59,13 @@ export default function RedPokedexLayout({
         {/* Desktop Header Controls - Hidden on mobile */}
         <div className="hidden md:flex absolute top-2 right-2 items-center gap-2">
           <UserDropdown />
-          <button onClick={() => router.push('/team')} className="px-3 py-1 bg-white text-red-800 border-2 border-red-600 rounded font-bold" title="Go to Team Builder">🎮 TEAM</button>
-          <button onClick={() => setShowDesktopMenu(true)} className="md:hidden px-3 py-1 bg-white text-red-800 border-2 border-red-600 rounded font-bold">MENU</button>
+          <button type="button" onClick={() => router.push('/team')} className="px-3 py-1 bg-white text-red-800 border-2 border-red-600 rounded font-bold" title="Go to Team Builder">🎮 TEAM</button>
+          <button type="button" onClick={() => setShowDesktopMenu(true)} className="md:hidden px-3 py-1 bg-white text-red-800 border-2 border-red-600 rounded font-bold">MENU</button>
         </div>
 
         {/* Mobile Menu Button - Only visible on mobile */}
         <button
+          type="button"
           onClick={() => setShowDesktopMenu(true)}
           className="md:hidden absolute top-2 right-2 p-2 bg-white text-red-800 border-2 border-red-600 rounded font-bold"
           aria-label="Toggle menu"
@@ -100,6 +102,7 @@ export default function RedPokedexLayout({
                 <option value="speed">Speed</option>
               </select>
               <button
+                type="button"
                 onClick={()=>setSortOrder(prev=>prev==='asc'?'desc':'asc')}
                 className="px-2 py-1 border-2 border-red-600 bg-white text-red-800 text-xs font-bold flex items-center gap-2 control-keep"
                 title={`Sort ${sortOrder==='asc'?'Descending':'Ascending'}`}
@@ -278,10 +281,10 @@ export default function RedPokedexLayout({
             </div>
             <div>
               <label className="block text-sm font-bold text-red-800 mb-1">Search</label>
-              <input type="text" className="w-full border-2 border-red-600 p-2" placeholder="Search..." value={searchTerm} onChange={(e)=>setSearchTerm(e.target.value)} style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }} />
+              <input type="text" className="w-full border-2 border-red-600 p-2" placeholder="Search..." aria-label="Search Pokémon" value={searchTerm} onChange={(e)=>setSearchTerm(e.target.value)} style={{ backgroundColor: 'var(--color-input-bg)', color: 'var(--color-input-text)' }} />
             </div>
             <div>
-              <button onClick={()=>window.location.href='/compare'} className="w-full px-3 py-2 bg-red-600 text-white font-bold">GO TO COMPARISON</button>
+              <button type="button" onClick={()=>window.location.href='/compare'} className="w-full px-3 py-2 bg-red-600 text-white font-bold">GO TO COMPARISON</button>
             </div>
           </aside>
         </div>, document.body)
@@ -293,19 +296,25 @@ export default function RedPokedexLayout({
           <input
             type="text"
                             placeholder="Search Pokémon by name or #..."
+            aria-label="Search Pokémon"
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
               if (e.target.value.trim()) {
+                const requestId = ++searchRequestIdRef.current;
                 setSearchLoading(true);
                 searchPokemonByName(e.target.value).then(results => {
+                  if (requestId !== searchRequestIdRef.current) return;
                   setFilteredPokemon(results);
                 }).catch(err => {
+                  if (requestId !== searchRequestIdRef.current) return;
                   console.warn('Search failed:', err);
                 }).finally(() => {
+                  if (requestId !== searchRequestIdRef.current) return;
                   setSearchLoading(false);
                 });
               } else {
+                searchRequestIdRef.current++;
                 setFilteredPokemon(pokemonList);
               }
             }}

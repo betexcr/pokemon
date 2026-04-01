@@ -175,6 +175,7 @@ function ChampionshipHubPage() {
               </div>
               {!showForm && (
                 <button
+                  type="button"
                   onClick={() => setShowForm(true)}
                   className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
                 >
@@ -207,6 +208,7 @@ function ChampionshipHubPage() {
                   <div className="grid grid-cols-4 gap-2">
                     {sizeOptions.map((s) => (
                       <button
+                        type="button"
                         key={s}
                         onClick={() => setFormSize(s)}
                         className={`py-2.5 rounded-lg font-semibold text-sm border transition-colors ${
@@ -230,6 +232,7 @@ function ChampionshipHubPage() {
                   </label>
                   <div className="grid grid-cols-2 gap-2">
                     <button
+                      type="button"
                       onClick={() => setFormSeatMode('random')}
                       className={`py-2.5 rounded-lg font-medium text-sm border transition-colors ${
                         formSeatMode === 'random'
@@ -240,6 +243,7 @@ function ChampionshipHubPage() {
                       🎲 Random Seeding
                     </button>
                     <button
+                      type="button"
                       onClick={() => setFormSeatMode('pick')}
                       className={`py-2.5 rounded-lg font-medium text-sm border transition-colors ${
                         formSeatMode === 'pick'
@@ -284,6 +288,7 @@ function ChampionshipHubPage() {
 
                 <div className="flex gap-2 pt-2">
                   <button
+                    type="button"
                     onClick={handleCreate}
                     disabled={creating || !formName.trim()}
                     className="flex-1 bg-yellow-600 hover:bg-yellow-700 disabled:bg-yellow-400 text-white py-2.5 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
@@ -301,6 +306,7 @@ function ChampionshipHubPage() {
                     )}
                   </button>
                   <button
+                    type="button"
                     onClick={() => setShowForm(false)}
                     className="px-4 py-2.5 rounded-lg border border-border text-muted hover:text-text transition-colors"
                   >
@@ -464,6 +470,7 @@ function ChampionshipHubPage() {
                 <h3 className="text-lg font-medium text-text mb-2">Could not load championships</h3>
                 <p className="text-muted mb-4">{loadError}</p>
                 <button
+                  type="button"
                   onClick={() => { setLoading(true); setLoadError(null); window.location.reload(); }}
                   className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
                 >

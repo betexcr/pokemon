@@ -12,7 +12,7 @@ export type ProgressState = {
   updatedAt: number; // epoch ms for conflict resolution
 };
 
-export type Snapshot = {
+type Snapshot = {
   id: string; // share id
   createdAt: number;
   totals: { caught: number; seen?: number; percent: number };

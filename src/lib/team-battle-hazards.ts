@@ -8,7 +8,7 @@ export function getPokemonTypes(pokemon: BattlePokemon): TypeName[] {
     .filter((t): t is TypeName => Boolean(t)) as TypeName[];
 }
 
-export function stealthRockDamage(pokemon: BattlePokemon): number {
+function stealthRockDamage(pokemon: BattlePokemon): number {
   const effectiveness = calculateTypeEffectiveness('Rock', getPokemonTypes(pokemon));
   if (effectiveness === 0) return 0;
   const fraction = (1 / 8) * effectiveness;
@@ -24,7 +24,7 @@ export function isGrounded(pokemon: BattlePokemon): boolean {
   return !isFlying && !hasLevitate;
 }
 
-export function spikesDamage(pokemon: BattlePokemon, layers: number): number {
+function spikesDamage(pokemon: BattlePokemon, layers: number): number {
   if (!isGrounded(pokemon)) {
     return 0;
   }
@@ -35,7 +35,7 @@ export function spikesDamage(pokemon: BattlePokemon, layers: number): number {
   return Math.max(1, Math.floor(pokemon.maxHp * fraction));
 }
 
-export type HazardApplicationResult = {
+type HazardApplicationResult = {
   damage: number;
   absorbedToxicSpikes?: boolean;
   poisonStatus?: 'poisoned' | 'badly-poisoned';

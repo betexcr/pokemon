@@ -90,6 +90,13 @@ export default function TrendsClient() {
   const cloudStateRef = useRef<PersistableTrendsState | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [showSearchDropdown, setShowSearchDropdown] = useState(false)
+  const blurTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (blurTimerRef.current) clearTimeout(blurTimerRef.current)
+    }
+  }, [])
 
   // Hydrate from URL on first render when available.
   useEffect(() => {
@@ -154,8 +161,10 @@ export default function TrendsClient() {
         setCloudLoaded(true)
       } catch (error) {
         // Silently handle Firebase permissions errors - they don't break functionality
-        console.warn('Firebase preferences not available (permissions or network issue):', error)
-        setCloudLoaded(true)
+        if (!cancelled) {
+          console.warn('Firebase preferences not available (permissions or network issue):', error)
+          setCloudLoaded(true)
+        }
       }
     })()
     return () => {
@@ -334,7 +343,10 @@ export default function TrendsClient() {
                 className="w-full rounded-md border border-slate-300 bg-white/80 px-3 py-2 text-sm shadow-inner focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-900/60 dark:text-slate-100 dark:focus:ring-slate-600"
                 onChange={(event) => setSearchQuery(event.target.value)}
                 onFocus={() => setShowSearchDropdown(true)}
-                onBlur={() => setTimeout(() => setShowSearchDropdown(false), 150)}
+                onBlur={() => {
+                  if (blurTimerRef.current) clearTimeout(blurTimerRef.current)
+                  blurTimerRef.current = setTimeout(() => setShowSearchDropdown(false), 150)
+                }}
               />
               {showSearchDropdown && searchFilteredList.length > 0 && (
                 <div className="absolute z-50 mt-1 w-full rounded-md border border-slate-200 bg-white shadow-lg dark:border-slate-600 dark:bg-slate-800">

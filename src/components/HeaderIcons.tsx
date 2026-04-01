@@ -227,7 +227,8 @@ interface HamburgerMenuProps {
 export function HamburgerMenu({ onClick, className = '' }: HamburgerMenuProps) {
   return (
     <Tooltip content="Open mobile navigation menu with all app features and settings" position="bottom">
-      <button 
+      <button
+        type="button"
         className={`relative w-8 h-8 sm:w-12 sm:h-12 md:w-12 md:h-12 lg:w-14 lg:h-14 xl:w-16 xl:h-16  overflow-hidden aspect-square border-2 border-gray-300 bg-white/80 shadow-sm transition-all duration-300 ease-in-out flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 touch-manipulation dark:border-gray-600 dark:bg-gray-800/70 dark:hover:bg-gray-700/70 ${className}`}
         onClick={onClick}
         title="Toggle menu"

@@ -236,11 +236,14 @@ export default function TeamBuilderPage() {
     }
   }, [])
 
-  // Prefetch types for visible suggestions so badges are shown immediately
   useEffect(() => {
     if (!showDropdown) return
+    let cancelled = false
     const visible = (searchTerm.trim() ? filteredPokemon.slice(0, 50) : firstGenSuggestions)
-    visible.forEach(p => { if ((p.types?.length || 0) === 0) fetchPokemonTypes(p.id) })
+    visible.forEach(p => {
+      if (!cancelled && (p.types?.length || 0) === 0) fetchPokemonTypes(p.id)
+    })
+    return () => { cancelled = true }
   }, [showDropdown, searchTerm, /* filteredPokemon causes init order issue */ firstGenSuggestions, fetchPokemonTypes])
 
   // Close dropdown when clicking outside or pressing Escape
@@ -312,15 +315,15 @@ export default function TeamBuilderPage() {
     }
   }, [showDropdown, searchTerm, loadMorePokemon])
 
-  // Fetch type data for displayed Pokémon
   useEffect(() => {
-    if (filteredPokemon.length > 0) {
-      filteredPokemon.forEach(pokemon => {
-        if (pokemon.types.length === 0) {
-          fetchPokemonTypes(pokemon.id)
-        }
-      })
-    }
+    if (filteredPokemon.length === 0) return
+    let cancelled = false
+    filteredPokemon.forEach(pokemon => {
+      if (!cancelled && pokemon.types.length === 0) {
+        fetchPokemonTypes(pokemon.id)
+      }
+    })
+    return () => { cancelled = true }
   }, [filteredPokemon, fetchPokemonTypes])
 
   // Load current draft state from localStorage
@@ -1241,12 +1244,14 @@ export default function TeamBuilderPage() {
                 value={teamName}
                 onChange={(e) => setTeamName(e.target.value)}
                 placeholder="Team name"
+                aria-label="Team name"
                 className="px-3 py-2 border border-border rounded-lg bg-surface text-text flex-1 sm:min-w-[200px]"
               />
               
               {/* Action buttons - stack on mobile, row on desktop */}
               <div className="flex flex-col sm:flex-row gap-2">
                 <button 
+                  type="button"
                   onClick={saveTeam} 
                   disabled={saving || !isTeamComplete}
                   className="px-4 py-2 rounded-lg bg-poke-blue text-white hover:bg-poke-blue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm font-medium"
@@ -1264,6 +1269,7 @@ export default function TeamBuilderPage() {
                   )}
                 </button>
                 <button 
+                  type="button"
                   onClick={clearTeam} 
                   className="px-4 py-2 rounded-lg border border-border text-text hover:bg-white/50 dark:hover:bg-white/10 transition-colors text-sm font-medium"
                 >
@@ -1358,6 +1364,7 @@ export default function TeamBuilderPage() {
                         min={1}
                         max={100}
                         value={slot.level}
+                        aria-label="Pokémon level"
                         onClick={(e) => e.stopPropagation()}
                         onChange={(e) => setSlot(idx, { level: Math.max(1, Math.min(100, Number(e.target.value) || 50)) })}
                         className="w-16 px-2 py-1 border border-border rounded text-xs"
@@ -1369,7 +1376,7 @@ export default function TeamBuilderPage() {
                             type="checkbox" 
                             checked={slot.isShiny || false} 
                             onChange={(e) => setSlot(idx, { isShiny: e.target.checked })}
-                            className="rounded border-gray-300"
+                            className="rounded border-gray-300 dark:border-gray-600"
                           />
                           <span className="hidden sm:inline">✨</span>
                         </label>
@@ -1378,6 +1385,7 @@ export default function TeamBuilderPage() {
 
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <button 
+                        type="button"
                         onClick={(e) => {
                           e.stopPropagation()
                           const pokeName = poke ? formatPokemonName(poke.name) : 'this Pokémon'
@@ -1432,6 +1440,7 @@ export default function TeamBuilderPage() {
                     >
                       {slot.id ? (
                         <button
+                          type="button"
                           className="text-blue-600 hover:text-blue-800"
                           onClick={async (e) => {
                             e.stopPropagation()
@@ -1513,6 +1522,7 @@ export default function TeamBuilderPage() {
                         </button>
                         {slot.moves.length > 0 && (
                           <button 
+                            type="button"
                             onClick={() => setSlot(idx, { moves: [] })} 
                             className="text-xs text-red-600 hover:text-red-800 px-2 py-1 rounded border border-red-200 hover:bg-red-50"
                             title="Clear all moves"
@@ -1546,6 +1556,7 @@ export default function TeamBuilderPage() {
                                         <span>{move.name}</span>
                                       )}
                                       <button 
+                                        type="button"
                                         onClick={() => toggleMove(idx, move)}
                                         className="text-red-500 hover:text-red-700 text-xs"
                                         title="Remove move"
@@ -1617,7 +1628,7 @@ export default function TeamBuilderPage() {
                                 type="checkbox"
                                 checked={levelMovesOnly}
                                 onChange={(e) => setLevelMovesOnly(e.target.checked)}
-                                className="rounded border-gray-300"
+                                className="rounded border-gray-300 dark:border-gray-600"
                               />
                               Level moves only
                             </label>
@@ -1700,6 +1711,7 @@ export default function TeamBuilderPage() {
                                         </td>
                                         <td>
                                           <button
+                                            type="button"
                                             onClick={(e) => {
                                               e.stopPropagation()
                                               toggleMove(idx, move)
@@ -1760,6 +1772,7 @@ export default function TeamBuilderPage() {
                     Sign in to sync your teams across devices
                   </p>
                   <button
+                    type="button"
                     onClick={() => {
                       setShowAuthModal(true);
                     }}
@@ -1790,12 +1803,14 @@ export default function TeamBuilderPage() {
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <button 
+                        type="button"
                         className="text-xs text-blue-600 hover:text-blue-800 px-2 py-1 rounded border border-blue-200 hover:bg-blue-50 whitespace-nowrap" 
                         onClick={() => loadTeam(team)}
                       >
                         Load
                       </button>
                       <button 
+                        type="button"
                         className="text-xs text-green-600 hover:text-green-800 px-2 py-1 rounded border border-green-200 hover:bg-green-50 whitespace-nowrap" 
                         onClick={() => overwriteTeam(team)}
                         disabled={saving || !isTeamComplete}
@@ -1804,6 +1819,7 @@ export default function TeamBuilderPage() {
                         {saving ? 'Saving...' : 'Save'}
                       </button>
                       <button 
+                        type="button"
                         className="text-xs text-red-600 hover:text-red-800 px-2 py-1 rounded border border-red-200 hover:bg-red-50 whitespace-nowrap" 
                         onClick={() => {
                           setConfirmAction({
@@ -1850,7 +1866,7 @@ export default function TeamBuilderPage() {
                         ) : null
                       }
                       return (
-                        <div key={idx} className="w-8 h-8 border border-dashed border-gray-300 rounded flex items-center justify-center">
+                        <div key={idx} className="w-8 h-8 border border-dashed border-gray-300 dark:border-gray-600 rounded flex items-center justify-center">
                           <span className="text-xs text-gray-400">?</span>
                         </div>
                       )

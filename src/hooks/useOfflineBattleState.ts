@@ -56,7 +56,7 @@ type TeamMon = {
 
 type PrivateState = { team: TeamMon[]; currentIndex?: number };
 
-export type UseOfflineBattleReturn = {
+type UseOfflineBattleReturn = {
   loading: boolean;
   error: string | null;
   meta: Meta | null;
@@ -377,10 +377,10 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
         setMe(projectPrivate(state.player));
         setLoading(false);
         initialized.current = true;
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (cancelled) return;
         console.error('Offline battle init error:', err);
-        setError(err.message || 'Failed to initialize battle');
+        setError(err instanceof Error ? err.message : 'Failed to initialize battle');
         setLoading(false);
       }
     })();
@@ -481,9 +481,9 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
       setMeta(updatedMeta);
       setPub(projectPublic(state));
       setMe(projectPrivate(state.player));
-    } catch (err: any) {
-      console.error('Offline battle resolution error:', err, err.stack);
-      setError(err.message);
+    } catch (err: unknown) {
+      console.error('Offline battle resolution error:', err);
+      setError(err instanceof Error ? err.message : 'Battle resolution failed');
     } finally {
       resolving.current = false;
     }

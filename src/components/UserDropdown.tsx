@@ -149,7 +149,8 @@ export default function UserDropdown({ isMobile = false }: UserDropdownProps) {
     return (
       <div className="relative inline-block text-left user-dropdown-container">
         <button 
-          className="w-8 h-8 sm:w-12 sm:h-12 md:w-12 md:h-12 lg:w-14 lg:h-14 xl:w-16 xl:h-16 rounded-full overflow-hidden border-2 border-gray-300 hover:border-gray-400 transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 user-dropdown-button touch-manipulation" 
+          type="button"
+          className="w-8 h-8 sm:w-12 sm:h-12 md:w-12 md:h-12 lg:w-14 lg:h-14 xl:w-16 xl:h-16 rounded-full overflow-hidden border-2 border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 user-dropdown-button touch-manipulation" 
           style={{
             borderRadius: '50% !important',
             aspectRatio: '1 / 1 !important',
@@ -185,6 +186,7 @@ export default function UserDropdown({ isMobile = false }: UserDropdownProps) {
     return (
       <div className="relative inline-block text-left user-dropdown-container">
         <button 
+          type="button"
           className="w-8 h-8 sm:w-12 sm:h-12 md:w-12 md:h-12 lg:w-14 lg:h-14 xl:w-16 xl:h-16 rounded-full overflow-hidden border-2 border-gray-300 transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 touch-manipulation dark:border-gray-600 bg-white/60 dark:bg-gray-800/60"
           style={{ borderRadius: '50%' } as React.CSSProperties}
           aria-label="Loading account"
@@ -215,6 +217,7 @@ export default function UserDropdown({ isMobile = false }: UserDropdownProps) {
         onMouseLeave={handleMouseLeave}
       >
         <button
+          type="button"
           onClick={handleClick}
           aria-haspopup="menu"
           aria-expanded={open}
@@ -329,6 +332,7 @@ export default function UserDropdown({ isMobile = false }: UserDropdownProps) {
     >
       {/* Avatar trigger */}
       <button
+        type="button"
         onClick={handleClick}
         aria-haspopup="menu"
         aria-expanded={open}
@@ -409,6 +413,7 @@ export default function UserDropdown({ isMobile = false }: UserDropdownProps) {
 
         {/* Reset Poke-Tips button */}
         <button
+          type="button"
           onClick={handleResetPokeTips}
           role="menuitem"
           className="flex w-full items-center px-4 py-3 text-sm text-blue-600 dark:text-blue-400 transition
@@ -424,6 +429,7 @@ export default function UserDropdown({ isMobile = false }: UserDropdownProps) {
         <div className="border-t border-gray-100 dark:border-gray-800" />
 
         <button
+          type="button"
           onClick={handleLogout}
           role="menuitem"
           className="flex w-full items-center px-4 py-3 text-sm text-red-600 dark:text-red-400 transition

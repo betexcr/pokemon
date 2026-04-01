@@ -232,7 +232,7 @@ class SharedPokemonCache {
 export const sharedPokemonCache = new SharedPokemonCache()
 
 // Export types for TypeScript
-export type SharedPokemonCacheStats = ReturnType<SharedPokemonCache['getStats']>
+type SharedPokemonCacheStats = ReturnType<SharedPokemonCache['getStats']>
 
 // Utility functions
 export const cacheUtils = {

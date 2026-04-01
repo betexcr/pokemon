@@ -134,49 +134,73 @@ export default function MovesSection({ moves, pokemonTypes = [], loading = false
             <tr className="[&>th]:px-3 [&>th]:py-2 text-left text-muted">
               <th 
                 className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 select-none"
+                role="button"
+                tabIndex={0}
                 onClick={() => handleSort('name')}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('name'); } }}
               >
                 Move {getSortIcon('name')}
               </th>
               <th 
                 className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 select-none"
+                role="button"
+                tabIndex={0}
                 onClick={() => handleSort('type')}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('type'); } }}
               >
                 Type {getSortIcon('type')}
               </th>
               <th 
                 className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 select-none"
+                role="button"
+                tabIndex={0}
                 onClick={() => handleSort('damage_class')}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('damage_class'); } }}
               >
                 Cat. {getSortIcon('damage_class')}
               </th>
               <th 
                 className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 select-none"
+                role="button"
+                tabIndex={0}
                 onClick={() => handleSort('power')}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('power'); } }}
               >
                 Power {getSortIcon('power')}
               </th>
               <th 
                 className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 select-none"
+                role="button"
+                tabIndex={0}
                 onClick={() => handleSort('accuracy')}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('accuracy'); } }}
               >
                 Acc. {getSortIcon('accuracy')}
               </th>
               <th 
                 className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 select-none"
+                role="button"
+                tabIndex={0}
                 onClick={() => handleSort('pp')}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('pp'); } }}
               >
                 PP {getSortIcon('pp')}
               </th>
               <th 
                 className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 select-none"
+                role="button"
+                tabIndex={0}
                 onClick={() => handleSort('level_learned_at')}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('level_learned_at'); } }}
               >
                 Lvl {getSortIcon('level_learned_at')}
               </th>
               <th 
                 className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 select-none"
+                role="button"
+                tabIndex={0}
                 onClick={() => handleSort('learn_method')}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('learn_method'); } }}
               >
                 Method {getSortIcon('learn_method')}
               </th>

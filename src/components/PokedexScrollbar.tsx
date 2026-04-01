@@ -27,10 +27,13 @@ export default function PokedexScrollbar({
   const [resolvedScrollContainer, setResolvedScrollContainer] = useState<HTMLDivElement | null>(null)
   const [hoverPercentage, setHoverPercentage] = useState<number | null>(null)
   const trackRef = useRef<HTMLDivElement>(null)
+  const jumpEndTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Track mount status to prevent hydration mismatches
   useEffect(() => {
     setIsMounted(true)
+    return () => {
+      if (jumpEndTimerRef.current) clearTimeout(jumpEndTimerRef.current)
+    }
   }, [])
 
   // Resolve scroll container robustly so list mode stays integrated
@@ -201,8 +204,8 @@ export default function PokedexScrollbar({
       setIsLoading(true)
       try {
         await onLoadToEnd()
-        // After loading, scroll to bottom
-        setTimeout(() => {
+        if (jumpEndTimerRef.current) clearTimeout(jumpEndTimerRef.current)
+        jumpEndTimerRef.current = setTimeout(() => {
           if (resolvedScrollContainer) {
             resolvedScrollContainer.scrollTo({
               top: resolvedScrollContainer.scrollHeight,

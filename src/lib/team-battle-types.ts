@@ -3,7 +3,7 @@ import type { TypeName } from './damage-calculator';
 export type WeatherKind = 'none' | 'sun' | 'rain' | 'sandstorm' | 'snow';
 export type TerrainKind = 'none' | 'electric' | 'grassy' | 'misty' | 'psychic';
 
-export type FieldWeather = {
+type FieldWeather = {
   kind: WeatherKind;
   turns: number;
   source?: string;
@@ -15,7 +15,7 @@ export type FieldTerrain = {
   source?: string;
 };
 
-export type FieldRooms = {
+type FieldRooms = {
   trickRoom?: { turns: number };
   wonderRoom?: { turns: number };
   magicRoom?: { turns: number };

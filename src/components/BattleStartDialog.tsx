@@ -308,6 +308,9 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart, room
       
       <div 
         className="fixed inset-0 z-[999999] flex items-center justify-center w-screen h-screen m-0 p-4 bg-black/70 backdrop-blur-md transition-all duration-300 ease-out"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Battle setup"
         style={{
           animation: isOpen ? 'fadeIn 0.3s ease-out' : 'fadeOut 0.3s ease-in',
           backdropFilter: 'blur(8px) saturate(180%)'
@@ -597,6 +600,7 @@ export default function BattleStartDialog({ isOpen, onClose, onBattleStart, room
             {!readinessStatus.isReady && (readinessStatus.errors.length > 0 || timeoutReached) && (
               <div className="mt-4">
                 <button
+                  type="button"
                   onClick={() => {
                     setTimeoutReached(false);
                     setReadinessStatus({ isReady: true, errors: [], lastCheck: null });

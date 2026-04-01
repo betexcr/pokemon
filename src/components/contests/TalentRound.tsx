@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { getMovesForCategory } from '@/data/contestData'
 import { Heart, Star, Sparkles } from 'lucide-react'
 import { CONTEST_MOVES } from '@/data/contestMoves'
@@ -13,11 +13,16 @@ interface TalentRoundProps {
 
 export default function TalentRound({ selectedCategory, onMoveUse, usedMoves }: TalentRoundProps) {
   const [selectedMove, setSelectedMove] = useState<string | null>(null)
+  const moveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Get moves for the selected category
+  useEffect(() => {
+    return () => {
+      if (moveTimerRef.current) clearTimeout(moveTimerRef.current)
+    }
+  }, [])
+
   const categoryMoves = getMovesForCategory(selectedCategory)
   
-  // Get some off-category moves for variety
   const allMoves = Object.values(CONTEST_MOVES)
   const otherMoves = allMoves
     .filter(move => move.category !== selectedCategory)
@@ -33,8 +38,8 @@ export default function TalentRound({ selectedCategory, onMoveUse, usedMoves }: 
     setSelectedMove(move)
     onMoveUse(move, category)
     
-    // Reset selection after a short delay
-    setTimeout(() => setSelectedMove(null), 500)
+    if (moveTimerRef.current) clearTimeout(moveTimerRef.current)
+    moveTimerRef.current = setTimeout(() => setSelectedMove(null), 500)
   }
 
   const isMoveUsed = (moveName: string) => usedMoves.includes(moveName)
@@ -54,6 +59,7 @@ export default function TalentRound({ selectedCategory, onMoveUse, usedMoves }: 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {categoryMoves.map((move) => (
             <button
+              type="button"
               key={move.name}
               onClick={() => handleMoveClick(move.name, move.category)}
               disabled={selectedMove === move.name}
@@ -69,7 +75,7 @@ export default function TalentRound({ selectedCategory, onMoveUse, usedMoves }: 
                 <span className="font-bold text-sm">{move.name}</span>
                 <div className="flex items-center gap-1">
                   {isLastMove(move.name) && <span className="text-red-500">😴</span>}
-                  {isMoveUsed(move.name) && !isLastMove(move.name) && <span className="text-gray-500">✓</span>}
+                  {isMoveUsed(move.name) && !isLastMove(move.name) && <span className="text-gray-500 dark:text-gray-400">✓</span>}
                   <span className="text-xs">
                     {move.power === 4 ? '⭐⭐⭐⭐' : move.power === 3 ? '⭐⭐⭐' : '⭐⭐'}
                   </span>
@@ -96,6 +102,7 @@ export default function TalentRound({ selectedCategory, onMoveUse, usedMoves }: 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {otherMoves.map((move) => (
             <button
+              type="button"
               key={move.name}
               onClick={() => handleMoveClick(move.name, move.category)}
               disabled={selectedMove === move.name}
@@ -111,7 +118,7 @@ export default function TalentRound({ selectedCategory, onMoveUse, usedMoves }: 
                 <span className="font-bold text-sm">{move.name}</span>
                 <div className="flex items-center gap-1">
                   {isLastMove(move.name) && <span className="text-red-500">😴</span>}
-                  {isMoveUsed(move.name) && !isLastMove(move.name) && <span className="text-gray-500">✓</span>}
+                  {isMoveUsed(move.name) && !isLastMove(move.name) && <span className="text-gray-500 dark:text-gray-400">✓</span>}
                   <span className="text-xs">
                     {move.power === 4 ? '⭐⭐⭐⭐' : move.power === 3 ? '⭐⭐⭐' : '⭐⭐'}
                   </span>

@@ -55,6 +55,7 @@ export default function ReferencesBar({ pokemon, selectedRank, onSelectRank }: R
           </div>
           <div className="flex items-center gap-2 overflow-x-auto">
             <button
+              type="button"
               onClick={() => setGenerationFilter(null)}
               className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
                 generationFilter === null
@@ -66,6 +67,7 @@ export default function ReferencesBar({ pokemon, selectedRank, onSelectRank }: R
             </button>
             {generations.map(gen => (
               <button
+                type="button"
                 key={gen}
                 onClick={() => setGenerationFilter(curr => (curr === gen ? null : gen))}
                 className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
@@ -95,6 +97,7 @@ export default function ReferencesBar({ pokemon, selectedRank, onSelectRank }: R
             return (
               <motion.button
                 key={poke.rank}
+                type="button"
                 onClick={() => onSelectRank(poke.rank)}
                 whileHover={{ y: -2 }}
                 whileTap={{ scale: 0.97 }}

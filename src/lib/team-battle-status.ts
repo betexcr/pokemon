@@ -21,7 +21,7 @@ export function clearStatus(pokemon: BattlePokemon): void {
   pokemon.volatile.toxicCounter = undefined;
 }
 
-export function incrementStatusTurns(pokemon: BattlePokemon): void {
+function incrementStatusTurns(pokemon: BattlePokemon): void {
   if (pokemon.status != null) {
     pokemon.statusTurns = (pokemon.statusTurns ?? 0) + 1;
   }

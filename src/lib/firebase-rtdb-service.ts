@@ -103,7 +103,7 @@ export interface RTDBChoice {
   clientVersion: number;
 }
 
-export interface RTDBResolution {
+interface RTDBResolution {
   by: 'function';
   committedAt: number;
   rngSeedUsed: number;
@@ -112,7 +112,7 @@ export interface RTDBResolution {
   stateHashAfter: string;
 }
 
-export interface RTDBPresence {
+interface RTDBPresence {
   connected: boolean;
   lastActiveAt: number;
 }
@@ -368,9 +368,8 @@ class FirebaseRTDBService {
 
     try {
       await set(choiceRef, dataToWrite);
-    } catch (e: any) {
-      // Gracefully handle permission errors that can happen due to race/duplicate submits
-      const message = String(e?.message || e);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
       if (/PERMISSION_DENIED/i.test(message)) {
         return;
       }

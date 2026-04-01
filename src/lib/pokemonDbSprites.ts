@@ -7,7 +7,7 @@
  * URL Structure: https://img.pokemondb.net/sprites/{generation}/{pokemon-name}.png
  */
 
-export type PokemonDBGeneration = 
+type PokemonDBGeneration = 
   | 'red-blue' | 'yellow' | 'gold' | 'silver' | 'crystal'
   | 'ruby-sapphire' | 'emerald' | 'firered-leafgreen'
   | 'diamond-pearl' | 'platinum' | 'heartgold-soulsilver'
@@ -102,7 +102,7 @@ function mapPokemonNameToSpriteName(pokemonName: string): string {
 /**
  * Generates a PokemonDB sprite URL
  */
-export function getPokemonDBSpriteURL(options: PokemonDBSpriteOptions): string {
+function getPokemonDBSpriteURL(options: PokemonDBSpriteOptions): string {
   const { generation, pokemonName, isShiny = false, isBack = false } = options;
   
   const spriteName = mapPokemonNameToSpriteName(pokemonName);
@@ -179,7 +179,7 @@ export function getPokemonDBSpriteFallbacks(
 /**
  * Get fallback URLs for when primary sprite fails to load
  */
-export function getPokemonDBFallbackURLs(pokemonName: string): string[] {
+function getPokemonDBFallbackURLs(pokemonName: string): string[] {
   const spriteName = mapPokemonNameToSpriteName(pokemonName);
   const baseUrl = 'https://img.pokemondb.net/sprites';
   
@@ -204,7 +204,7 @@ export function getPokemonDBFallbackURLs(pokemonName: string): string[] {
 /**
  * Check if a PokemonDB sprite exists by attempting to load it
  */
-export async function checkPokemonDBSpriteExists(url: string): Promise<boolean> {
+async function checkPokemonDBSpriteExists(url: string): Promise<boolean> {
   try {
     const response = await fetch(url, { method: 'HEAD' });
     return response.ok;
@@ -217,7 +217,7 @@ export async function checkPokemonDBSpriteExists(url: string): Promise<boolean> 
  * Get Pokemon availability for different generations
  * This is a simplified version - in a real app you might want to cache this data
  */
-export function getPokemonGenerationAvailability(pokemonName: string): Record<string, boolean> {
+function getPokemonGenerationAvailability(pokemonName: string): Record<string, boolean> {
   // This is a simplified mapping - in reality you'd want to check actual availability
   // For now, we'll assume most Pokemon are available in multiple generations
   // through different games (HOME, GO, etc.)
@@ -241,7 +241,7 @@ export function getPokemonGenerationAvailability(pokemonName: string): Record<st
  * Check if a Pokemon has shiny sprites available in a specific generation
  * This is based on known availability patterns - in a real app you might want to cache this data
  */
-export function hasPokemonDBShinySprite(pokemonName: string, internalGeneration: string): boolean {
+function hasPokemonDBShinySprite(pokemonName: string, internalGeneration: string): boolean {
   // Known cases where shiny sprites are not available
   const noShinyCases: Record<string, string[]> = {
     'scarlet-violet': ['sprigatito', 'floragato', 'meowscarada', 'fuecoco', 'crocalor', 'skeledirge', 'quaxly', 'quaxwell', 'quaquaval']

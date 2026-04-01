@@ -203,7 +203,7 @@ export async function handleForfeit(
  * Handle timeout - mark battle as ended with timeout reason.
  * The opponent of `timedOutUserId` wins.
  */
-export async function handleTimeout(
+async function handleTimeout(
   battleId: string,
   timedOutUserId: string,
   ops?: RtdbOps,

@@ -34,7 +34,7 @@ import {
   Wrench
 } from 'lucide-react'
 
-export interface HeaderIconConfig {
+interface HeaderIconConfig {
   icon: React.ComponentType<{ className?: string }>
   color: string
   bgColor: string
@@ -42,7 +42,7 @@ export interface HeaderIconConfig {
   darkBgColor?: string
 }
 
-export const HEADER_ICONS: Record<string, HeaderIconConfig> = {
+const HEADER_ICONS: Record<string, HeaderIconConfig> = {
   // Main pages
   'pokedex': {
     icon: BookOpen,

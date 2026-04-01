@@ -40,6 +40,7 @@ export default function BattleGuidePage() {
         <nav className="mb-8 flex flex-wrap gap-2" aria-label="Guide sections">
           {SECTIONS.map(s => (
             <button
+              type="button"
               key={s}
               onClick={() => setActive(s)}
               className={`rounded-full px-4 py-1.5 text-sm font-medium border transition-colors ${

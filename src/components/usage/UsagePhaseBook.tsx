@@ -105,6 +105,7 @@ export default function UsagePhaseBook({
         {Object.entries(PHASE_CONFIG).map(([phaseKey, config]) => (
           <motion.button
             key={phaseKey}
+            type="button"
             onClick={() => handlePhaseChange(phaseKey as UsagePhase)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
               phaseState.current === phaseKey

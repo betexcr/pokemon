@@ -249,7 +249,7 @@ export default function ComparePage() {
                   return (
                     <tr
                       key={pokemon.id}
-                      className={`border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 ${highlightedPokemonId === pokemon.id ? 'bg-blue-50/70 dark:bg-blue-900/20 outline outline-1 outline-blue-300' : ''}`}
+                      className={`border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 ${highlightedPokemonId === pokemon.id ? 'bg-blue-50/70 dark:bg-blue-900/20 outline outline-1 outline-blue-300 dark:outline-blue-500' : ''}`}
                       onMouseEnter={() => setHighlightedPokemonId(pokemon.id)}
                       onMouseLeave={() => setHighlightedPokemonId(null)}
                       onTouchStart={() => setHighlightedPokemonId(pokemon.id)}

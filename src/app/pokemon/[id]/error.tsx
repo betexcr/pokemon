@@ -27,12 +27,14 @@ export default function PokemonError({
         </p>
         <div className="space-y-4">
           <button
+            type="button"
             onClick={reset}
             className="w-full px-6 py-3 bg-poke-blue text-white rounded-lg hover:bg-poke-blue/80 transition-colors font-medium"
           >
             Try Again
           </button>
           <button
+            type="button"
             onClick={() => window.location.href = '/'}
             className="w-full px-6 py-3 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors font-medium"
           >

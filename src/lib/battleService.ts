@@ -17,7 +17,7 @@ import { auth } from './firebase';
 import { BattleState } from './team-battle-engine';
 import { fetchPokemon } from './pokeapi';
 
-export interface BattleAction {
+interface BattleAction {
   playerId: string;
   playerName: string;
   type: 'move' | 'switch';
@@ -29,7 +29,7 @@ export interface BattleAction {
   timestamp?: number;
 }
 
-export interface MultiplayerBattleState {
+interface MultiplayerBattleState {
   id: string;
   roomId: string;
   hostId: string;
@@ -49,7 +49,7 @@ export interface MultiplayerBattleState {
   updatedAt: Date;
 }
 
-export interface BattleUpdate {
+interface BattleUpdate {
   currentTurn?: 'host' | 'guest';
   turnNumber?: number;
   actions?: BattleAction[];

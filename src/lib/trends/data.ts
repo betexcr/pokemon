@@ -41,7 +41,7 @@ export const TREND_DATA: PokemonTrendView[] = enhancedBase.length > 0 ? enhanced
   }))
   .sort((a, b) => a.rank_global - b.rank_global)
 
-export function getPokemonNames(): string[] {
+function getPokemonNames(): string[] {
   return TREND_DATA.map((item) => item.name)
 }
 
@@ -49,7 +49,7 @@ export function findPokemonByName(name: string): PokemonTrendView | undefined {
   return TREND_DATA.find((p) => p.name.toLowerCase() === name.toLowerCase())
 }
 
-export function computeRegionalRanking(year: number, region: RegionKey, limit = 20, selectedPokemon?: string): RegionalRank[] {
+function computeRegionalRanking(year: number, region: RegionKey, limit = 20, selectedPokemon?: string): RegionalRank[] {
   const allRankings = TREND_DATA
     .map((entry) => {
       const snapshot = entry.trend.find((t) => t.year === year) ?? entry.trend[entry.trend.length - 1]
@@ -95,11 +95,11 @@ export function filterPokemon(options: {
   })
 }
 
-export function getGenerations(): number[] {
+function getGenerations(): number[] {
   return Array.from(new Set(TREND_DATA.map((e) => e.generation))).sort((a, b) => a - b)
 }
 
-export function getTypes(): string[] {
+function getTypes(): string[] {
   return Array.from(new Set(TREND_DATA.flatMap((e) => e.types))).sort((a, b) => a.localeCompare(b))
 }
 

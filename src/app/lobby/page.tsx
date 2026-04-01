@@ -235,6 +235,7 @@ function LobbyPage() {
                     value={selectedTeamId}
                     onChange={(e) => setSelectedTeamId(e.target.value)}
                     disabled={teamsLoading}
+                    aria-label="Select team"
                     className="block w-full pl-3 pr-10 py-3 text-base border-border focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-lg border bg-surface text-text disabled:opacity-50"
                   >
                     {teamsLoading ? (
@@ -263,6 +264,7 @@ function LobbyPage() {
             </div>
 
             <button
+              type="button"
               onClick={createRoom}
               disabled={creatingRoom || !selectedTeamId || teamsLoading}
               data-testid="create-room-button"
@@ -320,6 +322,7 @@ function LobbyPage() {
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value as RoomStatusFilter)}
+                  aria-label="Filter by status"
                   className="w-full pl-3 pr-8 py-2 text-sm rounded-lg border border-border bg-surface text-text"
                 >
                   <option value={ALL}>All</option>
@@ -332,6 +335,7 @@ function LobbyPage() {
                 <select
                   value={filterSpots}
                   onChange={(e) => setFilterSpots(e.target.value as RoomSpotsFilter)}
+                  aria-label="Filter by slots"
                   className="w-full pl-3 pr-8 py-2 text-sm rounded-lg border border-border bg-surface text-text"
                 >
                   <option value={ALL}>Any</option>
@@ -347,6 +351,7 @@ function LobbyPage() {
                     const v = e.target.value;
                     setFilterMaxPlayers(v === ALL ? ALL : Number(v));
                   }}
+                  aria-label="Filter by max players"
                   className="w-full pl-3 pr-8 py-2 text-sm rounded-lg border border-border bg-surface text-text"
                 >
                   <option value={ALL}>All</option>
@@ -362,6 +367,7 @@ function LobbyPage() {
                 <select
                   value={filterHost}
                   onChange={(e) => setFilterHost(e.target.value as typeof ALL | 'mine')}
+                  aria-label="Filter by host"
                   className="w-full pl-3 pr-8 py-2 text-sm rounded-lg border border-border bg-surface text-text"
                 >
                   <option value={ALL}>All rooms</option>
@@ -373,6 +379,7 @@ function LobbyPage() {
                 <select
                   value={filterGuest}
                   onChange={(e) => setFilterGuest(e.target.value as typeof ALL | 'yes' | 'no')}
+                  aria-label="Filter by guest joined"
                   className="w-full pl-3 pr-8 py-2 text-sm rounded-lg border border-border bg-surface text-text"
                 >
                   <option value={ALL}>Either</option>
@@ -414,6 +421,7 @@ function LobbyPage() {
                     <div className="flex items-center gap-2">
                       {user?.uid === room.hostId && (
                         <button
+                          type="button"
                           onClick={async (e) => {
                             e.stopPropagation();
                             if (!confirm('Delete this room?')) return;
@@ -448,6 +456,7 @@ function LobbyPage() {
                   </div>
 
                   <button
+                    type="button"
                     onClick={() => joinRoom(room.id)}
                     disabled={room.status !== 'waiting' || room.currentPlayers >= room.maxPlayers || !selectedTeamId}
                     className={`w-full py-2 px-4 rounded-lg font-medium transition-colors border

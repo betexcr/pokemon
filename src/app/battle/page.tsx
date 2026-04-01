@@ -197,6 +197,7 @@ function BattlePage() {
         {/* Battle Guide Link */}
         <div className="flex justify-end">
           <button
+            type="button"
             onClick={() => router.push("/battle/guide")}
             className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
           >
@@ -212,6 +213,7 @@ function BattlePage() {
             <h2 className="text-lg font-bold text-text">Your Team</h2>
             <div className="flex gap-2">
               <button
+                type="button"
                 onClick={() => router.push("/team")}
                 className="flex items-center space-x-2 bg-poke-blue hover:bg-poke-blue/90 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:scale-105 hover:shadow-lg border border-poke-blue/20"
               >
@@ -236,6 +238,7 @@ function BattlePage() {
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-bold text-text">AI Opponent</h2>
             <button
+              type="button"
               onClick={() => router.push("/lobby")}
               className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
             >

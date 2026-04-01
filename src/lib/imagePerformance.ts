@@ -125,7 +125,7 @@ class ImagePerformanceMonitor {
 }
 
 // Singleton instance
-export const imagePerformanceMonitor = new ImagePerformanceMonitor()
+const imagePerformanceMonitor = new ImagePerformanceMonitor()
 
 /**
  * Hook to measure image load performance
@@ -158,7 +158,7 @@ export function shouldPreloadImage(): boolean {
 /**
  * Get optimal image quality based on connection
  */
-export function getOptimalImageQuality(): 'high' | 'medium' | 'low' {
+function getOptimalImageQuality(): 'high' | 'medium' | 'low' {
   if (typeof navigator === 'undefined') return 'high'
   
   const connection = (navigator as any).connection

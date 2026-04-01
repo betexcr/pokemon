@@ -122,14 +122,18 @@ function ChampionshipDetailContent({ championshipId }: Props) {
     );
     if (activeMatches.length === 0) return;
 
+    let cancelled = false;
+
     const unsubs = activeMatches.map((match) =>
       roomService.onRoomChange(match.roomId!, async (room: RoomData | null) => {
+        if (cancelled) return;
         if (!room || room.status !== 'finished' || !room.battleId) return;
         if (advancingRef.current.has(match.id)) return;
         advancingRef.current.add(match.id);
 
         try {
           const meta = await rtdbService.getBattleMeta(room.battleId);
+          if (cancelled) return;
           if (meta?.winnerUid) {
             await championshipService.advanceWinner(
               championship.id,
@@ -145,7 +149,10 @@ function ChampionshipDetailContent({ championshipId }: Props) {
       })
     );
 
-    return () => unsubs.forEach((u) => u());
+    return () => {
+      cancelled = true;
+      unsubs.forEach((u) => u());
+    };
   }, [championship?.id, championship?.status, championship?.bracket]);
 
   const c = championship;
@@ -469,6 +476,7 @@ function ChampionshipDetailContent({ championshipId }: Props) {
                         value={selectedTeamId}
                         onChange={(e) => setSelectedTeamId(e.target.value)}
                         disabled={teamsLoading || teamChoices.length === 0}
+                        aria-label="Select team"
                         className="block w-full pl-3 pr-10 py-2.5 text-sm border-border focus:outline-none focus:ring-yellow-500 focus:border-yellow-500 rounded-lg border bg-surface text-text disabled:opacity-50"
                       >
                         {teamChoices.map((t) => (

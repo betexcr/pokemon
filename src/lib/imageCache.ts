@@ -284,7 +284,7 @@ class ImageCache {
 }
 
 // Create a singleton instance
-export const imageCache = new ImageCache({
+const imageCache = new ImageCache({
   maxMemoryItems: 300, // Keep 300 most recent images in memory for better performance
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   useServiceWorker: true, // Use service worker for persistence
@@ -297,7 +297,7 @@ export async function getCachedImageUrl(url: string): Promise<string> {
 }
 
 // Helper function to preload Pokémon images
-export async function preloadPokemonImages(pokemonIds: number[]): Promise<void> {
+async function preloadPokemonImages(pokemonIds: number[]): Promise<void> {
   const urls = pokemonIds.map(id => 
     `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${id}.png`
   )
@@ -310,7 +310,7 @@ const POPULAR_POKEMON_IDS = [
 ]
 
 // Intelligent preloading based on user behavior and popularity
-export async function preloadPopularPokemon(): Promise<void> {
+async function preloadPopularPokemon(): Promise<void> {
   // Check if we should preload
   if (!shouldPreloadImage()) {
     
@@ -330,7 +330,7 @@ export async function preloadPopularPokemon(): Promise<void> {
 }
 
 // Preload Pokemon based on current viewport and scroll position
-export async function preloadVisiblePokemon(visibleIds: number[]): Promise<void> {
+async function preloadVisiblePokemon(visibleIds: number[]): Promise<void> {
   if (visibleIds.length === 0) return
   
   
@@ -343,7 +343,7 @@ export async function preloadVisiblePokemon(visibleIds: number[]): Promise<void>
 }
 
 // Preload Pokemon based on search patterns
-export async function preloadSearchResults(searchTerm: string, resultIds: number[]): Promise<void> {
+async function preloadSearchResults(searchTerm: string, resultIds: number[]): Promise<void> {
   if (resultIds.length === 0) return
   
   
@@ -358,7 +358,7 @@ export async function preloadSearchResults(searchTerm: string, resultIds: number
 }
 
 // Cache warming for frequently accessed Pokemon
-export async function warmCache(): Promise<void> {
+async function warmCache(): Promise<void> {
   
   const startTime = performance.now()
   
@@ -397,7 +397,7 @@ export async function warmCache(): Promise<void> {
 }
 
 // Progressive cache warming - warm cache in background
-export function startProgressiveCacheWarming(): void {
+function startProgressiveCacheWarming(): void {
   if (typeof window === 'undefined') return
   
   // Start warming after a short delay to not block initial page load

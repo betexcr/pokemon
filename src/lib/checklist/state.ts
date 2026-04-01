@@ -2,7 +2,7 @@ import type { ProgressState } from "./types";
 import { loadLocal, saveLocal, nowState } from "./storage.local";
 import { loadCloud, saveCloud } from "./storage.firebase";
 
-export function unionMaps(a: Record<number, true> = {}, b: Record<number, true> = {}) {
+function unionMaps(a: Record<number, true> = {}, b: Record<number, true> = {}) {
   const out: Record<number, true> = { ...a };
   for (const k of Object.keys(b)) out[+k] = true;
   return out;

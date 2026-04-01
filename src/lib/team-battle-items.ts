@@ -109,7 +109,7 @@ export function tryConsumeBerry(state: BattleState, target: BattlePokemon): void
  * Check and apply type-resist berry BEFORE damage is finalized.
  * Returns the damage multiplier (0.5 if berry activates, 1 otherwise).
  */
-export function checkTypeResistBerry(
+function checkTypeResistBerry(
   state: BattleState,
   target: BattlePokemon,
   moveType: string,

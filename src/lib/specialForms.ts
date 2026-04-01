@@ -1,5 +1,5 @@
 // Special forms mapping and data
-export interface SpecialFormInfo {
+interface SpecialFormInfo {
   id: number
   name: string
   japaneseName: string
@@ -12,7 +12,7 @@ export interface SpecialFormInfo {
 
 // Mapping of special form IDs to their base Pokemon
 // IDs match actual PokeAPI /pokemon/{id} endpoints
-export const SPECIAL_FORM_MAPPINGS: Record<number, SpecialFormInfo> = {
+const SPECIAL_FORM_MAPPINGS: Record<number, SpecialFormInfo> = {
   10033: { id: 10033, name: 'Mega Venusaur', japaneseName: 'メガフシギバナ', basePokemonId: 3, basePokemonName: 'Venusaur', formType: 'mega', description: 'Mega Evolution of Venusaur; temporary powered-up form introduced in Gen VI.' },
   10034: { id: 10034, name: 'Mega Charizard X', japaneseName: 'メガリザードンX', basePokemonId: 6, basePokemonName: 'Charizard', formType: 'mega', variant: 'X', description: 'Black, blue-flamed Mega form emphasizing physical power; distinct X variant.' },
   10035: { id: 10035, name: 'Mega Charizard Y', japaneseName: 'メガリザードンY', basePokemonId: 6, basePokemonName: 'Charizard', formType: 'mega', variant: 'Y', description: 'Air-superiority Mega form emphasizing Special Attack; distinct Y variant.' },
@@ -78,16 +78,16 @@ export function getSpecialFormInfo(id: number): SpecialFormInfo | null {
   return SPECIAL_FORM_MAPPINGS[id] || null
 }
 
-export function getBasePokemonId(specialFormId: number): number | null {
+function getBasePokemonId(specialFormId: number): number | null {
   const formInfo = getSpecialFormInfo(specialFormId)
   return formInfo ? formInfo.basePokemonId : null
 }
 
-export function getSpecialFormsForBasePokemon(basePokemonId: number): SpecialFormInfo[] {
+function getSpecialFormsForBasePokemon(basePokemonId: number): SpecialFormInfo[] {
   return Object.values(SPECIAL_FORM_MAPPINGS).filter(form => form.basePokemonId === basePokemonId)
 }
 
-export function getSpecialFormDisplayName(formInfo: SpecialFormInfo): string {
+function getSpecialFormDisplayName(formInfo: SpecialFormInfo): string {
   if (formInfo.formType === 'mega') {
     return `Mega ${formInfo.basePokemonName}${formInfo.variant ? ` ${formInfo.variant}` : ''}`
   } else if (formInfo.formType === 'primal') {

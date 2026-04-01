@@ -438,7 +438,7 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
             ]);
         }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Error during turn resolution:', error);
         
         try {

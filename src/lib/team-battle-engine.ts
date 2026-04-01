@@ -199,12 +199,12 @@ export type BattleAction = {
 };
 
 // Helper functions
-export function calculateHp(baseHp: number, level: number): number {
+function calculateHp(baseHp: number, level: number): number {
   return Math.floor(((2 * baseHp + 31) * level) / 100) + level + 10;
 }
 
 // Calculate move priority (higher number = higher priority)
-export function getMovePriority(moveId: string): number {
+function getMovePriority(moveId: string): number {
   // Priority mapping for common moves
   const priorityMoves: Record<string, number> = {
     'quick-guard': 4,
@@ -434,19 +434,19 @@ export function calculateStat(baseStat: number, level: number): number {
 }
 
 // Apply stat modifiers
-export function applyStatModifier(baseStat: number, modifier: number): number {
+function applyStatModifier(baseStat: number, modifier: number): number {
   const multiplier = modifier >= 0 ? (2 + modifier) / 2 : 2 / (2 - modifier);
   return Math.floor(baseStat * multiplier);
 }
 
 // Calculate damage percentage
-export function calculateDamagePercentage(damage: number, maxHp: number): number {
+function calculateDamagePercentage(damage: number, maxHp: number): number {
   if (maxHp <= 0) return 0;
   return Math.round((damage / maxHp) * 100);
 }
 
 // Get effectiveness text
-export function getEffectivenessText(effectiveness: number): 'super_effective' | 'not_very_effective' | 'no_effect' | 'normal' {
+function getEffectivenessText(effectiveness: number): 'super_effective' | 'not_very_effective' | 'no_effect' | 'normal' {
   if (effectiveness === 0) return 'no_effect';
   if (effectiveness > 1) return 'super_effective';
   if (effectiveness < 1) return 'not_very_effective';
@@ -454,7 +454,7 @@ export function getEffectivenessText(effectiveness: number): 'super_effective' |
 }
 
 // Get Pokémon's current ability
-export function getCurrentAbility(pokemon: BattlePokemon): string {
+function getCurrentAbility(pokemon: BattlePokemon): string {
   if (pokemon.currentAbility) {
     return pokemon.currentAbility;
   }
@@ -465,7 +465,7 @@ export function getCurrentAbility(pokemon: BattlePokemon): string {
 }
 
 // Check if move can cause status effect
-export function canCauseStatusEffect(move: Move): string | null {
+function canCauseStatusEffect(move: Move): string | null {
   const statusMoves: Record<string, string> = {
     'thunder-wave': 'paralyzed',
     'thunderbolt': 'paralyzed',
@@ -490,7 +490,7 @@ export function canCauseStatusEffect(move: Move): string | null {
 }
 
 // Check if move changes abilities
-export function canChangeAbility(move: Move): string | null {
+function canChangeAbility(move: Move): string | null {
   const abilityMoves: Record<string, string> = {
     'worry-seed': 'insomnia',
     'gastro-acid': 'none', // Suppresses ability
@@ -676,14 +676,14 @@ export async function applyStatusMoveEffects(
 }
 
 // Check if Pokémon is immune to sleep
-export function isImmuneToSleep(pokemon: BattlePokemon): boolean {
+function isImmuneToSleep(pokemon: BattlePokemon): boolean {
   const currentAbility = getCurrentAbility(pokemon);
   const sleepImmuneAbilities = ['insomnia', 'vital-spirit', 'sweet-veil'];
   return sleepImmuneAbilities.includes(currentAbility);
 }
 
 // Check if move is a healing move
-export function isHealingMove(move: Move): boolean {
+function isHealingMove(move: Move): boolean {
   const healingMoves = [
     'recover', 'rest', 'soft-boiled', 'milk-drink', 'synthesis',
     'moonlight', 'morning-sun', 'roost', 'heal-bell', 'aromatherapy',
@@ -693,7 +693,7 @@ export function isHealingMove(move: Move): boolean {
 }
 
 // Calculate healing amount for healing moves
-export function calculateHealing(user: BattlePokemon, move: Move): number {
+function calculateHealing(user: BattlePokemon, move: Move): number {
   const healingAmounts: Record<string, number> = {
     'recover': 0.5,        // 50% of max HP
     'rest': 1.0,           // 100% of max HP (but puts to sleep)
@@ -713,7 +713,7 @@ export function calculateHealing(user: BattlePokemon, move: Move): number {
 }
 
 // Check if move is self-targeting
-export function isSelfTargetingMove(move: Move): boolean {
+function isSelfTargetingMove(move: Move): boolean {
   const selfTargetingMoves = [
     'recover', 'rest', 'soft-boiled', 'milk-drink', 'synthesis',
     'moonlight', 'morning-sun', 'roost', 'heal-bell', 'aromatherapy',
@@ -724,7 +724,7 @@ export function isSelfTargetingMove(move: Move): boolean {
 }
 
 // Check if move can cause flinch
-export function canCauseFlinch(move: Move): boolean {
+function canCauseFlinch(move: Move): boolean {
   const flinchMoves = [
     'air-slash', 'bite', 'dark-pulse', 'dragon-rush', 'extrasensory',
     'headbutt', 'iron-head', 'rock-slide', 'zen-headbutt', 'fake-out',
@@ -734,7 +734,7 @@ export function canCauseFlinch(move: Move): boolean {
 }
 
 // Type effectiveness calculation (now using comprehensive damage calculator)
-export function getTypeEffectiveness(attackType: string, defenseTypes: string[]): number {
+function getTypeEffectiveness(attackType: string, defenseTypes: string[]): number {
   return calculateTypeEffectiveness(
     attackType as TypeName,
     defenseTypes.map(type => type as TypeName)
@@ -742,7 +742,7 @@ export function getTypeEffectiveness(attackType: string, defenseTypes: string[])
 }
 
 // Calculate damage using comprehensive modern formula with PokeAPI moves
-export async function calculateDamageDetailed(
+async function calculateDamageDetailed(
   attacker: BattlePokemon,
   defender: BattlePokemon,
   move: Move | CompiledMove,
@@ -1014,7 +1014,7 @@ export function switchToPokemon(team: BattleTeam, index: number): void {
 }
 
 // Function to handle automatic switching when a Pokémon faints
-export function handleAutomaticSwitching(state: BattleState): BattleState {
+function handleAutomaticSwitching(state: BattleState): BattleState {
   const newState = { ...state };
   const newLog = [...state.battleLog];
 
@@ -1097,7 +1097,7 @@ export function handleAutomaticSwitching(state: BattleState): BattleState {
 }
 
 // Handle Pokemon switching for multiplayer battles (manual selection)
-export function handleMultiplayerSwitching(state: BattleState, isPlayerTurn: boolean): BattleState {
+function handleMultiplayerSwitching(state: BattleState, isPlayerTurn: boolean): BattleState {
   const newState = { ...state };
   const newLog = [...state.battleLog];
 
@@ -1132,7 +1132,7 @@ export function handleMultiplayerSwitching(state: BattleState, isPlayerTurn: boo
 }
 
 // Manually switch to a selected Pokemon (for multiplayer battles)
-export function switchToSelectedPokemon(state: BattleState, pokemonIndex: number, isPlayer: boolean): BattleState {
+function switchToSelectedPokemon(state: BattleState, pokemonIndex: number, isPlayer: boolean): BattleState {
   const newState = { ...state };
   const newLog = [...state.battleLog];
 
@@ -1190,7 +1190,7 @@ export function switchToSelectedPokemon(state: BattleState, pokemonIndex: number
 }
 
 // Initialize team battle
-export function initializeTeamBattle(
+function initializeTeamBattle(
   playerTeam: { pokemon: Pokemon; level: number; moves: Move[] }[],
   opponentTeam: { pokemon: Pokemon; level: number; moves: Move[] }[],
   playerTeamName: string = "Player",

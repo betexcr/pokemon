@@ -24,7 +24,7 @@ export function createBattleRng(seed?: number): BattleRng {
   };
 }
 
-export function normalizeBattleRng(value?: BattleRng | number | null): BattleRng {
+function normalizeBattleRng(value?: BattleRng | number | null): BattleRng {
   if (!value && value !== 0) {
     return createBattleRng();
   }
@@ -44,7 +44,7 @@ export function normalizeBattleRng(value?: BattleRng | number | null): BattleRng
   };
 }
 
-export function advance(rng: BattleRng): number {
+function advance(rng: BattleRng): number {
   let next = (rng.state * RNG_MULT) % RNG_MOD;
   if (next === 0) next = rng.seed || 1;
   rng.state = next;
@@ -52,7 +52,7 @@ export function advance(rng: BattleRng): number {
   return next;
 }
 
-export function advanceSteps(rng: BattleRng, steps: number): void {
+function advanceSteps(rng: BattleRng, steps: number): void {
   if (steps <= 0) return;
   for (let i = 0; i < steps; i++) {
     advance(rng);
@@ -74,7 +74,7 @@ export function rngRollChance(rng: BattleRng, probability: number): boolean {
   return rngNextFloat(rng) < probability;
 }
 
-export function rngWeighted<T>(rng: BattleRng, weights: Array<{ weight: number; value: T }>): T {
+function rngWeighted<T>(rng: BattleRng, weights: Array<{ weight: number; value: T }>): T {
   const total = weights.reduce((sum, item) => sum + Math.max(0, item.weight), 0);
   if (total <= 0) {
     return weights[0]?.value as T;

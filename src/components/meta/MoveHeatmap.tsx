@@ -8,7 +8,7 @@ import Tooltip from '@/components/Tooltip';
 export default function MoveHeatmap({ pokemon }: { pokemon: PokemonMeta | null }) {
   const reduce = useReducedMotion();
   const [active, setActive] = useState<string | null>(null);
-  if (!pokemon) return <div className="text-sm text-gray-500">Select a Pokémon to view its top moves.</div>;
+  if (!pokemon) return <div className="text-sm text-gray-500 dark:text-gray-400">Select a Pokémon to view its top moves.</div>;
   const moves = pokemon.topMoves.slice(0, 6);
 
   return (
@@ -30,7 +30,7 @@ export default function MoveHeatmap({ pokemon }: { pokemon: PokemonMeta | null }
                 title={`${m.move}: ${m.usage}%`}
               >
                 <div className="text-sm font-medium">{m.move}</div>
-                <div className="text-xs text-gray-700">{m.usage}% usage</div>
+                <div className="text-xs text-gray-700 dark:text-gray-300">{m.usage}% usage</div>
                 {active === m.move && (
                   <div className="mt-2 text-xs text-gray-800 dark:text-gray-200">Click to dismiss.</div>
                 )}

@@ -46,7 +46,7 @@ if (hasFirebaseConfig) {
 export const auth: Auth | null = app ? getAuth(app) : null;
 export const db: Firestore | null = app ? getFirestore(app) : null;
 export const rtdb: Database | null = app ? getDatabase(app) : null;
-export const functions: Functions | null = app ? getFunctions(app) : null;
+const functions: Functions | null = app ? getFunctions(app) : null;
 
 // Enable Firestore offline persistence once on the client, before app usage
 let __persistenceAttempted = false;
@@ -61,4 +61,3 @@ if (typeof window !== 'undefined' && app && !__persistenceAttempted) {
   }
 }
 
-export default app;

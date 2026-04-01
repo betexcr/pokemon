@@ -33,12 +33,12 @@ export async function fetchPokemon(idOrName: number | string): Promise<unknown> 
   return res.json();
 }
 
-export async function fetchType(idOrName: number | string): Promise<unknown> {
+async function fetchType(idOrName: number | string): Promise<unknown> {
   const res = await fetchWithRetry(`${BASE}/type/${idOrName}`);
   return res.json();
 }
 
 /** utility: lowercase-with-hyphens -> TitleCase */
-export function toTitleName(s: string): string {
+function toTitleName(s: string): string {
   return s.split("-").map(p => p.charAt(0).toUpperCase()+p.slice(1)).join("");
 }

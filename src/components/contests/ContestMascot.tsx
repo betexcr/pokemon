@@ -125,7 +125,7 @@ export default function ContestMascot({
 
         {/* Category Icon Overlay */}
         {selectedCategory && (
-          <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center text-xs">
+          <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 flex items-center justify-center text-xs">
             {categoryTheme.icon}
           </div>
         )}
@@ -147,7 +147,7 @@ export default function ContestMascot({
         {/* Excite Meter Indicator */}
         {exciteMeter > 0 && (
           <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2">
-            <div className="w-12 h-1 bg-gray-200 rounded-full overflow-hidden">
+            <div className="w-12 h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
               <div 
                 className="h-full bg-gradient-to-r from-yellow-400 to-red-500 transition-all duration-500"
                 style={{ width: `${exciteMeter}%` }}

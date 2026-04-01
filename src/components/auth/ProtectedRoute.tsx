@@ -37,6 +37,7 @@ export default function ProtectedRoute({ children, fallback }: ProtectedRoutePro
             You need to sign in to access this feature. Create an account to save your teams and battle other trainers!
           </p>
           <button
+            type="button"
             onClick={() => setShowAuthModal(true)}
             className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors"
             data-testid="open-auth-modal"

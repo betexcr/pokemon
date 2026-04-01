@@ -22,6 +22,7 @@ export default function ContestCategory({ category, onSelect }: ContestCategoryP
 
   return (
     <button
+      type="button"
       onClick={onSelect}
       className={`group relative overflow-hidden rounded-2xl p-6 text-center transition-all duration-300 hover:scale-105 hover:shadow-xl bg-gradient-to-br ${category.color} shadow-lg`}
     >

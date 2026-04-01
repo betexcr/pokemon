@@ -59,7 +59,7 @@ interface OfflineBattleComponentProps {
   viewMode?: 'animated' | 'classic';
 }
 
-export const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
+const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
   config,
   onBattleComplete,
   viewMode = 'animated',
@@ -145,7 +145,7 @@ export const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
     setPendingAction({ turn: meta.turn, type: 'move', id: moveId });
     try {
       await chooseMove(moveId);
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error('Move selection failed:', e);
     }
     setPendingAction(null);
@@ -156,7 +156,7 @@ export const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
     setPendingAction({ turn: meta.turn, type: 'switch', id: idx });
     try {
       await chooseSwitch(idx);
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error('Switch failed:', e);
     }
     setPendingAction(null);

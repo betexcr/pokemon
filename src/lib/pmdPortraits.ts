@@ -104,6 +104,6 @@ export function getPortraitURL(pokemonId: number, expression: string = 'Normal.p
 /**
  * Clears the portrait cache (useful for development)
  */
-export function clearPortraitCache(): void {
+function clearPortraitCache(): void {
   portraitCache.clear();
 }

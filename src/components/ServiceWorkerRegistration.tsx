@@ -18,12 +18,15 @@ export default function ServiceWorkerRegistration() {
       return
     }
 
+    let cancelled = false
     let updateFoundHandler: (() => void) | null = null
     let messageHandler: ((event: MessageEvent) => void) | null = null
 
     const registerSW = async () => {
       try {
         const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' })
+        if (cancelled) return
+
         registrationRef.current = registration
 
         updateFoundHandler = () => {
@@ -51,6 +54,7 @@ export default function ServiceWorkerRegistration() {
     registerSW()
 
     return () => {
+      cancelled = true
       if (registrationRef.current && updateFoundHandler) {
         registrationRef.current.removeEventListener('updatefound', updateFoundHandler)
       }

@@ -68,6 +68,9 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
   const modalContent = (
     <div 
       className="fixed inset-0 z-[99999] flex items-center justify-center w-full h-full p-2 sm:p-4 md:p-6"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Authentication"
       style={{ 
         backgroundColor: 'rgba(0, 0, 0, 0.75)',
         backdropFilter: 'blur(4px)',
@@ -100,6 +103,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
       >
         {/* Close Button */}
         <button
+          type="button"
           onClick={onClose}
           className="absolute top-3 right-3 sm:top-4 sm:right-4 bg-surface/90 hover:bg-surface rounded-full p-2 shadow-lg border border-border cursor-pointer flex items-center justify-center hover:scale-105 transition-all duration-200 z-10 backdrop-blur-sm"
           aria-label="Close modal"

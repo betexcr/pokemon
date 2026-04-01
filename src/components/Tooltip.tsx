@@ -114,7 +114,9 @@ export default function Tooltip({
     return () => document.removeEventListener('keydown', handleEscape)
   }, [isOpen])
 
-  // Cleanup hover / long-press timers on unmount
+  const touchEndTimerRef = useRef<number | null>(null)
+
+  // Cleanup hover / long-press / touchEnd timers on unmount
   useEffect(() => {
     return () => {
       if (hoverTimerRef.current) {
@@ -122,6 +124,9 @@ export default function Tooltip({
       }
       if (longPressTimerRef.current) {
         window.clearTimeout(longPressTimerRef.current)
+      }
+      if (touchEndTimerRef.current) {
+        window.clearTimeout(touchEndTimerRef.current)
       }
     }
   }, [])
@@ -344,7 +349,7 @@ export default function Tooltip({
       >
         <div className="space-y-3">
           {variant !== 'default' && variant !== 'japanese' && (
-            <div className={`flex items-center gap-3 pb-2 border-b border-gray-100`}
+            <div className={`flex items-center gap-3 pb-2 border-b border-gray-100 dark:border-gray-700`}
             >
               {type && (
                 <div 
@@ -352,7 +357,7 @@ export default function Tooltip({
                   style={{ backgroundColor: `var(--type-${String(type).toLowerCase()})` }}
                 />
               )}
-              <span className={`text-sm font-semibold capitalize text-gray-700`}>
+              <span className={`text-sm font-semibold capitalize text-gray-700 dark:text-gray-200`}>
                 {title || (variant === 'ability' ? 'Ability' : variant === 'move' ? (type ? type : 'Move') : variant === 'stat' ? 'Stat' : '')}
               </span>
               {variant === 'move' && (
@@ -371,7 +376,7 @@ export default function Tooltip({
               </span>
             </div>
           )}
-          <div className={`text-sm leading-relaxed ${variant === 'default' ? (isDarkMode ? 'text-gray-100' : 'text-gray-900') : variant === 'japanese' ? (isDarkMode ? 'text-blue-100' : 'text-blue-900') : 'text-gray-800'}`}>
+          <div className={`text-sm leading-relaxed ${variant === 'default' ? (isDarkMode ? 'text-gray-100' : 'text-gray-900') : variant === 'japanese' ? (isDarkMode ? 'text-blue-100' : 'text-blue-900') : (isDarkMode ? 'text-gray-200' : 'text-gray-800')}`}>
             {formatContent(content)}
           </div>
         </div>
@@ -576,7 +581,8 @@ export default function Tooltip({
     onTouchEnd: () => {
       isTouchingRef.current = false
       touchEndedRecentlyRef.current = true
-      setTimeout(() => { touchEndedRecentlyRef.current = false }, 400)
+      if (touchEndTimerRef.current) window.clearTimeout(touchEndTimerRef.current)
+      touchEndTimerRef.current = window.setTimeout(() => { touchEndedRecentlyRef.current = false }, 400)
       if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current)
       if (longPressActiveRef.current) {
         longPressActiveRef.current = false

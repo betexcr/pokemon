@@ -16,7 +16,7 @@ export default function ClickableRow({ id, children }: { id: number; children: R
       tabIndex={0}
       onClick={select}
       onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && select()}
-      className="cursor-pointer odd:bg-white even:bg-gray-50/50 dark:odd:bg-gray-900 dark:even:bg-gray-900/50 hover:bg-blue-50/60 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      className="cursor-pointer odd:bg-white even:bg-gray-50/50 dark:odd:bg-gray-900 dark:even:bg-gray-900/50 hover:bg-blue-50/60 dark:hover:bg-blue-900/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
     >
       {children}
     </tr>

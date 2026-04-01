@@ -299,7 +299,7 @@ export function useNetworkState() {
 }
 
 // Utility functions
-export const networkUtils = {
+const networkUtils = {
   // Check if we're offline
   isOffline: () => !offlineManager.getNetworkState().isOnline,
   
@@ -324,4 +324,4 @@ export const networkUtils = {
   shouldUseCache: () => offlineManager.shouldUseCache()
 }
 
-export default offlineManager
+// Only named export `offlineManager` is used

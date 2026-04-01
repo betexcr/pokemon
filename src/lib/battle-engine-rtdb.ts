@@ -2,7 +2,7 @@ import { rtdbService, type RTDBBattleMeta, type RTDBBattlePublic, type RTDBBattl
 import { BattlePokemon, BattleTeam, BattleState, BattleAction } from './team-battle-engine';
 import { processBattleTurn } from './team-battle-engine';
 
-export interface RTDBBattleEngine {
+interface RTDBBattleEngine {
   battleId: string;
   meta: RTDBBattleMeta | null;
   publicState: RTDBBattlePublic | null;

@@ -20,8 +20,8 @@ function ensureAdmin(): boolean {
         initializeApp({ credential: cert(sa), databaseURL: RTDB_URL });
         _adminReady = true;
         return true;
-    } catch (e: any) {
-        console.warn('Admin SDK init failed:', e.message);
+    } catch (e: unknown) {
+        console.warn('Admin SDK init failed:', e instanceof Error ? e.message : String(e));
         return false;
     }
 }

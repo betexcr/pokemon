@@ -64,7 +64,14 @@ export default function Home() {
   const sentinelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const scrollSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pendingScrollRestoreRef = useRef<number | null>(null)
+  const mountedRef = useRef(true)
+  const rafIdRef = useRef<number | null>(null)
   
+  useEffect(() => {
+    mountedRef.current = true
+    return () => { mountedRef.current = false }
+  }, [])
+
   // Update refs when state changes
   useEffect(() => {
     isLoadingMoreRef.current = isLoadingMore
@@ -250,6 +257,8 @@ export default function Home() {
       
       await new Promise(resolve => setTimeout(resolve, 10))
       
+      if (!mountedRef.current) return
+
       if (newBatch.length === 0) {
         setHasMorePokemon(false)
       } else {
@@ -263,10 +272,10 @@ export default function Home() {
       }
     } catch (err) {
       console.error('❌ Error loading more Pokemon:', err)
-      setError('Failed to load more Pokemon')
+      if (mountedRef.current) setError('Failed to load more Pokemon')
     } finally {
       isLoadingMoreRef.current = false
-      setIsLoadingMore(false)
+      if (mountedRef.current) setIsLoadingMore(false)
     }
   }, [loading, getViewportBatchSize])
 
@@ -328,7 +337,8 @@ export default function Home() {
     const onScroll = () => {
       if (ticking) return
       ticking = true
-      requestAnimationFrame(() => {
+      rafIdRef.current = requestAnimationFrame(() => {
+        rafIdRef.current = null
         ticking = false
         if (isLoadingMoreRef.current || !hasMorePokemonRef.current) return
         const { scrollTop, scrollHeight, clientHeight } = scrollEl
@@ -339,7 +349,13 @@ export default function Home() {
     }
 
     scrollEl.addEventListener('scroll', onScroll, { passive: true })
-    return () => scrollEl.removeEventListener('scroll', onScroll)
+    return () => {
+      scrollEl.removeEventListener('scroll', onScroll)
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current)
+        rafIdRef.current = null
+      }
+    }
   }, [loadMorePokemon])
 
   // Restore scroll position after the initial render with restored items
@@ -420,6 +436,7 @@ export default function Home() {
         <div className="text-center">
           <p className="text-red-600 mb-4">{error}</p>
           <button 
+            type="button"
             onClick={resetPokemonList}
             className="px-4 py-2 bg-poke-blue text-white rounded-lg hover:bg-poke-blue/90"
           >

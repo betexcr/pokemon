@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 
-export type InViewOptions = {
+type InViewOptions = {
   root?: Element | null;
   rootMargin?: string;
   threshold?: number | number[];

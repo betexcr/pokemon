@@ -130,6 +130,7 @@ function BattleRuntimePage() {
         <div className="text-center px-4">
           <p className="text-red-500 mb-4">You must be logged in to view battles</p>
           <button
+            type="button"
             onClick={() => router.push("/auth")}
             className="px-4 py-2 bg-poke-blue text-white rounded-lg hover:bg-poke-blue/90"
           >
@@ -147,6 +148,7 @@ function BattleRuntimePage() {
         <div className="text-center px-4">
           <p className="text-red-500 mb-4">No battle ID provided</p>
           <button
+            type="button"
             onClick={() => router.push("/battle")}
             className="px-4 py-2 bg-poke-blue text-white rounded-lg hover:bg-poke-blue/90"
           >
@@ -187,6 +189,7 @@ function BattleRuntimePage() {
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
               <button
+                type="button"
                 onClick={() => setShowChat(!showChat)}
                 className="flex items-center gap-1 sm:gap-2 text-muted hover:text-text transition-colors text-sm"
               >

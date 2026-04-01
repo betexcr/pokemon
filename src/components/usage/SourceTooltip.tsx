@@ -129,6 +129,7 @@ export default function SourceTooltip({ source, children }: SourceTooltipProps) 
             {source.url && (
               <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
                 <button
+                  type="button"
                   onClick={handleSourceClick}
                   className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline truncate block w-full text-left"
                 >

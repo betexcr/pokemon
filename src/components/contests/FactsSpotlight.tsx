@@ -59,6 +59,7 @@ export function FactsSpotlight({
           </div>
         </div>
         <button
+          type="button"
           className="ml-2 rounded-full px-3 py-1 text-xs border border-slate-300 dark:border-slate-700 hover:bg-white/60 dark:hover:bg-slate-800/60 transition"
           onClick={(e) => {
             const el = e.currentTarget

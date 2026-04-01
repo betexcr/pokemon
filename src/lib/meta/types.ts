@@ -1,4 +1,4 @@
-export type MoveUsage = {
+type MoveUsage = {
   move: string;
   usage: number; // percentage 0-100
 };

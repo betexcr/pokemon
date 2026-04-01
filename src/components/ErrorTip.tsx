@@ -184,6 +184,7 @@ ${index < errors.length - 1 ? '---' : ''}
             </div>
           </div>
           <button
+            type="button"
             onClick={handleDismiss}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
             aria-label="Dismiss error"
@@ -237,6 +238,7 @@ ${index < errors.length - 1 ? '---' : ''}
           <div className="flex items-center gap-2">
             {currentError.retryable && (
               <button
+                type="button"
                 onClick={handleRetry}
                 className="flex items-center gap-1 text-xs px-3 py-1.5 rounded border border-blue-300 bg-blue-50 text-blue-800 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-200 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
                 title="Retry the failed operation"
@@ -247,6 +249,7 @@ ${index < errors.length - 1 ? '---' : ''}
             )}
             {errors.length > 1 && (
               <button
+                type="button"
                 onClick={handleDismissAll}
                 className="text-xs px-3 py-1.5 rounded border border-gray-300 bg-gray-50 text-gray-800 dark:border-gray-700 dark:bg-gray-900/30 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-900/50 transition-colors"
                 title="Dismiss all errors"
@@ -255,6 +258,7 @@ ${index < errors.length - 1 ? '---' : ''}
               </button>
             )}
             <button
+              type="button"
               onClick={handleDownloadErrorLog}
               className="flex items-center gap-1 text-xs px-3 py-1.5 rounded border border-green-300 bg-green-50 text-green-800 dark:border-green-700 dark:bg-green-900/30 dark:text-green-200 hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors"
               title="Download error log"
@@ -270,6 +274,7 @@ ${index < errors.length - 1 ? '---' : ''}
               {/* Previous/Next Navigation */}
               <div className="flex items-center gap-1">
                 <button
+                  type="button"
                   onClick={handlePreviousError}
                   className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                   title="Previous error"
@@ -281,6 +286,7 @@ ${index < errors.length - 1 ? '---' : ''}
                   {currentErrorIndex + 1}/{errors.length}
                 </span>
                 <button
+                  type="button"
                   onClick={handleNextError}
                   className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                   title="Next error"
@@ -294,6 +300,7 @@ ${index < errors.length - 1 ? '---' : ''}
               <div className="flex gap-1">
                 {errors.map((_, index) => (
                   <button
+                    type="button"
                     key={index}
                     onClick={() => setCurrentErrorIndex(index)}
                     className={`w-2 h-2 rounded-full transition-colors ${

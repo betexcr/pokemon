@@ -34,7 +34,7 @@ export default function UsageTable({ rows, page = 1, pageSize = 10, sort = 'usag
                     alt={p.name}
                     width={32}
                     height={32}
-                    className="w-8 h-8 rounded-full bg-white/70 ring-1 ring-gray-200 object-contain"
+                    className="w-8 h-8 rounded-full bg-white/70 dark:bg-gray-800/70 ring-1 ring-gray-200 dark:ring-gray-600 object-contain"
                   />
                   <span>{p.name}</span>
                 </div>

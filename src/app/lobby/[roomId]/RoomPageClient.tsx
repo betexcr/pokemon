@@ -365,17 +365,21 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
 
     const displayName = user.displayName || 'Guest Trainer'
     const photoURL = user.photoURL || null
+    let cancelled = false
 
     void roomService
       .joinRoom(roomId, user.uid, displayName, photoURL)
       .then(() => {
-        setActionMessage('Joined room as guest')
+        if (!cancelled) setActionMessage('Joined room as guest')
       })
       .catch((err) => {
         console.error('Failed to join room as guest', err)
+        if (cancelled) return
         joinAttemptedRef.current = false
         setActionError(err instanceof Error ? err.message : 'Unable to join this room right now.')
       })
+
+    return () => { cancelled = true }
   }, [room, roomId, user])
 
   const handleReadyToggle = async () => {
