@@ -485,7 +485,7 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
     if (ids.length > 0) {
       const idx = ids.indexOf(pokemon.id);
       if (idx > 0) navigateToPokemon(ids[idx - 1]);
-    } else if (pokemon.id > 1) {
+    } else if (pokemon.id > 1 && pokemon.id <= 1025) {
       navigateToPokemon(pokemon.id - 1);
     }
   };
@@ -495,7 +495,7 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
     if (ids.length > 0) {
       const idx = ids.indexOf(pokemon.id);
       if (idx >= 0 && idx < ids.length - 1) navigateToPokemon(ids[idx + 1]);
-    } else if (pokemon.id < 1025) {
+    } else if (pokemon.id >= 1 && pokemon.id < 1025) {
       navigateToPokemon(pokemon.id + 1);
     }
   };

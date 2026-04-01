@@ -65,7 +65,7 @@ export default function RadarChart({ data, size = 300, className = '' }: RadarCh
         cy={center}
         r={radius}
         fill="none"
-        stroke={theme === 'red' ? '#8B0000' : theme === 'gold' ? '#B8860B' : theme === 'ruby' ? '#FF69B4' : '#666666'}
+        stroke={theme === 'red' ? '#8B0000' : theme === 'gold' ? '#B8860B' : theme === 'ruby' ? '#FF69B4' : theme === 'dark' ? '#9ca3af' : '#666666'}
         strokeWidth="1"
         opacity="0.3"
       />
@@ -84,7 +84,7 @@ export default function RadarChart({ data, size = 300, className = '' }: RadarCh
         y1={center}
         x2={x}
         y2={y}
-        stroke={theme === 'red' ? '#8B0000' : theme === 'gold' ? '#B8860B' : theme === 'ruby' ? '#FF69B4' : '#666666'}
+        stroke={theme === 'red' ? '#8B0000' : theme === 'gold' ? '#B8860B' : theme === 'ruby' ? '#FF69B4' : theme === 'dark' ? '#9ca3af' : '#666666'}
         strokeWidth="1"
         opacity="0.3"
       />

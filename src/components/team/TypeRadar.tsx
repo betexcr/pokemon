@@ -4,9 +4,12 @@ import { TYPES, type TypeName } from '@/lib/type/data';
 import { typeColors } from '@/lib/utils';
 import type { TeamAnalysis } from '@/lib/team/engine';
 import { motion, useReducedMotion } from 'framer-motion';
+import { useTheme } from '@/components/ThemeProvider';
 
 export default function TypeRadar({ analysis, id = 'team-radar' }: { analysis: TeamAnalysis; id?: string }) {
   const reduce = useReducedMotion();
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const width = 420;
   const height = 420;
   const svgHeight = height + 40;
@@ -32,7 +35,7 @@ export default function TypeRadar({ analysis, id = 'team-radar' }: { analysis: T
 
   return (
     <div>
-      <h3 className="font-semibold mb-2">Type Coverage Radar</h3>
+      <h3 className="font-semibold mb-2 text-gray-900 dark:text-gray-100">Type Coverage Radar</h3>
       <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
         Each axis is a Pokémon type. The blue shape grows toward types your team resists and shrinks toward types it is weak to. Bigger area near a label = better defense versus that type.
       </p>
@@ -48,7 +51,7 @@ export default function TypeRadar({ analysis, id = 'team-radar' }: { analysis: T
       >
         <g>
           {[0.4, 0.6, 0.8, 1].map((k, i) => (
-            <circle key={i} cx={cx} cy={cy} r={r * k} fill="none" stroke="#e5e7eb" />
+            <circle key={i} cx={cx} cy={cy} r={r * k} fill="none" stroke={isDark ? '#4b5563' : '#e5e7eb'} />
           ))}
           {/* Axis labels with full type names */}
           {TYPES.map((t, i) => {
@@ -82,11 +85,11 @@ export default function TypeRadar({ analysis, id = 'team-radar' }: { analysis: T
           />
           {/* Legend - placed below chart to avoid overlap */}
           <g transform={`translate(${cx - 160}, ${height})`}>
-            <rect x={0} y={-14} width={320} height={28} rx={6} ry={6} fill="#f9fafb" stroke="#e5e7eb" />
+            <rect x={0} y={-14} width={320} height={28} rx={6} ry={6} fill={isDark ? '#1f2937' : '#f9fafb'} stroke={isDark ? '#4b5563' : '#e5e7eb'} />
             <circle cx={12} cy={0} r={6} fill="#3b82f6" opacity={0.2} />
             <line x1={6} y1={0} x2={18} y2={0} stroke="#3b82f6" strokeWidth={2} />
-            <text x={28} y={0} fontSize={10} dominantBaseline="middle" fill="#374151">Blue shape = net type safety (resists minus weaknesses)</text>
-            <text x={28} y={12} fontSize={9} fill="#6b7280">Closer to edge near a type = safer vs that type</text>
+            <text x={28} y={0} fontSize={10} dominantBaseline="middle" fill={isDark ? '#d1d5db' : '#374151'}>Blue shape = net type safety (resists minus weaknesses)</text>
+            <text x={28} y={12} fontSize={9} fill={isDark ? '#9ca3af' : '#6b7280'}>Closer to edge near a type = safer vs that type</text>
           </g>
         </g>
       </svg>

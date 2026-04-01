@@ -1,4 +1,5 @@
 // Utility functions for Pokemon generations
+import { getSpecialFormInfo } from '@/lib/specialForms'
 
 interface GenerationRange {
   min: number
@@ -24,11 +25,16 @@ const GENERATIONS: GenerationRange[] = [
  * Get the generation information for a Pokemon by its ID
  */
 function getPokemonGeneration(pokemonId: number): GenerationRange | null {
-  // Handle special forms (IDs >= 10001) by using the base ID
-  const baseId = pokemonId >= 10001 ? (pokemonId % 10000) : pokemonId
-  
-  const generation = GENERATIONS.find(gen => baseId >= gen.min && baseId <= gen.max)
-  return generation || null
+  if (pokemonId >= 10001) {
+    const formInfo = getSpecialFormInfo(pokemonId)
+    if (formInfo) {
+      return GENERATIONS.find(gen => formInfo.basePokemonId >= gen.min && formInfo.basePokemonId <= gen.max) || null
+    }
+    // Fallback: Mega/Primal forms introduced in Gen VI
+    return GENERATIONS.find(gen => gen.roman === 'VI') || null
+  }
+
+  return GENERATIONS.find(gen => pokemonId >= gen.min && pokemonId <= gen.max) || null
 }
 
 /**

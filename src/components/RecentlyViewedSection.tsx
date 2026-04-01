@@ -34,7 +34,6 @@ export default function RecentlyViewedSection() {
           {recentlyViewed.map((item) => (
             <div
               key={item.id}
-              role="button"
               tabIndex={0}
               onClick={() => router.push(`/pokemon/${item.id}`)}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/pokemon/${item.id}`) } }}

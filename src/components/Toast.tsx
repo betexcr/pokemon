@@ -136,7 +136,7 @@ function ToastComponent({ toast, onRemove }: ToastProps) {
               type="button"
               onClick={handleRemove}
               aria-label="Dismiss notification"
-              className="inline-flex text-muted hover:text-text focus:outline-none"
+              className="inline-flex text-muted hover:text-text focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
             >
               <X className="h-4 w-4" />
             </button>

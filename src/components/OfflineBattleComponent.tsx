@@ -351,7 +351,7 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
                       onClick={() => handlePokemonSwitch(index)}
                       disabled={switchDisabled}
                       aria-pressed={isPending}
-                      className={`p-2 rounded-lg border transition-all duration-200 outline-none ${
+                      className={`p-2 rounded-lg border transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
                         switchDisabled ? 'border-border bg-surface cursor-not-allowed opacity-60' : 'border-border bg-surface hover:border-primary/50 hover:bg-primary/5'
                       } ${isPending ? 'border-primary/80 bg-primary/10' : ''}`}
                       data-testid={`switch-${speciesName}-${index}`}
@@ -374,7 +374,7 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
               <button
                 type="button"
                 onClick={handleForfeit}
-                className="inline-flex items-center justify-center rounded-md border border-red-600/60 bg-red-600/10 px-4 py-2 text-sm font-semibold text-red-400 hover:bg-red-600/15 hover:text-red-300"
+                className="inline-flex items-center justify-center rounded-md border border-red-600/60 bg-red-600/10 px-4 py-2 text-sm font-semibold text-red-400 hover:bg-red-600/15 hover:text-red-300 focus-visible:ring-2 focus-visible:ring-blue-500"
                 data-testid="forfeit-button"
               >
                 Forfeit Battle

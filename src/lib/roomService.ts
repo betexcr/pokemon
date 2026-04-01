@@ -48,7 +48,7 @@ export interface RoomData {
   battleId?: string; // Reference to battle document
 }
 
-export interface RoomUpdate {
+interface RoomUpdate {
   hostTeam?: unknown;
   hostReady?: boolean;
   hostReleasedTeam?: { name: string; sprites: string[] };

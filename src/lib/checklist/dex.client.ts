@@ -40,6 +40,8 @@ function useDexDataStore() {
   const [loadedGens, setLoadedGens] = useState<Set<number>>(new Set());
   const loadedGensRef = useRef<Set<number>>(new Set());
   const loadingGensRef = useRef<Set<number>>(new Set());
+  const mountedRef = useRef(true);
+  useEffect(() => { return () => { mountedRef.current = false; }; }, []);
   const loading = loadingCount > 0;
 
   useEffect(() => {
@@ -70,6 +72,7 @@ function useDexDataStore() {
         types: (p.types || []).map((t) => capitalize(t.type.name)),
         sprite: getPokemonFallbackImage(p.id),
       }));
+      if (!mountedRef.current) return;
       setDex((prev) => {
         const seen = new Set(prev.map((d) => d.id));
         const merged = [...prev, ...mapped.filter((m) => !seen.has(m.id))];
@@ -83,10 +86,10 @@ function useDexDataStore() {
         return next;
       });
     } catch (err) {
-      console.error(`Failed to load generation ${gen}:`, err);
+      if (mountedRef.current) console.error(`Failed to load generation ${gen}:`, err);
     } finally {
       loadingGensRef.current.delete(gen);
-      setLoadingCount((c) => Math.max(0, c - 1));
+      if (mountedRef.current) setLoadingCount((c) => Math.max(0, c - 1));
     }
   }, []);
 

@@ -24,7 +24,7 @@ export function nowState(): ProgressState {
   return { caught: {}, seen: {}, updatedAt: Date.now() };
 }
 
-export type StreakState = { lastDay: string; streak: number };
+type StreakState = { lastDay: string; streak: number };
 
 export function loadStreak(): StreakState | null {
   if (typeof window === "undefined") return null;

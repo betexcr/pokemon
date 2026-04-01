@@ -13,7 +13,7 @@ interface ContestTooltipProps {
   className?: string
 }
 
-export default function ContestTooltip({ 
+function ContestTooltip({ 
   content, 
   title, 
   icon, 

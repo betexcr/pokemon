@@ -2,6 +2,7 @@
 
 import React from 'react'
 import SpriteJsTile from './SpriteJsTile'
+import { getSpecialFormInfo } from '@/lib/specialForms'
 
 type AnimMeta = {
 	name: string
@@ -21,7 +22,10 @@ export function usePmdAnimations(pokemonId: number): { anims: AnimMeta[] | null;
 	React.useEffect(() => {
 		let cancelled = false
 		const load = async () => {
-			const id = String(pokemonId).padStart(4, '0')
+			const resolvedId = pokemonId >= 10001
+				? (getSpecialFormInfo(pokemonId)?.basePokemonId ?? pokemonId)
+				: pokemonId
+			const id = String(resolvedId).padStart(4, '0')
 			const basePath = `/assets/pmd/${id}/sprite`
 			const remoteBasePath = `https://raw.githubusercontent.com/PMDCollab/SpriteCollab/master/sprite/${id}`
 			const out: AnimMeta[] = []

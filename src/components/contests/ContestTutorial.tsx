@@ -171,7 +171,7 @@ export default function ContestTutorial({ onComplete, onSkip }: ContestTutorialP
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-lg w-full">
+      <div role="dialog" aria-modal="true" aria-label="Contest tutorial" className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-lg w-full">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-3">

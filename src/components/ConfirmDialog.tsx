@@ -79,7 +79,6 @@ export default function ConfirmDialog({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
       onClick={onCancel}
       onKeyDown={(e) => { if (e.key === 'Escape') onCancel(); }}
-      aria-hidden="true"
     >
       <div
         ref={dialogRef}

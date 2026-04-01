@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useMemo, memo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Pokemon } from "@/types/pokemon";
-import { formatPokemonName } from "@/lib/utils";
+import { formatPokemonName, getShowdownAnimatedSprite } from "@/lib/utils";
 import { Scale, Heart } from "lucide-react";
 import TypeBadge from "./TypeBadge";
 import Tooltip from "./Tooltip";
@@ -98,7 +98,7 @@ function ModernPokemonCardComponent({
   const apiHome = pokemon.sprites?.other?.home?.front_default;
   const primaryImageUrl = apiArtwork || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.id}.png`;
   const fallbackImageUrl = apiHome || pokemon.sprites?.front_default || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`;
-  const animatedUrl = `https://play.pokemonshowdown.com/sprites/ani/${pokemon.name || pokemon.id}.gif`;
+  const animatedUrl = getShowdownAnimatedSprite(pokemon.name || String(pokemon.id));
   const placeholderImageUrl = "/placeholder-pokemon.png";
 
   const handleClick = (e: React.MouseEvent) => {
@@ -490,7 +490,6 @@ function ModernPokemonCardComponent({
         </div>
       ) : (
           shouldUseTooltip ? (
-            // Debug: Tooltip branch
             <Tooltip
               content={tooltipContent}
               position="top"
@@ -678,8 +677,14 @@ const ModernPokemonCard = memo(
   ModernPokemonCardComponent,
   (prevProps, nextProps) => {
     // Return true if props are equal (skip re-render), false if different (re-render needed)
+    const prevP = prevProps.pokemon;
+    const nextP = nextProps.pokemon;
     return (
-      prevProps.pokemon.id === nextProps.pokemon.id &&
+      prevP.id === nextP.id &&
+      prevP.name === nextP.name &&
+      (prevP.types?.length || 0) === (nextP.types?.length || 0) &&
+      prevP.sprites?.other?.['official-artwork']?.front_default ===
+        nextP.sprites?.other?.['official-artwork']?.front_default &&
       prevProps.isInComparison === nextProps.isInComparison &&
       prevProps.isSelected === nextProps.isSelected &&
       prevProps.density === nextProps.density &&

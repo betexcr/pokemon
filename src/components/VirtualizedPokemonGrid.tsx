@@ -9,6 +9,8 @@ import { useTheme } from './ThemeProvider'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { motion, AnimatePresence } from 'framer-motion'
 
+const noop = () => {}
+
 interface VirtualizedPokemonGridProps {
   pokemonList: Pokemon[]
   onToggleComparison: (id: number) => void
@@ -204,13 +206,12 @@ export default function VirtualizedPokemonGrid({
 
   // Memoize Pokemon list processing to avoid recalculation on every render
   const processedPokemonData = useMemo(() => {
-    // Find the transition point from regular Pokemon to special forms (only if showSpecialForms is true)
-    const specialFormsStartIndex = showSpecialForms ? pokemonList.findIndex(pokemon => pokemon.id >= 10001) : -1
-    
-    // Split the Pokemon list into regular and special forms
-    // Always use the full pokemonList to ensure all Pokemon are rendered
-    const regularPokemon = pokemonList
-    const specialFormsPokemon = showSpecialForms && specialFormsStartIndex >= 0 ? pokemonList.slice(specialFormsStartIndex) : []
+    const regularPokemon = showSpecialForms
+      ? pokemonList.filter(p => p.id < 10001)
+      : pokemonList
+    const specialFormsPokemon = showSpecialForms
+      ? pokemonList.filter(p => p.id >= 10001)
+      : []
 
     // Calculate total rows for virtualization (including special forms section)
     const regularRows = Math.ceil(regularPokemon.length / getGridDimensions.cols)
@@ -391,7 +392,7 @@ export default function VirtualizedPokemonGrid({
                       <PokemonCard
                         pokemon={pokemon}
                         isFavorite={favoritesList.includes(pokemon.id)}
-                        onToggleFavorite={onToggleFavorite || (() => {})}
+                        onToggleFavorite={onToggleFavorite || noop}
                         isInComparison={comparisonList.includes(pokemon.id)}
                         onToggleComparison={onToggleComparison}
                         cardSize="compact"
@@ -554,7 +555,7 @@ export default function VirtualizedPokemonGrid({
                       <PokemonCard
                         pokemon={pokemon}
                         isFavorite={favoritesList.includes(pokemon.id)}
-                        onToggleFavorite={onToggleFavorite || (() => {})}
+                        onToggleFavorite={onToggleFavorite || noop}
                         isInComparison={comparisonList.includes(pokemon.id)}
                         onToggleComparison={onToggleComparison}
                         cardSize="ultra"

@@ -99,7 +99,7 @@ export default function AppHeader({
                     // Handle middle click
                     if (e.button === 1) {
                       e.preventDefault()
-                      window.open(backLink, '_blank')
+                      window.open(backLink, '_blank', 'noopener,noreferrer')
                     }
                   }}
                   className="flex items-center text-muted hover:text-text transition-colors flex-shrink-0 cursor-pointer"

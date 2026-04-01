@@ -111,6 +111,8 @@ export default function TeamBuilderPage() {
   const [draftHydrated, setDraftHydrated] = useState(false)
   const [confirmAction, setConfirmAction] = useState<{ title: string; message: string; onConfirm: () => void } | null>(null)
   const [overwriteTarget, setOverwriteTarget] = useState<FirebaseSavedTeam | null>(null)
+  const mountedRef = useRef(true)
+  useEffect(() => { return () => { mountedRef.current = false } }, [])
   const layoutRef = useRef<HTMLDivElement | null>(null)
   const selectorInputRef = useRef<HTMLInputElement | null>(null)
   const slotRefs = useRef<(HTMLDivElement | null)[]>([null, null, null, null, null, null])
@@ -693,6 +695,7 @@ export default function TeamBuilderPage() {
       if (needsFullData) {
         void getPokemon(selectedId)
           .then(fullPokemon => {
+            if (!mountedRef.current) return
             setAllPokemon(prev => {
               const exists = prev.some(p => p.id === fullPokemon.id)
               if (!exists) return [...prev, fullPokemon]
@@ -701,6 +704,7 @@ export default function TeamBuilderPage() {
             setDisplayPokemonById(prev => ({ ...prev, [fullPokemon.id]: fullPokemon }))
           })
           .catch(error => {
+            if (!mountedRef.current) return
             console.error('Failed to fetch Pokémon details:', error)
           })
       }
@@ -713,6 +717,7 @@ export default function TeamBuilderPage() {
       setLoadingMovesSlots(prev => new Set(prev).add(idx))
       void getAvailableMoves(selectedId, selectedLevel)
         .then(moves => {
+          if (!mountedRef.current) return
           setTeamSlots(current => {
             if (current[idx]?.id !== selectedId) return current
             setAvailableMoves(prev => ({ ...prev, [idx]: moves }))
@@ -720,9 +725,11 @@ export default function TeamBuilderPage() {
           })
         })
         .catch(error => {
+          if (!mountedRef.current) return
           console.error('Failed to load available moves:', error)
         })
         .finally(() => {
+          if (!mountedRef.current) return
           setLoadingMovesSlots(prev => {
             const next = new Set(prev)
             next.delete(idx)

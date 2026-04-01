@@ -12,7 +12,7 @@ export type Format =
   | 'BSS_SERIES_8' | 'BSS_SERIES_9' | 'BSS_SERIES_12' | 'BSS_SERIES_13' | 'BSS_REG_C' | 'BSS_REG_D' | 'BSS_REG_E' | 'BSS_REG_I'
   | 'UNKNOWN';
 
-export interface UsageSubstats {
+interface UsageSubstats {
   moves?: { name: string; pct: number }[];
   items?: { name: string; pct: number }[];
   abilities?: { name: string; pct: number }[];
@@ -42,7 +42,7 @@ export interface UsageRow {
 }
 
 // API Response Types
-export interface UsageQuery {
+interface UsageQuery {
   platform?: Platform | Platform[];
   generation?: Generation | Generation[];
   format?: Format | Format[];
@@ -52,14 +52,14 @@ export interface UsageQuery {
   offset?: number;
 }
 
-export interface UsageCompareQuery {
+interface UsageCompareQuery {
   pokemonId: number;
   months?: string[];
   platforms?: Platform[];
   formats?: Format[];
 }
 
-export interface UsageSummary {
+interface UsageSummary {
   total: number;
   rows: UsageRow[];
   metadata: {
@@ -82,7 +82,7 @@ export interface UsageFilters {
   sortOrder: 'asc' | 'desc';
 }
 
-export interface UsageChartData {
+interface UsageChartData {
   month: string;
   usage: number;
   rank: number;
@@ -90,7 +90,7 @@ export interface UsageChartData {
   format: Format;
 }
 
-export interface UsageTrendData {
+interface UsageTrendData {
   pokemonId: number;
   pokemonName: string;
   data: UsageChartData[];
@@ -98,7 +98,7 @@ export interface UsageTrendData {
 }
 
 // Firestore Document Structure
-export interface UsageDocument extends UsageRow {
+interface UsageDocument extends UsageRow {
   // Firestore-specific fields
   id: string; // Composite key: ${platform}_${generation}_${format}_${month}_${pokemonId}
   createdAt: string;
@@ -107,7 +107,7 @@ export interface UsageDocument extends UsageRow {
 }
 
 // Ingestion Types
-export interface IngestionConfig {
+interface IngestionConfig {
   platform: Platform;
   generation: Generation;
   format: Format;
@@ -116,7 +116,7 @@ export interface IngestionConfig {
   dryRun?: boolean;
 }
 
-export interface IngestionResult {
+interface IngestionResult {
   success: boolean;
   rowsProcessed: number;
   rowsStored: number;
@@ -140,7 +140,7 @@ export interface PokemonNameMapping {
 }
 
 // Cache Types
-export interface UsageCache {
+interface UsageCache {
   key: string;
   data: UsageRow[];
   timestamp: number;

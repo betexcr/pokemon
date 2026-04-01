@@ -23,7 +23,7 @@ export const BattleSprite = forwardRef<BattleSpriteRef, BattleSpriteProps>(funct
   { species, level, hp, status, types = [], side = 'player', className = '', spriteMode = 'static', shiny = false },
   _ref
 ) {
-  const speciesId = getPokemonIdFromSpecies(species) ?? 1
+  const speciesId = getPokemonIdFromSpecies(species)
   const variant: 'front' | 'back' = side === 'player' ? 'back' : 'front'
   const staticSprite = useMemo(() => getPokemonBattleImageWithFallback(speciesId, variant, shiny), [speciesId, variant, shiny])
   const animatedSprite = useMemo(() => spriteMode === 'animated'

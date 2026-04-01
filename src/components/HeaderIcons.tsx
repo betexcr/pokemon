@@ -85,7 +85,7 @@ export default function HeaderIcons({
           <PokedexLink
             href="/insights"
             transitionType="default"
-            className={`group relative w-8 h-8 sm:w-12 sm:h-12 md:w-12 md:h-12 lg:w-14 lg:h-14 xl:w-16 xl:h-16 overflow-hidden aspect-square rounded-xl border-2 shadow-sm transition-all duration-300 ease-in-out flex items-center justify-center focus:outline-none touch-manipulation 
+            className={`group relative w-8 h-8 sm:w-12 sm:h-12 md:w-12 md:h-12 lg:w-14 lg:h-14 xl:w-16 xl:h-16 overflow-hidden aspect-square rounded-xl border-2 shadow-sm transition-all duration-300 ease-in-out flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 touch-manipulation 
               ${openInsights ? 'border-poke-blue ring-2 ring-poke-blue/30' : 'border-gray-300 dark:border-gray-600'} 
               bg-white/80 dark:bg-gray-800/70 hover:bg-white dark:hover:bg-gray-800`}
             aria-haspopup="menu"

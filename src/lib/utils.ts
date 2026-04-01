@@ -1,9 +1,13 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { getSpecialFormInfo } from '@/lib/specialForms'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
+
+export const Z_INDEX_DRAWER_BACKDROP = 2147483000;
+export const Z_INDEX_DRAWER = 2147483001;
 
 // Pokémon type colors using official Pokémon colors
 export const typeColors: Record<string, { bg: string; text: string; border: string }> = {
@@ -41,9 +45,13 @@ export function formatPokemonName(name?: string | null): string {
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '');
   if (!slugish) return 'Unknown Pokémon';
-  const idMatch = slugish.match(/^pokemon-0*(\d{1,4})$/);
+  const idMatch = slugish.match(/^pokemon-0*(\d{1,5})$/);
   if (idMatch) {
     const id = Number(idMatch[1]);
+    if (id >= 10001) {
+      const formInfo = getSpecialFormInfo(id);
+      if (formInfo) return formInfo.name;
+    }
     const mappedSlug = POKEMON_ID_TO_SPECIES[id];
     if (mappedSlug) {
       return mappedSlug
@@ -316,20 +324,19 @@ export function getPokemonIdFromSpecies(species?: string | null): number | null 
     return null;
   }
 
-  const directMatch = normalizedSpecies.match(/^pokemon-0*(\d{1,4})$/);
+  const directMatch = normalizedSpecies.match(/^pokemon-0*(\d{1,5})$/);
   if (directMatch) {
     return Number(directMatch[1]);
   }
+
+  if (/^\d+$/.test(normalizedSpecies)) {
+    return Number(normalizedSpecies);
+  }
   
-  // First check our hardcoded mapping for Gen 1
   if (POKEMON_SPECIES_TO_ID[normalizedSpecies]) {
     return POKEMON_SPECIES_TO_ID[normalizedSpecies];
   }
   
-  // For Pokemon not in our mapping, try to extract ID from the species name
-  // This is a fallback for Pokemon from later generations
-  // We'll use a simple approach: if it's not in our mapping, return null
-  // and let the image loading system handle it with fallbacks
   return null;
 }
 
@@ -407,11 +414,17 @@ function normalizeSpeciesForSprite(species?: string | null): string | null {
   if (!species) return null;
   const trimmed = species.trim().toLowerCase();
   if (!trimmed) return null;
-  const directMatch = trimmed.match(/^pokemon-0*(\d{1,4})$/);
+  const directMatch = trimmed.match(/^pokemon-0*(\d{1,5})$/);
   if (directMatch) {
     const id = Number(directMatch[1]);
     const slug = POKEMON_ID_TO_SPECIES[id];
     if (slug) return slug;
+    if (id >= 10001) {
+      const info = getSpecialFormInfo(id);
+      if (info) {
+        return info.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      }
+    }
   }
   return trimmed.replace(/[\u2019']/g, '')
     .replace(/[^a-z0-9-]+/g, '-')
@@ -430,23 +443,75 @@ export function getShowdownAnimatedSprite(species?: string | null, variant: 'fro
   const exceptions: Record<string, string> = {
     // Showdown uses a dot for Mr. Mime
     'mr-mime': 'mr.mime',
-    // Mime Jr. drops hyphen and dot
     'mime-jr': 'mimejr',
-    // Mr. Rime (Galar) uses a dot
     'mr-rime': 'mr.rime',
-    // Ho-Oh uses "hooh" in Showdown
     'ho-oh': 'hooh',
-    // Type: Null variations
     'type-null': 'typenull',
-    // Jangmo-o family
     'jangmo-o': 'jangmoo',
     'hakamo-o': 'hakamo-o',
     'kommo-o': 'kommoo',
-    // Porygon-Z
     'porygon-z': 'porygonz',
-    // Nidoran variations
     'nidoran-f': 'nidoranf',
-    'nidoran-m': 'nidoranm'
+    'nidoran-m': 'nidoranm',
+    // Mega forms: PokeAPI uses extra hyphen that Showdown omits
+    'charizard-mega-x': 'charizard-megax',
+    'charizard-mega-y': 'charizard-megay',
+    'mewtwo-mega-x': 'mewtwo-megax',
+    'mewtwo-mega-y': 'mewtwo-megay',
+    // Primal forms
+    'kyogre-primal': 'kyogre-primal',
+    'groudon-primal': 'groudon-primal',
+    // Mega display names (from specialForms.ts) → Showdown slugs
+    'mega-venusaur': 'venusaur-mega',
+    'mega-charizard-x': 'charizard-megax',
+    'mega-charizard-y': 'charizard-megay',
+    'mega-blastoise': 'blastoise-mega',
+    'mega-alakazam': 'alakazam-mega',
+    'mega-gengar': 'gengar-mega',
+    'mega-kangaskhan': 'kangaskhan-mega',
+    'mega-pinsir': 'pinsir-mega',
+    'mega-gyarados': 'gyarados-mega',
+    'mega-aerodactyl': 'aerodactyl-mega',
+    'mega-mewtwo-x': 'mewtwo-megax',
+    'mega-mewtwo-y': 'mewtwo-megay',
+    'mega-ampharos': 'ampharos-mega',
+    'mega-scizor': 'scizor-mega',
+    'mega-heracross': 'heracross-mega',
+    'mega-houndoom': 'houndoom-mega',
+    'mega-tyranitar': 'tyranitar-mega',
+    'mega-blaziken': 'blaziken-mega',
+    'mega-gardevoir': 'gardevoir-mega',
+    'mega-mawile': 'mawile-mega',
+    'mega-aggron': 'aggron-mega',
+    'mega-medicham': 'medicham-mega',
+    'mega-manectric': 'manectric-mega',
+    'mega-banette': 'banette-mega',
+    'mega-absol': 'absol-mega',
+    'mega-garchomp': 'garchomp-mega',
+    'mega-lucario': 'lucario-mega',
+    'mega-abomasnow': 'abomasnow-mega',
+    'mega-latias': 'latias-mega',
+    'mega-latios': 'latios-mega',
+    'mega-swampert': 'swampert-mega',
+    'mega-sceptile': 'sceptile-mega',
+    'mega-sableye': 'sableye-mega',
+    'mega-altaria': 'altaria-mega',
+    'mega-gallade': 'gallade-mega',
+    'mega-audino': 'audino-mega',
+    'mega-sharpedo': 'sharpedo-mega',
+    'mega-slowbro': 'slowbro-mega',
+    'mega-steelix': 'steelix-mega',
+    'mega-pidgeot': 'pidgeot-mega',
+    'mega-glalie': 'glalie-mega',
+    'mega-diancie': 'diancie-mega',
+    'mega-metagross': 'metagross-mega',
+    'mega-rayquaza': 'rayquaza-mega',
+    'mega-camerupt': 'camerupt-mega',
+    'mega-lopunny': 'lopunny-mega',
+    'mega-salamence': 'salamence-mega',
+    'mega-beedrill': 'beedrill-mega',
+    'primal-kyogre': 'kyogre-primal',
+    'primal-groudon': 'groudon-primal',
   };
   const hyphenated = base.replace(/\s+/g, '-');
   const mapped = exceptions[hyphenated] || hyphenated;

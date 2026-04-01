@@ -77,7 +77,7 @@ export interface PokemonMove {
 }
 
 // Basic Pokémon type for initial page load (minimal data)
-export interface BasicPokemon {
+interface BasicPokemon {
   id: number;
   name: string;
   sprites: PokemonSprites;
@@ -335,7 +335,7 @@ export interface Move {
 }
 
 // UI Types
-export interface PokemonCard {
+interface PokemonCard {
   id: number;
   name: string;
   image: string;
@@ -358,13 +358,13 @@ export interface FilterState {
   sortOrder: 'asc' | 'desc';
 }
 
-export interface PokemonComparison {
+interface PokemonComparison {
   pokemon1: Pokemon | null;
   pokemon2: Pokemon | null;
 }
 
 // Ability information
-export interface Ability {
+interface Ability {
   id: number;
   name: string;
   is_main_series: boolean;
@@ -398,7 +398,7 @@ export interface Ability {
 }
 
 // Item information
-export interface Item {
+interface Item {
   id: number;
   name: string;
   cost: number;
@@ -442,7 +442,7 @@ export interface Item {
 }
 
 // Location Area information
-export interface LocationArea {
+interface LocationArea {
   id: number;
   name: string;
   game_index: number;
@@ -475,7 +475,7 @@ export interface LocationArea {
 }
 
 // Generation information
-export interface Generation {
+interface Generation {
   id: number;
   name: string;
   abilities: NamedAPIResource[];

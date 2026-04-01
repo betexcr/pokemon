@@ -27,6 +27,22 @@ interface UsageDeepDiveData {
   };
 }
 
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
+        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{label}</p>
+        {payload.map((entry: any, index: number) => (
+          <p key={index} style={{ color: entry.color }} className="text-sm">
+            {entry.name}: {entry.value}%
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
+
 export default function UsageDeepDivePhase({ 
   filters, 
   phaseState, 
@@ -82,22 +98,6 @@ export default function UsageDeepDivePhase({
       }
     }
   }, [data, selectedPokemon]);
-
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
-          <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{label}</p>
-          {payload.map((entry: any, index: number) => (
-            <p key={index} style={{ color: entry.color }} className="text-sm">
-              {entry.name}: {entry.value}%
-            </p>
-          ))}
-        </div>
-      );
-    }
-    return null;
-  };
 
   const formatSubstatsData = (substats: any, type: string) => {
     if (!substats || !substats[type]) return [];
@@ -172,6 +172,7 @@ export default function UsageDeepDivePhase({
         </label>
         <select
           value={selectedPokemon.pokemonId}
+          aria-label="Select Pokémon for analysis"
           onChange={(e) => {
             const pokemon = rows.find(p => p.pokemonId === Number(e.target.value));
             if (pokemon) setSelectedPokemon(pokemon);

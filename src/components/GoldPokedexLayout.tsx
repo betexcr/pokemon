@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { Pokemon, FilterState } from '@/types/pokemon';
-import { formatPokemonName, getPokemonDescription } from '@/lib/utils';
+import { formatPokemonName, getPokemonDescription, Z_INDEX_DRAWER_BACKDROP, Z_INDEX_DRAWER } from '@/lib/utils';
 import PokemonComparison from './PokemonComparison';
 import RadarChart from './RadarChart';
 import VirtualizedPokemonList from './VirtualizedPokemonList';
@@ -227,9 +227,9 @@ export default function GoldPokedexLayout({
 
       {/* Desktop Drawer (Retro) */}
       {typeof window !== 'undefined' && showDesktopMenu && createPortal(
-        <div id="desktop-drawer" className="fixed inset-0" style={{ zIndex: 2147483000 }} onKeyDown={(e) => { if (e.key === 'Escape') setShowDesktopMenu(false); }}>
-          <div className="fixed inset-0" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 2147483000 }} onClick={() => setShowDesktopMenu(false)} aria-hidden="true" />
-          <aside className="fixed right-0 top-0 h-full w-[320px] overflow-y-auto bg-white border-l-4 border-yellow-600 p-4 space-y-4" style={{ zIndex: 2147483001 }}>
+        <div id="desktop-drawer" className="fixed inset-0" style={{ zIndex: Z_INDEX_DRAWER_BACKDROP }} onKeyDown={(e) => { if (e.key === 'Escape') setShowDesktopMenu(false); }}>
+          <div className="fixed inset-0" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: Z_INDEX_DRAWER_BACKDROP }} onClick={() => setShowDesktopMenu(false)} aria-hidden="true" />
+          <aside className="fixed right-0 top-0 h-full w-[320px] overflow-y-auto bg-white border-l-4 border-yellow-600 p-4 space-y-4" style={{ zIndex: Z_INDEX_DRAWER }}>
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold text-yellow-800">MENU</h3>
               <button type="button" onClick={() => setShowDesktopMenu(false)} className="px-2 py-1 border-2 border-yellow-600 text-yellow-800 rounded">CLOSE</button>
