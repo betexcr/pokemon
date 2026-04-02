@@ -1566,6 +1566,13 @@ html[data-page='pokedex-main'] .cq-card .card-art {
 
 /* Reduce motion for accessibility */
 @media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
   ::view-transition-old(root),
   ::view-transition-new(root) {
     animation-duration: 0.1s;
@@ -1585,6 +1592,39 @@ html[data-page='pokedex-main'] .cq-card .card-art {
       animation-duration: 0.1s;
       animation-timing-function: ease;
     }
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --color-border: #4b5563;
+    --color-text: #111827;
+  }
+
+  .dark {
+    --color-border: #9ca3af;
+    --color-text: #f9fafb;
+  }
+
+  button,
+  [role="button"],
+  input,
+  select {
+    border-width: 2px !important;
+  }
+}
+
+@media (forced-colors: active) {
+  * {
+    forced-color-adjust: auto;
+  }
+
+  button,
+  [role="button"],
+  input,
+  select,
+  a {
+    border: 1px solid ButtonText !important;
   }
 }
 

@@ -12,6 +12,7 @@ import { getPokemonSpecies, getPokemonAbilities, getPokemonMoves, getEvolutionCh
 import { getMatchup } from '@/lib/getMatchup'
 import { PokemonDetailsSkeleton, StatsSectionSkeleton, MovesSectionSkeleton, EvolutionSectionSkeleton, MatchupsSectionSkeleton } from '@/components/skeletons/PokemonDetailsSkeleton'
 import { ULTRA_BEAST_POKEMON } from '@/lib/pokemon-categories'
+import { loadUiState, saveUiState } from '@/lib/uiState'
 
 interface PokemonDetailsProps {
   pokemon: Pokemon
@@ -21,6 +22,7 @@ interface PokemonDetailsProps {
 }
 
 export default function PokemonDetails({ pokemon, showHeader = true, className = '', loading: externalLoading }: PokemonDetailsProps) {
+  const tabStateKey = `pokemon.details.tab.${pokemon.id}`
   const [abilities, setAbilities] = useState<{ name: string; is_hidden?: boolean; description?: string | null }[]>([])
   const [flavorText, setFlavorText] = useState<string>('')
   const [genus, setGenus] = useState<string>('')
@@ -30,7 +32,9 @@ export default function PokemonDetails({ pokemon, showHeader = true, className =
   const [moves, setMoves] = useState<any[]>([])
   const [evolutionChain, setEvolutionChain] = useState<any[]>([])
   const [typeMatchups, setTypeMatchups] = useState<any[]>([])
-  const [activeTab, setActiveTab] = useState<'stats' | 'moves' | 'evolution' | 'matchups'>('stats')
+  const [activeTab, setActiveTab] = useState<'stats' | 'moves' | 'evolution' | 'matchups'>(
+    () => loadUiState<'stats' | 'moves' | 'evolution' | 'matchups'>(tabStateKey, 'stats')
+  )
   const tabsRef = useRef<HTMLDivElement>(null)
   const tabContentRef = useRef<HTMLDivElement>(null)
   const isFirstTabChange = useRef(true)
@@ -42,11 +46,15 @@ export default function PokemonDetails({ pokemon, showHeader = true, className =
 
   // Reset to default view (top + Stats tab) when navigating to a different Pokemon
   useEffect(() => {
-    setActiveTab('stats')
+    setActiveTab(loadUiState<'stats' | 'moves' | 'evolution' | 'matchups'>(tabStateKey, 'stats'))
     isFirstTabChange.current = true
     const main = tabContentRef.current?.closest('main') as HTMLElement | null
     if (main) main.scrollTo({ top: 0, behavior: 'instant' })
-  }, [pokemon.id])
+  }, [pokemon.id, tabStateKey])
+
+  useEffect(() => {
+    saveUiState(tabStateKey, activeTab)
+  }, [activeTab, tabStateKey])
 
   // Scroll tab content into view when the user switches tabs (skip on initial mount)
   useEffect(() => {
@@ -215,7 +223,14 @@ export default function PokemonDetails({ pokemon, showHeader = true, className =
           }}
         />
         
-        <div ref={tabContentRef} className="mt-6">
+        <div
+          ref={tabContentRef}
+          className="mt-6"
+          role="tabpanel"
+          id={`pokemon-tabpanel-${activeTab}`}
+          aria-labelledby={`pokemon-tab-${activeTab}`}
+          tabIndex={0}
+        >
           {(loading || externalLoading) ? (
             <PokemonDetailsSkeleton />
           ) : error ? (

@@ -39,6 +39,15 @@ function GameTextBox({
   displayedLogIndex,
   onDisplayedLogIndexChange,
 }: GameTextBoxProps) {
+  const classifyLine = (message: string) => {
+    const text = message.toLowerCase();
+    if (text.includes('fainted') || text.includes('damage') || text.includes('hit')) return { label: 'Damage', tone: 'text-red-700 dark:text-red-300 bg-red-500/10' };
+    if (text.includes('heal') || text.includes('restored')) return { label: 'Heal', tone: 'text-emerald-700 dark:text-emerald-300 bg-emerald-500/10' };
+    if (text.includes('status') || text.includes('burn') || text.includes('poison') || text.includes('paraly')) return { label: 'Status', tone: 'text-amber-700 dark:text-amber-300 bg-amber-500/10' };
+    if (text.includes('miss')) return { label: 'Miss', tone: 'text-slate-700 dark:text-slate-300 bg-slate-500/10' };
+    return { label: 'Event', tone: 'text-blue-700 dark:text-blue-300 bg-blue-500/10' };
+  };
+
   const logRef = useRef<HTMLDivElement>(null);
   const prevLengthRef = useRef(0);
 
@@ -100,7 +109,12 @@ function GameTextBox({
                       {line.message}
                     </>
                   ) : (
-                    line.message
+                    <span className="inline-flex items-center gap-2">
+                      <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${classifyLine(line.message).tone}`}>
+                        {classifyLine(line.message).label}
+                      </span>
+                      <span>{line.message}</span>
+                    </span>
                   )}
                 </p>
               ))}
@@ -141,6 +155,7 @@ const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
     me,
     meUid,
     oppUid,
+    connectionStatus,
     timeLeftSec,
     legalMoves,
     legalSwitchIndexes,
@@ -168,7 +183,12 @@ const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
 
   // Battle end screen state
   const [showEndScreen, setShowEndScreen] = useState(false);
-  const [displayedLogIndex, setDisplayedLogIndex] = useState(-1);
+  const [displayedLogIndex, setDisplayedLogIndex] = useState(() => {
+    if (typeof window === 'undefined') return -1;
+    const raw = window.sessionStorage.getItem(`battle.${battleId}.logIndex`);
+    return raw ? Number.parseInt(raw, 10) : -1;
+  });
+  const [recoveredTurn, setRecoveredTurn] = useState<number | null>(null);
 
   // Determine if current user is host (p1) and which side they are on
   const isHost = useMemo(() => {
@@ -213,6 +233,11 @@ const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
       setPendingAction(null);
     }
   }, [meta?.turn, meta?.phase, pendingAction]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.sessionStorage.setItem(`battle.${battleId}.logIndex`, String(displayedLogIndex));
+  }, [battleId, displayedLogIndex]);
 
   useEffect(() => {
     let cancelled = false;
@@ -266,6 +291,12 @@ const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
       }
     }
   }, [meta?.phase, meta?.winnerUid, onBattleComplete]);
+
+  useEffect(() => {
+    if (connectionStatus === 'online' && meta?.turn && recoveredTurn !== meta.turn) {
+      setRecoveredTurn(meta.turn);
+    }
+  }, [connectionStatus, meta?.turn, recoveredTurn]);
 
 const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | 'p2') => {
     try {
@@ -460,6 +491,11 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
   const myActive = mySide && (pub as any)?.[mySide]?.active ? (pub as any)[mySide].active : null;
   const oppActive = oppSide && (pub as any)?.[oppSide]?.active ? (pub as any)[oppSide].active : null;
   const myTeam = me?.team || [];
+  const timerUrgencyClass = timeLeftSec <= 5
+    ? 'text-red-600 dark:text-red-400 font-semibold'
+    : timeLeftSec <= 10
+      ? 'text-amber-600 dark:text-amber-400 font-semibold'
+      : 'text-xs text-muted';
 
   const resolveTeamSpecies = (pokemon: any): string | null => {
     if (!pokemon) return null;
@@ -496,7 +532,18 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
               {meta.phase}
             </span>
             <span className="text-xs text-muted" data-testid="turn-counter">Turn {meta.turn}</span>
-            <span className="text-xs text-muted">{timeLeftSec}s</span>
+            <span className={timerUrgencyClass}>{timeLeftSec}s</span>
+            <span
+              className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium ${
+                connectionStatus === 'online'
+                  ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+                  : connectionStatus === 'reconnecting'
+                    ? 'border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300'
+                    : 'border-red-500/40 bg-red-500/10 text-red-700 dark:text-red-300'
+              }`}
+            >
+              {connectionStatus === 'online' ? 'Online' : connectionStatus === 'reconnecting' ? 'Reconnecting' : 'Offline'}
+            </span>
           </div>
           <div className="text-sm text-muted">
             vs Opponent
@@ -513,6 +560,16 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
             Resolution Phase
           </span>
         </div>
+        {connectionStatus === 'reconnecting' && (
+          <div className="px-4 pb-2 text-center text-xs text-amber-700 dark:text-amber-300">
+            Reconnecting to battle stream...
+          </div>
+        )}
+        {recoveredTurn !== null && connectionStatus === 'online' && (
+          <div className="px-4 pb-2 text-center text-xs text-emerald-700 dark:text-emerald-300">
+            Connection recovered. Synced at turn {recoveredTurn}.
+          </div>
+        )}
       </div>
 
       {/* Battle Field */}
@@ -589,6 +646,12 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
                 Waiting for opponent…
               </div>
             )}
+            {pendingAction && pendingAction.turn === meta.turn && (
+              <div className="mb-4 flex items-center justify-center gap-2 rounded-md border border-primary/40 bg-primary/10 px-3 py-2 text-sm text-primary">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
+                Action locked in for turn {meta.turn}
+              </div>
+            )}
 
           {/* Move Selection */}
           <div className="mb-6">
@@ -650,7 +713,7 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
                     onClick={() => handleMoveSelection(move.id)}
                     disabled={buttonDisabled}
                     aria-pressed={isSelected}
-                    className={`p-3 rounded-lg border border-border bg-surface text-text hover:border-primary/50 hover:bg-primary/5 hover:shadow transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-bg ${isSelected ? 'border-primary/80 bg-primary/10' : ''}`}
+                    className={`min-h-[44px] p-3 rounded-lg border border-border bg-surface text-text hover:border-primary/50 hover:bg-primary/5 hover:shadow transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-bg ${isSelected ? 'border-primary/80 bg-primary/10' : ''}`}
                     data-testid={`move-${move.id}`}
                   >
                     <div className="font-medium capitalize">
@@ -718,7 +781,7 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
                     onClick={() => handlePokemonSwitch(index)}
                     disabled={switchDisabled}
                     aria-pressed={isPendingSwitch}
-                    className={`p-2 rounded-lg border transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-bg ${
+                    className={`min-h-[44px] p-2 rounded-lg border transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-bg ${
                       switchDisabled
                         ? 'border-border bg-surface cursor-not-allowed opacity-60'
                         : 'border-border bg-surface hover:border-primary/50 hover:bg-primary/5'

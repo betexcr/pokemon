@@ -37,6 +37,7 @@ function ModernPokemonCardComponent({
 }: ModernPokemonCardProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [imageRetryCount, setImageRetryCount] = useState(0);
   const router = useRouter();
 
   // Check if this is a skeleton Pokemon (no real data loaded yet)
@@ -287,6 +288,7 @@ function ModernPokemonCardComponent({
   useEffect(() => {
     setImageLoaded(false);
     setImageError(false);
+    setImageRetryCount(0);
   }, [pokemon.id]);
 
   // Retry loading for Pokemon that have real names but missing types
@@ -341,12 +343,14 @@ function ModernPokemonCardComponent({
       data-pokemon-id={pokemon.id}
       forceSquare={false}
     >
-      {/* Type accent bar */}
-      <div
-        className="h-1 w-full"
-        style={getAccentBarStyle()}
-        aria-hidden="true"
-      />
+      {/* Type accent bar (hidden in list mode for cleaner rows) */}
+      {density !== "list" && (
+        <div
+          className="h-1 w-full"
+          style={getAccentBarStyle()}
+          aria-hidden="true"
+        />
+      )}
 
       {/* Card content */}
       {density === "list" ? (
@@ -366,7 +370,12 @@ function ModernPokemonCardComponent({
             {/* Pokémon Image */}
             <LazyImage
               className="relative z-10 flex h-full w-full items-center justify-center"
-              srcList={[primaryImageUrl, fallbackImageUrl, animatedUrl, placeholderImageUrl]}
+              srcList={[
+                `${primaryImageUrl}${primaryImageUrl.includes('?') ? '&' : '?'}retry=${imageRetryCount}`,
+                `${fallbackImageUrl}${fallbackImageUrl.includes('?') ? '&' : '?'}retry=${imageRetryCount}`,
+                animatedUrl,
+                placeholderImageUrl
+              ]}
               alt={formatPokemonName(pokemon.name)}
               imgClassName={`w-full h-full object-contain transition-all duration-500 ease-out ${imageLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
               imgStyle={{
@@ -385,8 +394,21 @@ function ModernPokemonCardComponent({
 
             {/* Error state */}
             {imageError && (
-              <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-white/80 dark:bg-gray-900/80 text-muted">
-                <span className="text-xs">?</span>
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 rounded-lg bg-white/80 dark:bg-gray-900/80 text-muted">
+                <span className="text-[11px]">Image unavailable</span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setImageError(false);
+                    setImageLoaded(false);
+                    setImageRetryCount((prev) => prev + 1);
+                  }}
+                  className="rounded-md border border-border px-2 py-1 text-[10px] font-medium hover:bg-surface"
+                >
+                  Retry
+                </button>
               </div>
             )}
           </div>
@@ -529,7 +551,12 @@ function ModernPokemonCardComponent({
                     )}
                     <LazyImage
                       className="relative z-10 flex items-center justify-center w-full h-full"
-                      srcList={[primaryImageUrl, fallbackImageUrl, animatedUrl, placeholderImageUrl]}
+                      srcList={[
+                        `${primaryImageUrl}${primaryImageUrl.includes('?') ? '&' : '?'}retry=${imageRetryCount}`,
+                        `${fallbackImageUrl}${fallbackImageUrl.includes('?') ? '&' : '?'}retry=${imageRetryCount}`,
+                        animatedUrl,
+                        placeholderImageUrl
+                      ]}
                       alt={formatPokemonName(pokemon.name)}
                       width={475}
                       height={475}
@@ -545,8 +572,21 @@ function ModernPokemonCardComponent({
                       onError={() => setImageError(true)}
                     />
                     {imageError && (
-                      <div className="absolute inset-0 z-20 flex items-center justify-center rounded-xl bg-white/80 dark:bg-slate-900/70 text-muted">
-                        <span className="text-sm">?</span>
+                      <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 rounded-xl bg-white/80 dark:bg-slate-900/70 text-muted">
+                        <span className="text-xs">Image unavailable</span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setImageError(false);
+                            setImageLoaded(false);
+                            setImageRetryCount((prev) => prev + 1);
+                          }}
+                          className="rounded-md border border-border px-2 py-1 text-[10px] font-medium hover:bg-surface"
+                        >
+                          Retry
+                        </button>
                       </div>
                     )}
                   </div>
@@ -611,7 +651,12 @@ function ModernPokemonCardComponent({
                       )}
                       <LazyImage
                         className="relative z-10 flex items-center justify-center w-full h-full"
-                        srcList={[primaryImageUrl, fallbackImageUrl, animatedUrl, placeholderImageUrl]}
+                        srcList={[
+                          `${primaryImageUrl}${primaryImageUrl.includes('?') ? '&' : '?'}retry=${imageRetryCount}`,
+                          `${fallbackImageUrl}${fallbackImageUrl.includes('?') ? '&' : '?'}retry=${imageRetryCount}`,
+                          animatedUrl,
+                          placeholderImageUrl
+                        ]}
                         alt={formatPokemonName(pokemon.name)}
                         width={475}
                         height={475}
@@ -627,8 +672,21 @@ function ModernPokemonCardComponent({
                         onError={() => setImageError(true)}
                       />
                       {imageError && (
-                        <div className="absolute inset-0 z-20 flex items-center justify-center rounded-xl bg-white/80 dark:bg-slate-900/70 text-muted">
-                          <span className="text-sm">?</span>
+                        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 rounded-xl bg-white/80 dark:bg-slate-900/70 text-muted">
+                          <span className="text-xs">Image unavailable</span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setImageError(false);
+                              setImageLoaded(false);
+                              setImageRetryCount((prev) => prev + 1);
+                            }}
+                            className="rounded-md border border-border px-2 py-1 text-[10px] font-medium hover:bg-surface"
+                          >
+                            Retry
+                          </button>
                         </div>
                       )}
                     </div>

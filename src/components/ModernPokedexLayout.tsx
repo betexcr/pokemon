@@ -23,6 +23,7 @@ import SearchInput from '@/components/SearchInput'
 import PokedexScrollbar from '@/components/PokedexScrollbar'
 import RecentlyViewedSection from '@/components/RecentlyViewedSection'
 import { LEGENDARY_POKEMON, MYTHICAL_POKEMON, ULTRA_BEAST_POKEMON } from '@/lib/pokemon-categories'
+import { loadUiState, saveUiState } from '@/lib/uiState'
 
 interface ModernPokedexLayoutProps {
   pokemonList: Pokemon[]
@@ -117,9 +118,9 @@ export default function ModernPokedexLayout({
     try {
       if (typeof window !== 'undefined') {
         const savedShowSidebar = localStorage.getItem('pokedex.showSidebar')
-        if (savedShowSidebar !== null) {
-          setShowSidebar(savedShowSidebar === 'true')
-        }
+        const migratedSidebar = savedShowSidebar !== null ? savedShowSidebar === 'true' : false
+        const nextSidebar = loadUiState<boolean>('pokedex.showSidebar', migratedSidebar)
+        setShowSidebar(nextSidebar)
       }
     } catch (error) {
       console.error('Error loading sidebar state from localStorage:', error)
@@ -131,7 +132,10 @@ export default function ModernPokedexLayout({
     try {
       if (typeof window !== 'undefined') {
         const savedFilters = localStorage.getItem('pokedex.advancedFilters')
-        if (savedFilters) {
+        const persistedFilters = loadUiState<AdvancedFilters | null>('pokedex.advancedFilters', null)
+        if (persistedFilters) {
+          setAdvancedFilters(persistedFilters)
+        } else if (savedFilters) {
           const parsedFilters = JSON.parse(savedFilters) as AdvancedFilters
           // Validate the parsed filters to ensure they have the expected structure
           if (parsedFilters && typeof parsedFilters === 'object') {
@@ -163,7 +167,7 @@ export default function ModernPokedexLayout({
     if (!filtersLoadedRef.current) return
     try {
       if (typeof window !== 'undefined') {
-        localStorage.setItem('pokedex.advancedFilters', JSON.stringify(advancedFilters))
+        saveUiState('pokedex.advancedFilters', advancedFilters)
       }
     } catch (error) {
       console.error('Error saving advanced filters to localStorage:', error)
@@ -177,16 +181,25 @@ export default function ModernPokedexLayout({
         const savedSortBy = localStorage.getItem('pokedex.sortBy')
         const savedSortOrder = localStorage.getItem('pokedex.sortOrder')
         const savedCardDensity = localStorage.getItem('pokedex.cardDensity')
+        const persistedSortBy = loadUiState<typeof sortBy | null>('pokedex.sortBy', null)
+        const persistedSortOrder = loadUiState<typeof sortOrder | null>('pokedex.sortOrder', null)
+        const persistedDensity = loadUiState<typeof cardDensity | null>('pokedex.cardDensity', null)
         
-        if (savedSortBy && ['id', 'name', 'stats', 'hp', 'attack', 'defense', 'special-attack', 'special-defense', 'speed'].includes(savedSortBy)) {
+        if (persistedSortBy && ['id', 'name', 'stats', 'hp', 'attack', 'defense', 'special-attack', 'special-defense', 'speed'].includes(persistedSortBy)) {
+          setSortBy(persistedSortBy as typeof sortBy)
+        } else if (savedSortBy && ['id', 'name', 'stats', 'hp', 'attack', 'defense', 'special-attack', 'special-defense', 'speed'].includes(savedSortBy)) {
           setSortBy(savedSortBy as typeof sortBy)
         }
         
-        if (savedSortOrder && ['asc', 'desc'].includes(savedSortOrder)) {
+        if (persistedSortOrder && ['asc', 'desc'].includes(persistedSortOrder)) {
+          setSortOrder(persistedSortOrder as typeof sortOrder)
+        } else if (savedSortOrder && ['asc', 'desc'].includes(savedSortOrder)) {
           setSortOrder(savedSortOrder as typeof sortOrder)
         }
         
-        if (savedCardDensity && ['3cols', '6cols', '9cols', '12cols', 'list'].includes(savedCardDensity)) {
+        if (persistedDensity && ['3cols', '6cols', '9cols', '12cols', 'list'].includes(persistedDensity)) {
+          setCardDensity(persistedDensity as typeof cardDensity)
+        } else if (savedCardDensity && ['3cols', '6cols', '9cols', '12cols', 'list'].includes(savedCardDensity)) {
           setCardDensity(savedCardDensity as typeof cardDensity)
         }
       }
@@ -199,9 +212,9 @@ export default function ModernPokedexLayout({
   useEffect(() => {
     try {
       if (typeof window !== 'undefined') {
-        localStorage.setItem('pokedex.sortBy', sortBy)
-        localStorage.setItem('pokedex.sortOrder', sortOrder)
-        localStorage.setItem('pokedex.cardDensity', cardDensity)
+        saveUiState('pokedex.sortBy', sortBy)
+        saveUiState('pokedex.sortOrder', sortOrder)
+        saveUiState('pokedex.cardDensity', cardDensity)
       }
     } catch (error) {
       console.error('Error saving sort options to localStorage:', error)
@@ -215,7 +228,7 @@ export default function ModernPokedexLayout({
     
     try {
       if (typeof window !== 'undefined') {
-        localStorage.setItem('pokedex.showSidebar', String(showSidebar))
+        saveUiState('pokedex.showSidebar', showSidebar)
       }
     } catch (error) {
       console.error('Error saving sidebar state to localStorage:', error)
@@ -228,7 +241,12 @@ export default function ModernPokedexLayout({
     let target: number | null = null
     try {
       const saved = localStorage.getItem(SCROLL_POSITION_KEY)
-      if (saved) target = parseInt(saved, 10)
+      const persistedScroll = loadUiState<number | null>('pokedex.scrollPosition', null)
+      if (typeof persistedScroll === 'number' && persistedScroll > 0) {
+        target = persistedScroll
+      } else if (saved) {
+        target = parseInt(saved, 10)
+      }
     } catch {
       return
     }
@@ -267,7 +285,7 @@ export default function ModernPokedexLayout({
       clearTimeout(timeoutId)
       timeoutId = setTimeout(() => {
         try {
-          localStorage.setItem(SCROLL_POSITION_KEY, scrollContainer.scrollTop.toString())
+          saveUiState('pokedex.scrollPosition', scrollContainer.scrollTop)
         } catch { /* storage unavailable */ }
       }, 100)
     }
@@ -284,7 +302,7 @@ export default function ModernPokedexLayout({
     const saveNow = () => {
       try {
         if (scrollContainerRef.current) {
-          localStorage.setItem(SCROLL_POSITION_KEY, scrollContainerRef.current.scrollTop.toString())
+          saveUiState('pokedex.scrollPosition', scrollContainerRef.current.scrollTop)
         }
       } catch { /* storage unavailable */ }
     }
@@ -520,6 +538,7 @@ export default function ModernPokedexLayout({
     searchTerm,
     results: searchResults,
     isLoading: searchLoading,
+    error: searchError,
     handleSearchChange,
     clearSearch
   } = useSearch({
@@ -529,6 +548,31 @@ export default function ModernPokedexLayout({
   })
 
   const [jumpToNumberInput, setJumpToNumberInput] = useState('')
+  const activeFilterCount = useMemo(() => {
+    let count = 0
+    if (searchTerm.trim()) count += 1
+    count += advancedFilters.types.length
+    if (advancedFilters.generation !== 'all') count += 1
+    if (advancedFilters.habitat) count += 1
+    if (advancedFilters.legendary) count += 1
+    if (advancedFilters.mythical) count += 1
+    if (advancedFilters.ultraBeast) count += 1
+    if (debouncedHeightRange[0] > 0 || debouncedHeightRange[1] < 20) count += 1
+    if (debouncedWeightRange[0] > 0 || debouncedWeightRange[1] < 1000) count += 1
+    if (showFavoritesOnly) count += 1
+    return count
+  }, [
+    searchTerm,
+    advancedFilters.types.length,
+    advancedFilters.generation,
+    advancedFilters.habitat,
+    advancedFilters.legendary,
+    advancedFilters.mythical,
+    advancedFilters.ultraBeast,
+    debouncedHeightRange,
+    debouncedWeightRange,
+    showFavoritesOnly
+  ])
 
   const handleJumpToPokemonNumber = useCallback(async () => {
     const parsed = Number.parseInt(jumpToNumberInput, 10)
@@ -1647,9 +1691,9 @@ export default function ModernPokedexLayout({
       {/* Desktop Menu Drawer disabled: header has inline controls */}
 
       {/* Collapsible Search and Filters Section */}
-      <div className="border-b border-border bg-surface">
+      <div className="sticky top-0 border-b border-border bg-surface relative z-20">
         {/* Toggle Row */}
-        <div className="w-full px-4 py-2 flex items-center gap-2">
+        <div className="w-full px-4 py-2 flex items-center gap-2 relative z-20">
           {/* Advanced Filters button — always visible */}
           <Tooltip content="Open advanced filters" position="bottom">
             <button type="button"
@@ -1669,10 +1713,17 @@ export default function ModernPokedexLayout({
           {/* Expand/collapse toggle */}
           <button type="button"
             onClick={() => setIsFiltersCollapsed(!isFiltersCollapsed)}
+            onPointerUp={(e) => {
+              // Fallback for touch/pointer scenarios where click can be swallowed by overlays.
+              if (e.pointerType === 'touch') {
+                e.preventDefault()
+                setIsFiltersCollapsed(prev => !prev)
+              }
+            }}
             aria-expanded={!isFiltersCollapsed}
             aria-controls="search-filters-panel"
             title={isFiltersCollapsed ? 'Show search and filters' : 'Hide search and filters'}
-            className={`flex items-center justify-between flex-1 px-3 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 border ${
+            className={`flex items-center justify-between flex-1 px-3 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 border relative z-30 pointer-events-auto touch-manipulation ${
               isFiltersCollapsed
                 ? 'text-text bg-surface hover:bg-surface/60 border-border hover:border-border/80'
                 : 'text-poke-blue bg-poke-blue/10 border-poke-blue/30 shadow-sm'
@@ -1832,6 +1883,30 @@ export default function ModernPokedexLayout({
           </div>
         </div>
           </div>
+          <div className="border-t border-border bg-surface/90 px-3 sm:px-4 py-2">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+              <span className="text-muted">
+                Showing <span className="font-semibold text-text">{hydratedSortedPokemon.length}</span> Pokemon
+                {activeFilterCount > 0 ? (
+                  <> with <span className="font-semibold text-text">{activeFilterCount}</span> active filters</>
+                ) : null}
+              </span>
+              {comparisonList.length >= 2 && (
+                <button
+                  type="button"
+                  onClick={() => router.push('/compare')}
+                  className="min-h-[44px] rounded-md border border-poke-blue/40 bg-poke-blue/10 px-3 py-1.5 font-semibold text-poke-blue hover:bg-poke-blue/20"
+                >
+                  Quick compare ({comparisonList.length})
+                </button>
+              )}
+            </div>
+            {searchError && (
+              <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                Search issue: {searchError}
+              </p>
+            )}
+          </div>
 
           {/* Size, Sort & Advanced Filters Controls */}
           <div className="border-t border-border px-3 sm:px-4 py-2 sm:py-3">
@@ -1943,8 +2018,8 @@ export default function ModernPokedexLayout({
             
         {isInitialLoading ? (
           <div className="text-center py-12">
-            <img src="/loading.gif" alt="Loading Pokémon" width={100} height={100} className="mx-auto mb-4" />
-            <p className="text-muted">Loading Pokémon...</p>
+            <div className="mx-auto mb-4 h-10 w-10 rounded-full border-2 border-poke-blue/30 border-t-poke-blue animate-spin" />
+            <p className="text-muted">Loading Pokemon...</p>
           </div>
         ) : (
           <>
@@ -2083,7 +2158,6 @@ export default function ModernPokedexLayout({
               </>
             ) : (
               <div className="text-center py-12">
-                <div className="text-4xl mb-4">🔍</div>
                 <h3 className="text-lg font-semibold mb-2">No Pokémon found</h3>
                 <p className="text-muted mb-4">
                   Try adjusting your search terms or filters

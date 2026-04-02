@@ -83,6 +83,7 @@ type UseBattleState = {
   me: PrivateState | null;
   meUid: string | null;
   oppUid: string | null;
+  connectionStatus: "online" | "reconnecting" | "offline";
 
   timeLeftSec: number;
 
@@ -115,6 +116,9 @@ export function useBattleState(battleId: string): UseBattleState {
   const [serverOffsetMs, setServerOffsetMs] = useState(0);
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [connectionStatus, setConnectionStatus] = useState<"online" | "reconnecting" | "offline">("online");
+  const [lastMetaUpdateAt, setLastMetaUpdateAt] = useState<number>(Date.now());
+  const [lastPubUpdateAt, setLastPubUpdateAt] = useState<number>(Date.now());
 
   const meUid = user?.uid ?? null;
   const oppUid = useMemo(() => {
@@ -167,7 +171,10 @@ export function useBattleState(battleId: string): UseBattleState {
     // Add error handling for each listener
     unsubs.push(onValue(
       dbRef(database, `/battles/${battleId}/meta`), 
-      s => setMeta(s.val() ?? null),
+      s => {
+        setMeta(s.val() ?? null);
+        setLastMetaUpdateAt(Date.now());
+      },
       e => {
         console.error('useBattleState: Meta listener error:', e);
         setError(e.message);
@@ -176,7 +183,10 @@ export function useBattleState(battleId: string): UseBattleState {
     
     unsubs.push(onValue(
       dbRef(database, `/battles/${battleId}/public`), 
-      s => setPub(s.val() ?? null),
+      s => {
+        setPub(s.val() ?? null);
+        setLastPubUpdateAt(Date.now());
+      },
       e => {
         console.error('useBattleState: Public listener error:', e);
         setError(e.message);
@@ -193,6 +203,37 @@ export function useBattleState(battleId: string): UseBattleState {
 
     return () => { unsubs.forEach(u => u()); };
   }, [battleId, meUid, authLoading]);
+
+  useEffect(() => {
+    const updateFromNavigator = () => {
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
+        setConnectionStatus("offline");
+      } else {
+        setConnectionStatus("online");
+      }
+    };
+    updateFromNavigator();
+    window.addEventListener("online", updateFromNavigator);
+    window.addEventListener("offline", updateFromNavigator);
+    return () => {
+      window.removeEventListener("online", updateFromNavigator);
+      window.removeEventListener("offline", updateFromNavigator);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      setConnectionStatus("offline");
+      return;
+    }
+    const now = Date.now();
+    const staleForMs = now - Math.min(lastMetaUpdateAt, lastPubUpdateAt);
+    if (staleForMs > 8000) {
+      setConnectionStatus("reconnecting");
+    } else {
+      setConnectionStatus("online");
+    }
+  }, [lastMetaUpdateAt, lastPubUpdateAt, meta?.turn, meta?.phase, pub?.lastResultSummary]);
 
   // Late-bind private subscription only after we know meta and user membership
   useEffect(() => {
@@ -459,6 +500,7 @@ export function useBattleState(battleId: string): UseBattleState {
 
   return {
     loading, error, meta, pub, me, meUid, oppUid,
+    connectionStatus,
     timeLeftSec,
     legalMoves,
     legalSwitchIndexes,
