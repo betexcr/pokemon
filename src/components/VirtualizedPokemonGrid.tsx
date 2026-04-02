@@ -247,12 +247,22 @@ export default function VirtualizedPokemonGrid({
   const renderedRowsCache = useRef<Map<string, React.ReactNode>>(new Map())
   const lastRenderData = useRef<string>('')
 
+  const dataSignature = useMemo(() => {
+    if (pokemonList.length === 0) return 'empty'
+    const first = pokemonList[0]?.id ?? 'x'
+    const last = pokemonList[pokemonList.length - 1]?.id ?? 'x'
+    const mid = pokemonList[Math.floor(pokemonList.length / 2)]?.id ?? 'x'
+    const q1 = pokemonList[Math.floor(pokemonList.length / 4)]?.id ?? 'x'
+    const q3 = pokemonList[Math.floor((pokemonList.length * 3) / 4)]?.id ?? 'x'
+    return `${first}-${q1}-${mid}-${q3}-${last}`
+  }, [pokemonList])
+
   // Create cache key for current render state
   const getCacheKey = useCallback(() => {
     // Add a content-derived key so cache invalidates when type data loads asynchronously
     const typesVersion = computeTypesVersion()
-    return `${pokemonList.length}-${density}-${sortBy}-${comparisonList.length}-${selectedPokemon?.id || 'none'}-${typesVersion}`
-  }, [pokemonList.length, density, sortBy, comparisonList.length, selectedPokemon?.id, computeTypesVersion])
+    return `${pokemonList.length}-${dataSignature}-${density}-${sortBy}-${comparisonList.length}-${selectedPokemon?.id || 'none'}-${typesVersion}`
+  }, [pokemonList.length, dataSignature, density, sortBy, comparisonList.length, selectedPokemon?.id, computeTypesVersion])
 
   // Clear cache when data changes significantly
   useEffect(() => {
@@ -278,6 +288,12 @@ export default function VirtualizedPokemonGrid({
     measureElement: (element) => element.getBoundingClientRect().height,
     overscan: 5, // Render 5 extra rows for smooth scrolling
   })
+
+  // Re-measure and clear row cache when layout/data shape changes (e.g., switching to list mode).
+  useEffect(() => {
+    renderedRowsCache.current.clear()
+    virtualizer.measure()
+  }, [density, sortBy, dataSignature, virtualizer])
 
   // Optimized render function with caching
   const renderRow = useCallback((rowIndex: number) => {

@@ -3,7 +3,7 @@ import { Suspense } from 'react';
 import Script from 'next/script';
 import UsagePageClient from './UsagePageClient';
 import UsagePhaseBook from '@/components/usage/UsagePhaseBook';
-import { UsageFilters } from '@/types/usage';
+import { UsageFilters, UsagePhase, Platform, Generation, Format } from '@/types/usage';
 
 export const metadata: Metadata = {
   title: 'Usage Meta Dashboard',
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 
 export const revalidate = 3600; // Revalidate every hour
 
-type SearchParams = { 
+type SearchParams = {
   [key: string]: string | string[] | undefined;
   platform?: string | string[];
   generation?: string | string[];
@@ -32,21 +32,56 @@ type SearchParams = {
   month?: string;
   phase?: string;
   top50Only?: string;
+  sortBy?: string;
+  sortOrder?: string;
+  pokemonId?: string;
 };
 
-export default function UsagePage() {
-  // Default filters for static export
+const PLATFORM_VALUES: Platform[] = ['SMOGON_SINGLES', 'VGC_OFFICIAL', 'BSS_OFFICIAL', 'OTHER'];
+const GENERATION_VALUES: Generation[] = ['GEN5', 'GEN6', 'GEN7', 'GEN8', 'GEN9'];
+const FORMAT_VALUES: Format[] = [
+  'OU', 'UU', 'RU', 'NU', 'UBERS', 'PU', 'MONOTYPE',
+  'VGC_REG_A', 'VGC_REG_B', 'VGC_REG_C', 'VGC_REG_D', 'VGC_REG_E', 'VGC_REG_F', 'VGC_REG_G', 'VGC_REG_H', 'VGC_REG_I',
+  'BSS_SERIES_8', 'BSS_SERIES_9', 'BSS_SERIES_12', 'BSS_SERIES_13', 'BSS_REG_C', 'BSS_REG_D', 'BSS_REG_E', 'BSS_REG_I',
+  'UNKNOWN'
+];
+const PHASE_VALUES: UsagePhase[] = ['snapshot', 'trends', 'deepdive'];
+
+function pickSingle(param: string | string[] | undefined): string | undefined {
+  if (Array.isArray(param)) return param[0];
+  return param;
+}
+
+export default async function UsagePage({
+  searchParams
+}: {
+  searchParams?: Promise<SearchParams>;
+}) {
+  const params = (await searchParams) ?? {};
+  const platform = pickSingle(params.platform);
+  const generation = pickSingle(params.generation);
+  const format = pickSingle(params.format);
+  const month = pickSingle(params.month);
+  const phaseParam = pickSingle(params.phase);
+  const sortByParam = pickSingle(params.sortBy);
+  const sortOrderParam = pickSingle(params.sortOrder);
+  const pokemonIdParam = pickSingle(params.pokemonId);
+
   const filters: UsageFilters = {
-    platforms: ['SMOGON_SINGLES'],
-    generations: ['GEN9'],
-    formats: ['OU'],
-    month: new Date().toISOString().slice(0, 7),
-    top50Only: false,
-    sortBy: 'rank',
-    sortOrder: 'asc'
+    platforms: platform && PLATFORM_VALUES.includes(platform as Platform) ? [platform as Platform] : ['SMOGON_SINGLES'],
+    generations: generation && GENERATION_VALUES.includes(generation as Generation) ? [generation as Generation] : ['GEN9'],
+    formats: format && FORMAT_VALUES.includes(format as Format) ? [format as Format] : ['OU'],
+    month: month && /^\d{4}-\d{2}$/.test(month) ? month : new Date().toISOString().slice(0, 7),
+    top50Only: pickSingle(params.top50Only) === 'true',
+    sortBy: sortByParam === 'usage' || sortByParam === 'name' ? sortByParam : 'rank',
+    sortOrder: sortOrderParam === 'desc' ? 'desc' : 'asc'
   };
-  
-  const phase = 'snapshot';
+
+  const phase: UsagePhase =
+    phaseParam && PHASE_VALUES.includes(phaseParam as UsagePhase)
+      ? (phaseParam as UsagePhase)
+      : 'snapshot';
+  const initialSelectedPokemonId = pokemonIdParam ? Number.parseInt(pokemonIdParam, 10) : undefined;
 
   return (
     <>
@@ -85,7 +120,11 @@ export default function UsagePage() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           </div>
         }>
-          <UsagePhaseBook initialFilters={filters} initialPhase={phase as any} />
+          <UsagePhaseBook
+            initialFilters={filters}
+            initialPhase={phase}
+            initialSelectedPokemonId={Number.isFinite(initialSelectedPokemonId) ? initialSelectedPokemonId : undefined}
+          />
         </Suspense>
         </main>
       </UsagePageClient>

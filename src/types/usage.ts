@@ -156,5 +156,6 @@ export interface UsagePhaseState {
   data: {
     snapshot?: UsageRow[];
     trends?: UsageTrendData[];
+    selectedPokemonId?: number;
   };
 }

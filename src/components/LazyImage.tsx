@@ -176,9 +176,10 @@ export default function LazyImage({
           setCurrentIndex(0);
           setHadError(false);
         }, 3000); // Retry after 3 seconds
+
+        // Bubble error only when every fallback source failed.
+        onError?.(e);
       }
-      
-      onError?.(e);
     },
     [currentIndex, srcList.length, onError]
   );

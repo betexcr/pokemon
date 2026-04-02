@@ -151,27 +151,33 @@ export default function UsageFiltersComponent({
   onFiltersChange 
 }: UsageFiltersProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [availability, setAvailability] = useState<{ availability: Record<string, any>; formats: string[] } | null>(null);
-  const [loadingAvail, setLoadingAvail] = useState(false);
+  const [availability, setAvailability] = useState<{
+    availability: Record<string, Partial<Record<Generation, string[]>>>;
+    formats: Format[];
+  } | null>(null);
 
   useEffect(() => {
     const platform = filters.platforms[0];
     if (!platform) return;
     let cancelled = false;
     async function loadAvailability() {
-      setLoadingAvail(true);
       try {
         // Query all-gen availability for the platform so we can filter gens too
         const params = new URLSearchParams({ platform });
         const res = await fetch(`/api/usage/availability?${params.toString()}`, { cache: 'no-store' });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        if (!cancelled) setAvailability({ availability: data.availability || {}, formats: data.formats || [] });
+        if (!cancelled) {
+          setAvailability({
+            availability: (data.availability || {}) as Record<string, Partial<Record<Generation, string[]>>>,
+            formats: (data.formats || []) as Format[]
+          });
+        }
         // Determine first valid gen/format/month across availability
         const gensOrder: Generation[] = ['GEN9','GEN8','GEN7','GEN6','GEN5'];
         const findFirstValid = () => {
           for (const gen of gensOrder) {
-            for (const fmt of (data.formats || [])) {
+            for (const fmt of (data.formats || []) as Format[]) {
               const months = data.availability?.[fmt]?.[gen] || [];
               if (months.length > 0) return { gen, fmt, month: months[0] };
             }
@@ -185,15 +191,13 @@ export default function UsageFiltersComponent({
         if (!monthsForCurrent.length) {
           const picked = findFirstValid();
           if (picked) {
-            onFiltersChange({ ...filters, generations: [picked.gen], formats: [picked.fmt as any], month: picked.month });
+            onFiltersChange({ ...filters, generations: [picked.gen], formats: [picked.fmt], month: picked.month });
           }
         } else if (!monthsForCurrent.includes(filters.month)) {
           onFiltersChange({ ...filters, month: monthsForCurrent[0] });
         }
       } catch (e) {
         if (!cancelled) setAvailability(null);
-      } finally {
-        if (!cancelled) setLoadingAvail(false);
       }
     }
     loadAvailability();
@@ -207,12 +211,12 @@ export default function UsageFiltersComponent({
     const gen = filters.generations[0];
     if (!gen) return;
     const currentFmt = filters.formats[0];
-    const allFormats: Format[] = (availability.formats || []) as any;
-    const validFormats = allFormats.filter((f: any) => {
+    const allFormats: Format[] = availability.formats || [];
+    const validFormats = allFormats.filter((f) => {
       const months = availability.availability?.[f]?.[gen] || [];
       return months.length > 0;
     });
-    let nextFmt = currentFmt as any;
+    let nextFmt = currentFmt;
     if (!validFormats.includes(nextFmt)) {
       nextFmt = validFormats[0];
     }
@@ -435,7 +439,7 @@ export default function UsageFiltersComponent({
           <select
             id="usage-sort-by"
             value={filters.sortBy}
-            onChange={(e) => updateFilters({ sortBy: e.target.value as any })}
+            onChange={(e) => updateFilters({ sortBy: e.target.value as UsageFilters['sortBy'] })}
             className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm"
           >
             <option value="rank">Rank</option>
@@ -444,7 +448,7 @@ export default function UsageFiltersComponent({
           </select>
           <select
             value={filters.sortOrder}
-            onChange={(e) => updateFilters({ sortOrder: e.target.value as any })}
+            onChange={(e) => updateFilters({ sortOrder: e.target.value as UsageFilters['sortOrder'] })}
             aria-label="Sort order"
             className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm"
           >

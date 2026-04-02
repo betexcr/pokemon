@@ -12,6 +12,8 @@ interface UsageTableProps {
   onRowClick?: (row: UsageRow) => void;
   sortable?: boolean;
   showSubstats?: boolean;
+  sortBy?: SortField;
+  sortOrder?: SortOrder;
 }
 
 type SortField = 'rank' | 'usage' | 'name';
@@ -21,11 +23,15 @@ export default function UsageTable({
   rows, 
   onRowClick, 
   sortable = true,
-  showSubstats = false 
+  showSubstats = false,
+  sortBy,
+  sortOrder: sortOrderProp
 }: UsageTableProps) {
   const [sortField, setSortField] = useState<SortField>('rank');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
+  const activeSortField = sortBy ?? sortField;
+  const activeSortOrder = sortOrderProp ?? sortOrder;
 
   const sortedRows = useMemo(() => {
     if (!sortable) return rows;
@@ -33,7 +39,7 @@ export default function UsageTable({
     return [...rows].sort((a, b) => {
       let aValue: string | number, bValue: string | number;
 
-      switch (sortField) {
+      switch (activeSortField) {
         case 'rank':
           aValue = a.rank;
           bValue = b.rank;
@@ -50,14 +56,15 @@ export default function UsageTable({
           return 0;
       }
 
-      if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+      if (aValue < bValue) return activeSortOrder === 'asc' ? -1 : 1;
+      if (aValue > bValue) return activeSortOrder === 'asc' ? 1 : -1;
       return 0;
     });
-  }, [rows, sortField, sortOrder, sortable]);
+  }, [rows, activeSortField, activeSortOrder, sortable]);
 
   const handleSort = (field: SortField) => {
     if (!sortable) return;
+    if (sortBy || sortOrderProp) return;
     
     if (sortField === field) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -68,10 +75,10 @@ export default function UsageTable({
   };
 
   const getSortIcon = (field: SortField) => {
-    if (!sortable || sortField !== field) {
+    if (!sortable || activeSortField !== field) {
       return <div className="w-4 h-4" />;
     }
-    return sortOrder === 'asc' ? 
+    return activeSortOrder === 'asc' ? 
       <ChevronUp className="w-4 h-4" /> : 
       <ChevronDown className="w-4 h-4" />;
   };

@@ -1,21 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { UsageFilters, UsagePhaseState, UsagePhase } from '@/types/usage';
+import { UsageFilters, UsagePhaseState, UsagePhase, UsageRow } from '@/types/usage';
 import UsageTable from '../UsageTable';
 import UsagePodium from '../UsagePodium';
 import DataAvailabilityInfo from '../DataAvailabilityInfo';
-import { Info, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { Info, TrendingUp } from 'lucide-react';
 
 interface UsageSnapshotPhaseProps {
   filters: UsageFilters;
   phaseState: UsagePhaseState;
-  onPhaseChange: (phase: UsagePhase) => void;
+  onPhaseChange: (phase: UsagePhase, selectedPokemonId?: number) => void;
 }
 
 interface UsageSnapshotData {
-  data?: any[];  // Real data structure
-  rows?: any[];  // Mock data structure
+  data: UsageRow[];
   total?: number;
   metadata: {
     platforms?: string[];
@@ -79,18 +78,6 @@ export default function UsageSnapshotPhase({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters, retryKey]);
 
-  const getTrendIcon = (change?: number) => {
-    if (!change) return <Minus className="h-4 w-4 text-gray-400" />;
-    if (change > 0) return <TrendingUp className="h-4 w-4 text-green-500" />;
-    return <TrendingDown className="h-4 w-4 text-red-500" />;
-  };
-
-  const formatChange = (change?: number) => {
-    if (!change) return '—';
-    const sign = change > 0 ? '+' : '';
-    return `${sign}${change.toFixed(1)}%`;
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -123,7 +110,6 @@ export default function UsageSnapshotPhase({
     );
   }
 
-  // Real data only
   const rows = data?.data || [];
   
   if (!data || rows.length === 0) {
@@ -217,9 +203,11 @@ export default function UsageSnapshotPhase({
         </div>
         <UsageTable
           rows={rows}
+          sortBy={filters.sortBy}
+          sortOrder={filters.sortOrder}
           onRowClick={(row) => {
             // Navigate to deep dive phase with selected Pokémon
-            onPhaseChange('deepdive');
+            onPhaseChange('deepdive', row.pokemonId);
           }}
         />
       </div>

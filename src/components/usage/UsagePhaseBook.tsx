@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic';
 import { UsageFilters, UsagePhase, UsagePhaseState } from '@/types/usage';
 import UsageFiltersComponent from './UsageFilters';
 import UsageSnapshotPhase from './phases/UsageSnapshotPhase';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 const UsageTrendsPhase = dynamic(() => import('./phases/UsageTrendsPhase'));
 const UsageDeepDivePhase = dynamic(() => import('./phases/UsageDeepDivePhase'));
@@ -14,6 +14,7 @@ const UsageDeepDivePhase = dynamic(() => import('./phases/UsageDeepDivePhase'));
 interface UsagePhaseBookProps {
   initialFilters: UsageFilters;
   initialPhase: UsagePhase;
+  initialSelectedPokemonId?: number;
 }
 
 const PHASE_CONFIG = {
@@ -39,16 +40,18 @@ const PHASE_CONFIG = {
 
 export default function UsagePhaseBook({ 
   initialFilters, 
-  initialPhase 
+  initialPhase,
+  initialSelectedPokemonId
 }: UsagePhaseBookProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   
   const [filters, setFilters] = useState<UsageFilters>(initialFilters);
   const [phaseState, setPhaseState] = useState<UsagePhaseState>({
     current: initialPhase,
     history: [initialPhase],
-    data: {}
+    data: {
+      selectedPokemonId: initialSelectedPokemonId
+    }
   });
 
   // Update URL when filters or phase change
@@ -73,16 +76,23 @@ export default function UsagePhaseBook({
     if (phaseState.current !== 'snapshot') {
       params.set('phase', phaseState.current);
     }
+    if (phaseState.current === 'deepdive' && phaseState.data.selectedPokemonId) {
+      params.set('pokemonId', String(phaseState.data.selectedPokemonId));
+    }
     
     const newUrl = `${window.location.pathname}?${params.toString()}`;
     router.replace(newUrl, { scroll: false });
-  }, [filters, phaseState.current, router]);
+  }, [filters, phaseState.current, phaseState.data.selectedPokemonId, router]);
 
-  const handlePhaseChange = (newPhase: UsagePhase) => {
+  const handlePhaseChange = (newPhase: UsagePhase, selectedPokemonId?: number) => {
     setPhaseState(prev => ({
       ...prev,
       current: newPhase,
-      history: [...prev.history, newPhase].slice(-10) // Keep last 10 phases
+      history: [...prev.history, newPhase].slice(-10), // Keep last 10 phases
+      data: {
+        ...prev.data,
+        selectedPokemonId: selectedPokemonId ?? prev.data.selectedPokemonId
+      }
     }));
   };
 

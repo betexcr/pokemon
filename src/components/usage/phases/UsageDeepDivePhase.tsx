@@ -7,14 +7,13 @@ import { UsageFilters, UsagePhaseState, UsagePhase, UsageRow } from '@/types/usa
 interface UsageDeepDivePhaseProps {
   filters: UsageFilters;
   phaseState: UsagePhaseState;
-  onPhaseChange: (phase: UsagePhase) => void;
+  onPhaseChange: (phase: UsagePhase, selectedPokemonId?: number) => void;
 }
 
 const COLORS = ['#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#8B5CF6', '#EC4899'];
 
 interface UsageDeepDiveData {
-  data?: UsageRow[];  // Real data structure
-  rows?: UsageRow[];  // Mock data structure
+  data: UsageRow[];
   total?: number;
   metadata: {
     platforms?: string[];
@@ -27,12 +26,18 @@ interface UsageDeepDiveData {
   };
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+interface TooltipPayloadEntry {
+  color?: string;
+  name?: string;
+  value?: number | string;
+}
+
+const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: TooltipPayloadEntry[]; label?: string }) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
         <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{label}</p>
-        {payload.map((entry: any, index: number) => (
+        {payload.map((entry, index: number) => (
           <p key={index} style={{ color: entry.color }} className="text-sm">
             {entry.name}: {entry.value}%
           </p>
@@ -92,16 +97,24 @@ export default function UsageDeepDivePhase({
 
   useEffect(() => {
     if (data) {
-      const rows = data.data || data.rows || [];
-      if (rows.length > 0 && !selectedPokemon) {
+      const rows = data.data || [];
+      const targetId = phaseState.data.selectedPokemonId;
+      const next = targetId ? rows.find((row) => row.pokemonId === targetId) : undefined;
+      if (next) {
+        setSelectedPokemon(next);
+      } else if (rows.length > 0 && !selectedPokemon) {
         setSelectedPokemon(rows[0]);
       }
     }
-  }, [data, selectedPokemon]);
+  }, [data, phaseState.data.selectedPokemonId, selectedPokemon]);
 
-  const formatSubstatsData = (substats: any, type: string) => {
-    if (!substats || !substats[type]) return [];
-    return substats[type].map((item: any) => ({
+  const formatSubstatsData = (
+    substats: UsageRow['substats'],
+    type: 'moves' | 'items' | 'abilities'
+  ): Array<{ name: string; percentage: number }> => {
+    const values = substats?.[type];
+    if (!values) return [];
+    return values.map((item) => ({
       name: item.name,
       percentage: item.pct
     }));
@@ -134,8 +147,7 @@ export default function UsageDeepDivePhase({
     );
   }
 
-  // Handle both real data (data.data) and mock data (data.rows) structures
-  const rows = data?.data || data?.rows || [];
+  const rows = data?.data || [];
   
   if (!data || rows.length === 0 || !selectedPokemon) {
     return (
@@ -271,7 +283,7 @@ export default function UsageDeepDivePhase({
                   fill="#8884d8"
                   dataKey="percentage"
                 >
-                  {movesData.map((entry: any, index: number) => (
+                  {movesData.map((entry, index: number) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
@@ -307,7 +319,7 @@ export default function UsageDeepDivePhase({
             </ResponsiveContainer>
           </div>
           <div className="space-y-3">
-            {itemsData.map((item: any, index: number) => (
+            {itemsData.map((item, index: number) => (
               <div key={item.name} className="flex items-center justify-between">
                 <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                   {item.name}
@@ -335,7 +347,7 @@ export default function UsageDeepDivePhase({
           Ability Usage
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {abilitiesData.map((ability: any, index: number) => (
+          {abilitiesData.map((ability, index: number) => (
             <div key={ability.name} className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
                 <h4 className="font-semibold text-purple-900 dark:text-purple-100">

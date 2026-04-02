@@ -7,7 +7,7 @@ import { UsageFilters, UsagePhaseState, UsagePhase, UsageRow } from '@/types/usa
 interface UsageTrendsPhaseProps {
   filters: UsageFilters;
   phaseState: UsagePhaseState;
-  onPhaseChange: (phase: UsagePhase) => void;
+  onPhaseChange: (phase: UsagePhase, selectedPokemonId?: number) => void;
 }
 
 interface TrendDataPoint {
@@ -20,12 +20,18 @@ interface HistoricalData {
   data: UsageRow[];
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+interface TooltipPayloadEntry {
+  color?: string;
+  dataKey?: string;
+  value?: number | string;
+}
+
+const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: TooltipPayloadEntry[]; label?: string }) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
         <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{label}</p>
-        {payload.map((entry: any, index: number) => (
+        {payload.map((entry, index: number) => (
           <p key={index} style={{ color: entry.color }} className="text-sm">
             {entry.dataKey}: {entry.value}%
           </p>
@@ -36,12 +42,12 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-const RankTooltip = ({ active, payload, label }: any) => {
+const RankTooltip = ({ active, payload, label }: { active?: boolean; payload?: TooltipPayloadEntry[]; label?: string }) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
         <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{label}</p>
-        {payload.map((entry: any, index: number) => (
+        {payload.map((entry, index: number) => (
           <p key={index} style={{ color: entry.color }} className="text-sm">
             {entry.dataKey}: #{entry.value}
           </p>
@@ -67,15 +73,10 @@ export default function UsageTrendsPhase({
   // Generate list of recent months for trend analysis
   const getRecentMonths = (count: number = 6): string[] => {
     const months: string[] = [];
-    const now = new Date();
-    
-    // Use a conservative approach - start from a known good month and go backwards
-    // Since we know 2024-10 works, let's start from there
-    const startYear = 2024;
-    const startMonth = 10; // October 2024
-    
     for (let i = 0; i < count; i++) {
-      const date = new Date(startYear, startMonth - 1 - i, 1);
+      const date = new Date();
+      date.setDate(1);
+      date.setMonth(date.getMonth() - i);
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, '0');
       months.push(`${year}-${month}`);
@@ -107,26 +108,26 @@ export default function UsageTrendsPhase({
             if (result.historicalData && result.historicalData.length > 0) {
               const historicalData = result.historicalData;
               const latestData = historicalData[historicalData.length - 1];
-              const topPokemon = latestData.data.slice(0, 6).map((pokemon: any) => pokemon.name);
+              const topPokemon = latestData.data.slice(0, 6).map((pokemon: UsageRow) => pokemon.pokemonName);
 
               setAvailablePokemon(topPokemon);
               if (topPokemon.length > 0 && !topPokemon.includes(selectedPokemon)) {
                 setSelectedPokemon(topPokemon[0]);
               }
 
-              const trendChartData: TrendDataPoint[] = historicalData.map((monthData: any) => {
+              const trendChartData: TrendDataPoint[] = historicalData.map((monthData: HistoricalData) => {
                 const dataPoint: TrendDataPoint = { month: monthData.month };
                 topPokemon.forEach((pokemonName: string) => {
-                  const pokemonData = monthData.data.find((p: any) => p.name === pokemonName);
+                  const pokemonData = monthData.data.find((p: UsageRow) => p.pokemonName === pokemonName);
                   dataPoint[pokemonName] = pokemonData ? pokemonData.usagePercent : 0;
                 });
                 return dataPoint;
               });
 
-              const rankChartData: TrendDataPoint[] = historicalData.map((monthData: any) => {
+              const rankChartData: TrendDataPoint[] = historicalData.map((monthData: HistoricalData) => {
                 const dataPoint: TrendDataPoint = { month: monthData.month };
                 topPokemon.forEach((pokemonName: string) => {
-                  const pokemonData = monthData.data.find((p: any) => p.name === pokemonName);
+                  const pokemonData = monthData.data.find((p: UsageRow) => p.pokemonName === pokemonName);
                   dataPoint[pokemonName] = pokemonData ? pokemonData.rank : 0;
                 });
                 return dataPoint;
@@ -174,7 +175,7 @@ export default function UsageTrendsPhase({
         }
 
         const latestData = historicalData[historicalData.length - 1];
-        const topPokemon = latestData.data.slice(0, 6).map((pokemon: any) => pokemon.name);
+        const topPokemon = latestData.data.slice(0, 6).map((pokemon: UsageRow) => pokemon.pokemonName);
 
         setAvailablePokemon(topPokemon);
         if (topPokemon.length > 0 && !topPokemon.includes(selectedPokemon)) {
@@ -184,7 +185,7 @@ export default function UsageTrendsPhase({
         const trendChartData: TrendDataPoint[] = historicalData.map(monthData => {
           const dataPoint: TrendDataPoint = { month: monthData.month };
           topPokemon.forEach((pokemonName: string) => {
-            const pokemonData = monthData.data.find((p: any) => p.name === pokemonName);
+            const pokemonData = monthData.data.find((p: UsageRow) => p.pokemonName === pokemonName);
             dataPoint[pokemonName] = pokemonData ? pokemonData.usagePercent : 0;
           });
           return dataPoint;
@@ -193,7 +194,7 @@ export default function UsageTrendsPhase({
         const rankChartData: TrendDataPoint[] = historicalData.map(monthData => {
           const dataPoint: TrendDataPoint = { month: monthData.month };
           topPokemon.forEach((pokemonName: string) => {
-            const pokemonData = monthData.data.find((p: any) => p.name === pokemonName);
+            const pokemonData = monthData.data.find((p: UsageRow) => p.pokemonName === pokemonName);
             dataPoint[pokemonName] = pokemonData ? pokemonData.rank : 0;
           });
           return dataPoint;
