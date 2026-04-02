@@ -7,14 +7,7 @@ import {
   calculateTypeEffectiveness
 } from './damage-calculator';
 import { getMove, getCachedMove } from './moveCache';
-import {
-  resolveSwitch,
-  resolveMove,
-  processStartOfTurn,
-  processEndOfTurn,
-  processReplacements,
-  applyAutoSwitchInEffects,
-} from './team-battle-engine-additional';
+import { processReplacements, runBattleTurnFromQueue } from './team-battle-engine-additional';
 import {
   BattleRng,
   cloneBattleRng,
@@ -139,7 +132,7 @@ export type BattleTeam = {
 };
 
 export type BattleLogEntry = {
-  type: 'turn_start' | 'move_used' | 'move_missed' | 'critical_hit' | 'multi_hit' | 'recoil' | 'drain' | 'damage_dealt' | 'status_applied' | 'status_damage' | 'status_effect' | 'pokemon_fainted' | 'pokemon_sent_out' | 'battle_start' | 'battle_end' | 'ability_changed' | 'healing';
+  type: 'turn_start' | 'move_used' | 'move_missed' | 'critical_hit' | 'multi_hit' | 'recoil' | 'drain' | 'damage_dealt' | 'status_applied' | 'status_damage' | 'status_effect' | 'pokemon_fainted' | 'pokemon_sent_out' | 'battle_start' | 'battle_end' | 'ability_changed' | 'healing' | 'engine_warning';
   message: string;
   turn?: number;
   pokemon?: string;
@@ -255,20 +248,42 @@ export function getEffectiveSpeed(pokemon: BattlePokemon, tailwindActive = false
   return finalSpeed;
 }
 
+/** True when every move slot has 0 PP (Struggle condition). */
+export function allMovesOutOfPp(pokemon: BattlePokemon): boolean {
+  if (!pokemon.moves.length) return false;
+  return pokemon.moves.every((m) => m.pp <= 0);
+}
+
+/** Decrements PP for the used move slot once per selection (hit or miss). Struggle does not consume PP. */
+export function consumePpForMove(pokemon: BattlePokemon, moveId: string): void {
+  if (moveId.toLowerCase() === 'struggle') return;
+  const move = pokemon.moves.find((m) => m.id === moveId);
+  if (!move) return;
+  move.pp = Math.max(0, move.pp - 1);
+}
+
 // Check if a Pokemon can use a move (usability gates)
 export function canUseMove(
   pokemon: BattlePokemon,
   moveId: string,
   rng: BattleRng
 ): { canUse: boolean; reason?: string } {
-  const move = pokemon.moves.find(m => m.id === moveId);
-  if (!move) return { canUse: false, reason: 'Invalid move' };
+  const idLower = moveId.toLowerCase();
 
-  // Check PP
-  if (move.pp <= 0) return { canUse: false, reason: 'no PP left' };
+  if (idLower === 'struggle') {
+    if (!allMovesOutOfPp(pokemon)) {
+      return { canUse: false, reason: 'struggle not available' };
+    }
+  } else {
+    const move = pokemon.moves.find((m) => m.id === moveId);
+    if (!move) return { canUse: false, reason: 'Invalid move' };
 
-  // Check if move is disabled
-  if (move.disabled) return { canUse: false, reason: 'disabled' };
+    // Check PP
+    if (move.pp <= 0) return { canUse: false, reason: 'no PP left' };
+
+    // Check if move is disabled
+    if (move.disabled) return { canUse: false, reason: 'disabled' };
+  }
 
   // Check status conditions
   if (pokemon.status === 'asleep') {
@@ -310,12 +325,13 @@ export function canUseMove(
   }
 
   if (pokemon.volatile.encore && pokemon.volatile.encore.turns > 0) {
-    // Must use the same move as last turn
-    return { canUse: moveId === pokemon.volatile.encore.move, reason: 'encored' };
+    if (!(idLower === 'struggle' && allMovesOutOfPp(pokemon))) {
+      return { canUse: moveId === pokemon.volatile.encore.move, reason: 'encored' };
+    }
   }
 
   if (pokemon.volatile.disable && pokemon.volatile.disable.turns > 0) {
-    if (moveId === pokemon.volatile.disable.move) {
+    if (moveId === pokemon.volatile.disable.move && idLower !== 'struggle') {
       return { canUse: false, reason: 'disabled' };
     }
   }
@@ -1332,48 +1348,25 @@ export async function processBattleTurn(
   };
   newState.turn += 1;
 
-  await processStartOfTurn(newState);
-
-  newState.actionQueue = buildActionQueue(newState, playerAction, opponentAction);
+  const queue = buildActionQueue(newState, playerAction, opponentAction);
   newState.phase = 'resolution';
 
-  // C) Resolve actions
-  for (const action of newState.actionQueue) {
-    if (action.type === 'switch') {
-      await resolveSwitch(newState, action);
-    } else if (action.type === 'move' || action.type === 'pursuit') {
-      await resolveMove(newState, action);
-    }
-  }
+  await runBattleTurnFromQueue(newState, queue, { clearBattleLog: false });
 
-  // D) End-of-turn
-  await processEndOfTurn(newState);
-
-  // E) Force replacements
   await processReplacements(newState);
 
-  // If an active fainted during resolution or end-of-turn, auto-select next available
-  async function ensureReplacement(team: BattleTeam, side: 'player' | 'opponent') {
-    const cur = team.pokemon[team.currentIndex];
-    if (cur && cur.currentHp <= 0) {
-      const idx = getNextAvailablePokemon(team);
-      if (idx !== null) {
-        switchToPokemon(team, idx);
-        const sent = getCurrentPokemon(team);
-        newState.battleLog.push({
-          type: 'pokemon_sent_out',
-          message: `Go! ${sent.pokemon.name}!`,
-          pokemon: sent.pokemon.name
-        });
-        await applyAutoSwitchInEffects(newState, side, sent);
-      }
-    }
-  }
-  await ensureReplacement(newState.player, 'player');
-  await ensureReplacement(newState.opponent, 'opponent');
-
-  // Check if battle is over
-  if (isTeamDefeated(newState.player)) {
+  // Check if battle is over (draw if both teams wiped same turn, same as resolveTurn)
+  const playerLost = isTeamDefeated(newState.player);
+  const opponentLost = isTeamDefeated(newState.opponent);
+  if (playerLost && opponentLost) {
+    newState.isComplete = true;
+    newState.winner = undefined;
+    newState.battleLog.push({
+      type: 'battle_end',
+      message: 'Both teams fainted! The battle is a draw!',
+      turn: newState.turn
+    });
+  } else if (playerLost) {
     newState.isComplete = true;
     newState.winner = 'opponent';
     newState.battleLog.push({
@@ -1381,7 +1374,7 @@ export async function processBattleTurn(
       message: 'All your Pokémon have fainted! You lost!',
       turn: newState.turn
     });
-  } else if (isTeamDefeated(newState.opponent)) {
+  } else if (opponentLost) {
     newState.isComplete = true;
     newState.winner = 'player';
     newState.battleLog.push({

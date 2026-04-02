@@ -1,6 +1,20 @@
 // Additional functions for the Gen-8/9 battle engine
 
-import { BattleState, BattlePokemon, BattleTeam, getCurrentPokemon, switchToPokemon, getEffectiveSpeed, isTeamDefeated, canUseMove, applyStatusMoveEffects, calculateStat } from './team-battle-engine';
+import {
+  BattleState,
+  BattlePokemon,
+  BattleTeam,
+  getCurrentPokemon,
+  switchToPokemon,
+  getEffectiveSpeed,
+  isTeamDefeated,
+  canUseMove,
+  applyStatusMoveEffects,
+  calculateStat,
+  getNextAvailablePokemon,
+  consumePpForMove,
+} from './team-battle-engine';
+import { recordMoveDataMiss } from './battle-engine-metrics';
 import { calculateComprehensiveDamage, TypeName } from './damage-calculator';
 import { getMove } from './moveCache';
 import { applyEntryHazards, isGrounded } from './team-battle-hazards';
@@ -165,9 +179,25 @@ export async function resolveMove(state: BattleState, action: BattleState['actio
     return;
   }
   
-  const move = await getMove(moveId);
+  let move: Awaited<ReturnType<typeof getMove>> | null = null;
+  try {
+    move = await getMove(moveId);
+  } catch {
+    recordMoveDataMiss(moveId);
+    state.battleLog.push({
+      type: 'engine_warning',
+      message: `${attacker.pokemon.name} could not use ${moveId} (move data unavailable).`,
+      pokemon: attacker.pokemon.name,
+    });
+    return;
+  }
   if (!move) {
-    console.error(`Move ${moveId} not found, skipping.`);
+    recordMoveDataMiss(moveId);
+    state.battleLog.push({
+      type: 'engine_warning',
+      message: `${attacker.pokemon.name} could not use ${moveId} (move data missing).`,
+      pokemon: attacker.pokemon.name,
+    });
     return;
   }
 
@@ -177,6 +207,7 @@ export async function resolveMove(state: BattleState, action: BattleState['actio
     const mult = getAccuracyMultiplier(accStage - evaStage);
     const hitChance = (move.accuracy / 100) * mult;
     if (!rngRollChance(state.rng, hitChance)) {
+      consumePpForMove(attacker, moveId);
       state.battleLog.push({
         type: 'move_used',
         message: `${attacker.pokemon.name} used ${moveId}!`,
@@ -348,6 +379,8 @@ async function executeMoveAction(
   isPlayer: boolean,
   user: 'player' | 'opponent'
 ): Promise<void> {
+  consumePpForMove(attacker, moveId);
+
   // Log the move usage
   state.battleLog.push({
     type: 'move_used',
@@ -762,8 +795,26 @@ async function executeMoveAction(
   }
   attacker.volatile.damageDealtThisTurn += totalDamageDealt;
   
-  // Apply recoil damage (Brave Bird, Flare Blitz, etc.)
-  if (move.recoil && totalDamageDealt > 0) {
+  // Struggle: recoil is 1/4 max HP (not tied to damage dealt)
+  if (moveId.toLowerCase() === 'struggle') {
+    const recoilDamage = Math.max(1, Math.floor(attacker.maxHp / 4));
+    attacker.currentHp = Math.max(0, attacker.currentHp - recoilDamage);
+    state.battleLog.push({
+      type: 'recoil',
+      message: `${attacker.pokemon.name} was damaged by recoil!`,
+      pokemon: attacker.pokemon.name,
+      damage: Math.round((recoilDamage / attacker.maxHp) * 100)
+    });
+    if (attacker.currentHp <= 0) {
+      const attackingTeam = user === 'player' ? state.player : state.opponent;
+      attackingTeam.faintedCount = attackingTeam.pokemon.filter(p => p.currentHp <= 0).length;
+      state.battleLog.push({
+        type: 'pokemon_fainted',
+        message: `${attacker.pokemon.name} fainted from recoil!`,
+        pokemon: attacker.pokemon.name
+      });
+    }
+  } else if (move.recoil && totalDamageDealt > 0) {
     const recoilFraction = move.recoil.fraction || 0.33; // Default 1/3
     const recoilDamage = Math.max(1, Math.floor(totalDamageDealt * recoilFraction));
     attacker.currentHp = Math.max(0, attacker.currentHp - recoilDamage);
@@ -927,6 +978,64 @@ export async function applyAutoSwitchInEffects(
 ): Promise<void> {
   await runEntrySequence(state, side, incoming);
   incoming.volatile.justSwitchedIn = true;
+}
+
+export type RunBattleTurnFromQueueOptions = {
+  /** When true, clears `state.battleLog` before this turn slice (multiplayer / offline per-turn log). */
+  clearBattleLog?: boolean;
+};
+
+async function autoReplaceFaintedActive(state: BattleState, side: 'player' | 'opponent'): Promise<void> {
+  const team = side === 'player' ? state.player : state.opponent;
+  const active = getCurrentPokemon(team);
+  if (active.currentHp > 0) return;
+  const nextIndex = getNextAvailablePokemon(team);
+  if (nextIndex === null || nextIndex === team.currentIndex) return;
+  team.currentIndex = nextIndex;
+  const newPokemon = getCurrentPokemon(team);
+  state.battleLog.push({
+    type: 'pokemon_sent_out',
+    message: `Go! ${newPokemon.pokemon.name}!`,
+    pokemon: newPokemon.pokemon.name,
+  });
+  await runEntrySequence(state, side, newPokemon);
+}
+
+/**
+ * Canonical turn slice: start-of-turn, action queue, end-of-turn, auto-send next Pokémon with hazards/abilities.
+ * Used by multiplayer `resolveTurn`, offline battles, and `processBattleTurn`.
+ */
+export async function runBattleTurnFromQueue(
+  state: BattleState,
+  queue: BattleState['actionQueue'],
+  options?: RunBattleTurnFromQueueOptions
+): Promise<void> {
+  if (options?.clearBattleLog) {
+    state.battleLog = [];
+  }
+  state.actionQueue = queue;
+
+  await processStartOfTurn(state);
+
+  for (const action of queue) {
+    if (action.type === 'switch') {
+      await resolveSwitch(state, action);
+    } else if ((action.type === 'move' || action.type === 'pursuit') && action.moveId) {
+      await resolveMove(state, action);
+    }
+
+    state.player.faintedCount = state.player.pokemon.filter((p) => p.currentHp <= 0).length;
+    state.opponent.faintedCount = state.opponent.pokemon.filter((p) => p.currentHp <= 0).length;
+
+    if (isTeamDefeated(state.player) || isTeamDefeated(state.opponent)) {
+      break;
+    }
+  }
+
+  await processEndOfTurn(state);
+
+  await autoReplaceFaintedActive(state, 'player');
+  await autoReplaceFaintedActive(state, 'opponent');
 }
 
 // Process end-of-turn effects

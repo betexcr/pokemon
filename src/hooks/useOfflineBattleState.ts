@@ -5,9 +5,9 @@ import type {
   BattleState, BattlePokemon, BattleTeam, BattleAction, BattleLogEntry,
 } from '@/lib/team-battle-engine';
 import {
-  buildActionQueue, isTeamDefeated, getNextAvailablePokemon, getCurrentPokemon,
+  buildActionQueue, isTeamDefeated, getCurrentPokemon, allMovesOutOfPp,
 } from '@/lib/team-battle-engine';
-import { processStartOfTurn, processEndOfTurn, resolveMove, resolveSwitch } from '@/lib/team-battle-engine-additional';
+import { runBattleTurnFromQueue } from '@/lib/team-battle-engine-additional';
 import { createBattleRng } from '@/lib/battle-rng';
 import { createFieldState, EMPTY_HAZARDS } from '@/lib/team-battle-types';
 import { chooseAIAction } from '@/lib/offline-battle-ai';
@@ -411,50 +411,8 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
       const newMeta = { ...currentMeta, phase: 'resolving' as const };
       setMeta(newMeta);
 
-      // Build action queue (same as battle-resolution.ts)
       const queue = buildActionQueue(state, playerAction, opponentAction);
-      state.actionQueue = queue;
-      state.battleLog = [];
-
-      // Process start of turn
-      await processStartOfTurn(state);
-
-      // Execute actions
-      for (const action of queue) {
-        if (action.type === 'switch') {
-          await resolveSwitch(state, action);
-        } else if (action.type === 'move' && action.moveId) {
-          await resolveMove(state, action);
-        }
-
-        state.player.faintedCount = state.player.pokemon.filter(p => p.currentHp <= 0).length;
-        state.opponent.faintedCount = state.opponent.pokemon.filter(p => p.currentHp <= 0).length;
-
-        if (isTeamDefeated(state.player) || isTeamDefeated(state.opponent)) break;
-      }
-
-      // End of turn
-      await processEndOfTurn(state);
-
-      // Auto-replace fainted Pokemon
-      const p1Active = getCurrentPokemon(state.player);
-      if (p1Active.currentHp <= 0) {
-        const nextIdx = getNextAvailablePokemon(state.player);
-        if (nextIdx !== null && nextIdx !== state.player.currentIndex) {
-          state.player.currentIndex = nextIdx;
-          const np = getCurrentPokemon(state.player);
-          state.battleLog.push({ type: 'pokemon_sent_out', message: `Go! ${np.pokemon.name}!`, pokemon: np.pokemon.name });
-        }
-      }
-      const p2Active = getCurrentPokemon(state.opponent);
-      if (p2Active.currentHp <= 0) {
-        const nextIdx = getNextAvailablePokemon(state.opponent);
-        if (nextIdx !== null && nextIdx !== state.opponent.currentIndex) {
-          state.opponent.currentIndex = nextIdx;
-          const np = getCurrentPokemon(state.opponent);
-          state.battleLog.push({ type: 'pokemon_sent_out', message: `Go! ${np.pokemon.name}!`, pokemon: np.pokemon.name });
-        }
-      }
+      await runBattleTurnFromQueue(state, queue, { clearBattleLog: true });
 
       // Check win condition
       if (isTeamDefeated(state.player)) {
@@ -517,6 +475,9 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
   const legalMoves = useMemo(() => {
     if (!battleState) return [];
     const active = getCurrentPokemon(battleState.player);
+    if (allMovesOutOfPp(active)) {
+      return [{ id: 'struggle', pp: 1, maxPp: 1 }];
+    }
     return active.moves.filter(m => m.pp > 0 && !m.disabled).map(m => ({
       id: m.id, pp: m.pp, maxPp: m.maxPp,
     }));

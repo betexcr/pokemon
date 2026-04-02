@@ -1,7 +1,5 @@
 import { rtdbService, type RTDBBattleMeta, type RTDBBattlePublic, type RTDBBattlePrivate, type RTDBChoice } from './firebase-rtdb-service';
 import { BattlePokemon, BattleTeam, BattleState, BattleAction } from './team-battle-engine';
-import { processBattleTurn } from './team-battle-engine';
-
 interface RTDBBattleEngine {
   battleId: string;
   meta: RTDBBattleMeta | null;

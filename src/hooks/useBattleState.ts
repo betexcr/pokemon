@@ -341,7 +341,7 @@ export function useBattleState(battleId: string): UseBattleState {
     const taunted = !!myPublicV.taunt;
     const recharging = !!myPublicV.recharge;
 
-    return list.map(m => {
+    const mapped = list.map(m => {
       let disabled = !!m.disabled;
       let reason = m.reason || "";
       if (m.pp <= 0) { disabled = true; reason = "No PP"; }
@@ -356,6 +356,12 @@ export function useBattleState(battleId: string): UseBattleState {
       }
       return { ...m, disabled, reason: disabled ? reason : undefined };
     });
+
+    const allNoPp = list.length > 0 && list.every(m => (parseNumeric(m.pp) ?? 0) <= 0);
+    if (allNoPp) {
+      return [{ id: 'struggle', pp: 1, maxPp: 1, disabled: false, reason: undefined }];
+    }
+    return mapped;
   }, [myPrivateActive, me?.choiceLock, me?.disable, me?.encoreMoveId, myPublicV.taunt, myPublicV.recharge]);
 
   const legalSwitchIndexes = useMemo(() => {

@@ -6,10 +6,9 @@ import {
     BattlePokemon,
     buildActionQueue,
     isTeamDefeated,
-    getNextAvailablePokemon,
     getCurrentPokemon,
 } from './team-battle-engine';
-import { processStartOfTurn, processEndOfTurn, resolveMove, resolveSwitch, runEntrySequence } from './team-battle-engine-additional';
+import { runBattleTurnFromQueue } from './team-battle-engine-additional';
 import { createBattleRng } from './battle-rng';
 import { RTDBBattleMeta, RTDBBattlePrivate, RTDBBattlePublic, RTDBChoice } from './firebase-rtdb-service';
 import { handleBattleEnd } from './multiplayer/handleBattleEnd';
@@ -245,68 +244,9 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
 
     // 6. Build Action Queue
     const queue = buildActionQueue(battleState, p1Action, p2Action);
-    battleState.actionQueue = queue;
+    const currentState = battleState;
 
-    // 7. Execute Actions
-    let currentState = battleState;
-
-        // Phase is already set to 'resolving' by the transaction above
-        
-        // Clear battle log for the new turn calculation to avoid duplicating old logs
-        currentState.battleLog = [];
-
-        // 0. Process start of turn effects
-        await processStartOfTurn(currentState);
-
-        for (const action of queue) {
-            if (action.type === 'switch') {
-                await resolveSwitch(currentState, action);
-            } else if ((action.type === 'move' || action.type === 'pursuit') && action.moveId) {
-                await resolveMove(currentState, action);
-            }
-
-            currentState.player.faintedCount = currentState.player.pokemon.filter(p => p.currentHp <= 0).length;
-            currentState.opponent.faintedCount = currentState.opponent.pokemon.filter(p => p.currentHp <= 0).length;
-
-            if (isTeamDefeated(currentState.player) || isTeamDefeated(currentState.opponent)) {
-                break;
-            }
-        }
-
-        // 8. End of Turn Processing
-        await processEndOfTurn(currentState);
-        
-        const p1Active = getCurrentPokemon(currentState.player);
-        const p2Active = getCurrentPokemon(currentState.opponent);
-
-        // 8.5. Auto-replace fainted Pokemon (with entry hazards/abilities)
-        if (p1Active.currentHp <= 0) {
-            const nextIndex = getNextAvailablePokemon(currentState.player);
-            if (nextIndex !== null && nextIndex !== currentState.player.currentIndex) {
-                currentState.player.currentIndex = nextIndex;
-                const newPokemon = getCurrentPokemon(currentState.player);
-                currentState.battleLog.push({
-                    type: 'pokemon_sent_out',
-                    message: `Go! ${newPokemon.pokemon.name}!`,
-                    pokemon: newPokemon.pokemon.name
-                });
-                await runEntrySequence(currentState, 'player', newPokemon);
-            }
-        }
-
-        if (p2Active.currentHp <= 0) {
-            const nextIndex = getNextAvailablePokemon(currentState.opponent);
-            if (nextIndex !== null && nextIndex !== currentState.opponent.currentIndex) {
-                currentState.opponent.currentIndex = nextIndex;
-                const newPokemon = getCurrentPokemon(currentState.opponent);
-                currentState.battleLog.push({
-                    type: 'pokemon_sent_out',
-                    message: `Go! ${newPokemon.pokemon.name}!`,
-                    pokemon: newPokemon.pokemon.name
-                });
-                await runEntrySequence(currentState, 'opponent', newPokemon);
-            }
-        }
+        await runBattleTurnFromQueue(currentState, queue, { clearBattleLog: true });
 
         // 9. Check Win Condition
         const playerDefeated = isTeamDefeated(currentState.player);

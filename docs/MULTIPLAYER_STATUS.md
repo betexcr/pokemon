@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-The multiplayer battle system is **80% complete** with core infrastructure in place. The main missing piece is **automated turn resolution**. All components are designed to work within **Firebase free tier limits**.
+The multiplayer battle system has **core gameplay wired end-to-end**: choices are written to RTDB, and when both players lock in, **`resolveTurn`** in [`src/lib/battle-resolution.ts`](src/lib/battle-resolution.ts) runs the same canonical turn pipeline as offline battles (`runBattleTurnFromQueue` in [`src/lib/team-battle-engine-additional.ts`](src/lib/team-battle-engine-additional.ts)). Resolution is triggered from the **Next.js API** [`src/app/api/battles/[id]/submit/route.ts`](src/app/api/battles/[id]/submit/route.ts) and optionally from **Firebase Cloud Functions** ([`functions/src/index.ts`](functions/src/index.ts)). Battle end flows through [`src/lib/multiplayer/handleBattleEnd.ts`](src/lib/multiplayer/handleBattleEnd.ts). Remaining gaps are mostly **polish, edge cases, and production hardening** (timeouts, reconnect UX, anti-cheat validation). The stack remains suitable for **Firebase free tier** limits for moderate traffic.
 
 ## 🟢 Fully Implemented
 
@@ -36,38 +36,23 @@ The multiplayer battle system is **80% complete** with core infrastructure in pl
 ## 🟡 Partially Implemented
 
 ### Turn-Based Flow
-⚠️ **Turn Submission** - Works but no resolution
-- Players can submit choices to RTDB ✅
-- Choices are persisted correctly ✅
-- No automatic resolution when both submit ❌
-- No turn progression ❌
+- **Turn submission** – Choices written under `battles/{id}/turns/{turn}/choices` ✅
+- **Turn resolution** – When both UIDs have a choice, `resolveTurn` updates private teams, public state, battle log, field (weather/screens/hazards), advances `meta.turn`, or ends the battle via `handleBattleEnd` ✅
+- **Deterministic RNG** – Resolution currently creates a new RNG seed per fetch; storing/restoring RNG in RTDB would improve replay parity (future improvement)
 
 ⚠️ **Battle UI** ([src/components/RTDBBattleComponent.tsx](src/components/RTDBBattleComponent.tsx))
-- Battle rendering works ✅
-- Move selection works ✅
-- State synchronization works ✅
-- Resolution display incomplete ❌
+- Battle rendering, move selection, and RTDB sync ✅
+- Resolution / end-of-battle UX may still need polish depending on product goals ⚠️
 
-## 🔴 Not Implemented
+## 🔴 Not Implemented (or Incomplete)
 
-### Critical Missing Features
+### Hardening and UX
 
-❌ **Turn Resolution**
-- No automation when both players submit choices
-- Server-side code exists ([src/server/executeTurn.ts](src/server/executeTurn.ts)) but not deployed
-- Need: Trigger to execute turn and write results back to RTDB
-
-❌ **Battle Completion**
-- No winner determination sync
-- No room cleanup
-- No post-battle stats
-- No return to lobby flow
-
-❌ **Edge Cases**
-- Player disconnect/reconnect handling
-- Timeout when player doesn't submit choice
-- Forfeit mechanism
-- Abandonment detection
+- **Disconnect / reconnect** – Robust reconnection and stale-state recovery
+- **Turn timeout** – Auto-forfeit or random move when a player stalls
+- **Guest validation** – Optional anti-cheat: guest verifies host-posted resolution
+- **Post-battle** – Rich stats, rematch, aggressive room/battle cleanup policies
+- **Abandonment** – Scheduled deletion of stale battles/rooms
 
 ## Free Tier Compatibility Analysis
 
@@ -103,32 +88,11 @@ Total per battle:       ~80 writes, 100 reads
 
 ## Recommended Next Steps
 
-### Priority 1: Complete Core Flow (2-3 days)
+### Priority 1: Production polish (core flow exists)
 
-1. **Implement Turn Resolution Manager**
-   ```typescript
-   // src/components/multiplayer/BattleTurnManager.tsx
-   // Watches for both choices, triggers resolution
-   ```
-   - Listen for both players' choices in RTDB
-   - Host triggers turn execution
-   - Write resolution back to RTDB
-   - Both players read and display results
-
-2. **Battle End Handler**
-   ```typescript
-   // src/lib/multiplayer/handleBattleEnd.ts
-   ```
-   - Detect when battle is complete
-   - Update winner in RTDB meta
-   - Update Firestore battle doc
-   - Update room status to 'finished'
-
-3. **UI Updates**
-   - Show waiting state when opponent hasn't chosen
-   - Display turn resolution animation
-   - Show battle end screen with winner
-   - "Return to Lobby" button
+1. **Client triggers** – Ensure the battle UI reliably calls `POST /api/battles/[id]/submit` (or your Cloud Function) after each choice so the second submit runs `resolveTurn`.
+2. **Battle end UX** – [`BattleEndScreen.tsx`](src/components/multiplayer/BattleEndScreen.tsx) / lobby return flow as needed.
+3. **UI feedback** – Waiting states, clearer resolution log / HP transitions.
 
 ### Priority 2: Error Handling (1-2 days)
 
@@ -164,49 +128,26 @@ Total per battle:       ~80 writes, 100 reads
    - Remove abandoned rooms
    - Clear stale data
 
-## Files That Need Changes
+## Key implementation files (current)
 
-### New Files to Create
-```
-src/components/multiplayer/
-  ├── BattleTurnManager.tsx          # Watches choices, triggers resolution
-  └── BattleEndScreen.tsx            # Post-battle UI
-
-src/lib/multiplayer/
-  ├── resolveTurn.ts                 # Main turn resolution logic
-  ├── handleBattleEnd.ts             # Battle completion
-  ├── validateResolution.ts          # Anti-cheat validation
-  └── forfeitHandler.ts              # Forfeit + timeout logic
-```
-
-### Existing Files to Modify
-```
-src/components/RTDBBattleComponent.tsx     # Add BattleTurnManager
-src/lib/firebase-rtdb-service.ts           # Add getBattleState(), writeResolution()
-src/lib/roomService.ts                     # Add cleanupFinishedBattles()
-```
+| Area | File |
+|------|------|
+| Turn resolution | [`src/lib/battle-resolution.ts`](src/lib/battle-resolution.ts) (`resolveTurn`, `runBattleTurnFromQueue`) |
+| Shared engine | [`src/lib/team-battle-engine.ts`](src/lib/team-battle-engine.ts), [`src/lib/team-battle-engine-additional.ts`](src/lib/team-battle-engine-additional.ts) |
+| Submit + resolve trigger | [`src/app/api/battles/[id]/submit/route.ts`](src/app/api/battles/[id]/submit/route.ts) |
+| Cloud Functions (optional) | [`functions/src/index.ts`](functions/src/index.ts) |
+| Battle end | [`src/lib/multiplayer/handleBattleEnd.ts`](src/lib/multiplayer/handleBattleEnd.ts) |
 
 ## Architecture Decision: Client-Side vs Cloud Functions
 
-### ✅ Recommended: Client-Side Resolution (Host as Arbiter)
+### Implemented: Server-side resolution (API / Functions)
 
-**Pros:**
-- No Cloud Functions costs
-- Zero deployment complexity
-- Lower latency (no round-trip to Functions)
-- Works entirely within free tier
-- Still validate-able by guest for anti-cheat
+**Current flow:**
+1. Each client posts their choice (RTDB + `POST .../submit`).
+2. When both choices exist, **`resolveTurn`** runs (App Router API with user token, or Callable/HTTP Cloud Function with admin RTDB access).
+3. Updated state is written to RTDB; clients listen and render.
 
-**Cons:**
-- Host could theoretically cheat (mitigated by validation)
-- Slightly more client-side logic
-
-**Implementation:**
-1. Host detects both choices ready
-2. Host executes [executeTurn.ts](src/server/executeTurn.ts) locally
-3. Host posts resolution to RTDB
-4. Guest reads and validates resolution
-5. Both display same result
+**Optional later:** Host-as-arbiter client resolution (no Functions) if you want to avoid Function invocations; you would still want guest-side validation for fairness.
 
 ### Alternative: Cloud Functions (If Budget Allows Later)
 
@@ -232,10 +173,9 @@ src/lib/roomService.ts                     # Add cleanupFinishedBattles()
 - Good error handling in most places
 
 ### Areas for Improvement ⚠️
-- Some duplicate logic between services
-- Could use more unit tests for battle engine
-- Missing JSDoc comments in some modules
-- Some console.logs should be proper logging
+- More unit tests around `runBattleTurnFromQueue` and RTDB round-trips ([`src/lib/__tests__/battle-real-moves.test.ts`](src/lib/__tests__/battle-real-moves.test.ts) covers fixture moves + move-data failures)
+- Persist RNG seed in RTDB for reproducible battles
+- Replace ad-hoc `console` usage with structured logging where needed
 
 ## Testing Recommendations
 
@@ -251,11 +191,11 @@ src/lib/roomService.ts                     # Add cleanupFinishedBattles()
 - [ ] Room updates to finished
 - [ ] Can return to lobby
 
-### Automated Testing (Future)
-- [ ] Unit tests for turn execution
-- [ ] Integration tests for RTDB flow
-- [ ] E2E test for full battle flow
-- [ ] Load testing (simulate 100 concurrent battles)
+### Automated Testing
+- [x] Unit tests for canonical turn execution (see [`battle-real-moves.test.ts`](src/lib/__tests__/battle-real-moves.test.ts), [`battle-mechanics.test.ts`](src/lib/__tests__/battle-mechanics.test.ts))
+- [ ] Expand RTDB integration coverage for submit + resolve
+- [ ] Playwright E2E for full lobby-to-battle flow (see [`tests/playwright/`](tests/playwright/))
+- [ ] Load testing (simulate many concurrent battles)
 
 ## Deployment Checklist
 
@@ -280,16 +220,7 @@ src/lib/roomService.ts                     # Add cleanupFinishedBattles()
 
 ## Conclusion
 
-The multiplayer system has **excellent foundations** and is very close to completion. The main work remaining is:
-
-1. **Wire up turn resolution** (2-3 days)
-2. **Handle battle completion** (1 day)
-3. **Add error handling** (1-2 days)
-4. **Polish UI/UX** (2-3 days)
-
-**Total estimate: 5-8 days of focused development**
-
-The architecture is **perfectly suited for Firebase free tier** and can scale to thousands of daily battles at zero cost. When/if you need to scale beyond free tier, the upgrade path is straightforward (add Cloud Functions for server-authoritative resolution).
+Turn resolution and battle completion are **implemented** in code paths described above. Focus next on **timeouts, reconnect, optional resolution validation, UI polish, and operational monitoring**. The architecture remains well suited to **Firebase free tier** for moderate use; Cloud Functions are optional and already wired in the repo for server-side `resolveTurn` if you deploy them.
 
 ## Questions?
 

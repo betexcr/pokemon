@@ -206,12 +206,26 @@ export default function VirtualizedPokemonGrid({
 
   // Memoize Pokemon list processing to avoid recalculation on every render
   const processedPokemonData = useMemo(() => {
-    const regularPokemon = showSpecialForms
+    const dedupeById = (list: Pokemon[]) => {
+      const seen = new Set<number>()
+      const out: Pokemon[] = []
+      for (const p of list) {
+        if (seen.has(p.id)) continue
+        seen.add(p.id)
+        out.push(p)
+      }
+      return out
+    }
+
+    const regularRaw = showSpecialForms
       ? pokemonList.filter(p => p.id < 10001)
       : pokemonList
-    const specialFormsPokemon = showSpecialForms
+    const specialRaw = showSpecialForms
       ? pokemonList.filter(p => p.id >= 10001)
       : []
+
+    const regularPokemon = dedupeById(regularRaw)
+    const specialFormsPokemon = dedupeById(specialRaw)
 
     // Calculate total rows for virtualization (including special forms section)
     const regularRows = Math.ceil(regularPokemon.length / getGridDimensions.cols)
@@ -629,24 +643,12 @@ export default function VirtualizedPokemonGrid({
     return rowContent
   }, [getCacheKey, regularPokemon, specialFormsPokemon, regularRows, density, getGridDimensions, comparisonList, selectedPokemon, onToggleComparison, getLayoutClasses, favoritesList, onToggleFavorite])
 
-  // Deduplicate Pokemon to ensure unique keys
-  const uniqueRegularPokemon = useMemo(() => {
-    const seen = new Set();
-    return regularPokemon.filter(pokemon => {
-      if (seen.has(pokemon.id)) {
-        return false;
-      }
-      seen.add(pokemon.id);
-      return true;
-    });
-  }, [regularPokemon]);
-
   // Render virtualized content when enabled and pokemon count is high
-  if (enableVirtualization && uniqueRegularPokemon.length > 50) {
+  if (enableVirtualization && regularPokemon.length > 50) {
     return (
       <div className={`w-full max-w-full ${className}`}>
         {/* Virtualized Regular Pokemon */}
-        {uniqueRegularPokemon.length > 0 && (
+        {regularPokemon.length > 0 && (
           <div
             ref={parentRef}
             className="w-full h-full"
@@ -710,7 +712,7 @@ export default function VirtualizedPokemonGrid({
           </div>
         )}
 
-        {isLoadingMore && uniqueRegularPokemon.length > 0 && (
+        {isLoadingMore && regularPokemon.length > 0 && (
           <div className="mt-4">
             {renderSkeletonGrid(1)}
           </div>
@@ -723,7 +725,7 @@ export default function VirtualizedPokemonGrid({
   return (
     <div className={`w-full max-w-full overflow-x-hidden min-h-screen ${className}`}>
       {/* Regular Pokemon */}
-      {uniqueRegularPokemon.length > 0 && (
+      {regularPokemon.length > 0 && (
         <motion.div 
           className={`${getLayoutClasses()} w-full max-w-full ${density === 'list' ? 'pl-0 pr-0' : 'pl-0 pr-0'}`} 
           data-pokemon-grid
@@ -742,7 +744,7 @@ export default function VirtualizedPokemonGrid({
           }}
         >
           <AnimatePresence initial={false}>
-            {uniqueRegularPokemon.map((pokemon, index) => {
+            {regularPokemon.map((pokemon, index) => {
               // Check if Pokemon has loaded data (types available)
               const hasLoadedData = (pokemon.types?.length || 0) > 0
               
@@ -924,7 +926,7 @@ export default function VirtualizedPokemonGrid({
         </div>
       )}
 
-      {isLoadingMore && uniqueRegularPokemon.length > 0 && (
+      {isLoadingMore && regularPokemon.length > 0 && (
         <div className="mt-4">
           {renderSkeletonGrid(1)}
         </div>

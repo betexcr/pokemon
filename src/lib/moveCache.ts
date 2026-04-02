@@ -1,5 +1,24 @@
-import { CompiledMove } from './adapters/pokeapiMoveAdapter';
+import type { CompiledMove } from './adapters/pokeapiMoveAdapter';
 import { loadMoveFromPokeAPI } from './adapters/pokeapiMoveAdapter';
+
+/** Used when PokeAPI is unavailable; matches mainline Struggle (Physical, 50 BP, recoil). */
+function builtinStruggleMove(): CompiledMove {
+  return {
+    id: 165,
+    name: 'struggle',
+    type: 'Normal',
+    category: 'Physical',
+    power: 50,
+    accuracy: null,
+    pp: null,
+    priority: 0,
+    critRateStage: 0,
+    makesContact: true,
+    bypassAccuracyCheck: true,
+    hits: null,
+    recoil: { fraction: 0.25 },
+  };
+}
 
 function normalizeMoveIdentifier(idOrName: number | string): number | string {
   if (typeof idOrName === 'number') return idOrName;
@@ -45,6 +64,12 @@ export async function getMove(idOrName: number | string): Promise<CompiledMove> 
     moveCache.set(key, move);
     return move;
   } catch (error) {
+    const slug = typeof normalized === 'string' ? normalized : '';
+    if (slug === 'struggle' || normalized === 165) {
+      const fallback = builtinStruggleMove();
+      moveCache.set(key, fallback);
+      return fallback;
+    }
     console.error(`Failed to load move ${idOrName}:`, error);
     throw error;
   }
