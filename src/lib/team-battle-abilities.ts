@@ -112,6 +112,52 @@ export function handleOnEntryAbilities(state: BattleState, side: 'player' | 'opp
       }
       break;
     }
+    case 'download': {
+      const stats = opponentActive.pokemon.stats || [];
+      const base = (name: string) =>
+        stats.find((s: any) => (s.stat?.name || s.name) === name)?.base_stat ?? 50;
+      const def = base('defense');
+      const spd = base('special-defense');
+      if (spd >= def) {
+        incoming.statModifiers.attack = Math.min(6, incoming.statModifiers.attack + 1);
+        state.battleLog.push({
+          type: 'status_effect',
+          message: `${incoming.pokemon.name}'s Download raised its Attack!`,
+          pokemon: incoming.pokemon.name,
+        });
+      } else {
+        incoming.statModifiers.specialAttack = Math.min(6, incoming.statModifiers.specialAttack + 1);
+        state.battleLog.push({
+          type: 'status_effect',
+          message: `${incoming.pokemon.name}'s Download raised its Sp. Atk!`,
+          pokemon: incoming.pokemon.name,
+        });
+      }
+      break;
+    }
+    case 'frisk': {
+      if (opponentActive.heldItem) {
+        state.battleLog.push({
+          type: 'status_effect',
+          message: `${incoming.pokemon.name} frisked the foe and found its ${opponentActive.heldItem}!`,
+          pokemon: incoming.pokemon.name,
+        });
+      } else {
+        state.battleLog.push({
+          type: 'status_effect',
+          message: `${incoming.pokemon.name} frisked the foe, but it wasn't holding anything!`,
+          pokemon: incoming.pokemon.name,
+        });
+      }
+      break;
+    }
+    case 'unnerve': {
+      state.battleLog.push({
+        type: 'status_effect',
+        message: `${incoming.pokemon.name}'s Unnerve makes the opposing team too nervous to eat Berries!`,
+      });
+      break;
+    }
     default:
       break;
   }

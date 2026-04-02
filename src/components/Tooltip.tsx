@@ -48,6 +48,8 @@ export default function Tooltip({
   // Local open state to support tap/click/long-press on mobile in addition to hover
   const [isOpen, setIsOpen] = useState(false)
   const [isLatched, setIsLatched] = useState(false)
+  /** Synced immediately on tap (before React commits) so iPad mouseleave in the same gesture cannot dismiss. */
+  const latchedRef = useRef(false)
   const isTouchingRef = useRef(false)
   const longPressTimerRef = useRef<number | null>(null)
   const longPressActiveRef = useRef(false)
@@ -88,6 +90,7 @@ export default function Tooltip({
       const target = e.target as Node
       if (!a || !t) return
       if (!a.contains(target) && !t.contains(target)) {
+        latchedRef.current = false
         setIsOpen(false)
         setIsLatched(false)
         // Tooltip was dismissed by clicking outside
@@ -106,6 +109,7 @@ export default function Tooltip({
     if (!isOpen) return
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        latchedRef.current = false
         setIsOpen(false)
         setIsLatched(false)
       }
@@ -181,9 +185,12 @@ export default function Tooltip({
     return isDarkMode ? 'ring-white/10' : 'ring-gray-200/50'
   }
 
-  // Get type color for overlay
+  // Type-tinted gradient overlay — only for move/ability/stat. Other variants use solid Tailwind
+  // backgrounds from getTypeBackground(); an inline `background` here would override those classes.
+  // (Default `type="normal"` is truthy, so japanese/info used to get a white base and looked broken in dark mode.)
   const getTypeOverlay = () => {
-    if (variant === 'default' || !type) return {}
+    if (variant !== 'ability' && variant !== 'move' && variant !== 'stat') return {}
+    if (!type) return {}
     const t = String(type).toLowerCase()
     const base = isDarkMode ? 'rgba(17,24,39,0.95)' : 'white'
     return {
@@ -436,6 +443,7 @@ export default function Tooltip({
       clearTimeout(hoverTimerRef.current)
     }
     hoverTimerRef.current = window.setTimeout(() => {
+      latchedRef.current = false
       setFixedCoords(null)
       setIsOpen(true)
     }, 500) // 500ms delay
@@ -446,7 +454,7 @@ export default function Tooltip({
       clearTimeout(hoverTimerRef.current)
       hoverTimerRef.current = null
     }
-    if (!isLatched) setIsOpen(false)
+    if (!isLatched && !latchedRef.current) setIsOpen(false)
   }
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -495,13 +503,15 @@ export default function Tooltip({
       setIsOpen(prev => {
         const next = !prev
         if (next) {
+          latchedRef.current = true
           setFixedCoords(null)
         } else {
+          latchedRef.current = false
           wasDismissedByClickRef.current = true
         }
         return next
       })
-      setIsLatched(prev => !prev ? true : false) 
+      setIsLatched(prev => !prev ? true : false)
     }
   } : {
     className: `relative inline-block align-baseline group ${className}`,
@@ -510,6 +520,7 @@ export default function Tooltip({
     onFocus: () => {
       if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current)
       hoverTimerRef.current = window.setTimeout(() => {
+        latchedRef.current = false
         setFixedCoords(null)
         setIsOpen(true)
       }, 500)
@@ -519,7 +530,7 @@ export default function Tooltip({
         clearTimeout(hoverTimerRef.current)
         hoverTimerRef.current = null
       }
-      if (!isLatched) setIsOpen(false)
+      if (!isLatched && !latchedRef.current) setIsOpen(false)
     },
     onMouseMove: (e: React.MouseEvent<HTMLSpanElement>) => {
       if (!followCursor || !containViewport) return
@@ -557,13 +568,15 @@ export default function Tooltip({
       setIsOpen(prev => {
         const next = !prev
         if (next) {
+          latchedRef.current = true
           setFixedCoords(null)
         } else {
+          latchedRef.current = false
           wasDismissedByClickRef.current = true
         }
         return next
       })
-      setIsLatched(prev => !prev ? true : false) 
+      setIsLatched(prev => !prev ? true : false)
     },
     onTouchStart: (e: React.TouchEvent<HTMLSpanElement>) => {
       isTouchingRef.current = true
@@ -586,9 +599,12 @@ export default function Tooltip({
       if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current)
       if (longPressActiveRef.current) {
         longPressActiveRef.current = false
+        latchedRef.current = false
         setIsOpen(false)
         setIsLatched(false)
       } else {
+        // Latch synchronously before setState so synthetic pointer leave on iPad cannot close first.
+        latchedRef.current = true
         setFixedCoords(null)
         setIsOpen(true)
         setIsLatched(true)

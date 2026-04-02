@@ -7,9 +7,14 @@ import {
     buildActionQueue,
     isTeamDefeated,
     getCurrentPokemon,
+    validateServerBattleAction,
 } from './team-battle-engine';
 import { runBattleTurnFromQueue } from './team-battle-engine-additional';
-import { createBattleRng } from './battle-rng';
+import {
+    battleRngFromStored,
+    battleRngToStored,
+    createBattleRngFromBattleKey,
+} from './battle-rng';
 import { RTDBBattleMeta, RTDBBattlePrivate, RTDBBattlePublic, RTDBChoice } from './firebase-rtdb-service';
 import { handleBattleEnd } from './multiplayer/handleBattleEnd';
 
@@ -17,10 +22,30 @@ const POKEAPI_BASE = 'https://pokeapi.co/api/v2';
 
 const _resolvingLocks = new Set<string>();
 
+/** In-process dedupe for concurrent `hydrateTeam` fetches (same battle / species). */
+const _pokemonApiInflight = new Map<string, Promise<any>>();
+
+const PLACEHOLDER_BASE_STATS: { stat: { name: string }; base_stat: number }[] = [
+    { stat: { name: 'hp' }, base_stat: 50 },
+    { stat: { name: 'attack' }, base_stat: 50 },
+    { stat: { name: 'defense' }, base_stat: 50 },
+    { stat: { name: 'special-attack' }, base_stat: 50 },
+    { stat: { name: 'special-defense' }, base_stat: 50 },
+    { stat: { name: 'speed' }, base_stat: 50 },
+];
+
 async function fetchPokemonData(idOrName: number | string): Promise<any> {
-    const res = await fetch(`${POKEAPI_BASE}/pokemon/${idOrName}`);
-    if (!res.ok) throw new Error(`PokeAPI ${res.status} for pokemon/${idOrName}`);
-    return res.json();
+    const key = String(idOrName).toLowerCase();
+    let inflight = _pokemonApiInflight.get(key);
+    if (!inflight) {
+        inflight = (async () => {
+            const res = await fetch(`${POKEAPI_BASE}/pokemon/${idOrName}`);
+            if (!res.ok) throw new Error(`PokeAPI ${res.status} for pokemon/${idOrName}`);
+            return res.json();
+        })();
+        _pokemonApiInflight.set(key, inflight);
+    }
+    return inflight;
 }
 
 function ensureVolatile(p: any): BattlePokemon['volatile'] {
@@ -73,11 +98,15 @@ async function hydrateTeam(team: any[]): Promise<BattlePokemon[]> {
             }
         }
 
+        const resolvedStats = hasStats
+            ? pokemonObj.stats
+            : (fullData?.stats?.length ? fullData.stats : PLACEHOLDER_BASE_STATS);
+
         const pokemon = {
             id: pokemonObj.id || fullData?.id || 0,
             name: pokemonObj.name || fullData?.name || 'unknown',
             types: (pokemonObj.types?.length ? pokemonObj.types : fullData?.types?.map((t: any) => t.type) || [{ name: 'normal' }]),
-            stats: hasStats ? pokemonObj.stats : (fullData?.stats || []),
+            stats: resolvedStats,
             weight: pokemonObj.weight || fullData?.weight || 500,
             abilities: pokemonObj.abilities || fullData?.abilities || [],
         };
@@ -175,11 +204,15 @@ async function fetchBattleState(battleId: string, ops: RtdbOps): Promise<BattleS
         }
     };
 
+    const rng =
+        battleRngFromStored(meta.battleRng) ??
+        createBattleRngFromBattleKey(battleId, typeof meta.turn === 'number' ? meta.turn : 1);
+
     return {
         player: p1Team, // p1 is "player" from perspective of engine for now, we'll handle perspective in execution
         opponent: p2Team, // p2 is "opponent"
         turn: meta.turn,
-        rng: createBattleRng(Date.now()), // We should ideally store/retrieve RNG seed
+        rng,
         battleLog: [],
         isComplete: meta.phase === 'ended',
         winner: meta.winnerUid === meta.players.p1.uid ? 'player' : meta.winnerUid === meta.players.p2.uid ? 'opponent' : undefined,
@@ -241,6 +274,14 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
         switchIndex: p2Choice.payload?.switchToIndex,
         target: 'player'
     };
+
+    const v1 = validateServerBattleAction(battleState.player, p1Action);
+    const v2 = validateServerBattleAction(battleState.opponent, p2Action);
+    if (v1 || v2) {
+        console.error('resolveTurn: illegal choices', { battleId, v1, v2, p1Action, p2Action });
+        await handleBattleEnd(battleId, undefined, 'resolution_failed', meta, ops);
+        return;
+    }
 
     // 6. Build Action Queue
     const queue = buildActionQueue(battleState, p1Action, p2Action);
@@ -352,6 +393,8 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
                 : ''
         };
 
+        const rngStored = battleRngToStored(currentState.rng);
+
         if (currentState.isComplete) {
             // Write state updates (private, public, clear choices) but let
             // handleBattleEnd own the meta + Firestore + room transition.
@@ -359,6 +402,7 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
                 ops.update(`battles/${battleId}/private/${meta.players.p1.uid}`, p1Updates),
                 ops.update(`battles/${battleId}/private/${meta.players.p2.uid}`, p2Updates),
                 ops.update(`battles/${battleId}/public`, publicUpdates),
+                ops.update(`battles/${battleId}/meta`, { battleRng: rngStored }),
                 ops.set(`battles/${battleId}/turns/${meta.turn}/choices`, null),
             ]);
 
@@ -367,6 +411,7 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
             const metaUpdates: any = {
                 turn: meta.turn + 1,
                 phase: 'choosing',
+                battleRng: rngStored,
             };
 
             await Promise.all([

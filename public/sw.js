@@ -22,7 +22,6 @@ const CACHE_STRATEGIES = {
 const STATIC_ASSETS = [
   '/',
   '/index.html',
-  '/manifest.json',
   '/favicon.ico',
   '/loading.gif',
   '/pokedex.jpg',

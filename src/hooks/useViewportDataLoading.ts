@@ -9,6 +9,11 @@ interface UseViewportDataLoadingProps {
   scrollIdleDelay?: number;
 }
 
+function isPermanentPokemonLoadFailure(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  return msg.includes('404') || msg.includes('does not exist');
+}
+
 export function useViewportDataLoading({
   pokemonList,
   scrollIdleDelay = 300
@@ -16,11 +21,12 @@ export function useViewportDataLoading({
   const [loadedPokemon, setLoadedPokemon] = useState<Map<number, Pokemon>>(new Map());
   const [loadingPokemon, setLoadingPokemon] = useState<Set<number>>(new Set());
   const failedPokemonRef = useRef<Set<number>>(new Set());
+  const loadedPokemonRef = useRef<Map<number, Pokemon>>(new Map());
+  const inFlightRef = useRef<Set<number>>(new Set());
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isScrollIdleRef = useRef(true);
   const hasUserInteractedRef = useRef(false);
   const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const initialLoadTriggeredRef = useRef(false);
   const unmountedRef = useRef(false);
 
   useEffect(() => {
@@ -28,9 +34,15 @@ export function useViewportDataLoading({
     return () => { unmountedRef.current = true; };
   }, []);
 
+  useEffect(() => {
+    loadedPokemonRef.current = loadedPokemon;
+  }, [loadedPokemon]);
+
   // Mark Pokemon as loaded
   const markPokemonLoaded = useCallback((pokemon: Pokemon) => {
-    setLoadedPokemon(prev => new Map(prev.set(pokemon.id, pokemon)));
+    loadedPokemonRef.current.set(pokemon.id, pokemon);
+    inFlightRef.current.delete(pokemon.id);
+    setLoadedPokemon(prev => new Map(prev).set(pokemon.id, pokemon));
     setLoadingPokemon(prev => {
       const newSet = new Set(prev);
       newSet.delete(pokemon.id);
@@ -38,40 +50,37 @@ export function useViewportDataLoading({
     });
   }, []);
 
-  // Load Pokemon data
-  const loadPokemonData = useCallback(async (pokemonId: number) => {
+  // Load Pokemon data (refs avoid nested setState + duplicate in-flight fetches)
+  const loadPokemonData = useCallback((pokemonId: number) => {
     if (failedPokemonRef.current.has(pokemonId)) return;
+    if (loadedPokemonRef.current.has(pokemonId)) return;
+    if (inFlightRef.current.has(pokemonId)) return;
 
-    setLoadingPokemon(prev => {
-      if (prev.has(pokemonId)) {
-        return prev;
-      }
-      
-      setLoadedPokemon(loadedPrev => {
-        if (loadedPrev.has(pokemonId)) {
-          return loadedPrev;
+    inFlightRef.current.add(pokemonId);
+    setLoadingPokemon(prev => new Set(prev).add(pokemonId));
+
+    getPokemon(pokemonId)
+      .then(pokemonData => {
+        if (!unmountedRef.current) {
+          markPokemonLoaded(pokemonData);
+        } else {
+          inFlightRef.current.delete(pokemonId);
         }
-        
-        getPokemon(pokemonId)
-          .then(pokemonData => {
-            if (!unmountedRef.current) markPokemonLoaded(pokemonData);
-          })
-          .catch(() => {
-            failedPokemonRef.current.add(pokemonId);
-            if (!unmountedRef.current) {
-              setLoadingPokemon(loadingPrev => {
-                const newSet = new Set(loadingPrev);
-                newSet.delete(pokemonId);
-                return newSet;
-              });
-            }
+      })
+      .catch(err => {
+        inFlightRef.current.delete(pokemonId);
+        if (!unmountedRef.current) {
+          setLoadingPokemon(prev => {
+            const next = new Set(prev);
+            next.delete(pokemonId);
+            return next;
           });
-        
-        return loadedPrev;
+        }
+        // Only treat real missing species as permanent; aborts / timeouts / 503s can retry
+        if (isPermanentPokemonLoadFailure(err)) {
+          failedPokemonRef.current.add(pokemonId);
+        }
       });
-      
-      return new Set(prev).add(pokemonId);
-    });
   }, [markPokemonLoaded]);
 
   // Load data for currently visible Pokemon with optimized viewport detection
@@ -100,8 +109,8 @@ export function useViewportDataLoading({
       pokemonCards.forEach(card => {
         const rect = card.getBoundingClientRect();
         
-        // Check if card is visible in the viewport with a smaller buffer
-        const buffer = 100; // Reduced buffer to prevent loading off-screen Pokemon
+        // Generous buffer so virtualized rows near the edge still schedule loads
+        const buffer = 220;
         const isVisible = rect.bottom > (containerRect.top - buffer) && 
                          rect.top < (containerRect.bottom + buffer);
         
@@ -139,7 +148,7 @@ export function useViewportDataLoading({
       { top: 0, bottom: window.innerHeight } : 
       (scrollContainer as Element).getBoundingClientRect();
     
-    const buffer = 150; // Smaller buffer for catch-up loading
+    const buffer = 220;
     const missedPokemonIds: number[] = [];
     
     pokemonCards.forEach(card => {
@@ -149,7 +158,12 @@ export function useViewportDataLoading({
       
       if (isVisible) {
         const pokemonId = parseInt(card.getAttribute('data-pokemon-id') || '0');
-        if (pokemonId > 0 && !loadedPokemon.has(pokemonId) && !loadingPokemon.has(pokemonId) && !failedPokemonRef.current.has(pokemonId)) {
+        if (
+          pokemonId > 0 &&
+          !loadedPokemonRef.current.has(pokemonId) &&
+          !inFlightRef.current.has(pokemonId) &&
+          !failedPokemonRef.current.has(pokemonId)
+        ) {
           missedPokemonIds.push(pokemonId);
         }
       }
@@ -160,7 +174,7 @@ export function useViewportDataLoading({
         loadPokemonData(pokemonId);
       });
     }
-  }, [loadPokemonData, loadedPokemon, loadingPokemon]);
+  }, [loadPokemonData]);
 
   // Handle scroll idle detection with immediate loading for better UX
   const handleScroll = useCallback(() => {
@@ -189,19 +203,21 @@ export function useViewportDataLoading({
 
   // No intersection observer needed - using scroll-based approach instead
 
-  // Trigger initial loading when Pokemon list becomes available
+  // When the visible list range changes (filters, infinite scroll, sort), load again
+  const listLen = pokemonList.length;
+  const listFirstId = listLen > 0 ? pokemonList[0].id : 0;
+  const listLastId = listLen > 0 ? pokemonList[listLen - 1].id : 0;
+
   useEffect(() => {
-    if (pokemonList.length > 0 && !initialLoadTriggeredRef.current) {
-      initialLoadTriggeredRef.current = true;
-      
-      const id = setTimeout(() => {
-        hasUserInteractedRef.current = true;
-        isScrollIdleRef.current = true;
-        loadVisiblePokemonData();
-      }, 100);
-      return () => clearTimeout(id);
-    }
-  }, [pokemonList.length, loadVisiblePokemonData]);
+    if (listLen === 0) return;
+
+    const id = setTimeout(() => {
+      hasUserInteractedRef.current = true;
+      isScrollIdleRef.current = true;
+      loadVisiblePokemonData();
+    }, 100);
+    return () => clearTimeout(id);
+  }, [listLen, listFirstId, listLastId, loadVisiblePokemonData]);
 
   // Periodic catch-up loading to ensure no Pokemon are missed
   useEffect(() => {
@@ -255,7 +271,7 @@ export function useViewportDataLoading({
         clearTimeout(loadingTimeoutRef.current);
       }
     };
-  }, [handleScroll, loadPokemonData, loadedPokemon, loadingPokemon]);
+  }, [handleScroll, loadPokemonData]);
 
   // Get Pokemon with loaded data or skeleton
   const getPokemonWithData = useCallback((pokemon: Pokemon): Pokemon => {

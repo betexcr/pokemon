@@ -1,6 +1,12 @@
-import { BattlePokemon, BattleState } from './team-battle-engine';
+import { BattlePokemon, BattleState, BattleTeam } from './team-battle-engine';
 import { clearStatus } from './team-battle-status';
 import { rngRollChance } from './battle-rng';
+
+function teamHasUnnerveOnField(team: BattleTeam): boolean {
+  return team.pokemon.some(
+    (p) => p.currentHp > 0 && p.currentAbility?.toLowerCase() === 'unnerve'
+  );
+}
 
 const STAT_BOOST_BERRIES: Record<string, keyof BattlePokemon['statModifiers']> = {
   'liechi-berry': 'attack',
@@ -36,9 +42,18 @@ function consumeItem(target: BattlePokemon) {
   target.heldItem = undefined;
 }
 
-export function tryConsumeBerry(state: BattleState, target: BattlePokemon): void {
+export function tryConsumeBerry(
+  state: BattleState,
+  target: BattlePokemon,
+  targetSide: 'player' | 'opponent'
+): void {
   if (!target.heldItem || target.currentHp <= 0) return;
   const item = target.heldItem.toLowerCase();
+
+  const foe = targetSide === 'player' ? state.opponent : state.player;
+  if (teamHasUnnerveOnField(foe)) {
+    return;
+  }
 
   // Sitrus Berry: restore 25% HP when below 50%
   if (item === 'sitrus-berry') {
@@ -53,6 +68,25 @@ export function tryConsumeBerry(state: BattleState, target: BattlePokemon): void
         pokemon: target.pokemon.name,
         healing: Math.round((heal / target.maxHp) * 100),
       });
+    }
+    return;
+  }
+
+  // Oran Berry: restore 10 HP when at or below 50% max HP
+  if (item === 'oran-berry') {
+    const threshold = Math.floor(target.maxHp / 2);
+    if (target.currentHp <= threshold) {
+      const heal = Math.min(10, target.maxHp - target.currentHp);
+      if (heal > 0) {
+        target.currentHp = Math.min(target.maxHp, target.currentHp + heal);
+        consumeItem(target);
+        state.battleLog.push({
+          type: 'healing',
+          message: `${target.pokemon.name} restored HP with its Oran Berry!`,
+          pokemon: target.pokemon.name,
+          healing: Math.round((heal / target.maxHp) * 100),
+        });
+      }
     }
     return;
   }

@@ -11,6 +11,7 @@ import Image from 'next/image';
 import { BattleTurnManager } from '@/components/multiplayer/BattleTurnManager';
 import { BattleEndScreen } from '@/components/multiplayer/BattleEndScreen';
 import { useForfeit } from '@/hooks/useMultiplayerBattle';
+import { battleLogToDisplayLines, type BattleLogDisplayLine } from '@/lib/battle-log-display';
 
 const formatMoveLabel = (rawId: string): string => {
   if (!rawId) return 'Unknown Move';
@@ -41,28 +42,26 @@ function GameTextBox({
   const logRef = useRef<HTMLDivElement>(null);
   const prevLengthRef = useRef(0);
 
-  const messages: string[] = useMemo(() => {
-    if (!battleLog?.length) return [];
-    return battleLog.map((entry: any) =>
-      typeof entry === 'string' ? entry : entry?.message ?? ''
-    ).filter(Boolean);
-  }, [battleLog]);
+  const lines: BattleLogDisplayLine[] = useMemo(
+    () => battleLogToDisplayLines(battleLog as unknown[] | undefined),
+    [battleLog]
+  );
 
   // Auto-advance to newest message when the log grows
   useEffect(() => {
-    if (messages.length > prevLengthRef.current) {
-      onDisplayedLogIndexChange(messages.length - 1);
+    if (lines.length > prevLengthRef.current) {
+      onDisplayedLogIndexChange(lines.length - 1);
     }
-    prevLengthRef.current = messages.length;
-  }, [messages.length, onDisplayedLogIndexChange]);
+    prevLengthRef.current = lines.length;
+  }, [lines.length, onDisplayedLogIndexChange]);
 
   // Scroll into view when index changes
   useEffect(() => {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: 'smooth' });
   }, [displayedLogIndex]);
 
-  const visibleMessages = messages.length > 0
-    ? messages.slice(Math.max(0, messages.length - 3))
+  const visibleLines = lines.length > 0
+    ? lines.slice(Math.max(0, lines.length - 3))
     : [];
 
   const idleText = waitingForResolution
@@ -71,25 +70,38 @@ function GameTextBox({
       ? `What will ${formatPokemonName(myActiveSpecies)} do?`
       : null;
 
-  if (visibleMessages.length === 0 && !idleText) return null;
+  if (visibleLines.length === 0 && !idleText) return null;
 
   return (
     <div className="relative z-20 mx-auto mt-4 w-full max-w-xl">
       <div className="relative rounded-xl border-[3px] border-text/20 bg-surface shadow-lg">
         <div className="absolute inset-[3px] rounded-lg border border-text/10 pointer-events-none" />
         <div ref={logRef} className="relative px-5 py-3 min-h-[3.5rem] max-h-28 overflow-y-auto">
-          {visibleMessages.length > 0 ? (
+          {visibleLines.length > 0 ? (
             <div className="space-y-1">
-              {visibleMessages.map((msg, i) => (
+              {visibleLines.map((line, i) => (
                 <p
-                  key={`${messages.length}-${i}`}
-                  className={`text-sm leading-relaxed text-text ${
-                    i === visibleMessages.length - 1
-                      ? 'font-medium animate-[typewriter_0.3s_ease-out]'
-                      : 'text-text/60'
+                  key={`${lines.length}-${i}`}
+                  className={`text-sm leading-relaxed ${
+                    line.isEngineWarning
+                      ? 'rounded border-l-4 border-amber-500/80 bg-amber-500/10 pl-2 py-0.5 font-mono text-amber-900 dark:text-amber-100'
+                      : `text-text ${
+                          i === visibleLines.length - 1
+                            ? 'font-medium animate-[typewriter_0.3s_ease-out]'
+                            : 'text-text/60'
+                        }`
                   }`}
                 >
-                  {msg}
+                  {line.isEngineWarning ? (
+                    <>
+                      <span className="mr-1.5 align-middle text-[10px] font-sans font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+                        Engine
+                      </span>
+                      {line.message}
+                    </>
+                  ) : (
+                    line.message
+                  )}
                 </p>
               ))}
             </div>
@@ -97,7 +109,7 @@ function GameTextBox({
             <p className="text-sm leading-relaxed text-text font-medium">{idleText}</p>
           ) : null}
         </div>
-        {visibleMessages.length > 0 && (
+        {visibleLines.length > 0 && (
           <div className="absolute bottom-2 right-3">
             <span className="inline-block h-2 w-2 animate-bounce text-text/40">▼</span>
           </div>

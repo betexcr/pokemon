@@ -95,3 +95,31 @@ export function cloneBattleRng(rng: BattleRng): BattleRng {
   return { seed: rng.seed, state: rng.state, calls: rng.calls };
 }
 
+/** Persisted shape for RTDB meta.battleRng */
+export type StoredBattleRng = { seed: number; state: number; calls: number };
+
+export function battleRngFromStored(stored?: StoredBattleRng | null): BattleRng | null {
+  if (!stored || typeof stored.seed !== 'number' || typeof stored.state !== 'number') {
+    return null;
+  }
+  return {
+    seed: stored.seed,
+    state: stored.state,
+    calls: typeof stored.calls === 'number' ? stored.calls : 0,
+  };
+}
+
+export function battleRngToStored(rng: BattleRng): StoredBattleRng {
+  return { seed: rng.seed, state: rng.state, calls: rng.calls };
+}
+
+/** Deterministic fallback when legacy battles have no stored RNG (stable across retries for same turn). */
+export function createBattleRngFromBattleKey(battleId: string, turn: number): BattleRng {
+  let h = 0;
+  for (let i = 0; i < battleId.length; i++) {
+    h = (h * 31 + battleId.charCodeAt(i)) | 0;
+  }
+  const seed = (Math.abs(h) ^ (turn * 2654435761)) >>> 0;
+  return createBattleRng(seed || 1);
+}
+

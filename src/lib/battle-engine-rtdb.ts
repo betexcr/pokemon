@@ -1,16 +1,9 @@
 import { rtdbService, type RTDBBattleMeta, type RTDBBattlePublic, type RTDBBattlePrivate, type RTDBChoice } from './firebase-rtdb-service';
 import { BattlePokemon, BattleTeam, BattleState, BattleAction } from './team-battle-engine';
-interface RTDBBattleEngine {
-  battleId: string;
-  meta: RTDBBattleMeta | null;
-  publicState: RTDBBattlePublic | null;
-  privateState: RTDBBattlePrivate | null;
-  isInitialized: boolean;
-  unsubscribe: (() => void)[];
-}
-
+import { battleRngFromStored, createBattleRng } from './battle-rng';
+import type { FieldState } from './team-battle-types';
 export class FirebaseRTDBBattleEngine {
-  private battleId: string;
+  public readonly battleId: string;
   private meta: RTDBBattleMeta | null = null;
   private publicState: RTDBBattlePublic | null = null;
   private privateState: RTDBBattlePrivate | null = null;
@@ -18,6 +11,7 @@ export class FirebaseRTDBBattleEngine {
   public isInitialized = false;
   private onStateChange?: (state: BattleState) => void;
   private onPhaseChange?: (phase: string) => void;
+  private currentUserUid: string | null = null;
 
   constructor(battleId: string) {
     this.battleId = battleId;
@@ -30,6 +24,9 @@ export class FirebaseRTDBBattleEngine {
   ): Promise<void> {
     this.onStateChange = onStateChange;
     this.onPhaseChange = onPhaseChange;
+
+    const { auth } = await import('./firebase');
+    this.currentUserUid = auth?.currentUser?.uid ?? null;
 
     // Set up listeners
     this.unsubscribe.push(
@@ -46,11 +43,9 @@ export class FirebaseRTDBBattleEngine {
       })
     );
 
-    // Get current user UID for private state
-    const { auth } = await import('./firebase');
-    if (auth?.currentUser?.uid) {
+    if (this.currentUserUid) {
       this.unsubscribe.push(
-        rtdbService.onBattlePrivate(this.battleId, auth.currentUser.uid, (privateState) => {
+        rtdbService.onBattlePrivate(this.battleId, this.currentUserUid, (privateState) => {
           this.privateState = privateState;
           this.handleStateChange();
         })
@@ -75,72 +70,172 @@ export class FirebaseRTDBBattleEngine {
     if (!this.meta || !this.publicState || !this.privateState) {
       throw new Error('Battle state not fully initialized');
     }
+    if (!this.currentUserUid) {
+      throw new Error('Battle state not fully initialized');
+    }
 
-    // Convert RTDB data to BattleState format
-    const playerTeam = this.convertToBattleTeam(this.privateState.team, this.publicState.p1);
-    const opponentTeam = this.convertToBattleTeam(
-      this.getOpponentTeam(), 
-      this.publicState.p2
+    const isP1 = this.meta.players.p1.uid === this.currentUserUid;
+    const isP2 = this.meta.players.p2.uid === this.currentUserUid;
+    if (!isP1 && !isP2) {
+      throw new Error('Current user is not a participant in this battle');
+    }
+
+    const myPublic = isP1 ? this.publicState.p1 : this.publicState.p2;
+    const oppPublic = isP1 ? this.publicState.p2 : this.publicState.p1;
+    const currentIndex = this.privateState.currentIndex ?? 0;
+
+    const playerTeam = this.convertToBattleTeam(
+      Array.isArray(this.privateState.team) ? this.privateState.team : [],
+      myPublic,
+      currentIndex
     );
+    const opponentTeam = this.convertToBattleTeam(
+      this.buildOpponentTeamFromPublic(oppPublic),
+      oppPublic,
+      0
+    );
+
+    const rng =
+      battleRngFromStored(this.meta.battleRng) ?? createBattleRng(this.meta.turn || 1);
+
+    const rawField = this.publicState.field as Record<string, unknown> | undefined;
+    const field: FieldState = {
+      weather: (rawField?.weather as FieldState['weather']) ?? undefined,
+      terrain: (rawField?.terrain as FieldState['terrain']) ?? undefined,
+      rooms: {},
+    };
+
+    let phase: BattleState['phase'] = 'choice';
+    if (this.meta.phase === 'resolving') phase = 'resolution';
+    else if (this.meta.phase === 'ended') phase = 'execution';
 
     return {
       player: playerTeam,
       opponent: opponentTeam,
       turn: this.meta.turn,
-      rng: Math.floor(Math.random() * 1000000),
-      battleLog: [], // Will be populated from resolution logs
+      rng,
+      battleLog: [],
       isComplete: this.meta.phase === 'ended',
-      winner: this.meta.winnerUid ? 
-        (this.meta.winnerUid === this.meta.players.p1.uid ? 'player' : 'opponent') : 
-        undefined,
-      phase: this.meta.phase === 'choosing' ? 'choice' : 
-             this.meta.phase === 'resolving' ? 'resolution' : 'choice',
+      winner: this.meta.winnerUid
+        ? this.meta.winnerUid === this.currentUserUid
+          ? 'player'
+          : 'opponent'
+        : undefined,
+      phase,
       actionQueue: [],
-      field: {}
+      field,
     };
   }
 
-  private convertToBattleTeam(teamData: any, publicData: any): BattleTeam {
+  private convertToBattleTeam(teamData: any[], publicData: any, currentIndex: number): BattleTeam {
+    if (!teamData.length || !publicData?.active) {
+      return { pokemon: [], currentIndex: 0, faintedCount: 0, sideConditions: {} };
+    }
+
+    const benchSlotIndices = teamData.map((_, i) => i).filter((i) => i !== currentIndex);
+
     const pokemon: BattlePokemon[] = teamData.map((pokemonData: any, index: number) => {
-      const isActive = index === 0;
-      const publicPokemon = isActive ? publicData.active : publicData.benchPublic[index - 1];
-      
+      const isActive = index === currentIndex;
+      let publicPokemon: any;
+      if (isActive) {
+        publicPokemon = publicData.active;
+      } else {
+        const benchIdx = benchSlotIndices.indexOf(index);
+        publicPokemon = publicData.benchPublic?.[benchIdx];
+      }
+
+      if (!publicPokemon) {
+        publicPokemon = {
+          hp: { cur: pokemonData.currentHp ?? 0, max: pokemonData.maxHp ?? 1 },
+          status: pokemonData.status ?? null,
+          boosts: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0, acc: 0, eva: 0 },
+        };
+      }
+
+      const boosts = publicPokemon.boosts || {};
+
       return {
         pokemon: pokemonData.pokemon,
         level: pokemonData.level,
         currentHp: isActive ? publicPokemon.hp.cur : pokemonData.currentHp,
         maxHp: isActive ? publicPokemon.hp.max : pokemonData.maxHp,
         moves: pokemonData.moves || [],
-        status: publicPokemon.status,
+        status: publicPokemon.status ?? pokemonData.status,
         statusTurns: pokemonData.statusTurns,
         volatile: pokemonData.volatile || {},
+        heldItem: pokemonData.heldItem,
         currentAbility: pokemonData.currentAbility,
         originalAbility: pokemonData.originalAbility,
         abilityChanged: pokemonData.abilityChanged,
         statModifiers: {
-          attack: publicPokemon.boosts.atk,
-          defense: publicPokemon.boosts.def,
-          specialAttack: publicPokemon.boosts.spa,
-          specialDefense: publicPokemon.boosts.spd,
-          speed: publicPokemon.boosts.spe,
-          accuracy: publicPokemon.boosts.acc,
-          evasion: publicPokemon.boosts.eva
-        }
+          attack: boosts.atk ?? 0,
+          defense: boosts.def ?? 0,
+          specialAttack: boosts.spa ?? 0,
+          specialDefense: boosts.spd ?? 0,
+          speed: boosts.spe ?? 0,
+          accuracy: boosts.acc ?? 0,
+          evasion: boosts.eva ?? 0,
+        },
       };
     });
 
     return {
       pokemon,
-      currentIndex: 0,
-      faintedCount: pokemon.filter(p => p.currentHp <= 0).length,
-      sideConditions: {}
+      currentIndex,
+      faintedCount: pokemon.filter((p) => p.currentHp <= 0).length,
+      sideConditions: {},
     };
   }
 
-  private getOpponentTeam(): any {
-    // This would need to be implemented based on your team structure
-    // For now, return empty array - this should be handled by the server
-    return [];
+  /** Opponent team is unknown privately; reconstruct visible slots from public RTDB only. */
+  private buildOpponentTeamFromPublic(oppPublic: RTDBBattlePublic['p1']): any[] {
+    if (!oppPublic?.active) return [];
+    const activeRow = this.minimalSlotFromPublicActive(oppPublic.active);
+    const bench = (oppPublic.benchPublic || []).map((b) => this.minimalSlotFromPublicBench(b));
+    return [activeRow, ...bench];
+  }
+
+  private minimalSlotFromPublicActive(active: RTDBBattlePublic['p1']['active']): any {
+    const types = (active.types || []).map((t: string) => ({ type: { name: t } }));
+    return {
+      pokemon: {
+        id: 0,
+        name: active.species,
+        types: types.length ? types : [{ type: { name: 'normal' } }],
+        stats: [],
+        weight: 500,
+        abilities: [],
+      },
+      level: active.level ?? 50,
+      currentHp: active.hp?.cur ?? 0,
+      maxHp: active.hp?.max ?? 1,
+      moves: [{ id: 'tackle', pp: 35, maxPp: 35 }],
+      volatile: {},
+      statModifiers: { attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0, accuracy: 0, evasion: 0 },
+    };
+  }
+
+  private minimalSlotFromPublicBench(bench: { species: string; fainted: boolean; revealedMoves: string[] }): any {
+    const moveSlots =
+      bench.revealedMoves?.length > 0
+        ? bench.revealedMoves.map((id) => ({ id, pp: 10, maxPp: 10 }))
+        : [{ id: 'tackle', pp: 35, maxPp: 35 }];
+    return {
+      pokemon: {
+        id: 0,
+        name: bench.species,
+        types: [{ type: { name: 'normal' } }],
+        stats: [],
+        weight: 500,
+        abilities: [],
+      },
+      level: 50,
+      currentHp: bench.fainted ? 0 : 1,
+      maxHp: 1,
+      moves: moveSlots,
+      volatile: {},
+      statModifiers: { attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0, accuracy: 0, evasion: 0 },
+    };
   }
 
   // Submit a choice (move or switch)
@@ -162,18 +257,12 @@ export class FirebaseRTDBBattleEngine {
       }
     };
 
-    await rtdbService.submitChoice(
-      this.battleId,
-      this.meta.turn,
-      this.getCurrentUserId(),
-      choice
-    );
-  }
+    const uid = this.currentUserUid;
+    if (!uid) {
+      throw new Error('Not authenticated');
+    }
 
-  private getCurrentUserId(): string {
-    // This should get the current user's UID
-    // Implementation depends on your auth system
-    return 'current-user-uid';
+    await rtdbService.submitChoice(this.battleId, this.meta.turn, uid, choice);
   }
 
   // Listen to turn resolution
@@ -194,6 +283,7 @@ export class FirebaseRTDBBattleEngine {
     this.unsubscribe.forEach(unsub => unsub());
     this.unsubscribe = [];
     this.isInitialized = false;
+    this.currentUserUid = null;
   }
 
   // Getters
@@ -218,6 +308,7 @@ export class FirebaseRTDBBattleEngine {
 export class BattleFlowEngine {
   private battleId: string;
   private engine: FirebaseRTDBBattleEngine;
+  private lastState: BattleState | null = null;
 
   constructor(battleId: string) {
     this.battleId = battleId;
@@ -225,13 +316,15 @@ export class BattleFlowEngine {
   }
 
   async initialize(): Promise<void> {
+    this.lastState = null;
     await this.engine.initialize(
       (state) => this.handleBattleStateChange(state),
       (phase) => this.handlePhaseChange(phase)
     );
   }
 
-  private handleBattleStateChange(_state: BattleState): void {
+  private handleBattleStateChange(state: BattleState | null | undefined): void {
+    this.lastState = state ?? null;
   }
 
   private handlePhaseChange(_phase: string): void {
@@ -258,14 +351,22 @@ export class BattleFlowEngine {
 
   // Get current battle state
   getBattleState(): BattleState | null {
+    if (this.lastState !== null) {
+      return this.lastState;
+    }
     if (!this.engine.isInitialized) {
       return null;
     }
-    return this.engine.convertToBattleState();
+    try {
+      return this.engine.convertToBattleState();
+    } catch {
+      return null;
+    }
   }
 
   // Cleanup
   destroy(): void {
+    this.lastState = null;
     this.engine.destroy();
   }
 }

@@ -8,6 +8,7 @@ import { formatPokemonName, getShowdownAnimatedSprite } from '@/lib/utils';
 import { BattleSprite, BattleSpriteRef } from '@/components/battle/BattleSprite';
 import Image from 'next/image';
 import { BattleEndScreen } from '@/components/multiplayer/BattleEndScreen';
+import { battleLogToDisplayLines, type BattleLogDisplayLine } from '@/lib/battle-log-display';
 
 const formatMoveLabel = (rawId: string): string => {
   if (!rawId) return 'Unknown Move';
@@ -38,9 +39,25 @@ function GameTextBox({ battleLog, myActiveSpecies }: { battleLog?: any[]; myActi
         <div ref={logRef} className="relative px-5 py-3 min-h-[3.5rem] max-h-28 overflow-y-auto">
           {visible.length > 0 ? (
             <div className="space-y-1">
-              {visible.map((msg, i) => (
-                <p key={`${messages.length}-${i}`} className={`text-sm leading-relaxed text-text ${i === visible.length - 1 ? 'font-medium animate-[typewriter_0.3s_ease-out]' : 'text-text/60'}`}>
-                  {msg}
+              {visible.map((line, i) => (
+                <p
+                  key={`${lines.length}-${i}`}
+                  className={`text-sm leading-relaxed ${
+                    line.isEngineWarning
+                      ? 'rounded border-l-4 border-amber-500/80 bg-amber-500/10 pl-2 py-0.5 font-mono text-amber-900 dark:text-amber-100'
+                      : `text-text ${i === visible.length - 1 ? 'font-medium animate-[typewriter_0.3s_ease-out]' : 'text-text/60'}`
+                  }`}
+                >
+                  {line.isEngineWarning ? (
+                    <>
+                      <span className="mr-1.5 align-middle text-[10px] font-sans font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+                        Engine
+                      </span>
+                      {line.message}
+                    </>
+                  ) : (
+                    line.message
+                  )}
                 </p>
               ))}
             </div>

@@ -28,24 +28,31 @@ This document maps the long-form Gen 9 reference ([battle_mechanics.md](./battle
 | Damage (formula, crit, STAB, weather, screens) | **Partial** | Broad coverage in damage calculator; not every ability/item |
 | Accuracy / evasion | **Partial** | Stage multipliers; not every ability |
 | Status conditions | **Partial** | Sleep/freeze/para/burn/poison/toxic; durations simplified |
-| Volatiles (confusion, substitute, etc.) | **Partial** | Subset implemented |
+| Volatiles (confusion, substitute, etc.) | **Partial** | Subset implemented; **Encore:** if the encored move has 0 PP, only **Struggle** is legal (Showdown-style), aligned in `canUseMove`, `validateServerBattleAction`, and battle hooks |
 | Field (weather, terrain, rooms) | **Partial** | Common cases; not full move/ability matrix |
 | Hazards | **Partial** | SR, Spikes, Toxic Spikes, Sticky Web |
 | Switching, Pursuit | **Partial** | Pursuit interrupt path exists |
 | Multi-hit | **Partial** | Loop + Skill Link; item interactions subset |
 | PP consumption | **Full** | Per successful use (hit or miss after selection); Struggle does not consume slot PP |
 | Struggle | **Full** | When all moves 0 PP; uses move data + recoil |
-| Abilities | **Partial** | Handlers scattered; many abilities absent |
-| Items | **Partial** | Berries, common held items subset |
-| Terastallization | **Missing** | Not modeled |
-| Double battles | **Missing** | Singles-oriented |
+| Abilities | **Partial** | Entry: Intimidate, weather/terrain setters, Cloud Nine / Air Lock, **Download**, **Frisk**, **Unnerve** (see [`team-battle-abilities.ts`](../src/lib/team-battle-abilities.ts)); end-of-turn subset (e.g. Speed Boost, Shed Skin); many abilities still absent |
+| Items | **Partial** | Sitrus, Lum, pinch stat berries, type-resist berries, Harvest, Focus Sash/Band, Rocky Helmet, Shell Bell, Leftovers, Black Sludge, **Oran Berry**; **Unnerve** blocks all berry triggers (see [`team-battle-items.ts`](../src/lib/team-battle-items.ts)) |
+| Terastallization | **Missing** | **Product-deferred** — not started; implement only after explicit scope approval |
+| Double battles | **Missing** | **Product-deferred** — singles-only architecture until approved |
 
 ## Known deltas (implementation vs cart)
 
-- **RNG:** [`fetchBattleState`](src/lib/battle-resolution.ts) creates a new RNG seed each resolution; seed is not stored in RTDB, so battles are not bit-reproducible from stored state alone.
+- **RNG:** Battle RNG is stored under RTDB `meta.battleRng` (`seed`, `state`, `calls`), initialized in [`createBattle`](src/lib/firebase-rtdb-service.ts) and advanced after each resolved turn in [`resolveTurn`](src/lib/battle-resolution.ts). Legacy battles without `battleRng` use a deterministic fallback from battle id + turn.
+- **Server validation:** [`validateServerBattleAction`](src/lib/team-battle-engine.ts) runs in `resolveTurn` before `buildActionQueue` (PP, Struggle, switch legality, sleep/freeze, taunt, encore, disable). Illegal choices end the battle with `resolution_failed`.
 - **Move data:** Moves load from PokeAPI via [`getMove`](src/lib/moveCache.ts); failures log `engine_warning` and skip the move. A built-in fallback exists for **Struggle** if the network fails.
-- **Hydration:** Battle reconstruction may call PokeAPI for Pokémon without full stats (see `hydrateTeam` in battle-resolution).
-- **Server validation:** Move legality is primarily client-side; optional hardening on submit is a follow-up.
+- **Hydration:** [`hydrateTeam`](src/lib/battle-resolution.ts) uses embedded `pokemon.stats` on private team snapshots when present; otherwise it fetches PokeAPI with an in-process dedupe cache per species key. If fetch fails or returns no stats, **placeholder base stats (50 across)** are used so resolution can continue; HP still uses `maxHp` / `currentHp` from the snapshot when set. [`createBattle`](src/lib/firebase-rtdb-service.ts) deep-clones submitted teams so client payloads with stats are preserved verbatim in RTDB.
+- **Client reconstruction:** [`FirebaseRTDBBattleEngine`](src/lib/battle-engine-rtdb.ts) builds the opponent team from **public** RTDB only (active + bench); full opponent sets are not read from the other player’s private node.
+
+## Phased backlog (post–Tier 1)
+
+Completed in-repo waves include: `engine_warning` styling in multiplayer/offline battle text boxes, committed move JSON fixtures (`src/lib/__tests__/fixtures/moves/`), optional HTTP smoke test with `RUN_POKEAPI_TESTS=1` ([`pokeapi-http.integration.test.ts`](../src/lib/__tests__/pokeapi-http.integration.test.ts)), hydration cache + placeholder stats, first ability trio (**Download**, **Frisk**, **Unnerve**), item additions (**Oran Berry**, Unnerve vs berries), and Encore + 0 PP **Struggle** alignment (Showdown-style).
+
+**Product-deferred (do not implement without approval):** Terastallization and double battles remain **Missing** above.
 
 ## Maintenance
 

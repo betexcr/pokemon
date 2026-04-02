@@ -1,0 +1,14 @@
+{
+  "id": 33,
+  "name": "tackle",
+  "type": "Normal",
+  "category": "Physical",
+  "power": 40,
+  "accuracy": 100,
+  "pp": 35,
+  "priority": 0,
+  "critRateStage": 0,
+  "makesContact": true,
+  "bypassAccuracyCheck": false,
+  "hits": null
+}

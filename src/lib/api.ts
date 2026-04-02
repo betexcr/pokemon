@@ -161,9 +161,33 @@ function setNegativeCache(key: string, error: string, ttlSeconds: number = 300):
   }
 }
 
-// Base API URL
-// Always use PokeAPI directly since we removed the internal API routes
-const API_BASE_URL = 'https://pokeapi.co/api/v2'
+// Base URL: default direct PokeAPI; set NEXT_PUBLIC_POKEAPI_BASE_URL=/api/pokeapi to use the proxy + Redis
+// (see src/app/api/pokeapi/[[...path]]/route.ts). Relative paths work in the browser; Node fetch needs an
+// absolute URL. During `next build` we cannot call the not-yet-deployed app, so SSG uses pokeapi.co directly.
+const DEFAULT_POKEAPI = 'https://pokeapi.co/api/v2'
+
+function getApiBaseUrl(): string {
+  const raw =
+    typeof process !== 'undefined'
+      ? process.env.NEXT_PUBLIC_POKEAPI_BASE_URL?.trim() || ''
+      : ''
+  if (!raw) return DEFAULT_POKEAPI
+  if (raw.startsWith('http://') || raw.startsWith('https://')) return raw
+
+  if (typeof window !== 'undefined') return raw
+
+  if (process.env.NEXT_PHASE === 'phase-production-build') {
+    return DEFAULT_POKEAPI
+  }
+
+  const origin =
+    process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, '') ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '')
+  if (origin) {
+    return `${origin}${raw.startsWith('/') ? raw : `/${raw}`}`
+  }
+  return DEFAULT_POKEAPI
+}
 
 let cachedMainlinePokemonMaxId: number | null = null
 let mainlinePokemonMaxIdPromise: Promise<number | null> | null = null
@@ -174,7 +198,7 @@ async function getMainlinePokemonMaxId(): Promise<number | null> {
 
   mainlinePokemonMaxIdPromise = (async () => {
     try {
-      const data = await fetchFromAPI<{ count: number }>(`${API_BASE_URL}/pokemon-species?limit=1`)
+      const data = await fetchFromAPI<{ count: number }>(`${getApiBaseUrl()}/pokemon-species?limit=1`)
       const total = data.count
       if (Number.isFinite(total) && total > 0) {
         cachedMainlinePokemonMaxId = total
@@ -207,7 +231,7 @@ export async function fetchAllPokemonIds(): Promise<number[]> {
     }
 
     try {
-      const data = await fetchFromAPI<{ results: Array<{ name: string; url: string }>; count: number }>(`${API_BASE_URL}/pokemon?limit=2000`)
+      const data = await fetchFromAPI<{ results: Array<{ name: string; url: string }>; count: number }>(`${getApiBaseUrl()}/pokemon?limit=2000`)
       const ids = data.results
         .map(p => parseInt(p.url.split('/').filter(Boolean).pop()!))
         .filter(id => !isNaN(id))
@@ -273,11 +297,11 @@ async function fetchFromAPI<T>(url: string, signal?: AbortSignal): Promise<T> {
   // Special handling for 503 errors (Service Unavailable)
   const is503Error = (status: number) => status === 503
 
-  // Convert relative URLs to absolute only in the browser. On the server, keep relative so Next.js fetch resolves correctly in any environment.
+  // Browser: join relative URLs to the page origin. Server: callers should pass absolute URLs (see getApiBaseUrl).
   const absoluteUrl = url.startsWith('http')
     ? url
     : (typeof window !== 'undefined'
-      ? `${window.location.origin}${url}`
+      ? `${window.location.origin}${url.startsWith('/') ? url : `/${url}`}`
       : url)
 
   // Record request start for analytics
@@ -499,7 +523,7 @@ export async function getPokemonList(limit = 100, offset = 0, signal?: AbortSign
   const cached = await getCache(cacheKey)
   if (cached) return cached
 
-  const url = `${API_BASE_URL}/pokemon/?limit=${limit}&offset=${offset}`
+  const url = `${getApiBaseUrl()}/pokemon/?limit=${limit}&offset=${offset}`
   const data = await fetchFromAPI<{ results: Array<{ name: string; url: string }>; count: number }>(url, signal)
   await setCache(cacheKey, data, CACHE_TTL.POKEMON_LIST)
   return data
@@ -510,7 +534,7 @@ export async function getPokemonTotalCount(): Promise<number> {
   const cached = await getCache(cacheKey)
   if (cached) return cached
 
-  const data = await fetchFromAPI<{ count: number }>(`${API_BASE_URL}/pokemon?limit=1`)
+  const data = await fetchFromAPI<{ count: number }>(`${getApiBaseUrl()}/pokemon?limit=1`)
   await setCache(cacheKey, data.count, CACHE_TTL.POKEMON_TOTAL_COUNT)
   return data.count
 }
@@ -576,7 +600,7 @@ export async function getPokemon(id: number | string, signal?: AbortSignal): Pro
   }
 
   // Always fetch from PokeAPI directly (including alternate forms like Mega/Primal/Gmax)
-  const url = `${API_BASE_URL}/pokemon/${numericId}/`
+  const url = `${getApiBaseUrl()}/pokemon/${numericId}/`
   try {
     const data = await fetchFromAPI<Pokemon>(url, signal)
 
@@ -618,7 +642,7 @@ export async function getPokemonSpecies(id: number | string): Promise<PokemonSpe
   }
 
   // Always use numeric ID for API calls (no zero-padding)
-  const url = `${API_BASE_URL}/pokemon-species/${numericId}/`
+  const url = `${getApiBaseUrl()}/pokemon-species/${numericId}/`
   try {
     
     const data = await fetchFromAPI(url)
@@ -657,7 +681,7 @@ export async function getEvolutionChain(id: number | string): Promise<EvolutionC
   if (cached) return cached
 
   // Always use numeric ID for API calls (no zero-padding)
-  const url = `${API_BASE_URL}/evolution-chain/${numericId}/`
+  const url = `${getApiBaseUrl()}/evolution-chain/${numericId}/`
   const data = await fetchFromAPI(url)
   await setCache(cacheKey, data, CACHE_TTL.EVOLUTION_CHAIN)
   return data
@@ -759,7 +783,7 @@ export async function getType(id: number | string): Promise<PokemonTypeData> {
   if (cached) return cached
 
   // Use the ID as-is (could be numeric ID or type name)
-  const url = `${API_BASE_URL}/type/${id}/`
+  const url = `${getApiBaseUrl()}/type/${id}/`
   const data = await fetchFromAPI(url)
   await setCache(cacheKey, data, CACHE_TTL.TYPE)
   return data
@@ -773,7 +797,7 @@ export async function getAbility(id: number | string): Promise<PokemonAbilityDat
   if (cached) return cached
 
   // Use the ID as-is (could be numeric ID or ability name)
-  const url = `${API_BASE_URL}/ability/${id}/`
+  const url = `${getApiBaseUrl()}/ability/${id}/`
   const data = await fetchFromAPI(url)
   await setCache(cacheKey, data, CACHE_TTL.ABILITY)
   return data
@@ -897,7 +921,7 @@ async function getMove(id: number | string): Promise<any> {
     return cached
   }
 
-  const url = `${API_BASE_URL}/move/${id}/`
+  const url = `${getApiBaseUrl()}/move/${id}/`
   const data = await fetchFromAPI(url)
   moveMemoryCache.set(memKey, data)
   if (moveMemoryCache.size > MOVE_CACHE_MAX) {

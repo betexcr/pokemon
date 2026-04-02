@@ -13,6 +13,7 @@ import {
   type DataSnapshot
 } from 'firebase/database';
 import { rtdb } from './firebase';
+import { createBattleRng, battleRngToStored } from './battle-rng';
 
 export interface RTDBBattleMeta {
   createdAt: number;
@@ -29,6 +30,8 @@ export interface RTDBBattleMeta {
   version: number;
   winnerUid?: string;
   endedReason?: 'forfeit' | 'timeout' | 'victory' | 'resolution_failed';
+  /** Authoritative battle RNG; updated after each resolved turn. */
+  battleRng?: { seed: number; state: number; calls: number };
 }
 
 export interface RTDBBattlePublic {
@@ -174,6 +177,7 @@ class FirebaseRTDBService {
     
     // Create meta
     const metaRef = ref(this.db, `battles/${battleId}/meta`);
+    const initialRng = createBattleRng(now);
     await set(metaRef, {
       createdAt: serverTimestamp(),
       format: 'singles',
@@ -186,7 +190,8 @@ class FirebaseRTDBService {
       phase: 'choosing',
       turn: 1,
       deadlineAt: deadlineAt,
-      version: 1
+      version: 1,
+      battleRng: battleRngToStored(initialRng),
     });
 
     // Record participant list for security rules and quick lookups
@@ -230,14 +235,16 @@ class FirebaseRTDBService {
 
     // Create private state (full team info)
     const p1PrivateRef = ref(this.db, `battles/${battleId}/private/${p1Uid}`);
+    const p1Snapshot = JSON.parse(JSON.stringify(p1Team));
     await set(p1PrivateRef, {
-      team: p1Team,
+      team: p1Snapshot,
       choiceLock: {}
     });
 
     const p2PrivateRef = ref(this.db, `battles/${battleId}/private/${p2Uid}`);
+    const p2Snapshot = JSON.parse(JSON.stringify(p2Team));
     await set(p2PrivateRef, {
-      team: p2Team,
+      team: p2Snapshot,
       choiceLock: {}
     });
   }

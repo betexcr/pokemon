@@ -880,7 +880,7 @@ async function executeMoveAction(
   }
   
   // Try to consume berry after damage
-  tryConsumeBerry(state, defender);
+  tryConsumeBerry(state, defender, user === 'player' ? 'opponent' : 'player');
   
   // Apply secondary effects from damaging moves (ailments, stat changes, flinch)
   if (defender.currentHp > 0) {
@@ -1073,7 +1073,7 @@ function processResidualDamage(_state: BattleState): void {
 
 // Process item residuals
 function processItemResiduals(state: BattleState): void {
-  const processItem = (team: BattleTeam) => {
+  const processItem = (team: BattleTeam, side: 'player' | 'opponent') => {
     const pokemon = getCurrentPokemon(team);
     if (pokemon.currentHp <= 0) return;
 
@@ -1117,11 +1117,11 @@ function processItemResiduals(state: BattleState): void {
       }
     }
 
-    tryConsumeBerry(state, pokemon);
+    tryConsumeBerry(state, pokemon, side);
   };
 
-  processItem(state.player);
-  processItem(state.opponent);
+  processItem(state.player, 'player');
+  processItem(state.opponent, 'opponent');
 
   // Reset per-turn damage trackers after applying Shell Bell
   getCurrentPokemon(state.player).volatile.damageDealtThisTurn = 0;

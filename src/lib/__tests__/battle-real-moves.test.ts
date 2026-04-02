@@ -5,6 +5,7 @@ import {
   buildActionQueue,
   canUseMove,
   allMovesOutOfPp,
+  validateServerBattleAction,
   type BattleState,
   type BattlePokemon,
   type BattleTeam,
@@ -16,6 +17,7 @@ import {
   getMoveDataMissCount,
   resetMoveDataMissCountForTests,
 } from '../battle-engine-metrics';
+import { handleOnEntryAbilities } from '../team-battle-abilities';
 
 vi.mock('../moveCache', () => ({
   getMove: vi.fn(),
@@ -251,5 +253,147 @@ describe('battle turn with move fixtures', () => {
 
     expect(state.battleLog.some((e) => e.message?.includes('struggle'))).toBe(true);
     expect(state.battleLog.some((e) => e.type === 'recoil')).toBe(true);
+  });
+});
+
+describe('Encore and Struggle (Showdown-style)', () => {
+  it('allows Struggle when encored move has 0 PP while other moves still have PP', () => {
+    const mon = makeMon('enc', ['normal'], {
+      moves: [
+        { id: 'tackle', pp: 0, maxPp: 35 },
+        { id: 'growl', pp: 20, maxPp: 40 },
+      ],
+      volatile: { encore: { move: 'tackle', turns: 3 } },
+    });
+    const team = makeTeam(mon);
+    const rng = createBattleRng(1);
+    expect(canUseMove(mon, 'struggle', rng).canUse).toBe(true);
+    expect(canUseMove(mon, 'growl', rng).canUse).toBe(false);
+    expect(validateServerBattleAction(team, { type: 'move', moveId: 'struggle' })).toBeNull();
+    expect(validateServerBattleAction(team, { type: 'move', moveId: 'growl' })).toBe('encored_wrong_move');
+  });
+});
+
+describe('ability wave (download, frisk, unnerve)', () => {
+  function entryMon(
+    name: string,
+    ability: string | undefined,
+    extra: Partial<BattlePokemon> = {}
+  ): BattlePokemon {
+    return {
+      pokemon: {
+        id: 1,
+        name,
+        types: [{ type: { name: 'normal' } }],
+        stats: [
+          { stat: { name: 'defense' }, base_stat: 40 },
+          { stat: { name: 'special-defense' }, base_stat: 80 },
+        ],
+        weight: 100,
+        abilities: [],
+      } as BattlePokemon['pokemon'],
+      level: 50,
+      currentHp: 100,
+      maxHp: 100,
+      moves: [],
+      volatile: {},
+      statModifiers: {
+        attack: 0,
+        defense: 0,
+        specialAttack: 0,
+        specialDefense: 0,
+        speed: 0,
+        accuracy: 0,
+        evasion: 0,
+      },
+      currentAbility: ability,
+      heldItem: 'sitrus-berry',
+      ...extra,
+    };
+  }
+
+  it('Download raises Sp. Atk when foe Defense base is not lower than Sp. Def', () => {
+    const incoming = entryMon('porygon-z', 'download');
+    const opp = entryMon('blissey', 'natural-cure', {
+      heldItem: undefined,
+      pokemon: {
+        id: 1,
+        name: 'blissey',
+        types: [{ type: { name: 'normal' } }],
+        stats: [
+          { stat: { name: 'defense' }, base_stat: 90 },
+          { stat: { name: 'special-defense' }, base_stat: 30 },
+        ],
+        weight: 100,
+        abilities: [],
+      } as BattlePokemon['pokemon'],
+    });
+    const st: BattleState = {
+      player: { pokemon: [incoming], currentIndex: 0, faintedCount: 0, sideConditions: {} },
+      opponent: { pokemon: [opp], currentIndex: 0, faintedCount: 0, sideConditions: {} },
+      turn: 1,
+      rng: createBattleRng(1),
+      battleLog: [],
+      isComplete: false,
+      phase: 'choice',
+      actionQueue: [],
+      field: createFieldState(),
+    };
+    handleOnEntryAbilities(st, 'player', incoming);
+    expect(incoming.statModifiers.specialAttack).toBe(1);
+    expect(incoming.statModifiers.attack).toBe(0);
+  });
+
+  it('Frisk reveals opponent item', () => {
+    const incoming = entryMon('duskull', 'frisk', { heldItem: undefined });
+    const opp = entryMon('snorlax', 'thick-fat', { heldItem: 'leftovers' });
+    const st: BattleState = {
+      player: { pokemon: [incoming], currentIndex: 0, faintedCount: 0, sideConditions: {} },
+      opponent: { pokemon: [opp], currentIndex: 0, faintedCount: 0, sideConditions: {} },
+      turn: 1,
+      rng: createBattleRng(1),
+      battleLog: [],
+      isComplete: false,
+      phase: 'choice',
+      actionQueue: [],
+      field: createFieldState(),
+    };
+    handleOnEntryAbilities(st, 'player', incoming);
+    expect(st.battleLog.some((e) => e.message?.includes('leftovers'))).toBe(true);
+  });
+
+  it('Unnerve logs on switch-in', () => {
+    const incoming = entryMon('hydreigon', 'unnerve', { heldItem: undefined });
+    const opp = entryMon('rattata', 'run-away', { heldItem: undefined });
+    const st: BattleState = {
+      player: { pokemon: [incoming], currentIndex: 0, faintedCount: 0, sideConditions: {} },
+      opponent: { pokemon: [opp], currentIndex: 0, faintedCount: 0, sideConditions: {} },
+      turn: 1,
+      rng: createBattleRng(1),
+      battleLog: [],
+      isComplete: false,
+      phase: 'choice',
+      actionQueue: [],
+      field: createFieldState(),
+    };
+    handleOnEntryAbilities(st, 'player', incoming);
+    expect(st.battleLog.some((e) => e.message?.includes('Unnerve'))).toBe(true);
+  });
+});
+
+describe('validateServerBattleAction', () => {
+  it('rejects illegal struggle and invalid switches', () => {
+    const active = makeMon('atk', ['normal'], {
+      moves: [{ id: 'tackle', pp: 5, maxPp: 10 }],
+    });
+    const team: BattleTeam = {
+      pokemon: [active, { ...active, pokemon: { ...active.pokemon, name: 'b' }, currentHp: 0 }],
+      currentIndex: 0,
+      faintedCount: 0,
+      sideConditions: {},
+    };
+    expect(validateServerBattleAction(team, { type: 'move', moveId: 'struggle' })).toBe('illegal_struggle');
+    expect(validateServerBattleAction(team, { type: 'switch', switchIndex: 0 })).toBe('switch_same_slot');
+    expect(validateServerBattleAction(team, { type: 'switch', switchIndex: 1 })).toBe('switch_to_fainted');
   });
 });

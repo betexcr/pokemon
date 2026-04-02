@@ -1,7 +1,21 @@
 import { describe, it, expect, beforeEach, afterEach, vi, Mock } from 'vitest';
 import { FirebaseRTDBBattleEngine, BattleFlowEngine } from '../battle-engine-rtdb';
 import { rtdbService } from '../firebase-rtdb-service';
+import type { RTDBBattleMeta } from '../firebase-rtdb-service';
 import { BattleState, BattleAction } from '../team-battle-engine';
+import { createBattleRng } from '../battle-rng';
+
+const choosingMeta = (turn = 1): RTDBBattleMeta => ({
+  phase: 'choosing',
+  turn,
+  version: 1,
+  players: { p1: { uid: 'test-user-uid', name: 'P1' }, p2: { uid: 'p2', name: 'P2' } },
+  createdAt: Date.now(),
+  format: 'singles',
+  ruleSet: 'gen9-no-weather',
+  region: 'global',
+  deadlineAt: Date.now() + 30000,
+});
 
 // Mock the RTDB service
 vi.mock('../firebase-rtdb-service', () => ({
@@ -86,6 +100,8 @@ describe('FirebaseRTDBBattleEngine', () => {
       (rtdbService.onBattlePrivate as Mock).mockReturnValue(mockUnsubscribe);
 
       await battleEngine.initialize();
+      battleEngine['currentUserUid'] = 'test-user-uid';
+      battleEngine['meta'] = choosingMeta(1);
     });
 
     it('should submit move choice', async () => {
@@ -185,15 +201,8 @@ describe('FirebaseRTDBBattleEngine', () => {
     it('should convert RTDB data to BattleState', () => {
       // Mock the battle data
       battleEngine['meta'] = {
-        phase: 'choosing',
-        turn: 1,
-        version: 1,
-        players: { p1: { uid: 'p1', name: 'P1' }, p2: { uid: 'p2', name: 'P2' } },
-        createdAt: Date.now(),
-        format: 'singles',
-        ruleSet: 'gen9-no-weather',
-        region: 'global',
-        deadlineAt: Date.now() + 30000
+        ...choosingMeta(1),
+        battleRng: { seed: 42, state: 42, calls: 0 },
       };
 
       battleEngine['publicState'] = {
@@ -203,6 +212,7 @@ describe('FirebaseRTDBBattleEngine', () => {
             level: 50,
             types: ['electric'],
             hp: { cur: 100, max: 100 },
+            status: null,
             boosts: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0, acc: 0, eva: 0 }
           },
           benchPublic: []
@@ -213,6 +223,7 @@ describe('FirebaseRTDBBattleEngine', () => {
             level: 50,
             types: ['fire'],
             hp: { cur: 100, max: 100 },
+            status: null,
             boosts: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0, acc: 0, eva: 0 }
           },
           benchPublic: []
@@ -242,8 +253,11 @@ describe('FirebaseRTDBBattleEngine', () => {
             statModifiers: { attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0, accuracy: 0, evasion: 0 }
           }
         ],
-        choiceLock: {}
+        choiceLock: {},
+        currentIndex: 0,
       };
+
+      battleEngine['currentUserUid'] = 'test-user-uid';
 
       const battleState = battleEngine.convertToBattleState();
 
@@ -252,6 +266,7 @@ describe('FirebaseRTDBBattleEngine', () => {
       expect(battleState.phase).toBe('choice');
       expect(battleState.player.pokemon).toHaveLength(1);
       expect(battleState.player.pokemon[0].pokemon.name).toBe('Pikachu');
+      expect(battleState.opponent.pokemon.length).toBeGreaterThanOrEqual(1);
     });
 
     it('should throw error if not fully initialized', () => {
@@ -438,22 +453,23 @@ describe('BattleFlowEngine', () => {
     it('should return battle state if initialized', async () => {
       const mockInitialize = vi.spyOn(flowEngine['engine'], 'initialize');
       mockInitialize.mockResolvedValue(undefined);
-      
-      const mockConvertToBattleState = vi.spyOn(flowEngine['engine'], 'convertToBattleState');
+
       const mockBattleState: BattleState = {
         player: { pokemon: [], currentIndex: 0, faintedCount: 0, sideConditions: {} },
         opponent: { pokemon: [], currentIndex: 0, faintedCount: 0, sideConditions: {} },
         turn: 1,
-        rng: 12345,
+        rng: createBattleRng(1),
         battleLog: [],
         isComplete: false,
         phase: 'choice',
         actionQueue: [],
         field: {}
       };
-      mockConvertToBattleState.mockReturnValue(mockBattleState);
 
       await flowEngine.initialize();
+      (flowEngine as unknown as { handleBattleStateChange(s: BattleState | null | undefined): void }).handleBattleStateChange(
+        mockBattleState
+      );
       const result = flowEngine.getBattleState();
 
       expect(result).toBe(mockBattleState);

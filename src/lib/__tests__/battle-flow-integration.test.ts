@@ -1,7 +1,22 @@
 import { describe, it, expect, beforeEach, afterEach, vi, Mock } from 'vitest';
-import { BattleFlowEngine } from '../battle-engine-rtdb';
+import { BattleFlowEngine, FirebaseRTDBBattleEngine } from '../battle-engine-rtdb';
 import { rtdbService } from '../firebase-rtdb-service';
+import type { RTDBBattleMeta } from '../firebase-rtdb-service';
 import { BattleState, BattlePokemon, BattleTeam } from '../team-battle-engine';
+import { createBattleRng } from '../battle-rng';
+
+const metaChoosing = (overrides: Partial<RTDBBattleMeta> = {}): RTDBBattleMeta => ({
+  phase: 'choosing',
+  turn: 1,
+  version: 1,
+  players: { p1: { uid: 'test-user-uid', name: 'P1' }, p2: { uid: 'p2', name: 'P2' } },
+  createdAt: Date.now(),
+  format: 'singles',
+  ruleSet: 'gen9-no-weather',
+  region: 'global',
+  deadlineAt: Date.now() + 30000,
+  ...overrides,
+});
 
 // Mock the RTDB service
 vi.mock('../firebase-rtdb-service', () => ({
@@ -68,7 +83,7 @@ describe('Battle Flow Integration Tests', () => {
       player: mockTeam,
       opponent: mockTeam,
       turn: 1,
-      rng: 12345,
+      rng: createBattleRng(1),
       battleLog: [],
       isComplete: false,
       phase: 'choice',
@@ -99,9 +114,14 @@ describe('Battle Flow Integration Tests', () => {
       let stateChangeCallback: ((state: BattleState) => void) | undefined;
       let phaseChangeCallback: ((phase: string) => void) | undefined;
 
-      // Mock the initialize method to capture callbacks
       const mockInitialize = vi.spyOn(flowEngine['engine'], 'initialize');
-      mockInitialize.mockImplementation((onStateChange, onPhaseChange) => {
+      mockInitialize.mockImplementation(function (
+        this: FirebaseRTDBBattleEngine,
+        onStateChange,
+        onPhaseChange
+      ) {
+        this.isInitialized = true;
+        (this as unknown as { currentUserUid: string }).currentUserUid = 'test-user-uid';
         stateChangeCallback = onStateChange;
         phaseChangeCallback = onPhaseChange;
         return Promise.resolve();
@@ -113,7 +133,6 @@ describe('Battle Flow Integration Tests', () => {
       expect(stateChangeCallback).toBeDefined();
       expect(phaseChangeCallback).toBeDefined();
 
-      // Simulate battle state changes
       const initialState = createMockBattleState();
       stateChangeCallback!(initialState);
       phaseChangeCallback!('choosing');
@@ -122,13 +141,21 @@ describe('Battle Flow Integration Tests', () => {
       expect(currentState).toBeDefined();
       expect(currentState?.phase).toBe('choice');
 
-      // Test move submission
+      flowEngine['engine']['meta'] = metaChoosing({ turn: 1 });
+
       await flowEngine.submitMove('thunderbolt', 'opponent');
-      expect(rtdbService.submitChoice).toHaveBeenCalledWith({
-        type: 'move',
-        moveId: 'thunderbolt',
-        target: 'opponent'
-      });
+      expect(rtdbService.submitChoice).toHaveBeenCalledWith(
+        'test-battle-123',
+        1,
+        'test-user-uid',
+        expect.objectContaining({
+          action: 'move',
+          payload: expect.objectContaining({
+            moveId: 'thunderbolt',
+            target: 'opponent',
+          }),
+        })
+      );
 
       // Simulate phase change to resolving
       phaseChangeCallback!('resolving');
@@ -138,7 +165,7 @@ describe('Battle Flow Integration Tests', () => {
       const completedState = createMockBattleState({
         isComplete: true,
         winner: 'player',
-        phase: 'ended'
+        phase: 'execution',
       });
       stateChangeCallback!(completedState);
       phaseChangeCallback!('ended');
@@ -153,7 +180,13 @@ describe('Battle Flow Integration Tests', () => {
       let phaseChangeCallback: ((phase: string) => void) | undefined;
 
       const mockInitialize = vi.spyOn(flowEngine['engine'], 'initialize');
-      mockInitialize.mockImplementation((onStateChange, onPhaseChange) => {
+      mockInitialize.mockImplementation(function (
+        this: FirebaseRTDBBattleEngine,
+        onStateChange,
+        onPhaseChange
+      ) {
+        this.isInitialized = true;
+        (this as unknown as { currentUserUid: string }).currentUserUid = 'test-user-uid';
         stateChangeCallback = onStateChange;
         phaseChangeCallback = onPhaseChange;
         return Promise.resolve();
@@ -212,12 +245,18 @@ describe('Battle Flow Integration Tests', () => {
       stateChangeCallback!(switchState);
       phaseChangeCallback!('choosing');
 
-      // Test switch submission
+      flowEngine['engine']['meta'] = metaChoosing({ turn: 1 });
+
       await flowEngine.submitSwitch(1);
-      expect(rtdbService.submitChoice).toHaveBeenCalledWith({
-        type: 'switch',
-        switchIndex: 1
-      });
+      expect(rtdbService.submitChoice).toHaveBeenCalledWith(
+        'test-battle-123',
+        1,
+        'test-user-uid',
+        expect.objectContaining({
+          action: 'switch',
+          payload: expect.objectContaining({ switchToIndex: 1 }),
+        })
+      );
     });
 
     it('should handle error scenarios gracefully', async () => {
@@ -232,7 +271,13 @@ describe('Battle Flow Integration Tests', () => {
       let phaseChangeCallback: ((phase: string) => void) | undefined;
 
       const mockInitialize = vi.spyOn(flowEngine['engine'], 'initialize');
-      mockInitialize.mockImplementation((onStateChange, onPhaseChange) => {
+      mockInitialize.mockImplementation(function (
+        this: FirebaseRTDBBattleEngine,
+        onStateChange,
+        onPhaseChange
+      ) {
+        this.isInitialized = true;
+        (this as unknown as { currentUserUid: string }).currentUserUid = 'test-user-uid';
         stateChangeCallback = onStateChange;
         phaseChangeCallback = onPhaseChange;
         return Promise.resolve();
@@ -246,6 +291,8 @@ describe('Battle Flow Integration Tests', () => {
       stateChangeCallback!(initialState);
       phaseChangeCallback!('choosing');
 
+      flowEngine['engine']['meta'] = metaChoosing({ turn: 1 });
+
       await expect(flowEngine.submitMove('invalid-move')).rejects.toThrow('Invalid move');
     });
 
@@ -254,7 +301,13 @@ describe('Battle Flow Integration Tests', () => {
       let phaseChangeCallback: ((phase: string) => void) | undefined;
 
       const mockInitialize = vi.spyOn(flowEngine['engine'], 'initialize');
-      mockInitialize.mockImplementation((onStateChange, onPhaseChange) => {
+      mockInitialize.mockImplementation(function (
+        this: FirebaseRTDBBattleEngine,
+        onStateChange,
+        onPhaseChange
+      ) {
+        this.isInitialized = true;
+        (this as unknown as { currentUserUid: string }).currentUserUid = 'test-user-uid';
         stateChangeCallback = onStateChange;
         phaseChangeCallback = onPhaseChange;
         return Promise.resolve();
@@ -268,6 +321,8 @@ describe('Battle Flow Integration Tests', () => {
       stateChangeCallback!(initialState);
       phaseChangeCallback!('choosing');
 
+      flowEngine['engine']['meta'] = metaChoosing({ turn: 1 });
+
       await expect(flowEngine.submitSwitch(5)).rejects.toThrow('Invalid switch');
     });
   });
@@ -278,7 +333,13 @@ describe('Battle Flow Integration Tests', () => {
       let phaseChangeCallback: ((phase: string) => void) | undefined;
 
       const mockInitialize = vi.spyOn(flowEngine['engine'], 'initialize');
-      mockInitialize.mockImplementation((onStateChange, onPhaseChange) => {
+      mockInitialize.mockImplementation(function (
+        this: FirebaseRTDBBattleEngine,
+        onStateChange,
+        onPhaseChange
+      ) {
+        this.isInitialized = true;
+        (this as unknown as { currentUserUid: string }).currentUserUid = 'test-user-uid';
         stateChangeCallback = onStateChange;
         phaseChangeCallback = onPhaseChange;
         return Promise.resolve();
@@ -310,7 +371,13 @@ describe('Battle Flow Integration Tests', () => {
       let phaseChangeCallback: ((phase: string) => void) | undefined;
 
       const mockInitialize = vi.spyOn(flowEngine['engine'], 'initialize');
-      mockInitialize.mockImplementation((onStateChange, onPhaseChange) => {
+      mockInitialize.mockImplementation(function (
+        this: FirebaseRTDBBattleEngine,
+        onStateChange,
+        onPhaseChange
+      ) {
+        this.isInitialized = true;
+        (this as unknown as { currentUserUid: string }).currentUserUid = 'test-user-uid';
         stateChangeCallback = onStateChange;
         phaseChangeCallback = onPhaseChange;
         return Promise.resolve();
@@ -357,38 +424,50 @@ describe('Battle Flow Integration Tests', () => {
 
   describe('Edge Cases', () => {
     it('should handle null battle state gracefully', async () => {
-      let stateChangeCallback: ((state: BattleState) => void) | undefined;
+      let stateChangeCallback: ((state: BattleState | null) => void) | undefined;
 
       const mockInitialize = vi.spyOn(flowEngine['engine'], 'initialize');
-      mockInitialize.mockImplementation((onStateChange) => {
+      mockInitialize.mockImplementation(function (
+        this: FirebaseRTDBBattleEngine,
+        onStateChange
+      ) {
+        this.isInitialized = true;
+        (this as unknown as { currentUserUid: string }).currentUserUid = 'test-user-uid';
         stateChangeCallback = onStateChange;
         return Promise.resolve();
       });
 
       await flowEngine.initialize();
 
-      // Simulate null state
-      stateChangeCallback!(null as any);
+      stateChangeCallback!(null as unknown as BattleState);
 
       expect(flowEngine.getBattleState()).toBeNull();
     });
 
-    it('should handle undefined callbacks', async () => {
+    it('should reject submissions when battle meta is missing', async () => {
       const mockInitialize = vi.spyOn(flowEngine['engine'], 'initialize');
-      mockInitialize.mockImplementation(() => Promise.resolve());
+      mockInitialize.mockImplementation(function (this: FirebaseRTDBBattleEngine) {
+        this.isInitialized = true;
+        (this as unknown as { currentUserUid: string }).currentUserUid = 'test-user-uid';
+        return Promise.resolve();
+      });
 
       await flowEngine.initialize();
 
-      // Should not throw errors
-      expect(() => flowEngine.submitMove('thunderbolt')).not.toThrow();
-      expect(() => flowEngine.submitSwitch(1)).not.toThrow();
+      await expect(flowEngine.submitMove('thunderbolt')).rejects.toThrow('Battle not initialized');
+      await expect(flowEngine.submitSwitch(1)).rejects.toThrow('Battle not initialized');
     });
 
     it('should handle concurrent operations', async () => {
       let stateChangeCallback: ((state: BattleState) => void) | undefined;
 
       const mockInitialize = vi.spyOn(flowEngine['engine'], 'initialize');
-      mockInitialize.mockImplementation((onStateChange) => {
+      mockInitialize.mockImplementation(function (
+        this: FirebaseRTDBBattleEngine,
+        onStateChange
+      ) {
+        this.isInitialized = true;
+        (this as unknown as { currentUserUid: string }).currentUserUid = 'test-user-uid';
         stateChangeCallback = onStateChange;
         return Promise.resolve();
       });
@@ -398,11 +477,12 @@ describe('Battle Flow Integration Tests', () => {
       const initialState = createMockBattleState();
       stateChangeCallback!(initialState);
 
-      // Simulate concurrent operations
+      flowEngine['engine']['meta'] = metaChoosing({ turn: 1 });
+
       const promises = [
         flowEngine.submitMove('thunderbolt'),
         flowEngine.submitMove('quick-attack'),
-        flowEngine.submitSwitch(1)
+        flowEngine.submitSwitch(1),
       ];
 
       await Promise.allSettled(promises);

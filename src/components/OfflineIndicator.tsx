@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { useNetworkState } from '@/lib/offlineManager'
-import { getPrefetchState } from '@/lib/offlinePrefetch'
+import { getSearchIndex } from '@/lib/offlinePrefetch'
 
 export default function OfflineIndicator() {
   const networkState = useNetworkState()
@@ -12,8 +12,9 @@ export default function OfflineIndicator() {
 
   useEffect(() => {
     if (!networkState.isOnline) {
-      const state = getPrefetchState()
-      setHasOfflineData(!!state.lastFullPrefetch)
+      void getSearchIndex().then((idx) => {
+        setHasOfflineData(Array.isArray(idx) && idx.length > 0)
+      })
     }
   }, [networkState.isOnline])
 

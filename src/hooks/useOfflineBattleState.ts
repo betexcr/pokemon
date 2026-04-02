@@ -5,7 +5,11 @@ import type {
   BattleState, BattlePokemon, BattleTeam, BattleAction, BattleLogEntry,
 } from '@/lib/team-battle-engine';
 import {
-  buildActionQueue, isTeamDefeated, getCurrentPokemon, allMovesOutOfPp,
+  buildActionQueue,
+  isTeamDefeated,
+  getCurrentPokemon,
+  allMovesOutOfPp,
+  encoredMoveHasNoPp,
 } from '@/lib/team-battle-engine';
 import { runBattleTurnFromQueue } from '@/lib/team-battle-engine-additional';
 import { createBattleRng } from '@/lib/battle-rng';
@@ -475,7 +479,7 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
   const legalMoves = useMemo(() => {
     if (!battleState) return [];
     const active = getCurrentPokemon(battleState.player);
-    if (allMovesOutOfPp(active)) {
+    if (allMovesOutOfPp(active) || encoredMoveHasNoPp(active)) {
       return [{ id: 'struggle', pp: 1, maxPp: 1 }];
     }
     return active.moves.filter(m => m.pp > 0 && !m.disabled).map(m => ({

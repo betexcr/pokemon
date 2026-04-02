@@ -254,6 +254,18 @@ export function allMovesOutOfPp(pokemon: BattlePokemon): boolean {
   return pokemon.moves.every((m) => m.pp <= 0);
 }
 
+/** Encored move slot has no PP left (Showdown-style: must Struggle even if other moves have PP). */
+export function encoredMoveHasNoPp(pokemon: BattlePokemon): boolean {
+  const e = pokemon.volatile.encore;
+  if (!e || e.turns <= 0) return false;
+  const slot = pokemon.moves.find((m) => m.id === e.move);
+  return !slot || slot.pp <= 0;
+}
+
+export function canSelectStruggle(pokemon: BattlePokemon): boolean {
+  return allMovesOutOfPp(pokemon) || encoredMoveHasNoPp(pokemon);
+}
+
 /** Decrements PP for the used move slot once per selection (hit or miss). Struggle does not consume PP. */
 export function consumePpForMove(pokemon: BattlePokemon, moveId: string): void {
   if (moveId.toLowerCase() === 'struggle') return;
@@ -271,17 +283,25 @@ export function canUseMove(
   const idLower = moveId.toLowerCase();
 
   if (idLower === 'struggle') {
-    if (!allMovesOutOfPp(pokemon)) {
+    if (!canSelectStruggle(pokemon)) {
       return { canUse: false, reason: 'struggle not available' };
     }
   } else {
     const move = pokemon.moves.find((m) => m.id === moveId);
     if (!move) return { canUse: false, reason: 'Invalid move' };
 
-    // Check PP
-    if (move.pp <= 0) return { canUse: false, reason: 'no PP left' };
+    if (pokemon.volatile.encore && pokemon.volatile.encore.turns > 0) {
+      const enc = pokemon.volatile.encore.move;
+      if (moveId !== enc) {
+        return { canUse: false, reason: 'encored' };
+      }
+      if (move.pp <= 0) {
+        return { canUse: false, reason: 'encored move has no PP' };
+      }
+    } else {
+      if (move.pp <= 0) return { canUse: false, reason: 'no PP left' };
+    }
 
-    // Check if move is disabled
     if (move.disabled) return { canUse: false, reason: 'disabled' };
   }
 
@@ -324,12 +344,6 @@ export function canUseMove(
     }
   }
 
-  if (pokemon.volatile.encore && pokemon.volatile.encore.turns > 0) {
-    if (!(idLower === 'struggle' && allMovesOutOfPp(pokemon))) {
-      return { canUse: moveId === pokemon.volatile.encore.move, reason: 'encored' };
-    }
-  }
-
   if (pokemon.volatile.disable && pokemon.volatile.disable.turns > 0) {
     if (moveId === pokemon.volatile.disable.move && idLower !== 'struggle') {
       return { canUse: false, reason: 'disabled' };
@@ -337,6 +351,57 @@ export function canUseMove(
   }
 
   return { canUse: true };
+}
+
+/**
+ * Deterministic server-side legality for submitted choices (no RNG).
+ * Paralysis full para / confusion self-hit are resolved during turn execution, not here.
+ */
+export function validateServerBattleAction(team: BattleTeam, action: BattleAction): string | null {
+  if (action.type === 'switch') {
+    const idx = action.switchIndex;
+    if (typeof idx !== 'number' || !Number.isInteger(idx)) return 'invalid_switch_index';
+    if (idx < 0 || idx >= team.pokemon.length) return 'switch_out_of_range';
+    if (idx === team.currentIndex) return 'switch_same_slot';
+    if (team.pokemon[idx].currentHp <= 0) return 'switch_to_fainted';
+    return null;
+  }
+
+  if (action.type === 'move') {
+    const moveId = action.moveId;
+    if (!moveId || typeof moveId !== 'string') return 'missing_move';
+    const mon = getCurrentPokemon(team);
+    const idLower = moveId.toLowerCase();
+
+    if (idLower === 'struggle') {
+      if (!canSelectStruggle(mon)) return 'illegal_struggle';
+      return null;
+    }
+
+    const move = mon.moves.find((m) => m.id === moveId);
+    if (!move) return 'invalid_move';
+    if (mon.volatile.encore && mon.volatile.encore.turns > 0) {
+      if (moveId !== mon.volatile.encore.move) return 'encored_wrong_move';
+      if (move.pp <= 0) return 'encored_no_pp_use_struggle';
+    } else if (move.pp <= 0) {
+      return 'no_pp';
+    }
+    if (move.disabled) return 'move_disabled';
+    if (mon.status === 'asleep' || mon.status === 'frozen') return 'cannot_use_move_status';
+
+    if (mon.volatile.taunt && mon.volatile.taunt.turns > 0) {
+      const fullMove = getCachedMove(moveId);
+      if (fullMove?.category === 'Status') return 'taunted';
+    }
+
+    if (mon.volatile.disable && mon.volatile.disable.turns > 0) {
+      if (moveId === mon.volatile.disable.move && idLower !== 'struggle') return 'move_disabled_volatile';
+    }
+
+    return null;
+  }
+
+  return 'unknown_action';
 }
 
 // Build and order action queue (Gen-8/9 style)

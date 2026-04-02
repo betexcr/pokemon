@@ -1250,7 +1250,7 @@ export default function HelpAssistant({ className = '' }: HelpAssistantProps) {
   if (!shouldShow) return null
 
   return (
-    <div className={`fixed bottom-4 right-4 z-50 sm:bottom-6 sm:right-6 ${className}`}>
+    <div className={`fixed bottom-4 right-28 z-50 sm:bottom-6 sm:right-28 ${className}`}>
       {/* Help Assistant Button */}
       {!isExpanded && (
         <button

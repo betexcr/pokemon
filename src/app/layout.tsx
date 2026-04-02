@@ -15,7 +15,6 @@ import { ReactQueryProvider } from '@/components/ReactQueryProvider'
 import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration'
 import OfflineIndicator from '@/components/OfflineIndicator'
 import PokemonPreloader from '@/components/PokemonPreloader'
-import OfflineDownloadPanel from '@/components/OfflineDownloadPanel'
 import AnalyticsProvider from '@/components/AnalyticsProvider'
 
 
@@ -149,11 +148,6 @@ export default function RootLayout({
         <meta name="msapplication-TileColor" content="#3B4CCA" />
         <meta name="application-name" content="PokéDex" />
         <meta name="apple-mobile-web-app-title" content="PokéDex" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        
-        {/* PWA Manifest */}
-        <link rel="manifest" href="/manifest.json" />
 
         {/* Structured Data: Organization */}
         <script
@@ -204,7 +198,6 @@ export default function RootLayout({
                     <GlobalErrorCatcher />
                     <HelpAssistant />
                     <ErrorTip />
-                    <OfflineDownloadPanel />
                     <ServiceWorkerRegistration />
                     <PokemonPreloader />
                     <AnalyticsProvider />
