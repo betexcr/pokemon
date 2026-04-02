@@ -11,8 +11,18 @@ interface UsageFiltersProps {
 
 const PLATFORM_OPTIONS: { value: Platform; label: string; description: string }[] = [
   { value: 'SMOGON_SINGLES', label: 'Smogon Singles', description: 'Pokémon Showdown competitive singles' },
-  { value: 'VGC_OFFICIAL', label: 'VGC Official', description: 'Video Game Championships doubles' },
-  { value: 'BSS_OFFICIAL', label: 'BSS Official', description: 'Battle Stadium Singles cartridge' }
+  {
+    value: 'VGC_OFFICIAL',
+    label: 'VGC Official',
+    description:
+      'Doubles usage from Smogon’s published VGC regulation stats (same naming as official seasons, third-party source).',
+  },
+  {
+    value: 'BSS_OFFICIAL',
+    label: 'BSS Official',
+    description:
+      'Battle Stadium–style usage from Smogon’s Battle Stadium / BSS regulation dumps (third-party, not Nintendo-only).',
+  },
 ];
 
 const GENERATION_OPTIONS: { value: Generation; label: string; description: string }[] = [
@@ -315,6 +325,7 @@ export default function UsageFiltersComponent({
                     : [platform.value]; // Select only this platform
                   updateFilters({ platforms: newPlatforms });
                 }}
+                title={platform.description}
                 className={`px-3 py-2 rounded-lg text-sm transition-all ${
                   filters.platforms.includes(platform.value)
                     ? 'bg-blue-600 text-white shadow-md'

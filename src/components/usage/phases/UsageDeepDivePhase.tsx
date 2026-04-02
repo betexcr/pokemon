@@ -22,6 +22,7 @@ interface UsageDeepDiveData {
     months?: string[];
     sampleSize?: number;
     source?: string;
+    dataQuality?: 'live' | 'empty';
     lastUpdated?: string;
   };
 }

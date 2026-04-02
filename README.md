@@ -114,7 +114,7 @@ A comprehensive, high-performance Pokémon web application built with Next.js, T
 
 ### Maintainer reference
 
-**Hosting, architecture map, and pointers to complex modules** (battles, RTDB, championships, caching): see **[docs/ARCHITECTURE_AND_HOSTING.md](docs/ARCHITECTURE_AND_HOSTING.md)**. Includes the known Vercel production URL and how to verify what commit is deployed.
+**Hosting, architecture map, and pointers to complex modules** (battles, RTDB, championships, caching): see **[docs/ARCHITECTURE_AND_HOSTING.md](docs/ARCHITECTURE_AND_HOSTING.md)**. The canonical live site is **`https://pokemon-indol-tau.vercel.app/`**; `pokemon.ultharcr.com` is retired. The doc also covers how to verify what commit is deployed.
 
 ## 📱 UI/UX Features
 

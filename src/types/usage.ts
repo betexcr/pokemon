@@ -12,7 +12,7 @@ export type Format =
   | 'BSS_SERIES_8' | 'BSS_SERIES_9' | 'BSS_SERIES_12' | 'BSS_SERIES_13' | 'BSS_REG_C' | 'BSS_REG_D' | 'BSS_REG_E' | 'BSS_REG_I'
   | 'UNKNOWN';
 
-interface UsageSubstats {
+export interface UsageSubstats {
   moves?: { name: string; pct: number }[];
   items?: { name: string; pct: number }[];
   abilities?: { name: string; pct: number }[];
