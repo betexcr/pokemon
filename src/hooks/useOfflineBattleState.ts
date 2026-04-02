@@ -47,6 +47,7 @@ type Meta = {
   deadlineAt: number;
   winnerUid: string | null;
   endedReason: null | 'forfeit' | string;
+  ruleProfile?: 'simplified' | 'cart_like';
 };
 
 type MoveEntry = { id: string; pp: number; maxPp?: number; disabled?: boolean; reason?: string };
@@ -373,6 +374,7 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
           deadlineAt: Date.now() + 120_000,
           winnerUid: null,
           endedReason: null,
+          ruleProfile: 'simplified',
         };
 
         setBattleState(state);
@@ -479,13 +481,14 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
   const legalMoves = useMemo(() => {
     if (!battleState) return [];
     const active = getCurrentPokemon(battleState.player);
-    if (allMovesOutOfPp(active) || encoredMoveHasNoPp(active)) {
+    const profile = meta?.ruleProfile ?? 'simplified';
+    if (allMovesOutOfPp(active) || (profile === 'simplified' && encoredMoveHasNoPp(active))) {
       return [{ id: 'struggle', pp: 1, maxPp: 1 }];
     }
     return active.moves.filter(m => m.pp > 0 && !m.disabled).map(m => ({
       id: m.id, pp: m.pp, maxPp: m.maxPp,
     }));
-  }, [battleState]);
+  }, [battleState, meta?.ruleProfile]);
 
   const legalSwitchIndexes = useMemo(() => {
     if (!battleState) return [];

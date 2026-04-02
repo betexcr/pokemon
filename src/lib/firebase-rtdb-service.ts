@@ -32,6 +32,8 @@ export interface RTDBBattleMeta {
   endedReason?: 'forfeit' | 'timeout' | 'victory' | 'resolution_failed';
   /** Authoritative battle RNG; updated after each resolved turn. */
   battleRng?: { seed: number; state: number; calls: number };
+  /** Behavior profile for legality/edge rules. */
+  ruleProfile?: 'simplified' | 'cart_like';
 }
 
 export interface RTDBBattlePublic {
@@ -83,6 +85,12 @@ export interface RTDBBattlePublic {
   };
   lastResultSummary: string;
   battleLog?: string[];
+  lastValidation?: {
+    turn: number;
+    p1?: string | null;
+    p2?: string | null;
+    normalized?: boolean;
+  };
 }
 
 export interface RTDBBattlePrivate {
@@ -106,13 +114,29 @@ export interface RTDBChoice {
   clientVersion: number;
 }
 
-interface RTDBResolution {
+export interface RTDBResolution {
   by: 'function';
   committedAt: number;
   rngSeedUsed: number;
   diffs: any[];
   logs: string[];
   stateHashAfter: string;
+  replay?: {
+    turn: number;
+    p1Action: { type: 'move' | 'switch'; moveId?: string; switchIndex?: number; target?: string };
+    p2Action: { type: 'move' | 'switch'; moveId?: string; switchIndex?: number; target?: string };
+    rngBefore: { seed: number; state: number; calls: number };
+    rngAfter: { seed: number; state: number; calls: number };
+  };
+  validation?: {
+    p1?: string;
+    p2?: string;
+    normalized?: boolean;
+  };
+  metrics?: {
+    resolveDurationMs?: number;
+    hydrationFallbackCount?: number;
+  };
 }
 
 interface RTDBPresence {
@@ -192,6 +216,7 @@ class FirebaseRTDBService {
       deadlineAt: deadlineAt,
       version: 1,
       battleRng: battleRngToStored(initialRng),
+      ruleProfile: 'simplified',
     });
 
     // Record participant list for security rules and quick lookups

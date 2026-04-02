@@ -16,6 +16,7 @@ type Meta = {
   deadlineAt: number;
   winnerUid: string | null;
   endedReason: null | "forfeit" | "timeout";
+  ruleProfile?: "simplified" | "cart_like";
 };
 
 type PublicVolatiles = {
@@ -40,6 +41,12 @@ type PublicState = {
     screens: IdMap<{ reflect: number; lightScreen: number }>;
   };
   lastResultSummary?: string;
+  lastValidation?: {
+    turn: number;
+    p1?: string | null;
+    p2?: string | null;
+    normalized?: boolean;
+  };
 } & IdMap<{ active: PublicMon; benchPublic: Array<{ species: string; fainted: boolean; revealedMoves: string[] }> }>;
 
 type Move = { id: string; pp: number };
@@ -341,8 +348,10 @@ export function useBattleState(battleId: string): UseBattleState {
     const taunted = !!myPublicV.taunt;
     const recharging = !!myPublicV.recharge;
 
+    const profile = meta?.ruleProfile ?? 'simplified';
     const encSlot = encoreMoveId ? list.find((m) => m.id === encoreMoveId) : undefined;
     const encoreForcesStruggle =
+      profile === 'simplified' &&
       Boolean(encoreMoveId && encSlot && (parseNumeric(encSlot.pp) ?? 0) <= 0);
     const allNoPp = list.length > 0 && list.every((m) => (parseNumeric(m.pp) ?? 0) <= 0);
     if (allNoPp || encoreForcesStruggle) {
@@ -366,7 +375,7 @@ export function useBattleState(battleId: string): UseBattleState {
     });
 
     return mapped;
-  }, [myPrivateActive, me?.choiceLock, me?.disable, me?.encoreMoveId, myPublicV.taunt, myPublicV.recharge]);
+  }, [myPrivateActive, me?.choiceLock, me?.disable, me?.encoreMoveId, myPublicV.taunt, myPublicV.recharge, meta?.ruleProfile]);
 
   const legalSwitchIndexes = useMemo(() => {
     const team = me?.team ?? [];

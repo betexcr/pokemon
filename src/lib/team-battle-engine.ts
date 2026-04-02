@@ -14,7 +14,7 @@ import {
   createBattleRng,
   rngRollChance,
 } from './battle-rng';
-import { FieldState, SideHazards, EMPTY_HAZARDS, createFieldState, FieldSideScreens, TerrainKind, WeatherKind } from './team-battle-types';
+import { FieldState, SideHazards, EMPTY_HAZARDS, createFieldState, FieldSideScreens, TerrainKind, WeatherKind, type BattleFeatureFlags } from './team-battle-types';
 import { isGrounded } from './team-battle-hazards';
 
 function normalizeTypeName(raw?: string | null): TypeName {
@@ -182,6 +182,8 @@ export type BattleState = {
   turnNumber?: number;
   needsPokemonSelection?: 'player' | 'opponent';
   currentTurn?: 'host' | 'guest';
+  /** Feature-gate scaffold for future mechanics (Tera/doubles). */
+  featureFlags?: BattleFeatureFlags;
 };
 
 export type BattleAction = {
@@ -189,6 +191,20 @@ export type BattleAction = {
   moveId?: string;
   target?: 'player' | 'opponent';
   switchIndex?: number;
+};
+
+export type BattleRuleProfile = 'simplified' | 'cart_like';
+
+/** Future doubles-ready target model (currently singles uses 'opponent'). */
+export type BattleTargetRef =
+  | { mode: 'single'; side: 'player' | 'opponent' }
+  | { mode: 'slot'; side: 'player' | 'opponent'; slot: number };
+
+export type NormalizedServerActionResult = {
+  action: BattleAction;
+  normalized: boolean;
+  reasonCode?: string;
+  errorCode?: string;
 };
 
 // Helper functions
@@ -358,50 +374,100 @@ export function canUseMove(
  * Paralysis full para / confusion self-hit are resolved during turn execution, not here.
  */
 export function validateServerBattleAction(team: BattleTeam, action: BattleAction): string | null {
+  const normalized = normalizeServerBattleAction(team, action, 'simplified');
+  return normalized.errorCode ?? null;
+}
+
+/**
+ * Server-authoritative action normalization.
+ * - `simplified`: normalize select illegal moves to Struggle when deterministic.
+ * - `cart_like`: keep strict failures unless explicitly legal.
+ */
+export function normalizeServerBattleAction(
+  team: BattleTeam,
+  action: BattleAction,
+  profile: BattleRuleProfile = 'simplified'
+): NormalizedServerActionResult {
   if (action.type === 'switch') {
     const idx = action.switchIndex;
-    if (typeof idx !== 'number' || !Number.isInteger(idx)) return 'invalid_switch_index';
-    if (idx < 0 || idx >= team.pokemon.length) return 'switch_out_of_range';
-    if (idx === team.currentIndex) return 'switch_same_slot';
-    if (team.pokemon[idx].currentHp <= 0) return 'switch_to_fainted';
-    return null;
+    if (typeof idx !== 'number' || !Number.isInteger(idx)) return { action, normalized: false, errorCode: 'invalid_switch_index' };
+    if (idx < 0 || idx >= team.pokemon.length) return { action, normalized: false, errorCode: 'switch_out_of_range' };
+    if (idx === team.currentIndex) return { action, normalized: false, errorCode: 'switch_same_slot' };
+    if (team.pokemon[idx].currentHp <= 0) return { action, normalized: false, errorCode: 'switch_to_fainted' };
+    return { action, normalized: false };
   }
 
   if (action.type === 'move') {
     const moveId = action.moveId;
-    if (!moveId || typeof moveId !== 'string') return 'missing_move';
+    if (!moveId || typeof moveId !== 'string') return { action, normalized: false, errorCode: 'missing_move' };
     const mon = getCurrentPokemon(team);
     const idLower = moveId.toLowerCase();
 
     if (idLower === 'struggle') {
-      if (!canSelectStruggle(mon)) return 'illegal_struggle';
-      return null;
+      if (!canSelectStruggle(mon)) return { action, normalized: false, errorCode: 'illegal_struggle' };
+      return { action, normalized: false };
     }
 
     const move = mon.moves.find((m) => m.id === moveId);
-    if (!move) return 'invalid_move';
-    if (mon.volatile.encore && mon.volatile.encore.turns > 0) {
-      if (moveId !== mon.volatile.encore.move) return 'encored_wrong_move';
-      if (move.pp <= 0) return 'encored_no_pp_use_struggle';
-    } else if (move.pp <= 0) {
-      return 'no_pp';
+    if (!move) {
+      if (profile === 'simplified' && canSelectStruggle(mon)) {
+        return {
+          action: { type: 'move', moveId: 'struggle', target: action.target },
+          normalized: true,
+          reasonCode: 'invalid_move_coerced_to_struggle',
+        };
+      }
+      return { action, normalized: false, errorCode: 'invalid_move' };
     }
-    if (move.disabled) return 'move_disabled';
-    if (mon.status === 'asleep' || mon.status === 'frozen') return 'cannot_use_move_status';
+    if (mon.volatile.encore && mon.volatile.encore.turns > 0) {
+      if (moveId !== mon.volatile.encore.move) {
+        if (profile === 'simplified' && canSelectStruggle(mon)) {
+          return {
+            action: { type: 'move', moveId: 'struggle', target: action.target },
+            normalized: true,
+            reasonCode: 'encore_wrong_move_coerced_to_struggle',
+          };
+        }
+        return { action, normalized: false, errorCode: 'encored_wrong_move' };
+      }
+      if (move.pp <= 0) {
+        if (profile === 'simplified') {
+          return {
+            action: { type: 'move', moveId: 'struggle', target: action.target },
+            normalized: true,
+            reasonCode: 'encored_no_pp_coerced_to_struggle',
+          };
+        }
+        return { action, normalized: false, errorCode: 'encored_no_pp_use_struggle' };
+      }
+    } else if (move.pp <= 0) {
+      if (profile === 'simplified' && canSelectStruggle(mon)) {
+        return {
+          action: { type: 'move', moveId: 'struggle', target: action.target },
+          normalized: true,
+          reasonCode: 'no_pp_coerced_to_struggle',
+        };
+      }
+      return { action, normalized: false, errorCode: 'no_pp' };
+    }
+    if (move.disabled) return { action, normalized: false, errorCode: 'move_disabled' };
+    if (mon.status === 'asleep' || mon.status === 'frozen') return { action, normalized: false, errorCode: 'cannot_use_move_status' };
 
     if (mon.volatile.taunt && mon.volatile.taunt.turns > 0) {
       const fullMove = getCachedMove(moveId);
-      if (fullMove?.category === 'Status') return 'taunted';
+      if (fullMove?.category === 'Status') return { action, normalized: false, errorCode: 'taunted' };
     }
 
     if (mon.volatile.disable && mon.volatile.disable.turns > 0) {
-      if (moveId === mon.volatile.disable.move && idLower !== 'struggle') return 'move_disabled_volatile';
+      if (moveId === mon.volatile.disable.move && idLower !== 'struggle') {
+        return { action, normalized: false, errorCode: 'move_disabled_volatile' };
+      }
     }
 
-    return null;
+    return { action, normalized: false };
   }
 
-  return 'unknown_action';
+  return { action, normalized: false, errorCode: 'unknown_action' };
 }
 
 // Build and order action queue (Gen-8/9 style)

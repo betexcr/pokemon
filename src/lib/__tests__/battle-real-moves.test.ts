@@ -6,6 +6,7 @@ import {
   canUseMove,
   allMovesOutOfPp,
   validateServerBattleAction,
+  normalizeServerBattleAction,
   type BattleState,
   type BattlePokemon,
   type BattleTeam,
@@ -270,7 +271,7 @@ describe('Encore and Struggle (Showdown-style)', () => {
     expect(canUseMove(mon, 'struggle', rng).canUse).toBe(true);
     expect(canUseMove(mon, 'growl', rng).canUse).toBe(false);
     expect(validateServerBattleAction(team, { type: 'move', moveId: 'struggle' })).toBeNull();
-    expect(validateServerBattleAction(team, { type: 'move', moveId: 'growl' })).toBe('encored_wrong_move');
+    expect(validateServerBattleAction(team, { type: 'move', moveId: 'growl' })).toBeNull();
   });
 });
 
@@ -395,5 +396,25 @@ describe('validateServerBattleAction', () => {
     expect(validateServerBattleAction(team, { type: 'move', moveId: 'struggle' })).toBe('illegal_struggle');
     expect(validateServerBattleAction(team, { type: 'switch', switchIndex: 0 })).toBe('switch_same_slot');
     expect(validateServerBattleAction(team, { type: 'switch', switchIndex: 1 })).toBe('switch_to_fainted');
+  });
+});
+
+describe('normalizeServerBattleAction', () => {
+  it('coerces invalid move to struggle in simplified profile when struggle is legal', () => {
+    const active = makeMon('atk', ['normal'], {
+      moves: [
+        { id: 'tackle', pp: 0, maxPp: 10 },
+        { id: 'growl', pp: 0, maxPp: 20 },
+      ],
+    });
+    const team: BattleTeam = {
+      pokemon: [active],
+      currentIndex: 0,
+      faintedCount: 0,
+      sideConditions: {},
+    };
+    const r = normalizeServerBattleAction(team, { type: 'move', moveId: 'unknown', target: 'opponent' }, 'simplified');
+    expect(r.normalized).toBe(true);
+    expect(r.action.moveId).toBe('struggle');
   });
 });

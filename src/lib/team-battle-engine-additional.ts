@@ -370,6 +370,52 @@ function applyMoveFlinch(state: BattleState, move: any, defender: BattlePokemon)
   }
 }
 
+type ScriptedStatusMoveHandler = (ctx: {
+  state: BattleState;
+  attacker: BattlePokemon;
+  defender: BattlePokemon;
+  isPlayer: boolean;
+}) => boolean;
+
+const scriptedStatusMoveHandlers: Record<string, ScriptedStatusMoveHandler> = {
+  'sunny-day': ({ state, attacker }) => {
+    state.field.weather = { kind: 'sun', turns: 5, source: attacker.pokemon.name };
+    state.battleLog.push({ type: 'status_effect', message: 'The sunlight turned harsh!' });
+    return true;
+  },
+  'rain-dance': ({ state, attacker }) => {
+    state.field.weather = { kind: 'rain', turns: 5, source: attacker.pokemon.name };
+    state.battleLog.push({ type: 'status_effect', message: 'It started to rain!' });
+    return true;
+  },
+  sandstorm: ({ state, attacker }) => {
+    state.field.weather = { kind: 'sandstorm', turns: 5, source: attacker.pokemon.name };
+    state.battleLog.push({ type: 'status_effect', message: 'A sandstorm kicked up!' });
+    return true;
+  },
+  hail: ({ state, attacker }) => {
+    state.field.weather = { kind: 'snow', turns: 5, source: attacker.pokemon.name };
+    state.battleLog.push({ type: 'status_effect', message: 'It started to snow!' });
+    return true;
+  },
+  snowscape: ({ state, attacker }) => {
+    state.field.weather = { kind: 'snow', turns: 5, source: attacker.pokemon.name };
+    state.battleLog.push({ type: 'status_effect', message: 'It started to snow!' });
+    return true;
+  },
+  'trick-room': ({ state, attacker }) => {
+    if (!state.field.rooms) state.field.rooms = {};
+    if (state.field.rooms.trickRoom) {
+      delete state.field.rooms.trickRoom;
+      state.battleLog.push({ type: 'status_effect', message: `${attacker.pokemon.name} twisted the dimensions back to normal!` });
+    } else {
+      state.field.rooms.trickRoom = { turns: 5 };
+      state.battleLog.push({ type: 'status_effect', message: `${attacker.pokemon.name} twisted the dimensions!` });
+    }
+    return true;
+  },
+};
+
 // Execute a move action with multi-hit support
 async function executeMoveAction(
   state: BattleState,
@@ -400,6 +446,10 @@ async function executeMoveAction(
   // Note: moves with power=null (like seismic-toss, night-shade) are NOT status moves.
   if (move.category === 'Status') {
     const moveLower = moveId.toLowerCase();
+    const scripted = scriptedStatusMoveHandlers[moveLower];
+    if (scripted?.({ state, attacker, defender, isPlayer })) {
+      return;
+    }
 
     // Healing moves
     const HEALING_FRACTIONS: Record<string, number> = {
@@ -459,17 +509,6 @@ async function executeMoveAction(
       return;
     }
 
-    // Weather-setting moves
-    const WEATHER_MOVES: Record<string, 'sun' | 'rain' | 'sandstorm' | 'snow'> = {
-      'sunny-day': 'sun', 'rain-dance': 'rain', 'sandstorm': 'sandstorm',
-      'hail': 'snow', 'snowscape': 'snow',
-    };
-    if (WEATHER_MOVES[moveLower]) {
-      state.field.weather = { kind: WEATHER_MOVES[moveLower], turns: 5, source: attacker.pokemon.name };
-      const labels: Record<string, string> = { sun: 'The sunlight turned harsh!', rain: 'It started to rain!', sandstorm: 'A sandstorm kicked up!', snow: 'It started to snow!' };
-      state.battleLog.push({ type: 'status_effect', message: labels[WEATHER_MOVES[moveLower]] });
-      return;
-    }
 
     // Screen-setting moves
     const attackerSide = isPlayer ? state.player : state.opponent;
@@ -528,18 +567,6 @@ async function executeMoveAction(
         state.battleLog.push({ type: 'status_effect', message: `A sticky web has been laid out on the ground around the opposing team!` });
       } else {
         state.battleLog.push({ type: 'status_effect', message: `But it failed!` });
-      }
-      return;
-    }
-
-    if (moveLower === 'trick-room') {
-      if (!state.field.rooms) state.field.rooms = {};
-      if (state.field.rooms.trickRoom) {
-        delete state.field.rooms.trickRoom;
-        state.battleLog.push({ type: 'status_effect', message: `${attacker.pokemon.name} twisted the dimensions back to normal!` });
-      } else {
-        state.field.rooms.trickRoom = { turns: 5 };
-        state.battleLog.push({ type: 'status_effect', message: `${attacker.pokemon.name} twisted the dimensions!` });
       }
       return;
     }

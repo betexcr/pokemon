@@ -47,6 +47,17 @@ export type FieldState = {
   other?: Record<string, unknown>;
 };
 
+/** Scaffolding for future doubles targeting without changing current singles flow. */
+export type BattleSlotRef = {
+  side: 'player' | 'opponent';
+  slot: number;
+};
+
+export type BattleFeatureFlags = {
+  teraEnabled?: boolean;
+  doublesEnabled?: boolean;
+};
+
 export const EMPTY_HAZARDS: SideHazards = {
   stealthRock: false,
   spikes: 0,

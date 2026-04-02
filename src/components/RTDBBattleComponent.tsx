@@ -192,6 +192,18 @@ const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
     if (pendingAction && pendingAction.turn === meta.turn) return true;
     return meta.phase === 'resolving';
   }, [meta?.phase, meta?.turn, pendingAction]);
+  const validationNotice = useMemo(() => {
+    const v = (pub as any)?.lastValidation;
+    if (!v) return null;
+    if (v.normalized) return `Server normalized one or more submitted actions (turn ${v.turn}).`;
+    if (v.p1 || v.p2) return `Server rejected illegal action(s) on turn ${v.turn}.`;
+    return null;
+  }, [pub]);
+  const battleLogWithValidation = useMemo(() => {
+    const base = (pub?.battleLog as any[] | undefined) ?? [];
+    if (!validationNotice) return base;
+    return [...base, { type: 'engine_warning', message: validationNotice }];
+  }, [pub?.battleLog, validationNotice]);
 
   const activePhase: 'choosing' | 'resolving' = waitingForResolution ? 'resolving' : 'choosing';
 
@@ -557,7 +569,7 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
 
         {/* Pokemon-style Battle Text Box */}
         <GameTextBox
-          battleLog={pub?.battleLog as any[] | undefined}
+          battleLog={battleLogWithValidation}
           waitingForResolution={waitingForResolution}
           myActiveSpecies={myActive?.species}
           displayedLogIndex={displayedLogIndex}

@@ -38,7 +38,7 @@ The multiplayer battle system has **core gameplay wired end-to-end**: choices ar
 ### Turn-Based Flow
 - **Turn submission** – Choices written under `battles/{id}/turns/{turn}/choices` ✅
 - **Turn resolution** – When both UIDs have a choice, `resolveTurn` updates private teams, public state, battle log, field (weather/screens/hazards), advances `meta.turn`, or ends the battle via `handleBattleEnd` ✅
-- **Deterministic RNG** – Resolution currently creates a new RNG seed per fetch; storing/restoring RNG in RTDB would improve replay parity (future improvement)
+- **Deterministic RNG + replay artifacts** – Resolution restores/stores `meta.battleRng`, writes per-turn replay payloads (actions, RNG before/after, state hash) under `turns/{turn}/resolution`, and records validation/metrics fields for auditing.
 
 ⚠️ **Battle UI** ([src/components/RTDBBattleComponent.tsx](src/components/RTDBBattleComponent.tsx))
 - Battle rendering, move selection, and RTDB sync ✅
