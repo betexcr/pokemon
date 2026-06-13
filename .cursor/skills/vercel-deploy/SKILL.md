@@ -84,4 +84,4 @@ Use Vercel CLI or GitHub integration for preview/production deploys. Never commi
 ## Related docs
 
 - [docs/ARCHITECTURE_AND_HOSTING.md](../../docs/ARCHITECTURE_AND_HOSTING.md)
-- [NETLIFY_ENV_VARS.md](../../NETLIFY_ENV_VARS.md) (Netlify alt — secondary)
+- [NETLIFY_ENV_VARS.md](../../docs/NETLIFY_ENV_VARS.md) (Netlify alt — secondary)
