@@ -1,0 +1,40 @@
+---
+description: TypeScript and React conventions for this project
+globs: "**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# TypeScript & React
+
+From [docs/coding_standards.md](../../docs/coding_standards.md).
+
+## Typing
+
+- Avoid `any`; use precise types and guards
+- Exported APIs must be explicitly typed
+- Never swallow errors silently
+
+## React / Next.js
+
+- Server Components by default; `'use client'` only for interactivity
+- Page clients: co-locate as `*PageClient.tsx` next to routes
+- Routing: `next/link`, `next/navigation` — not raw `<a>` for internal nav (except middle-click patterns)
+- Images: `next/image` with width/height
+
+## Naming
+
+- Components: `PascalCase.tsx`, props type `ComponentNameProps`
+- Utilities: `kebab-case.ts` or `camelCase.ts`
+- Hooks: `use*` in `src/hooks/`
+- Handlers: `handle*` prefix
+- Booleans: `is/has/should/can` prefix
+
+## Styling
+
+- Tailwind only — semantic tokens (`bg`, `surface`, `text`, `muted`, `poke.*`, `type.*`)
+- No inline styles for color/spacing; no new CSS files
+
+## Data fetching
+
+- Components call typed functions in `src/lib/api.ts`, not raw `fetch`
+- Use `requestManager` signals for cancellable requests

@@ -1,0 +1,27 @@
+---
+description: Battle engine and resolution constraints
+globs: "**/team-battle*.ts,**/battle-resolution.ts,**/battle-engine*.ts,**/damage-calculator.ts,**/battle-rng.ts,**/offline-battle-ai.ts"
+alwaysApply: false
+---
+
+# Battle Engine Rules
+
+## Multiplayer
+
+- Turn resolution is **server-side only** (`battle-resolution.ts`, `/api/battles/[id]/submit`)
+- Never add client-side turn execution for RTDB battles
+- Use seeded RNG (`battle-rng.ts`) — do not use `Math.random()` for MP battle outcomes
+
+## Shared engine
+
+- Offline and multiplayer share `team-battle-engine.ts` — changes affect both modes
+- After engine edits: `npm run test:unit` + `npm run test:integration`
+
+## UI parity
+
+- Battle log display: use `battleLogToDisplayLines()` in both `RTDBBattleComponent` and `OfflineBattleComponent`
+
+## Hydration
+
+- Pokémon slots may lack full stats/moves — hydrate via `getPokemon()` before engine runs
+- See `hydrateSlot()` in `useOfflineBattleState.ts` and `battle-resolution.ts`

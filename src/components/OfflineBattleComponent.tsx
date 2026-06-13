@@ -18,34 +18,34 @@ const formatMoveLabel = (rawId: string): string => {
 function GameTextBox({ battleLog, myActiveSpecies }: { battleLog?: any[]; myActiveSpecies?: string | null }) {
   const logRef = useRef<HTMLDivElement>(null);
 
-  const messages: string[] = useMemo(() => {
-    if (!battleLog?.length) return [];
-    return battleLog.map((e: any) => typeof e === 'string' ? e : e?.message ?? '').filter(Boolean);
-  }, [battleLog]);
+  const lines: BattleLogDisplayLine[] = useMemo(
+    () => battleLogToDisplayLines(battleLog as unknown[] | undefined),
+    [battleLog],
+  );
 
   useEffect(() => {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: 'smooth' });
-  }, [messages.length]);
+  }, [lines.length]);
 
-  const visible = messages.length > 0 ? messages.slice(Math.max(0, messages.length - 3)) : [];
+  const visibleLines = lines.length > 0 ? lines.slice(Math.max(0, lines.length - 3)) : [];
   const idle = myActiveSpecies ? `What will ${formatPokemonName(myActiveSpecies)} do?` : null;
 
-  if (visible.length === 0 && !idle) return null;
+  if (visibleLines.length === 0 && !idle) return null;
 
   return (
     <div className="relative z-20 mx-auto mt-4 w-full max-w-xl">
       <div className="relative rounded-xl border-[3px] border-text/20 bg-surface shadow-lg">
         <div className="absolute inset-[3px] rounded-lg border border-text/10 pointer-events-none" />
         <div ref={logRef} className="relative px-5 py-3 min-h-[3.5rem] max-h-28 overflow-y-auto">
-          {visible.length > 0 ? (
+          {visibleLines.length > 0 ? (
             <div className="space-y-1">
-              {visible.map((line, i) => (
+              {visibleLines.map((line, i) => (
                 <p
                   key={`${lines.length}-${i}`}
                   className={`text-sm leading-relaxed ${
                     line.isEngineWarning
                       ? 'rounded border-l-4 border-amber-500/80 bg-amber-500/10 pl-2 py-0.5 font-mono text-amber-900 dark:text-amber-100'
-                      : `text-text ${i === visible.length - 1 ? 'font-medium animate-[typewriter_0.3s_ease-out]' : 'text-text/60'}`
+                      : `text-text ${i === visibleLines.length - 1 ? 'font-medium animate-[typewriter_0.3s_ease-out]' : 'text-text/60'}`
                   }`}
                 >
                   {line.isEngineWarning ? (

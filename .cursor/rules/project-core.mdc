@@ -1,0 +1,32 @@
+---
+description: Core project conventions always applied in this repo
+alwaysApply: true
+---
+
+# Project Core
+
+Read [AGENTS.md](../../AGENTS.md) for architecture, gotchas, and skill index.
+
+## Essentials
+
+- Imports: `@/` alias maps to `src/` — never deep relative paths across modules
+- Dev server: port **3002** (`npm run dev`)
+- Business logic in `src/lib/`; UI in `src/components/`; routes in `src/app/`
+- Canonical prod URL: `https://pokemon-indol-tau.vercel.app` — not `pokemon.ultharcr.com`
+
+## File placement
+
+| Type | Location |
+|------|----------|
+| Pages / API routes | `src/app/` |
+| Reusable components | `src/components/` |
+| Hooks | `src/hooks/` |
+| Services / engine | `src/lib/` |
+| Shared types | `src/types/` |
+| Tests | `__tests__/` subdirs co-located with source |
+
+## Before finishing
+
+- Run relevant tests from AGENTS.md testing matrix
+- Minimize diff scope — match existing patterns in surrounding files
+- Do not commit secrets or `.env` files

@@ -1,0 +1,36 @@
+---
+description: Firebase, Firestore, and RTDB service conventions
+globs: "**/firebase*.ts,**/roomService.ts,**/rtdb*.ts,**/userTeams.ts,**/championshipService.ts,**/checklist/storage.firebase.ts"
+alwaysApply: false
+---
+
+# Firebase Services
+
+## Storage split
+
+- **RTDB** — live battle state only (`battles/{id}/...`)
+- **Firestore** — rooms, teams, championships, checklist
+- Do not store live turn sync in Firestore
+
+## Client init
+
+- Lazy: `firebase/client.ts` → `getDb()` for lobby, checklist
+- Eager: `firebase.ts` when RTDB/auth needed immediately
+
+## Security
+
+- Never log API keys, service account JSON, or user tokens
+- Server-only: `FIREBASE_SERVICE_ACCOUNT_KEY`
+- Rules files: `database.rules.json`, `firestore.rules`
+
+## RTDB paths
+
+```
+battles/{id}/meta | public | private/{uid}
+battles/{id}/turns/{n}/choices/{uid}
+battles/{id}/turns/{n}/resolution  ← server writes only
+```
+
+## Testing
+
+- RTDB changes: `npm run test:unit` + `npm run test:security`

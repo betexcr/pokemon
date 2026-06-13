@@ -1,11 +1,8 @@
----
-description: Run the multiplayer battle Playwright test
----
+# Moved
 
-This workflow runs the multiplayer battle E2E test using Playwright.
+Workflows have moved to [`.cursor/workflows/`](../../.cursor/workflows/).
 
-1. Run the test
-// turbo
-```bash
-npx playwright test tests/playwright/multiplayer-battle.spec.ts --headed
-```
+- Multiplayer test: [`test-multiplayer-battle.md`](../../.cursor/workflows/test-multiplayer-battle.md)
+- Offline battle dev test: [`dev-and-test-battle.md`](../../.cursor/workflows/dev-and-test-battle.md)
+
+See [AGENTS.md](../../AGENTS.md) for the full agent guide.
