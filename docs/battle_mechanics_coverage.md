@@ -27,8 +27,8 @@ This document maps the long-form Gen 9 reference ([battle_mechanics.md](./battle
 | Priority, speed, Trick Room | **Partial** | Core ordering exists; not every priority ability |
 | Damage (formula, crit, STAB, weather, screens) | **Partial** | Broad coverage in damage calculator; not every ability/item |
 | Accuracy / evasion | **Partial** | Stage multipliers; not every ability |
-| Status conditions | **Partial** | Sleep/freeze/para/burn/poison/toxic; sleep uses turn counter + 30% early wake; Heal Bell / Aromatherapy cure team; confusion snap-out logged |
-| Volatiles (confusion, substitute, etc.) | **Partial** | Subset implemented; **Encore:** if the encored move has 0 PP, only **Struggle** is legal (Showdown-style), aligned in `canUseMove`, `validateServerBattleAction`, and battle hooks |
+| Status conditions | **Partial** | Sleep: random 1–3 turns (Rest = 2), 30% early wake at turn start, counter decrement at end; freeze 20% thaw at turn start; Heal Bell / Aromatherapy cure full team; confusion snap-out logged; para/burn/poison/toxic residual |
+| Volatiles (confusion, substitute, etc.) | **Partial** | Confusion 2–5 turns, self-hit 33%, snap-out message; **Encore:** if encored move has 0 PP, only **Struggle** is legal (Showdown-style) |
 | Field (weather, terrain, rooms) | **Partial** | Common cases; not full move/ability matrix |
 | Hazards | **Partial** | SR, Spikes, Toxic Spikes, Sticky Web |
 | Switching, Pursuit | **Partial** | Pursuit interrupt path exists |
@@ -47,10 +47,13 @@ This document maps the long-form Gen 9 reference ([battle_mechanics.md](./battle
 - **Move data:** Moves load from PokeAPI via [`getMove`](src/lib/moveCache.ts); failures log `engine_warning` and skip the move. A built-in fallback exists for **Struggle** if the network fails.
 - **Hydration:** [`hydrateTeam`](src/lib/battle-resolution.ts) uses embedded `pokemon.stats` on private team snapshots when present; otherwise it fetches PokeAPI with an in-process dedupe cache per species key. If fetch fails or returns no stats, **placeholder base stats (50 across)** are used so resolution can continue; HP still uses `maxHp` / `currentHp` from the snapshot when set. [`createBattle`](src/lib/firebase-rtdb-service.ts) deep-clones submitted teams so client payloads with stats are preserved verbatim in RTDB.
 - **Client reconstruction:** [`FirebaseRTDBBattleEngine`](src/lib/battle-engine-rtdb.ts) builds the opponent team from **public** RTDB only (active + bench); full opponent sets are not read from the other player’s private node.
+- **Sleep wake (intentional blend):** Cart Gen 9 uses a sleep counter decremented at end of turn only. The engine adds a **30% early-wake roll at start of turn** for livelier battles, plus end-of-turn counter decrement. Both paths log `"[Name] woke up!"`.
+- **Freeze thaw timing:** Spec text places thaw at end of turn; the engine rolls **20% at start of turn** in `applyStartOfTurnStatus` (same message: `"[Name] thawed out!"`).
+- **Status cure battle log:** Team cures via **Heal Bell** / **Aromatherapy**; ability/item cures (Lum Berry, Shed Skin, Hydration) also write to `battleLog` for display in offline and RTDB battles via `battleLogToDisplayLines`.
 
 ## Phased backlog (post–Tier 1)
 
-Completed in-repo waves include: `engine_warning` styling in multiplayer/offline battle text boxes, committed move JSON fixtures (`src/lib/__tests__/fixtures/moves/`), optional HTTP smoke test with `RUN_POKEAPI_TESTS=1` ([`pokeapi-http.integration.test.ts`](../src/lib/__tests__/pokeapi-http.integration.test.ts)), hydration cache + placeholder stats, first ability trio (**Download**, **Frisk**, **Unnerve**), item additions (**Oran Berry**, Unnerve vs berries), and Encore + 0 PP **Struggle** alignment (Showdown-style).
+Completed in-repo waves include: `engine_warning` styling in multiplayer/offline battle text boxes, committed move JSON fixtures (`src/lib/__tests__/fixtures/moves/`), optional HTTP smoke test with `RUN_POKEAPI_TESTS=1` ([`pokeapi-http.integration.test.ts`](../src/lib/__tests__/pokeapi-http.integration.test.ts)), hydration cache + placeholder stats, first ability trio (**Download**, **Frisk**, **Unnerve**), item additions (**Oran Berry**, Unnerve vs berries), Encore + 0 PP **Struggle** alignment (Showdown-style), and **status cure battle log** (sleep wake messages, confusion snap-out, Heal Bell / Aromatherapy).
 
 **Product-deferred (do not implement without approval):** Terastallization and double battles remain **Missing** above.
 
