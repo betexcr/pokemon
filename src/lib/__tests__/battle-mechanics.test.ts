@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { BattlePokemon, BattleState, BattleTeam } from '../team-battle-engine';
 import { canUseMove } from '../team-battle-engine';
-import { applyStartOfTurnStatus, applyEndOfTurnStatus, clearStatus, applyStatus } from '../team-battle-status';
+import { applyStartOfTurnStatus, applyEndOfTurnStatus, clearStatus, applyStatus, cureTeamStatuses } from '../team-battle-status';
 import { isGrounded } from '../team-battle-status';
 import { applyWeatherResidual, decrementFieldTimers } from '../team-battle-field';
 import { createBattleRng, BattleRng } from '../battle-rng';
@@ -96,27 +96,55 @@ describe('Status Durations', () => {
       expect(moveAttempts).toBe(0);
     });
 
-    it('wakes up after 3 turns via applyStartOfTurnStatus', () => {
-      const pokemon = makePokemon({ status: 'asleep', statusTurns: 2 });
-      applyStartOfTurnStatus(state, pokemon, rng);
-      expect(pokemon.status).toBeUndefined();
+    it('assigns random sleep duration 1–3 when applied with rng', () => {
+      const rng = createBattleRng(999);
+      const durations = new Set<number>();
+      for (let i = 0; i < 200; i++) {
+        const pokemon = makePokemon();
+        applyStatus(pokemon, 'asleep', { rng });
+        durations.add(pokemon.statusTurns ?? 0);
+      }
+      expect(durations.size).toBeGreaterThan(1);
+      for (const d of durations) {
+        expect(d).toBeGreaterThanOrEqual(1);
+        expect(d).toBeLessThanOrEqual(3);
+      }
     });
 
-    it('does not wake up before 3 turns', () => {
-      const pokemon = makePokemon({ status: 'asleep', statusTurns: 0 });
-      applyStartOfTurnStatus(state, pokemon, rng);
-      expect(pokemon.statusTurns).toBe(1);
-      expect(pokemon.status).toBe('asleep');
-    });
-
-    it('increments statusTurns each start-of-turn', () => {
-      const pokemon = makePokemon({ status: 'asleep', statusTurns: 0 });
-      applyStartOfTurnStatus(state, pokemon, rng);
-      expect(pokemon.statusTurns).toBe(1);
-      applyStartOfTurnStatus(state, pokemon, rng);
+    it('Rest sleep lasts 2 turns', () => {
+      const pokemon = makePokemon();
+      applyStatus(pokemon, 'asleep', { sleepTurns: 2 });
       expect(pokemon.statusTurns).toBe(2);
-      applyStartOfTurnStatus(state, pokemon, rng);
+    });
+
+    it('can wake early at start of turn (~30% chance)', () => {
+      let wakeCount = 0;
+      const trials = 1000;
+      const rng2 = createBattleRng(42);
+      for (let i = 0; i < trials; i++) {
+        const pokemon = makePokemon({ status: 'asleep', statusTurns: 3 });
+        const s = makeState();
+        applyStartOfTurnStatus(s, pokemon, rng2);
+        if (!pokemon.status) wakeCount++;
+      }
+      const wakeRate = wakeCount / trials;
+      expect(wakeRate).toBeGreaterThan(0.20);
+      expect(wakeRate).toBeLessThan(0.40);
+    });
+
+    it('wakes when sleep counter reaches 0 at end of turn', () => {
+      const pokemon = makePokemon({ status: 'asleep', statusTurns: 1 });
+      applyEndOfTurnStatus(state, pokemon);
       expect(pokemon.status).toBeUndefined();
+      expect(state.battleLog.some((e) => e.message?.includes('woke up'))).toBe(true);
+    });
+
+    it('does not wake before sleep counter expires (without early roll)', () => {
+      const pokemon = makePokemon({ status: 'asleep', statusTurns: 2 });
+      // Seed that fails early wake — use many attempts with statusTurns 2 and only end-of-turn decrement
+      applyEndOfTurnStatus(state, pokemon);
+      expect(pokemon.status).toBe('asleep');
+      expect(pokemon.statusTurns).toBe(1);
     });
   });
 
@@ -193,11 +221,13 @@ describe('Status Durations', () => {
       expect(pokemon.volatile.confusion?.turns).toBe(2);
     });
 
-    it('confusion wears off when turns reach 0', () => {
+    it('confusion wears off when turns reach 0 and flags snap out', () => {
       const pokemon = makePokemon();
       pokemon.volatile.confusion = { turns: 1 };
-      canUseMove(pokemon, 'seismic-toss', createBattleRng(40002));
+      const result = canUseMove(pokemon, 'seismic-toss', createBattleRng(40002));
       expect(pokemon.volatile.confusion).toBeUndefined();
+      expect(result.canUse).toBe(true);
+      expect(result.snappedOutOfConfusion).toBe(true);
     });
 
     it('confusion self-damage reduces HP', () => {
@@ -469,11 +499,11 @@ describe('Damage Calculator Weather Modifiers', () => {
 // ---------- STATUS APPLICATION RULES ----------
 
 describe('Status Application Rules', () => {
-  it('applyStatus sets status and resets statusTurns', () => {
+  it('applyStatus sets status; non-sleep clears statusTurns', () => {
     const pokemon = makePokemon();
     applyStatus(pokemon, 'paralyzed');
     expect(pokemon.status).toBe('paralyzed');
-    expect(pokemon.statusTurns).toBe(0);
+    expect(pokemon.statusTurns).toBeUndefined();
   });
 
   it('clearStatus removes status and turns', () => {
@@ -494,5 +524,30 @@ describe('Status Application Rules', () => {
     pokemon.volatile.toxicCounter = 5;
     applyStatus(pokemon, 'paralyzed');
     expect(pokemon.volatile.toxicCounter).toBeUndefined();
+  });
+
+  it('heal bell cures team and logs bell + individual cures', () => {
+    const state = makeState();
+    state.player.pokemon[0] = makePokemon({ status: 'burned' });
+    state.player.pokemon[1] = makePokemon({ status: 'paralyzed' });
+    const count = cureTeamStatuses(state, state.player, 'heal-bell', 'Blissey');
+    expect(count).toBe(2);
+    expect(state.player.pokemon[0].status).toBeUndefined();
+    expect(state.player.pokemon[1].status).toBeUndefined();
+    expect(state.battleLog.some((e) => e.message === 'A bell chimed!')).toBe(true);
+    expect(state.battleLog.some((e) => e.message?.includes('was cured of'))).toBe(true);
+  });
+
+  it('aromatherapy cures team with team message', () => {
+    const state = makeState();
+    state.player.pokemon[0] = makePokemon({ status: 'poisoned' });
+    const count = cureTeamStatuses(state, state.player, 'aromatherapy', 'Blissey');
+    expect(count).toBe(1);
+    expect(state.battleLog.some((e) => e.message?.includes("cured its team's status problems"))).toBe(true);
+  });
+
+  it('heal bell returns 0 when no status to cure', () => {
+    const state = makeState();
+    expect(cureTeamStatuses(state, state.player, 'heal-bell', 'Blissey')).toBe(0);
   });
 });

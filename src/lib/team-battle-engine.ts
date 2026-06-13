@@ -295,7 +295,7 @@ export function canUseMove(
   pokemon: BattlePokemon,
   moveId: string,
   rng: BattleRng
-): { canUse: boolean; reason?: string } {
+): { canUse: boolean; reason?: string; snappedOutOfConfusion?: boolean } {
   const idLower = moveId.toLowerCase();
 
   if (idLower === 'struggle') {
@@ -338,7 +338,9 @@ export function canUseMove(
     pokemon.volatile.confusion.turns -= 1;
     if (pokemon.volatile.confusion.turns <= 0) {
       pokemon.volatile.confusion = undefined;
-    } else if (rngRollChance(rng, 1 / 3)) {
+      return { canUse: true, snappedOutOfConfusion: true };
+    }
+    if (rngRollChance(rng, 1 / 3)) {
       const basePower = 40;
       const baseAtk = pokemon.pokemon.stats?.find((s: any) => (s.stat?.name || s.name) === 'attack')?.base_stat ?? 50;
       const baseDef = pokemon.pokemon.stats?.find((s: any) => (s.stat?.name || s.name) === 'defense')?.base_stat ?? 50;

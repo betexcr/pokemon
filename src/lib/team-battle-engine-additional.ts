@@ -20,7 +20,7 @@ import { getMove } from './moveCache';
 import { applyEntryHazards, isGrounded } from './team-battle-hazards';
 import { handleOnEntryAbilities } from './team-battle-abilities';
 import { applyWeatherResidual, applyTerrainHealing, decrementFieldTimers, applyLeechSeed, applyBindingDamage } from './team-battle-field';
-import { applyEndOfTurnStatus, clearStatus, applyStatus, applyStartOfTurnStatus, terrainPreventsStatus } from './team-battle-status';
+import { applyEndOfTurnStatus, clearStatus, applyStatus, applyStartOfTurnStatus, terrainPreventsStatus, cureTeamStatuses } from './team-battle-status';
 import { BattleRng, rngRollChance, rngNextInt, rngNextFloat } from './battle-rng';
 import { tryConsumeBerry, tryHarvestBerry } from './team-battle-items';
 
@@ -86,8 +86,7 @@ export async function processStartOfTurn(state: BattleState): Promise<void> {
   if (playerPokemon.volatile.yawn) {
     playerPokemon.volatile.yawn.turns--;
     if (playerPokemon.volatile.yawn.turns <= 0) {
-      playerPokemon.status = 'asleep';
-      playerPokemon.statusTurns = 0;
+      applyStatus(playerPokemon, 'asleep', { rng: state.rng });
       playerPokemon.volatile.yawn = undefined;
       state.battleLog.push({
         type: 'status_applied',
@@ -101,8 +100,7 @@ export async function processStartOfTurn(state: BattleState): Promise<void> {
   if (opponentPokemon.volatile.yawn) {
     opponentPokemon.volatile.yawn.turns--;
     if (opponentPokemon.volatile.yawn.turns <= 0) {
-      opponentPokemon.status = 'asleep';
-      opponentPokemon.statusTurns = 0;
+      applyStatus(opponentPokemon, 'asleep', { rng: state.rng });
       opponentPokemon.volatile.yawn = undefined;
       state.battleLog.push({
         type: 'status_applied',
@@ -159,6 +157,13 @@ export async function resolveMove(state: BattleState, action: BattleState['actio
   }
   
   const canUseResult = canUseMove(attacker, moveId, state.rng);
+  if (canUseResult.snappedOutOfConfusion) {
+    state.battleLog.push({
+      type: 'status_effect',
+      message: `${attacker.pokemon.name} snapped out of confusion!`,
+      pokemon: attacker.pokemon.name,
+    });
+  }
   if (!canUseResult.canUse) {
     const reason = canUseResult.reason || 'couldn\'t use the move';
     state.battleLog.push({
@@ -319,7 +324,7 @@ function applyMoveAilment(
     if (!rngRollChance(state.rng, chance)) return;
   }
 
-  applyStatus(defender, status);
+  applyStatus(defender, status, status === 'asleep' ? { rng: state.rng } : undefined);
   const label = STATUS_LABELS[status!] ?? status;
   state.battleLog.push({
     type: 'status_applied',
@@ -474,7 +479,7 @@ async function executeMoveAction(
         });
       }
       if (moveLower === 'rest') {
-        applyStatus(attacker, 'asleep');
+        applyStatus(attacker, 'asleep', { sleepTurns: 2 });
         attacker.currentHp = attacker.maxHp;
         state.battleLog.push({
           type: 'status_applied',
@@ -482,6 +487,21 @@ async function executeMoveAction(
           pokemon: attacker.pokemon.name,
           status: 'asleep',
         });
+      }
+      return;
+    }
+
+    // Team status cure
+    if (moveLower === 'heal-bell' || moveLower === 'aromatherapy') {
+      const team = isPlayer ? state.player : state.opponent;
+      const cured = cureTeamStatuses(
+        state,
+        team,
+        moveLower as 'heal-bell' | 'aromatherapy',
+        attacker.pokemon.name,
+      );
+      if (cured === 0) {
+        state.battleLog.push({ type: 'status_effect', message: 'But it failed!' });
       }
       return;
     }

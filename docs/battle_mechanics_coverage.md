@@ -27,7 +27,7 @@ This document maps the long-form Gen 9 reference ([battle_mechanics.md](./battle
 | Priority, speed, Trick Room | **Partial** | Core ordering exists; not every priority ability |
 | Damage (formula, crit, STAB, weather, screens) | **Partial** | Broad coverage in damage calculator; not every ability/item |
 | Accuracy / evasion | **Partial** | Stage multipliers; not every ability |
-| Status conditions | **Partial** | Sleep/freeze/para/burn/poison/toxic; durations simplified |
+| Status conditions | **Partial** | Sleep/freeze/para/burn/poison/toxic; sleep uses turn counter + 30% early wake; Heal Bell / Aromatherapy cure team; confusion snap-out logged |
 | Volatiles (confusion, substitute, etc.) | **Partial** | Subset implemented; **Encore:** if the encored move has 0 PP, only **Struggle** is legal (Showdown-style), aligned in `canUseMove`, `validateServerBattleAction`, and battle hooks |
 | Field (weather, terrain, rooms) | **Partial** | Common cases; not full move/ability matrix |
 | Hazards | **Partial** | SR, Spikes, Toxic Spikes, Sticky Web |
