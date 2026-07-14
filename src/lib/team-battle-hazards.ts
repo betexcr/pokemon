@@ -48,6 +48,12 @@ export function applyEntryHazards(pokemon: BattlePokemon, hazards: SideHazards):
   let poisonStatus: 'poisoned' | 'badly-poisoned' | undefined;
   let applyStickyWeb = false;
 
+  // Heavy-Duty Boots skip all entry hazards
+  const item = pokemon.heldItem?.toLowerCase();
+  if (item === 'heavy-duty-boots') {
+    return { damage: 0 };
+  }
+
   if (hazards.stealthRock) {
     damage += stealthRockDamage(pokemon);
   }

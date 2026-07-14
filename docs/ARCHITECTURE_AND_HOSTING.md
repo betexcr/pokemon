@@ -14,6 +14,8 @@ Single place to confirm **where the app runs**, how pieces fit together, and **w
 
 Local `main` (or your branch) is **not** live until CI/CD or a manual Vercel deploy finishes for that commit.
 
+Ops (health, ready, rollback, env): [PRODUCTION_OPS.md](./PRODUCTION_OPS.md).
+
 ## High-level architecture
 
 ```mermaid

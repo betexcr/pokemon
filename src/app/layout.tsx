@@ -16,6 +16,8 @@ import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration'
 import OfflineIndicator from '@/components/OfflineIndicator'
 import PokemonPreloader from '@/components/PokemonPreloader'
 import AnalyticsProvider from '@/components/AnalyticsProvider'
+import { Analytics } from '@vercel/analytics/react'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://pokemon-indol-tau.vercel.app'
@@ -201,6 +203,8 @@ export default function RootLayout({
                     <ServiceWorkerRegistration />
                     <PokemonPreloader />
                     <AnalyticsProvider />
+                    <Analytics />
+                    <SpeedInsights />
                   </div>
                 </ToastProvider>
               </ReactQueryProvider>

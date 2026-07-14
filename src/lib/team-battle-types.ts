@@ -65,6 +65,23 @@ export const EMPTY_HAZARDS: SideHazards = {
   stickyWeb: false,
 };
 
+export function getWeatherDuration(kind: WeatherKind | undefined, heldItem?: string): number {
+  const item = heldItem?.toLowerCase();
+  if (kind === 'rain' && item === 'damp-rock') return 8;
+  if (kind === 'sun' && item === 'heat-rock') return 8;
+  if (kind === 'sandstorm' && item === 'smooth-rock') return 8;
+  if (kind === 'snow' && item === 'icy-rock') return 8;
+  return 5;
+}
+
+export function getTerrainDuration(heldItem?: string): number {
+  return heldItem?.toLowerCase() === 'terrain-extender' ? 8 : 5;
+}
+
+export function getScreenDuration(heldItem?: string): number {
+  return heldItem?.toLowerCase() === 'light-clay' ? 8 : 5;
+}
+
 export const createFieldState = (): FieldState => ({
   weather: undefined,
   terrain: undefined,

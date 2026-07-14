@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { buildEvoGraph } from '@/lib/evo/build';
+import { checkRateLimit, clientIpFromRequest } from '@/lib/server/rate-limit';
+import { logger } from '@/lib/server/logger';
 
 export async function GET(request: NextRequest) {
+  const ip = clientIpFromRequest(request);
+  const rl = await checkRateLimit(`evolutions-search:${ip}`, 60, 60_000);
+  if (!rl.allowed) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
+
   const sp = request.nextUrl.searchParams;
   const query = (sp.get('q') || '').toLowerCase().trim();
   const genRaw = sp.get('gen');
@@ -26,7 +34,7 @@ export async function GET(request: NextRequest) {
       { headers: { 'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=7200' } }
     );
   } catch (error) {
-    console.error('Evolution search error:', error);
+    logger.error('Evolution search error', { route: 'evolutions/search', err: error });
     return NextResponse.json({ families: [] }, { status: 500 });
   }
 }

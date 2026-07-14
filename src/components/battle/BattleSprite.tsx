@@ -40,6 +40,7 @@ export const BattleSprite = forwardRef<BattleSpriteRef, BattleSpriteProps>(funct
           alt={formatPokemonName(species)}
           width={160}
           height={160}
+          unoptimized={Boolean(animatedSprite)}
           className="h-full w-full object-contain"
           onError={(event) => {
             const target = event.currentTarget
@@ -58,7 +59,14 @@ export const BattleSprite = forwardRef<BattleSpriteRef, BattleSpriteProps>(funct
           <span className="capitalize" data-testid={`pokemon-name-${side}`}>{formatPokemonName(species)}</span>
           <span className="text-muted-foreground">Lv. {level}</span>
         </div>
-        <div className="mt-2 h-2 w-full rounded-full bg-muted">
+        <div
+          className="mt-2 h-2 w-full rounded-full bg-muted"
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={Math.max(1, hp.max)}
+          aria-valuenow={Math.max(0, Math.min(hp.max, hp.cur))}
+          aria-label={`${formatPokemonName(species)} HP`}
+        >
           <div
             className={`h-full rounded-full transition-all duration-300 ${hpPercentage > 50 ? 'bg-emerald-500' : hpPercentage > 25 ? 'bg-amber-500' : 'bg-red-500'}`}
             style={{ width: `${hpPercentage}%` }}
@@ -66,6 +74,7 @@ export const BattleSprite = forwardRef<BattleSpriteRef, BattleSpriteProps>(funct
         </div>
         <p className="mt-1 text-xs text-muted-foreground" data-testid={`hp-bar-${side}`}>
           {hp.cur} / {hp.max} HP · {types.join(' / ') || 'Unknown type'}
+          {status ? ` · Status ${status}` : ''}
         </p>
         {status && (
           <span className="mt-2 inline-flex items-center rounded-full border border-yellow-500/60 bg-yellow-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-500" data-testid={`status-icon-${status}`}>

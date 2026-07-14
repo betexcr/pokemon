@@ -11,7 +11,10 @@ import Image from 'next/image';
 import { BattleTurnManager } from '@/components/multiplayer/BattleTurnManager';
 import { BattleEndScreen } from '@/components/multiplayer/BattleEndScreen';
 import { useForfeit } from '@/hooks/useMultiplayerBattle';
-import { battleLogToDisplayLines, type BattleLogDisplayLine } from '@/lib/battle-log-display';
+import { BattleTextBox } from '@/components/battle/BattleTextBox';
+import { trackEvent } from '@/lib/analytics';
+import { shouldClearPendingAction } from '@/lib/battle-private-volatiles';
+import { useReducedMotionPref } from '@/hooks/useReducedMotionPref';
 
 const formatMoveLabel = (rawId: string): string => {
   if (!rawId) return 'Unknown Move';
@@ -21,117 +24,6 @@ const formatMoveLabel = (rawId: string): string => {
     .map(segment => segment.charAt(0).toUpperCase() + segment.slice(1))
     .join(' ');
 };
-
-/* ─── Pokemon-style text box ────────────────────────────────────────── */
-
-interface GameTextBoxProps {
-  battleLog?: any[];
-  waitingForResolution: boolean;
-  myActiveSpecies?: string | null;
-  displayedLogIndex: number;
-  onDisplayedLogIndexChange: (idx: number) => void;
-}
-
-function GameTextBox({
-  battleLog,
-  waitingForResolution,
-  myActiveSpecies,
-  displayedLogIndex,
-  onDisplayedLogIndexChange,
-}: GameTextBoxProps) {
-  const classifyLine = (message: string) => {
-    const text = message.toLowerCase();
-    if (text.includes('fainted') || text.includes('damage') || text.includes('hit')) return { label: 'Damage', tone: 'text-red-700 dark:text-red-300 bg-red-500/10' };
-    if (text.includes('heal') || text.includes('restored')) return { label: 'Heal', tone: 'text-emerald-700 dark:text-emerald-300 bg-emerald-500/10' };
-    if (text.includes('status') || text.includes('burn') || text.includes('poison') || text.includes('paraly')) return { label: 'Status', tone: 'text-amber-700 dark:text-amber-300 bg-amber-500/10' };
-    if (text.includes('miss')) return { label: 'Miss', tone: 'text-slate-700 dark:text-slate-300 bg-slate-500/10' };
-    return { label: 'Event', tone: 'text-blue-700 dark:text-blue-300 bg-blue-500/10' };
-  };
-
-  const logRef = useRef<HTMLDivElement>(null);
-  const prevLengthRef = useRef(0);
-
-  const lines: BattleLogDisplayLine[] = useMemo(
-    () => battleLogToDisplayLines(battleLog as unknown[] | undefined),
-    [battleLog]
-  );
-
-  // Auto-advance to newest message when the log grows
-  useEffect(() => {
-    if (lines.length > prevLengthRef.current) {
-      onDisplayedLogIndexChange(lines.length - 1);
-    }
-    prevLengthRef.current = lines.length;
-  }, [lines.length, onDisplayedLogIndexChange]);
-
-  // Scroll into view when index changes
-  useEffect(() => {
-    logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: 'smooth' });
-  }, [displayedLogIndex]);
-
-  const visibleLines = lines.length > 0
-    ? lines.slice(Math.max(0, lines.length - 3))
-    : [];
-
-  const idleText = waitingForResolution
-    ? null
-    : myActiveSpecies
-      ? `What will ${formatPokemonName(myActiveSpecies)} do?`
-      : null;
-
-  if (visibleLines.length === 0 && !idleText) return null;
-
-  return (
-    <div className="relative z-20 mx-auto mt-4 w-full max-w-xl">
-      <div className="relative rounded-xl border-[3px] border-text/20 bg-surface shadow-lg">
-        <div className="absolute inset-[3px] rounded-lg border border-text/10 pointer-events-none" />
-        <div ref={logRef} className="relative px-5 py-3 min-h-[3.5rem] max-h-28 overflow-y-auto">
-          {visibleLines.length > 0 ? (
-            <div className="space-y-1">
-              {visibleLines.map((line, i) => (
-                <p
-                  key={`${lines.length}-${i}`}
-                  className={`text-sm leading-relaxed ${
-                    line.isEngineWarning
-                      ? 'rounded border-l-4 border-amber-500/80 bg-amber-500/10 pl-2 py-0.5 font-mono text-amber-900 dark:text-amber-100'
-                      : `text-text ${
-                          i === visibleLines.length - 1
-                            ? 'font-medium animate-[typewriter_0.3s_ease-out]'
-                            : 'text-text/60'
-                        }`
-                  }`}
-                >
-                  {line.isEngineWarning ? (
-                    <>
-                      <span className="mr-1.5 align-middle text-[10px] font-sans font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
-                        Engine
-                      </span>
-                      {line.message}
-                    </>
-                  ) : (
-                    <span className="inline-flex items-center gap-2">
-                      <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${classifyLine(line.message).tone}`}>
-                        {classifyLine(line.message).label}
-                      </span>
-                      <span>{line.message}</span>
-                    </span>
-                  )}
-                </p>
-              ))}
-            </div>
-          ) : idleText ? (
-            <p className="text-sm leading-relaxed text-text font-medium">{idleText}</p>
-          ) : null}
-        </div>
-        {visibleLines.length > 0 && (
-          <div className="absolute bottom-2 right-3">
-            <span className="inline-block h-2 w-2 animate-bounce text-text/40">▼</span>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 /* ─── Main component ───────────────────────────────────────────────── */
 
@@ -147,7 +39,10 @@ const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
   onBattleComplete,
   viewMode = 'classic'
 }) => {
+  const reduceMotion = useReducedMotionPref();
+  const spriteMode = reduceMotion || viewMode !== 'animated' ? 'static' : 'animated';
   const {
+
     loading,
     error,
     meta,
@@ -227,12 +122,28 @@ const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
 
   const activePhase: 'choosing' | 'resolving' = waitingForResolution ? 'resolving' : 'choosing';
 
+  const lastSeenVersionRef = useRef<number | undefined>(undefined);
   useEffect(() => {
-    if (!pendingAction) return;
-    if (!meta || meta.phase === 'ended' || meta.turn !== pendingAction.turn) {
+    if (!pendingAction || !meta) return;
+    const v = (pub as any)?.lastValidation;
+    const rejected = Boolean(v && (v.p1 || v.p2) && !v.normalized);
+    if (
+      shouldClearPendingAction({
+        pendingTurn: pendingAction.turn,
+        phase: meta.phase,
+        turn: meta.turn,
+        version: meta.version,
+        lastSeenVersion: lastSeenVersionRef.current,
+        lastValidationTurn: typeof v?.turn === 'number' ? v.turn : null,
+        lastValidationRejected: rejected,
+      })
+    ) {
       setPendingAction(null);
     }
-  }, [meta?.turn, meta?.phase, pendingAction]);
+    if (typeof meta.version === 'number') {
+      lastSeenVersionRef.current = meta.version;
+    }
+  }, [meta?.turn, meta?.phase, meta?.version, pendingAction, pub]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -286,11 +197,23 @@ const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
   useEffect(() => {
     if (meta?.phase === 'ended') {
       setShowEndScreen(true);
+      trackEvent('battle_completed', {
+        mode: 'multiplayer',
+        battleId,
+        reason: meta.endedReason || 'victory',
+      });
       if (meta.winnerUid && onBattleComplete) {
         onBattleComplete(meta.winnerUid);
       }
     }
-  }, [meta?.phase, meta?.winnerUid, onBattleComplete]);
+  }, [meta?.phase, meta?.winnerUid, meta?.endedReason, onBattleComplete, battleId]);
+
+  useEffect(() => {
+    if (meta && pub && !loading) {
+      trackEvent('battle_started', { mode: 'multiplayer', battleId });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fire once when battle becomes ready
+  }, [Boolean(meta && pub && !loading), battleId]);
 
   useEffect(() => {
     if (connectionStatus === 'online' && meta?.turn && recoveredTurn !== meta.turn) {
@@ -448,7 +371,7 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
       const normalizedShiny = !!shiny;
       const speciesId = getPokemonIdFromSpecies(species || '') ?? null;
       const staticSprite = getPokemonBattleImageWithFallback(speciesId, variant, normalizedShiny);
-      const shouldAnimate = animatedPreferred && viewMode === 'animated';
+      const shouldAnimate = animatedPreferred && spriteMode === 'animated';
       const animatedSprite = shouldAnimate ? getShowdownAnimatedSprite(species || undefined, variant, normalizedShiny) : null;
       const sources = [animatedSprite, staticSprite.primary, staticSprite.fallback, '/placeholder-pokemon.png']
         .filter((src): src is string => !!src && src.length > 0);
@@ -471,19 +394,38 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
         />
       );
     },
-    [viewMode]
+    [spriteMode]
   );
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-8">
+      <div className="flex items-center justify-center p-8" role="status" aria-live="polite">
         <div className="text-lg">Initializing battle...</div>
       </div>
     );
   }
 
-  if (error) return <div className="p-8 text-center text-red-500">Error: {error}</div>;
-  if (!meta || !pub) return <div className="p-8 text-center">Waiting for battle data...</div>;
+  if (error) {
+    return (
+      <div className="mx-auto max-w-md space-y-4 p-8 text-center" role="alert">
+        <p className="text-red-600 dark:text-red-400">Battle error: {error}</p>
+        <p className="text-sm text-muted">Battle ID: {battleId}</p>
+        <div className="flex justify-center gap-3">
+          <button
+            type="button"
+            className="rounded-md border border-border px-4 py-2 text-sm hover:bg-surface"
+            onClick={() => window.location.reload()}
+          >
+            Retry
+          </button>
+          <a href="/lobby/" className="rounded-md bg-primary px-4 py-2 text-sm text-white">
+            Return to lobby
+          </a>
+        </div>
+      </div>
+    );
+  }
+  if (!meta || !pub) return <div className="p-8 text-center" role="status">Waiting for battle data...</div>;
 
   // Reuse early-computed side keys for active Pokemon lookup
   const mySide = mySideEarly;
@@ -527,12 +469,18 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
       <div className="sticky top-0 z-40 border-b border-border bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/80 px-3 py-2 sm:p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="inline-flex items-center rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-muted shadow-sm">
+            <span
+              role="status"
+              aria-live="polite"
+              className="inline-flex items-center rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-muted shadow-sm"
+            >
               <span className="mr-2 inline-block h-2 w-2 rounded-full bg-primary/80" />
               {meta.phase}
             </span>
             <span className="text-xs text-muted" data-testid="turn-counter">Turn {meta.turn}</span>
-            <span className={timerUrgencyClass}>{timeLeftSec}s</span>
+            <span role="timer" className={timerUrgencyClass} aria-label={`${timeLeftSec} seconds remaining`}>
+              {timeLeftSec}s
+            </span>
             <span
               className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium ${
                 connectionStatus === 'online'
@@ -594,7 +542,7 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
                 side="player"
                 shiny={Boolean((myActive as any)?.shiny || (myActive as any)?.isShiny)}
                 className="transform scale-110"
-                spriteMode={viewMode === 'animated' ? 'animated' : 'static'}
+                spriteMode={spriteMode}
               />
             )}
           </div>
@@ -618,19 +566,20 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
                 side="opponent"
                 shiny={Boolean((oppActive as any)?.shiny || (oppActive as any)?.isShiny)}
                 className="transform scale-110"
-                spriteMode={viewMode === 'animated' ? 'animated' : 'static'}
+                spriteMode={spriteMode}
               />
             )}
           </div>
         </div>
 
         {/* Pokemon-style Battle Text Box */}
-        <GameTextBox
+        <BattleTextBox
           battleLog={battleLogWithValidation}
           waitingForResolution={waitingForResolution}
           myActiveSpecies={myActive?.species}
           displayedLogIndex={displayedLogIndex}
           onDisplayedLogIndexChange={setDisplayedLogIndex}
+          classifyLines
         />
       </div>
 
@@ -641,7 +590,11 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
             <h3 className="text-lg font-semibold mb-4">Choose Your Action</h3>
 
             {waitingForResolution && (
-              <div className="mb-4 flex items-center justify-center gap-2 text-sm text-muted">
+              <div
+                role="status"
+                aria-live="polite"
+                className="mb-4 flex items-center justify-center gap-2 text-sm text-muted"
+              >
                 <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
                 Waiting for opponent…
               </div>
@@ -772,7 +725,8 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
                       ? `${maxHp}`
                       : '—';
                 const isPendingSwitch = pendingAction?.type === 'switch' && pendingAction.turn === meta?.turn && pendingAction.id === index;
-                const switchDisabled = pokemon?.fainted || index === 0 || !legalSwitchIndexes.includes(index) || waitingForResolution;
+                const currentIndex = typeof me?.currentIndex === 'number' ? me.currentIndex : 0;
+                const switchDisabled = pokemon?.fainted || index === currentIndex || !legalSwitchIndexes.includes(index) || waitingForResolution;
 
                 return (
                   <button
@@ -806,7 +760,7 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
                     {pokemon?.fainted && (
                       <div className="text-xs text-red-500">Fainted</div>
                     )}
-                    {index === 0 && (
+                    {index === currentIndex && (
                       <div className="text-xs text-muted">Active</div>
                     )}
                   </button>
@@ -833,7 +787,7 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
         </div>
 
       {/* Transition Effects for Animated View */}
-      {viewMode === 'animated' && (
+      {viewMode === 'animated' && !reduceMotion && (
         <>
           {/* Status Popups */}
           <StatusPopups

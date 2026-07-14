@@ -1,81 +1,217 @@
-// Firestore rules (rules_version = '2')
+﻿// Firestore rules (rules_version = '2')
 
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Public lobby rooms
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function roomAffectedKeys() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
+
+    function isRoomHost() {
+      return resource.data.hostId == request.auth.uid;
+    }
+
+    function isRoomGuest() {
+      return resource.data.guestId == request.auth.uid;
+    }
+
+    function hostImmutableRoomFieldsOk() {
+      return request.resource.data.hostId == resource.data.hostId;
+    }
+
+    function hostForbiddenGuestKeys() {
+      return !roomAffectedKeys().hasAny(['guestReady', 'guestTeam', 'guestId', 'guestName', 'guestPhotoURL']);
+    }
+
+    function guestFieldKeysOnly() {
+      return roomAffectedKeys().hasOnly([
+        'guestId', 'guestName', 'guestPhotoURL', 'guestTeam', 'guestReady',
+        'guestReleasedTeam', 'guestAnimatingBalls', 'guestReleasedBalls',
+        'activeUsers', 'currentPlayers', 'maxPlayers'
+      ]);
+    }
+
+    function presenceKeysOnly() {
+      return roomAffectedKeys().hasOnly(['activeUsers', 'currentPlayers', 'lastSeenHostAt']);
+    }
+
+    function battleIdUnchanged() {
+      return (!('battleId' in resource.data) && !('battleId' in request.resource.data))
+        || (('battleId' in resource.data)
+          && ('battleId' in request.resource.data)
+          && request.resource.data.battleId == resource.data.battleId);
+    }
+
+    function statusUnchanged() {
+      return request.resource.data.status == resource.data.status;
+    }
+
+    function hostNotStartingBattle() {
+      return request.resource.data.status != 'battling'
+        && (!('battleId' in request.resource.data) || request.resource.data.battleId == null);
+    }
+
+    function teamsAndReadyLocked() {
+      return !roomAffectedKeys().hasAny([
+        'hostTeam', 'guestTeam', 'hostReady', 'guestReady'
+      ]);
+    }
+
+    function noBattleIdOrNull() {
+      return !('battleId' in resource.data) || resource.data.battleId == null;
+    }
+
     match /battle_rooms/{roomId} {
-      allow read: if request.auth != null && (
-        // Everyone can see active lobby rooms
+      allow read: if isSignedIn() && (
         resource != null && resource.data.status in ['waiting', 'ready', 'battling', 'finished', 'unresolved'] ||
-        // Allow listeners to stay alive while a room is being deleted
         resource == null ||
-        // Host or guest always keep access to their room
         (resource != null && (resource.data.hostId == request.auth.uid || resource.data.guestId == request.auth.uid))
       );
 
-      allow create: if request.auth != null &&
-        request.resource.data.hostId == request.auth.uid;
+      allow create: if isSignedIn() &&
+        request.resource.data.hostId == request.auth.uid
+        && request.resource.data.status in ['waiting', 'ready']
+        && (!('battleId' in request.resource.data) || request.resource.data.battleId == null)
+        && !('hostTeam' in request.resource.data)
+        && !('guestTeam' in request.resource.data);
 
-      allow update: if request.auth != null && (
-        // Host can always update the room
-        resource.data.hostId == request.auth.uid ||
-        // Guest can update their own fields (join, ready, leave)
-        resource.data.guestId == request.auth.uid ||
-        // Anyone already tracked as active can maintain presence fields
-        ((request.resource.data.activeUsers is list) && request.resource.data.activeUsers.hasAny([request.auth.uid])) ||
-        // First guest claiming an empty slot
-        (!resource.data.guestId && request.resource.data.guestId == request.auth.uid)
+      allow update: if isSignedIn() && hostImmutableRoomFieldsOk() && (
+        (
+          isRoomHost()
+          && hostForbiddenGuestKeys()
+          && (
+            (
+              resource.data.status in ['waiting', 'ready']
+              && hostNotStartingBattle()
+              && !roomAffectedKeys().hasAny(['hostTeam', 'guestTeam'])
+            )
+            ||
+            (
+              resource.data.status == 'battling'
+              && battleIdUnchanged()
+              && request.resource.data.status in ['battling', 'unresolved']
+              && teamsAndReadyLocked()
+            )
+            ||
+            (
+              resource.data.status in ['finished', 'unresolved']
+              && battleIdUnchanged()
+              && statusUnchanged()
+              && teamsAndReadyLocked()
+            )
+          )
+        )
+        ||
+        (
+          isRoomGuest()
+          && guestFieldKeysOnly()
+          && battleIdUnchanged()
+          && statusUnchanged()
+          && !roomAffectedKeys().hasAny(['guestTeam'])
+        )
+        ||
+        (
+          (!('guestId' in resource.data) || resource.data.guestId == null)
+          && resource.data.status in ['waiting', 'ready']
+          && noBattleIdOrNull()
+          && request.resource.data.guestId == request.auth.uid
+          && guestFieldKeysOnly()
+          && !roomAffectedKeys().hasAny(['guestTeam'])
+          && battleIdUnchanged()
+          && request.resource.data.status in ['waiting', 'ready']
+        )
+        ||
+        (
+          presenceKeysOnly()
+          && (isRoomHost() || isRoomGuest())
+        )
       );
 
-      allow delete: if request.auth != null &&
-        resource.data.hostId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.hostId == request.auth.uid;
+
+      match /private/{docId} {
+        allow read, write: if isSignedIn() && (
+          get(/databases/$(database)/documents/battle_rooms/$(roomId)).data.hostId == request.auth.uid
+          || get(/databases/$(database)/documents/battle_rooms/$(roomId)).data.guestId == request.auth.uid
+        );
+      }
     }
 
-    // Battle documents managed by the cloud function/battle service
     match /battles/{battleId} {
-      allow create: if request.auth != null &&
-        request.resource.data.hostId == request.auth.uid;
-      allow read, update: if request.auth != null && (
+      allow create: if false;
+      allow read: if isSignedIn() && (
         resource.data.hostId == request.auth.uid ||
         resource.data.guestId == request.auth.uid
       );
-      allow delete: if request.auth != null &&
-        resource.data.hostId == request.auth.uid;
+      allow update, delete: if false;
     }
 
-    // Saved teams stored in per-user sub-collections (legacy) or flat collection (current)
     match /user_teams/{uid}/{teamId} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read, write: if isSignedIn() && request.auth.uid == uid;
     }
 
     match /userTeams/{teamId} {
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow read, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == resource.data.userId;
     }
 
-    // Dex progress synced per user
     match /users/{uid}/dex/{docId} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read, write: if isSignedIn() && request.auth.uid == uid;
     }
 
-    // Championship tournaments
-    match /championships/{champId} {
-      allow read: if request.auth != null;
+    function champAffectedKeys() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
 
-      allow create: if request.auth != null &&
+    function isChampHost() {
+      return resource.data.hostUid == request.auth.uid;
+    }
+
+    function champStatusUnchanged() {
+      return request.resource.data.status == resource.data.status;
+    }
+
+    function champJoinAppendSelf() {
+      return request.resource.data.participants.size() == resource.data.participants.size() + 1
+        && request.resource.data.participants[request.resource.data.participants.size() - 1].uid == request.auth.uid;
+    }
+
+    match /championships/{champId} {
+      allow read: if isSignedIn();
+
+      allow create: if isSignedIn() &&
         request.resource.data.hostUid == request.auth.uid;
 
-      // Any authenticated user can update (join, leave, pick seat, update team).
-      // Service-layer logic enforces host-only operations (start, randomize, forfeit, cancel).
-      allow update: if request.auth != null;
+      allow update: if isSignedIn() && (
+        (
+          isChampHost()
+          && request.resource.data.hostUid == resource.data.hostUid
+        )
+        ||
+        (
+          resource.data.status in ['open', 'seeding']
+          && champStatusUnchanged()
+          && request.resource.data.hostUid == resource.data.hostUid
+          && request.resource.data.size == resource.data.size
+          && champAffectedKeys().hasOnly(['participants', 'updatedAt'])
+          && (
+            champJoinAppendSelf()
+            || request.resource.data.participants.size() == resource.data.participants.size() - 1
+          )
+        )
+      );
 
-      allow delete: if request.auth != null &&
-        resource.data.hostUid == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.hostUid == request.auth.uid;
     }
 
-    // Block everything else by default
     match /{document=**} {
       allow read, write: if false;
     }

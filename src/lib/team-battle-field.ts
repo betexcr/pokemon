@@ -3,6 +3,8 @@ import { FieldState, FieldSideScreens } from './team-battle-types';
 import { getPokemonTypes, isGrounded } from './team-battle-hazards';
 import { BattlePokemon } from './team-battle-engine';
 
+export { getWeatherDuration, getTerrainDuration, getScreenDuration } from './team-battle-types';
+
 export function decrementFieldTimers(field: FieldState, screens: { player: FieldSideScreens; opponent: FieldSideScreens }): void {
   if (field.weather && field.weather.turns > 0) {
     field.weather.turns -= 1;
@@ -60,7 +62,18 @@ export function applyWeatherResidual(state: BattleState): void {
       const pokemon = getCurrentPokemon(team);
       if (pokemon.currentHp <= 0) return;
       const types = getPokemonTypes(pokemon);
-      const immune = types.includes('rock') || types.includes('ground') || types.includes('steel');
+      const ability = pokemon.currentAbility?.toLowerCase();
+      const item = pokemon.heldItem?.toLowerCase();
+      const immune =
+        types.includes('rock') ||
+        types.includes('ground') ||
+        types.includes('steel') ||
+        ability === 'magic-guard' ||
+        ability === 'overcoat' ||
+        ability === 'sand-force' ||
+        ability === 'sand-rush' ||
+        ability === 'sand-veil' ||
+        item === 'safety-goggles';
       if (!immune) {
         const damage = Math.floor(pokemon.maxHp / 16);
         if (damage > 0) {

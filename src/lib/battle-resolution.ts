@@ -21,6 +21,17 @@ import { RTDBBattleMeta, RTDBBattlePrivate, RTDBBattlePublic, RTDBChoice, type R
 import { handleBattleEnd } from './multiplayer/handleBattleEnd';
 import { hashBattleState } from './battle-replay';
 import { recordResolutionDurationMs, recordHydrationFallback, recordNormalizedAction, recordIllegalActionRejected } from './battle-engine-metrics';
+import { TURN_DEADLINE_MS } from './server/create-rtdb-battle';
+import { claimTurn } from './battle-resolution-claim';
+import {
+  projectPrivateVolatiles,
+  RecoverableResolutionError,
+  isRecoverableResolutionFailure,
+  illegalRejectMetaFields,
+  softFailChoosingFields,
+} from './battle-private-volatiles';
+
+export { RecoverableResolutionError, isRecoverableResolutionFailure };
 
 const POKEAPI_BASE = 'https://pokeapi.co/api/v2';
 
@@ -28,15 +39,6 @@ const _resolvingLocks = new Set<string>();
 
 /** In-process dedupe for concurrent `hydrateTeam` fetches (same battle / species). */
 const _pokemonApiInflight = new Map<string, Promise<any>>();
-
-const PLACEHOLDER_BASE_STATS: { stat: { name: string }; base_stat: number }[] = [
-    { stat: { name: 'hp' }, base_stat: 50 },
-    { stat: { name: 'attack' }, base_stat: 50 },
-    { stat: { name: 'defense' }, base_stat: 50 },
-    { stat: { name: 'special-attack' }, base_stat: 50 },
-    { stat: { name: 'special-defense' }, base_stat: 50 },
-    { stat: { name: 'speed' }, base_stat: 50 },
-];
 
 async function fetchPokemonData(idOrName: number | string): Promise<any> {
     const key = String(idOrName).toLowerCase();
@@ -87,7 +89,7 @@ function ensureStatModifiers(p: any): BattlePokemon['statModifiers'] {
     };
 }
 
-type HydrationStats = { placeholderStatsUsed: number };
+type HydrationStats = { placeholderStatsUsed: number; missingStats: boolean };
 
 async function hydrateTeam(team: any[], stats?: HydrationStats): Promise<BattlePokemon[]> {
     const hydratedTeam = await Promise.all(team.map(async (p) => {
@@ -106,10 +108,13 @@ async function hydrateTeam(team: any[], stats?: HydrationStats): Promise<BattleP
 
         const resolvedStats = hasStats
             ? pokemonObj.stats
-            : (fullData?.stats?.length ? fullData.stats : PLACEHOLDER_BASE_STATS);
-        if (!hasStats && (!fullData?.stats?.length)) {
+            : (fullData?.stats?.length ? fullData.stats : null);
+
+        if (!resolvedStats?.length) {
             stats && (stats.placeholderStatsUsed += 1);
+            stats && (stats.missingStats = true);
             recordHydrationFallback();
+            throw new Error(`Missing base stats for pokemon ${pokemonId || 'unknown'}`);
         }
 
         const pokemon = {
@@ -161,10 +166,11 @@ async function fetchBattleState(battleId: string, ops: RtdbOps, hydrationStats?:
     const meta = await ops.get(`battles/${battleId}/meta`) as RTDBBattleMeta;
     if (!meta) return null;
 
-    const [p1Private, p2Private, publicState] = await Promise.all([
+    const [p1Private, p2Private, publicState, serverState] = await Promise.all([
         ops.get(`battles/${battleId}/private/${meta.players.p1.uid}`) as Promise<RTDBBattlePrivate>,
         ops.get(`battles/${battleId}/private/${meta.players.p2.uid}`) as Promise<RTDBBattlePrivate>,
         ops.get(`battles/${battleId}/public`) as Promise<RTDBBattlePublic>,
+        ops.get(`battles/${battleId}/server`) as Promise<{ battleRng?: RTDBBattleMeta['battleRng'] } | null>,
     ]);
 
     if (!p1Private || !p2Private || !publicState) {
@@ -183,7 +189,7 @@ async function fetchBattleState(battleId: string, ops: RtdbOps, hydrationStats?:
     const mapScreens = (raw: any) => ({
         reflect: raw?.reflect ? { turns: raw.reflect } : undefined,
         lightScreen: raw?.lightScreen ? { turns: raw.lightScreen } : undefined,
-        auroraVeil: undefined,
+        auroraVeil: raw?.auroraVeil ? { turns: raw.auroraVeil } : undefined,
         safeguard: undefined,
         tailwind: undefined,
     });
@@ -215,108 +221,222 @@ async function fetchBattleState(battleId: string, ops: RtdbOps, hydrationStats?:
     };
 
     const rng =
-        battleRngFromStored(meta.battleRng) ??
+        battleRngFromStored(serverState?.battleRng) ??
+        battleRngFromStored(meta.battleRng) ?? // legacy fallback during migration
         createBattleRngFromBattleKey(battleId, typeof meta.turn === 'number' ? meta.turn : 1);
 
+    const roomsRaw = (publicState as any)?.field?.rooms ?? {};
+    const rooms: BattleState['field']['rooms'] = {};
+    if (roomsRaw.trickRoom?.turns || roomsRaw.trickRoom) {
+        rooms.trickRoom = { turns: typeof roomsRaw.trickRoom === 'number' ? roomsRaw.trickRoom : roomsRaw.trickRoom.turns };
+    }
+    if (roomsRaw.magicRoom?.turns || roomsRaw.magicRoom) {
+        rooms.magicRoom = { turns: typeof roomsRaw.magicRoom === 'number' ? roomsRaw.magicRoom : roomsRaw.magicRoom.turns };
+    }
+    if (roomsRaw.wonderRoom?.turns || roomsRaw.wonderRoom) {
+        rooms.wonderRoom = { turns: typeof roomsRaw.wonderRoom === 'number' ? roomsRaw.wonderRoom : roomsRaw.wonderRoom.turns };
+    }
+
     return {
-        player: p1Team, // p1 is "player" from perspective of engine for now, we'll handle perspective in execution
-        opponent: p2Team, // p2 is "opponent"
+        player: p1Team,
+        opponent: p2Team,
         turn: meta.turn,
         rng,
         battleLog: [],
         isComplete: meta.phase === 'ended',
         winner: meta.winnerUid === meta.players.p1.uid ? 'player' : meta.winnerUid === meta.players.p2.uid ? 'opponent' : undefined,
-        phase: 'selection', // We are resolving, so we start from selection state effectively
+        phase: 'selection',
         actionQueue: [],
         field: {
             weather: publicState?.field?.weather ?? undefined,
             terrain: publicState?.field?.terrain ?? undefined,
-            rooms: {}
+            rooms,
         }
     };
 }
 
+function privateUpdatesFromTeam(team: BattleTeam) {
+    const active = getCurrentPokemon(team);
+    const volatileProj = projectPrivateVolatiles(active);
+    return {
+        team: team.pokemon,
+        currentIndex: team.currentIndex,
+        ...volatileProj,
+    };
+}
+
+function isProdLike() {
+    return process.env.VERCEL_ENV === 'production' || process.env.NODE_ENV === 'production';
+}
+
+/**
+ * Enforce turn timeout: if past deadline while choosing, forfeit the idle player(s).
+ */
+export async function enforceTurnDeadline(battleId: string, authToken?: string): Promise<boolean> {
+    const ops = getRtdbOps(authToken, { requireAdmin: isProdLike() });
+    const meta = await ops.get(`battles/${battleId}/meta`) as RTDBBattleMeta | null;
+    if (!meta || meta.phase !== 'choosing' || !meta.deadlineAt) return false;
+    if (Date.now() < meta.deadlineAt) return false;
+
+    const choices = (await ops.get(`battles/${battleId}/turns/${meta.turn}/choices`)) as Record<string, RTDBChoice> | null;
+    const p1Id = meta.players.p1.uid;
+    const p2Id = meta.players.p2.uid;
+    const p1Ready = !!choices?.[p1Id];
+    const p2Ready = !!choices?.[p2Id];
+
+    if (p1Ready && p2Ready) return false;
+
+    if (!p1Ready && !p2Ready) {
+        await handleBattleEnd(battleId, undefined, 'timeout', meta, ops);
+        return true;
+    }
+    const winner = p1Ready ? 'player' : 'opponent';
+    await handleBattleEnd(battleId, winner, 'timeout', meta, ops);
+    return true;
+}
+
 export async function resolveTurn(battleId: string, authToken?: string): Promise<void> {
     const startedAt = Date.now();
-    const ops = getRtdbOps(authToken);
+    const ops = getRtdbOps(authToken, { requireAdmin: isProdLike() });
 
-    const meta = await ops.get(`battles/${battleId}/meta`) as RTDBBattleMeta;
-    if (!meta) throw new Error('Battle not found');
+    const metaEarly = await ops.get(`battles/${battleId}/meta`) as RTDBBattleMeta;
+    if (!metaEarly) throw new Error('Battle not found');
 
-    if (meta.phase !== 'choosing') {
+    if (metaEarly.phase === 'ended') return;
+
+    if (metaEarly.phase === 'choosing' && metaEarly.deadlineAt && Date.now() > metaEarly.deadlineAt) {
+        const timedOut = await enforceTurnDeadline(battleId, authToken);
+        if (timedOut) return;
+    }
+
+    const choices = await ops.get(`battles/${battleId}/turns/${metaEarly.turn}/choices`) as Record<string, RTDBChoice>;
+    if (!choices || !choices[metaEarly.players.p1.uid] || !choices[metaEarly.players.p2.uid]) {
         return;
     }
 
-    const lockKey = `${battleId}:${meta.turn}`;
+    const lockKey = `${battleId}:${metaEarly.turn}`;
     if (_resolvingLocks.has(lockKey)) {
         return;
     }
     _resolvingLocks.add(lockKey);
 
-    const choices = await ops.get(`battles/${battleId}/turns/${meta.turn}/choices`) as Record<string, RTDBChoice>;
-    if (!choices || !choices[meta.players.p1.uid] || !choices[meta.players.p2.uid]) {
-        _resolvingLocks.delete(lockKey);
-        return;
-    }
-
     try {
-    await ops.update(`battles/${battleId}/meta`, { phase: 'resolving' });
+        const resolutionExists = !!(await ops.get(`battles/${battleId}/turns/${metaEarly.turn}/resolution`));
+        if (resolutionExists) {
+            return;
+        }
 
-    // 4. Fetch Current State
-    const hydrationStats: HydrationStats = { placeholderStatsUsed: 0 };
-    const battleState = await fetchBattleState(battleId, ops, hydrationStats);
-    if (!battleState) {
-        console.error('Failed to reconstruct battle state. One or more paths missing.');
-        throw new Error('Failed to reconstruct battle state');
-    }
-    // 4. Map Choices to BattleActions
-    const p1Choice = choices[meta.players.p1.uid];
-    const p2Choice = choices[meta.players.p2.uid];
+        const claim = await claimTurn(ops, battleId, metaEarly.turn, { resolutionExists });
+        if (!claim.committed) {
+            return;
+        }
+        const meta = (claim.meta || metaEarly) as RTDBBattleMeta;
 
-    const p1ActionRaw: BattleAction = {
-        type: p1Choice.action as 'move' | 'switch',
-        moveId: p1Choice.payload?.moveId,
-        switchIndex: p1Choice.payload?.switchToIndex,
-        target: 'opponent'
-    };
-
-    const p2ActionRaw: BattleAction = {
-        type: p2Choice.action as 'move' | 'switch',
-        moveId: p2Choice.payload?.moveId,
-        switchIndex: p2Choice.payload?.switchToIndex,
-        target: 'player'
-    };
-
-    const profile: BattleRuleProfile = meta.ruleProfile ?? 'simplified';
-    const n1 = normalizeServerBattleAction(battleState.player, p1ActionRaw, profile);
-    const n2 = normalizeServerBattleAction(battleState.opponent, p2ActionRaw, profile);
-    if (n1.normalized) recordNormalizedAction();
-    if (n2.normalized) recordNormalizedAction();
-    if (n1.errorCode || n2.errorCode) {
-        recordIllegalActionRejected();
-        console.error('resolveTurn: illegal choices', { battleId, v1: n1.errorCode, v2: n2.errorCode, p1ActionRaw, p2ActionRaw });
-        await ops.update(`battles/${battleId}/public`, {
-            lastValidation: {
-                turn: meta.turn,
-                p1: n1.errorCode ?? null,
-                p2: n2.errorCode ?? null,
-                normalized: false,
+        const hydrationStats: HydrationStats = { placeholderStatsUsed: 0, missingStats: false };
+        let battleState: BattleState | null;
+        try {
+            battleState = await fetchBattleState(battleId, ops, hydrationStats);
+        } catch (hydrateErr) {
+            console.error('Hydration failed (recoverable):', hydrateErr);
+            const soft = softFailChoosingFields(metaEarly, TURN_DEADLINE_MS);
+            if (ops.updateMulti) {
+                await ops.updateMulti({
+                    [`battles/${battleId}/turns/${metaEarly.turn}/choices`]: null,
+                    [`battles/${battleId}/meta/phase`]: soft.phase,
+                    [`battles/${battleId}/meta/resolvingStartedAt`]: soft.resolvingStartedAt,
+                    [`battles/${battleId}/meta/version`]: soft.version,
+                    [`battles/${battleId}/meta/deadlineAt`]: soft.deadlineAt,
+                });
+            } else {
+                await ops.set(`battles/${battleId}/turns/${metaEarly.turn}/choices`, null);
+                await ops.update(`battles/${battleId}/meta`, soft);
             }
-        } as any);
-        await handleBattleEnd(battleId, undefined, 'resolution_failed', meta, ops);
-        return;
-    }
-    const p1Action = n1.action;
-    const p2Action = n2.action;
+            throw new RecoverableResolutionError(
+                hydrateErr instanceof Error ? hydrateErr.message : 'Hydration failed'
+            );
+        }
+        if (!battleState) {
+            const soft = softFailChoosingFields(metaEarly, TURN_DEADLINE_MS);
+            if (ops.updateMulti) {
+                await ops.updateMulti({
+                    [`battles/${battleId}/turns/${metaEarly.turn}/choices`]: null,
+                    [`battles/${battleId}/meta/phase`]: soft.phase,
+                    [`battles/${battleId}/meta/resolvingStartedAt`]: soft.resolvingStartedAt,
+                    [`battles/${battleId}/meta/version`]: soft.version,
+                    [`battles/${battleId}/meta/deadlineAt`]: soft.deadlineAt,
+                });
+            } else {
+                await ops.set(`battles/${battleId}/turns/${metaEarly.turn}/choices`, null);
+                await ops.update(`battles/${battleId}/meta`, soft);
+            }
+            throw new RecoverableResolutionError('Failed to reconstruct battle state');
+        }
 
-    // 6. Build Action Queue
-    const queue = buildActionQueue(battleState, p1Action, p2Action);
-    const currentState = battleState;
-    const rngBefore = cloneBattleRng(currentState.rng);
+        const p1Choice = choices[meta.players.p1.uid];
+        const p2Choice = choices[meta.players.p2.uid];
+
+        const p1ActionRaw: BattleAction = {
+            type: p1Choice.action as 'move' | 'switch',
+            moveId: p1Choice.payload?.moveId,
+            switchIndex: p1Choice.payload?.switchToIndex,
+            target: 'opponent'
+        };
+
+        const p2ActionRaw: BattleAction = {
+            type: p2Choice.action as 'move' | 'switch',
+            moveId: p2Choice.payload?.moveId,
+            switchIndex: p2Choice.payload?.switchToIndex,
+            target: 'player'
+        };
+
+        const profile: BattleRuleProfile = meta.ruleProfile ?? 'simplified';
+        const n1 = normalizeServerBattleAction(battleState.player, p1ActionRaw, profile);
+        const n2 = normalizeServerBattleAction(battleState.opponent, p2ActionRaw, profile);
+        if (n1.normalized) recordNormalizedAction();
+        if (n2.normalized) recordNormalizedAction();
+
+        if (n1.errorCode || n2.errorCode) {
+            recordIllegalActionRejected();
+            console.error('resolveTurn: illegal choices — rejecting and returning to choosing', {
+                battleId,
+                v1: n1.errorCode,
+                v2: n2.errorCode,
+            });
+            const rejectMeta = illegalRejectMetaFields(meta, TURN_DEADLINE_MS);
+            const multi: Record<string, unknown> = {
+                [`battles/${battleId}/public/lastValidation`]: {
+                    turn: meta.turn,
+                    p1: n1.errorCode ?? null,
+                    p2: n2.errorCode ?? null,
+                    normalized: false,
+                },
+                [`battles/${battleId}/turns/${meta.turn}/choices`]: null,
+                [`battles/${battleId}/meta/phase`]: rejectMeta.phase,
+                [`battles/${battleId}/meta/resolvingStartedAt`]: rejectMeta.resolvingStartedAt,
+                [`battles/${battleId}/meta/version`]: rejectMeta.version,
+                [`battles/${battleId}/meta/deadlineAt`]: rejectMeta.deadlineAt,
+            };
+            if (ops.updateMulti) {
+                await ops.updateMulti(multi);
+            } else {
+                await ops.set(`battles/${battleId}/turns/${meta.turn}/choices`, null);
+                await ops.update(`battles/${battleId}/public`, {
+                    lastValidation: multi[`battles/${battleId}/public/lastValidation`],
+                } as any);
+                await ops.update(`battles/${battleId}/meta`, rejectMeta);
+            }
+            return;
+        }
+
+        const p1Action = n1.action;
+        const p2Action = n2.action;
+
+        const queue = buildActionQueue(battleState, p1Action, p2Action);
+        const currentState = battleState;
+        const rngBefore = cloneBattleRng(currentState.rng);
 
         await runBattleTurnFromQueue(currentState, queue, { clearBattleLog: true });
 
-        // 9. Check Win Condition
         const playerDefeated = isTeamDefeated(currentState.player);
         const opponentDefeated = isTeamDefeated(currentState.opponent);
         if (playerDefeated && opponentDefeated) {
@@ -333,20 +453,8 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
             currentState.battleLog.push({ type: 'battle_end', message: `${meta.players.p1.name} won!` });
         }
 
-        // 10. Save Updated State to RTDB
-        // We need to map BattleState back to RTDB structure
-        // This is the reverse of fetchBattleState
-
-        // Prepare updates for private nodes (team state)
-        const p1Updates = {
-            team: currentState.player.pokemon,
-            currentIndex: currentState.player.currentIndex
-        };
-
-        const p2Updates = {
-            team: currentState.opponent.pokemon,
-            currentIndex: currentState.opponent.currentIndex
-        };
+        const p1Updates = privateUpdatesFromTeam(currentState.player);
+        const p2Updates = privateUpdatesFromTeam(currentState.opponent);
 
         const p1ActiveNow = getCurrentPokemon(currentState.player);
         const p2ActiveNow = getCurrentPokemon(currentState.opponent);
@@ -389,8 +497,7 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
                 turn: meta.turn,
                 p1Action: { type: p1Action.type, moveId: p1Action.moveId, switchIndex: p1Action.switchIndex, target: p1Action.target },
                 p2Action: { type: p2Action.type, moveId: p2Action.moveId, switchIndex: p2Action.switchIndex, target: p2Action.target },
-                rngBefore,
-                rngAfter: cloneBattleRng(currentState.rng),
+                // Live RNG state stays Admin-only under battles/.../server — do not expose in client-readable resolution
             },
             validation: {
                 p1: n1.reasonCode,
@@ -403,19 +510,33 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
             }
         };
 
+        const roomsOut: Record<string, unknown> = {};
+        if (currentState.field?.rooms?.trickRoom) {
+            roomsOut.trickRoom = { turns: currentState.field.rooms.trickRoom.turns };
+        }
+        if (currentState.field?.rooms?.magicRoom) {
+            roomsOut.magicRoom = { turns: currentState.field.rooms.magicRoom.turns };
+        }
+        if (currentState.field?.rooms?.wonderRoom) {
+            roomsOut.wonderRoom = { turns: currentState.field.rooms.wonderRoom.turns };
+        }
+
         const publicUpdates: any = {
             battleLog: currentState.battleLog,
             field: {
                 weather: currentState.field?.weather ?? null,
                 terrain: currentState.field?.terrain ?? null,
+                rooms: roomsOut,
                 screens: {
                     p1: {
                         reflect: currentState.player.sideConditions.screens.reflect?.turns ?? 0,
                         lightScreen: currentState.player.sideConditions.screens.lightScreen?.turns ?? 0,
+                        auroraVeil: currentState.player.sideConditions.screens.auroraVeil?.turns ?? 0,
                     },
                     p2: {
                         reflect: currentState.opponent.sideConditions.screens.reflect?.turns ?? 0,
                         lightScreen: currentState.opponent.sideConditions.screens.lightScreen?.turns ?? 0,
+                        auroraVeil: currentState.opponent.sideConditions.screens.auroraVeil?.turns ?? 0,
                     }
                 },
                 hazards: {
@@ -453,40 +574,137 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
         };
 
         const rngStored = battleRngToStored(currentState.rng);
+        const nextVersion = (meta.version ?? 1) + 1;
+        const nextDeadline = Date.now() + TURN_DEADLINE_MS;
 
         if (currentState.isComplete) {
-            // Write state updates (private, public, clear choices) but let
-            // handleBattleEnd own the meta + Firestore + room transition.
-            await Promise.all([
-                ops.update(`battles/${battleId}/private/${meta.players.p1.uid}`, p1Updates),
-                ops.update(`battles/${battleId}/private/${meta.players.p2.uid}`, p2Updates),
-                ops.update(`battles/${battleId}/public`, publicUpdates),
-                ops.update(`battles/${battleId}/meta`, { battleRng: rngStored }),
-                ops.set(`battles/${battleId}/turns/${meta.turn}/resolution`, replayResolution),
-                ops.set(`battles/${battleId}/turns/${meta.turn}/choices`, null),
-            ]);
+            let winnerUid: string | null = null;
+            if (currentState.winner === 'player') winnerUid = meta.players.p1.uid;
+            else if (currentState.winner === 'opponent') winnerUid = meta.players.p2.uid;
 
-            await handleBattleEnd(battleId, currentState.winner, 'victory', undefined, ops);
+            if (ops.updateMulti) {
+                await ops.updateMulti({
+                    [`battles/${battleId}/private/${meta.players.p1.uid}`]: p1Updates,
+                    [`battles/${battleId}/private/${meta.players.p2.uid}`]: p2Updates,
+                    [`battles/${battleId}/public`]: publicUpdates,
+                    [`battles/${battleId}/meta/battleRng`]: null,
+                    [`battles/${battleId}/server/battleRng`]: rngStored,
+                    [`battles/${battleId}/meta/resolvingStartedAt`]: null,
+                    [`battles/${battleId}/meta/phase`]: 'ended',
+                    [`battles/${battleId}/meta/winnerUid`]: winnerUid,
+                    [`battles/${battleId}/meta/endedReason`]: 'victory',
+                    [`battles/${battleId}/turns/${meta.turn}/resolution`]: replayResolution,
+                    [`battles/${battleId}/turns/${meta.turn}/choices`]: null,
+                });
+            } else {
+                await Promise.all([
+                    ops.update(`battles/${battleId}/private/${meta.players.p1.uid}`, p1Updates),
+                    ops.update(`battles/${battleId}/private/${meta.players.p2.uid}`, p2Updates),
+                    ops.update(`battles/${battleId}/public`, publicUpdates),
+                    ops.update(`battles/${battleId}/meta`, {
+                        battleRng: null,
+                        resolvingStartedAt: null,
+                        phase: 'ended',
+                        winnerUid,
+                        endedReason: 'victory',
+                    }),
+                    ops.set(`battles/${battleId}/server/battleRng`, rngStored),
+                    ops.set(`battles/${battleId}/turns/${meta.turn}/resolution`, replayResolution),
+                    ops.set(`battles/${battleId}/turns/${meta.turn}/choices`, null),
+                ]);
+            }
+            // Firestore room + battle doc; RTDB phase already ended (idempotent)
+            await handleBattleEnd(battleId, currentState.winner, 'victory', {
+                ...meta,
+                phase: 'ended',
+                winnerUid: winnerUid ?? undefined,
+                endedReason: 'victory',
+            } as RTDBBattleMeta, ops);
         } else {
-            const metaUpdates: any = {
+            const metaUpdates = {
                 turn: meta.turn + 1,
                 phase: 'choosing',
-                battleRng: rngStored,
+                version: nextVersion,
+                deadlineAt: nextDeadline,
+                resolvingStartedAt: null,
+                battleRng: null,
             };
-
-            await Promise.all([
-                ops.update(`battles/${battleId}/meta`, metaUpdates),
-                ops.update(`battles/${battleId}/private/${meta.players.p1.uid}`, p1Updates),
-                ops.update(`battles/${battleId}/private/${meta.players.p2.uid}`, p2Updates),
-                ops.update(`battles/${battleId}/public`, publicUpdates),
-                ops.set(`battles/${battleId}/turns/${meta.turn}/resolution`, replayResolution),
-                ops.set(`battles/${battleId}/turns/${meta.turn}/choices`, null),
-            ]);
+            if (ops.updateMulti) {
+                await ops.updateMulti({
+                    [`battles/${battleId}/meta/turn`]: metaUpdates.turn,
+                    [`battles/${battleId}/meta/phase`]: metaUpdates.phase,
+                    [`battles/${battleId}/meta/version`]: metaUpdates.version,
+                    [`battles/${battleId}/meta/deadlineAt`]: metaUpdates.deadlineAt,
+                    [`battles/${battleId}/meta/resolvingStartedAt`]: null,
+                    [`battles/${battleId}/meta/battleRng`]: null,
+                    [`battles/${battleId}/server/battleRng`]: rngStored,
+                    [`battles/${battleId}/private/${meta.players.p1.uid}`]: p1Updates,
+                    [`battles/${battleId}/private/${meta.players.p2.uid}`]: p2Updates,
+                    [`battles/${battleId}/public`]: publicUpdates,
+                    [`battles/${battleId}/turns/${meta.turn}/resolution`]: replayResolution,
+                    [`battles/${battleId}/turns/${meta.turn}/choices`]: null,
+                });
+            } else {
+                await Promise.all([
+                    ops.update(`battles/${battleId}/meta`, metaUpdates),
+                    ops.set(`battles/${battleId}/server/battleRng`, rngStored),
+                    ops.update(`battles/${battleId}/private/${meta.players.p1.uid}`, p1Updates),
+                    ops.update(`battles/${battleId}/private/${meta.players.p2.uid}`, p2Updates),
+                    ops.update(`battles/${battleId}/public`, publicUpdates),
+                    ops.set(`battles/${battleId}/turns/${meta.turn}/resolution`, replayResolution),
+                    ops.set(`battles/${battleId}/turns/${meta.turn}/choices`, null),
+                ]);
+            }
         }
-
     } catch (error: unknown) {
         console.error('Error during turn resolution:', error);
-        
+        const turn = metaEarly?.turn;
+        let resolutionExists = false;
+        try {
+            if (typeof turn === 'number') {
+                resolutionExists = !!(await ops.get(`battles/${battleId}/turns/${turn}/resolution`));
+            }
+        } catch {
+            /* ignore */
+        }
+
+        // Never soft-reset to choosing after an authoritative resolution was written
+        if (resolutionExists) {
+            try {
+                await handleBattleEnd(battleId, undefined, 'victory', undefined, ops);
+            } catch (cleanupError) {
+                console.error('Failed to finalize ended battle after resolution:', cleanupError);
+            }
+            throw error;
+        }
+
+        const recoverable = isRecoverableResolutionFailure(error);
+
+        if (recoverable) {
+            // Soft-fail writes already happened in hydrate path; ensure choosing if needed
+            try {
+                const soft = softFailChoosingFields(metaEarly || { version: 1 }, TURN_DEADLINE_MS);
+                if (ops.updateMulti && typeof turn === 'number') {
+                    await ops.updateMulti({
+                        [`battles/${battleId}/turns/${turn}/choices`]: null,
+                        [`battles/${battleId}/meta/phase`]: soft.phase,
+                        [`battles/${battleId}/meta/resolvingStartedAt`]: soft.resolvingStartedAt,
+                        [`battles/${battleId}/meta/version`]: soft.version,
+                        [`battles/${battleId}/meta/deadlineAt`]: soft.deadlineAt,
+                    });
+                } else {
+                    if (typeof turn === 'number') {
+                        await ops.set(`battles/${battleId}/turns/${turn}/choices`, null);
+                    }
+                    await ops.update(`battles/${battleId}/meta`, soft);
+                }
+            } catch {
+                /* ignore */
+            }
+            throw error;
+        }
+
+        // Hard-fail: end without bouncing through choosing
         try {
             await handleBattleEnd(battleId, undefined, 'resolution_failed', undefined, ops);
         } catch (cleanupError) {
@@ -497,6 +715,11 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
         recordResolutionDurationMs(Date.now() - startedAt);
         _resolvingLocks.delete(lockKey);
     }
-
 }
 
+/** @internal exported for unit tests */
+export const __test__ = {
+    hydrateTeam,
+    projectPrivateVolatiles,
+    fetchBattleState,
+};

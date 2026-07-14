@@ -122,10 +122,19 @@ export async function handleBattleEnd(
       winnerUid = meta.players.p1.uid;
     } else if (winner === 'opponent') {
       winnerUid = meta.players.p2.uid;
+    } else if (meta.winnerUid) {
+      winnerUid = meta.winnerUid;
+    }
+
+    // RTDB already ended (atomic victory write) — sync Firestore only
+    if (meta.phase === 'ended') {
+      await updateFirestore(battleId, winner, winnerUid, endReason);
+      return;
     }
 
     // 1. Update RTDB meta — use a transaction when available to avoid
     //    double-writes from concurrent calls (TOCTOU guard).
+    let rtdbAlreadyEnded = false;
     if (serverOps?.transaction) {
       const result = await serverOps.transaction(
         `battles/${battleId}/meta`,
@@ -135,12 +144,8 @@ export async function handleBattleEnd(
         },
       );
       if (!result.committed) {
-        console.warn(`handleBattleEnd: battle ${battleId} already ended (txn aborted), skipping`);
-        return;
+        rtdbAlreadyEnded = true;
       }
-    } else if (meta.phase === 'ended') {
-      console.warn(`handleBattleEnd: battle ${battleId} already ended, skipping`);
-      return;
     } else if (serverOps) {
       await serverOps.update(`battles/${battleId}/meta`, {
         phase: 'ended',
@@ -157,7 +162,10 @@ export async function handleBattleEnd(
       });
     }
 
-    // 2. Update Firestore battle + room
+    // 2. Always sync Firestore battle + room (even when RTDB already ended concurrently)
+    if (rtdbAlreadyEnded) {
+      console.warn(`handleBattleEnd: battle ${battleId} already ended in RTDB; syncing Firestore`);
+    }
     await updateFirestore(battleId, winner, winnerUid, endReason);
   } catch (error) {
     console.error('Failed to handle battle end:', error);

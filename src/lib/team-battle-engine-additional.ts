@@ -7,22 +7,41 @@ import {
   getCurrentPokemon,
   switchToPokemon,
   getEffectiveSpeed,
+  isTailwindActive,
   isTeamDefeated,
   canUseMove,
   applyStatusMoveEffects,
   calculateStat,
   getNextAvailablePokemon,
+  getNextAvailableBenchPokemon,
+  applySwitchOutAbilities,
+  getMovePriority,
   consumePpForMove,
+  getTeamForPokemon,
+  isSafeguardActive,
 } from './team-battle-engine';
 import { recordMoveDataMiss } from './battle-engine-metrics';
-import { calculateComprehensiveDamage, TypeName } from './damage-calculator';
+import { calculateComprehensiveDamage, calculateTypeEffectiveness, TypeName } from './damage-calculator';
 import { getMove } from './moveCache';
-import { applyEntryHazards, isGrounded } from './team-battle-hazards';
+import { applyEntryHazards, isGrounded, getPokemonTypes } from './team-battle-hazards';
+import {
+  applyVolatileAndHazardScripts,
+  applyBindingOnHit,
+} from './team-battle-scripts';
 import { handleOnEntryAbilities } from './team-battle-abilities';
-import { applyWeatherResidual, applyTerrainHealing, decrementFieldTimers, applyLeechSeed, applyBindingDamage } from './team-battle-field';
+import {
+  applyWeatherResidual,
+  applyTerrainHealing,
+  decrementFieldTimers,
+  applyLeechSeed,
+  applyBindingDamage,
+} from './team-battle-field';
+import { getWeatherDuration, getTerrainDuration, getScreenDuration } from './team-battle-types';
 import { applyEndOfTurnStatus, clearStatus, applyStatus, applyStartOfTurnStatus, terrainPreventsStatus, cureTeamStatuses } from './team-battle-status';
 import { BattleRng, rngRollChance, rngNextInt, rngNextFloat } from './battle-rng';
-import { tryConsumeBerry, tryHarvestBerry } from './team-battle-items';
+import { tryConsumeBerry, tryHarvestBerry, checkTypeResistBerry, removeHeldItem } from './team-battle-items';
+import { PIVOT_MOVES, SELF_STATUS_MOVES } from './battle-move-constants';
+import { prepareLiveDamageModifiers, toDamageTypeName } from './battle-damage-modifiers';
 
 // Process start-of-turn effects
 export async function processStartOfTurn(state: BattleState): Promise<void> {
@@ -122,6 +141,7 @@ export async function resolveSwitch(state: BattleState, action: BattleState['act
   const currentPokemon = getCurrentPokemon(team);
   currentPokemon.volatile.protect = undefined;
   currentPokemon.volatile.flinched = false;
+  applySwitchOutAbilities(currentPokemon);
   
   // Perform the switch
   switchToPokemon(team, switchIndex);
@@ -316,6 +336,11 @@ function applyMoveAilment(
     return;
   }
 
+  // Safeguard blocks non-volatile status (and confusion is handled above)
+  if (isSafeguardActive(getTeamForPokemon(state, defender))) {
+    return;
+  }
+
   if (isSecondary) {
     const chance = move.ailment.chance === 0 ? 1 : (move.ailment.chance ?? 0) / 100;
     if (!rngRollChance(state.rng, chance)) return;
@@ -384,28 +409,48 @@ type ScriptedStatusMoveHandler = (ctx: {
 
 const scriptedStatusMoveHandlers: Record<string, ScriptedStatusMoveHandler> = {
   'sunny-day': ({ state, attacker }) => {
-    state.field.weather = { kind: 'sun', turns: 5, source: attacker.pokemon.name };
+    state.field.weather = { kind: 'sun', turns: getWeatherDuration('sun', attacker.heldItem), source: attacker.pokemon.name };
     state.battleLog.push({ type: 'status_effect', message: 'The sunlight turned harsh!' });
     return true;
   },
   'rain-dance': ({ state, attacker }) => {
-    state.field.weather = { kind: 'rain', turns: 5, source: attacker.pokemon.name };
+    state.field.weather = { kind: 'rain', turns: getWeatherDuration('rain', attacker.heldItem), source: attacker.pokemon.name };
     state.battleLog.push({ type: 'status_effect', message: 'It started to rain!' });
     return true;
   },
   sandstorm: ({ state, attacker }) => {
-    state.field.weather = { kind: 'sandstorm', turns: 5, source: attacker.pokemon.name };
+    state.field.weather = { kind: 'sandstorm', turns: getWeatherDuration('sandstorm', attacker.heldItem), source: attacker.pokemon.name };
     state.battleLog.push({ type: 'status_effect', message: 'A sandstorm kicked up!' });
     return true;
   },
   hail: ({ state, attacker }) => {
-    state.field.weather = { kind: 'snow', turns: 5, source: attacker.pokemon.name };
+    state.field.weather = { kind: 'snow', turns: getWeatherDuration('snow', attacker.heldItem), source: attacker.pokemon.name };
     state.battleLog.push({ type: 'status_effect', message: 'It started to snow!' });
     return true;
   },
   snowscape: ({ state, attacker }) => {
-    state.field.weather = { kind: 'snow', turns: 5, source: attacker.pokemon.name };
+    state.field.weather = { kind: 'snow', turns: getWeatherDuration('snow', attacker.heldItem), source: attacker.pokemon.name };
     state.battleLog.push({ type: 'status_effect', message: 'It started to snow!' });
+    return true;
+  },
+  'electric-terrain': ({ state, attacker }) => {
+    state.field.terrain = { kind: 'electric', turns: getTerrainDuration(attacker.heldItem), source: attacker.pokemon.name };
+    state.battleLog.push({ type: 'status_effect', message: 'An electric current runs across the battlefield!' });
+    return true;
+  },
+  'grassy-terrain': ({ state, attacker }) => {
+    state.field.terrain = { kind: 'grassy', turns: getTerrainDuration(attacker.heldItem), source: attacker.pokemon.name };
+    state.battleLog.push({ type: 'status_effect', message: 'Grass grew to cover the battlefield!' });
+    return true;
+  },
+  'misty-terrain': ({ state, attacker }) => {
+    state.field.terrain = { kind: 'misty', turns: getTerrainDuration(attacker.heldItem), source: attacker.pokemon.name };
+    state.battleLog.push({ type: 'status_effect', message: 'Mist swirled around the battlefield!' });
+    return true;
+  },
+  'psychic-terrain': ({ state, attacker }) => {
+    state.field.terrain = { kind: 'psychic', turns: getTerrainDuration(attacker.heldItem), source: attacker.pokemon.name };
+    state.battleLog.push({ type: 'status_effect', message: 'The battlefield got weird!' });
     return true;
   },
   'trick-room': ({ state, attacker }) => {
@@ -419,7 +464,204 @@ const scriptedStatusMoveHandlers: Record<string, ScriptedStatusMoveHandler> = {
     }
     return true;
   },
+  trick: ({ state, attacker, defender }) => {
+    const aItem = attacker.heldItem;
+    const dItem = defender.heldItem;
+    attacker.heldItem = dItem;
+    defender.heldItem = aItem;
+    attacker.volatile.choiceLock = undefined;
+    defender.volatile.choiceLock = undefined;
+    syncUnburdenAfterItemChange(attacker, Boolean(aItem), Boolean(attacker.heldItem));
+    syncUnburdenAfterItemChange(defender, Boolean(dItem), Boolean(defender.heldItem));
+    state.battleLog.push({
+      type: 'status_effect',
+      message: `${attacker.pokemon.name} switched items with ${defender.pokemon.name}!`,
+    });
+    return true;
+  },
+  switcheroo: ({ state, attacker, defender }) => {
+    const aItem = attacker.heldItem;
+    const dItem = defender.heldItem;
+    attacker.heldItem = dItem;
+    defender.heldItem = aItem;
+    attacker.volatile.choiceLock = undefined;
+    defender.volatile.choiceLock = undefined;
+    syncUnburdenAfterItemChange(attacker, Boolean(aItem), Boolean(attacker.heldItem));
+    syncUnburdenAfterItemChange(defender, Boolean(dItem), Boolean(defender.heldItem));
+    state.battleLog.push({
+      type: 'status_effect',
+      message: `${attacker.pokemon.name} switched items with ${defender.pokemon.name}!`,
+    });
+    return true;
+  },
 };
+
+function syncUnburdenAfterItemChange(
+  pokemon: BattlePokemon,
+  hadItem: boolean,
+  hasItem: boolean
+): void {
+  if (pokemon.currentAbility?.toLowerCase() !== 'unburden') return;
+  if (hadItem && !hasItem) {
+    pokemon.volatile.unburdenActive = true;
+  } else if (hasItem) {
+    pokemon.volatile.unburdenActive = undefined;
+  }
+}
+
+/** Apply absorbed hit to Substitute; returns true if the Substitute took the hit. */
+function absorbHitWithSubstitute(
+  state: BattleState,
+  defender: BattlePokemon,
+  damage: number
+): boolean {
+  if (!defender.volatile.substitute || damage <= 0) return false;
+  const sub = defender.volatile.substitute;
+  if (damage >= sub.hp) {
+    state.battleLog.push({
+      type: 'status_effect',
+      message: `${defender.pokemon.name}'s substitute faded!`,
+      pokemon: defender.pokemon.name,
+    });
+    defender.volatile.substitute = undefined;
+  } else {
+    sub.hp -= damage;
+    state.battleLog.push({
+      type: 'status_effect',
+      message: `${defender.pokemon.name}'s substitute took the hit!`,
+      pokemon: defender.pokemon.name,
+    });
+  }
+  return true;
+}
+
+/** Self-targeting / pivot move sets live in battle-move-constants.ts */
+
+async function performPivotSwitch(
+  state: BattleState,
+  user: 'player' | 'opponent',
+): Promise<void> {
+  const team = user === 'player' ? state.player : state.opponent;
+  const outgoing = getCurrentPokemon(team);
+  if (outgoing.currentHp <= 0) return;
+  const nextIndex = getNextAvailableBenchPokemon(team);
+  if (nextIndex === null) return;
+
+  applySwitchOutAbilities(outgoing);
+  outgoing.volatile.protect = undefined;
+  outgoing.volatile.flinched = false;
+  switchToPokemon(team, nextIndex);
+  const replacement = getCurrentPokemon(team);
+  state.battleLog.push({
+    type: 'pokemon_sent_out',
+    message: `Go! ${replacement.pokemon.name}!`,
+    pokemon: replacement.pokemon.name,
+  });
+  await runEntrySequence(state, user, replacement);
+  replacement.volatile.justSwitchedIn = true;
+}
+
+function tryAbilityAbsorb(
+  state: BattleState,
+  attacker: BattlePokemon,
+  defender: BattlePokemon,
+  moveTypeRaw: string,
+  moveCategory: string,
+): boolean {
+  const ability = defender.currentAbility?.toLowerCase();
+  if (!ability) return false;
+  const moveType = moveTypeRaw.toLowerCase();
+
+  const healQuarter = () => {
+    const heal = Math.floor(defender.maxHp / 4);
+    if (heal > 0 && defender.currentHp < defender.maxHp) {
+      defender.currentHp = Math.min(defender.maxHp, defender.currentHp + heal);
+      state.battleLog.push({
+        type: 'healing',
+        message: `${defender.pokemon.name} restored HP with ${ability}!`,
+        pokemon: defender.pokemon.name,
+        healing: Math.round((heal / defender.maxHp) * 100),
+      });
+    } else {
+      state.battleLog.push({
+        type: 'status_effect',
+        message: `${defender.pokemon.name}'s ${ability} made it immune!`,
+        pokemon: defender.pokemon.name,
+      });
+    }
+  };
+
+  const boostStat = (
+    key: 'attack' | 'specialAttack' | 'speed',
+    label: string,
+  ) => {
+    defender.statModifiers[key] = Math.min(6, defender.statModifiers[key] + 1);
+    state.battleLog.push({
+      type: 'status_effect',
+      message: `${defender.pokemon.name}'s ${ability} raised its ${label}!`,
+      pokemon: defender.pokemon.name,
+    });
+  };
+
+  if (ability === 'flash-fire' && moveType === 'fire') {
+    defender.volatile.flashFireActive = true;
+    state.battleLog.push({
+      type: 'status_effect',
+      message: `${defender.pokemon.name}'s Flash Fire raised its Fire power!`,
+      pokemon: defender.pokemon.name,
+    });
+    return true;
+  }
+  if (ability === 'volt-absorb' && moveType === 'electric') {
+    healQuarter();
+    return true;
+  }
+  if (ability === 'water-absorb' && moveType === 'water') {
+    healQuarter();
+    return true;
+  }
+  if (ability === 'storm-drain' && moveType === 'water') {
+    boostStat('specialAttack', 'Sp. Atk');
+    return true;
+  }
+  if (ability === 'lightning-rod' && moveType === 'electric') {
+    boostStat('specialAttack', 'Sp. Atk');
+    return true;
+  }
+  if (ability === 'sap-sipper' && moveType === 'grass') {
+    boostStat('attack', 'Attack');
+    return true;
+  }
+  if (ability === 'motor-drive' && moveType === 'electric') {
+    boostStat('speed', 'Speed');
+    return true;
+  }
+  if (ability === 'levitate' && moveType === 'ground') {
+    state.battleLog.push({
+      type: 'status_effect',
+      message: `${defender.pokemon.name} is immune via Levitate!`,
+      pokemon: defender.pokemon.name,
+    });
+    return true;
+  }
+  if (ability === 'wonder-guard' && moveCategory !== 'Status') {
+    const atkType = (moveType.charAt(0).toUpperCase() + moveType.slice(1)) as TypeName;
+    const defTypes = getPokemonTypes(defender).map((t) => {
+      const s = String(t);
+      return (s.charAt(0).toUpperCase() + s.slice(1).toLowerCase()) as TypeName;
+    });
+    const effectiveness = calculateTypeEffectiveness(atkType, defTypes);
+    if (effectiveness <= 1) {
+      state.battleLog.push({
+        type: 'status_effect',
+        message: `${defender.pokemon.name}'s Wonder Guard blocked the attack!`,
+        pokemon: defender.pokemon.name,
+      });
+      return true;
+    }
+  }
+  return false;
+}
 
 // Execute a move action with multi-hit support
 async function executeMoveAction(
@@ -431,6 +673,19 @@ async function executeMoveAction(
   user: 'player' | 'opponent'
 ): Promise<void> {
   consumePpForMove(attacker, moveId);
+
+  if (moveId.toLowerCase() !== 'struggle') {
+    attacker.volatile.lastMoveUsed = moveId;
+  }
+
+  // Choice items lock the user into the selected move
+  const itemLower = attacker.heldItem?.toLowerCase();
+  if (
+    (itemLower === 'choice-scarf' || itemLower === 'choice-band' || itemLower === 'choice-specs') &&
+    moveId.toLowerCase() !== 'struggle'
+  ) {
+    attacker.volatile.choiceLock = moveId;
+  }
 
   // Log the move usage
   state.battleLog.push({
@@ -446,11 +701,47 @@ async function executeMoveAction(
     console.error(`Move ${moveId} not found`);
     return;
   }
+
+  const moveLower = moveId.toLowerCase();
+  const attackerAbilityEarly = attacker.currentAbility?.toLowerCase();
+  const effectivePriority = getMovePriority(moveId, attacker);
+
+  // Psychic Terrain blocks priority moves against grounded opposing targets
+  const targetsOpponent = !SELF_STATUS_MOVES.has(moveLower);
+  if (
+    state.field.terrain?.kind === 'psychic' &&
+    effectivePriority > 0 &&
+    targetsOpponent &&
+    isGrounded(defender)
+  ) {
+    state.battleLog.push({
+      type: 'status_effect',
+      message: `${defender.pokemon.name} is protected by Psychic Terrain!`,
+      pokemon: defender.pokemon.name,
+    });
+    return;
+  }
+
+  // Prankster: Dark-types are immune to status moves boosted by Prankster
+  if (
+    attackerAbilityEarly === 'prankster' &&
+    move.category === 'Status' &&
+    targetsOpponent
+  ) {
+    const defenderTypes = getPokemonTypes(defender).map((t) => String(t).toLowerCase());
+    if (defenderTypes.includes('dark')) {
+      state.battleLog.push({
+        type: 'status_effect',
+        message: `It doesn't affect ${defender.pokemon.name}...`,
+        pokemon: defender.pokemon.name,
+      });
+      return;
+    }
+  }
   
   // Handle status moves (no direct damage).
   // Note: moves with power=null (like seismic-toss, night-shade) are NOT status moves.
   if (move.category === 'Status') {
-    const moveLower = moveId.toLowerCase();
     const scripted = scriptedStatusMoveHandlers[moveLower];
     if (scripted?.({ state, attacker, defender, isPlayer })) {
       return;
@@ -532,19 +823,20 @@ async function executeMoveAction(
 
     // Screen-setting moves
     const attackerSide = isPlayer ? state.player : state.opponent;
+    const screenTurns = getScreenDuration(attacker.heldItem);
     if (moveLower === 'reflect') {
-      attackerSide.sideConditions.screens.reflect = { turns: 5 };
+      attackerSide.sideConditions.screens.reflect = { turns: screenTurns };
       state.battleLog.push({ type: 'status_effect', message: `Reflect raised ${attacker.pokemon.name}'s team's Defense!` });
       return;
     }
     if (moveLower === 'light-screen') {
-      attackerSide.sideConditions.screens.lightScreen = { turns: 5 };
+      attackerSide.sideConditions.screens.lightScreen = { turns: screenTurns };
       state.battleLog.push({ type: 'status_effect', message: `Light Screen raised ${attacker.pokemon.name}'s team's Sp. Def!` });
       return;
     }
     if (moveLower === 'aurora-veil') {
       if (state.field.weather?.kind === 'snow') {
-        attackerSide.sideConditions.screens.auroraVeil = { turns: 5 };
+        attackerSide.sideConditions.screens.auroraVeil = { turns: screenTurns };
         state.battleLog.push({ type: 'status_effect', message: `Aurora Veil made ${attacker.pokemon.name}'s team stronger against physical and special moves!` });
       } else {
         state.battleLog.push({ type: 'status_effect', message: `But it failed!` });
@@ -591,9 +883,19 @@ async function executeMoveAction(
       return;
     }
 
+    if (applyVolatileAndHazardScripts(state, moveLower, attacker, defender, isPlayer)) {
+      if (moveLower === 'parting-shot') {
+        await performPivotSwitch(state, user);
+      }
+      return;
+    }
+
     await applyStatusMoveEffects(attacker, defender, move, state);
     applyMoveAilment(state, move, attacker, defender);
     applyMoveSecondaryStatChanges(state, move, attacker, defender);
+    if (moveLower === 'parting-shot') {
+      await performPivotSwitch(state, user);
+    }
     return;
   }
   
@@ -616,11 +918,17 @@ async function executeMoveAction(
       return; // Move blocked
     }
   }
+
+  // Ability absorbs / immunities before damage
+  if (tryAbilityAbsorb(state, attacker, defender, String(move.type), move.category)) {
+    return;
+  }
   
   // Determine number of hits
   const hitCount = determineHitCount(move, attacker, state.rng);
   let totalDamageDealt = 0;
   let actualHits = 0;
+  let hitSubstitute = false;
   
   // Execute each hit
   for (let i = 0; i < hitCount; i++) {
@@ -637,15 +945,25 @@ async function executeMoveAction(
     const defenderDefenseStat = defender.pokemon.stats?.find((s: any) => (s.stat?.name || s.name) === 'defense')?.base_stat || 50;
     const defenderSpecialDefenseStat = defender.pokemon.stats?.find((s: any) => (s.stat?.name || s.name) === 'special-defense')?.base_stat || 50;
     
-    // Determine if this is a physical or special move
     const isPhysical = move.category === 'Physical';
-    const attackStat = isPhysical
+    let attackStat = isPhysical
       ? calculateStat(attackerAttackStat, attacker.level)
       : calculateStat(attackerSpecialAttackStat, attacker.level);
-    const defenseStat = isPhysical
+    let defenseStat = isPhysical
       ? calculateStat(defenderDefenseStat, defender.level)
       : calculateStat(defenderSpecialDefenseStat, defender.level);
-    
+
+    // Sandstorm Rock SpD / Snow Ice Def
+    const weatherKind = state.field.weather?.kind;
+    if (!isPhysical && weatherKind === 'sandstorm') {
+      const defTypes = getPokemonTypes(defender).map((t) => String(t).toLowerCase());
+      if (defTypes.includes('rock')) defenseStat = Math.floor(defenseStat * 1.5);
+    }
+    if (isPhysical && weatherKind === 'snow') {
+      const defTypes = getPokemonTypes(defender).map((t) => String(t).toLowerCase());
+      if (defTypes.includes('ice')) defenseStat = Math.floor(defenseStat * 1.5);
+    }
+
     // Fixed-damage moves bypass the normal formula
     const FIXED_DAMAGE_MOVES: Record<string, (atk: BattlePokemon, def: BattlePokemon) => number> = {
       'seismic-toss': (a) => a.level,
@@ -669,41 +987,80 @@ async function executeMoveAction(
     }
 
     // Calculate damage using the comprehensive damage calculator
-    const toTypeName = (s: string): TypeName =>
-      (s.charAt(0).toUpperCase() + s.slice(1)) as TypeName;
-
-    const weatherMap: Record<string, 'Rain' | 'Sun' | 'Sandstorm' | 'Hail' | 'None'> = {
-      rain: 'Rain', sun: 'Sun', sandstorm: 'Sandstorm', snow: 'Hail',
-    };
-    const terrainMap: Record<string, 'Electric' | 'Grassy' | 'Psychic' | 'Misty' | 'None'> = {
-      electric: 'Electric', grassy: 'Grassy', psychic: 'Psychic', misty: 'Misty',
-    };
+    const prep = prepareLiveDamageModifiers({
+      rng: state.rng,
+      move,
+      moveId,
+      weatherKind: state.field.weather?.kind,
+      terrainKind: state.field.terrain?.kind,
+      attacker,
+      defender,
+    });
 
     const damageResult = calculateComprehensiveDamage({
       level: attacker.level,
-      movePower: move.power || 0,
-      moveType: toTypeName(move.type),
-      attackerTypes: attacker.pokemon.types.map(type => 
-        toTypeName(typeof type === 'string' ? type : type.type?.name || 'normal')
+      movePower: prep.movePower,
+      moveType: prep.moveType,
+      attackerTypes: attacker.pokemon.types.map(type =>
+        toDamageTypeName(typeof type === 'string' ? type : type.type?.name || 'normal')
       ),
-      defenderTypes: defender.pokemon.types.map(type => 
-        toTypeName(typeof type === 'string' ? type : type.type?.name || 'normal')
+      defenderTypes: defender.pokemon.types.map(type =>
+        toDamageTypeName(typeof type === 'string' ? type : type.type?.name || 'normal')
       ),
       attackStat: attackStat,
       defenseStat: defenseStat,
-      weather: weatherMap[state.field.weather?.kind ?? ''] ?? 'None',
-      terrain: terrainMap[state.field.terrain?.kind ?? ''] ?? 'None',
-      isPhysical: move.category === 'Physical',
+      attackStatStages: prep.attackStatStages,
+      defenseStatStages: prep.defenseStatStages,
+      weather: prep.weather,
+      terrain: prep.terrain,
+      isPhysical: prep.isPhysical,
+      isBurned: attacker.status === 'burned',
+      hasGuts: prep.hasGuts,
+      hasAdaptability: prep.attackerAbility === 'adaptability',
+      hasLifeOrb: prep.attackerItem === 'life-orb',
+      hasExpertBelt: prep.attackerItem === 'expert-belt',
       hasReflect: !!defenderSideConditions?.screens?.reflect,
       hasLightScreen: !!defenderSideConditions?.screens?.lightScreen,
       hasAuroraVeil: !!defenderSideConditions?.screens?.auroraVeil,
+      hasTintedLens: prep.attackerAbility === 'tinted-lens',
+      hasFilter: prep.defenderAbility === 'filter' || prep.defenderAbility === 'prism-armor',
+      hasSolidRock: prep.defenderAbility === 'solid-rock',
+      hasMultiscale: prep.defenderAbility === 'multiscale' || prep.defenderAbility === 'shadow-shield',
+      isFullHp: defender.currentHp === defender.maxHp,
+      hasHugePower: prep.attackerAbility === 'huge-power',
+      hasPurePower: prep.attackerAbility === 'pure-power',
+      hasSniper: prep.attackerAbility === 'sniper',
+      isHighCritMove: (typeof move.critRateStage === 'number' ? move.critRateStage : 0) > 0,
+      hasSuperLuck: prep.attackerAbility === 'super-luck',
+      cannotCrit: prep.cannotCrit,
+      precomputedCrit: prep.isCrit,
+      attackMultiplier: prep.attackMultiplier,
+      defenseMultiplier: prep.defenseMultiplier,
+      powerMultiplier: prep.powerMultiplier,
       defenderGrounded: isGrounded(defender),
       rng: state.rng,
     });
     
     let damage = damageResult.damage;
-    const oldHp = defender.currentHp;
-    
+
+    // Type-resist berries (Unnerve-aware)
+    const berryMult = checkTypeResistBerry(
+      state,
+      defender,
+      String(move.type),
+      damageResult.effectiveness,
+      user === 'player' ? 'opponent' : 'player'
+    );
+    damage = Math.floor(damage * berryMult);
+
+    // Substitute absorbs damage before real HP / sash
+    if (absorbHitWithSubstitute(state, defender, damage)) {
+      hitSubstitute = true;
+      totalDamageDealt += damage;
+      actualHits++;
+      continue;
+    }
+
     // Check for Focus Sash / Sturdy (survive at 1 HP from full HP)
     const defenderAbility = defender.currentAbility?.toLowerCase();
     const defenderItem = defender.heldItem?.toLowerCase();
@@ -930,10 +1287,31 @@ async function executeMoveAction(
   tryConsumeBerry(state, defender, user === 'player' ? 'opponent' : 'player');
   
   // Apply secondary effects from damaging moves (ailments, stat changes, flinch)
-  if (defender.currentHp > 0) {
+  // Substitute blocks most secondary effects when it absorbed the hit
+  if (defender.currentHp > 0 && !hitSubstitute) {
     applyMoveAilment(state, move, attacker, defender, true);
     applyMoveSecondaryStatChanges(state, move, attacker, defender, true);
     applyMoveFlinch(state, move, defender);
+    applyBindingOnHit(state, moveId.toLowerCase(), defender);
+  }
+
+  // Rapid Spin / Mortal Spin clear hazards even though they deal damage
+  const spinId = moveId.toLowerCase();
+  if ((spinId === 'rapid-spin' || spinId === 'mortal-spin') && totalDamageDealt >= 0) {
+    applyVolatileAndHazardScripts(state, spinId, attacker, defender, isPlayer);
+  }
+
+  // Knock Off: remove held item after a successful hit (not blocked by Substitute alone when damage dealt to HP — skip if only hit sub)
+  if (moveLower === 'knock-off' && totalDamageDealt > 0 && defender.heldItem && !hitSubstitute) {
+    const removed = removeHeldItem(defender);
+    defender.volatile.choiceLock = undefined;
+    if (removed) {
+      state.battleLog.push({
+        type: 'status_effect',
+        message: `${attacker.pokemon.name} knocked off ${defender.pokemon.name}'s ${removed}!`,
+        pokemon: defender.pokemon.name,
+      });
+    }
   }
   
   // Check if Pokemon fainted
@@ -948,7 +1326,7 @@ async function executeMoveAction(
     const defendingTeam = user === 'player' ? state.opponent : state.player;
     defendingTeam.faintedCount = defendingTeam.pokemon.filter(p => p.currentHp <= 0).length;
     
-    // Trigger on-faint abilities (Moxie, Soul Heart, etc.)
+    // Trigger on-faint abilities (Moxie, Soul Heart, Beast Boost)
     const attackerAbility = attacker.currentAbility?.toLowerCase();
     if (attackerAbility === 'moxie') {
       attacker.statModifiers.attack = Math.min(6, attacker.statModifiers.attack + 1);
@@ -957,15 +1335,56 @@ async function executeMoveAction(
         message: `${attacker.pokemon.name}'s Attack rose thanks to Moxie!`,
         pokemon: attacker.pokemon.name
       });
-    } else if (attackerAbility === 'soul-heart' || attackerAbility === 'beast-boost') {
+    } else if (attackerAbility === 'soul-heart') {
       attacker.statModifiers.specialAttack = Math.min(6, attacker.statModifiers.specialAttack + 1);
       state.battleLog.push({
         type: 'status_effect',
         message: `${attacker.pokemon.name}'s Special Attack rose!`,
         pokemon: attacker.pokemon.name
       });
+    } else if (attackerAbility === 'beast-boost') {
+      applyBeastBoost(attacker, state);
     }
   }
+
+  // Pivot moves: auto-switch to next available bench Pokémon
+  if (PIVOT_MOVES.has(moveLower) && moveLower !== 'parting-shot' && totalDamageDealt > 0 && attacker.currentHp > 0) {
+    await performPivotSwitch(state, user);
+  }
+}
+
+function applyBeastBoost(attacker: BattlePokemon, state: BattleState): void {
+  const findBase = (name: string): number => {
+    const stats = attacker.pokemon.stats;
+    if (!Array.isArray(stats)) return 50;
+    const found = stats.find((s: any) => (s.stat?.name || s.name) === name);
+    return found?.base_stat ?? 50;
+  };
+  const stageMult = (stage: number) => {
+    const clamped = Math.max(-6, Math.min(6, stage));
+    return clamped >= 0 ? (2 + clamped) / 2 : 2 / (2 - clamped);
+  };
+  const candidates: Array<{
+    key: 'attack' | 'defense' | 'specialAttack' | 'specialDefense' | 'speed';
+    value: number;
+    label: string;
+  }> = [
+    { key: 'attack', value: findBase('attack') * stageMult(attacker.statModifiers.attack), label: 'Attack' },
+    { key: 'defense', value: findBase('defense') * stageMult(attacker.statModifiers.defense), label: 'Defense' },
+    { key: 'specialAttack', value: findBase('special-attack') * stageMult(attacker.statModifiers.specialAttack), label: 'Special Attack' },
+    { key: 'specialDefense', value: findBase('special-defense') * stageMult(attacker.statModifiers.specialDefense), label: 'Special Defense' },
+    { key: 'speed', value: findBase('speed') * stageMult(attacker.statModifiers.speed), label: 'Speed' },
+  ];
+  let best = candidates[0];
+  for (const c of candidates) {
+    if (c.value > best.value) best = c;
+  }
+  attacker.statModifiers[best.key] = Math.min(6, attacker.statModifiers[best.key] + 1);
+  state.battleLog.push({
+    type: 'status_effect',
+    message: `${attacker.pokemon.name}'s ${best.label} rose thanks to Beast Boost!`,
+    pokemon: attacker.pokemon.name,
+  });
 }
 
 // Run on-entry sequence for a Pokemon (switchingSide = the side whose Pokemon is switching in)
@@ -1192,6 +1611,21 @@ function processEndOfTurnAbilities(state: BattleState): void {
         });
         break;
       }
+      case 'poison-heal': {
+        if (pokemon.status === 'poisoned' || pokemon.status === 'badly-poisoned') {
+          const heal = Math.floor(pokemon.maxHp / 8);
+          if (heal > 0 && pokemon.currentHp < pokemon.maxHp) {
+            pokemon.currentHp = Math.min(pokemon.maxHp, pokemon.currentHp + heal);
+            state.battleLog.push({
+              type: 'healing',
+              message: `${pokemon.pokemon.name} restored HP with Poison Heal!`,
+              pokemon: pokemon.pokemon.name,
+              healing: Math.round((heal / pokemon.maxHp) * 100),
+            });
+          }
+        }
+        break;
+      }
       case 'shed-skin': {
         if (pokemon.status && rngRollChance(state.rng, 0.3)) {
           const oldStatus = pokemon.status;
@@ -1299,6 +1733,32 @@ function processEndOfTurnAbilities(state: BattleState): void {
 function processVolatileDecrements(state: BattleState): void {
   const playerPokemon = getCurrentPokemon(state.player);
   const opponentPokemon = getCurrentPokemon(state.opponent);
+
+  const processWish = (team: BattleTeam) => {
+    // Wish is stored on the mon that used it; heal the current active when it lands
+    for (const mon of team.pokemon) {
+      if (!mon.volatile.wish) continue;
+      mon.volatile.wish.turns -= 1;
+      if (mon.volatile.wish.turns > 0) continue;
+      const heal = mon.volatile.wish.heal;
+      mon.volatile.wish = undefined;
+      const active = getCurrentPokemon(team);
+      if (active.currentHp <= 0 || heal <= 0) continue;
+      const before = active.currentHp;
+      active.currentHp = Math.min(active.maxHp, active.currentHp + heal);
+      const gained = active.currentHp - before;
+      if (gained > 0) {
+        state.battleLog.push({
+          type: 'healing',
+          message: `${active.pokemon.name}'s wish came true!`,
+          pokemon: active.pokemon.name,
+          healing: Math.round((gained / active.maxHp) * 100),
+        });
+      }
+    }
+  };
+  processWish(state.player);
+  processWish(state.opponent);
   
   // Encore turns
   if (playerPokemon.volatile.encore) {
@@ -1422,8 +1882,8 @@ export async function processReplacements(state: BattleState): Promise<void> {
   
   // If both sides need replacements, determine order by speed
   if (playerNeedsReplacement && opponentNeedsReplacement) {
-    const playerSpeed = getEffectiveSpeed(getCurrentPokemon(state.player), !!(state.player.sideConditions.tailwind?.turns && state.player.sideConditions.tailwind.turns > 0));
-    const opponentSpeed = getEffectiveSpeed(getCurrentPokemon(state.opponent), !!(state.opponent.sideConditions.tailwind?.turns && state.opponent.sideConditions.tailwind.turns > 0));
+    const playerSpeed = getEffectiveSpeed(getCurrentPokemon(state.player), isTailwindActive(state.player), state.field);
+    const opponentSpeed = getEffectiveSpeed(getCurrentPokemon(state.opponent), isTailwindActive(state.opponent), state.field);
     
     if (playerSpeed > opponentSpeed) {
       // Player chooses first

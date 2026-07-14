@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Trophy, Medal, ArrowLeft } from 'lucide-react';
 
@@ -28,8 +29,48 @@ export function BattleEndScreen({
   returnTo = { path: '/lobby', label: 'Return to Lobby' },
 }: Props) {
   const router = useRouter();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const primaryButtonRef = useRef<HTMLButtonElement>(null);
   const isWinner = winner === 'player';
   const isDraw = winner === null;
+
+  const handlePrimary = () => {
+    router.push(returnTo.path);
+  };
+
+  useEffect(() => {
+    primaryButtonRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        router.push(returnTo.path);
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const dialog = dialogRef.current;
+      if (!dialog) return;
+      const focusable = dialog.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else if (document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [router, returnTo.path]);
   
   // Determine title and message based on outcome
   let title = 'Draw';
@@ -67,7 +108,14 @@ export function BattleEndScreen({
   
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-      <div className="bg-card border border-border rounded-lg p-8 max-w-md w-full mx-4 text-center space-y-6">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="battle-end-title"
+        aria-describedby="battle-end-message"
+        className="bg-card border border-border rounded-lg p-8 max-w-md w-full mx-4 text-center space-y-6"
+      >
         {/* Trophy/Medal Icon */}
         <div className={`mx-auto w-24 h-24 rounded-full flex items-center justify-center ${bgColor}`}>
           {isWinner ? (
@@ -79,10 +127,10 @@ export function BattleEndScreen({
         
         {/* Result Title */}
         <div>
-          <h2 className={`text-3xl font-bold mb-2 ${iconColor}`}>
+          <h2 id="battle-end-title" className={`text-3xl font-bold mb-2 ${iconColor}`}>
             {title}
           </h2>
-          <p className="text-muted-foreground">
+          <p id="battle-end-message" className="text-muted-foreground">
             {message}
           </p>
         </div>
@@ -124,8 +172,9 @@ export function BattleEndScreen({
         {/* Actions */}
         <div className="space-y-2">
           <button
+            ref={primaryButtonRef}
             type="button"
-            onClick={() => router.push(returnTo.path)}
+            onClick={handlePrimary}
             className="w-full px-4 py-3 bg-poke-blue text-white rounded-lg hover:bg-poke-blue/90 transition-colors flex items-center justify-center gap-2 font-semibold"
           >
             <ArrowLeft className="w-4 h-4" />

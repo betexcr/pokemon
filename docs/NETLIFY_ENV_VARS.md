@@ -1,23 +1,38 @@
-# Environment Variables for Netlify
+# Environment variables (legacy Netlify notes)
 
-Copy these to Netlify dashboard (Settings → Build & deploy → Environment variables):
+> **Canonical host is Vercel** (`https://pokemon-indol-tau.vercel.app`). Prefer the checklist in [PRODUCTION_OPS.md](./PRODUCTION_OPS.md) and `.env.example`. Netlify is not the production target.
 
-## Firebase Configuration
-NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSyASbdOWHRBH_QAqpjRrp9KyzPWheNuUZmY
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=pokemon-battles-86a0d.firebaseapp.com
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=pokemon-battles-86a0d
-NEXT_PUBLIC_FIREBASE_DATABASE_URL=https://pokemon-battles-86a0d-default-rtdb.firebaseio.com
-NEXT_PUBLIC_FIREBASE_APP_ID=pokemon-battles-86a0d
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=pokemon-battles-86a0d.firebasestorage.app
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=(leave empty)
-NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=G-503930717
+Copy placeholders into your host’s env UI — **never commit real secrets**.
 
-## Firebase Admin (for multiplayer)
-FIREBASE_SERVICE_ACCOUNT_KEY=(copy from .env file)
+## Firebase (client)
 
-## Redis
-UPSTASH_REDIS_REST_URL=https://hardy-jackass-16664.upstash.io
-UPSTASH_REDIS_REST_TOKEN=AUEYAAIncDIzZGVmMmQ1ZTVmMTg0MzI1Yjk3ZmEwMDBiZWRkNTg4YnAyMTY2NjQ
+```
+NEXT_PUBLIC_FIREBASE_API_KEY=
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=
+NEXT_PUBLIC_FIREBASE_DATABASE_URL=
+NEXT_PUBLIC_FIREBASE_APP_ID=
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
+```
 
-## Other
-NEXT_PUBLIC_BASE_URL=(will be auto-filled by Netlify)
+## Firebase Admin (multiplayer server)
+
+```
+FIREBASE_SERVICE_ACCOUNT_KEY=
+```
+
+## Redis (PokeAPI proxy + rate limits)
+
+```
+UPSTASH_REDIS_REST_URL=https://YOUR_INSTANCE.upstash.io
+UPSTASH_REDIS_REST_TOKEN=YOUR_UPSTASH_REST_TOKEN
+```
+
+## Site
+
+```
+NEXT_PUBLIC_SITE_URL=https://pokemon-indol-tau.vercel.app
+NEXT_PUBLIC_BASE_URL=
+NEXT_PUBLIC_POKEAPI_BASE_URL=/api/pokeapi
+```

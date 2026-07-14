@@ -150,6 +150,14 @@ export function applyEndOfTurnStatus(state: BattleState, pokemon: BattlePokemon)
   switch (pokemon.status) {
     case 'poisoned':
     case 'badly-poisoned': {
+      // Poison Heal heals in processEndOfTurnAbilities instead of taking residual damage
+      if (pokemon.currentAbility?.toLowerCase() === 'poison-heal') {
+        if (pokemon.status === 'badly-poisoned') {
+          if (!pokemon.volatile.toxicCounter) pokemon.volatile.toxicCounter = 1;
+          pokemon.volatile.toxicCounter += 1;
+        }
+        break;
+      }
       if (!pokemon.volatile.toxicCounter) {
         pokemon.volatile.toxicCounter = pokemon.status === 'badly-poisoned' ? 1 : 0;
       }

@@ -1,29 +1,13 @@
-name: ESLint Check
+# Legacy: ESLint + tsc covered by ci.yml. Kept disabled to avoid conflicting gates.
+name: ESLint Check (legacy)
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   lint:
+    if: false
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Use Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run ESLint
-        run: npx eslint src/ --max-warnings=1000
-
-      - name: Check for TypeScript errors
-        run: npx tsc --noEmit -p tsconfig.json
+      - uses: actions/checkout@v4
+      - run: echo "Use ci.yml instead"

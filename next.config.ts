@@ -34,7 +34,8 @@ const nextConfig: NextConfig = {
   //   '*': ['./src/app/api_backup/**/*']
   // },
   images: {
-    unoptimized: true,
+    // Keep static/remote sprite CDN optimization; GIFs still work via next/image.
+    unoptimized: false,
     remotePatterns: [
       {
         protocol: 'https',
@@ -76,6 +77,18 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=()',
+          },
+        ],
+      },
       {
         source: '/:path*.(png|jpg|jpeg|gif|svg|ico|webp|woff2|woff)',
         headers: [

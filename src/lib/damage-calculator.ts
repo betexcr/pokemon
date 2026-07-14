@@ -175,6 +175,12 @@ export function calculateComprehensiveDamage({
   isHighCritMove = false,
   hasSuperLuck = false,
   defenderGrounded = true,
+  ignoreAttackerStages = false,
+  ignoreDefenderStages = false,
+  cannotCrit = false,
+  attackMultiplier = 1,
+  defenseMultiplier = 1,
+  powerMultiplier = 1,
   precomputedCrit,
   rng
 }: {
@@ -210,18 +216,29 @@ export function calculateComprehensiveDamage({
   isHighCritMove?: boolean;
   hasSuperLuck?: boolean;
   defenderGrounded?: boolean;
+  ignoreAttackerStages?: boolean;
+  ignoreDefenderStages?: boolean;
+  cannotCrit?: boolean;
+  attackMultiplier?: number;
+  defenseMultiplier?: number;
+  powerMultiplier?: number;
   precomputedCrit?: boolean;
   rng: BattleRng;
 }): { damage: number; effectiveness: number; critical: boolean; effectivenessText: string } {
   
-  // Apply stat stage modifiers
-  const modifiedAttackStat = attackStat * getStatStageMultiplier(attackStatStages);
-  const modifiedDefenseStat = defenseStat * getStatStageMultiplier(defenseStatStages);
+  // Apply stat stage modifiers (Unaware / crit ignore handled by flags)
+  const atkStages = ignoreAttackerStages ? 0 : attackStatStages;
+  const defStages = ignoreDefenderStages ? 0 : defenseStatStages;
+  const modifiedAttackStat = attackStat * getStatStageMultiplier(atkStages) * attackMultiplier;
+  const modifiedDefenseStat = defenseStat * getStatStageMultiplier(defStages) * defenseMultiplier;
   
   // Apply ability stat modifiers
   let finalAttackStat = modifiedAttackStat;
   if (hasHugePower || hasPurePower) {
     finalAttackStat *= 2;
+  }
+  if (hasGuts) {
+    finalAttackStat *= 1.5;
   }
   
   // Calculate type effectiveness
@@ -247,7 +264,7 @@ export function calculateComprehensiveDamage({
   const burnMod = getBurnModifier(isBurned, isPhysical, hasGuts);
   
   // Calculate other modifiers
-  let otherMods = 1;
+  let otherMods = 1 * powerMultiplier;
   
   // Life Orb
   if (hasLifeOrb) {
@@ -284,7 +301,7 @@ export function calculateComprehensiveDamage({
   }
   
   // Check for critical hit (use precomputed result if provided to avoid dual rolls)
-  const isCrit = precomputedCrit ?? getCriticalHitChance(0.0625, isHighCritMove, hasSuperLuck, rng);
+  let isCrit = cannotCrit ? false : (precomputedCrit ?? getCriticalHitChance(0.0625, isHighCritMove, hasSuperLuck, rng));
   
   // Screens are bypassed on critical hits (Gen VI+ rules)
   if (!isCrit) {

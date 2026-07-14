@@ -21,7 +21,9 @@ alwaysApply: false
 
 - Never log API keys, service account JSON, or user tokens
 - Server-only: `FIREBASE_SERVICE_ACCOUNT_KEY`
-- Rules files: `database.rules.json`, `firestore.rules`
+- Rules source of truth: `src/lib/firebase-rtdb-rules.json` (also mirrored in `database.rules.json`)
+- Deploy: `firebase deploy --only database,firestore:rules`
+- Battle create: `POST /api/battles/create` (Admin only)
 
 ## RTDB paths
 

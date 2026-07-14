@@ -9,6 +9,7 @@ import { createFieldState, EMPTY_HAZARDS, FieldSideScreens } from '../team-battl
 
 vi.mock('../moveCache', () => ({
   getMove: vi.fn().mockResolvedValue(null),
+  getCachedMove: vi.fn(() => undefined),
 }));
 vi.mock('../executor', () => ({ executeTurn: vi.fn() }));
 

@@ -36,23 +36,27 @@
           "$uid": {
             ".read": "auth != null && auth.uid == $uid",
             ".write": false
-          },
-          "$other": {
-            ".read": false, 
-            ".write": false
           }
+        },
+        "participants": {
+          ".read": "auth != null && (root.child('battles/'+$bid+'/meta/players/p1/uid').val() == auth.uid || root.child('battles/'+$bid+'/meta/players/p2/uid').val() == auth.uid)",
+          ".write": false
+        },
+        "server": {
+          ".read": false,
+          ".write": false
         },
         "turns": {
           "$turn": {
             "choices": {
               "$uid": {
                 ".read": "auth != null && auth.uid == $uid",
-                ".write": "auth != null && auth.uid == $uid && root.child('battles/'+$bid+'/meta/phase').val() == 'choosing' && !data.exists() && newData.child('action').isString() && (newData.child('action').val() == 'move' || newData.child('action').val() == 'switch' || newData.child('action').val() == 'forfeit') && newData.child('clientVersion').val() == root.child('battles/'+$bid+'/meta/version').val()"
+                ".write": "auth != null && auth.uid == $uid && (root.child('battles/'+$bid+'/meta/players/p1/uid').val() == auth.uid || root.child('battles/'+$bid+'/meta/players/p2/uid').val() == auth.uid) && root.child('battles/'+$bid+'/meta/phase').val() == 'choosing' && ('' + root.child('battles/'+$bid+'/meta/turn').val()) == $turn && !data.exists() && newData.child('action').isString() && (newData.child('action').val() == 'move' || newData.child('action').val() == 'switch') && newData.child('clientVersion').val() == root.child('battles/'+$bid+'/meta/version').val()"
               }
             },
-            "resolution": { 
-              ".read": "auth != null && (root.child('battles/'+$bid+'/meta/players/p1/uid').val() == auth.uid || root.child('battles/'+$bid+'/meta/players/p2/uid').val() == auth.uid)", 
-              ".write": false 
+            "resolution": {
+              ".read": "auth != null && (root.child('battles/'+$bid+'/meta/players/p1/uid').val() == auth.uid || root.child('battles/'+$bid+'/meta/players/p2/uid').val() == auth.uid)",
+              ".write": false
             }
           }
         }

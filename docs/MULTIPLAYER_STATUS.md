@@ -38,7 +38,7 @@ The multiplayer battle system has **core gameplay wired end-to-end**: choices ar
 ### Turn-Based Flow
 - **Turn submission** – Choices written under `battles/{id}/turns/{turn}/choices` ✅
 - **Turn resolution** – When both UIDs have a choice, `resolveTurn` updates private teams, public state, battle log, field (weather/screens/hazards), advances `meta.turn`, or ends the battle via `handleBattleEnd` ✅
-- **Deterministic RNG + replay artifacts** – Resolution restores/stores `meta.battleRng`, writes per-turn replay payloads (actions, RNG before/after, state hash) under `turns/{turn}/resolution`, and records validation/metrics fields for auditing.
+- **Deterministic RNG + replay artifacts** – Resolution restores/stores `server/battleRng` (legacy `meta.battleRng` fallback), writes per-turn replay payloads (actions, RNG before/after, state hash) under `turns/{turn}/resolution`, and records validation/metrics fields for auditing.
 
 ⚠️ **Battle UI** ([src/components/RTDBBattleComponent.tsx](src/components/RTDBBattleComponent.tsx))
 - Battle rendering, move selection, and RTDB sync ✅
@@ -49,10 +49,19 @@ The multiplayer battle system has **core gameplay wired end-to-end**: choices ar
 ### Hardening and UX
 
 - **Disconnect / reconnect** – Robust reconnection and stale-state recovery
-- **Turn timeout** – Auto-forfeit or random move when a player stalls
 - **Guest validation** – Optional anti-cheat: guest verifies host-posted resolution
 - **Post-battle** – Rich stats, rematch, aggressive room/battle cleanup policies
 - **Abandonment** – Scheduled deletion of stale battles/rooms
+
+### Recently hardened (Wave 1–2)
+
+- **Strict RTDB rules** – Admin-only meta/public/private; choices write-once while choosing
+- **Admin battle create** – `POST /api/battles/create`
+- **Atomic turn claim** – RTDB transaction + stale `resolving` recovery
+- **Turn timeout** – `deadlineAt` renewed each turn; `enforceTurnDeadline` on submit
+- **Field rooms + choiceLock projection** – persisted across resolves
+- **Firestore field-level rules** – lobby + championships
+- **Rate limits** – submit + pokeapi proxy
 
 ## Free Tier Compatibility Analysis
 
@@ -174,7 +183,7 @@ Total per battle:       ~80 writes, 100 reads
 
 ### Areas for Improvement ⚠️
 - More unit tests around `runBattleTurnFromQueue` and RTDB round-trips ([`src/lib/__tests__/battle-real-moves.test.ts`](src/lib/__tests__/battle-real-moves.test.ts) covers fixture moves + move-data failures)
-- Persist RNG seed in RTDB for reproducible battles
+- Persist RNG seed in RTDB for reproducible battles → done via `server/battleRng`
 - Replace ad-hoc `console` usage with structured logging where needed
 
 ## Testing Recommendations
@@ -205,9 +214,9 @@ Total per battle:       ~80 writes, 100 reads
 - [ ] Deploy Firestore security rules
 - [ ] Deploy RTDB security rules
 - [ ] Test on staging environment
-- [ ] Set up error monitoring (Sentry/etc)
+- [x] Set up error monitoring (optional Sentry via `SENTRY_DSN`; Vercel Analytics / Speed Insights)
 - [ ] Configure Firebase quota alerts
-- [ ] Add rate limiting to prevent abuse
+- [x] Add rate limiting to prevent abuse (battle/PokeAPI/usage/evolutions; Redis required in Vercel production)
 - [ ] Test on mobile devices
 
 ### Post-Launch Monitoring

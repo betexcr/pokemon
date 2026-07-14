@@ -60,6 +60,9 @@ type Pokemon = {
   moves: Move[];                 // exact PP here (private)
   status?: PublicMon["status"];
   fainted?: boolean;
+  hp?: { cur: number; max: number };
+  currentHp?: number;
+  maxHp?: number;
 };
 
 type PrivateState = {
@@ -337,52 +340,6 @@ export function useBattleState(battleId: string): UseBattleState {
       .map(normalizeMoveEntry)
       .filter((m): m is ReturnType<typeof normalizeMoveEntry> & { id: string; pp: number; maxPp: number } => Boolean(m));
 
-    // Multiplayer fallback: If moves look uninitialized (e.g., all 'tackle' or empty),
-    // try to hydrate from local current team so the UI shows correct moves without
-    // altering server logic.
-    const looksUninitialized = list.length === 0 || (list.length > 0 && list.every(m => (m.id || '').toLowerCase() === 'tackle'));
-    if (looksUninitialized) {
-      try {
-        const raw = typeof window !== 'undefined' ? window.localStorage.getItem('pokemon-current-team') : null;
-        if (raw) {
-          const saved = JSON.parse(raw) as Array<{ id: number; moves?: Array<{ name: string }> }>;
-          // Find matching by species id
-          const getId = (name: string) => {
-            try {
-              // lazy import to avoid cycles
-              // eslint-disable-next-line @typescript-eslint/no-var-requires
-              const utils = require('@/lib/utils') as { getPokemonIdFromSpecies: (s?: string | null)=>number|null };
-              return utils.getPokemonIdFromSpecies(name) || null;
-            } catch { return null; }
-          };
-          const activeId = getId(myPrivateActive.species || '');
-          const candidate = activeId ? saved.find(s => s.id === activeId) : saved[0];
-          if (candidate?.moves?.length) {
-            list = candidate.moves.slice(0, 4).map(normalizeMoveEntry).filter(Boolean) as typeof list;
-          }
-        }
-        // Secondary fallback: first saved team in team-builder storage
-        if ((!list || list.length === 0 || list.every(m => (m.id || '').toLowerCase() === 'tackle'))) {
-          const savedTeamsRaw = typeof window !== 'undefined' ? window.localStorage.getItem('pokemon-team-builder') : null;
-          if (savedTeamsRaw) {
-            const teams = JSON.parse(savedTeamsRaw) as Array<{ slots: Array<{ id: number; moves?: Array<{ name: string }> }> }>;
-            const activeId = (() => {
-              try {
-                const utils = require('@/lib/utils') as { getPokemonIdFromSpecies: (s?: string | null)=>number|null };
-                return utils.getPokemonIdFromSpecies(myPrivateActive.species || '') || null;
-              } catch { return null; }
-            })();
-            const firstTeam = teams?.[0];
-            const slot = activeId && firstTeam ? firstTeam.slots.find(s => s.id === activeId) : undefined;
-            if (slot?.moves?.length) {
-              list = slot.moves.slice(0, 4).map(normalizeMoveEntry).filter(Boolean) as typeof list;
-            }
-          }
-        }
-      } catch {
-        // ignore fallback errors silently
-      }
-    }
     const choiceLockMoveId = me?.choiceLock?.locked ? me?.choiceLock?.moveId : undefined;
     const disableMoveId = me?.disable?.moveId;
     const encoreMoveId = me?.encoreMoveId;
@@ -420,15 +377,23 @@ export function useBattleState(battleId: string): UseBattleState {
 
   const legalSwitchIndexes = useMemo(() => {
     const team = me?.team ?? [];
+    const currentIndex = typeof me?.currentIndex === 'number' ? me.currentIndex : 0;
     const res: number[] = [];
-    for (let i = 1; i < team.length; i++) {
+    for (let i = 0; i < team.length; i++) {
+      if (i === currentIndex) continue;
       const slot = team[i];
       if (!slot) continue;
-      const hasHp = typeof slot.stats?.hp === 'number' ? slot.stats.hp > 0 : true;
-      if (!slot.fainted && hasHp) res.push(i);
+      const currentHp =
+        typeof slot.hp?.cur === 'number'
+          ? slot.hp.cur
+          : typeof (slot as { currentHp?: number }).currentHp === 'number'
+            ? (slot as { currentHp: number }).currentHp
+            : undefined;
+      const fainted = Boolean(slot.fainted) || (typeof currentHp === 'number' && currentHp <= 0);
+      if (!fainted) res.push(i);
     }
     return res;
-  }, [me?.team]);
+  }, [me?.team, me?.currentIndex]);
 
   const getIdTokenHeader = useCallback(async (): Promise<string> => {
     if (auth?.currentUser) {

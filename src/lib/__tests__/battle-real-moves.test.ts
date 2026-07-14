@@ -22,6 +22,7 @@ import { handleOnEntryAbilities } from '../team-battle-abilities';
 
 vi.mock('../moveCache', () => ({
   getMove: vi.fn(),
+  getCachedMove: vi.fn(() => undefined),
 }));
 
 import { getMove } from '../moveCache';

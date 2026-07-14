@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getMonthlyUsageSummary } from '@/lib/usage/service';
 import type { Format, Generation, Platform } from '@/types/usage';
+import { checkRateLimit, clientIpFromRequest } from '@/lib/server/rate-limit';
 
 const PLATFORMS: Platform[] = ['SMOGON_SINGLES', 'VGC_OFFICIAL', 'BSS_OFFICIAL', 'OTHER'];
 const GENERATIONS: Generation[] = ['GEN5', 'GEN6', 'GEN7', 'GEN8', 'GEN9'];
@@ -17,6 +18,12 @@ function isOneOf<T extends string>(value: string, allowed: readonly T[]): value 
 
 export async function GET(req: NextRequest) {
   try {
+    const ip = clientIpFromRequest(req);
+    const rl = await checkRateLimit(`usage-monthly:${ip}`, 60, 60_000);
+    if (!rl.allowed) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
+
     const search = req.nextUrl.searchParams;
     const platformRaw = search.get('platform') ?? 'SMOGON_SINGLES';
     const generationRaw = search.get('generation') ?? 'GEN9';
@@ -26,6 +33,10 @@ export async function GET(req: NextRequest) {
 
     if (!isOneOf(platformRaw, PLATFORMS) || !isOneOf(generationRaw, GENERATIONS) || !isOneOf(formatRaw, FORMATS)) {
       return NextResponse.json({ error: 'Invalid query parameters' }, { status: 400 });
+    }
+
+    if (!/^\d{4}-\d{2}$/.test(month)) {
+      return NextResponse.json({ error: 'Invalid month; expected YYYY-MM' }, { status: 400 });
     }
 
     const data = await getMonthlyUsageSummary({
@@ -40,8 +51,9 @@ export async function GET(req: NextRequest) {
       headers: { 'Cache-Control': 'public, s-maxage=1800, stale-while-revalidate=600' },
     });
   } catch (error) {
+    console.error('usage/monthly failed:', error);
     return NextResponse.json(
-      { error: 'Failed to load monthly usage data', detail: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Failed to load monthly usage data' },
       { status: 500 }
     );
   }

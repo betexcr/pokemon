@@ -101,6 +101,11 @@ export interface RTDBBattlePrivate {
     target?: string;
     locked?: boolean;
   };
+  encoreMoveId?: string;
+  disable?: {
+    moveId?: string;
+    turnsLeft?: number;
+  };
 }
 
 export interface RTDBChoice {
@@ -125,8 +130,9 @@ export interface RTDBResolution {
     turn: number;
     p1Action: { type: 'move' | 'switch'; moveId?: string; switchIndex?: number; target?: string };
     p2Action: { type: 'move' | 'switch'; moveId?: string; switchIndex?: number; target?: string };
-    rngBefore: { seed: number; state: number; calls: number };
-    rngAfter: { seed: number; state: number; calls: number };
+    /** @deprecated Live RNG must not be client-readable; omit from writes. */
+    rngBefore?: { seed: number; state: number; calls: number };
+    rngAfter?: { seed: number; state: number; calls: number };
   };
   validation?: {
     p1?: string;

@@ -93,11 +93,13 @@ flowchart TB
 
 1. **Live battles use RTDB, not Firestore.** Firestore `battles` is legacy; real-time sync is `battles/{id}/` in RTDB.
 2. **Multiplayer turn resolution is server-side only** via `battle-resolution.ts` and `/api/battles/[id]/submit`. Never resolve MP turns in the client.
-3. **Offline vs multiplayer UI split:** `OfflineBattleComponent` vs `RTDBBattleComponent` — keep battle log / UI changes in sync (both use `battleLogToDisplayLines`).
+3. **Offline vs multiplayer UI split:** `OfflineBattleComponent` vs `RTDBBattleComponent` — keep battle log / UI changes in sync (both use `BattleTextBox` + `battleLogToDisplayLines`).
 4. **Dev port is 3002** — Playwright and `npm run dev` expect this.
 5. **Two Firebase clients:** eager `firebase.ts` vs lazy `firebase/client.ts` — prefer lazy for lobby/checklist.
-6. **Build ignores TS errors** (`typescript.ignoreBuildErrors: true`) — still fix types locally.
+6. **Build ignores TS errors** (`typescript.ignoreBuildErrors: true`) — still fix types locally; CI should aim for `tsc --noEmit` (Wave 3 follow-up).
 7. **ErrorTip "Gengar" mascot** is generic unknown-error UI, not the failing Pokémon.
+8. **RTDB rules source of truth** is `src/lib/firebase-rtdb-rules.json` (see `firebase.json`). Deploy with `firebase deploy --only database,firestore:rules`. Battle create is Admin-only (`POST /api/battles/create`).
+9. **Open production gaps:** see [docs/MULTIPLAYER_STATUS.md](docs/MULTIPLAYER_STATUS.md) and [docs/battle_mechanics_coverage.md](docs/battle_mechanics_coverage.md).
 
 ## Where to work
 

@@ -1,6 +1,21 @@
 import { BattleState, getCurrentPokemon } from './team-battle-engine';
 import { BattlePokemon } from './team-battle-engine';
-import type { FieldState } from './team-battle-types';
+import type { WeatherKind, TerrainKind } from './team-battle-types';
+import { getTerrainDuration, getWeatherDuration } from './team-battle-types';
+
+const INTIMIDATE_IMMUNE = new Set([
+  'inner-focus',
+  'oblivious',
+  'own-tempo',
+  'scrappy',
+]);
+
+const ATK_DROP_BLOCKERS = new Set([
+  'clear-body',
+  'white-smoke',
+  'hyper-cutter',
+  'full-metal-body',
+]);
 
 export function handleOnEntryAbilities(state: BattleState, side: 'player' | 'opponent', incoming: BattlePokemon): void {
   const ability = incoming.currentAbility?.toLowerCase();
@@ -8,30 +23,67 @@ export function handleOnEntryAbilities(state: BattleState, side: 'player' | 'opp
 
   const opponentTeam = side === 'player' ? state.opponent : state.player;
   const opponentActive = getCurrentPokemon(opponentTeam);
+  const item = incoming.heldItem;
 
-  const setWeather = (kind: FieldState['weather']['kind']) => {
+  const setWeather = (kind: WeatherKind) => {
+    if (kind === 'none') return;
     state.field.weather = {
       kind,
-      turns: 5,
+      turns: getWeatherDuration(kind, item),
       source: incoming.pokemon.name,
     };
   };
 
-  const setTerrain = (kind: FieldState['terrain']['kind']) => {
+  const setTerrain = (kind: TerrainKind) => {
+    if (kind === 'none') return;
     state.field.terrain = {
       kind,
-      turns: 5,
+      turns: getTerrainDuration(item),
       source: incoming.pokemon.name,
     };
   };
 
   switch (ability) {
     case 'intimidate': {
-      if (opponentActive.currentHp > 0) {
-        opponentActive.statModifiers.attack = Math.max(-6, opponentActive.statModifiers.attack - 1);
+      if (opponentActive.currentHp <= 0) break;
+      const foeAbility = opponentActive.currentAbility?.toLowerCase() || '';
+
+      if (INTIMIDATE_IMMUNE.has(foeAbility)) {
         state.battleLog.push({
           type: 'status_effect',
-          message: `${opponentActive.pokemon.name}'s Attack fell due to Intimidate!`,
+          message: `${opponentActive.pokemon.name}'s ${foeAbility} prevented Intimidate!`,
+          pokemon: opponentActive.pokemon.name,
+        });
+        break;
+      }
+      if (ATK_DROP_BLOCKERS.has(foeAbility)) {
+        state.battleLog.push({
+          type: 'status_effect',
+          message: `${opponentActive.pokemon.name}'s ${foeAbility} prevented its Attack from falling!`,
+          pokemon: opponentActive.pokemon.name,
+        });
+        break;
+      }
+
+      opponentActive.statModifiers.attack = Math.max(-6, opponentActive.statModifiers.attack - 1);
+      state.battleLog.push({
+        type: 'status_effect',
+        message: `${opponentActive.pokemon.name}'s Attack fell due to Intimidate!`,
+        pokemon: opponentActive.pokemon.name,
+      });
+
+      if (foeAbility === 'defiant') {
+        opponentActive.statModifiers.attack = Math.min(6, opponentActive.statModifiers.attack + 2);
+        state.battleLog.push({
+          type: 'status_effect',
+          message: `${opponentActive.pokemon.name}'s Defiant sharply raised its Attack!`,
+          pokemon: opponentActive.pokemon.name,
+        });
+      } else if (foeAbility === 'competitive') {
+        opponentActive.statModifiers.specialAttack = Math.min(6, opponentActive.statModifiers.specialAttack + 2);
+        state.battleLog.push({
+          type: 'status_effect',
+          message: `${opponentActive.pokemon.name}'s Competitive sharply raised its Sp. Atk!`,
           pokemon: opponentActive.pokemon.name,
         });
       }
@@ -162,5 +214,3 @@ export function handleOnEntryAbilities(state: BattleState, side: 'player' | 'opp
       break;
   }
 }
-
-

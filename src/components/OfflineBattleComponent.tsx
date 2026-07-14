@@ -4,71 +4,18 @@ import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { useOfflineBattleState, type OfflineBattleConfig } from '@/hooks/useOfflineBattleState';
 import Tooltip from '@/components/Tooltip';
 import { getMove } from '@/lib/moveCache';
-import { formatPokemonName, getShowdownAnimatedSprite } from '@/lib/utils';
+import { getPokemonIdFromSpecies, getPokemonBattleImageWithFallback, formatPokemonName, getShowdownAnimatedSprite } from '@/lib/utils';
 import { BattleSprite, BattleSpriteRef } from '@/components/battle/BattleSprite';
 import Image from 'next/image';
 import { BattleEndScreen } from '@/components/multiplayer/BattleEndScreen';
-import { battleLogToDisplayLines, type BattleLogDisplayLine } from '@/lib/battle-log-display';
+import { BattleTextBox } from '@/components/battle/BattleTextBox';
+import { trackEvent } from '@/lib/analytics';
+import { useReducedMotionPref } from '@/hooks/useReducedMotionPref';
 
 const formatMoveLabel = (rawId: string): string => {
   if (!rawId) return 'Unknown Move';
   return rawId.split(/[-_\s]+/).filter(Boolean).map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
 };
-
-function GameTextBox({ battleLog, myActiveSpecies }: { battleLog?: any[]; myActiveSpecies?: string | null }) {
-  const logRef = useRef<HTMLDivElement>(null);
-
-  const lines: BattleLogDisplayLine[] = useMemo(
-    () => battleLogToDisplayLines(battleLog as unknown[] | undefined),
-    [battleLog],
-  );
-
-  useEffect(() => {
-    logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: 'smooth' });
-  }, [lines.length]);
-
-  const visibleLines = lines.length > 0 ? lines.slice(Math.max(0, lines.length - 3)) : [];
-  const idle = myActiveSpecies ? `What will ${formatPokemonName(myActiveSpecies)} do?` : null;
-
-  if (visibleLines.length === 0 && !idle) return null;
-
-  return (
-    <div className="relative z-20 mx-auto mt-4 w-full max-w-xl">
-      <div className="relative rounded-xl border-[3px] border-text/20 bg-surface shadow-lg">
-        <div className="absolute inset-[3px] rounded-lg border border-text/10 pointer-events-none" />
-        <div ref={logRef} className="relative px-5 py-3 min-h-[3.5rem] max-h-28 overflow-y-auto">
-          {visibleLines.length > 0 ? (
-            <div className="space-y-1">
-              {visibleLines.map((line, i) => (
-                <p
-                  key={`${lines.length}-${i}`}
-                  className={`text-sm leading-relaxed ${
-                    line.isEngineWarning
-                      ? 'rounded border-l-4 border-amber-500/80 bg-amber-500/10 pl-2 py-0.5 font-mono text-amber-900 dark:text-amber-100'
-                      : `text-text ${i === visibleLines.length - 1 ? 'font-medium animate-[typewriter_0.3s_ease-out]' : 'text-text/60'}`
-                  }`}
-                >
-                  {line.isEngineWarning ? (
-                    <>
-                      <span className="mr-1.5 align-middle text-[10px] font-sans font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
-                        Engine
-                      </span>
-                      {line.message}
-                    </>
-                  ) : (
-                    line.message
-                  )}
-                </p>
-              ))}
-            </div>
-          ) : idle ? (
-            <p className="text-sm leading-relaxed text-text font-medium">{idle}</p>
-          ) : null}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 interface OfflineBattleComponentProps {
   config: OfflineBattleConfig;
@@ -91,6 +38,8 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
   const [showEndScreen, setShowEndScreen] = useState(false);
   const playerSpriteRef = useRef<BattleSpriteRef>(null);
   const opponentSpriteRef = useRef<BattleSpriteRef>(null);
+  const reduceMotion = useReducedMotionPref();
+  const spriteMode = reduceMotion || viewMode !== 'animated' ? 'static' : 'animated';
 
   const waitingForResolution = useMemo(() => {
     if (!meta) return false;
@@ -192,8 +141,32 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
   const renderSpriteImage = (species: string | undefined, opts: { variant?: string; shiny?: boolean; animatedPreferred?: boolean; size?: number; className?: string } = {}) => {
     if (!species) return null;
     const variant: 'front' | 'back' = opts.variant === 'back' ? 'back' : 'front';
-    const src = getShowdownAnimatedSprite(species, variant, opts.shiny);
-    return <Image src={src} alt={species} width={opts.size || 48} height={opts.size || 48} className={opts.className || 'w-12 h-12 object-contain'} unoptimized />;
+    const normalizedShiny = !!opts.shiny;
+    const speciesId = getPokemonIdFromSpecies(species) ?? null;
+    const staticSprite = getPokemonBattleImageWithFallback(speciesId, variant, normalizedShiny);
+    const shouldAnimate = !!opts.animatedPreferred && spriteMode === 'animated';
+    const animatedSprite = shouldAnimate ? getShowdownAnimatedSprite(species, variant, normalizedShiny) : null;
+    const sources = [animatedSprite, staticSprite.primary, staticSprite.fallback, '/placeholder-pokemon.png']
+      .filter((src): src is string => !!src && src.length > 0);
+    if (!sources.length) return null;
+    return (
+      <Image
+        src={sources[0]}
+        alt={formatPokemonName(species)}
+        width={opts.size || 48}
+        height={opts.size || 48}
+        className={opts.className || 'w-12 h-12 object-contain'}
+        unoptimized
+        onError={(event) => {
+          const target = event.currentTarget;
+          const fallbackIndex = Number(target.dataset.fallbackIndex || '0') + 1;
+          if (fallbackIndex < sources.length) {
+            target.dataset.fallbackIndex = String(fallbackIndex);
+            target.src = sources[fallbackIndex];
+          }
+        }}
+      />
+    );
   };
 
   if (loading) {
@@ -207,8 +180,18 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4" role="alert">
         <p className="text-red-500">Battle error: {error}</p>
+        <button
+          type="button"
+          className="rounded-md border border-border px-4 py-2 text-sm"
+          onClick={() => window.location.reload()}
+        >
+          Retry
+        </button>
+        <a href="/battle/" className="text-sm text-primary underline">
+          Return to battle setup
+        </a>
       </div>
     );
   }
@@ -227,7 +210,11 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
       <div className="sticky top-0 z-40 border-b border-border bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/80 px-3 py-2 sm:p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="inline-flex items-center rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-muted shadow-sm">
+            <span
+              role="status"
+              aria-live="polite"
+              className="inline-flex items-center rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-muted shadow-sm"
+            >
               <span className="mr-2 inline-block h-2 w-2 rounded-full bg-primary/80" />
               {meta.phase === 'ended' ? 'Battle Over' : meta.phase === 'resolving' ? 'Resolving...' : 'Your Turn'}
             </span>
@@ -257,7 +244,7 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
                 types={myActive.types || []}
                 side="player"
                 className="transform scale-110"
-                spriteMode={viewMode === 'animated' ? 'animated' : 'static'}
+                spriteMode={spriteMode}
               />
             )}
           </div>
@@ -277,15 +264,16 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
                 types={oppActive.types || []}
                 side="opponent"
                 className="transform scale-110"
-                spriteMode={viewMode === 'animated' ? 'animated' : 'static'}
+                spriteMode={spriteMode}
               />
             )}
           </div>
         </div>
 
-        <GameTextBox
+        <BattleTextBox
           battleLog={pub?.battleLog}
           myActiveSpecies={myActive?.species}
+          waitingForResolution={waitingForResolution}
         />
       </div>
 
@@ -296,7 +284,11 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
             <h3 className="text-lg font-semibold mb-4">Choose Your Action</h3>
 
             {waitingForResolution && (
-              <div className="mb-4 flex items-center justify-center gap-2 text-sm text-muted">
+              <div
+                role="status"
+                aria-live="polite"
+                className="mb-4 flex items-center justify-center gap-2 text-sm text-muted"
+              >
                 <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
                 Resolving turn...
               </div>

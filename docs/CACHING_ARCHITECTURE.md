@@ -98,33 +98,28 @@ This document describes the caching architecture used to optimize Pokémon API d
 
 **Implementation**: `src/lib/api.ts` - `negativeCache` Map
 
-### Layer 4: Redis (Server-side - Currently Unused)
+### Layer 4: Redis (Server-side — PokeAPI proxy + rate limits)
 
-**Status**: ✅ Configured but not actively used
+**Status**: ✅ Used in production when Upstash env vars are set
 
 **Setup**:
 - **Provider**: Upstash Redis
-- **Environment Variables**:
+- **Environment Variables** (placeholders only — never commit real tokens):
   ```
-  UPSTASH_REDIS_REST_URL=https://hardy-jackass-16664.upstash.io
-  UPSTASH_REDIS_REST_TOKEN=AUEYAAIncDIzZGVmMmQ1ZTVmMTg0MzI1Yjk3ZmEwMDBiZWRkNTg4YnAyMTY2NjQ
+  UPSTASH_REDIS_REST_URL=https://YOUR_INSTANCE.upstash.io
+  UPSTASH_REDIS_REST_TOKEN=YOUR_UPSTASH_REST_TOKEN
   ```
-- **Client**: `@upstash/redis` v1.35.4
-- **TTLs**: All set to 24 hours
+- **Client**: `@upstash/redis` via [`src/lib/server/upstashRedis.ts`](../src/lib/server/upstashRedis.ts)
+- **TTLs**: PokeAPI proxy cache ~24h CDN / Redis; rate-limit windows per route
 
-**Location**: `src/lib/redis.ts` - `RedisCache` class
+**Active uses**:
+- Shared cache for [`/api/pokeapi`](../src/app/api/pokeapi/[[...path]]/route.ts) when `NEXT_PUBLIC_POKEAPI_BASE_URL=/api/pokeapi`
+- Sliding-window rate limits for battle create/submit and PokeAPI (`src/lib/server/rate-limit.ts`)
 
-**Why Currently Unused**:
-- No server-side API routes that would benefit from Redis
-- All Pokemon data fetching happens client-side
-- Upstash REST API would add latency compared to direct client fetch
-- Browser cache is sufficient for client-side use
-
-**Potential Future Use**: 
-- Caching processed battle results
-- Caching user team data
-- Caching aggregated statistics
-- Rate limiting middleware
+**Potential future use**:
+- Caching processed battle aggregates
+- Caching user team metadata
+- Broader edge rate limiting
 
 ## Data Flow
 

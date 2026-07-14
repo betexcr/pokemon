@@ -73,19 +73,26 @@ Server-only env: `FIREBASE_SERVICE_ACCOUNT_KEY` (JSON string).
 
 | File | Scope |
 |------|-------|
-| `database.rules.json` | RTDB root rules |
-| `src/lib/firebase-rtdb-rules.json` | RTDB rules (source) |
-| `firestore.rules` | Firestore rules |
+| `src/lib/firebase-rtdb-rules.json` | **Source of truth** for RTDB (deployed via `firebase.json`) |
+| `database.rules.json` | Kept in sync as a deploy fallback / mirror |
+| `firestore.rules` | Firestore rules (field-level lobby + championships) |
 | `firestore.indexes.json` | Composite indexes |
 
-Error hints: `src/lib/firebaseErrorLogger.ts` maps permission errors to collection hints.
+Deploy RTDB + Firestore rules (separate from Vercel):
+
+```bash
+firebase deploy --only database,firestore:rules
+```
+
+Battle creation must go through `POST /api/battles/create` (Admin SDK). Clients must not write `meta` / `public` / `private`.
 
 ## Hard rules
 
 1. Never log Firebase tokens, service account keys, or user PII.
 2. Use lazy `getDb()` for lobby/checklist unless RTDB is immediately needed.
 3. Do not write turn resolutions from the client — server only.
-4. Test auth flows with Playwright test credentials only in test specs, never in production code.
+4. Production requires `FIREBASE_SERVICE_ACCOUNT_KEY` — resolution and battle create fail closed without Admin.
+5. Test auth flows with Playwright test credentials only in test specs, never in production code.
 
 ## Testing
 

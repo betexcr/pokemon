@@ -14,7 +14,7 @@ description: >-
 - **Canonical prod URL:** `https://pokemon-indol-tau.vercel.app`
 - **Retired:** `pokemon.ultharcr.com` — do not use in metadata, sitemap, or env defaults
 
-Also deployed to GitHub Pages via `.github/workflows/deploy.yml` (secondary/legacy static path).
+Also see [PRODUCTION_OPS.md](./PRODUCTION_OPS.md) for health checks, rollback, and env checklist. Legacy GitHub Pages / Firebase Hosting static deploys are disabled.
 
 ## Build notes
 
@@ -55,13 +55,21 @@ UPSTASH_REDIS_REST_TOKEN
 FIREBASE_SERVICE_ACCOUNT_KEY       # JSON string for RTDB admin ops
 ```
 
-Template: [`.env.example`](../../.env.example). CI uses GitHub Actions `vars.*` / `secrets.*`.
+### Optional observability
+
+```
+SENTRY_DSN
+NEXT_PUBLIC_SENTRY_DSN
+```
+
+Template: [`.env.example`](../../.env.example). Ops runbook: [PRODUCTION_OPS.md](../../docs/PRODUCTION_OPS.md). CI uses GitHub Actions `vars.*` / `secrets.*`.
 
 ## Verify production
 
-1. Open production URL or feature path (e.g. `/battle`, `/championship`)
-2. Vercel → Deployments → confirm **Ready** deployment matches expected Git commit
-3. Compare: `git log -1 --oneline` locally vs deployed commit SHA
+1. `/api/health` and `/api/ready` (see PRODUCTION_OPS.md)
+2. Open production URL or feature path (e.g. `/battle`, `/championship`)
+3. Vercel → Deployments → confirm **Ready** deployment matches expected Git commit
+4. Compare: `git log -1 --oneline` locally vs deployed commit SHA
 
 ## Deploy commands
 
@@ -70,7 +78,7 @@ npm run build          # local build check
 npm run build:prod     # NODE_ENV=production build
 ```
 
-Use Vercel CLI or GitHub integration for preview/production deploys. Never commit secrets.
+Use Vercel CLI or GitHub integration for preview/production deploys. Never commit secrets. After any leaked token scrub, **rotate Upstash** in console + Vercel env.
 
 ## Common production issues
 
@@ -78,10 +86,12 @@ Use Vercel CLI or GitHub integration for preview/production deploys. Never commi
 |---------|-------|
 | Battles stuck on "Loading" | `NEXT_PUBLIC_FIREBASE_DATABASE_URL`, RTDB rules |
 | PokeAPI slow / rate limited | Enable proxy + Upstash vars |
+| 429 on all APIs in prod | Upstash missing (prod rate limits fail closed) |
 | Wrong OG/sitemap URLs | `NEXT_PUBLIC_SITE_URL` |
 | Turn submit 403/500 | `FIREBASE_SERVICE_ACCOUNT_KEY` on server |
 
 ## Related docs
 
+- [docs/PRODUCTION_OPS.md](../../docs/PRODUCTION_OPS.md)
 - [docs/ARCHITECTURE_AND_HOSTING.md](../../docs/ARCHITECTURE_AND_HOSTING.md)
-- [NETLIFY_ENV_VARS.md](../../docs/NETLIFY_ENV_VARS.md) (Netlify alt — secondary)
+- [NETLIFY_ENV_VARS.md](../../docs/NETLIFY_ENV_VARS.md) (legacy placeholders only)

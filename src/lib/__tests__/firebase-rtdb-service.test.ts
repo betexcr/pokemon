@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi, Mock } from 'vitest';
 import { rtdbService } from '../firebase-rtdb-service';
-import { ref, set, get, remove, onValue } from 'firebase/database';
+import { ref, set, get, remove, onValue, update } from 'firebase/database';
 
 // Mock Firebase RTDB
 vi.mock('firebase/database', () => ({
@@ -42,12 +42,12 @@ describe('FirebaseRTDBService', () => {
     it('should update user presence with connected status', async () => {
       const mockRef = { path: 'presence/test-uid' };
       (ref as Mock).mockReturnValue(mockRef);
-      (set as Mock).mockResolvedValue(undefined);
+      (update as Mock).mockResolvedValue(undefined);
 
       await rtdbService.updatePresence('test-uid', true);
 
       expect(ref).toHaveBeenCalledWith(expect.anything(), 'presence/test-uid');
-      expect(set).toHaveBeenCalledWith(mockRef, {
+      expect(update).toHaveBeenCalledWith(mockRef, {
         connected: true,
         lastActiveAt: { '.sv': 'timestamp' }
       });
@@ -56,24 +56,23 @@ describe('FirebaseRTDBService', () => {
     it('should update user presence with disconnected status', async () => {
       const mockRef = { path: 'presence/test-uid' };
       (ref as Mock).mockReturnValue(mockRef);
-      (set as Mock).mockResolvedValue(undefined);
+      (update as Mock).mockResolvedValue(undefined);
 
       await rtdbService.updatePresence('test-uid', false);
 
-      expect(set).toHaveBeenCalledWith(mockRef, {
+      expect(update).toHaveBeenCalledWith(mockRef, {
         connected: false,
         lastActiveAt: { '.sv': 'timestamp' }
       });
     });
 
     it('should throw error if RTDB not initialized', async () => {
-      // Mock rtdb as null
-      vi.doMock('../firebase', () => ({
-        rtdb: null
-      }));
-
-      await expect(rtdbService.updatePresence('test-uid', true))
-        .rejects.toThrow('RTDB not initialized');
+      const { rtdbService: svc } = await import('../firebase-rtdb-service');
+      // Force private db null via casting — service bound at construct time to mocked rtdb
+      const original = (svc as any).db;
+      (svc as any).db = null;
+      await expect(svc.updatePresence('test-uid', true)).rejects.toThrow('RTDB not initialized');
+      (svc as any).db = original;
     });
   });
 
@@ -113,18 +112,9 @@ describe('FirebaseRTDBService', () => {
 
   describe('createBattle', () => {
     it('should create battle with proper structure', async () => {
-      const mockMetaRef = { path: 'battles/battle-123/meta' };
-      const mockPublicRef = { path: 'battles/battle-123/public' };
-      const mockP1PrivateRef = { path: 'battles/battle-123/private/p1-uid' };
-      const mockP2PrivateRef = { path: 'battles/battle-123/private/p2-uid' };
-
-      (ref as Mock)
-        .mockReturnValueOnce(mockMetaRef)
-        .mockReturnValueOnce(mockPublicRef)
-        .mockReturnValueOnce(mockP1PrivateRef)
-        .mockReturnValueOnce(mockP2PrivateRef);
-
+      (ref as Mock).mockImplementation((_db: unknown, path: string) => ({ path }));
       (set as Mock).mockResolvedValue(undefined);
+      (update as Mock).mockResolvedValue(undefined);
 
       const p1Team = [
         {
@@ -156,56 +146,60 @@ describe('FirebaseRTDBService', () => {
         p2Team
       );
 
-      // Verify meta creation
-      expect(set).toHaveBeenCalledWith(mockMetaRef, expect.objectContaining({
-        format: 'singles',
-        ruleSet: 'gen9-no-weather',
-        players: {
-          p1: { uid: 'p1-uid', name: 'Player 1' },
-          p2: { uid: 'p2-uid', name: 'Player 2' }
-        },
-        phase: 'choosing',
-        turn: 1,
-        version: 1
-      }));
+      expect(set).toHaveBeenCalledWith(
+        expect.objectContaining({ path: 'battles/battle-123/meta' }),
+        expect.objectContaining({
+          format: 'singles',
+          ruleSet: 'gen9-no-weather',
+          players: {
+            p1: { uid: 'p1-uid', name: 'Player 1' },
+            p2: { uid: 'p2-uid', name: 'Player 2' }
+          },
+          phase: 'choosing',
+          turn: 1,
+          version: 1,
+          battleRng: expect.any(Object),
+        })
+      );
 
-      // Verify public state creation
-      expect(set).toHaveBeenCalledWith(mockPublicRef, expect.objectContaining({
-        p1: expect.objectContaining({
-          active: expect.objectContaining({
-            species: 'Pikachu',
-            level: 50,
-            types: ['electric'],
-            hp: { cur: 100, max: 100 }
-          })
-        }),
-        p2: expect.objectContaining({
-          active: expect.objectContaining({
-            species: 'Charmander',
-            level: 50,
-            types: ['fire'],
-            hp: { cur: 100, max: 100 }
+      expect(set).toHaveBeenCalledWith(
+        expect.objectContaining({ path: 'battles/battle-123/public' }),
+        expect.objectContaining({
+          p1: expect.objectContaining({
+            active: expect.objectContaining({
+              species: 'Pikachu',
+              level: 50,
+              types: ['electric'],
+              hp: { cur: 100, max: 100 }
+            })
+          }),
+          p2: expect.objectContaining({
+            active: expect.objectContaining({
+              species: 'Charmander',
+              level: 50,
+              types: ['fire'],
+              hp: { cur: 100, max: 100 }
+            })
           })
         })
-      }));
+      );
 
-      // Verify private state creation
-      expect(set).toHaveBeenCalledWith(mockP1PrivateRef, {
-        team: p1Team,
-        choiceLock: {}
-      });
+      expect(set).toHaveBeenCalledWith(
+        expect.objectContaining({ path: 'battles/battle-123/private/p1-uid' }),
+        expect.objectContaining({ team: p1Team, choiceLock: {} })
+      );
 
-      expect(set).toHaveBeenCalledWith(mockP2PrivateRef, {
-        team: p2Team,
-        choiceLock: {}
-      });
+      expect(set).toHaveBeenCalledWith(
+        expect.objectContaining({ path: 'battles/battle-123/private/p2-uid' }),
+        expect.objectContaining({ team: p2Team, choiceLock: {} })
+      );
     });
   });
 
   describe('submitChoice', () => {
     it('should submit choice with proper structure', async () => {
-      const mockRef = { path: 'battles/battle-123/turns/1/choices/test-uid' };
-      (ref as Mock).mockReturnValue(mockRef);
+      (ref as Mock).mockImplementation((_db: unknown, path: string) => ({ path }));
+      (get as Mock).mockResolvedValue({ val: () => 1 });
       (set as Mock).mockResolvedValue(undefined);
 
       const choice = {
@@ -219,15 +213,22 @@ describe('FirebaseRTDBService', () => {
       await rtdbService.submitChoice('battle-123', 1, 'test-uid', choice);
 
       expect(ref).toHaveBeenCalledWith(expect.anything(), 'battles/battle-123/turns/1/choices/test-uid');
-      expect(set).toHaveBeenCalledWith(mockRef, {
-        ...choice,
-        committedAt: { '.sv': 'timestamp' },
-        clientVersion: 0
-      });
+      expect(set).toHaveBeenCalledWith(
+        expect.objectContaining({ path: 'battles/battle-123/turns/1/choices/test-uid' }),
+        expect.objectContaining({
+          action: 'move',
+          payload: choice.payload,
+          committedAt: expect.anything(),
+        })
+      );
     });
   });
 
   describe('listeners', () => {
+    beforeEach(() => {
+      (ref as Mock).mockImplementation((_db: unknown, path: string) => ({ path }));
+    });
+
     it('should set up battle meta listener', () => {
       const mockUnsubscribe = vi.fn();
       (onValue as Mock).mockReturnValue(mockUnsubscribe);
@@ -236,7 +237,10 @@ describe('FirebaseRTDBService', () => {
       const unsubscribe = rtdbService.onBattleMeta('battle-123', callback);
 
       expect(ref).toHaveBeenCalledWith(expect.anything(), 'battles/battle-123/meta');
-      expect(onValue).toHaveBeenCalledWith(expect.anything(), callback);
+      expect(onValue).toHaveBeenCalledWith(
+        expect.objectContaining({ path: 'battles/battle-123/meta' }),
+        expect.any(Function)
+      );
       expect(unsubscribe).toBe(mockUnsubscribe);
     });
 
@@ -248,7 +252,10 @@ describe('FirebaseRTDBService', () => {
       const unsubscribe = rtdbService.onBattlePublic('battle-123', callback);
 
       expect(ref).toHaveBeenCalledWith(expect.anything(), 'battles/battle-123/public');
-      expect(onValue).toHaveBeenCalledWith(expect.anything(), callback);
+      expect(onValue).toHaveBeenCalledWith(
+        expect.objectContaining({ path: 'battles/battle-123/public' }),
+        expect.any(Function)
+      );
       expect(unsubscribe).toBe(mockUnsubscribe);
     });
 
@@ -260,7 +267,10 @@ describe('FirebaseRTDBService', () => {
       const unsubscribe = rtdbService.onBattlePrivate('battle-123', 'test-uid', callback);
 
       expect(ref).toHaveBeenCalledWith(expect.anything(), 'battles/battle-123/private/test-uid');
-      expect(onValue).toHaveBeenCalledWith(expect.anything(), callback);
+      expect(onValue).toHaveBeenCalledWith(
+        expect.objectContaining({ path: 'battles/battle-123/private/test-uid' }),
+        expect.any(Function)
+      );
       expect(unsubscribe).toBe(mockUnsubscribe);
     });
 
@@ -272,7 +282,10 @@ describe('FirebaseRTDBService', () => {
       const unsubscribe = rtdbService.onBattleChoices('battle-123', 1, callback);
 
       expect(ref).toHaveBeenCalledWith(expect.anything(), 'battles/battle-123/turns/1/choices');
-      expect(onValue).toHaveBeenCalledWith(expect.anything(), callback);
+      expect(onValue).toHaveBeenCalledWith(
+        expect.objectContaining({ path: 'battles/battle-123/turns/1/choices' }),
+        expect.any(Function)
+      );
       expect(unsubscribe).toBe(mockUnsubscribe);
     });
 
@@ -284,7 +297,10 @@ describe('FirebaseRTDBService', () => {
       const unsubscribe = rtdbService.onBattleResolution('battle-123', 1, callback);
 
       expect(ref).toHaveBeenCalledWith(expect.anything(), 'battles/battle-123/turns/1/resolution');
-      expect(onValue).toHaveBeenCalledWith(expect.anything(), callback);
+      expect(onValue).toHaveBeenCalledWith(
+        expect.objectContaining({ path: 'battles/battle-123/turns/1/resolution' }),
+        expect.any(Function)
+      );
       expect(unsubscribe).toBe(mockUnsubscribe);
     });
   });

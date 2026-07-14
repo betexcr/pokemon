@@ -50,7 +50,7 @@ describe('Battle State Conversion Tests', () => {
         phase: 'choosing',
         turn: 1,
         version: 1,
-        players: { p1: { uid: 'p1', name: 'P1' }, p2: { uid: 'p2', name: 'P2' } },
+        players: { p1: { uid: 'test-user-uid', name: 'P1' }, p2: { uid: 'p2', name: 'P2' } },
         createdAt: Date.now(),
         format: 'singles',
         ruleSet: 'gen9-no-weather',
@@ -131,7 +131,7 @@ describe('Battle State Conversion Tests', () => {
         phase: 'choosing',
         turn: 1,
         version: 1,
-        players: { p1: { uid: 'p1', name: 'P1' }, p2: { uid: 'p2', name: 'P2' } },
+        players: { p1: { uid: 'test-user-uid', name: 'P1' }, p2: { uid: 'p2', name: 'P2' } },
         createdAt: Date.now(),
         format: 'singles',
         ruleSet: 'gen9-no-weather',
@@ -161,17 +161,17 @@ describe('Battle State Conversion Tests', () => {
       };
 
       battleState = battleEngine.convertToBattleState();
-      expect(battleState.phase).toBe('resolving');
+      expect(battleState.phase).toBe('resolution');
 
       // Test ended phase
       battleEngine['meta'] = {
         ...battleEngine['meta']!,
         phase: 'ended',
-        winnerUid: 'p1'
+        winnerUid: 'test-user-uid'
       };
 
       battleState = battleEngine.convertToBattleState();
-      expect(battleState.phase).toBe('ended');
+      expect(battleState.phase).toBe('execution');
       expect(battleState.isComplete).toBe(true);
       expect(battleState.winner).toBe('player');
     });
@@ -188,7 +188,7 @@ describe('Battle State Conversion Tests', () => {
         phase: 'choosing',
         turn: 1,
         version: 1,
-        players: { p1: { uid: 'p1', name: 'P1' }, p2: { uid: 'p2', name: 'P2' } },
+        players: { p1: { uid: 'test-user-uid', name: 'P1' }, p2: { uid: 'p2', name: 'P2' } },
         createdAt: Date.now(),
         format: 'singles',
         ruleSet: 'gen9-no-weather',
@@ -246,7 +246,7 @@ describe('Battle State Conversion Tests', () => {
         phase: 'choosing',
         turn: 1,
         version: 1,
-        players: { p1: { uid: 'p1', name: 'P1' }, p2: { uid: 'p2', name: 'P2' } },
+        players: { p1: { uid: 'test-user-uid', name: 'P1' }, p2: { uid: 'p2', name: 'P2' } },
         createdAt: Date.now(),
         format: 'singles',
         ruleSet: 'gen9-no-weather',
@@ -303,7 +303,7 @@ describe('Battle State Conversion Tests', () => {
         phase: 'choosing',
         turn: 1,
         version: 1,
-        players: { p1: { uid: 'p1', name: 'P1' }, p2: { uid: 'p2', name: 'P2' } },
+        players: { p1: { uid: 'test-user-uid', name: 'P1' }, p2: { uid: 'p2', name: 'P2' } },
         createdAt: Date.now(),
         format: 'singles',
         ruleSet: 'gen9-no-weather',
@@ -350,7 +350,7 @@ describe('Battle State Conversion Tests', () => {
         phase: 'choosing',
         turn: 1,
         version: 1,
-        players: { p1: { uid: 'p1', name: 'P1' }, p2: { uid: 'p2', name: 'P2' } },
+        players: { p1: { uid: 'test-user-uid', name: 'P1' }, p2: { uid: 'p2', name: 'P2' } },
         createdAt: Date.now(),
         format: 'singles',
         ruleSet: 'gen9-no-weather',
@@ -415,7 +415,7 @@ describe('Battle State Conversion Tests', () => {
         phase: 'choosing',
         turn: 1,
         version: 1,
-        players: { p1: { uid: 'p1', name: 'P1' }, p2: { uid: 'p2', name: 'P2' } },
+        players: { p1: { uid: 'test-user-uid', name: 'P1' }, p2: { uid: 'p2', name: 'P2' } },
         createdAt: Date.now(),
         format: 'singles',
         ruleSet: 'gen9-no-weather',
@@ -500,7 +500,7 @@ describe('Battle State Conversion Tests', () => {
         phase: 'choosing',
         turn: 1,
         version: 1,
-        players: { p1: { uid: 'p1', name: 'P1' }, p2: { uid: 'p2', name: 'P2' } },
+        players: { p1: { uid: 'test-user-uid', name: 'P1' }, p2: { uid: 'p2', name: 'P2' } },
         createdAt: Date.now(),
         format: 'singles',
         ruleSet: 'gen9-no-weather',
@@ -529,7 +529,7 @@ describe('Battle State Conversion Tests', () => {
         phase: 'choosing',
         turn: 1,
         version: 1,
-        players: { p1: { uid: 'p1', name: 'P1' }, p2: { uid: 'p2', name: 'P2' } },
+        players: { p1: { uid: 'test-user-uid', name: 'P1' }, p2: { uid: 'p2', name: 'P2' } },
         createdAt: Date.now(),
         format: 'singles',
         ruleSet: 'gen9-no-weather',

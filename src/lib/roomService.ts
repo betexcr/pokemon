@@ -4,6 +4,7 @@ import {
   addDoc,
   getDoc,
   getDocs,
+  setDoc,
   updateDoc,
   deleteDoc,
   deleteField,
@@ -13,14 +14,13 @@ import {
   orderBy,
   limit,
   serverTimestamp,
+  runTransaction,
   type Unsubscribe,
   FirestoreError
 } from 'firebase/firestore';
 import { getDb as getClientDb, hasFirebaseClientConfig } from './firebase/client';
-import { battleService } from './battleService';
-import { rtdbService } from './firebase-rtdb-service';
 import { firebaseErrorLogger, PermissionErrorDetails } from './firebaseErrorLogger';
-import { getPokemon } from './api';
+import { auth } from './firebase';
 
 export interface RoomData {
   id: string;
@@ -70,6 +70,42 @@ interface RoomUpdate {
 
 class RoomService {
   private roomsCollection = 'battle_rooms';
+
+  private teamsDocRef(db: ReturnType<RoomService['getDb']>, roomId: string) {
+    return doc(db, this.roomsCollection, roomId, 'private', 'teams');
+  }
+
+  private async writeRoomTeams(
+    db: ReturnType<RoomService['getDb']>,
+    roomId: string,
+    patch: { hostTeam?: unknown; guestTeam?: unknown; clearGuest?: boolean; clearHost?: boolean }
+  ): Promise<void> {
+    const ref = this.teamsDocRef(db, roomId);
+    const updates: Record<string, unknown> = { updatedAt: serverTimestamp() };
+    if (patch.hostTeam !== undefined) updates.hostTeam = patch.hostTeam;
+    if (patch.guestTeam !== undefined) updates.guestTeam = patch.guestTeam;
+    if (patch.clearGuest) {
+      updates.guestTeam = deleteField();
+    }
+    if (patch.clearHost) {
+      updates.hostTeam = deleteField();
+    }
+    await setDoc(ref, updates, { merge: true });
+  }
+
+  private async readRoomTeams(
+    db: ReturnType<RoomService['getDb']>,
+    roomId: string
+  ): Promise<{ hostTeam?: unknown; guestTeam?: unknown }> {
+    try {
+      const snap = await getDoc(this.teamsDocRef(db, roomId));
+      if (!snap.exists()) return {};
+      const data = snap.data();
+      return { hostTeam: data.hostTeam, guestTeam: data.guestTeam };
+    } catch {
+      return {};
+    }
+  }
 
   private getDb() {
     try {
@@ -145,12 +181,11 @@ class RoomService {
         activeUsers: [hostId] // Track active users
       };
 
-      // Only include hostTeam if it's provided and not undefined
-      if (hostTeam !== undefined) {
-        roomData.hostTeam = hostTeam;
-      }
-
+      // Teams live in private/teams (participant-only) — never on the public room doc
       const docRef = await addDoc(collection(db, this.roomsCollection), roomData);
+      if (hostTeam !== undefined) {
+        await this.writeRoomTeams(db, docRef.id, { hostTeam });
+      }
       return docRef.id;
     } catch (error) {
       console.error('❌ Failed to create room:', error);
@@ -199,6 +234,10 @@ class RoomService {
 
     if (docSnap.exists()) {
       const data = docSnap.data();
+      const teams = await this.readRoomTeams(db, docSnap.id);
+      // Prefer private teams; fall back to legacy parent fields during migration
+      const hostTeam = teams.hostTeam ?? data.hostTeam;
+      const guestTeam = teams.guestTeam ?? data.guestTeam;
 
       // Handle older rooms that might not have all the new fields
       const roomData: RoomData = {
@@ -206,7 +245,7 @@ class RoomService {
         hostId: data.hostId || '',
         hostName: data.hostName || 'Unknown Host',
         hostPhotoURL: data.hostPhotoURL,
-        hostTeam: data.hostTeam,
+        hostTeam,
         hostReady: data.hostReady || false,
         hostReleasedTeam: data.hostReleasedTeam,
         hostAnimatingBalls: data.hostAnimatingBalls || [],
@@ -214,7 +253,7 @@ class RoomService {
         guestId: data.guestId,
         guestName: data.guestName,
         guestPhotoURL: data.guestPhotoURL,
-        guestTeam: data.guestTeam,
+        guestTeam,
         guestReady: data.guestReady || false,
         guestReleasedTeam: data.guestReleasedTeam,
         guestAnimatingBalls: data.guestAnimatingBalls || [],
@@ -233,193 +272,81 @@ class RoomService {
     return null;
   }
 
-  // Join a room
+  // Join a room (transactional guest claim)
   async joinRoom(roomId: string, guestId: string, guestName: string, guestPhotoURL?: string | null, guestTeam?: unknown): Promise<boolean> {
     const db = this.getDb();
 
-    // Enhanced authentication check
-    const { auth } = await import('@/lib/firebase');
-    if (!auth || !auth.currentUser || !auth.currentUser.uid) {
+    const { auth: firebaseAuth } = await import('@/lib/firebase');
+    if (!firebaseAuth || !firebaseAuth.currentUser || !firebaseAuth.currentUser.uid) {
       throw new Error('User not authenticated. Please sign in to join rooms.');
     }
 
-    if (auth.currentUser.uid !== guestId) {
+    if (firebaseAuth.currentUser.uid !== guestId) {
       throw new Error('User ID mismatch. Cannot join room with different user ID.');
     }
 
     try {
-
       const roomRef = doc(db, this.roomsCollection, roomId);
-      const roomSnap = await getDoc(roomRef);
 
-      if (!roomSnap.exists()) {
-        throw new Error('Room not found');
-      }
+      await runTransaction(db, async (txn) => {
+        const roomSnap = await txn.get(roomRef);
+        if (!roomSnap.exists()) {
+          throw new Error('Room not found');
+        }
 
-      const roomData = roomSnap.data();
+        const roomData = roomSnap.data();
 
-      // Check if user is already in the room BEFORE capacity checks
-      if (roomData.hostId === guestId || roomData.guestId === guestId) {
-        // If already the guest and a team is provided, update guestTeam
-        if (roomData.guestId === guestId && guestTeam !== undefined) {
-          try {
-            await updateDoc(roomRef, { guestTeam: guestTeam });
-          } catch {
-            // Guest team update failed for existing guest
+        if (roomData.hostId === guestId) {
+          return;
+        }
+
+        if (roomData.guestId === guestId) {
+          const patch: Record<string, unknown> = {};
+          const activeUsers = roomData.activeUsers || [roomData.hostId];
+          if (roomData.currentPlayers !== activeUsers.length) {
+            patch.currentPlayers = activeUsers.length;
           }
+          if (Object.keys(patch).length) txn.update(roomRef, patch);
+          return;
         }
 
-        // Ensure currentPlayers is correct even for existing users
-        const activeUsers = roomData.activeUsers || [roomData.hostId];
-        const correctCurrentPlayers = activeUsers.length;
-        if (roomData.currentPlayers !== correctCurrentPlayers) {
-          await updateDoc(roomRef, { currentPlayers: correctCurrentPlayers });
+        if (roomData.guestId && roomData.guestId !== guestId) {
+          throw new Error('Room already has an opponent');
         }
 
-        return true;
-      }
+        if (roomData.status !== 'waiting' && roomData.status !== 'ready') {
+          throw new Error(`Room is not available. Status: ${roomData.status}`);
+        }
 
-      // If the user is already in activeUsers but not assigned as guest yet, allow assignment
-      const existingActiveUsers: string[] = roomData.activeUsers || [roomData.hostId];
-      const userIsActive = existingActiveUsers.includes(guestId);
-      if (userIsActive && !roomData.guestId) {
+        if (!roomData.guestId && (roomData.currentPlayers ?? 1) >= (roomData.maxPlayers ?? 2)) {
+          throw new Error(`Room is full. Players: ${roomData.currentPlayers}/${roomData.maxPlayers}`);
+        }
+
+        const activeUsers = (roomData.activeUsers || [roomData.hostId]).slice();
+        if (!activeUsers.includes(guestId)) activeUsers.push(guestId);
+
         const updateData: Record<string, unknown> = {
           guestId,
           guestName,
           guestPhotoURL: guestPhotoURL || null,
           guestReady: false,
-          guestTeam: guestTeam !== undefined ? guestTeam : roomData.guestTeam,
-          // do not change activeUsers; keep currentPlayers based on active users
-          status: 'ready'
+          status: 'ready',
+          activeUsers,
+          currentPlayers: activeUsers.length,
         };
-        try {
-          await updateDoc(roomRef, updateData);
-          return true;
-        } catch (assignErr) {
-          console.error('Failed to assign active user as guest:', assignErr);
-          // continue to normal flow (capacity checks) to surface a meaningful error
-        }
-      }
+        if (!roomData.maxPlayers) updateData.maxPlayers = 2;
 
-      // Check if room is available
-      // Check if room already has a guest (but allow if it's the same user)
-      if (roomData.guestId && roomData.guestId !== guestId) {
-        throw new Error('Room already has an opponent');
-      }
+        txn.update(roomRef, updateData);
+      });
 
-      // Check room capacity - only if there's no guest yet
-      if (!roomData.guestId && roomData.currentPlayers >= roomData.maxPlayers) {
-        throw new Error(`Room is full. Players: ${roomData.currentPlayers}/${roomData.maxPlayers}`);
-      }
-
-      // Allow joining if room is waiting or ready
-      if (roomData.status !== 'waiting' && roomData.status !== 'ready') {
-        throw new Error(`Room is not available. Status: ${roomData.status}`);
-      }
-
-      // Attempt a single ATOMIC claim + presence update to satisfy rules in one write
-      const atomicActiveUsers = (roomData.activeUsers || [roomData.hostId]).slice();
-      if (!atomicActiveUsers.includes(guestId)) {
-        atomicActiveUsers.push(guestId);
-      }
-      const atomicData: Record<string, unknown> = {
-        guestId,
-        guestName,
-        guestPhotoURL: guestPhotoURL || null,
-        guestReady: false,
-        status: 'ready',
-        activeUsers: atomicActiveUsers,
-        currentPlayers: atomicActiveUsers.length
-      };
       if (guestTeam !== undefined) {
-        atomicData.guestTeam = guestTeam;
-      }
-      if (!roomData.maxPlayers) {
-        atomicData.maxPlayers = 2;
-      }
-
-      try {
-        await updateDoc(roomRef, atomicData);
-      } catch (updateError) {
-        console.error('JoinRoom ATOMIC failed, no partial writes performed:', updateError);
-
-        // Log detailed error information
-        firebaseErrorLogger.logError(
-          updateError as Error,
-          'join_room_update',
-          {
-            roomId,
-            guestId,
-            guestName,
-            guestPhotoURL,
-            hasGuestTeam: !!guestTeam,
-            collection: this.roomsCollection,
-            operation: 'updateDoc',
-            updateData: atomicData
-          }
-        );
-
-        // If it's a permission error, provide specific guidance
-        if (updateError instanceof FirestoreError && updateError.code === 'permission-denied') {
-          const permissionDetails: PermissionErrorDetails = {
-            operation: 'write',
-            collection: this.roomsCollection,
-            documentId: roomId,
-            userId: guestId,
-            expectedPermissions: ['authenticated', 'room participant'],
-            actualPermissions: [],
-            securityRuleViolations: ['battle_rooms update rule']
-          };
-
-          firebaseErrorLogger.logPermissionError(updateError, permissionDetails, {
-            roomId,
-            guestId,
-            guestName,
-            operation: 'join_room_update'
-          });
-        }
-
-        throw new Error(`Failed to join room atomically: ${updateError instanceof Error ? updateError.message : 'Unknown error'}`);
+        await this.writeRoomTeams(db, roomId, { guestTeam });
       }
 
       return true;
     } catch (error) {
-      console.error('❌ Failed to join room:', error);
-
-      // Log detailed error information
-      firebaseErrorLogger.logError(
-        error as Error,
-        'join_room',
-        {
-          roomId,
-          guestId,
-          guestName,
-          guestPhotoURL,
-          hasGuestTeam: !!guestTeam,
-          collection: this.roomsCollection
-        }
-      );
-
-      // If it's a permission error, provide specific guidance
-      if (error instanceof FirestoreError && error.code === 'permission-denied') {
-        const permissionDetails: PermissionErrorDetails = {
-          operation: 'write',
-          collection: this.roomsCollection,
-          documentId: roomId,
-          userId: guestId,
-          expectedPermissions: ['authenticated', 'room participant'],
-          actualPermissions: [],
-          securityRuleViolations: ['battle_rooms update rule']
-        };
-
-        firebaseErrorLogger.logPermissionError(error, permissionDetails, {
-          roomId,
-          guestId,
-          guestName,
-          operation: 'join_room'
-        });
-      }
-
+      console.error('JoinRoom failed:', error);
+      firebaseErrorLogger.logError(error as Error, 'join_room', { roomId, guestId });
       throw error;
     }
   }
@@ -436,27 +363,27 @@ class RoomService {
 
     const wasBattling = roomData.status === 'battling';
 
-    // If room was in battle, only the host can delete the battle
+    // If room was in battle, keep battleId linkage; only drop presence / guest slot
     if (wasBattling) {
-      try {
-        if (roomData.battleId && roomData.hostId === userId) {
-          await battleService.deleteBattle(roomData.battleId);
-        }
-      } catch {
-        // Battle cleanup failed; continue with room leave
-      }
-
       const activeUsers = (roomData.activeUsers || []).filter((id: string) => id !== userId);
-      await updateDoc(roomRef, {
-        guestId: userId === roomData.guestId ? deleteField() : roomData.guestId,
-        guestName: userId === roomData.guestId ? deleteField() : roomData.guestName,
-        guestTeam: userId === roomData.guestId ? deleteField() : roomData.guestTeam,
-        guestReady: userId === roomData.guestId ? deleteField() : roomData.guestReady,
-        battleId: deleteField(),
-        status: 'unresolved',
+      const updates: Record<string, unknown> = {
         currentPlayers: activeUsers.length,
-        activeUsers
-      } as Record<string, unknown>);
+        activeUsers,
+      };
+      // Guest leaving mid-battle: clear guest slot but keep battleId for RTDB forfeit/timeout
+      if (userId === roomData.guestId) {
+        updates.guestId = deleteField();
+        updates.guestName = deleteField();
+        updates.guestReady = deleteField();
+      }
+      // Host leaving: mark unresolved but keep battleId so clients can still forfeit/timeout
+      if (userId === roomData.hostId) {
+        updates.status = 'unresolved';
+      }
+      await updateDoc(roomRef, updates);
+      if (userId === roomData.guestId) {
+        await this.writeRoomTeams(db, roomId, { clearGuest: true });
+      }
       return;
     }
 
@@ -474,12 +401,12 @@ class RoomService {
       await updateDoc(roomRef, {
         guestId: deleteField(),
         guestName: deleteField(),
-        guestTeam: deleteField(),
         guestReady: deleteField(),
         currentPlayers: activeUsers.length,
         activeUsers,
         status: 'waiting'
       });
+      await this.writeRoomTeams(db, roomId, { clearGuest: true });
     }
   }
 
@@ -780,70 +707,32 @@ class RoomService {
     };
   }
 
-  // Start battle
+  // Start battle — RTDB battle is created server-side (Admin) via API
   async startBattle(roomId: string, _battleId: string): Promise<void> {
-    const db = this.getDb();
-    // First check if battle is ready to start
     const readinessCheck = await this.checkBattleReadiness(roomId);
     if (!readinessCheck.isReady) {
-      console.error('❌ Battle readiness validation failed:', readinessCheck.errors);
+      console.error('Battle readiness validation failed:', readinessCheck.errors);
       throw new Error(`Battle cannot start: ${readinessCheck.errors.join(', ')}`);
     }
 
-    const roomRef = doc(db, this.roomsCollection, roomId);
-    const roomSnap = await getDoc(roomRef);
-
-    if (!roomSnap.exists()) {
-      throw new Error('Room not found');
+    if (!auth?.currentUser) {
+      throw new Error('User not authenticated. Please sign in to start a battle.');
     }
-
-    const roomData = roomSnap.data();
-
-    // Use existing battle document or create new one if needed
-    let actualBattleId = roomData.battleId;
-
-    if (!actualBattleId) {
-      // Fallback: create battle document if it doesn't exist
-      actualBattleId = await battleService.createBattle(
-        roomId,
-        roomData.hostId,
-        roomData.hostName,
-        roomData.hostTeam,
-        roomData.guestId,
-        roomData.guestName,
-        roomData.guestTeam
-      );
-
-      await new Promise(resolve => setTimeout(resolve, 500));
-    }
-
-    // Ensure RTDB mirrors the battle so realtime listeners can attach
-    if (actualBattleId) {
-      try {
-        const hostRtdbTeam = await this.normalizeTeamForRTDB(roomData.hostTeam);
-        const guestRtdbTeam = await this.normalizeTeamForRTDB(roomData.guestTeam);
-        await rtdbService.createBattle(
-          actualBattleId,
-          roomData.hostId,
-          roomData.hostName || 'Host Trainer',
-          hostRtdbTeam,
-          roomData.guestId,
-          roomData.guestName || 'Guest Trainer',
-          guestRtdbTeam
-        );
-      } catch (rtdbError) {
-        console.error('Failed to prime RTDB battle state:', rtdbError);
-        throw new Error('Failed to initialize battle. Please try again.');
-      }
-    }
-
-    await updateDoc(roomRef, {
-      status: 'battling',
-      battleId: actualBattleId,
-      // Mark start time so clients can show a short countdown
-      startedAt: serverTimestamp()
+    const token = await auth.currentUser.getIdToken();
+    const res = await fetch('/api/battles/create/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ roomId }),
     });
-
+    const payload = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(
+        typeof payload.error === 'string' ? payload.error : 'Failed to initialize battle. Please try again.'
+      );
+    }
   }
 
   // Listen to room changes
@@ -857,173 +746,83 @@ class RoomService {
     }
 
     const roomRef = doc(db, this.roomsCollection, roomId);
+    const teamsRef = this.teamsDocRef(db, roomId);
 
-    return onSnapshot(roomRef, (doc) => {
-      if (doc.exists()) {
-        const data = doc.data();
+    let latestRoom: Record<string, unknown> | null = null;
+    let latestTeams: { hostTeam?: unknown; guestTeam?: unknown } = {};
 
-        // Handle older rooms that might not have all the new fields
-        const room: RoomData = {
-          id: doc.id,
-          hostId: data.hostId || '',
-          hostName: data.hostName || 'Unknown Host',
-          hostPhotoURL: data.hostPhotoURL,
-          hostTeam: data.hostTeam,
-          hostReady: data.hostReady || false,
-          hostReleasedTeam: data.hostReleasedTeam,
-          hostAnimatingBalls: data.hostAnimatingBalls || [],
-          hostReleasedBalls: data.hostReleasedBalls || [],
-          guestId: data.guestId,
-          guestName: data.guestName,
-          guestPhotoURL: data.guestPhotoURL,
-          guestTeam: data.guestTeam,
-          guestReady: data.guestReady || false,
-          guestReleasedTeam: data.guestReleasedTeam,
-          guestAnimatingBalls: data.guestAnimatingBalls || [],
-          guestReleasedBalls: data.guestReleasedBalls || [],
-          status: data.status || 'waiting',
-          createdAt: data.createdAt?.toDate() || new Date(),
-          maxPlayers: data.maxPlayers || 2,
-          currentPlayers: data.currentPlayers || (data.guestId ? 2 : 1),
-          activeUsers: data.activeUsers || (data.hostId ? [data.hostId] : []),
-          battleId: data.battleId
-        };
+    const emit = () => {
+      if (!latestRoom) {
+        callback(null);
+        return;
+      }
+      const data = latestRoom;
+      const room: RoomData = {
+        id: roomId,
+        hostId: (data.hostId as string) || '',
+        hostName: (data.hostName as string) || 'Unknown Host',
+        hostPhotoURL: data.hostPhotoURL as string | undefined,
+        hostTeam: latestTeams.hostTeam ?? data.hostTeam,
+        hostReady: (data.hostReady as boolean) || false,
+        hostReleasedTeam: data.hostReleasedTeam as RoomData['hostReleasedTeam'],
+        hostAnimatingBalls: (data.hostAnimatingBalls as number[]) || [],
+        hostReleasedBalls: (data.hostReleasedBalls as number[]) || [],
+        guestId: data.guestId as string | undefined,
+        guestName: data.guestName as string | undefined,
+        guestPhotoURL: data.guestPhotoURL as string | undefined,
+        guestTeam: latestTeams.guestTeam ?? data.guestTeam,
+        guestReady: (data.guestReady as boolean) || false,
+        guestReleasedTeam: data.guestReleasedTeam as RoomData['guestReleasedTeam'],
+        guestAnimatingBalls: (data.guestAnimatingBalls as number[]) || [],
+        guestReleasedBalls: (data.guestReleasedBalls as number[]) || [],
+        status: (data.status as RoomData['status']) || 'waiting',
+        createdAt: (data.createdAt as { toDate?: () => Date })?.toDate?.() || new Date(),
+        maxPlayers: (data.maxPlayers as number) || 2,
+        currentPlayers: (data.currentPlayers as number) || (data.guestId ? 2 : 1),
+        activeUsers: (data.activeUsers as string[]) || (data.hostId ? [data.hostId as string] : []),
+        battleId: data.battleId as string | undefined,
+      };
+      callback(room);
+    };
 
-        callback(room);
+    const unsubRoom = onSnapshot(roomRef, (docSnap) => {
+      if (docSnap.exists()) {
+        latestRoom = docSnap.data() as Record<string, unknown>;
+        emit();
       } else {
+        latestRoom = null;
         callback(null);
       }
     }, (error) => {
       console.error('roomService.onRoomChange error:', error);
-
-      // Log detailed error information for room listener
-      firebaseErrorLogger.logError(
-        error,
-        'listen_room',
-        {
-          roomId,
-          collection: this.roomsCollection,
-          operation: 'onSnapshot',
-          errorCode: error.code,
-          errorMessage: error.message
-        }
-      );
-
-      // If it's a permission error, provide specific guidance
-      if (error.code === 'permission-denied') {
-        const permissionDetails: PermissionErrorDetails = {
-          operation: 'listen',
-          collection: this.roomsCollection,
-          documentId: roomId,
-          expectedPermissions: ['authenticated', 'room access'],
-          actualPermissions: [],
-          securityRuleViolations: ['battle_rooms read rule']
-        };
-
-        firebaseErrorLogger.logPermissionError(error, permissionDetails, {
-          roomId,
-          operation: 'listen_room'
-        });
-      }
-
+      firebaseErrorLogger.logError(error, 'listen_room', {
+        roomId,
+        collection: this.roomsCollection,
+        operation: 'onSnapshot',
+        errorCode: error.code,
+        errorMessage: error.message,
+      });
       callback(null);
     });
-  }
 
-  private async normalizeTeamForRTDB(teamData: unknown): Promise<Array<Record<string, unknown>>> {
-    if (!teamData) return [];
-    const slots = Array.isArray(teamData)
-      ? teamData
-      : typeof teamData === 'object' && (teamData as any).slots
-        ? (teamData as any).slots
-        : typeof teamData === 'object' && Array.isArray((teamData as any).pokemon)
-          ? (teamData as any).pokemon
-          : [];
+    const unsubTeams = onSnapshot(teamsRef, (snap) => {
+      if (snap.exists()) {
+        const d = snap.data();
+        latestTeams = { hostTeam: d.hostTeam, guestTeam: d.guestTeam };
+      } else {
+        latestTeams = {};
+      }
+      emit();
+    }, () => {
+      // Participants-only; non-participants simply won't get teams
+      latestTeams = {};
+      emit();
+    });
 
-    if (!Array.isArray(slots)) return [];
-
-    const validSlots = slots.filter((slot: any) => slot && (slot.id != null || slot.species || slot.name));
-
-    return Promise.all(validSlots.map(async (slot: any, index: number) => {
-        const id = typeof slot.id === 'number' ? slot.id : parseInt(String(slot.id ?? 0), 10) || index + 1;
-        const species = typeof slot.species === 'string'
-          ? slot.species
-          : slot.name || `pokemon-${id}`;
-        const level = typeof slot.level === 'number' ? slot.level : 50;
-
-        const moves = Array.isArray(slot.moves)
-          ? slot.moves
-            .map((move: any) => {
-              if (typeof move === 'string') return { id: move, name: move, pp: 20, maxPp: 20 };
-              if (move && typeof move === 'object') {
-                 return {
-                    id: move.name || move.id,
-                    name: move.name || move.id,
-                    type: move.type,
-                    category: move.damage_class === 'status' ? 'Status' : move.damage_class === 'physical' ? 'Physical' : 'Special',
-                    power: move.power,
-                    accuracy: move.accuracy,
-                    pp: move.pp || 20,
-                    maxPp: move.pp || 20
-                 };
-              }
-              return null;
-            })
-            .filter((m: any) => m && m.id)
-            .slice(0, 4)
-          : [];
-
-        // Try to get pokemon data from slot first, fall back to PokeAPI
-        const srcPokemon = slot.pokemon || slot;
-        let stats = Array.isArray(srcPokemon.stats) ? srcPokemon.stats : [];
-        let rawTypes = Array.isArray(slot.types) ? slot.types
-          : Array.isArray(srcPokemon.types) ? srcPokemon.types : [];
-        let weight = srcPokemon.weight ?? null;
-        let abilities = Array.isArray(srcPokemon.abilities) ? srcPokemon.abilities : [];
-        let resolvedName = species;
-
-        // Fetch from PokeAPI when essential data is missing
-        if (stats.length === 0 && id > 0) {
-          try {
-            const apiData = await getPokemon(id);
-            stats = apiData.stats || [];
-            if (rawTypes.length === 0) rawTypes = apiData.types || [];
-            if (weight === null) weight = apiData.weight ?? 500;
-            if (abilities.length === 0) abilities = apiData.abilities || [];
-            resolvedName = apiData.name || species;
-          } catch (err) {
-            // Pokemon data fetch failed; continue with partial data
-          }
-        }
-
-        const types = rawTypes
-          .map((t: any) => (typeof t === 'string' ? t : t?.type?.name || t?.name))
-          .filter(Boolean);
-
-        let maxHp: number;
-        if (typeof slot.maxHp === 'number' && slot.maxHp > 0) {
-          maxHp = slot.maxHp;
-        } else if (stats.length > 0) {
-          const hpStat = stats.find((s: any) => s.stat?.name === 'hp' || s.name === 'hp');
-          const baseHp = typeof hpStat?.base_stat === 'number' ? hpStat.base_stat : 50;
-          maxHp = Math.floor(((2 * baseHp + 31) * level) / 100) + level + 10;
-        } else {
-          maxHp = Math.floor(((2 * 50 + 31) * level) / 100) + level + 10;
-        }
-        const currentHp = typeof slot.currentHp === 'number' && slot.currentHp > 0 ? slot.currentHp : maxHp;
-
-        return {
-          pokemon: { id, name: resolvedName, types, stats, weight: weight ?? 500, abilities },
-          level,
-          moves,
-          currentHp,
-          maxHp,
-          nature: typeof slot.nature === 'string' ? slot.nature : 'hardy',
-          statModifiers: slot.statModifiers || {},
-          status: slot.status || null,
-          originalIndex: index
-        };
-      }));
+    return () => {
+      unsubRoom();
+      unsubTeams();
+    };
   }
 
   // Track user presence in a room
@@ -1117,13 +916,13 @@ class RoomService {
           hostId: data.hostId || '',
           hostName: data.hostName || 'Unknown Host',
           hostPhotoURL: data.hostPhotoURL,
-          hostTeam: data.hostTeam,
+          hostTeam: undefined, // never expose teams in lobby list
           hostReady: data.hostReady || false,
           hostReleasedTeam: data.hostReleasedTeam,
           guestId: data.guestId,
           guestName: data.guestName,
           guestPhotoURL: data.guestPhotoURL,
-          guestTeam: data.guestTeam,
+          guestTeam: undefined,
           guestReady: data.guestReady || false,
           guestReleasedTeam: data.guestReleasedTeam,
           status: data.status || 'waiting',

@@ -24,7 +24,7 @@ Both share the same engine in `src/lib/team-battle-engine.ts` and `team-battle-e
    - `src/app/api/battles/[id]/submit/route.ts`
    - `functions/src/index.ts` (Firebase Functions mirror)
 
-2. **Use deterministic RNG** for multiplayer: `createBattleRng()` in `src/lib/battle-rng.ts` — seed lives in RTDB meta.
+2. **Use deterministic RNG** for multiplayer: `createBattleRng()` in `src/lib/battle-rng.ts` — seed lives in RTDB `server/battleRng` (legacy `meta.battleRng` is read as a fallback during migration).
 
 3. **UI parity:** Battle log rendering uses `battleLogToDisplayLines()` from `src/lib/battle-log-display.ts`. When changing `GameTextBox` or log display, update **both** `RTDBBattleComponent.tsx` and `OfflineBattleComponent.tsx`.
 
@@ -34,10 +34,13 @@ Both share the same engine in `src/lib/team-battle-engine.ts` and `team-battle-e
 
 | File | Role |
 |------|------|
-| `src/lib/team-battle-engine.ts` | State machine, action queue, damage hooks |
-| `src/lib/team-battle-engine-additional.ts` | Turn execution, entry hazards, replacements |
+| `src/lib/team-battle-engine.ts` | State machine, action queue, speed / priority / `canUseMove` |
+| `src/lib/team-battle-engine-additional.ts` | Turn execution, **live damage path** (`executeMoveAction` → `prepareLiveDamageModifiers` → `calculateComprehensiveDamage`), entry hazards, pivots |
+| `src/lib/battle-damage-modifiers.ts` | Shared live damage prep (BP hooks, items, Unaware/crit stages) |
+| `src/lib/battle-move-constants.ts` | Pivot / self-status / type-boost item tables |
+| `src/lib/team-battle-scripts.ts` | Volatile setters + hazard clear (Encore, Tailwind, Defog, …) |
 | `src/lib/damage-calculator.ts` | Type effectiveness, damage formula |
-| `src/lib/battle-resolution.ts` | Server turn resolution + RTDB writes |
+| `src/lib/battle-resolution.ts` | Server turn resolution + RTDB writes (`server/battleRng`) |
 | `src/lib/offline-battle-ai.ts` | AI move/switch selection |
 | `src/lib/battle-log-display.ts` | Log → UI display lines |
 | `src/hooks/useOfflineBattleState.ts` | Local battle init + turn loop |
@@ -74,7 +77,8 @@ battles/{id}/turns/{n}/resolution     — turn result (written by server)
 
 - Editing `battleService.ts` (Firestore) when the live path is RTDB
 - Adding client-side turn execution in `RTDBBattleComponent` or `useBattleState`
-- Forgetting to hydrate moves/stats before engine runs (see `hydrateSlot` in `useOfflineBattleState.ts` and `battle-resolution.ts`)
+- Forgetting to hydrate moves/stats before engine runs (see `hydrateSlot` in `useOfflineBattleState.ts` and `battle-resolution.ts`) — hydration **throws** when stats are missing (no placeholder 50s)
+- Wiring damage modifiers only in unused helpers — live battles use `executeMoveAction` → `calculateComprehensiveDamage`
 - Mismatched battle log types: display lines are `{ message, isEngineWarning }`, not raw strings
 
 ## Additional resources

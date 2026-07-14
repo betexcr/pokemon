@@ -40,6 +40,20 @@ const TYPE_RESIST_BERRIES: Record<string, string> = {
 function consumeItem(target: BattlePokemon) {
   target.volatile.lastConsumedBerry = target.heldItem;
   target.heldItem = undefined;
+  if (target.currentAbility?.toLowerCase() === 'unburden') {
+    target.volatile.unburdenActive = true;
+  }
+}
+
+/** Clear held item (Knock Off etc.) and activate Unburden if applicable. */
+export function removeHeldItem(target: BattlePokemon): string | undefined {
+  const removed = target.heldItem;
+  if (!removed) return undefined;
+  target.heldItem = undefined;
+  if (target.currentAbility?.toLowerCase() === 'unburden') {
+    target.volatile.unburdenActive = true;
+  }
+  return removed;
 }
 
 export function tryConsumeBerry(
@@ -143,13 +157,17 @@ export function tryConsumeBerry(
  * Check and apply type-resist berry BEFORE damage is finalized.
  * Returns the damage multiplier (0.5 if berry activates, 1 otherwise).
  */
-function checkTypeResistBerry(
+export function checkTypeResistBerry(
   state: BattleState,
   target: BattlePokemon,
   moveType: string,
-  effectiveness: number
+  effectiveness: number,
+  targetSide: 'player' | 'opponent' = 'opponent'
 ): number {
   if (!target.heldItem || target.currentHp <= 0) return 1;
+  const foe = targetSide === 'player' ? state.opponent : state.player;
+  if (teamHasUnnerveOnField(foe)) return 1;
+
   const item = target.heldItem.toLowerCase();
 
   if (!(item in TYPE_RESIST_BERRIES)) return 1;
@@ -157,7 +175,13 @@ function checkTypeResistBerry(
   const resistType = TYPE_RESIST_BERRIES[item];
   const moveTypeNorm = moveType.toLowerCase();
 
-  if (moveTypeNorm === resistType && effectiveness > 1) {
+  // Chilan Berry halves any Normal move; other resist berries need super-effective hits
+  const activates =
+    item === 'chilan-berry'
+      ? moveTypeNorm === 'normal'
+      : moveTypeNorm === resistType && effectiveness > 1;
+
+  if (activates) {
     consumeItem(target);
     state.battleLog.push({
       type: 'status_effect',
