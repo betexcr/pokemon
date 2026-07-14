@@ -48,7 +48,7 @@ Compare local `git log -1 --oneline` with the deployment commit SHA after promot
 3. `/api/ready` → 200 with `components.redis` / `firebaseAdmin` = `ok`  
 4. Sign in  
 5. Lobby / create room smoke (if Firebase configured)  
-6. Spot-check Pokédex search (proxy path)
+6. Spot-check Pokédex search (proxy path). Cached Dex reads do **not** count toward the Upstash upstream rate limit; only cache-misses do (600/min/IP).
 
 ## After credential scrub (docs)
 

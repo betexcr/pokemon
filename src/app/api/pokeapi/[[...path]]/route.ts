@@ -20,6 +20,9 @@ const ALLOWED_ROOTS = new Set([
 const TTL_SECONDS = CACHE_TTL.POKEMON_DETAIL
 const MAX_SEGMENTS = 4
 const MAX_PATH_CHARS = 120
+/** Upstream (cache-miss) budget per IP — Dex bursts many parallel fetches. */
+const UPSTREAM_RATE_LIMIT = 600
+const UPSTREAM_RATE_WINDOW_MS = 60_000
 
 function normalizeQuery(searchParams: URLSearchParams): string {
   const keys = Array.from(searchParams.keys()).sort()
@@ -43,14 +46,6 @@ export async function GET(
   context: { params: Promise<{ path?: string[] }> }
 ) {
   const requestId = getRequestId(request)
-  const ip = clientIpFromRequest(request)
-  const rl = await checkRateLimit(`pokeapi:${ip}`, 120, 60_000)
-  if (!rl.allowed) {
-    return NextResponse.json(
-      { error: 'Too many requests' },
-      { status: 429, headers: withRequestIdHeaders(requestId) }
-    )
-  }
 
   const { path: rawPath } = await context.params
   const segments = (rawPath ?? []).filter(Boolean)
@@ -81,6 +76,8 @@ export async function GET(
     'Cache-Control': 'public, s-maxage=86400, stale-while-revalidate=3600',
   } as const
 
+  // Serve Redis cache hits without counting against the rate limit — a Dex page
+  // easily exceeds a global 120/min cap even when everything is already cached.
   if (redis) {
     try {
       const cached = await withTimeout(redis.get<string>(redisKey))
@@ -89,6 +86,7 @@ export async function GET(
         return NextResponse.json(body, {
           headers: {
             ...cacheHeaders,
+            ...withRequestIdHeaders(requestId),
             ...(isDev ? { 'x-cache': 'HIT' } : {}),
           },
         })
@@ -96,6 +94,17 @@ export async function GET(
     } catch {
       // ignore Redis read errors; fetch from origin
     }
+  }
+
+  const ip = clientIpFromRequest(request)
+  const rl = await checkRateLimit(`pokeapi:${ip}`, UPSTREAM_RATE_LIMIT, UPSTREAM_RATE_WINDOW_MS, {
+    onRedisError: 'memory',
+  })
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      { status: 429, headers: withRequestIdHeaders(requestId) }
+    )
   }
 
   const ac = new AbortController()
@@ -121,7 +130,10 @@ export async function GET(
   if (!res.ok) {
     return new NextResponse(text, {
       status: res.status,
-      headers: { 'Content-Type': res.headers.get('Content-Type') || 'application/json' },
+      headers: {
+        'Content-Type': res.headers.get('Content-Type') || 'application/json',
+        ...withRequestIdHeaders(requestId),
+      },
     })
   }
 
@@ -144,6 +156,7 @@ export async function GET(
     status: 200,
     headers: {
       ...cacheHeaders,
+      ...withRequestIdHeaders(requestId),
       ...(isDev ? { 'x-cache': 'MISS' } : {}),
     },
   })

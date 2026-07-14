@@ -1,11 +1,17 @@
 /**
  * Lightweight sliding-window rate limiter.
- * Prefer Upstash when configured. In Vercel production, fail closed if Redis is unavailable.
+ * Prefer Upstash when configured. In Vercel production, fail closed by default if Redis is unavailable.
+ * Pass `onRedisError: 'memory'` for high-read proxies (e.g. PokeAPI) so a Redis blip does not 429 the Dex.
  */
 
 import { getRedis, withTimeout } from './upstashRedis';
 
 type WindowResult = { allowed: boolean; remaining: number };
+
+export type RateLimitOptions = {
+  /** When Redis is missing/errors: deny (default in Vercel prod) or process-local memory. */
+  onRedisError?: 'deny' | 'memory';
+};
 
 const memoryBuckets = new Map<string, { count: number; resetAt: number }>();
 
@@ -31,15 +37,28 @@ function denyAll(): WindowResult {
   return { allowed: false, remaining: 0 };
 }
 
+function fallbackOnRedisError(
+  key: string,
+  limit: number,
+  windowMs: number,
+  onRedisError: 'deny' | 'memory'
+): WindowResult {
+  if (onRedisError === 'memory' || !isVercelProduction()) {
+    return memoryLimit(key, limit, windowMs);
+  }
+  return denyAll();
+}
+
 export async function checkRateLimit(
   key: string,
   limit: number,
-  windowMs: number
+  windowMs: number,
+  options: RateLimitOptions = {}
 ): Promise<WindowResult> {
+  const onRedisError = options.onRedisError ?? 'deny';
   const redis = getRedis();
   if (!redis) {
-    if (isVercelProduction()) return denyAll();
-    return memoryLimit(key, limit, windowMs);
+    return fallbackOnRedisError(key, limit, windowMs, onRedisError);
   }
 
   try {
@@ -53,8 +72,7 @@ export async function checkRateLimit(
     }
     return { allowed: true, remaining: Math.max(0, limit - count) };
   } catch {
-    if (isVercelProduction()) return denyAll();
-    return memoryLimit(key, limit, windowMs);
+    return fallbackOnRedisError(key, limit, windowMs, onRedisError);
   }
 }
 

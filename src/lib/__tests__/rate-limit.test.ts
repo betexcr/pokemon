@@ -41,4 +41,16 @@ describe('checkRateLimit', () => {
     expect(result.allowed).toBe(false);
     expect(result.remaining).toBe(0);
   });
+
+  it('uses memory fallback in production when onRedisError is memory', async () => {
+    process.env.VERCEL_ENV = 'production';
+    resetRedisClientForTests();
+    const key = `prod-mem-${Date.now()}-${Math.random()}`;
+    const first = await checkRateLimit(key, 2, 60_000, { onRedisError: 'memory' });
+    const second = await checkRateLimit(key, 2, 60_000, { onRedisError: 'memory' });
+    const third = await checkRateLimit(key, 2, 60_000, { onRedisError: 'memory' });
+    expect(first.allowed).toBe(true);
+    expect(second.allowed).toBe(true);
+    expect(third.allowed).toBe(false);
+  });
 });
