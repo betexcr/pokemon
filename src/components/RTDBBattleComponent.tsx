@@ -365,16 +365,17 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
         shiny = false,
         animatedPreferred = false,
         size = 48,
-        className
-      }: { variant: 'front' | 'back'; shiny?: boolean; animatedPreferred?: boolean; size?: number; className?: string }
+        className,
+        dexId = null,
+      }: { variant: 'front' | 'back'; shiny?: boolean; animatedPreferred?: boolean; size?: number; className?: string; dexId?: number | null }
     ) => {
       const normalizedShiny = !!shiny;
-      const speciesId = getPokemonIdFromSpecies(species || '') ?? null;
-      const staticSprite = getPokemonBattleImageWithFallback(speciesId, variant, normalizedShiny);
+      const speciesId = dexId ?? getPokemonIdFromSpecies(species || '') ?? null;
+      const staticSprite = getPokemonBattleImageWithFallback(speciesId, variant, normalizedShiny, species);
       const shouldAnimate = animatedPreferred && spriteMode === 'animated';
       const animatedSprite = shouldAnimate ? getShowdownAnimatedSprite(species || undefined, variant, normalizedShiny) : null;
-      const sources = [animatedSprite, staticSprite.primary, staticSprite.fallback, '/placeholder-pokemon.png']
-        .filter((src): src is string => !!src && src.length > 0);
+      const sources = [animatedSprite, ...staticSprite.chain, '/placeholder-pokemon.png']
+        .filter((src, index, arr): src is string => !!src && arr.indexOf(src) === index);
 
       return (
         <Image
@@ -383,6 +384,7 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
           width={size}
           height={size}
           className={className ?? 'object-contain'}
+          unoptimized
           onError={(event) => {
             const target = event.currentTarget;
             const fallbackIndex = Number(target.dataset.fallbackIndex || '0') + 1;

@@ -1692,14 +1692,14 @@ export default function ModernPokedexLayout({
 
       {/* Collapsible Search and Filters Section */}
       <div className="sticky top-0 border-b border-border bg-surface relative z-20">
-        {/* Toggle Row */}
-        <div className="w-full px-4 py-2 flex items-center gap-2 relative z-20">
+        {/* Toggle Row — extra end padding keeps Expand clear of overlay scrollbars */}
+        <div className="w-full pl-4 pr-6 sm:pr-8 py-2 flex items-center gap-2 relative z-20">
           {/* Advanced Filters button — always visible */}
           <Tooltip content="Open advanced filters" position="bottom">
             <button type="button"
               onClick={() => setShowSidebar(prev => !prev)}
               aria-pressed={showSidebar}
-              className={`flex-shrink-0 flex items-center gap-2 px-3 py-2.5 rounded-lg border text-sm font-semibold transition-all duration-200 shadow-sm hover:shadow-md ${
+              className={`flex-shrink-0 flex items-center gap-2 min-h-11 px-3 py-2.5 rounded-lg border text-sm font-semibold transition-all duration-200 shadow-sm hover:shadow-md ${
                 showSidebar
                   ? 'bg-poke-blue/10 border-poke-blue text-poke-blue'
                   : 'bg-surface border-border hover:bg-white/50 dark:hover:bg-white/10 hover:border-poke-blue/30 text-text'
@@ -1710,53 +1710,45 @@ export default function ModernPokedexLayout({
             </button>
           </Tooltip>
 
-          {/* Expand/collapse toggle */}
+          {/* Expand/collapse toggle — full remaining width is the hit target */}
           <button type="button"
-            onClick={() => setIsFiltersCollapsed(!isFiltersCollapsed)}
-            onPointerUp={(e) => {
-              // Fallback for touch/pointer scenarios where click can be swallowed by overlays.
-              if (e.pointerType === 'touch') {
-                e.preventDefault()
-                setIsFiltersCollapsed(prev => !prev)
-              }
-            }}
+            onClick={() => setIsFiltersCollapsed(prev => !prev)}
             aria-expanded={!isFiltersCollapsed}
             aria-controls="search-filters-panel"
+            aria-label={isFiltersCollapsed ? 'Expand search and filters' : 'Collapse search and filters'}
             title={isFiltersCollapsed ? 'Show search and filters' : 'Hide search and filters'}
-            className={`flex items-center justify-between flex-1 px-3 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 border relative z-30 pointer-events-auto touch-manipulation ${
+            className={`group flex items-center justify-center flex-1 min-h-11 min-w-0 px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 border relative z-30 cursor-pointer select-none touch-manipulation active:scale-[0.99] ${
               isFiltersCollapsed
-                ? 'text-text bg-surface hover:bg-surface/60 border-border hover:border-border/80'
-                : 'text-poke-blue bg-poke-blue/10 border-poke-blue/30 shadow-sm'
+                ? 'text-text bg-bg hover:bg-border/40 border-border hover:border-poke-blue/40 hover:shadow-sm'
+                : 'text-poke-blue bg-poke-blue/10 border-poke-blue/30 shadow-sm hover:bg-poke-blue/15'
             }`}
           >
-            <span className="flex items-center gap-2">
-              <Search className="w-4 h-4" />
-              Search & Filters
-              <span className={`text-[11px] px-2 py-0.5 rounded-full border ${
-                isFiltersCollapsed
-                  ? 'text-muted border-border bg-surface'
-                  : 'text-poke-blue border-poke-blue/30 bg-white/70 dark:bg-surface/70'
+            <span className="flex items-center justify-center gap-2 flex-wrap">
+              <Search className="w-4 h-4 flex-shrink-0" />
+              <span className="hidden sm:inline">Search & Filters</span>
+              <span className={`inline-flex items-center gap-1.5 text-xs font-bold tracking-wide ${
+                isFiltersCollapsed ? 'text-muted group-hover:text-text' : 'text-poke-blue'
               }`}>
-                {isFiltersCollapsed ? 'Show' : 'Hide'}
-              </span>
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="text-xs text-muted">
                 {isFiltersCollapsed ? 'Expand' : 'Collapse'}
+                {isFiltersCollapsed ? (
+                  <ChevronDown className="w-4 h-4" aria-hidden="true" />
+                ) : (
+                  <ChevronUp className="w-4 h-4" aria-hidden="true" />
+                )}
               </span>
-              {isFiltersCollapsed ? (
-                <ChevronDown className="w-4 h-4 text-muted" />
-              ) : (
-                <ChevronUp className="w-4 h-4 text-poke-blue" />
-              )}
             </span>
           </button>
         </div>
 
         {/* Collapsible Content */}
-        <div id="search-filters-panel" className={`overflow-hidden transition-all duration-300 ease-in-out ${
-          isFiltersCollapsed ? 'max-h-0 opacity-0' : 'max-h-[50vh] sm:max-h-[600px] opacity-100'
-        }`}>
+        <div
+          id="search-filters-panel"
+          className={`overflow-hidden transition-all duration-300 ease-in-out ${
+            isFiltersCollapsed
+              ? 'max-h-0 opacity-0 pointer-events-none'
+              : 'max-h-[50vh] sm:max-h-[600px] opacity-100'
+          }`}
+        >
           {/* Search Bar */}
           <div className="px-3 sm:px-4 py-2 sm:py-3">
             <div className="flex items-center gap-2 sm:gap-3 relative">

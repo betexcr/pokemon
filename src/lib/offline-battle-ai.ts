@@ -1,5 +1,6 @@
 import { BattlePokemon, BattleTeam, getCurrentPokemon } from './team-battle-engine';
 import { calculateTypeEffectiveness, TypeName } from './damage-calculator';
+import { getForcedBattleMoveId } from './battle-multiturn';
 
 function getTypeNames(pokemon: BattlePokemon): TypeName[] {
   return (pokemon.pokemon.types || []).map((t: any) => {
@@ -78,6 +79,11 @@ export function chooseAIAction(aiTeam: BattleTeam, playerTeam: BattleTeam): AIAc
       }
     }
     return { type: 'move', moveId: aiActive.moves[0]?.id || 'struggle' };
+  }
+
+  const forced = getForcedBattleMoveId(aiActive);
+  if (forced) {
+    return { type: 'move', moveId: forced };
   }
 
   const availableMoves = aiActive.moves.filter(m => m.pp > 0 && !m.disabled);

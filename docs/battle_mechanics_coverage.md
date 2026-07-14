@@ -32,7 +32,8 @@ This document maps the long-form Gen 9 reference ([battle_mechanics.md](./battle
 | Field (weather, terrain, rooms) | **Partial** | Weather rocks / Terrain Extender / Light Clay → 8 turns; common weather/terrain moves + surge abilities |
 | Hazards | **Partial** | SR, Spikes, Toxic Spikes, Sticky Web; **Heavy-Duty Boots** skip entry; Defog / Rapid Spin / Mortal Spin / Court Change clear/swap |
 | Switching, Pursuit | **Partial** | Pursuit interrupt; **Regenerator** / **Natural Cure** on switch-out; U-turn / Volt Switch / Flip Turn / Parting Shot auto-pivot |
-| Multi-hit | **Partial** | Loop + Skill Link; item interactions subset |
+| Multi-hit | **Partial** | Loop + Skill Link; item interactions subset; hit counts parsed from PokeAPI `meta.min_hits`/`max_hits` |
+| Multi-turn locks (Outrage / Dig / Hyper Beam) | **Partial** | Rampage 2–3 turns + fatigue confusion; two-turn charge (+ sun/rain skip); recharge; offline auto-continue |
 | PP consumption | **Full** | Per successful use (hit or miss after selection); Struggle does not consume slot PP |
 | Struggle | **Full** | When all moves 0 PP; uses move data + recoil |
 | Abilities | **Partial** | Entry: Intimidate (blocks + Defiant/Competitive), weather/terrain setters, Cloud Nine / Air Lock, **Download**, **Frisk**, **Unnerve**; absorbs (Flash Fire, Volt/Water Absorb, Storm Drain, Lightning Rod, Sap Sipper, Motor Drive, Levitate, Wonder Guard); end-of-turn subset (Speed Boost, Shed Skin, Poison Heal, …); Beast Boost highest contest stat |

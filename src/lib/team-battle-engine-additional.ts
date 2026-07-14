@@ -28,6 +28,18 @@ import {
   applyVolatileAndHazardScripts,
   applyBindingOnHit,
 } from './team-battle-scripts';
+import {
+  applyRampageAfterHit,
+  beginTwoTurnCharge,
+  clearTwoTurnState,
+  completeTwoTurnCharge,
+  endRampageWithConfusion,
+  getTwoTurnKind,
+  isRechargeMove,
+  RECHARGE_MOVE_ID,
+  scheduleRecharge,
+  shouldSkipTwoTurnCharge,
+} from './battle-multiturn';
 import { handleOnEntryAbilities } from './team-battle-abilities';
 import {
   applyWeatherResidual,
@@ -171,11 +183,22 @@ export async function resolveMove(state: BattleState, action: BattleState['actio
   const attacker = action.user === 'player' ? getCurrentPokemon(state.player) : getCurrentPokemon(state.opponent);
   const defender = action.user === 'player' ? getCurrentPokemon(state.opponent) : getCurrentPokemon(state.player);
   const moveId = action.moveId!;
-  
+
   if (attacker.currentHp <= 0) {
     return;
   }
-  
+
+  // Forced recharge turn after Hyper Beam family
+  if (moveId === RECHARGE_MOVE_ID || attacker.volatile.mustRecharge) {
+    attacker.volatile.mustRecharge = false;
+    state.battleLog.push({
+      type: 'status_effect',
+      message: `${attacker.pokemon.name} must recharge!`,
+      pokemon: attacker.pokemon.name,
+    });
+    return;
+  }
+
   const canUseResult = canUseMove(attacker, moveId, state.rng);
   if (canUseResult.snappedOutOfConfusion) {
     state.battleLog.push({
@@ -191,9 +214,13 @@ export async function resolveMove(state: BattleState, action: BattleState['actio
       message: `${attacker.pokemon.name} is ${reason}...`,
       pokemon: attacker.pokemon.name
     });
+    // Failing a rampage turn (sleep / para / freeze / confusion self-hit) ends the lock with fatigue
+    if (attacker.volatile.rampage) {
+      endRampageWithConfusion(state, attacker);
+    }
     return;
   }
-  
+
   if (attacker.volatile.flinched) {
     state.battleLog.push({
       type: 'status_effect',
@@ -201,9 +228,12 @@ export async function resolveMove(state: BattleState, action: BattleState['actio
       pokemon: attacker.pokemon.name
     });
     attacker.volatile.flinched = false;
+    if (attacker.volatile.rampage) {
+      endRampageWithConfusion(state, attacker);
+    }
     return;
   }
-  
+
   let move: Awaited<ReturnType<typeof getMove>> | null = null;
   try {
     move = await getMove(moveId);
@@ -226,6 +256,26 @@ export async function resolveMove(state: BattleState, action: BattleState['actio
     return;
   }
 
+  const moveLower = moveId.toLowerCase();
+  const pendingTwoTurn = attacker.volatile.twoTurn?.kind === 'pending' && attacker.volatile.twoTurn.move === moveLower;
+  const startingTwoTurn =
+    !pendingTwoTurn &&
+    getTwoTurnKind(moveLower) != null &&
+    !shouldSkipTwoTurnCharge(moveLower, state.field.weather?.kind);
+
+  // Charge turn: no accuracy check / no damage
+  if (startingTwoTurn) {
+    consumePpForMove(attacker, moveId);
+    state.battleLog.push({
+      type: 'move_used',
+      message: `${attacker.pokemon.name} used ${moveId}!`,
+      pokemon: attacker.pokemon.name,
+      move: moveId,
+    });
+    beginTwoTurnCharge(state, attacker, moveId);
+    return;
+  }
+
   if (move.accuracy != null && !move.bypassAccuracyCheck) {
     const accStage = attacker.statModifiers?.accuracy ?? 0;
     const evaStage = defender.statModifiers?.evasion ?? 0;
@@ -244,10 +294,17 @@ export async function resolveMove(state: BattleState, action: BattleState['actio
         message: `${attacker.pokemon.name}'s attack missed!`,
         pokemon: attacker.pokemon.name
       });
+      // Miss still advances an already-active rampage lock
+      if (attacker.volatile.rampage?.move === moveLower) {
+        applyRampageAfterHit(state, attacker, moveId, state.rng);
+      }
+      if (pendingTwoTurn) {
+        clearTwoTurnState(attacker);
+      }
       return;
     }
   }
-  
+
   await executeMoveAction(state, attacker, defender, moveId, action.user === 'player', action.user);
 }
 
@@ -915,8 +972,19 @@ async function executeMoveAction(
       if (!defender.volatile.protect.counter) {
         defender.volatile.protect.counter = 1;
       }
+      if (attacker.volatile.twoTurn?.kind === 'pending') {
+        clearTwoTurnState(attacker);
+      }
+      if (attacker.volatile.rampage?.move === moveLower) {
+        applyRampageAfterHit(state, attacker, moveId, state.rng);
+      }
       return; // Move blocked
     }
+  }
+
+  // Completing Dig/Fly/Solar Beam — leave semi-invulnerable before dealing damage
+  if (attacker.volatile.twoTurn?.kind === 'pending' && attacker.volatile.twoTurn.move === moveLower) {
+    clearTwoTurnState(attacker);
   }
 
   // Ability absorbs / immunities before damage
@@ -1351,6 +1419,19 @@ async function executeMoveAction(
   if (PIVOT_MOVES.has(moveLower) && moveLower !== 'parting-shot' && totalDamageDealt > 0 && attacker.currentHp > 0) {
     await performPivotSwitch(state, user);
   }
+
+  // Multi-turn locks: Outrage/Petal Dance continue; Hyper Beam forces recharge
+  if (totalDamageDealt > 0 && attacker.currentHp > 0) {
+    applyRampageAfterHit(state, attacker, moveId, state.rng);
+    if (isRechargeMove(moveId)) {
+      scheduleRecharge(attacker, moveId);
+      state.battleLog.push({
+        type: 'status_effect',
+        message: `${attacker.pokemon.name} must recharge next turn!`,
+        pokemon: attacker.pokemon.name,
+      });
+    }
+  }
 }
 
 function applyBeastBoost(attacker: BattlePokemon, state: BattleState): void {
@@ -1759,6 +1840,13 @@ function processVolatileDecrements(state: BattleState): void {
   };
   processWish(state.player);
   processWish(state.opponent);
+
+  // Dig/Fly/Solar Beam: after the charge turn, mark the move pending for next action
+  for (const mon of [playerPokemon, opponentPokemon]) {
+    if (mon.volatile.twoTurn?.kind === 'charging') {
+      completeTwoTurnCharge(mon);
+    }
+  }
   
   // Encore turns
   if (playerPokemon.volatile.encore) {

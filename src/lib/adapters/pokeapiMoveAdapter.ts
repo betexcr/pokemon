@@ -1,6 +1,9 @@
 import type { MoveCategory, RuntimeMove, DynamicPowerContext } from "@/types/move";
 import type { TypeName } from "@/lib/damage-calculator";
 import { fetchMove } from "@/lib/pokeapi";
+import { parseHits, parseRecoilDrain } from "@/lib/adapters/moveMeta";
+
+export { parseHits, parseRecoilDrain } from "@/lib/adapters/moveMeta";
 
 // Map PokeAPI type string -> engine TypeName
 function mapType(t: string): TypeName {
@@ -64,20 +67,6 @@ function parseTopLevelStatChanges(move: unknown): RuntimeMove["statChanges"] {
     })
     .filter(Boolean) as NonNullable<RuntimeMove["statChanges"]>;
   return list.length ? list : undefined;
-}
-
-function parseRecoilDrain(meta: unknown): { recoil?: RuntimeMove["recoil"], drain?: RuntimeMove["drain"] } {
-  const out: { recoil?: RuntimeMove["recoil"], drain?: RuntimeMove["drain"] } = {};
-  const metaObj = meta as { recoil?: number; drain?: number };
-  if (metaObj?.recoil && metaObj.recoil > 0) out.recoil = { fraction: metaObj.recoil / 100 }; // e.g., 33 -> 0.33
-  if (metaObj?.drain && metaObj.drain > 0) out.drain = { fraction: metaObj.drain / 100 };     // e.g., 50 -> 0.5
-  return out;
-}
-
-function parseHits(move: unknown): RuntimeMove["hits"] {
-  const moveObj = move as { min_hits?: number; max_hits?: number };
-  if (moveObj.min_hits && moveObj.max_hits) return { min: moveObj.min_hits, max: moveObj.max_hits };
-  return null;
 }
 
 /** Known variable-power moves you likely care about (expand as needed). */

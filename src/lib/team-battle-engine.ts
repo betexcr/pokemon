@@ -51,6 +51,14 @@ export type BattlePokemon = {
     flashFireActive?: boolean;
     /** Last successfully selected move id (Encore / Disable target). */
     lastMoveUsed?: string;
+    /** Outrage / Petal Dance / Thrash lock; turnsLeft are remaining after the current hit. */
+    rampage?: { move: string; turnsLeft: number };
+    /** Hyper Beam family — skip the next voluntary action. */
+    mustRecharge?: boolean;
+    /** Dig/Fly/Solar Beam-style charge. charging = this turn charged; pending = execute next action. */
+    twoTurn?: { move: string; kind: 'charging' | 'pending' };
+    /** Semi-invulnerable while charging Dig/Fly/etc. Stores the move id. */
+    semiInvulnerable?: string;
   };
   // Ability system
   currentAbility?: string;
@@ -288,6 +296,12 @@ export function canSelectStruggle(pokemon: BattlePokemon): boolean {
 /** Decrements PP for the used move slot once per selection (hit or miss). Struggle does not consume PP. */
 export function consumePpForMove(pokemon: BattlePokemon, moveId: string): void {
   if (moveId.toLowerCase() === 'struggle') return;
+  if (moveId === '__recharge__') return;
+  const id = moveId.toLowerCase();
+  // Continuation of a rampage lock does not spend PP again
+  if (pokemon.volatile.rampage?.move === id) return;
+  // Second turn of Dig/Fly/Solar Beam — PP already spent on the charge turn
+  if (pokemon.volatile.twoTurn?.kind === 'pending' && pokemon.volatile.twoTurn.move === id) return;
   const move = pokemon.moves.find((m) => m.id === moveId);
   if (!move) return;
   move.pp = Math.max(0, move.pp - 1);
@@ -301,7 +315,12 @@ export function canUseMove(
 ): { canUse: boolean; reason?: string; snappedOutOfConfusion?: boolean } {
   const idLower = moveId.toLowerCase();
 
-  if (idLower === 'struggle') {
+  // Forced recharge turn — not a real move slot
+  if (idLower === '__recharge__') {
+    if (!pokemon.volatile.mustRecharge) {
+      return { canUse: false, reason: 'not recharging' };
+    }
+  } else if (idLower === 'struggle') {
     if (!canSelectStruggle(pokemon)) {
       return { canUse: false, reason: 'struggle not available' };
     }
@@ -309,15 +328,26 @@ export function canUseMove(
     const move = pokemon.moves.find((m) => m.id === moveId);
     if (!move) return { canUse: false, reason: 'Invalid move' };
 
+    const forced = pokemon.volatile.mustRecharge
+      ? '__recharge__'
+      : pokemon.volatile.twoTurn?.kind === 'pending'
+        ? pokemon.volatile.twoTurn.move
+        : pokemon.volatile.rampage && pokemon.volatile.rampage.turnsLeft > 0
+          ? pokemon.volatile.rampage.move
+          : null;
+    if (forced && idLower !== forced) {
+      return { canUse: false, reason: forced === '__recharge__' ? 'must recharge' : 'locked into move' };
+    }
+
     if (pokemon.volatile.encore && pokemon.volatile.encore.turns > 0) {
       const enc = pokemon.volatile.encore.move;
       if (moveId !== enc) {
         return { canUse: false, reason: 'encored' };
       }
-      if (move.pp <= 0) {
+      if (move.pp <= 0 && !pokemon.volatile.rampage) {
         return { canUse: false, reason: 'encored move has no PP' };
       }
-    } else {
+    } else if (!pokemon.volatile.rampage && pokemon.volatile.twoTurn?.kind !== 'pending') {
       if (move.pp <= 0) return { canUse: false, reason: 'no PP left' };
     }
 
@@ -408,6 +438,10 @@ export function normalizeServerBattleAction(
   profile: BattleRuleProfile = 'simplified'
 ): NormalizedServerActionResult {
   if (action.type === 'switch') {
+    const mon = getCurrentPokemon(team);
+    if (mon.volatile.mustRecharge || mon.volatile.rampage || mon.volatile.twoTurn?.kind === 'pending') {
+      return { action, normalized: false, errorCode: 'switch_locked_multi_turn' };
+    }
     const idx = action.switchIndex;
     if (typeof idx !== 'number' || !Number.isInteger(idx)) return { action, normalized: false, errorCode: 'invalid_switch_index' };
     if (idx < 0 || idx >= team.pokemon.length) return { action, normalized: false, errorCode: 'switch_out_of_range' };
@@ -421,6 +455,25 @@ export function normalizeServerBattleAction(
     if (!moveId || typeof moveId !== 'string') return { action, normalized: false, errorCode: 'missing_move' };
     const mon = getCurrentPokemon(team);
     const idLower = moveId.toLowerCase();
+
+    const forced =
+      mon.volatile.mustRecharge
+        ? '__recharge__'
+        : mon.volatile.twoTurn?.kind === 'pending'
+          ? mon.volatile.twoTurn.move
+          : mon.volatile.rampage && mon.volatile.rampage.turnsLeft > 0
+            ? mon.volatile.rampage.move
+            : null;
+    if (forced && idLower !== forced) {
+      return {
+        action: { type: 'move', moveId: forced, target: action.target },
+        normalized: true,
+        reasonCode: 'multi_turn_lock_coerced',
+      };
+    }
+    if (forced === '__recharge__' || idLower === '__recharge__') {
+      return { action: { type: 'move', moveId: '__recharge__', target: action.target }, normalized: forced !== idLower, reasonCode: forced !== idLower ? 'multi_turn_lock_coerced' : undefined };
+    }
 
     if (idLower === 'struggle') {
       if (!canSelectStruggle(mon)) return { action, normalized: false, errorCode: 'illegal_struggle' };
@@ -449,7 +502,7 @@ export function normalizeServerBattleAction(
         }
         return { action, normalized: false, errorCode: 'encored_wrong_move' };
       }
-      if (move.pp <= 0) {
+      if (move.pp <= 0 && !mon.volatile.rampage) {
         if (profile === 'simplified') {
           return {
             action: { type: 'move', moveId: 'struggle', target: action.target },
@@ -459,7 +512,7 @@ export function normalizeServerBattleAction(
         }
         return { action, normalized: false, errorCode: 'encored_no_pp_use_struggle' };
       }
-    } else if (move.pp <= 0) {
+    } else if (move.pp <= 0 && !mon.volatile.rampage && mon.volatile.twoTurn?.kind !== 'pending') {
       if (profile === 'simplified' && canSelectStruggle(mon)) {
         return {
           action: { type: 'move', moveId: 'struggle', target: action.target },
@@ -824,6 +877,11 @@ export function switchToPokemon(team: BattleTeam, index: number): void {
 /** Regenerator heal 1/3 and Natural Cure status clear on voluntary switch-out. */
 export function applySwitchOutAbilities(pokemon: BattlePokemon): void {
   if (pokemon.currentHp <= 0) return;
+  // Leaving the field cancels multi-turn locks (no fatigue confusion on voluntary switch)
+  pokemon.volatile.rampage = undefined;
+  pokemon.volatile.mustRecharge = undefined;
+  pokemon.volatile.twoTurn = undefined;
+  pokemon.volatile.semiInvulnerable = undefined;
   const ability = pokemon.currentAbility?.toLowerCase();
   if (ability === 'regenerator') {
     const heal = Math.floor(pokemon.maxHp / 3);

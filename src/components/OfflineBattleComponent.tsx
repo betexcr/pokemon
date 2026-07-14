@@ -14,6 +14,7 @@ import { useReducedMotionPref } from '@/hooks/useReducedMotionPref';
 
 const formatMoveLabel = (rawId: string): string => {
   if (!rawId) return 'Unknown Move';
+  if (rawId === '__recharge__') return 'Recharge';
   return rawId.split(/[-_\s]+/).filter(Boolean).map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
 };
 
@@ -45,6 +46,26 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
     if (!meta) return false;
     return meta.phase === 'resolving';
   }, [meta?.phase]);
+
+  // Auto-continue Outrage / Dig / Hyper Beam recharge without requiring another click
+  useEffect(() => {
+    if (!meta || meta.phase !== 'choosing' || waitingForResolution) return;
+    if (pendingAction) return;
+    if (legalMoves.length !== 1) return;
+    // Forced locks also clear switch options; Encore alone still allows switches
+    if (legalSwitchIndexes.length > 0 && legalMoves[0]?.id !== '__recharge__') return;
+    const only = legalMoves[0]?.id;
+    if (!only) return;
+    let cancelled = false;
+    const t = window.setTimeout(() => {
+      if (cancelled) return;
+      void chooseMove(only);
+    }, 350);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(t);
+    };
+  }, [meta?.phase, meta?.turn, waitingForResolution, legalMoves, legalSwitchIndexes, pendingAction, chooseMove]);
 
   useEffect(() => {
     if (meta?.phase === 'ended') {
@@ -138,16 +159,16 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
     return mon?.species || mon?.pokemon?.name || 'unknown';
   };
 
-  const renderSpriteImage = (species: string | undefined, opts: { variant?: string; shiny?: boolean; animatedPreferred?: boolean; size?: number; className?: string } = {}) => {
+  const renderSpriteImage = (species: string | undefined, opts: { variant?: string; shiny?: boolean; animatedPreferred?: boolean; size?: number; className?: string; dexId?: number | null } = {}) => {
     if (!species) return null;
     const variant: 'front' | 'back' = opts.variant === 'back' ? 'back' : 'front';
     const normalizedShiny = !!opts.shiny;
-    const speciesId = getPokemonIdFromSpecies(species) ?? null;
-    const staticSprite = getPokemonBattleImageWithFallback(speciesId, variant, normalizedShiny);
+    const speciesId = opts.dexId ?? getPokemonIdFromSpecies(species) ?? null;
+    const staticSprite = getPokemonBattleImageWithFallback(speciesId, variant, normalizedShiny, species);
     const shouldAnimate = !!opts.animatedPreferred && spriteMode === 'animated';
     const animatedSprite = shouldAnimate ? getShowdownAnimatedSprite(species, variant, normalizedShiny) : null;
-    const sources = [animatedSprite, staticSprite.primary, staticSprite.fallback, '/placeholder-pokemon.png']
-      .filter((src): src is string => !!src && src.length > 0);
+    const sources = [animatedSprite, ...staticSprite.chain, '/placeholder-pokemon.png']
+      .filter((src, index, arr): src is string => !!src && arr.indexOf(src) === index);
     if (!sources.length) return null;
     return (
       <Image
@@ -238,6 +259,7 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
               <BattleSprite
                 ref={playerSpriteRef}
                 species={myActive.species}
+                dexId={(myActive as { dexId?: number | null }).dexId ?? null}
                 level={myActive.level}
                 hp={myActive.hp}
                 status={myActive.status as any}
@@ -258,6 +280,7 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
               <BattleSprite
                 ref={opponentSpriteRef}
                 species={oppActive.species}
+                dexId={(oppActive as { dexId?: number | null }).dexId ?? null}
                 level={oppActive.level}
                 hp={oppActive.hp}
                 status={oppActive.status as any}
@@ -366,7 +389,12 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
                       data-testid={`switch-${speciesName}-${index}`}
                     >
                       <div className="flex items-center gap-2">
-                        {renderSpriteImage(speciesName, { variant: 'front', size: 32, className: 'w-8 h-8 object-contain' })}
+                        {renderSpriteImage(speciesName, {
+                          variant: 'front',
+                          size: 32,
+                          className: 'w-8 h-8 object-contain',
+                          dexId: (pokemon as { dexId?: number | null }).dexId ?? null,
+                        })}
                         <div className="text-sm font-medium capitalize truncate">{formatPokemonName(speciesName)}</div>
                       </div>
                       <div className="text-xs text-muted">HP: {hpCur} / {hpMax}</div>

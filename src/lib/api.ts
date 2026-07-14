@@ -845,53 +845,65 @@ export async function getPokemonMoves(id: number | string): Promise<Array<{ name
     const pokemon = await getPokemon(id)
     const moves = pokemon.moves || []
 
-    const moveDetails = await Promise.all(
-      moves.slice(0, 50).map(async (entry) => { // Limit to first 50 moves for performance
-        try {
-          const moveData = await getMove(entry.move.name)
-          const effectEntry = moveData?.effect_entries?.find((entry: any) => entry.language?.name === 'en')
-          const effectChance = moveData?.effect_chance
-          let shortEffect = effectEntry?.short_effect || effectEntry?.effect || null
-          if (shortEffect) {
-            shortEffect = shortEffect.replace(
-              /\$effect_chance/g,
-              effectChance != null ? String(effectChance) : ''
-            )
-          }
+    const pickLearnDetail = (versionDetails: Array<{
+      level_learned_at?: number
+      move_learn_method?: { name?: string }
+    }>) => {
+      if (!versionDetails.length) return undefined
+      const preferred = ['level-up', 'train', 'machine', 'tutor', 'egg']
+      for (const method of preferred) {
+        const match = [...versionDetails].reverse().find((d) => d.move_learn_method?.name === method)
+        if (match) return match
+      }
+      return versionDetails[versionDetails.length - 1]
+    }
 
-          // Get the most recent learn method and level
-          const versionDetails = entry.version_group_details || []
-          const latestVersion = versionDetails[versionDetails.length - 1]
-
-          return {
-            name: entry.move.name,
-            type: moveData.type?.name || 'unknown',
-            damage_class: moveData.damage_class?.name || 'status',
-            power: moveData.power,
-            accuracy: moveData.accuracy,
-            pp: moveData.pp,
-            level_learned_at: latestVersion?.level_learned_at || null,
-            learn_method: latestVersion?.move_learn_method?.name || 'unknown',
-            short_effect: shortEffect,
-          }
-        } catch (error) {
-          console.debug('Failed to load move details', error)
-          return {
-            name: entry.move.name,
-            type: 'unknown',
-            damage_class: 'status',
-            power: null,
-            accuracy: null,
-            pp: null,
-            level_learned_at: null,
-            learn_method: 'unknown',
-            short_effect: null,
-          }
-        }
-      })
+    // Resolve move metadata in batches — megas can have 60+ moves; unbounded fan-out 429s the proxy.
+    const movePayloads = await getMovesBatched(
+      moves.map((entry) => entry.move.name),
+      { concurrency: 8 }
     )
 
-    return moveDetails
+    return moves.map((entry, index) => {
+      const moveData = movePayloads[index]
+      const latestVersion = pickLearnDetail(entry.version_group_details || [])
+
+      if (!moveData) {
+        return {
+          name: entry.move.name,
+          type: 'unknown',
+          damage_class: 'status' as const,
+          power: null,
+          accuracy: null,
+          pp: null,
+          level_learned_at: latestVersion?.level_learned_at ?? null,
+          learn_method: latestVersion?.move_learn_method?.name || 'unknown',
+          short_effect: null,
+        }
+      }
+
+      const effectEntry = moveData?.effect_entries?.find((e: any) => e.language?.name === 'en')
+      const effectChance = moveData?.effect_chance
+      let shortEffect = effectEntry?.short_effect || effectEntry?.effect || null
+      if (shortEffect) {
+        shortEffect = shortEffect.replace(
+          /\$effect_chance/g,
+          effectChance != null ? String(effectChance) : ''
+        )
+      }
+
+      return {
+        name: entry.move.name,
+        type: moveData.type?.name || 'unknown',
+        damage_class: moveData.damage_class?.name || 'status',
+        power: moveData.power,
+        accuracy: moveData.accuracy,
+        pp: moveData.pp,
+        level_learned_at: latestVersion?.level_learned_at ?? null,
+        learn_method: latestVersion?.move_learn_method?.name || 'unknown',
+        short_effect: shortEffect,
+      }
+    })
   } catch (error) {
     console.error('getPokemonMoves error:', error)
     reportDataLoadingError('Failed to load Pokemon moves', {

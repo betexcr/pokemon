@@ -52,3 +52,55 @@ export const SELF_STATUS_MOVES = new Set([
 
 /** Damaging (or Parting Shot) moves that force a mid-turn switch. */
 export const PIVOT_MOVES = new Set(['u-turn', 'volt-switch', 'flip-turn', 'parting-shot']);
+
+/** Lock the user into the move for 2–3 turns, then confuse (Outrage / Petal Dance / Thrash). */
+export const RAMPAGE_MOVES = new Set([
+  'outrage',
+  'petal-dance',
+  'thrash',
+  'raging-fury',
+]);
+
+/** Deal damage, then force a recharge turn (Hyper Beam family). */
+export const RECHARGE_MOVES = new Set([
+  'hyper-beam',
+  'giga-impact',
+  'blast-burn',
+  'frenzy-plant',
+  'hydro-cannon',
+  'rock-wrecker',
+  'roar-of-time',
+  'prismatic-laser',
+  'meteor-assault',
+  'eternabeam',
+]);
+
+/**
+ * Two-turn moves: charge on turn 1, execute on turn 2.
+ * Values: `semi` = also semi-invulnerable while charging; `charge` = visible charge only.
+ */
+export const TWO_TURN_MOVES: Readonly<Record<string, 'semi' | 'charge'>> = {
+  dig: 'semi',
+  fly: 'semi',
+  dive: 'semi',
+  bounce: 'semi',
+  'phantom-force': 'semi',
+  'shadow-force': 'semi',
+  'solar-beam': 'charge',
+  'solar-blade': 'charge',
+  'skull-bash': 'charge',
+  'razor-wind': 'charge',
+  'sky-attack': 'charge',
+  'freeze-shock': 'charge',
+  'ice-burn': 'charge',
+  geomancy: 'charge',
+  'meteor-beam': 'charge',
+  'electro-shot': 'charge',
+};
+
+/** Skip the charge turn of these moves under matching weather. */
+export const TWO_TURN_WEATHER_SKIP: Readonly<Record<string, string>> = {
+  'solar-beam': 'sun',
+  'solar-blade': 'sun',
+  'electro-shot': 'rain',
+};

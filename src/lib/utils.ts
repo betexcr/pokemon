@@ -360,14 +360,57 @@ function getPokemonBattleSpriteUrl(pokemonId: number | null, variant: 'front' | 
   return getPokemonBattleImageUrl(pokemonId, variant, shiny);
 }
 
+/** Static Showdown PNG — works for any species slug, not just Gen 1 national IDs. */
+export function getShowdownStaticSprite(
+  species?: string | null,
+  variant: 'front' | 'back' = 'front',
+  shiny: boolean = false
+): string | null {
+  const normalized = normalizeSpeciesForSprite(species);
+  if (!normalized) return null;
+  const exceptions: Record<string, string> = {
+    'mr-mime': 'mr.mime',
+    'mime-jr': 'mimejr',
+    'mr-rime': 'mr.rime',
+    'ho-oh': 'hooh',
+    'type-null': 'typenull',
+    'porygon-z': 'porygonz',
+    'nidoran-f': 'nidoranf',
+    'nidoran-m': 'nidoranm',
+  };
+  const mapped = exceptions[normalized] || normalized;
+  let folder = variant === 'back' ? 'gen5-back' : 'gen5';
+  if (shiny) folder = `${folder}-shiny`;
+  return `https://play.pokemonshowdown.com/sprites/${folder}/${mapped}.png`;
+}
+
 // Get Pokemon image with fallback for battle context
-export function getPokemonBattleImageWithFallback(pokemonId: number | null, variant: 'front' | 'back' = 'front', shiny: boolean = false): {
+export function getPokemonBattleImageWithFallback(
+  pokemonId: number | null,
+  variant: 'front' | 'back' = 'front',
+  shiny: boolean = false,
+  species?: string | null
+): {
   primary: string;
   fallback: string;
+  chain: string[];
 } {
+  const showdown = getShowdownStaticSprite(species, variant, shiny);
+  const showdownNonShiny = shiny ? getShowdownStaticSprite(species, variant, false) : null;
+  const pokePrimary = pokemonId ? getPokemonBattleSpriteUrl(pokemonId, variant, shiny) : null;
+  const pokeFallback = pokemonId ? getPokemonBattleSpriteUrl(pokemonId, variant, false) : null;
+  const chain = [
+    pokePrimary,
+    showdown,
+    pokeFallback,
+    showdownNonShiny,
+    '/placeholder-pokemon.png',
+  ].filter((src, index, arr): src is string => !!src && arr.indexOf(src) === index);
+
   return {
-    primary: getPokemonBattleSpriteUrl(pokemonId, variant, shiny),
-    fallback: getPokemonBattleSpriteUrl(pokemonId, variant, false) // Always fallback to non-shiny
+    primary: chain[0] || '/placeholder-pokemon.png',
+    fallback: chain[1] || '/placeholder-pokemon.png',
+    chain,
   };
 }
 

@@ -17,13 +17,16 @@ import { createFieldState, EMPTY_HAZARDS } from '@/lib/team-battle-types';
 import { chooseAIAction } from '@/lib/offline-battle-ai';
 import { getPokemon } from '@/lib/api';
 import type { GYM_CHAMPIONS } from '@/lib/gym_champions';
+import { getForcedBattleMoveId, RECHARGE_MOVE_ID } from '@/lib/battle-multiturn';
 
 // ---------------------------------------------------------------------------
 // Types that mirror what useBattleState returns
 // ---------------------------------------------------------------------------
 
 type PublicMon = {
-  species: string; level: number; types: string[];
+  species: string;
+  dexId?: number | null;
+  level: number; types: string[];
   hp: { cur: number; max: number };
   status: null | string;
   boosts: Record<string, number>;
@@ -52,7 +55,9 @@ type Meta = {
 
 type MoveEntry = { id: string; pp: number; maxPp?: number; disabled?: boolean; reason?: string };
 type TeamMon = {
-  species: string; level: number; types: string[];
+  species: string;
+  dexId?: number | null;
+  level: number; types: string[];
   stats: { hp: number; atk: number; def: number; spa: number; spd: number; spe: number };
   item?: string; ability?: string; moves: MoveEntry[];
   status?: string | null; fainted?: boolean;
@@ -164,6 +169,7 @@ async function hydrateSlot(raw: any): Promise<BattlePokemon> {
 function makePublicActive(mon: BattlePokemon): PublicMon {
   return {
     species: mon.pokemon.name,
+    dexId: typeof mon.pokemon.id === 'number' && mon.pokemon.id > 0 ? mon.pokemon.id : null,
     level: mon.level,
     types: (mon.pokemon.types || []).map((t: any) => typeof t === 'string' ? t : t.type?.name || t.name || 'normal'),
     hp: { cur: Math.max(0, mon.currentHp), max: mon.maxHp },
@@ -193,6 +199,7 @@ function projectPrivate(team: BattleTeam): PrivateState {
       const statVal = (name: string) => p.pokemon.stats?.find((s: any) => (s.stat?.name || s.name) === name)?.base_stat ?? 50;
       return {
         species: p.pokemon.name,
+        dexId: typeof p.pokemon.id === 'number' && p.pokemon.id > 0 ? p.pokemon.id : null,
         level: p.level,
         types: (p.pokemon.types || []).map((t: any) => typeof t === 'string' ? t : t.type?.name || t.name || 'normal'),
         stats: { hp: p.maxHp, atk: statVal('attack'), def: statVal('defense'), spa: statVal('special-attack'), spd: statVal('special-defense'), spe: statVal('speed') },
@@ -481,6 +488,14 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
   const legalMoves = useMemo(() => {
     if (!battleState) return [];
     const active = getCurrentPokemon(battleState.player);
+    const forced = getForcedBattleMoveId(active);
+    if (forced) {
+      if (forced === RECHARGE_MOVE_ID) {
+        return [{ id: RECHARGE_MOVE_ID, pp: 1, maxPp: 1 }];
+      }
+      const slot = active.moves.find(m => m.id === forced);
+      return [{ id: forced, pp: slot?.pp ?? 1, maxPp: slot?.maxPp ?? 1 }];
+    }
     const profile = meta?.ruleProfile ?? 'simplified';
     if (allMovesOutOfPp(active) || (profile === 'simplified' && encoredMoveHasNoPp(active))) {
       return [{ id: 'struggle', pp: 1, maxPp: 1 }];
@@ -492,6 +507,8 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
 
   const legalSwitchIndexes = useMemo(() => {
     if (!battleState) return [];
+    const active = getCurrentPokemon(battleState.player);
+    if (getForcedBattleMoveId(active)) return [];
     return battleState.player.pokemon
       .map((p, i) => ({ p, i }))
       .filter(({ p, i }) => i !== battleState.player.currentIndex && p.currentHp > 0)

@@ -17,18 +17,28 @@ interface BattleSpriteProps {
   className?: string
   spriteMode?: 'animated' | 'static'
   shiny?: boolean
+  /** National dex / form ID when known — improves PokeAPI sprite fallbacks. */
+  dexId?: number | null
 }
 
 export const BattleSprite = forwardRef<BattleSpriteRef, BattleSpriteProps>(function BattleSprite(
-  { species, level, hp, status, types = [], side = 'player', className = '', spriteMode = 'static', shiny = false },
+  { species, level, hp, status, types = [], side = 'player', className = '', spriteMode = 'static', shiny = false, dexId = null },
   _ref
 ) {
-  const speciesId = getPokemonIdFromSpecies(species)
+  const speciesId = dexId ?? getPokemonIdFromSpecies(species)
   const variant: 'front' | 'back' = side === 'player' ? 'back' : 'front'
-  const staticSprite = useMemo(() => getPokemonBattleImageWithFallback(speciesId, variant, shiny), [speciesId, variant, shiny])
+  const staticSprite = useMemo(
+    () => getPokemonBattleImageWithFallback(speciesId, variant, shiny, species),
+    [speciesId, variant, shiny, species]
+  )
   const animatedSprite = useMemo(() => spriteMode === 'animated'
     ? getShowdownAnimatedSprite(species, variant, shiny)
     : null, [species, variant, shiny, spriteMode])
+
+  const sources = useMemo(() => {
+    const list = [animatedSprite, ...staticSprite.chain, '/placeholder-pokemon.png']
+    return list.filter((src, index, arr): src is string => !!src && arr.indexOf(src) === index)
+  }, [animatedSprite, staticSprite.chain])
 
   const hpPercentage = Math.max(0, Math.min(100, Math.round((hp.cur / Math.max(1, hp.max)) * 100)))
 
@@ -36,19 +46,19 @@ export const BattleSprite = forwardRef<BattleSpriteRef, BattleSpriteProps>(funct
     <div className={`flex w-full max-w-xs flex-col items-center gap-3 rounded-2xl border border-border bg-card/80 p-4 shadow-lg ${className}`}>
       <div className="relative h-28 w-28 overflow-hidden rounded-xl bg-gradient-to-b from-white/10 to-black/20">
         <Image
-          src={animatedSprite || staticSprite.primary}
+          src={sources[0]}
           alt={formatPokemonName(species)}
           width={160}
           height={160}
-          unoptimized={Boolean(animatedSprite)}
+          unoptimized={Boolean(animatedSprite) || sources[0]?.includes('pokemonshowdown.com')}
           className="h-full w-full object-contain"
           onError={(event) => {
             const target = event.currentTarget
-            const fallbacks = [staticSprite.primary, staticSprite.fallback].filter(Boolean)
             const currentIndex = Number(target.dataset.fallbackIndex || '0')
-            if (currentIndex < fallbacks.length) {
-              target.dataset.fallbackIndex = String(currentIndex + 1)
-              target.src = fallbacks[currentIndex]
+            const nextIndex = currentIndex + 1
+            if (nextIndex < sources.length) {
+              target.dataset.fallbackIndex = String(nextIndex)
+              target.src = sources[nextIndex]
             }
           }}
         />

@@ -1,9 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import TypeBadgeWithEffectiveness from "@/components/TypeBadgeWithEffectiveness";
 import Tooltip from "@/components/Tooltip";
-import { MoveSkeleton } from "@/components/skeletons/PokemonDetailsSkeleton";
 
 type Move = {
   name: string;
@@ -19,6 +18,8 @@ type Move = {
 
 const categories = ["physical","special","status"] as const;
 
+/** Primary in-game learn methods shown before enabling "Show HM/TM/Other". */
+const PRIMARY_LEARN_METHODS = new Set(["level-up", "train"]);
 
 export default function MovesSection({ moves, pokemonTypes = [], loading = false }: { moves: Move[]; pokemonTypes?: string[]; loading?: boolean }) {
   const [q, setQ] = useState("");
@@ -28,13 +29,19 @@ export default function MovesSection({ moves, pokemonTypes = [], loading = false
   const [sortField, setSortField] = useState<keyof Move | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
+  // Mega / form-only entries often use `train` (or only TM) with zero level-up rows.
+  useEffect(() => {
+    if (moves.length === 0) return;
+    const hasPrimary = moves.some((m) => m.learn_method != null && PRIMARY_LEARN_METHODS.has(m.learn_method));
+    if (!hasPrimary) setShowAllMoves(true);
+  }, [moves]);
 
   const filtered = useMemo(() => {
     let rows = moves;
     
-    // Filter by learn method (show only level-up moves by default)
+    // Default: level-up + train (ZA / megas); TM/egg/tutor require the checkbox
     if (!showAllMoves) {
-      rows = rows.filter(m => m.learn_method === 'level-up');
+      rows = rows.filter(m => m.learn_method != null && PRIMARY_LEARN_METHODS.has(m.learn_method));
     }
     
     if (q) rows = rows.filter(m => m.name.toLowerCase().includes(q.toLowerCase()));
@@ -207,8 +214,7 @@ export default function MovesSection({ moves, pokemonTypes = [], loading = false
             </tr>
           </thead>
           <tbody className="[&>tr]:border-b [&>tr]:border-border">
-            {loading || filtered.length === 0 ? (
-              // Show skeleton rows when loading
+            {loading ? (
               [1, 2, 3, 4, 5, 6].map((index) => (
                 <tr key={`skeleton-${index}`} className="[&>td]:px-3 [&>td]:py-2">
                   <td className="font-medium">
@@ -237,6 +243,14 @@ export default function MovesSection({ moves, pokemonTypes = [], loading = false
                   </td>
                 </tr>
               ))
+            ) : filtered.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="px-3 py-8 text-center text-sm text-muted">
+                  {moves.length === 0
+                    ? 'No moves found for this Pokémon.'
+                    : 'No moves match these filters. Try enabling “Show HM/TM/Other moves”.'}
+                </td>
+              </tr>
             ) : (
               filtered.map((m, index) => (
                 <tr key={`${m.name}-${index}`} className="[&>td]:px-3 [&>td]:py-2">
@@ -280,6 +294,7 @@ const formatLearnMethod = (method: string | undefined): string => {
   
   const methodMap: Record<string, string> = {
     'level-up': 'Level',
+    'train': 'Train',
     'machine': 'TM/HM',
     'egg': 'Egg',
     'tutor': 'Tutor',
