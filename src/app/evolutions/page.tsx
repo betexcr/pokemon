@@ -26,10 +26,15 @@ export const metadata: Metadata = {
 export const revalidate = 3600;
 
 export default async function EvolutionsPage() {
-  const normalized: NormalizedEvoGraph = await buildEvoGraph({
-    offset: 0,
-    limit: 80,
-  });
+  // Never let a PokeAPI outage fail the build/prerender: fall back to an empty graph and let
+  // ISR (revalidate above) retry on the next request.
+  let normalized: NormalizedEvoGraph;
+  try {
+    normalized = await buildEvoGraph({ offset: 0, limit: 80 });
+  } catch (error) {
+    console.error('[evolutions] Failed to build evolution graph; serving empty fallback', error);
+    normalized = { families: [] };
+  }
 
   const serverList = normalized.families.map((fam) => {
     const count = fam.edges?.length ?? 0;

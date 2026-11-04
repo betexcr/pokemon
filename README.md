@@ -116,6 +116,8 @@ A comprehensive, high-performance Pokémon web application built with Next.js, T
 
 **Hosting, architecture map, and pointers to complex modules** (battles, RTDB, championships, caching): see **[docs/ARCHITECTURE_AND_HOSTING.md](docs/ARCHITECTURE_AND_HOSTING.md)**. The canonical live site is **`https://pokebattles.vercel.app/`**; `pokemon.ultharcr.com` is retired. The doc also covers how to verify what commit is deployed.
 
+**Deploying to Vercel:** pushes deploy automatically. Before pushing dependency or build changes, run `npm run verify:deploy` (lockfile sync + production build). Rules and the failed-deployment playbook: **[docs/VERCEL_DEPLOYMENT.md](docs/VERCEL_DEPLOYMENT.md)**.
+
 ## 📱 UI/UX Features
 
 ### Design Principles

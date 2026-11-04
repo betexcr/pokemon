@@ -45,7 +45,11 @@
     "seed-usage": "node scripts/seed-usage-data.js",
     "test-real-data": "node scripts/test-real-data.js",
     "assets:pmd": "node scripts/download-pmd-assets.js",
-    "assets:pmd:id": "node scripts/download-pmd-assets.js $PMD_ID"
+    "assets:pmd:id": "node scripts/download-pmd-assets.js $PMD_ID",
+    "verify:deploy": "node scripts/verify-deploy.mjs"
+  },
+  "engines": {
+    "node": "22.x"
   },
   "dependencies": {
     "@sentry/nextjs": "^10.65.0",

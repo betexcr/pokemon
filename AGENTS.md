@@ -12,6 +12,7 @@ Next.js 15 App Router application: Pokédex, team builder, offline AI battles, r
 | **Canonical prod URL** | `https://pokebattles.vercel.app` |
 | **Retired domains** | `pokemon.ultharcr.com`, `pokemon-indol-tau.vercel.app` — do not use in new links, metadata, or env defaults (a canonical pointing at another host triggers anti-phishing warnings) |
 | **Maintainer map** | [docs/ARCHITECTURE_AND_HOSTING.md](docs/ARCHITECTURE_AND_HOSTING.md) |
+| **Deploying** | [docs/VERCEL_DEPLOYMENT.md](docs/VERCEL_DEPLOYMENT.md) — run `npm run verify:deploy` before pushing |
 
 ## Quick start
 
@@ -99,7 +100,8 @@ flowchart TB
 6. **Build ignores TS errors** (`typescript.ignoreBuildErrors: true`) — still fix types locally; CI should aim for `tsc --noEmit` (Wave 3 follow-up).
 7. **ErrorTip "Gengar" mascot** is generic unknown-error UI, not the failing Pokémon.
 8. **RTDB rules source of truth** is `src/lib/firebase-rtdb-rules.json` (see `firebase.json`). Deploy with `firebase deploy --only database,firestore:rules`. Battle create is Admin-only (`POST /api/battles/create`).
-9. **Open production gaps:** see [docs/MULTIPLAYER_STATUS.md](docs/MULTIPLAYER_STATUS.md) and [docs/battle_mechanics_coverage.md](docs/battle_mechanics_coverage.md).
+9. **Vercel deploys run `npm ci` + `next build`** (see [docs/VERCEL_DEPLOYMENT.md](docs/VERCEL_DEPLOYMENT.md)): keep `package-lock.json` in sync (add deps only via `npm install`), never commit bun/yarn/pnpm lockfiles, and never make `next build` depend on network calls (PokeAPI/Smogon) — use fallbacks or on-demand ISR instead of large `generateStaticParams`. The build must pass offline with no env vars.
+10. **Open production gaps:** see [docs/MULTIPLAYER_STATUS.md](docs/MULTIPLAYER_STATUS.md) and [docs/battle_mechanics_coverage.md](docs/battle_mechanics_coverage.md).
 
 ## Where to work
 
@@ -126,6 +128,7 @@ Conventions: [docs/coding_standards.md](docs/coding_standards.md). Use `@/` impo
 | Lobby / multiplayer flow | `npm run test:e2e:multiplayer` |
 | Bracket / championships | `npm run test:unit` (includes bracket tests) |
 | Full CI parity | `npm run lint` + `npm run test:unit` + `npm run build` |
+| Dependencies / `next.config.ts` / `vercel.json` / server pages | `npm run verify:deploy` |
 
 E2E dev server: Playwright auto-starts `npm run dev` on port 3002. See [`.cursor/skills/testing/workflows.md`](.cursor/skills/testing/workflows.md).
 

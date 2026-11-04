@@ -10,13 +10,18 @@ description: >-
 
 ## Platform
 
-- **Host:** Vercel — build via `npm run build` ([`vercel.json`](../../vercel.json))
+- **Host:** Vercel — install `npm ci`, build `npm run build`, Node 22 ([`vercel.json`](../../vercel.json), `engines` in `package.json`)
+- **Full guide + failure playbook:** [docs/VERCEL_DEPLOYMENT.md](../../docs/VERCEL_DEPLOYMENT.md)
+- **Before pushing:** `npm run verify:deploy` (lockfile sync + single lockfile + build)
 - **Canonical prod URL:** `https://pokebattles.vercel.app`
 - **Retired:** `pokemon.ultharcr.com`, `pokemon-indol-tau.vercel.app` — do not use in metadata, sitemap, or env defaults
 
 Also see [PRODUCTION_OPS.md](./PRODUCTION_OPS.md) for health checks, rollback, and env checklist. Legacy GitHub Pages / Firebase Hosting static deploys are disabled.
 
 ## Build notes
+
+- npm only: keep `package-lock.json` in sync (`npm install <pkg>`), no `bun.lock`/`yarn.lock`/`pnpm-lock.yaml`
+- `next build` must not need the network: no unguarded PokeAPI/Smogon fetches in prerendered pages; `/pokemon/[id]` is on-demand ISR (`generateStaticParams` returns `[]`)
 
 - `trailingSlash: true` in `next.config.ts`
 - `typescript.ignoreBuildErrors: true` — build proceeds despite TS errors; fix locally anyway
@@ -84,6 +89,8 @@ Use Vercel CLI or GitHub integration for preview/production deploys. Never commi
 
 | Symptom | Check |
 |---------|-------|
+| Deployment fails at install (`npm ci … not in sync`) | `npm install`, commit `package-lock.json` |
+| Deployment fails prerendering a page | Build-time fetch; add fallback / on-demand ISR |
 | Battles stuck on "Loading" | `NEXT_PUBLIC_FIREBASE_DATABASE_URL`, RTDB rules |
 | PokeAPI slow / rate limited | Enable proxy + Upstash vars |
 | 429 on all APIs in prod | Upstash missing (prod rate limits fail closed) |

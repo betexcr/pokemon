@@ -1,9 +1,9 @@
 # Production operations
 
 Canonical production URL: **https://pokebattles.vercel.app**  
-Retired domain (do not use): `pokemon.ultharcr.com`
+Retired domains (do not use): `pokemon.ultharcr.com`, `pokemon-indol-tau.vercel.app`
 
-Platform of record: **Vercel** (Git integration). Legacy GitHub Pages / Firebase Hosting static-export workflows are disabled.
+Platform of record: **Vercel** (Git integration). Build/deploy rules and the failed-deployment playbook: [VERCEL_DEPLOYMENT.md](./VERCEL_DEPLOYMENT.md). Legacy GitHub Pages / Firebase Hosting static-export workflows are disabled.
 
 ## Required environment (Vercel Production)
 
@@ -59,6 +59,8 @@ If Upstash tokens were ever committed to the repo:
 3. Confirm `/api/ready` reports Redis `ok`
 
 ## CI
+
+Run `npm run verify:deploy` locally before pushing dependency or build changes.
 
 GitHub Actions [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) runs lint (`max-warnings=0`), `test:unit`, `test:security`, and `build` on PRs to `main`. Prefer requiring this check before merge.
 
