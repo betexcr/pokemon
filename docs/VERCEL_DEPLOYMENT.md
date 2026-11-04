@@ -78,6 +78,8 @@ Rules:
 | Install | `npm ci` | `vercel.json` → `installCommand` |
 | Build | `npm run build` (`next build`) | `vercel.json` → `buildCommand` |
 
+Keep `vercel.json` to these keys. Legacy options such as `"public": true` are rejected by Vercel's schema (*should NOT have additional property `public`*) and fail the deployment before it builds.
+
 Do not override these in the Vercel dashboard (Project → Settings → Build & Deployment): leave the overrides off so `vercel.json` / `package.json` win and the repo stays the single source of truth.
 
 ## Rules that keep deployments green
@@ -98,6 +100,7 @@ Do not override these in the Vercel dashboard (Project → Settings → Build & 
 |-------|---------|-----|
 | Commits pushed by an AI agent were authored as `Claude <noreply@anthropic.com>`, not the Vercel account owner | Deployment **Blocked** before build (Hobby plan: author lacks access) | Commit as `Alberto Munoz <betomunozcr@gmail.com>` (see section above) |
 | `package-lock.json` drifted from `package.json` after `@sentry/nextjs`, `@vercel/analytics`, `@vercel/speed-insights` and `next@15.5.9` were added (commit `54c603ae`) | `npm ci` fails: *"package.json and package-lock.json … are not in sync"*. GitHub CI died ~18s into every run | Regenerated lockfile; Vercel install pinned to `npm ci`; `verify:deploy` checks sync |
+| `vercel.json` contained the legacy `"public": true` option | *vercel.json schema validation failed: should NOT have additional property `public`* | Removed `public` |
 | Stale `bun.lock` (March 2026) next to `package-lock.json` | Vercel could pick Bun and resolve a different dependency tree than npm | Removed `bun.lock` / `bunfig.toml` |
 | `/pokemon/[id]` prerendered every Pokémon (~1,050 pages) from PokeAPI at build | Very long builds; any PokeAPI timeout/429 failed the build or baked a 404 into it | On-demand ISR (`generateStaticParams` → `[]`, `revalidate = 3600`) |
 | `/evolutions` threw when PokeAPI was unreachable during prerender | `Export encountered an error on /evolutions/page` | `try/catch` with empty-graph fallback; ISR retries |
@@ -116,6 +119,7 @@ Do not override these in the Vercel dashboard (Project → Settings → Build & 
 | Log line | Meaning / fix |
 |----------|---------------|
 | Deployment shows **Blocked** / *commit author did not have contributing access* (no build log) | Wrong commit author; see *Commit author must be the Vercel account owner* |
+| `The vercel.json schema validation failed … should NOT have additional property …` | Remove that key from `vercel.json` (it is not a valid/current Vercel option) |
 | `npm ci can only install packages when your package.json and package-lock.json … are in sync` | Run `npm install`, commit `package-lock.json` |
 | `Error occurred prerendering page "/x"` / `fetch failed` / `ENOTFOUND` | Page fetches at build time; add fallback or render on demand (rule 3) |
 | `Static page generation for /x is still timing out` | Too many / too slow prerenders; shrink `generateStaticParams` |
