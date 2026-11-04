@@ -47,7 +47,7 @@ test.describe('Battle E2E - Modal Login then Battle', () => {
 
       // Wait for modal or check if we need to type credentials
       // Try to find email input in modal
-      let emailInput1 = hostPage.locator('input[type="email"]').first();
+      const emailInput1 = hostPage.locator('input[type="email"]').first();
       const emailVisible1 = await emailInput1.isVisible({ timeout: 3000 }).catch(() => false);
 
       if (emailVisible1) {
@@ -95,7 +95,7 @@ test.describe('Battle E2E - Modal Login then Battle', () => {
         console.log('  ⓘ No auth button found - checking if already logged in');
       }
 
-      let emailInput2 = guestPage.locator('input[type="email"]').first();
+      const emailInput2 = guestPage.locator('input[type="email"]').first();
       const emailVisible2 = await emailInput2.isVisible({ timeout: 3000 }).catch(() => false);
 
       if (emailVisible2) {

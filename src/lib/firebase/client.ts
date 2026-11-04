@@ -2,7 +2,11 @@
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, type Auth } from "firebase/auth";
 
-const trimmed = (v?: string) => (typeof v === "string" ? v.trim() : v);
+// Blank values count as missing so the SDK can apply its own defaults (see ../firebase.ts).
+const trimmed = (v?: string): string | undefined => {
+  const t = typeof v === "string" ? v.trim() : v;
+  return t ? t : undefined;
+};
 
 const config = {
   apiKey: trimmed(process.env.NEXT_PUBLIC_FIREBASE_API_KEY),

@@ -1,10 +1,11 @@
 import { test, expect, Page } from '@playwright/test';
 import * as fs from 'fs';
+import type { TestUser } from './types';
 
 const BASE_URL = 'http://localhost:3002';
 
 // Load test users
-let testUsers = [];
+let testUsers: TestUser[] = [];
 if (fs.existsSync('test-users.json')) {
   const data = JSON.parse(fs.readFileSync('test-users.json', 'utf-8'));
   testUsers = Array.isArray(data) ? data : data.players || [];
@@ -17,7 +18,7 @@ if (!player1 || !player2) {
   throw new Error('Test users not found');
 }
 
-async function loginViaMainPage(page: Page, player: any) {
+async function loginViaMainPage(page: Page, player: TestUser) {
   console.log(`\n  🔐 ${player.displayName}: Logging in via main page...`);
 
   // Navigate to main page
@@ -85,7 +86,7 @@ async function loginViaMainPage(page: Page, player: any) {
   console.log(`    ✅ Logged in successfully!`);
 }
 
-async function createTeamWithPokemon(page: Page, player: any) {
+async function createTeamWithPokemon(page: Page, player: TestUser) {
   console.log(`\n  🎯 ${player.displayName}: Creating team...`);
   
   const pokemonToAdd = ['Charizard', 'Bulbasaur', 'Pikachu', 'Lugia', 'Gengar', 'Mewtwo'];
@@ -144,7 +145,7 @@ async function createTeamWithPokemon(page: Page, player: any) {
           await visibleButtons[randomIdx].click();
           await page.waitForTimeout(300);
         }
-      } catch (e) {
+      } catch {
         console.log(`        Warning: Could not add move ${moveIdx + 1} to slot ${slotIdx + 1}`);
       }
     }
@@ -309,7 +310,7 @@ test.describe('Simple Battle E2E', () => {
             battleEnded = true;
             console.log(`\n  🏁 BATTLE ENDED AT TURN ${turn}\n`);
           }
-        } catch (err) {
+        } catch {
           // Continue silently
         }
       }

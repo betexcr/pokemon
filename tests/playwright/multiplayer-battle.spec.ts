@@ -8,8 +8,21 @@ const HOST_PASSWORD = process.env.TEST_HOST_PASSWORD ?? 'TestHost123!';
 const GUEST_EMAIL = process.env.TEST_GUEST_EMAIL ?? 'test-guest@pokemon-battles.test';
 const GUEST_PASSWORD = process.env.TEST_GUEST_PASSWORD ?? 'TestGuest123!';
 
+type PokeApiStat = { stat: { name: string }; base_stat: number };
+type PokeApiAbility = { ability: { name: string }; is_hidden: boolean; slot: number };
+type TestMove = {
+  name: string;
+  type: string;
+  damage_class: string;
+  power: number | null;
+  accuracy: number | null;
+  pp: number;
+  level_learned_at: number | null;
+};
+type FirestoreDoc = { fields?: Record<string, { stringValue?: string } | undefined> };
+
 // Pre-hydrated Pokemon data so battle resolution skips PokeAPI calls
-const POKEMON_DATA: Record<number, { types: any[]; stats: any[]; weight: number; abilities: any[] }> = {
+const POKEMON_DATA: Record<number, { types: { name: string }[]; stats: PokeApiStat[]; weight: number; abilities: PokeApiAbility[] }> = {
   6: {
     types: [{ name: 'fire' }, { name: 'flying' }],
     stats: [
@@ -82,10 +95,10 @@ const POKEMON_DATA: Record<number, { types: any[]; stats: any[]; weight: number;
   },
 };
 
-function makeSlot(id: number, moves: any[]) {
+function makeSlot(id: number, moves: TestMove[]) {
   const data = POKEMON_DATA[id];
   const level = 50;
-  const baseHp = data.stats.find((s: any) => s.stat.name === 'hp')?.base_stat ?? 50;
+  const baseHp = data.stats.find((s) => s.stat.name === 'hp')?.base_stat ?? 50;
   const maxHp = Math.floor(((2 * baseHp + 31) * level) / 100) + level + 10;
   return {
     id,
@@ -321,7 +334,7 @@ async function saveTeamViaREST(
   const listUrl = `${baseUrl}/userTeams?pageSize=100`;
   const listRes = await fetch(listUrl, { headers: { Authorization: `Bearer ${idToken}` } });
   const listData = await listRes.json();
-  const existing = (listData.documents || []).find((doc: any) => {
+  const existing = ((listData.documents || []) as FirestoreDoc[]).find((doc) => {
     const fields = doc.fields || {};
     return fields.userId?.stringValue === userId && fields.name?.stringValue === teamName;
   });
@@ -332,13 +345,13 @@ async function saveTeamViaREST(
 
   // Convert slots to Firestore REST format, including pokemon data, types, and HP
   const firestoreSlots = slots.map(s => {
-    const pokemonData = (s as any).pokemon || {};
+    const pokemonData: { stats?: PokeApiStat[]; types?: { name: string }[] } = s.pokemon || {};
     const statsArr = pokemonData.stats || [];
-    const typesArr = (s as any).types || pokemonData.types || [];
+    const typesArr: Array<string | { name?: string }> = s.types || pokemonData.types || [];
 
     const firestoreTypes = {
       arrayValue: {
-        values: typesArr.map((t: any) => ({
+        values: typesArr.map((t) => ({
           mapValue: { fields: { name: { stringValue: typeof t === 'string' ? t : t?.name || 'normal' } } }
         }))
       }
@@ -346,7 +359,7 @@ async function saveTeamViaREST(
 
     const firestoreStats = {
       arrayValue: {
-        values: statsArr.map((st: any) => ({
+        values: statsArr.map((st: { base_stat?: number; stat?: { name?: string }; name?: string }) => ({
           mapValue: {
             fields: {
               base_stat: { integerValue: String(st.base_stat ?? 0) },
@@ -363,8 +376,8 @@ async function saveTeamViaREST(
           id: { integerValue: String(s.id) },
           level: { integerValue: String(s.level) },
           nature: { stringValue: s.nature },
-          maxHp: { integerValue: String((s as any).maxHp || 0) },
-          currentHp: { integerValue: String((s as any).currentHp || 0) },
+          maxHp: { integerValue: String(s.maxHp || 0) },
+          currentHp: { integerValue: String(s.currentHp || 0) },
           types: firestoreTypes,
           pokemon: {
             mapValue: {
@@ -423,89 +436,6 @@ async function saveTeamViaREST(
   }
 
   console.log(`  ✅ Team "${teamName}" saved via REST`);
-}
-
-const FIRESTORE_BASE = 'https://firestore.googleapis.com/v1/projects/pokemon-battles-86a0d/databases/(default)/documents';
-
-async function firestoreSaveTeam(idToken: string, userId: string, teamName: string, slots: typeof HOST_TEAM_SLOTS) {
-  // Check if a team with this name already exists
-  const queryRes = await fetch(
-    `${FIRESTORE_BASE}:runQuery`,
-    {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${idToken}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        structuredQuery: {
-          from: [{ collectionId: 'userTeams' }],
-          where: {
-            compositeFilter: {
-              op: 'AND',
-              filters: [
-                { fieldFilter: { field: { fieldPath: 'userId' }, op: 'EQUAL', value: { stringValue: userId } } },
-                { fieldFilter: { field: { fieldPath: 'name' }, op: 'EQUAL', value: { stringValue: teamName } } },
-              ],
-            },
-          },
-          limit: 1,
-        },
-      }),
-    },
-  );
-  const queryData = await queryRes.json();
-  if (Array.isArray(queryData) && queryData[0]?.document) {
-    console.log(`  Team "${teamName}" already exists, skipping`);
-    return;
-  }
-
-  const now = new Date().toISOString();
-  const slotsArray = slots.map(s => ({
-    mapValue: {
-      fields: {
-        id: { integerValue: String(s.id) },
-        level: { integerValue: String(s.level) },
-        nature: { stringValue: s.nature },
-        moves: {
-          arrayValue: {
-            values: s.moves.map(m => ({
-              mapValue: {
-                fields: {
-                  name: { stringValue: m.name },
-                  type: { stringValue: m.type },
-                  damage_class: { stringValue: m.damage_class },
-                  power: m.power !== null ? { integerValue: String(m.power) } : { nullValue: null },
-                  accuracy: m.accuracy !== null ? { integerValue: String(m.accuracy) } : { nullValue: null },
-                  pp: m.pp !== null ? { integerValue: String(m.pp) } : { nullValue: null },
-                  level_learned_at: { nullValue: null },
-                },
-              },
-            })),
-          },
-        },
-      },
-    },
-  }));
-
-  const res = await fetch(`${FIRESTORE_BASE}/userTeams`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${idToken}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      fields: {
-        name: { stringValue: teamName },
-        userId: { stringValue: userId },
-        isPublic: { booleanValue: false },
-        description: { stringValue: '' },
-        createdAt: { timestampValue: now },
-        updatedAt: { timestampValue: now },
-        slots: { arrayValue: { values: slotsArray } },
-      },
-    }),
-  });
-
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`Firestore save failed (${res.status}): ${errText}`);
-  }
-  console.log(`  ✅ Team "${teamName}" saved to Firestore`);
 }
 
 // ---------------------------------------------------------------------------
@@ -983,7 +913,7 @@ test.describe('Multiplayer Battle', () => {
     await waitForBattleUI(hostPage, 'Host');
     await waitForBattleUI(guestPage, 'Guest');
 
-    const pickMove = async (page: any, testId: string, label: string) => {
+    const pickMove = async (page: Page, testId: string, label: string) => {
       const btn = page.locator(`button[data-testid="${testId}"]`);
       await btn.waitFor({ state: 'visible', timeout: 15_000 });
       await btn.click({ force: true });
@@ -1077,14 +1007,14 @@ test.describe('Multiplayer Battle', () => {
     await waitForBattleUI(hostPage, 'Host');
     await waitForBattleUI(guestPage, 'Guest');
 
-    const pickMove = async (page: any, testId: string, label: string) => {
+    const pickMove = async (page: Page, testId: string, label: string) => {
       const btn = page.locator(`button[data-testid="${testId}"]`);
       await btn.waitFor({ state: 'visible', timeout: 15_000 });
       await btn.click({ force: true });
       console.log(`  ${label}`);
     };
 
-    const parseHp = async (page: any, side: string): Promise<{ cur: number; max: number }> => {
+    const parseHp = async (page: Page, side: string): Promise<{ cur: number; max: number }> => {
       const text = await page.getByTestId(`hp-bar-${side}`).textContent({ timeout: 5_000 }).catch(() => '0 / 0');
       const match = text?.match(/(\d+)\s*\/\s*(\d+)/);
       return { cur: parseInt(match?.[1] || '0'), max: parseInt(match?.[2] || '0') };
@@ -1216,14 +1146,14 @@ test.describe('Multiplayer Battle', () => {
     await waitForBattleUI(hostPage, 'Host');
     await waitForBattleUI(guestPage, 'Guest');
 
-    const pickMove = async (page: any, testId: string, label: string) => {
+    const pickMove = async (page: Page, testId: string, label: string) => {
       const btn = page.locator(`button[data-testid="${testId}"]`);
       await btn.waitFor({ state: 'visible', timeout: 15_000 });
       await btn.click({ force: true });
       console.log(`  ${label}`);
     };
 
-    const parseHp = async (page: any, side: string): Promise<{ cur: number; max: number }> => {
+    const parseHp = async (page: Page, side: string): Promise<{ cur: number; max: number }> => {
       const text = await page.getByTestId(`hp-bar-${side}`).textContent({ timeout: 5_000 }).catch(() => '0 / 0');
       const match = text?.match(/(\d+)\s*\/\s*(\d+)/);
       return { cur: parseInt(match?.[1] || '0'), max: parseInt(match?.[2] || '0') };

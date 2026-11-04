@@ -6,7 +6,14 @@ import { getFunctions, type Functions } from 'firebase/functions';
 
 // Trim environment variables to avoid issues with stray whitespace/newlines in
 // production builds that can break OAuth redirect/iframe URLs.
-const trimmed = (value?: string) => (typeof value === 'string' ? value.trim() : value);
+// Blank values (e.g. CI `vars.*` that are not set) count as missing. This matters for
+// databaseURL: the Firebase SDK only falls back to the project's default RTDB URL when it
+// is `undefined`; an empty string makes getDatabase() throw "Cannot parse Firebase url"
+// at module load, which fails `next build` while prerendering.
+const trimmed = (value?: string): string | undefined => {
+  const v = typeof value === 'string' ? value.trim() : value;
+  return v ? v : undefined;
+};
 
 const firebaseConfig = {
   // Your Firebase config
