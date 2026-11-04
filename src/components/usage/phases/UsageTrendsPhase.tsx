@@ -8,6 +8,7 @@ interface UsageTrendsPhaseProps {
   filters: UsageFilters;
   phaseState: UsagePhaseState;
   onPhaseChange: (phase: UsagePhase, selectedPokemonId?: number) => void;
+  onMonthResolved?: (requestedMonth: string, resolvedMonth: string) => void;
 }
 
 interface TrendDataPoint {
@@ -73,7 +74,8 @@ export default function UsageTrendsPhase({
   // Generate list of recent months for trend analysis
   const getRecentMonths = (count: number = 6): string[] => {
     const months: string[] = [];
-    for (let i = 0; i < count; i++) {
+    // Start at last month: Smogon only publishes a month's stats after it ends.
+    for (let i = 1; i <= count; i++) {
       const date = new Date();
       date.setDate(1);
       date.setMonth(date.getMonth() - i);
@@ -157,8 +159,14 @@ export default function UsageTrendsPhase({
             if (response.ok) {
               const result = await response.json();
               if (cancelled) return;
-              if (result.data && result.data.length > 0) {
-                historicalData.push({ month, data: result.data });
+              // The API may serve an earlier month when this one is unpublished; skip duplicates.
+              const servedMonth: string = result.metadata?.resolvedMonth ?? month;
+              if (
+                result.data &&
+                result.data.length > 0 &&
+                !historicalData.some((entry) => entry.month === servedMonth)
+              ) {
+                historicalData.push({ month: servedMonth, data: result.data });
               }
             }
           } catch (err) {

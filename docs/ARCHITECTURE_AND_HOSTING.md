@@ -7,7 +7,7 @@ Single place to confirm **where the app runs**, how pieces fit together, and **w
 | Item | Detail |
 |------|--------|
 | **Platform** | [Vercel](https://vercel.com) — build via `npm run build` (see [`vercel.json`](../vercel.json)). |
-| **Known production app** | [https://pokemon-indol-tau.vercel.app](https://pokemon-indol-tau.vercel.app) — e.g. [Battle / AI battle](https://pokemon-indol-tau.vercel.app/battle/). |
+| **Known production app** | [https://pokebattles.vercel.app](https://pokebattles.vercel.app) — e.g. [Battle / AI battle](https://pokebattles.vercel.app/battle/). |
 | **Source of truth for “what is live”** | The Vercel project’s **Deployments** tab: successful deployment + **Git commit** = what users get. Custom domains point at the same project. |
 
 **Retired domain:** `pokemon.ultharcr.com` is no longer valid. Treat it as historical only; do not use it in new links, metadata, or env defaults. Prefer the Vercel URL above (or set `NEXT_PUBLIC_SITE_URL` to that canonical origin).

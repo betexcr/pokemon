@@ -1,6 +1,6 @@
 # Environment variables (legacy Netlify notes)
 
-> **Canonical host is Vercel** (`https://pokemon-indol-tau.vercel.app`). Prefer the checklist in [PRODUCTION_OPS.md](./PRODUCTION_OPS.md) and `.env.example`. Netlify is not the production target.
+> **Canonical host is Vercel** (`https://pokebattles.vercel.app`). Prefer the checklist in [PRODUCTION_OPS.md](./PRODUCTION_OPS.md) and `.env.example`. Netlify is not the production target.
 
 Copy placeholders into your host’s env UI — **never commit real secrets**.
 
@@ -32,7 +32,7 @@ UPSTASH_REDIS_REST_TOKEN=YOUR_UPSTASH_REST_TOKEN
 ## Site
 
 ```
-NEXT_PUBLIC_SITE_URL=https://pokemon-indol-tau.vercel.app
+NEXT_PUBLIC_SITE_URL=https://pokebattles.vercel.app
 NEXT_PUBLIC_BASE_URL=
 NEXT_PUBLIC_POKEAPI_BASE_URL=/api/pokeapi
 ```

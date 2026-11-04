@@ -1,6 +1,6 @@
 import type { UsageRow, UsageSubstats } from '@/types/usage';
 import { smogonStatsMonthPath } from './smogonMonth';
-import { SMOGON_STATS_BASE } from './smogonDiscovery';
+import { SMOGON_STATS_BASE, smogonFetch } from './smogonDiscovery';
 
 const SECTION_TITLE =
   /^(Moves|Items|Abilities|Spreads|Tera Types|Teammates|Checks and Counters|Raw count|Avg\. weight|Viability Ceiling)/i;
@@ -114,7 +114,9 @@ export function parseSmogonMovesetBlockForPokemon(fullText: string, pokemonName:
 export async function fetchSmogonMovesetText(month: string, stem: string): Promise<string | null> {
   const pathMonth = smogonStatsMonthPath(month);
   const url = `${SMOGON_STATS_BASE}/${pathMonth}/moveset/${stem}-0.txt`;
-  const res = await fetch(url, { next: { revalidate: 3600 } });
+  // Moveset dumps are several MB; Next's data cache refuses entries over 2MB, so don't try.
+  // The parsed rows are cached in-process by the usage service instead.
+  const res = await smogonFetch(url, { cache: 'no-store', timeoutMs: 15_000 });
   if (!res.ok) return null;
   return res.text();
 }

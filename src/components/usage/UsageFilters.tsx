@@ -143,11 +143,12 @@ const getFormatOptions = (platform: Platform, generation: Generation): { value: 
   return formatMap[platform]?.[generation] || [];
 };
 
-// Generate month options (last 24 months)
+// Month options: last 24 published months (Smogon uploads a month's stats after it ends,
+// so the in-progress month is never selectable).
 const MONTH_OPTIONS = (() => {
   const months = [];
   const now = new Date();
-  for (let i = 0; i < 24; i++) {
+  for (let i = 1; i <= 24; i++) {
     const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const monthStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
     const label = date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });

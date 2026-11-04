@@ -1,4 +1,5 @@
 import { ImageResponse } from 'next/og';
+import { SITE_HOST } from '@/lib/site/siteUrl'
 
 export const size = {
   width: 1200,
@@ -7,7 +8,7 @@ export const size = {
 
 export const contentType = 'image/png';
 export const dynamic = 'force-static';
-export const alt = 'PokéDex - Modern Pokémon Database & Battle Platform';
+export const alt = 'PokéBattles – unofficial Pokémon fan site: Pokédex, team builder & battles';
 
 const SPRITES = {
   charizard:
@@ -268,7 +269,7 @@ export default function Image() {
             display: 'flex',
           }}
         >
-          pokemon-indol-tau.vercel.app
+          {SITE_HOST}
         </div>
       </div>
     ),

@@ -18,33 +18,37 @@ import PokemonPreloader from '@/components/PokemonPreloader'
 import AnalyticsProvider from '@/components/AnalyticsProvider'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
+import { SITE_URL, SITE_NAME, FAN_SITE_DISCLAIMER } from '@/lib/site/siteUrl'
 
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://pokemon-indol-tau.vercel.app'
+const SITE_TITLE = `${SITE_NAME} – Unofficial Pokédex & Battle Simulator`
+const SITE_DESCRIPTION =
+  'An unofficial, non-commercial fan-made Pokédex, team builder and battle simulator. Browse Pokémon data from PokeAPI and competitive usage stats from Smogon.'
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: 'PokéDex - Modern Pokémon Database',
-  description: 'Explore the world of Pokémon with our modern, high-performance PokéDex application. Search, discover, and learn about your favorite Pokémon with beautiful UI and real-time data from PokeAPI.',
-  keywords: 'Pokémon, PokéDex, PokeAPI, gaming, database, search, discover',
-  authors: [{ name: 'PokéDex Team' }],
+  title: SITE_TITLE,
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  keywords: 'Pokémon fan site, Pokédex, PokeAPI, team builder, battle simulator, Smogon usage stats',
+  authors: [{ name: `${SITE_NAME} contributors` }],
   icons: {
     icon: '/favicon.ico',
     shortcut: '/favicon.ico',
     apple: '/favicon.ico',
   },
   openGraph: {
-    title: 'PokéDex - Modern Pokémon Database',
-    description: 'Explore the world of Pokémon with our modern, high-performance PokéDex application. Search, discover, and learn about your favorite Pokémon with beautiful UI and real-time data from PokeAPI.',
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
     type: 'website',
     locale: 'en_US',
     url: SITE_URL,
-    siteName: 'PokéDex',
+    siteName: SITE_NAME,
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'PokéDex - Modern Pokémon Database',
-    description: 'Explore the world of Pokémon with our modern, high-performance PokéDex application. Search, discover, and learn about your favorite Pokémon with beautiful UI and real-time data from PokeAPI.',
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
   },
   robots: {
     index: true,
@@ -148,23 +152,7 @@ export default function RootLayout({
         {/* Additional SEO */}
         <meta name="theme-color" content="#3B4CCA" />
         <meta name="msapplication-TileColor" content="#3B4CCA" />
-        <meta name="application-name" content="PokéDex" />
-        <meta name="apple-mobile-web-app-title" content="PokéDex" />
-
-        {/* Structured Data: Organization */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              '@context': 'https://schema.org',
-              '@type': 'Organization',
-              name: 'PokéDex',
-              url: SITE_URL,
-              logo: `${SITE_URL}/pokedex.jpg`,
-              sameAs: []
-            })
-          }}
-        />
+        <meta name="apple-mobile-web-app-title" content={SITE_NAME} />
 
         {/* Structured Data: WebSite with potentialAction */}
         <script
@@ -173,7 +161,8 @@ export default function RootLayout({
             __html: JSON.stringify({
               '@context': 'https://schema.org',
               '@type': 'WebSite',
-              name: 'PokéDex',
+              name: SITE_NAME,
+              description: FAN_SITE_DISCLAIMER,
               url: SITE_URL,
               potentialAction: {
                 '@type': 'SearchAction',
@@ -197,6 +186,9 @@ export default function RootLayout({
                   <div className="relative z-10 min-h-screen">
                     <OfflineIndicator />
                     {children}
+                    <footer className="px-4 pb-6 pt-10 text-center text-xs text-gray-500 dark:text-gray-400">
+                      <p className="mx-auto max-w-3xl">{FAN_SITE_DISCLAIMER}</p>
+                    </footer>
                     <GlobalErrorCatcher />
                     <HelpAssistant />
                     <ErrorTip />
