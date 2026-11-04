@@ -5,7 +5,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { motion, useReducedMotion } from 'framer-motion'
 import { PopularityChart, seriesColor, type PopularityChartSeries } from '@/components/PopularityChart'
 import {
-  DEFAULT_POKEMON,
+  DEFAULT_SELECTION,
   REGION_DESCRIPTIONS,
   REGION_KEYS,
   fetchPokemonPopularity,
@@ -37,10 +37,13 @@ function spriteSources(id: number): string[] {
   return [getPmdPortraitImage(id), getPokemonImageUrl(id), getPokemonFallbackImage(id), '/placeholder-pokemon.png']
 }
 
-const STORAGE_KEY = 'trends:preferences:v1'
+// v2: selection model changed (all selected Pokémon shown as one list); drops stale v1 picks.
+const STORAGE_KEY = 'trends:preferences:v2'
+const CLOUD_DOC = 'preferences-v2'
 const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 const MIN_YEAR = 2016
-const MAX_COMPARE = 6
+/** Total Pokémon on the chart (focused + compared); matches the chart palette size. */
+const MAX_SELECTED = 7
 
 type LoadState =
   | { status: 'loading' }
@@ -51,11 +54,17 @@ function sanitizeState(state: Partial<TrendsState>): TrendsState {
   const compare = Array.isArray(state.compare)
     ? state.compare.filter((name) => typeof name === 'string' && name.trim().length > 0)
     : []
-  const uniqueCompare = Array.from(new Map(compare.map((name) => [toSpeciesSlug(name), name])).values()).slice(0, MAX_COMPARE)
+  const hasPokemon = typeof state.pokemon === 'string' && state.pokemon.trim().length > 0
+  const pokemon = hasPokemon ? state.pokemon!.trim() : DEFAULT_SELECTION[0]
+  // No focused Pokémon and no explicit compare list → first visit: use the default selection.
+  const baseCompare = !hasPokemon && !Array.isArray(state.compare) ? DEFAULT_SELECTION.slice(1) : compare
+  const uniqueCompare = Array.from(new Map(baseCompare.map((name) => [toSpeciesSlug(name), name])).values())
+    .filter((name) => toSpeciesSlug(name) !== toSpeciesSlug(pokemon))
+    .slice(0, MAX_SELECTED - 1)
   const currentYear = new Date().getUTCFullYear()
   const year = Number(state.year)
   return {
-    pokemon: typeof state.pokemon === 'string' && state.pokemon.trim() ? state.pokemon.trim() : DEFAULT_POKEMON,
+    pokemon,
     compare: uniqueCompare,
     region: normalizeRegion(state.region) ?? 'Global',
     year: Number.isInteger(year) && year >= MIN_YEAR && year <= currentYear ? year : currentYear,
@@ -174,7 +183,7 @@ export default function TrendsClient() {
           if (!cancelled) setCloudLoaded(true)
           return
         }
-        const ref = doc(db, 'users', user.uid, 'trends', 'preferences')
+        const ref = doc(db, 'users', user.uid, 'trends', CLOUD_DOC)
         const snapshot = await getDoc(ref)
         if (!snapshot.exists()) {
           if (!cancelled) setCloudLoaded(true)
@@ -226,7 +235,7 @@ export default function TrendsClient() {
         try {
           const db = getDb()
           if (!db) return
-          const ref = doc(db, 'users', user.uid, 'trends', 'preferences')
+          const ref = doc(db, 'users', user.uid, 'trends', CLOUD_DOC)
           await setDoc(ref, { ...payload, ts: serverTimestamp() }, { merge: true })
         } catch (error) {
           // Silently handle Firebase permissions errors - they don't break functionality
@@ -263,6 +272,9 @@ export default function TrendsClient() {
     () => state.compare.map(toSpeciesSlug).filter((slug) => slug && slug !== primarySlug),
     [state.compare, primarySlug]
   )
+  /** Everything on the chart, in series (colour) order: focused Pokémon first. */
+  const selectedSlugs = useMemo(() => [primarySlug, ...compareSlugs], [primarySlug, compareSlugs])
+  const selectionFull = selectedSlugs.length >= MAX_SELECTED
 
   const load = (slug: string, force = false) => {
     if (!slug) return
@@ -367,28 +379,41 @@ export default function TrendsClient() {
   // Selection helpers
   // ---------------------------------------------------------------------------
 
-  const addToCompare = (name: string) => {
+  const addToSelection = (name: string) => {
     setState((prev) => {
       const slug = toSpeciesSlug(name)
       if (slug === toSpeciesSlug(prev.pokemon)) return prev
       if (prev.compare.some((entry) => toSpeciesSlug(entry) === slug)) return prev
-      if (prev.compare.length >= MAX_COMPARE) return prev
+      if (prev.compare.length + 1 >= MAX_SELECTED) return prev
       return { ...prev, compare: [...prev.compare, name] }
     })
   }
 
-  const removeFromCompare = (name: string) => {
-    const slug = toSpeciesSlug(name)
-    setState((prev) => ({ ...prev, compare: prev.compare.filter((entry) => toSpeciesSlug(entry) !== slug) }))
+  const removeFromSelection = (slug: string) => {
+    setState((prev) => {
+      const remaining = [prev.pokemon, ...prev.compare].filter((name) => toSpeciesSlug(name) !== slug)
+      if (remaining.length === 0) return prev // keep at least one Pokémon on the chart
+      return { ...prev, pokemon: remaining[0], compare: remaining.slice(1) }
+    })
+  }
+
+  /** Make a selected Pokémon the focused one (header, insights, monthly chart). */
+  const focusSelection = (slug: string) => {
+    setState((prev) => {
+      const all = [prev.pokemon, ...prev.compare]
+      const target = all.find((name) => toSpeciesSlug(name) === slug)
+      if (!target || toSpeciesSlug(prev.pokemon) === slug) return prev
+      return { ...prev, pokemon: target, compare: all.filter((name) => name !== target) }
+    })
   }
 
   const searchResults = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()
-    if (!query) return species.slice(0, 50)
+    if (!query) return species
     const numeric = /^#?\d+$/.test(query) ? Number(query.replace('#', '')) : null
-    return species
-      .filter((entry) => (numeric != null ? entry.id === numeric : entry.name.toLowerCase().includes(query) || entry.slug.includes(query)))
-      .slice(0, 50)
+    return species.filter((entry) =>
+      numeric != null ? entry.id === numeric : entry.name.toLowerCase().includes(query) || entry.slug.includes(query)
+    )
   }, [species, searchQuery])
 
   const perspectiveCard = (delay: number) => ({
@@ -459,12 +484,14 @@ export default function TrendsClient() {
           {/* Search Section */}
           <div className="mt-4 rounded-2xl border border-slate-200/80 bg-white/70 p-4 shadow-sm backdrop-blur dark:border-slate-700/70 dark:bg-slate-900/60">
             <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-100">Select Pokémon</h4>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Pick a primary Pokémon and add up to {MAX_COMPARE} others to compare.</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Click a Pokémon to add it to the chart (up to {MAX_SELECTED}). The highlighted one drives the header and insights.
+            </p>
             <div className="mt-3 relative">
               <input
                 type="text"
                 value={searchQuery}
-                placeholder={speciesError ? 'Species list unavailable' : 'Search by name or Dex #...'}
+                placeholder={speciesError ? 'Species list unavailable' : species.length ? `Search ${species.length} Pokémon or Dex #` : 'Search Pokémon or Dex #'}
                 aria-label="Search Pokémon"
                 className="w-full rounded-md border border-slate-300 bg-white/80 px-3 py-2 text-sm shadow-inner focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-900/60 dark:text-slate-100 dark:focus:ring-slate-600"
                 onChange={(event) => setSearchQuery(event.target.value)}
@@ -473,57 +500,61 @@ export default function TrendsClient() {
                   if (blurTimerRef.current) clearTimeout(blurTimerRef.current)
                   blurTimerRef.current = setTimeout(() => setShowSearchDropdown(false), 150)
                 }}
+                onKeyDown={(event) => {
+                  if (event.key === 'Escape') setShowSearchDropdown(false)
+                  if (event.key === 'Enter' && searchResults.length > 0) addToSelection(searchResults[0].name)
+                }}
               />
               {showSearchDropdown && searchResults.length > 0 && (
-                <div className="absolute z-50 mt-1 w-full rounded-md border border-slate-200 bg-white shadow-lg dark:border-slate-600 dark:bg-slate-800">
-                  <div className="max-h-64 overflow-y-auto">
+                <div
+                  className="absolute z-50 mt-1 w-full rounded-md border border-slate-200 bg-white shadow-lg dark:border-slate-600 dark:bg-slate-800"
+                  // Keep the input focused so the list stays open while adding several Pokémon.
+                  onMouseDown={(event) => event.preventDefault()}
+                >
+                  {selectionFull ? (
+                    <p className="border-b border-slate-200 px-3 py-2 text-[11px] text-amber-700 dark:border-slate-700 dark:text-amber-300">
+                      Chart is full ({MAX_SELECTED}). Remove one below to add another.
+                    </p>
+                  ) : null}
+                  <div className="max-h-72 overflow-y-auto" role="listbox" aria-label="Pokémon">
                     {searchResults.map((entry) => {
-                      const isPrimary = primarySlug === entry.slug
-                      const isCompared = compareSlugs.includes(entry.slug)
-                      const addDisabled = isPrimary || isCompared || state.compare.length >= MAX_COMPARE
+                      const isSelected = selectedSlugs.includes(entry.slug)
+                      const disabled = isSelected || selectionFull
                       return (
-                        <div
+                        <button
                           key={entry.slug}
-                          className={`flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition ${isPrimary ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm dark:border-blue-400 dark:bg-slate-800 dark:text-blue-300' : 'border-transparent bg-slate-50/70 hover:border-slate-200 hover:bg-white dark:bg-slate-800/40 dark:hover:bg-slate-800/70'}`}
+                          type="button"
+                          role="option"
+                          aria-selected={isSelected}
+                          disabled={disabled}
+                          onClick={() => addToSelection(entry.name)}
+                          className={`flex w-full items-center gap-3 border-b border-slate-100 px-3 py-2 text-left text-sm transition last:border-b-0 dark:border-slate-700/60 ${
+                            isSelected
+                              ? 'bg-blue-50 text-blue-700 dark:bg-slate-700/60 dark:text-blue-300'
+                              : disabled
+                                ? 'cursor-not-allowed text-slate-400 dark:text-slate-500'
+                                : 'text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700/40'
+                          }`}
                         >
-                          <button
-                            type="button"
-                            className="flex flex-1 items-center gap-3 text-left"
-                            onClick={() => {
-                              setState((prev) => ({
-                                ...prev,
-                                pokemon: entry.name,
-                                compare: prev.compare.filter((name) => toSpeciesSlug(name) !== entry.slug),
-                              }))
-                              setSearchQuery('')
-                              setShowSearchDropdown(false)
-                            }}
-                          >
-                            <div className="flex-shrink-0">
-                              <LazyImage
-                                srcList={spriteSources(entry.id)}
-                                alt={entry.name}
-                                width={32}
-                                height={32}
-                                imgClassName="w-8 h-8 object-contain"
-                                rootMargin="50px"
-                                threshold={0.01}
-                              />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="font-medium truncate">{entry.name}</div>
-                              <div className="text-xs text-slate-500 dark:text-slate-400">#{String(entry.id).padStart(4, '0')}</div>
-                            </div>
-                          </button>
-                          <button
-                            type="button"
-                            className={`ml-2 rounded-full border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide transition ${addDisabled ? 'border-slate-200 text-slate-400 dark:border-slate-700 dark:text-slate-500' : 'border-slate-300 text-slate-600 hover:border-blue-400 hover:text-blue-700 dark:border-slate-600 dark:text-slate-300 dark:hover:border-blue-400 dark:hover:text-blue-300'}`}
-                            onClick={() => addToCompare(entry.name)}
-                            disabled={addDisabled}
-                          >
-                            {isPrimary || isCompared ? 'Added' : 'Add'}
-                          </button>
-                        </div>
+                          <div className="flex-shrink-0">
+                            <LazyImage
+                              srcList={spriteSources(entry.id)}
+                              alt=""
+                              width={32}
+                              height={32}
+                              imgClassName="w-8 h-8 object-contain"
+                              rootMargin="50px"
+                              threshold={0.01}
+                            />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate font-medium">{entry.name}</div>
+                            <div className="text-xs text-slate-500 dark:text-slate-400">#{String(entry.id).padStart(4, '0')}</div>
+                          </div>
+                          <span className="flex-shrink-0 text-[10px] font-semibold uppercase tracking-wide">
+                            {isSelected ? '✓ Added' : disabled ? '' : '+ Add'}
+                          </span>
+                        </button>
                       )
                     })}
                   </div>
@@ -532,42 +563,60 @@ export default function TrendsClient() {
             </div>
             <div className="mt-4">
               <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-                <span>Comparison list</span>
-                {state.compare.length > 0 && (
+                <span>
+                  Selected Pokémon ({selectedSlugs.length}/{MAX_SELECTED})
+                </span>
+                {selectedSlugs.length > 1 && (
                   <button
                     type="button"
                     className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
                     onClick={() => setState((prev) => ({ ...prev, compare: [] }))}
+                    title="Keep only the highlighted Pokémon"
                   >
-                    Clear
+                    Clear others
                   </button>
                 )}
               </div>
-              {compareSlugs.length === 0 ? (
-                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Add Pokémon to compare their trends.</p>
-              ) : (
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {compareSlugs.map((slug, index) => {
-                    const entry = loads[slug]
-                    const label = entry?.status === 'ready' ? entry.data.pokemon.name : speciesDisplayName(slug)
-                    return (
+              <ul className="mt-2 flex flex-wrap gap-2">
+                {selectedSlugs.map((slug, index) => {
+                  const entry = loads[slug]
+                  const label = entry?.status === 'ready' ? entry.data.pokemon.name : speciesBySlug.get(slug)?.name ?? speciesDisplayName(slug)
+                  const isFocused = index === 0
+                  return (
+                    <li
+                      key={slug}
+                      className={`flex items-center rounded-full border text-xs shadow-sm ${
+                        isFocused
+                          ? 'border-blue-500 bg-blue-50 text-blue-800 dark:border-blue-400 dark:bg-slate-800 dark:text-blue-200'
+                          : 'border-slate-200 bg-white/80 text-slate-700 dark:border-slate-600 dark:bg-slate-900/70 dark:text-slate-200'
+                      }`}
+                      title={entry?.status === 'error' ? entry.error : undefined}
+                    >
                       <button
-                        key={slug}
                         type="button"
-                        className="flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs text-slate-700 shadow-sm transition hover:border-blue-400 hover:text-blue-700 dark:border-slate-600 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:border-blue-400 dark:hover:text-blue-300"
-                        onClick={() => removeFromCompare(slug)}
-                        title={entry?.status === 'error' ? entry.error : undefined}
+                        className="flex items-center gap-2 py-1 pl-3 pr-1"
+                        onClick={() => focusSelection(slug)}
+                        aria-pressed={isFocused}
+                        aria-label={isFocused ? `${label} (highlighted)` : `Highlight ${label}`}
                       >
-                        <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: seriesColor(index + 1) }} />
-                        {label}
+                        <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: seriesColor(index) }} />
+                        <span className={isFocused ? 'font-semibold' : undefined}>{label}</span>
                         {entry?.status === 'loading' ? <span className="text-[10px] text-slate-400">loading…</span> : null}
                         {entry?.status === 'error' ? <span className="text-[10px] text-red-500">failed</span> : null}
-                        <span className="text-[10px] uppercase tracking-wide">Remove</span>
                       </button>
-                    )
-                  })}
-                </div>
-              )}
+                      <button
+                        type="button"
+                        className="rounded-full px-2 py-1 text-slate-400 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40 dark:hover:text-red-400"
+                        onClick={() => removeFromSelection(slug)}
+                        disabled={selectedSlugs.length <= 1}
+                        aria-label={`Remove ${label}`}
+                      >
+                        ×
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
             </div>
           </div>
         </aside>
