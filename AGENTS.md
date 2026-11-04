@@ -100,8 +100,9 @@ flowchart TB
 6. **Build ignores TS errors** (`typescript.ignoreBuildErrors: true`) — still fix types locally; CI should aim for `tsc --noEmit` (Wave 3 follow-up).
 7. **ErrorTip "Gengar" mascot** is generic unknown-error UI, not the failing Pokémon.
 8. **RTDB rules source of truth** is `src/lib/firebase-rtdb-rules.json` (see `firebase.json`). Deploy with `firebase deploy --only database,firestore:rules`. Battle create is Admin-only (`POST /api/battles/create`).
-9. **Vercel deploys run `npm ci` + `next build`** (see [docs/VERCEL_DEPLOYMENT.md](docs/VERCEL_DEPLOYMENT.md)): keep `package-lock.json` in sync (add deps only via `npm install`), never commit bun/yarn/pnpm lockfiles, and never make `next build` depend on network calls (PokeAPI/Smogon) — use fallbacks or on-demand ISR instead of large `generateStaticParams`. The build must pass offline with no env vars.
-10. **Open production gaps:** see [docs/MULTIPLAYER_STATUS.md](docs/MULTIPLAYER_STATUS.md) and [docs/battle_mechanics_coverage.md](docs/battle_mechanics_coverage.md).
+9. **Commit as `Alberto Munoz <betomunozcr@gmail.com>`.** The Vercel project is on a Hobby plan (account `albmunmu`, GitHub `betexcr`) and blocks deployments whose commit author is anyone else, including AI-agent identities like `noreply@anthropic.com`. Set `git config user.name/user.email` before committing; see [docs/VERCEL_DEPLOYMENT.md](docs/VERCEL_DEPLOYMENT.md).
+10. **Vercel deploys run `npm ci` + `next build`** (see [docs/VERCEL_DEPLOYMENT.md](docs/VERCEL_DEPLOYMENT.md)): keep `package-lock.json` in sync (add deps only via `npm install`), never commit bun/yarn/pnpm lockfiles, and never make `next build` depend on network calls (PokeAPI/Smogon) — use fallbacks or on-demand ISR instead of large `generateStaticParams`. The build must pass offline with no env vars.
+11. **Open production gaps:** see [docs/MULTIPLAYER_STATUS.md](docs/MULTIPLAYER_STATUS.md) and [docs/battle_mechanics_coverage.md](docs/battle_mechanics_coverage.md).
 
 ## Where to work
 

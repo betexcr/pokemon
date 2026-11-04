@@ -33,7 +33,24 @@ try {
   fail(`package-lock.json is out of sync with package.json; run \`npm install\` and commit the lockfile.\n${out}`);
 }
 
-// 3. Node major matches engines (Vercel uses engines.node).
+// 3. Commit author: the Vercel Hobby project only deploys commits authored by its owner.
+const DEPLOY_AUTHOR_EMAIL = 'betomunozcr@gmail.com';
+try {
+  const email = execSync('git config user.email', { stdio: 'pipe' }).toString().trim();
+  const headAuthor = execSync("git log -1 --format=%ae", { stdio: 'pipe' }).toString().trim();
+  if (email !== DEPLOY_AUTHOR_EMAIL) {
+    fail(`git user.email is "${email}"; Vercel only deploys commits authored by ${DEPLOY_AUTHOR_EMAIL}. Run: git config user.email "${DEPLOY_AUTHOR_EMAIL}"`);
+  } else {
+    ok(`git user.email is ${DEPLOY_AUTHOR_EMAIL}`);
+  }
+  if (headAuthor !== DEPLOY_AUTHOR_EMAIL) {
+    console.warn(`  ! HEAD commit is authored by ${headAuthor}; Vercel will block a push whose head commit is not by ${DEPLOY_AUTHOR_EMAIL}.`);
+  }
+} catch {
+  console.warn('  ! Could not read git identity (not a git checkout?)');
+}
+
+// 4. Node major matches engines (Vercel uses engines.node).
 const engines = JSON.parse(readFileSync('package.json', 'utf8')).engines?.node ?? '';
 const wantMajor = engines.match(/^(\d+)/)?.[1];
 const haveMajor = process.versions.node.split('.')[0];
@@ -48,7 +65,7 @@ if (failures.length) {
   process.exit(1);
 }
 
-// 4. Production build (same command Vercel runs).
+// 5. Production build (same command Vercel runs).
 if (!process.argv.includes('--no-build')) {
   console.log('\nRunning `npm run build` …');
   try {

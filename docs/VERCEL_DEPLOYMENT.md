@@ -9,6 +9,34 @@ npm run verify:deploy            # lockfile checks + the same `npm run build` Ve
 npm run verify:deploy -- --no-build   # lockfile checks only (~5s)
 ```
 
+## Commit author must be the Vercel account owner (most common failure)
+
+The Vercel project lives on the **Hobby** plan of Vercel account **`albmunmu`**, connected to GitHub user **`betexcr`**. Hobby projects do not allow collaborators, so Vercel **blocks any deployment whose Git commit author is not that account** (*"Deployment Blocked: the commit author did not have contributing access to the project"*). The build never even starts.
+
+Deployments that work are authored by:
+
+| Field | Value |
+|-------|-------|
+| Commit author | `Alberto Munoz <betomunozcr@gmail.com>` |
+| GitHub user | `betexcr` |
+| Vercel account | `albmunmu` |
+
+Before committing from any new machine, container, CI job, or AI agent (Cursor, Claude Code, Copilot, etc.):
+
+```bash
+git config user.name  "Alberto Munoz"
+git config user.email "betomunozcr@gmail.com"
+git log -1 --format='%an <%ae>'   # verify before pushing
+```
+
+Rules:
+
+- Vercel checks the commit a push points at (the branch head). If an agent pushed commits under another identity, add a commit authored by `betomunozcr@gmail.com` on top (or re-author the branch) and push again.
+- `Co-authored-by:` trailers are fine; only the **author** field matters.
+- When merging a PR into `main`, use **Create a merge commit** or **Squash and merge** from GitHub while logged in as `betexcr` (the resulting commit is authored by you). **Rebase and merge** keeps the original authors and gets blocked if any are not you.
+- `npm run verify:deploy` warns when the configured `git config user.email` differs from `betomunozcr@gmail.com`.
+- Alternatives if more people/agents need to deploy: upgrade the Vercel project to Pro and invite them, or deploy via the Vercel CLI with a token (`vercel --prod`), which is not subject to the Git author check.
+
 ## How Vercel builds this project
 
 | Setting | Value | Source of truth |
@@ -37,6 +65,7 @@ Do not override these in the Vercel dashboard (Project → Settings → Build & 
 
 | Cause | Symptom | Fix |
 |-------|---------|-----|
+| Commits pushed by an AI agent were authored as `Claude <noreply@anthropic.com>`, not the Vercel account owner | Deployment **Blocked** before build (Hobby plan: author lacks access) | Commit as `Alberto Munoz <betomunozcr@gmail.com>` (see section above) |
 | `package-lock.json` drifted from `package.json` after `@sentry/nextjs`, `@vercel/analytics`, `@vercel/speed-insights` and `next@15.5.9` were added (commit `54c603ae`) | `npm ci` fails: *"package.json and package-lock.json … are not in sync"*. GitHub CI died ~18s into every run | Regenerated lockfile; Vercel install pinned to `npm ci`; `verify:deploy` checks sync |
 | Stale `bun.lock` (March 2026) next to `package-lock.json` | Vercel could pick Bun and resolve a different dependency tree than npm | Removed `bun.lock` / `bunfig.toml` |
 | `/pokemon/[id]` prerendered every Pokémon (~1,050 pages) from PokeAPI at build | Very long builds; any PokeAPI timeout/429 failed the build or baked a 404 into it | On-demand ISR (`generateStaticParams` → `[]`, `revalidate = 3600`) |
@@ -55,6 +84,7 @@ Do not override these in the Vercel dashboard (Project → Settings → Build & 
 
 | Log line | Meaning / fix |
 |----------|---------------|
+| Deployment shows **Blocked** / *commit author did not have contributing access* (no build log) | Wrong commit author; see *Commit author must be the Vercel account owner* |
 | `npm ci can only install packages when your package.json and package-lock.json … are in sync` | Run `npm install`, commit `package-lock.json` |
 | `Error occurred prerendering page "/x"` / `fetch failed` / `ENOTFOUND` | Page fetches at build time; add fallback or render on demand (rule 3) |
 | `Static page generation for /x is still timing out` | Too many / too slow prerenders; shrink `generateStaticParams` |
