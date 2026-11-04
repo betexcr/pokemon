@@ -1,109 +1,99 @@
-import top50Raw from '@/data/top50.json'
-import enhancedTrendsRaw from '@/data/enhanced-trends.json'
-import type { PokemonPopularityRecord, PokemonTrendView, RegionKey, TrendYearSnapshot, RegionalRank } from './types'
+import type { PokemonPopularity, PopularityRegion } from './types'
+import { POPULARITY_REGIONS, toSpeciesSlug } from './wikipedia'
 
-export const REGION_KEYS: RegionKey[] = ['Global', 'Asia', 'US', 'EU']
-export const TREND_YEARS = [2020, 2021, 2022, 2023, 2024, 2025]
+export const REGION_KEYS: PopularityRegion[] = POPULARITY_REGIONS
 
-const base: PokemonPopularityRecord[] = top50Raw as PokemonPopularityRecord[]
-const enhancedBase: PokemonTrendView[] = enhancedTrendsRaw as PokemonTrendView[]
-
-// Real data only - no regional bias calculations needed
-
-function clamp(value: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, value))
+export const REGION_DESCRIPTIONS: Record<PopularityRegion, string> = {
+  Global: 'All tracked Wikipedia editions (en, ja, ko, zh, de, fr, es, it)',
+  English: 'English Wikipedia',
+  Asia: 'Japanese, Korean and Chinese Wikipedia',
+  Europe: 'German, French, Spanish and Italian Wikipedia',
 }
 
-function round1(value: number) {
-  return Math.round(value * 10) / 10
+export const DEFAULT_POKEMON = 'Pikachu'
+
+const LEGACY_REGIONS: Record<string, PopularityRegion> = { US: 'English', EU: 'Europe' }
+
+/** Accept current region keys plus the retired `US` / `EU` values from old URLs and saved prefs. */
+export function normalizeRegion(value: unknown): PopularityRegion | undefined {
+  if (typeof value !== 'string') return undefined
+  if ((REGION_KEYS as string[]).includes(value)) return value as PopularityRegion
+  return LEGACY_REGIONS[value]
 }
 
-// Real historical data only - show only the actual peak year data point
-function generateTrend(entry: PokemonPopularityRecord): TrendYearSnapshot[] {
-  // Only return the actual peak year data point
-  const peakYearData: TrendYearSnapshot = {
-    year: entry.peak_year,
-    values: REGION_KEYS.reduce<Record<RegionKey, number>>((acc, region) => {
-      acc[region] = round1(entry.peak_percent)
-      return acc
-    }, {} as Record<RegionKey, number>)
+const DISPLAY_NAME_OVERRIDES: Record<string, string> = {
+  'mr-mime': 'Mr. Mime',
+  'mime-jr': 'Mime Jr.',
+  'mr-rime': 'Mr. Rime',
+  farfetchd: "Farfetch'd",
+  sirfetchd: "Sirfetch'd",
+  'nidoran-f': 'Nidoran♀',
+  'nidoran-m': 'Nidoran♂',
+  'type-null': 'Type: Null',
+  flabebe: 'Flabébé',
+  'ho-oh': 'Ho-Oh',
+  'porygon-z': 'Porygon-Z',
+  'jangmo-o': 'Jangmo-o',
+  'hakamo-o': 'Hakamo-o',
+  'kommo-o': 'Kommo-o',
+  'wo-chien': 'Wo-Chien',
+  'chien-pao': 'Chien-Pao',
+  'ting-lu': 'Ting-Lu',
+  'chi-yu': 'Chi-Yu',
+}
+
+/** Human-readable English name for a PokeAPI species slug. Round-trips through `toSpeciesSlug`. */
+export function speciesDisplayName(slug: string): string {
+  const override = DISPLAY_NAME_OVERRIDES[slug]
+  if (override) return override
+  return slug
+    .split('-')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+}
+
+export { toSpeciesSlug }
+
+export function formatViews(value: number): string {
+  if (!Number.isFinite(value)) return '0'
+  if (value >= 1000) {
+    return new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 }).format(value)
   }
-  
-  // Return array with only the peak year data point
-  return [peakYearData]
+  if (value >= 100) return String(Math.round(value))
+  return String(Math.round(value * 10) / 10)
 }
 
-// Use enhanced data if available, fallback to generated trends
-export const TREND_DATA: PokemonTrendView[] = enhancedBase.length > 0 ? enhancedBase : base
-  .map((entry) => ({
-    ...entry,
-    trend: generateTrend(entry),
-  }))
-  .sort((a, b) => a.rank_global - b.rank_global)
-
-function getPokemonNames(): string[] {
-  return TREND_DATA.map((item) => item.name)
+export function percentChange(current: number, previous: number): number | null {
+  if (!Number.isFinite(current) || !Number.isFinite(previous) || previous <= 0) return null
+  return Math.round(((current - previous) / previous) * 1000) / 10
 }
 
-export function findPokemonByName(name: string): PokemonTrendView | undefined {
-  return TREND_DATA.find((p) => p.name.toLowerCase() === name.toLowerCase())
+export function peakYear(data: PokemonPopularity, region: PopularityRegion) {
+  return data.yearly.reduce<{ year: number; value: number } | null>((best, point) => {
+    const value = point.values[region]
+    return !best || value > best.value ? { year: point.year, value } : best
+  }, null)
 }
 
-function computeRegionalRanking(year: number, region: RegionKey, limit = 20, selectedPokemon?: string): RegionalRank[] {
-  const allRankings = TREND_DATA
-    .map((entry) => {
-      const snapshot = entry.trend.find((t) => t.year === year) ?? entry.trend[entry.trend.length - 1]
-      return {
-        name: entry.name,
-        percent: snapshot.values[region],
-        national_number: entry.national_number,
-        sources: entry.notable_sources,
-      }
-    })
-    .sort((a, b) => b.percent - a.percent)
-    .map((item, index) => ({ ...item, rank: index + 1 }))
-
-  // If no selected Pokemon, return top limit
-  if (!selectedPokemon) {
-    return allRankings.slice(0, limit)
+export async function fetchPokemonPopularity(pokemon: string, signal?: AbortSignal): Promise<PokemonPopularity> {
+  const res = await fetch(`/api/trends/popularity?pokemon=${encodeURIComponent(toSpeciesSlug(pokemon))}`, { signal })
+  if (!res.ok) {
+    const body = (await res.json().catch(() => null)) as { error?: string } | null
+    throw new Error(body?.error || `Request failed (${res.status})`)
   }
-
-  // Find the selected Pokemon's rank
-  const selectedIndex = allRankings.findIndex(p => p.name.toLowerCase() === selectedPokemon.toLowerCase())
-  
-  // If selected Pokemon not found, return top limit
-  if (selectedIndex === -1) {
-    return allRankings.slice(0, limit)
-  }
-
-  // Get Pokemon around the selected one (2 before, selected, 2 after = 5 total)
-  const startIndex = Math.max(0, selectedIndex - 2)
-  const endIndex = Math.min(allRankings.length, startIndex + 5)
-  
-  return allRankings.slice(startIndex, endIndex)
+  return (await res.json()) as PokemonPopularity
 }
 
-export function filterPokemon(options: {
-  generations: number[]
-  types: string[]
-}): PokemonTrendView[] {
-  const { generations, types } = options
-  return TREND_DATA.filter((entry) => {
-    if (generations.length > 0 && !generations.includes(entry.generation)) return false
-    if (types.length > 0 && !types.every((t) => entry.types.includes(t))) return false
-    return true
-  })
+export interface SpeciesOption {
+  id: number
+  slug: string
+  name: string
 }
 
-function getGenerations(): number[] {
-  return Array.from(new Set(TREND_DATA.map((e) => e.generation))).sort((a, b) => a - b)
+export async function fetchSpeciesOptions(signal?: AbortSignal): Promise<SpeciesOption[]> {
+  const res = await fetch('/api/trends/species', { signal })
+  if (!res.ok) throw new Error(`Species list failed (${res.status})`)
+  const body = (await res.json()) as { species: Array<{ id: number; slug: string }> }
+  return body.species.map((entry) => ({ ...entry, name: speciesDisplayName(entry.slug) }))
 }
-
-function getTypes(): string[] {
-  return Array.from(new Set(TREND_DATA.flatMap((e) => e.types))).sort((a, b) => a.localeCompare(b))
-}
-
-export function getDefaultPokemon(): PokemonTrendView {
-  return TREND_DATA[0]
-}
-

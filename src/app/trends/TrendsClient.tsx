@@ -3,37 +3,62 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { motion, useReducedMotion } from 'framer-motion'
-import { PopularityChart } from '@/components/PopularityChart'
-import { REGION_KEYS, TREND_DATA, TREND_YEARS, filterPokemon, findPokemonByName, getDefaultPokemon } from '@/lib/trends/data'
-import type { PersistableTrendsState, RegionKey, TrendsState } from '@/lib/trends/types'
+import { PopularityChart, seriesColor, type PopularityChartSeries } from '@/components/PopularityChart'
+import {
+  DEFAULT_POKEMON,
+  REGION_DESCRIPTIONS,
+  REGION_KEYS,
+  fetchPokemonPopularity,
+  fetchSpeciesOptions,
+  formatViews,
+  normalizeRegion,
+  peakYear,
+  percentChange,
+  speciesDisplayName,
+  toSpeciesSlug,
+  type SpeciesOption,
+} from '@/lib/trends/data'
+import type { PersistableTrendsState, PokemonPopularity, TrendsState } from '@/lib/trends/types'
 import AppHeader from '@/components/AppHeader'
 import { useAuth } from '@/contexts/AuthContext'
 import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore'
 import { getDb } from '@/lib/firebase/client'
 import { getPokemonImageUrl, getPokemonFallbackImage } from '@/lib/api'
 import { useSmartBackNavigation, useReferrerStorage } from '@/hooks/useSmartBackNavigation'
+import LazyImage from '@/components/LazyImage'
 
 // Function to get PMDCollab portrait image
 function getPmdPortraitImage(pokemonId: number): string {
   const id4 = String(pokemonId).padStart(4, '0')
   return `https://raw.githubusercontent.com/PMDCollab/SpriteCollab/master/portrait/${id4}/Normal.png`
 }
-import LazyImage from '@/components/LazyImage'
+
+function spriteSources(id: number): string[] {
+  return [getPmdPortraitImage(id), getPokemonImageUrl(id), getPokemonFallbackImage(id), '/placeholder-pokemon.png']
+}
 
 const STORAGE_KEY = 'trends:preferences:v1'
+const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const MIN_YEAR = 2016
+const MAX_COMPARE = 6
 
+type LoadState =
+  | { status: 'loading' }
+  | { status: 'ready'; data: PokemonPopularity }
+  | { status: 'error'; error: string }
 
 function sanitizeState(state: Partial<TrendsState>): TrendsState {
-  const fallback = getDefaultPokemon()
   const compare = Array.isArray(state.compare)
     ? state.compare.filter((name) => typeof name === 'string' && name.trim().length > 0)
     : []
-  const uniqueCompare = Array.from(new Map(compare.map((name) => [name.toLowerCase(), name])).values())
+  const uniqueCompare = Array.from(new Map(compare.map((name) => [toSpeciesSlug(name), name])).values()).slice(0, MAX_COMPARE)
+  const currentYear = new Date().getUTCFullYear()
+  const year = Number(state.year)
   return {
-    pokemon: state.pokemon || fallback.name,
+    pokemon: typeof state.pokemon === 'string' && state.pokemon.trim() ? state.pokemon.trim() : DEFAULT_POKEMON,
     compare: uniqueCompare,
-    region: (state.region && REGION_KEYS.includes(state.region)) ? state.region : 'Global',
-    year: TREND_YEARS.includes(state.year || 0) ? state.year! : TREND_YEARS[TREND_YEARS.length - 1],
+    region: normalizeRegion(state.region) ?? 'Global',
+    year: Number.isInteger(year) && year >= MIN_YEAR && year <= currentYear ? year : currentYear,
     generations: Array.isArray(state.generations) ? state.generations : [],
     types: Array.isArray(state.types) ? state.types : [],
   }
@@ -42,14 +67,14 @@ function sanitizeState(state: Partial<TrendsState>): TrendsState {
 function readQueryParams(params: URLSearchParams): Partial<TrendsState> {
   const pokemon = params.get('poke') ?? undefined
   const compare = params.get('compare')
-  const region = params.get('region') as RegionKey | null
+  const region = normalizeRegion(params.get('region'))
   const yearValue = params.get('year')
   const generations = params.get('gen')
   const types = params.get('types')
   return {
     pokemon,
     compare: compare ? compare.split(',').filter(Boolean) : undefined,
-    region: (region && REGION_KEYS.includes(region)) ? region : undefined,
+    region,
     year: yearValue ? Number(yearValue) : undefined,
     generations: generations ? generations.split(',').map((value) => Number(value)).filter((value) => !Number.isNaN(value)) : undefined,
     types: types ? types.split(',').filter(Boolean) : undefined,
@@ -65,6 +90,11 @@ function serializeStateToParams(state: TrendsState) {
   if (state.types.length) params.set('types', state.types.join(','))
   if (state.compare.length) params.set('compare', state.compare.join(','))
   return params
+}
+
+function formatChange(change: number | null): string {
+  if (change == null) return 'n/a'
+  return `${change > 0 ? '+' : ''}${change}%`
 }
 
 export default function TrendsClient() {
@@ -140,6 +170,10 @@ export default function TrendsClient() {
     ;(async () => {
       try {
         const db = getDb()
+        if (!db) {
+          if (!cancelled) setCloudLoaded(true)
+          return
+        }
         const ref = doc(db, 'users', user.uid, 'trends', 'preferences')
         const snapshot = await getDoc(ref)
         if (!snapshot.exists()) {
@@ -191,6 +225,7 @@ export default function TrendsClient() {
       const push = async () => {
         try {
           const db = getDb()
+          if (!db) return
           const ref = doc(db, 'users', user.uid, 'trends', 'preferences')
           await setDoc(ref, { ...payload, ts: serverTimestamp() }, { merge: true })
         } catch (error) {
@@ -204,100 +239,167 @@ export default function TrendsClient() {
   }, [state, hydrated, router, pathname, user, cloudLoaded])
 
 
-  const filtered = useMemo(() => filterPokemon({
-    generations: [],
-    types: [],
-  }), [])
+  // ---------------------------------------------------------------------------
+  // Real data loading (Wikipedia pageviews via /api/trends/popularity)
+  // ---------------------------------------------------------------------------
 
-  const currentPokemon = useMemo(() => {
-    const explicit = findPokemonByName(state.pokemon)
-    if (explicit) return explicit
-    return getDefaultPokemon()
-  }, [state.pokemon])
+  const [species, setSpecies] = useState<SpeciesOption[]>([])
+  const [speciesError, setSpeciesError] = useState(false)
+  const [loads, setLoads] = useState<Record<string, LoadState>>({})
+  const requestedRef = useRef<Set<string>>(new Set())
 
-  const comparisonPokemon = useMemo(() => {
-    const resolved = state.compare
-      .map((name) => findPokemonByName(name))
-      .filter(Boolean) as (typeof TREND_DATA)[number][]
-    const unique = new Map<string, (typeof TREND_DATA)[number]>()
-    resolved.forEach((entry) => {
-      if (!unique.has(entry.name.toLowerCase())) unique.set(entry.name.toLowerCase(), entry)
-    })
-    return Array.from(unique.values()).filter((entry) => entry.name.toLowerCase() !== currentPokemon.name.toLowerCase())
-  }, [state.compare, currentPokemon])
+  useEffect(() => {
+    const controller = new AbortController()
+    fetchSpeciesOptions(controller.signal)
+      .then(setSpecies)
+      .catch((error: unknown) => {
+        if ((error as { name?: string })?.name !== 'AbortError') setSpeciesError(true)
+      })
+    return () => controller.abort()
+  }, [])
 
-  const chartPokemon = useMemo(() => [currentPokemon, ...comparisonPokemon], [currentPokemon, comparisonPokemon])
+  const primarySlug = toSpeciesSlug(state.pokemon)
+  const compareSlugs = useMemo(
+    () => state.compare.map(toSpeciesSlug).filter((slug) => slug && slug !== primarySlug),
+    [state.compare, primarySlug]
+  )
+
+  const load = (slug: string, force = false) => {
+    if (!slug) return
+    if (!force && requestedRef.current.has(slug)) return
+    requestedRef.current.add(slug)
+    setLoads((prev) => ({ ...prev, [slug]: { status: 'loading' } }))
+    fetchPokemonPopularity(slug)
+      .then((data) => setLoads((prev) => ({ ...prev, [slug]: { status: 'ready', data } })))
+      .catch((error: unknown) => {
+        setLoads((prev) => ({
+          ...prev,
+          [slug]: { status: 'error', error: error instanceof Error ? error.message : 'Failed to load data' },
+        }))
+      })
+  }
+
+  useEffect(() => {
+    if (!hydrated) return
+    ;[primarySlug, ...compareSlugs].forEach((slug) => load(slug))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated, primarySlug, compareSlugs])
+
+  const speciesBySlug = useMemo(() => new Map(species.map((entry) => [entry.slug, entry])), [species])
+
+  const primaryLoad: LoadState = loads[primarySlug] ?? { status: 'loading' }
+  const primaryData = primaryLoad.status === 'ready' ? primaryLoad.data : null
+  const primaryId = primaryData?.pokemon.id ?? speciesBySlug.get(primarySlug)?.id
+  const primaryName = primaryData?.pokemon.name ?? speciesDisplayName(primarySlug)
+
+  const comparisonData = useMemo(
+    () =>
+      compareSlugs
+        .map((slug) => {
+          const entry = loads[slug]
+          return entry?.status === 'ready' ? entry.data : null
+        })
+        .filter((entry): entry is PokemonPopularity => entry !== null),
+    [compareSlugs, loads]
+  )
+
+  const chartData = useMemo(() => (primaryData ? [primaryData, ...comparisonData] : []), [primaryData, comparisonData])
+
+  const years = useMemo(() => primaryData?.yearly.map((point) => point.year) ?? [], [primaryData])
+  const selectedYear = years.includes(state.year) ? state.year : years[years.length - 1] ?? state.year
+
+  const yearlySeries: PopularityChartSeries[] = useMemo(
+    () =>
+      chartData.map((data) => {
+        const byYear = new Map(data.yearly.map((point) => [point.year, point.values[state.region]]))
+        return {
+          key: data.pokemon.slug,
+          label: data.pokemon.name,
+          spriteId: data.pokemon.id,
+          values: years.map((year) => byYear.get(year) ?? null),
+        }
+      }),
+    [chartData, years, state.region]
+  )
+
+  const monthKeys = useMemo(() => {
+    if (!primaryData) return []
+    return primaryData.monthly.filter((point) => point.month.startsWith(`${selectedYear}-`)).map((point) => point.month)
+  }, [primaryData, selectedYear])
+
+  const monthlySeries: PopularityChartSeries[] = useMemo(
+    () =>
+      chartData.map((data) => {
+        const byMonth = new Map(data.monthly.map((point) => [point.month, point.values[state.region]]))
+        return {
+          key: data.pokemon.slug,
+          label: data.pokemon.name,
+          spriteId: data.pokemon.id,
+          values: monthKeys.map((month) => byMonth.get(month) ?? null),
+        }
+      }),
+    [chartData, monthKeys, state.region]
+  )
+
+  const yearPoint = primaryData?.yearly.find((point) => point.year === selectedYear)
+  const previousYearPoint = primaryData?.yearly.find((point) => point.year === selectedYear - 1)
+  const yoyChange = yearPoint && previousYearPoint ? percentChange(yearPoint.values[state.region], previousYearPoint.values[state.region]) : null
+  const peak = primaryData ? peakYear(primaryData, state.region) : null
+  const busiestMonth = useMemo(() => {
+    if (!primaryData) return null
+    return primaryData.monthly
+      .filter((point) => point.month.startsWith(`${selectedYear}-`))
+      .reduce<{ month: string; value: number } | null>((best, point) => {
+        const value = point.values[state.region]
+        return !best || value > best.value ? { month: point.month, value } : best
+      }, null)
+  }, [primaryData, selectedYear, state.region])
+
+  const regionShare = useMemo(() => {
+    if (!yearPoint || yearPoint.values.Global <= 0) return null
+    return (['English', 'Asia', 'Europe'] as const).map((region) => ({
+      region,
+      share: Math.round((yearPoint.values[region] / yearPoint.values.Global) * 1000) / 10,
+    }))
+  }, [yearPoint])
+
+  // ---------------------------------------------------------------------------
+  // Selection helpers
+  // ---------------------------------------------------------------------------
 
   const addToCompare = (name: string) => {
     setState((prev) => {
-      if (name.toLowerCase() === prev.pokemon.toLowerCase()) return prev
-      const exists = prev.compare.some((entry) => entry.toLowerCase() === name.toLowerCase())
-      if (exists) return prev
+      const slug = toSpeciesSlug(name)
+      if (slug === toSpeciesSlug(prev.pokemon)) return prev
+      if (prev.compare.some((entry) => toSpeciesSlug(entry) === slug)) return prev
+      if (prev.compare.length >= MAX_COMPARE) return prev
       return { ...prev, compare: [...prev.compare, name] }
     })
   }
 
   const removeFromCompare = (name: string) => {
-    setState((prev) => ({
-      ...prev,
-      compare: prev.compare.filter((entry) => entry.toLowerCase() !== name.toLowerCase()),
-    }))
+    const slug = toSpeciesSlug(name)
+    setState((prev) => ({ ...prev, compare: prev.compare.filter((entry) => toSpeciesSlug(entry) !== slug) }))
   }
 
-
-  const activePokemonList = useMemo(() => {
-    const list = filtered.length ? filtered : TREND_DATA
-    const ensured = findPokemonByName(currentPokemon.name)
-    if (ensured && !list.find((item) => item.name === ensured.name)) {
-      return [ensured, ...list]
-    }
-    // Remove duplicates by using a Map with name as key
-    const uniquePokemon = new Map()
-    list.forEach(pokemon => {
-      if (!uniquePokemon.has(pokemon.name)) {
-        uniquePokemon.set(pokemon.name, pokemon)
-      }
-    })
-    return Array.from(uniquePokemon.values())
-  }, [filtered, currentPokemon])
-
-  const searchFilteredList = useMemo(() => {
-    if (!searchQuery.trim()) return activePokemonList
-    const query = searchQuery.toLowerCase()
-    const filtered = activePokemonList.filter((pokemon) => 
-      pokemon.name.toLowerCase().includes(query)
-    )
-    // Remove duplicates by using a Map with name as key
-    const uniquePokemon = new Map()
-    filtered.forEach(pokemon => {
-      if (!uniquePokemon.has(pokemon.name)) {
-        uniquePokemon.set(pokemon.name, pokemon)
-      }
-    })
-    return Array.from(uniquePokemon.values())
-  }, [activePokemonList, searchQuery])
-
-  const peakSnapshot = useMemo(() => {
-    const trend = currentPokemon.trend
-    const peakPoint = trend.reduce<{ year: number; value: number; region: RegionKey }>((acc, snapshot) => {
-      const bestRegion = REGION_KEYS.reduce((best, region) => {
-        const value = snapshot.values[region]
-        return value > best.value ? { region, value } : best
-      }, { region: state.region, value: snapshot.values[state.region] })
-      if (bestRegion.value > acc.value) {
-        return { year: snapshot.year, value: bestRegion.value, region: bestRegion.region }
-      }
-      return acc
-    }, { year: trend[trend.length - 1].year, value: trend[trend.length - 1].values[state.region], region: state.region })
-    return peakPoint
-  }, [currentPokemon, state.region])
-
+  const searchResults = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase()
+    if (!query) return species.slice(0, 50)
+    const numeric = /^#?\d+$/.test(query) ? Number(query.replace('#', '')) : null
+    return species
+      .filter((entry) => (numeric != null ? entry.id === numeric : entry.name.toLowerCase().includes(query) || entry.slug.includes(query)))
+      .slice(0, 50)
+  }, [species, searchQuery])
 
   const perspectiveCard = (delay: number) => ({
     initial: reduceMotion ? undefined : { opacity: 0 },
     animate: reduceMotion ? undefined : { opacity: 1 },
     transition: { duration: 0.6, delay },
   })
+
+  const regionLabel = state.region === 'Global' ? 'all tracked Wikipedias' : REGION_DESCRIPTIONS[state.region]
+  const coverageEnd = primaryData?.coverage?.end
+  const yearIsPartial = Boolean(yearPoint?.partial)
 
   return (
     <>
@@ -314,12 +416,14 @@ export default function TrendsClient() {
           <div className="rounded-2xl border border-slate-200/80 bg-white/70 shadow-sm backdrop-blur dark:border-slate-700/70 dark:bg-slate-900/60">
             <div className="p-4">
               <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-100">Regions</h4>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Select a region to view trends</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Grouped by Wikipedia language edition</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {REGION_KEYS.map((region) => (
                   <button
                     key={region}
                     type="button"
+                    title={REGION_DESCRIPTIONS[region]}
+                    aria-pressed={state.region === region}
                     className={`rounded-full px-3 py-1 text-xs font-medium transition ${state.region === region ? 'bg-blue-600 text-white shadow dark:bg-blue-500' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'}`}
                     onClick={() => setState((prev) => ({ ...prev, region }))}
                   >
@@ -327,18 +431,40 @@ export default function TrendsClient() {
                   </button>
                 ))}
               </div>
+              <p className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">{REGION_DESCRIPTIONS[state.region]}</p>
             </div>
           </div>
+
+          {/* Year Section */}
+          {years.length > 0 && (
+            <div className="mt-4 rounded-2xl border border-slate-200/80 bg-white/70 p-4 shadow-sm backdrop-blur dark:border-slate-700/70 dark:bg-slate-900/60">
+              <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-100">Year</h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Pick a year for the monthly breakdown</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {years.map((year) => (
+                  <button
+                    key={year}
+                    type="button"
+                    aria-pressed={selectedYear === year}
+                    className={`rounded-full px-3 py-1 text-xs font-medium tabular-nums transition ${selectedYear === year ? 'bg-blue-600 text-white shadow dark:bg-blue-500' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'}`}
+                    onClick={() => setState((prev) => ({ ...prev, year }))}
+                  >
+                    {year}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Search Section */}
           <div className="mt-4 rounded-2xl border border-slate-200/80 bg-white/70 p-4 shadow-sm backdrop-blur dark:border-slate-700/70 dark:bg-slate-900/60">
             <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-100">Select Pokémon</h4>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Pick a primary Pokémon and add others to compare.</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Pick a primary Pokémon and add up to {MAX_COMPARE} others to compare.</p>
             <div className="mt-3 relative">
               <input
                 type="text"
                 value={searchQuery}
-                placeholder="Search Pokémon..."
+                placeholder={speciesError ? 'Species list unavailable' : 'Search by name or Dex #...'}
                 aria-label="Search Pokémon"
                 className="w-full rounded-md border border-slate-300 bg-white/80 px-3 py-2 text-sm shadow-inner focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 dark:border-slate-600 dark:bg-slate-900/60 dark:text-slate-100 dark:focus:ring-slate-600"
                 onChange={(event) => setSearchQuery(event.target.value)}
@@ -348,63 +474,58 @@ export default function TrendsClient() {
                   blurTimerRef.current = setTimeout(() => setShowSearchDropdown(false), 150)
                 }}
               />
-              {showSearchDropdown && searchFilteredList.length > 0 && (
+              {showSearchDropdown && searchResults.length > 0 && (
                 <div className="absolute z-50 mt-1 w-full rounded-md border border-slate-200 bg-white shadow-lg dark:border-slate-600 dark:bg-slate-800">
                   <div className="max-h-64 overflow-y-auto">
-                    {searchFilteredList.slice(0, 50).map((entry, index) => (
-                      (() => {
-                        const isPrimary = state.pokemon.toLowerCase() === entry.name.toLowerCase()
-                        const isCompared = state.compare.some((name) => name.toLowerCase() === entry.name.toLowerCase())
-                        const addDisabled = isPrimary || isCompared
-                        return (
-                      <div
-                        key={`${entry.name}-${entry.rank_global}-${index}`}
-                        className={`flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition ${state.pokemon === entry.name ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm dark:border-blue-400 dark:bg-slate-800 dark:text-blue-300' : 'border-transparent bg-slate-50/70 hover:border-slate-200 hover:bg-white dark:bg-slate-800/40 dark:hover:bg-slate-800/70'}`}
-                      >
-                        <button
-                          type="button"
-                          className="flex flex-1 items-center gap-3 text-left"
-                          onClick={() => {
-                            setState((prev) => ({ ...prev, pokemon: entry.name }))
-                            setShowSearchDropdown(false)
-                          }}
+                    {searchResults.map((entry) => {
+                      const isPrimary = primarySlug === entry.slug
+                      const isCompared = compareSlugs.includes(entry.slug)
+                      const addDisabled = isPrimary || isCompared || state.compare.length >= MAX_COMPARE
+                      return (
+                        <div
+                          key={entry.slug}
+                          className={`flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition ${isPrimary ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm dark:border-blue-400 dark:bg-slate-800 dark:text-blue-300' : 'border-transparent bg-slate-50/70 hover:border-slate-200 hover:bg-white dark:bg-slate-800/40 dark:hover:bg-slate-800/70'}`}
                         >
-                          <div className="flex-shrink-0">
-                            <LazyImage
-                              srcList={[
-                                getPmdPortraitImage(entry.national_number),
-                                getPokemonImageUrl(entry.national_number),
-                                getPokemonFallbackImage(entry.national_number),
-                                "/placeholder-pokemon.png"
-                              ]}
-                              alt={entry.name}
-                              width={32}
-                              height={32}
-                              imgClassName="w-8 h-8 object-contain"
-                              rootMargin="50px"
-                              threshold={0.01}
-                            />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium truncate">#{entry.rank_global} {entry.name}</div>
-                            <div className="text-xs text-slate-500 dark:text-slate-400">Rank #{entry.rank_global}</div>
-                          </div>
-                          <div className="flex-shrink-0 text-xs text-slate-500 dark:text-slate-400">
-                            {entry.peak_percent}%
-                          </div>
-                        </button>
-                        <button
-                          type="button"
-                          className={`ml-2 rounded-full border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide transition ${addDisabled ? 'border-slate-200 text-slate-400 dark:border-slate-700 dark:text-slate-500' : 'border-slate-300 text-slate-600 hover:border-blue-400 hover:text-blue-700 dark:border-slate-600 dark:text-slate-300 dark:hover:border-blue-400 dark:hover:text-blue-300'}`}
-                          onClick={() => addToCompare(entry.name)}
-                          disabled={addDisabled}
-                        >
-                          {addDisabled ? 'Added' : 'Add'}
-                        </button>
-                      </div>
-                        )
-                      })()
-                    ))}
+                          <button
+                            type="button"
+                            className="flex flex-1 items-center gap-3 text-left"
+                            onClick={() => {
+                              setState((prev) => ({
+                                ...prev,
+                                pokemon: entry.name,
+                                compare: prev.compare.filter((name) => toSpeciesSlug(name) !== entry.slug),
+                              }))
+                              setSearchQuery('')
+                              setShowSearchDropdown(false)
+                            }}
+                          >
+                            <div className="flex-shrink-0">
+                              <LazyImage
+                                srcList={spriteSources(entry.id)}
+                                alt={entry.name}
+                                width={32}
+                                height={32}
+                                imgClassName="w-8 h-8 object-contain"
+                                rootMargin="50px"
+                                threshold={0.01}
+                              />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium truncate">{entry.name}</div>
+                              <div className="text-xs text-slate-500 dark:text-slate-400">#{String(entry.id).padStart(4, '0')}</div>
+                            </div>
+                          </button>
+                          <button
+                            type="button"
+                            className={`ml-2 rounded-full border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide transition ${addDisabled ? 'border-slate-200 text-slate-400 dark:border-slate-700 dark:text-slate-500' : 'border-slate-300 text-slate-600 hover:border-blue-400 hover:text-blue-700 dark:border-slate-600 dark:text-slate-300 dark:hover:border-blue-400 dark:hover:text-blue-300'}`}
+                            onClick={() => addToCompare(entry.name)}
+                            disabled={addDisabled}
+                          >
+                            {isPrimary || isCompared ? 'Added' : 'Add'}
+                          </button>
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
               )}
@@ -422,21 +543,29 @@ export default function TrendsClient() {
                   </button>
                 )}
               </div>
-              {comparisonPokemon.length === 0 ? (
+              {compareSlugs.length === 0 ? (
                 <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Add Pokémon to compare their trends.</p>
               ) : (
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {comparisonPokemon.map((entry) => (
-                    <button
-                      key={entry.name}
-                      type="button"
-                      className="flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs text-slate-700 shadow-sm transition hover:border-blue-400 hover:text-blue-700 dark:border-slate-600 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:border-blue-400 dark:hover:text-blue-300"
-                      onClick={() => removeFromCompare(entry.name)}
-                    >
-                      {entry.name}
-                      <span className="text-[10px] uppercase tracking-wide">Remove</span>
-                    </button>
-                  ))}
+                  {compareSlugs.map((slug, index) => {
+                    const entry = loads[slug]
+                    const label = entry?.status === 'ready' ? entry.data.pokemon.name : speciesDisplayName(slug)
+                    return (
+                      <button
+                        key={slug}
+                        type="button"
+                        className="flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs text-slate-700 shadow-sm transition hover:border-blue-400 hover:text-blue-700 dark:border-slate-600 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:border-blue-400 dark:hover:text-blue-300"
+                        onClick={() => removeFromCompare(slug)}
+                        title={entry?.status === 'error' ? entry.error : undefined}
+                      >
+                        <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: seriesColor(index + 1) }} />
+                        {label}
+                        {entry?.status === 'loading' ? <span className="text-[10px] text-slate-400">loading…</span> : null}
+                        {entry?.status === 'error' ? <span className="text-[10px] text-red-500">failed</span> : null}
+                        <span className="text-[10px] uppercase tracking-wide">Remove</span>
+                      </button>
+                    )
+                  })}
                 </div>
               )}
             </div>
@@ -447,7 +576,7 @@ export default function TrendsClient() {
           <header className="space-y-1">
             <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Popularity Trends Explorer</h1>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Dive into real-time popularity shifts across regions, generations, and meta relevance. Hover for tooltips and try reduced motion for accessibility.
+              Real interest over time, measured as average daily Wikipedia pageviews for each Pokémon across English, Asian and European language editions.
             </p>
           </header>
           <div className="grid gap-4 lg:grid-cols-1">
@@ -458,61 +587,177 @@ export default function TrendsClient() {
               <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4 dark:border-slate-700">
                 <div className="flex items-center gap-4">
                   <div className="flex-shrink-0">
-                    <LazyImage
-                      srcList={[
-                        getPmdPortraitImage(currentPokemon.national_number),
-                        getPokemonImageUrl(currentPokemon.national_number),
-                        getPokemonFallbackImage(currentPokemon.national_number),
-                        "/placeholder-pokemon.png"
-                      ]}
-                      alt={currentPokemon.name}
-                      width={64}
-                      height={64}
-                      imgClassName="w-16 h-16 object-contain"
-                      rootMargin="100px"
-                      threshold={0.01}
-                    />
+                    {primaryId ? (
+                      <LazyImage
+                        key={primaryId}
+                        srcList={spriteSources(primaryId)}
+                        alt={primaryName}
+                        width={64}
+                        height={64}
+                        imgClassName="w-16 h-16 object-contain"
+                        rootMargin="100px"
+                        threshold={0.01}
+                      />
+                    ) : (
+                      <div className="h-16 w-16 rounded-full bg-slate-100 dark:bg-slate-800" />
+                    )}
                   </div>
                   <div>
                     <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Now viewing</div>
-                    <div className="text-lg font-semibold text-slate-900 dark:text-slate-100">{currentPokemon.name}</div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Rank #{currentPokemon.rank_global}</p>
+                    <div className="text-lg font-semibold text-slate-900 dark:text-slate-100">{primaryName}</div>
+                    {primaryId ? <p className="text-xs text-slate-500 dark:text-slate-400">#{String(primaryId).padStart(4, '0')}</p> : null}
                   </div>
                 </div>
-                <div className="text-right text-xs text-slate-500 dark:text-slate-400">
-                  <div>Peak snapshot: {peakSnapshot.value}% ({peakSnapshot.year}, {peakSnapshot.region})</div>
-                  <div>Sources: {currentPokemon.notable_sources.slice(0, 2).join(', ')}</div>
-                </div>
-              </div>
-              <div className="mt-4 overflow-x-auto">
-                {currentPokemon.trend.length === 1 ? (
-                  <div className="mb-4 rounded-lg bg-blue-50 border border-blue-200 p-4 dark:bg-blue-900/20 dark:border-blue-800">
-                    <div className="flex items-center">
-                      <svg className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <p className="text-sm text-blue-800 dark:text-blue-200">
-                        Showing peak popularity data only. Historical trend data is limited to the peak year ({currentPokemon.peak_year}).
-                      </p>
+                {primaryData && peak ? (
+                  <div className="text-right text-xs text-slate-500 dark:text-slate-400">
+                    <div>
+                      Peak year ({state.region}): <span className="font-semibold text-slate-700 dark:text-slate-200">{peak.year}</span> · {formatViews(peak.value)} views/day
+                    </div>
+                    <div>
+                      {selectedYear}{yearIsPartial ? ' (to date)' : ''}: {formatViews(yearPoint?.values[state.region] ?? 0)} views/day · {formatChange(yoyChange)} vs {selectedYear - 1}
                     </div>
                   </div>
                 ) : null}
-                <PopularityChart pokemon={chartPokemon} activeRegion={state.region} />
               </div>
-            </motion.div>
-            <motion.div
-              className="rounded-3xl border border-slate-200/80 bg-gradient-to-br from-blue-50 via-white to-violet-100 p-5 shadow-xl dark:border-slate-700/70 dark:from-slate-800 dark:via-slate-900 dark:to-slate-800"
-              {...perspectiveCard(0.28)}
-            >
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Insights</h3>
-              <div className="mt-3 grid gap-3 text-sm md:grid-cols-2">
-                {currentPokemon.notable_sources.map((source) => (
-                  <div key={source} className="rounded-lg border border-slate-200/70 bg-white/70 px-3 py-2 text-slate-700 shadow-sm dark:border-slate-700/70 dark:bg-slate-900/70 dark:text-slate-300">
-                    {source}
+
+              {primaryData && !primaryData.complete ? (
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200" role="status">
+                  <span>
+                    Some Wikipedia editions couldn&apos;t be loaded ({primaryData.editions.filter((edition) => edition.error).map((edition) => edition.lang).join(', ')}), so totals are understated.
+                  </span>
+                  <button type="button" className="font-semibold underline" onClick={() => load(primarySlug, true)}>
+                    Retry
+                  </button>
+                </div>
+              ) : null}
+              <div className="mt-4 overflow-x-auto">
+                {primaryLoad.status === 'loading' ? (
+                  <div className="flex h-[300px] items-center justify-center" role="status">
+                    <p className="animate-pulse text-sm text-slate-500 dark:text-slate-400">Loading Wikipedia pageviews for {primaryName}…</p>
                   </div>
-                ))}
+                ) : primaryLoad.status === 'error' ? (
+                  <div className="flex h-[300px] flex-col items-center justify-center gap-3 text-center" role="alert">
+                    <p className="text-sm text-red-600 dark:text-red-400">Couldn&apos;t load popularity data for {primaryName}: {primaryLoad.error}</p>
+                    <button
+                      type="button"
+                      className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
+                      onClick={() => load(primarySlug, true)}
+                    >
+                      Retry
+                    </button>
+                  </div>
+                ) : years.length === 0 ? (
+                  <div className="flex h-[300px] items-center justify-center text-center">
+                    <p className="text-sm text-slate-500 dark:text-slate-400">No Wikipedia pageview data found for {primaryName}.</p>
+                  </div>
+                ) : (
+                  <PopularityChart
+                    title={`Yearly popularity · ${state.region}`}
+                    subtitle={`Average daily pageviews on ${regionLabel}. Click a year to see its monthly breakdown.`}
+                    xLabels={years.map(String)}
+                    labelNotes={primaryData?.yearly.map((point) => (point.partial ? 'to date' : undefined))}
+                    series={yearlySeries}
+                    formatValue={formatViews}
+                    highlightIndex={years.indexOf(selectedYear)}
+                    onSelectIndex={(index) => {
+                      const year = years[index]
+                      if (year) setState((prev) => ({ ...prev, year }))
+                    }}
+                    ariaLabel={`Average daily Wikipedia pageviews per year in ${state.region} for ${yearlySeries.map((entry) => entry.label).join(', ')}`}
+                  />
+                )}
               </div>
             </motion.div>
+
+            {primaryData && monthKeys.length > 0 ? (
+              <motion.div
+                className="rounded-3xl border border-slate-200/80 bg-white/80 p-5 shadow-xl backdrop-blur dark:border-slate-700/70 dark:bg-slate-900/70"
+                {...perspectiveCard(0.15)}
+              >
+                <div className="overflow-x-auto">
+                  <PopularityChart
+                    title={`${selectedYear} by month · ${state.region}`}
+                    subtitle={yearIsPartial && coverageEnd ? `Data through ${coverageEnd}.` : 'Average daily pageviews per month.'}
+                    xLabels={monthKeys.map((month) => MONTH_LABELS[Number(month.slice(5, 7)) - 1])}
+                    series={monthlySeries}
+                    formatValue={formatViews}
+                    ariaLabel={`Average daily Wikipedia pageviews per month in ${selectedYear}, ${state.region}`}
+                  />
+                </div>
+              </motion.div>
+            ) : null}
+
+            {primaryData ? (
+              <motion.div
+                className="rounded-3xl border border-slate-200/80 bg-gradient-to-br from-blue-50 via-white to-violet-100 p-5 shadow-xl dark:border-slate-700/70 dark:from-slate-800 dark:via-slate-900 dark:to-slate-800"
+                {...perspectiveCard(0.28)}
+              >
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Insights · {selectedYear}</h3>
+                <div className="mt-3 grid gap-3 text-sm md:grid-cols-3">
+                  <div className="rounded-lg border border-slate-200/70 bg-white/70 px-3 py-2 text-slate-700 shadow-sm dark:border-slate-700/70 dark:bg-slate-900/70 dark:text-slate-300">
+                    <div className="text-xs text-slate-500 dark:text-slate-400">Year over year ({state.region})</div>
+                    <div className="text-lg font-semibold tabular-nums">{formatChange(yoyChange)}</div>
+                  </div>
+                  <div className="rounded-lg border border-slate-200/70 bg-white/70 px-3 py-2 text-slate-700 shadow-sm dark:border-slate-700/70 dark:bg-slate-900/70 dark:text-slate-300">
+                    <div className="text-xs text-slate-500 dark:text-slate-400">Busiest month ({state.region})</div>
+                    <div className="text-lg font-semibold tabular-nums">
+                      {busiestMonth && busiestMonth.value > 0
+                        ? `${MONTH_LABELS[Number(busiestMonth.month.slice(5, 7)) - 1]} · ${formatViews(busiestMonth.value)}/day`
+                        : 'n/a'}
+                    </div>
+                  </div>
+                  <div className="rounded-lg border border-slate-200/70 bg-white/70 px-3 py-2 text-slate-700 shadow-sm dark:border-slate-700/70 dark:bg-slate-900/70 dark:text-slate-300">
+                    <div className="text-xs text-slate-500 dark:text-slate-400">Share of global views</div>
+                    <div className="text-sm font-medium tabular-nums">
+                      {regionShare ? regionShare.map((entry) => `${entry.region} ${entry.share}%`).join(' · ') : 'n/a'}
+                    </div>
+                  </div>
+                </div>
+
+                <h4 className="mt-5 text-sm font-semibold text-slate-800 dark:text-slate-100">Articles tracked</h4>
+                <ul className="mt-2 grid gap-2 text-xs sm:grid-cols-2">
+                  {primaryData.editions.map((edition) => (
+                    <li
+                      key={edition.lang}
+                      className="rounded-lg border border-slate-200/70 bg-white/70 px-3 py-2 text-slate-700 shadow-sm dark:border-slate-700/70 dark:bg-slate-900/70 dark:text-slate-300"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-semibold">{edition.label} <span className="font-normal text-slate-500">({edition.lang}, {edition.region})</span></span>
+                        <span className="tabular-nums text-slate-500 dark:text-slate-400">{formatViews(edition.totalViews)} views</span>
+                      </div>
+                      {edition.titles.length > 0 ? (
+                        <div className="mt-1 flex flex-wrap gap-x-2">
+                          {edition.titles.map((title, index) => (
+                            <a
+                              key={title}
+                              href={edition.urls[index]}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline dark:text-blue-400"
+                            >
+                              {title}
+                            </a>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="mt-1 text-slate-500 dark:text-slate-400">
+                          {edition.error ? 'Lookup failed — excluded from totals' : 'No matching article'}
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+
+                <p className="mt-4 text-[11px] text-slate-500 dark:text-slate-400">
+                  Source:{' '}
+                  <a href={primaryData.source.url} target="_blank" rel="noopener noreferrer" className="underline">
+                    {primaryData.source.label}
+                  </a>
+                  {primaryData.coverage ? `, ${primaryData.coverage.start} to ${primaryData.coverage.end}` : ''}. Counts human (non-bot) views of each
+                  Pokémon&apos;s article or redirect title; it reflects public interest, not competitive usage.
+                </p>
+              </motion.div>
+            ) : null}
           </div>
         </section>
       </main>
