@@ -50,6 +50,7 @@ Competitive Pokémon usage tracking across Smogon Singles, VGC, BSS — generati
 - **PopupBook** (`src/components/top50/PopupBook.tsx`) — 3D phase transitions for top-50
 - Rank selection, detail popups, generation/format filters
 - Trend charts over time
+- **`/trends` selection:** one "Selected Pokémon" list (max 7, the chart palette size). The search dropdown lists every species and clicking adds to the list; the first entry is the highlighted Pokémon (header, insights, monthly chart) and is stored as `poke`, the rest as `compare` in the URL. First-visit defaults are `DEFAULT_SELECTION` in `src/lib/trends/data.ts` (Mew, Meowth, Gengar, Pikachu). Saved preferences use `trends:preferences:v2`; bump the version if the selection model changes again.
 
 ## Scripts
 
