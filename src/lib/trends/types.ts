@@ -1,53 +1,57 @@
-export type RegionKey = 'Global' | 'Asia' | 'US' | 'EU'
+/**
+ * Popularity regions are groups of Wikipedia language editions:
+ * - English: en.wikipedia
+ * - Asia: ja / ko / zh
+ * - Europe: de / fr / es / it
+ * - Global: all of the above combined
+ */
+export type PopularityRegion = 'Global' | 'English' | 'Asia' | 'Europe'
 
-export interface PokemonPopularityRecord {
-  name: string
-  rank_global: number
-  peak_percent: number
-  peak_year: number
-  notable_sources: string[]
-  national_number: number
-  generation: number
-  home_region: string
-  types: string[]
-  competitive_tier: 'meta' | 'fan-favorite' | 'niche'
-  variant_tag?: string
-  dex_base?: number
+/** @deprecated kept for older saved preferences; use PopularityRegion. */
+export type RegionKey = PopularityRegion
+
+export interface PopularityEdition {
+  lang: string
+  label: string
+  region: Exclude<PopularityRegion, 'Global'>
+  /** Localised Pokémon name used to look up the article. */
+  localName: string | null
+  /** Wikipedia titles whose pageviews are counted. Empty when none matched. */
+  titles: string[]
+  urls: string[]
+  /** Total user pageviews counted in the covered window. */
+  totalViews: number
+  error?: string
 }
 
-export interface TrendYearSnapshot {
-  year: number
-  values: Record<RegionKey, number>
-}
-
-export interface RegionalRank {
-  name: string
-  percent: number
-  rank: number
-  national_number: number
-  sources: string[]
-}
-
-export interface PokemonTrendView extends PokemonPopularityRecord {
-  trend: TrendYearSnapshot[]
+export interface PokemonPopularity {
+  pokemon: {
+    id: number
+    slug: string
+    name: string
+    generation: number | null
+  }
+  metric: 'avg_daily_pageviews'
+  coverage: { start: string; end: string } | null
+  yearly: Array<{ year: number; values: Record<PopularityRegion, number>; partial: boolean }>
+  monthly: Array<{ month: string; values: Record<PopularityRegion, number> }>
+  editions: PopularityEdition[]
+  source: {
+    label: string
+    url: string
+    fetchedAt: string
+  }
 }
 
 export interface TrendsState {
   pokemon: string
   compare: string[]
-  region: RegionKey
+  region: PopularityRegion
   year: number
   generations: number[]
   types: string[]
 }
 
-export interface PersistableTrendsState {
-  pokemon: string
-  compare: string[]
-  region: RegionKey
-  year: number
-  generations: number[]
-  types: string[]
+export interface PersistableTrendsState extends TrendsState {
   updatedAt: number
 }
-
