@@ -8,6 +8,7 @@ import AttackAnimator from '@/components/battle/AttackAnimator';
 import { FxKind } from '@/components/battle/fx/MoveFX.types';
 import { BattleSprite, BattleSpriteRef } from '@/components/battle/BattleSprite';
 import Image from 'next/image';
+import Link from 'next/link';
 import { BattleTurnManager } from '@/components/multiplayer/BattleTurnManager';
 import { BattleEndScreen } from '@/components/multiplayer/BattleEndScreen';
 import { useForfeit } from '@/hooks/useMultiplayerBattle';
@@ -420,9 +421,9 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
           >
             Retry
           </button>
-          <a href="/lobby/" className="rounded-md bg-primary px-4 py-2 text-sm text-white">
+          <Link href="/lobby/" className="rounded-md bg-primary px-4 py-2 text-sm text-white">
             Return to lobby
-          </a>
+          </Link>
         </div>
       </div>
     );

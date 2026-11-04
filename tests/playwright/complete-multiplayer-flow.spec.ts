@@ -321,7 +321,7 @@ test('complete multiplayer flow: two users create teams and battle to completion
     console.log('\n=== STEP 5: BATTLE EXECUTION ===');
     
     let currentTurn = 1;
-    let maxTurns = 50; // Safety limit
+    const maxTurns = 50; // Safety limit
     let battleEnded = false;
     
     while (!battleEnded && currentTurn <= maxTurns) {

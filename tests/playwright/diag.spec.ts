@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
 
 test('diagnose page load and auth', async ({ page }) => {
   test.setTimeout(120_000);

@@ -3,7 +3,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 const BASE_URL = 'http://127.0.0.1:3002';
-const FIREBASE_API_KEY = 'AIzaSyASbdOWHRBH_QAqpjRrp9KyzPWheNuUZmY';
 
 // Load test users from file
 const testUsersPath = path.join(__dirname, '..', '..', 'test-users.json');
@@ -13,7 +12,7 @@ const player1 = testUsers[0]; // Player One - Thunder Squad
 const player2 = testUsers[1]; // Player Two - Water Warriors
 
 test.describe('Full Battle E2E - Complete to Victory', () => {
-  test('play battle until victory (all pokemon defeated)', async ({ browser, page, context }) => {
+  test('play battle until victory (all pokemon defeated)', async ({ browser, page }) => {
     console.log('\n╔═══════════════════════════════════════════════════════════╗');
     console.log('║  FULL MULTIPLAYER BATTLE - PLAY UNTIL VICTORY           ║');
     console.log('╚═══════════════════════════════════════════════════════════╝\n');

@@ -1,6 +1,7 @@
-import { test, expect, Page, Browser } from '@playwright/test';
+import { test, expect, type BrowserContext } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
+import type { TestUser } from './types';
 
 const BASE_URL = 'http://127.0.0.1:3002';
 
@@ -20,7 +21,7 @@ test.describe('Complete Multiplayer Battle E2E Test', () => {
     // ─────────────────────────────────────────────────────────────────
     // Helper: Authenticate a context with a test user
     // ─────────────────────────────────────────────────────────────────
-    const authenticateContext = async (context: any, user: any) => {
+    const authenticateContext = async (context: BrowserContext, user: TestUser) => {
       // Add init script to set localStorage before page loads
       await context.addInitScript({
         script: `
@@ -460,11 +461,11 @@ test.describe('Complete Multiplayer Battle E2E Test', () => {
 
       // Verify no critical errors in console
       const hostConsole = await hostPage.evaluate(() => {
-        return (window as any).__ERRORS__ || [];
+        return (window as unknown as { __ERRORS__?: unknown[] }).__ERRORS__ || [];
       }).catch(() => []);
 
       const guestConsole = await guestPage.evaluate(() => {
-        return (window as any).__ERRORS__ || [];
+        return (window as unknown as { __ERRORS__?: unknown[] }).__ERRORS__ || [];
       }).catch(() => []);
 
       if (hostConsole.length === 0 && guestConsole.length === 0) {

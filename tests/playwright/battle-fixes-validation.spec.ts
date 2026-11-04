@@ -74,7 +74,7 @@ const FULL_TEAM = [
   }
 ];
 
-async function injectTeam(page: Page, team: any[]) {
+async function injectTeam(page: Page, team: typeof FULL_TEAM) {
   await page.evaluate((teamData) => {
     const formattedTeam = teamData.map(p => ({
       ...p,

@@ -1,4 +1,4 @@
-import { test, expect, Page, BrowserContext } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 import * as fs from 'fs';
 
 const BASE_URL = 'http://localhost:3002';
@@ -200,7 +200,7 @@ test.describe('Battle E2E - UI Login & Play Until Victory', () => {
             battleEnded = true;
             console.log(`\n  🏁 BATTLE ENDED AT TURN ${turn}`);
           }
-        } catch (err) {
+        } catch {
           // Silently continue
         }
       }

@@ -1,6 +1,7 @@
 import { test, expect, BrowserContext } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
+import type { TestUser } from './types';
 
 const BASE_URL = 'http://127.0.0.1:3002';
 const FIREBASE_API_KEY = 'AIzaSyASbdOWHRBH_QAqpjRrp9KyzPWheNuUZmY';
@@ -15,7 +16,7 @@ const player2 = testUsers[1]; // Player Two - Water Warriors
 /**
  * Authenticate a user via Firebase REST API and inject auth into context
  */
-async function authenticateUser(context: BrowserContext, user: any, apiKey: string) {
+async function authenticateUser(context: BrowserContext, user: TestUser, apiKey: string) {
   console.log(`  🔐 Authenticating ${user.displayName}...`);
 
   // First, create a temporary page just to make the request
@@ -23,7 +24,7 @@ async function authenticateUser(context: BrowserContext, user: any, apiKey: stri
 
   try {
     // Make auth request
-    const response = await tempPage.evaluate(async (creds: any) => {
+    const response = await tempPage.evaluate(async (creds: { email: string; password: string; apiKey: string }) => {
       const res = await fetch(
         `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${creds.apiKey}`,
         {
@@ -63,7 +64,7 @@ async function authenticateUser(context: BrowserContext, user: any, apiKey: stri
     };
 
     // Set localStorage from the temp page itself (after page loads)
-    await tempPage.evaluate(({ authKey, authData }: any) => {
+    await tempPage.evaluate(({ authKey, authData }: { authKey: string; authData: unknown }) => {
       localStorage.setItem(authKey, JSON.stringify(authData));
       // Also trigger Firebase's internal state refresh
       window.dispatchEvent(new StorageEvent('storage', {
@@ -74,7 +75,7 @@ async function authenticateUser(context: BrowserContext, user: any, apiKey: stri
     }, { authKey, authData });
 
     // Also set up init script for NEW pages created after this
-    await context.addInitScript(({ authKey, authData }: any) => {
+    await context.addInitScript(({ authKey, authData }: { authKey: string; authData: unknown }) => {
       localStorage.setItem(authKey, JSON.stringify(authData));
     }, { authKey, authData });
 
@@ -103,8 +104,8 @@ test.describe('Full Battle E2E - Play Until Victory', () => {
       // ─────────────────────────────────────────────────────────────────
       console.log('\n📝 Step 1: Authenticating Players\n');
       
-      const p1Auth = await authenticateUser(context1, player1, FIREBASE_API_KEY);
-      const p2Auth = await authenticateUser(context2, player2, FIREBASE_API_KEY);
+      await authenticateUser(context1, player1, FIREBASE_API_KEY);
+      await authenticateUser(context2, player2, FIREBASE_API_KEY);
 
       // ─────────────────────────────────────────────────────────────────
       // Step 2: Navigate to app (auth will be picked up from localStorage)

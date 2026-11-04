@@ -41,7 +41,7 @@ const CHARIZARD_TEAM = [
   }
 ];
 
-async function injectTeam(page: Page, team: any[]) {
+async function injectTeam(page: Page, team: typeof CHARIZARD_TEAM) {
   await page.evaluate((teamData) => {
     localStorage.setItem('pokemon-team-builder', JSON.stringify([teamData]));
     localStorage.setItem('pokemon-current-team', JSON.stringify(teamData));
@@ -166,7 +166,7 @@ test('Gen 9 Battle Mechanics: Charizard vs Charizard with full mechanics', async
 
     // Test 6: Entry hazards and switching
     console.log('\n=== Test 6: Switching Mechanics ===');
-    const turn4HostHp = parseHp(await hostPage.getByTestId('hp-bar-player').innerText());
+    parseHp(await hostPage.getByTestId('hp-bar-player').innerText());
     
     // Switch to Blastoise
     await hostPage.getByTestId('switch-blastoise-1').click();
