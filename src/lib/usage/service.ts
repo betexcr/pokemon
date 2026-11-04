@@ -1,7 +1,12 @@
 import type { Format, Generation, Platform, UsageRow } from '@/types/usage';
 import { inferPokemonId, parseSmogonUsageText } from '@/lib/usage/parseSmogonUsage';
-import { smogonStatsMonthPath } from '@/lib/usage/smogonMonth';
-import { SMOGON_STATS_BASE } from '@/lib/usage/smogonDiscovery';
+import {
+  clampToPublishableMonth,
+  latestPublishableUsageMonth,
+  monthsBackFrom,
+  smogonStatsMonthPath,
+} from '@/lib/usage/smogonMonth';
+import { SMOGON_STATS_BASE, smogonFetch } from '@/lib/usage/smogonDiscovery';
 import { resolveSmogonUsageFile } from '@/lib/usage/smogonResolve';
 import { enrichRowsWithMovesetSubstats } from '@/lib/usage/smogonMoveset';
 import { probeSmogonUsageFileExists } from '@/lib/usage/smogonProbe';
@@ -40,8 +45,13 @@ interface MonthlyUsageResponse {
     months: string[];
     sampleSize?: number;
     source: string;
+    sourceUrl?: string;
     dataQuality: 'live' | 'empty';
     lastUpdated: string;
+    /** Month the caller asked for (YYYY-MM). */
+    requestedMonth: string;
+    /** Month actually served; differs from requestedMonth when that month is not published yet. */
+    resolvedMonth: string;
   };
 }
 
@@ -177,7 +187,7 @@ async function fetchSmogonMonthlyRows(
   if (cachedFile && cachedFile.expires > Date.now()) {
     text = cachedFile.text;
   } else {
-    const res = await fetch(sourceUrl, {
+    const res = await smogonFetch(sourceUrl, {
       next: { revalidate: 3600 },
     });
 
@@ -232,15 +242,13 @@ async function getMonthlyRows(
   return rows;
 }
 
+/** Most recent publishable months, newest first (the in-progress month never has stats). */
 function getRecentMonths(months: number): string[] {
-  const result: string[] = [];
-  const now = new Date();
-  for (let i = 0; i < months; i += 1) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    result.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
-  }
-  return result;
+  return monthsBackFrom(latestPublishableUsageMonth(), months);
 }
+
+/** How many months to walk back when the requested month has no published stats. */
+const MONTHLY_FALLBACK_LOOKBACK = 6;
 
 async function monthHasData(
   platform: Platform,
@@ -303,7 +311,19 @@ export async function getMonthlyUsageSummary(params: {
   month: string;
   top50Only?: boolean;
 }): Promise<MonthlyUsageResponse> {
-  const rows = await getMonthlyRows(params.platform, params.generation, params.format, params.month);
+  const requestedMonth = normalizeMonth(params.month);
+  // Walk back from the requested month (clamped to what Smogon can have published) until a
+  // month with real data is found, so links like ?month=<current month> still show stats.
+  const candidates = monthsBackFrom(clampToPublishableMonth(requestedMonth), MONTHLY_FALLBACK_LOOKBACK);
+  let resolvedMonth = candidates[0] ?? requestedMonth;
+  let rows: UsageRow[] = [];
+  for (const month of candidates) {
+    rows = await getMonthlyRows(params.platform, params.generation, params.format, month);
+    if (rows.length > 0) {
+      resolvedMonth = month;
+      break;
+    }
+  }
   const filtered = params.top50Only ? rows.filter((row) => row.rank <= 50) : rows;
   const sampleSize = filtered.find((row) => typeof row.sampleSize === 'number')?.sampleSize;
 
@@ -314,11 +334,14 @@ export async function getMonthlyUsageSummary(params: {
       platforms: [params.platform],
       generations: [params.generation],
       formats: [params.format],
-      months: [normalizeMonth(params.month)],
+      months: [resolvedMonth],
       sampleSize,
       source: metadataSourceLabel(params.platform),
+      sourceUrl: filtered[0]?.source.url,
       dataQuality: filtered.length > 0 ? 'live' : 'empty',
       lastUpdated: nowIso(),
+      requestedMonth,
+      resolvedMonth,
     },
   };
 }

@@ -38,6 +38,13 @@ const PHASE_CONFIG = {
   }
 };
 
+function formatMonthLabel(month: string): string {
+  const m = month.match(/^(\d{4})-(\d{2})$/);
+  if (!m) return month;
+  const date = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, 1));
+  return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', timeZone: 'UTC' });
+}
+
 export default function UsagePhaseBook({ 
   initialFilters, 
   initialPhase,
@@ -46,6 +53,7 @@ export default function UsagePhaseBook({
   const router = useRouter();
   
   const [filters, setFilters] = useState<UsageFilters>(initialFilters);
+  const [monthNotice, setMonthNotice] = useState<{ requested: string; resolved: string } | null>(null);
   const [phaseState, setPhaseState] = useState<UsagePhaseState>({
     current: initialPhase,
     history: [initialPhase],
@@ -96,7 +104,16 @@ export default function UsagePhaseBook({
     }));
   };
 
+  const handleMonthResolved = (requested: string, resolved: string) => {
+    setMonthNotice({ requested, resolved });
+    // Keep the selector and URL in sync with the month actually shown; phase data stays intact.
+    setFilters(prev => (prev.month === requested ? { ...prev, month: resolved } : prev));
+  };
+
   const handleFiltersChange = (newFilters: UsageFilters) => {
+    if (monthNotice && newFilters.month !== monthNotice.resolved) {
+      setMonthNotice(null);
+    }
     setFilters(newFilters);
     // Clear phase-specific data when filters change
     setPhaseState(prev => ({
@@ -142,6 +159,16 @@ export default function UsagePhaseBook({
         />
       </div>
 
+      {monthNotice && (
+        <div
+          role="status"
+          className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-200"
+        >
+          Smogon has not published stats for {formatMonthLabel(monthNotice.requested)} yet — showing{' '}
+          {formatMonthLabel(monthNotice.resolved)}, the latest available month.
+        </div>
+      )}
+
       {/* Phase Content */}
       <div className="relative">
         <AnimatePresence mode="wait">
@@ -157,6 +184,7 @@ export default function UsagePhaseBook({
               filters={filters}
               phaseState={phaseState}
               onPhaseChange={handlePhaseChange}
+              onMonthResolved={handleMonthResolved}
             />
           </motion.div>
         </AnimatePresence>

@@ -11,8 +11,8 @@ description: >-
 ## Platform
 
 - **Host:** Vercel — build via `npm run build` ([`vercel.json`](../../vercel.json))
-- **Canonical prod URL:** `https://pokemon-indol-tau.vercel.app`
-- **Retired:** `pokemon.ultharcr.com` — do not use in metadata, sitemap, or env defaults
+- **Canonical prod URL:** `https://pokebattles.vercel.app`
+- **Retired:** `pokemon.ultharcr.com`, `pokemon-indol-tau.vercel.app` — do not use in metadata, sitemap, or env defaults
 
 Also see [PRODUCTION_OPS.md](./PRODUCTION_OPS.md) for health checks, rollback, and env checklist. Legacy GitHub Pages / Firebase Hosting static deploys are disabled.
 
@@ -40,7 +40,7 @@ NEXT_PUBLIC_FIREBASE_DATABASE_URL
 ### Site / routing
 
 ```
-NEXT_PUBLIC_SITE_URL=https://pokemon-indol-tau.vercel.app
+NEXT_PUBLIC_SITE_URL=https://pokebattles.vercel.app
 NEXT_PUBLIC_BASE_URL=              # server-side absolute URL resolution
 NEXT_PUBLIC_POKEAPI_BASE_URL=/api/pokeapi   # optional BFF proxy
 NEXT_PUBLIC_CDN_URL=               # assetPrefix in next.config.ts

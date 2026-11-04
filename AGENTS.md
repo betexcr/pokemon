@@ -9,8 +9,8 @@ Next.js 15 App Router application: Pokédex, team builder, offline AI battles, r
 | Item | Detail |
 |------|--------|
 | **Stack** | TypeScript, Tailwind CSS, Firebase (Auth, Firestore, RTDB), PokeAPI |
-| **Canonical prod URL** | `https://pokemon-indol-tau.vercel.app` |
-| **Retired domain** | `pokemon.ultharcr.com` — do not use in new links or env defaults |
+| **Canonical prod URL** | `https://pokebattles.vercel.app` |
+| **Retired domains** | `pokemon.ultharcr.com`, `pokemon-indol-tau.vercel.app` — do not use in new links, metadata, or env defaults (a canonical pointing at another host triggers anti-phishing warnings) |
 | **Maintainer map** | [docs/ARCHITECTURE_AND_HOSTING.md](docs/ARCHITECTURE_AND_HOSTING.md) |
 
 ## Quick start

@@ -1,6 +1,6 @@
 # Production operations
 
-Canonical production URL: **https://pokemon-indol-tau.vercel.app**  
+Canonical production URL: **https://pokebattles.vercel.app**  
 Retired domain (do not use): `pokemon.ultharcr.com`
 
 Platform of record: **Vercel** (Git integration). Legacy GitHub Pages / Firebase Hosting static-export workflows are disabled.

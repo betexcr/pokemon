@@ -4,6 +4,8 @@ import Script from 'next/script';
 import UsagePageClient from './UsagePageClient';
 import UsagePhaseBook from '@/components/usage/UsagePhaseBook';
 import { UsageFilters, UsagePhase, Platform, Generation, Format } from '@/types/usage';
+import { SITE_URL, SITE_NAME } from '@/lib/site/siteUrl';
+import { clampToPublishableMonth, latestPublishableUsageMonth } from '@/lib/usage/smogonMonth';
 
 export const metadata: Metadata = {
   title: 'Usage Meta Dashboard',
@@ -71,7 +73,8 @@ export default async function UsagePage({
     platforms: platform && PLATFORM_VALUES.includes(platform as Platform) ? [platform as Platform] : ['SMOGON_SINGLES'],
     generations: generation && GENERATION_VALUES.includes(generation as Generation) ? [generation as Generation] : ['GEN9'],
     formats: format && FORMAT_VALUES.includes(format as Format) ? [format as Format] : ['OU'],
-    month: month && /^\d{4}-\d{2}$/.test(month) ? month : new Date().toISOString().slice(0, 7),
+    // Smogon publishes a month only after it ends, so never default to (or request) the current month.
+    month: month && /^\d{4}-\d{2}$/.test(month) ? clampToPublishableMonth(month) : latestPublishableUsageMonth(),
     top50Only: pickSingle(params.top50Only) === 'true',
     sortBy: sortByParam === 'usage' || sortByParam === 'name' ? sortByParam : 'rank',
     sortOrder: sortOrderParam === 'desc' ? 'desc' : 'asc'
@@ -95,11 +98,11 @@ export default async function UsagePage({
             '@type': 'Dataset',
             name: 'Pokémon Competitive Usage Dataset',
             description: 'Aggregated competitive Pokémon usage statistics across Smogon, VGC, and other platforms by generation and format.',
-            url: 'https://pokemon-indol-tau.vercel.app/usage',
+            url: `${SITE_URL}/usage`,
             license: 'https://creativecommons.org/licenses/by/4.0/',
             creator: {
               '@type': 'Organization',
-              name: 'PokéDex'
+              name: SITE_NAME
             }
           })
         }}
