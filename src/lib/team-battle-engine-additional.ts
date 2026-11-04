@@ -54,6 +54,7 @@ import { BattleRng, rngRollChance, rngNextInt, rngNextFloat } from './battle-rng
 import { tryConsumeBerry, tryHarvestBerry, checkTypeResistBerry, removeHeldItem } from './team-battle-items';
 import { PIVOT_MOVES, SELF_STATUS_MOVES } from './battle-move-constants';
 import { prepareLiveDamageModifiers, toDamageTypeName } from './battle-damage-modifiers';
+import { COUNTER_MOVES, getCounterDamage, moveFailsTryCondition, recordDamageTaken } from './team-battle-move-conditions';
 
 // Process start-of-turn effects
 export async function processStartOfTurn(state: BattleState): Promise<void> {
@@ -97,6 +98,7 @@ export async function processStartOfTurn(state: BattleState): Promise<void> {
   
   playerPokemon.volatile.flinched = false;
   playerPokemon.volatile.justSwitchedIn = false;
+  playerPokemon.volatile.lastDamageTaken = undefined;
   if (playerPokemon.volatile.protect?.active) {
     playerPokemon.volatile.protect.active = false;
   } else {
@@ -104,6 +106,7 @@ export async function processStartOfTurn(state: BattleState): Promise<void> {
   }
   opponentPokemon.volatile.flinched = false;
   opponentPokemon.volatile.justSwitchedIn = false;
+  opponentPokemon.volatile.lastDamageTaken = undefined;
   if (opponentPokemon.volatile.protect?.active) {
     opponentPokemon.volatile.protect.active = false;
   } else {
@@ -187,6 +190,9 @@ export async function resolveMove(state: BattleState, action: BattleState['actio
   if (attacker.currentHp <= 0) {
     return;
   }
+
+  // Every move action (including recharge / sleep / flinch turns) counts toward Fake Out's first-turn gate
+  attacker.volatile.moveActionsSinceEntry = (attacker.volatile.moveActionsSinceEntry ?? 0) + 1;
 
   // Forced recharge turn after Hyper Beam family
   if (moveId === RECHARGE_MOVE_ID || attacker.volatile.mustRecharge) {
@@ -273,6 +279,20 @@ export async function resolveMove(state: BattleState, action: BattleState['actio
       move: moveId,
     });
     beginTwoTurnCharge(state, attacker, moveId);
+    return;
+  }
+
+  // onTry conditions (Fake Out, Sucker Punch, Counter, ...) fail before the accuracy roll
+  if (await moveFailsTryCondition(state, action, attacker, defender, moveLower)) {
+    consumePpForMove(attacker, moveId);
+    attacker.volatile.lastMoveUsed = moveId;
+    state.battleLog.push({
+      type: 'move_used',
+      message: `${attacker.pokemon.name} used ${moveId}!`,
+      pokemon: attacker.pokemon.name,
+      move: moveId,
+    });
+    state.battleLog.push({ type: 'status_effect', message: 'But it failed!' });
     return;
   }
 
@@ -995,6 +1015,8 @@ async function executeMoveAction(
   // Determine number of hits
   const hitCount = determineHitCount(move, attacker, state.rng);
   let totalDamageDealt = 0;
+  /** Damage that reached the defender's HP (not a Substitute) — feeds Counter / Mirror Coat / Metal Burst. */
+  let hpDamageDealt = 0;
   let actualHits = 0;
   let hitSubstitute = false;
   
@@ -1041,14 +1063,34 @@ async function executeMoveAction(
       'super-fang': (_a, d) => Math.max(1, Math.floor(d.currentHp / 2)),
       'endeavor': (a, d) => Math.max(0, d.currentHp - a.currentHp),
       'final-gambit': (a) => a.currentHp,
-      'counter': () => 0, // requires tracking last damage taken
-      'mirror-coat': () => 0,
     };
+    for (const counterMove of Object.keys(COUNTER_MOVES)) {
+      FIXED_DAMAGE_MOVES[counterMove] = (a) => getCounterDamage(a, counterMove) ?? 0;
+    }
 
     const fixedFn = FIXED_DAMAGE_MOVES[moveId.toLowerCase()];
     if (fixedFn) {
+      // Fixed-damage moves still respect type immunity (Seismic Toss vs Ghost, Mirror Coat vs Dark, ...)
+      const atkType = toDamageTypeName(String(move.type || 'normal'));
+      const defTypes = getPokemonTypes(defender).map((t) => toDamageTypeName(String(t)));
+      if (calculateTypeEffectiveness(atkType, defTypes) === 0) {
+        state.battleLog.push({
+          type: 'status_effect',
+          message: `It doesn't affect ${defender.pokemon.name}...`,
+          pokemon: defender.pokemon.name,
+        });
+        return;
+      }
       const fixedDmg = fixedFn(attacker, defender);
+      if (absorbHitWithSubstitute(state, defender, fixedDmg)) {
+        hitSubstitute = true;
+        totalDamageDealt += fixedDmg;
+        actualHits++;
+        continue;
+      }
+      const hpBefore = defender.currentHp;
       defender.currentHp = Math.max(0, defender.currentHp - fixedDmg);
+      hpDamageDealt += hpBefore - defender.currentHp;
       totalDamageDealt += fixedDmg;
       actualHits++;
       continue;
@@ -1166,7 +1208,9 @@ async function executeMoveAction(
       }
     }
     
+    const hpBeforeHit = defender.currentHp;
     defender.currentHp = Math.max(0, defender.currentHp - damage);
+    hpDamageDealt += hpBeforeHit - defender.currentHp;
     totalDamageDealt += damage;
     actualHits++;
     
@@ -1261,6 +1305,8 @@ async function executeMoveAction(
     damage: totalDamageDealt
   });
   
+  recordDamageTaken(defender, hpDamageDealt, move.category);
+
   // Track damage for Shell Bell
   if (!attacker.volatile.damageDealtThisTurn) {
     attacker.volatile.damageDealtThisTurn = 0;
@@ -1470,6 +1516,9 @@ function applyBeastBoost(attacker: BattlePokemon, state: BattleState): void {
 
 // Run on-entry sequence for a Pokemon (switchingSide = the side whose Pokemon is switching in)
 export async function runEntrySequence(state: BattleState, switchingSide: 'player' | 'opponent', incomingPokemon: BattlePokemon): Promise<void> {
+  incomingPokemon.volatile.moveActionsSinceEntry = 0;
+  incomingPokemon.volatile.lastDamageTaken = undefined;
+
   const switchingTeam = switchingSide === 'player' ? state.player : state.opponent;
 
   // Hazards are on the switching player's own side of the field

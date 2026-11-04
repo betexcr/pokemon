@@ -59,6 +59,10 @@ export type BattlePokemon = {
     twoTurn?: { move: string; kind: 'charging' | 'pending' };
     /** Semi-invulnerable while charging Dig/Fly/etc. Stores the move id. */
     semiInvulnerable?: string;
+    /** Move actions taken since entering the field, including the current one (Fake Out / First Impression gate). */
+    moveActionsSinceEntry?: number;
+    /** HP damage taken from an opposing attack this turn (Counter / Mirror Coat / Metal Burst). Cleared each turn. */
+    lastDamageTaken?: { amount: number; category: 'Physical' | 'Special' };
   };
   // Ability system
   currentAbility?: string;
@@ -190,7 +194,11 @@ const FALLBACK_PRIORITY: Record<string, number> = {
   'quick-attack': 1,
   'extreme-speed': 2,
   'fake-out': 3,
+  'first-impression': 2,
   'sucker-punch': 1,
+  'thunderclap': 1,
+  'counter': -5,
+  'mirror-coat': -5,
   'bullet-punch': 1,
   'ice-shard': 1,
   'shadow-sneak': 1,

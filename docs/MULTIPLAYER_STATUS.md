@@ -202,7 +202,8 @@ Total per battle:       ~80 writes, 100 reads
 
 ### Automated Testing
 - [x] Unit tests for canonical turn execution (see [`battle-real-moves.test.ts`](src/lib/__tests__/battle-real-moves.test.ts), [`battle-mechanics.test.ts`](src/lib/__tests__/battle-mechanics.test.ts))
-- [ ] Expand RTDB integration coverage for submit + resolve
+- [x] RTDB client integration coverage ([`rtdb-integration.test.ts`](src/lib/__tests__/rtdb-integration.test.ts): real `rtdbService` + `FirebaseRTDBBattleEngine` against an in-memory RTDB fake)
+- [ ] Integration coverage for server submit + `resolveTurn`
 - [ ] Playwright E2E for full lobby-to-battle flow (see [`tests/playwright/`](tests/playwright/))
 - [ ] Load testing (simulate many concurrent battles)
 
