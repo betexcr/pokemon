@@ -10,7 +10,8 @@ export const REGION_DESCRIPTIONS: Record<PopularityRegion, string> = {
   Europe: 'German, French, Spanish and Italian Wikipedia',
 }
 
-export const DEFAULT_POKEMON = 'Pikachu'
+/** Shown on first visit (no URL params or saved preferences). The first one is the focused Pokémon. */
+export const DEFAULT_SELECTION = ['Mew', 'Meowth', 'Gengar', 'Pikachu']
 
 const LEGACY_REGIONS: Record<string, PopularityRegion> = { US: 'English', EU: 'Europe' }
 
