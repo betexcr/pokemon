@@ -15,6 +15,7 @@ interface UsagePhaseBookProps {
   initialFilters: UsageFilters;
   initialPhase: UsagePhase;
   initialSelectedPokemonId?: number;
+  initialSelectedPokemonName?: string;
 }
 
 const PHASE_CONFIG = {
@@ -48,7 +49,8 @@ function formatMonthLabel(month: string): string {
 export default function UsagePhaseBook({ 
   initialFilters, 
   initialPhase,
-  initialSelectedPokemonId
+  initialSelectedPokemonId,
+  initialSelectedPokemonName
 }: UsagePhaseBookProps) {
   const router = useRouter();
   
@@ -58,7 +60,8 @@ export default function UsagePhaseBook({
     current: initialPhase,
     history: [initialPhase],
     data: {
-      selectedPokemonId: initialSelectedPokemonId
+      selectedPokemonId: initialSelectedPokemonId,
+      selectedPokemonName: initialSelectedPokemonName
     }
   });
 
@@ -84,22 +87,27 @@ export default function UsagePhaseBook({
     if (phaseState.current !== 'snapshot') {
       params.set('phase', phaseState.current);
     }
-    if (phaseState.current === 'deepdive' && phaseState.data.selectedPokemonId) {
+    if (phaseState.current === 'deepdive' && phaseState.data.selectedPokemonName) {
+      params.set('pokemon', phaseState.data.selectedPokemonName);
+    } else if (phaseState.current === 'deepdive' && phaseState.data.selectedPokemonId) {
       params.set('pokemonId', String(phaseState.data.selectedPokemonId));
     }
     
     const newUrl = `${window.location.pathname}?${params.toString()}`;
     router.replace(newUrl, { scroll: false });
-  }, [filters, phaseState.current, phaseState.data.selectedPokemonId, router]);
+  }, [filters, phaseState.current, phaseState.data.selectedPokemonId, phaseState.data.selectedPokemonName, router]);
 
-  const handlePhaseChange = (newPhase: UsagePhase, selectedPokemonId?: number) => {
+  const handlePhaseChange = (newPhase: UsagePhase, selectedPokemonId?: number, selectedPokemonName?: string) => {
     setPhaseState(prev => ({
       ...prev,
       current: newPhase,
       history: [...prev.history, newPhase].slice(-10), // Keep last 10 phases
       data: {
         ...prev.data,
-        selectedPokemonId: selectedPokemonId ?? prev.data.selectedPokemonId
+        selectedPokemonId: selectedPokemonId ?? prev.data.selectedPokemonId,
+        // A new id without a name (e.g. legacy links) must not keep a stale name.
+        selectedPokemonName:
+          selectedPokemonName ?? (selectedPokemonId !== undefined ? undefined : prev.data.selectedPokemonName)
       }
     }));
   };

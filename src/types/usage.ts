@@ -157,5 +157,7 @@ export interface UsagePhaseState {
     snapshot?: UsageRow[];
     trends?: UsageTrendData[];
     selectedPokemonId?: number;
+    /** Exact Smogon species name; distinguishes formes that share a dex number. */
+    selectedPokemonName?: string;
   };
 }

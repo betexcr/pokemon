@@ -5,7 +5,7 @@ import { UsageRow } from '@/types/usage';
 import { ChevronUp, ChevronDown, Info } from 'lucide-react';
 import SourceTooltip from './SourceTooltip';
 import LazyImage from '@/components/LazyImage';
-import { getPokemonImageUrl, getPokemonFallbackImage } from '@/lib/api';
+import { usageSpriteUrls } from '@/lib/usage/species';
 
 interface UsageTableProps {
   rows: UsageRow[];
@@ -147,8 +147,11 @@ export default function UsageTable({
             <th className="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300">
               Format
             </th>
-            <th className="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300">
-              Sample
+            <th
+              className="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300"
+              title="Raw count: number of teams that included this Pokémon"
+            >
+              Teams
             </th>
             <th className="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300">
               Source
@@ -178,11 +181,7 @@ export default function UsageTable({
                 <div className="flex items-center gap-3">
                   <div className="relative w-10 h-10 flex-shrink-0">
                     <LazyImage
-                      srcList={[
-                        getPokemonImageUrl(row.pokemonId, 'default', 'medium'),
-                        getPokemonFallbackImage(row.pokemonId),
-                        "/placeholder-pokemon.png"
-                      ]}
+                      srcList={usageSpriteUrls(row.pokemonName, 'medium')}
                       alt={row.pokemonName}
                       width={40}
                       height={40}
@@ -195,9 +194,11 @@ export default function UsageTable({
                     <span className="font-medium text-gray-900 dark:text-gray-100">
                       {row.pokemonName}
                     </span>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                      #{row.pokemonId}
-                    </span>
+                    {row.pokemonId > 0 && (
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        #{row.pokemonId}
+                      </span>
+                    )}
                   </div>
                 </div>
               </td>

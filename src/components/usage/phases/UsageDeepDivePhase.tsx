@@ -1,128 +1,154 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { UsageFilters, UsagePhaseState, UsagePhase, UsageRow } from '@/types/usage';
+import { useState, useEffect, useMemo } from 'react';
+import LazyImage from '@/components/LazyImage';
+import { usageSpriteUrls } from '@/lib/usage/species';
+import type { UsageFilters, UsagePhaseState, UsagePhase, UsageRow, UsageSubstats } from '@/types/usage';
 
 interface UsageDeepDivePhaseProps {
   filters: UsageFilters;
   phaseState: UsagePhaseState;
-  onPhaseChange: (phase: UsagePhase, selectedPokemonId?: number) => void;
+  onPhaseChange: (phase: UsagePhase, selectedPokemonId?: number, selectedPokemonName?: string) => void;
   onMonthResolved?: (requestedMonth: string, resolvedMonth: string) => void;
 }
 
-const COLORS = ['#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#8B5CF6', '#EC4899'];
-
-interface UsageDeepDiveData {
+interface MonthlyResponse {
   data: UsageRow[];
-  total?: number;
   metadata: {
-    platforms?: string[];
-    generations?: string[];
-    formats?: string[];
-    months?: string[];
-    sampleSize?: number;
+    resolvedMonth?: string;
+    totalBattles?: number;
     source?: string;
-    dataQuality?: 'live' | 'empty';
-    lastUpdated?: string;
   };
 }
 
-interface TooltipPayloadEntry {
-  color?: string;
-  name?: string;
-  value?: number | string;
+interface SubstatsResponse {
+  pokemonName: string;
+  month: string;
+  substats: UsageSubstats | null;
+  sourceUrl?: string;
 }
 
-const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: TooltipPayloadEntry[]; label?: string }) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
-        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{label}</p>
-        {payload.map((entry, index: number) => (
-          <p key={index} style={{ color: entry.color }} className="text-sm">
-            {entry.name}: {entry.value}%
-          </p>
-        ))}
-      </div>
-    );
-  }
-  return null;
-};
+type PctEntry = { name: string; pct: number };
 
-export default function UsageDeepDivePhase({ 
-  filters, 
-  phaseState, 
-  onPhaseChange 
-}: UsageDeepDivePhaseProps) {
-  const [data, setData] = useState<UsageDeepDiveData | null>(null);
+const LIST_LIMIT = 10;
+
+function PctList({ title, entries, color, note }: { title: string; entries?: PctEntry[]; color: string; note?: string }) {
+  if (!entries || entries.length === 0) return null;
+  const max = Math.max(...entries.map((e) => e.pct), 1);
+  return (
+    <section className="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h3>
+      {note && <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">{note}</p>}
+      <ul className="space-y-2 mt-2">
+        {entries.slice(0, LIST_LIMIT).map((entry) => (
+          <li key={entry.name} className="flex items-center gap-3">
+            <span className="w-40 shrink-0 truncate text-sm text-gray-900 dark:text-gray-100" title={entry.name}>
+              {entry.name}
+            </span>
+            <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+              <div className={`${color} h-2 rounded-full`} style={{ width: `${(entry.pct / max) * 100}%` }} />
+            </div>
+            <span className="w-16 text-right text-sm tabular-nums text-gray-600 dark:text-gray-400">
+              {entry.pct.toFixed(1)}%
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+export default function UsageDeepDivePhase({ filters, phaseState }: UsageDeepDivePhaseProps) {
+  const [monthly, setMonthly] = useState<MonthlyResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedPokemon, setSelectedPokemon] = useState<UsageRow | null>(null);
   const [retryKey, setRetryKey] = useState(0);
+  const [selectedName, setSelectedName] = useState<string | null>(phaseState.data.selectedPokemonName ?? null);
 
+  const [details, setDetails] = useState<SubstatsResponse | null>(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [detailsError, setDetailsError] = useState<string | null>(null);
+
+  // 1. Ranking for the selected format/month (used for the picker and headline numbers).
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setError(null);
-
-    const fetchDeepDiveData = async () => {
+    (async () => {
       try {
         const params = new URLSearchParams();
-        if (filters.platforms.length > 0) params.set('platform', filters.platforms[0]);
-        if (filters.generations.length > 0) params.set('generation', filters.generations[0]);
-        if (filters.formats.length > 0) params.set('format', filters.formats[0]);
+        if (filters.platforms[0]) params.set('platform', filters.platforms[0]);
+        if (filters.generations[0]) params.set('generation', filters.generations[0]);
+        if (filters.formats[0]) params.set('format', filters.formats[0]);
         if (filters.month) params.set('month', filters.month);
         if (filters.top50Only) params.set('top50Only', 'true');
-
         const response = await fetch(`/api/usage/monthly?${params.toString()}`);
-        if (cancelled) return;
-
-        if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-
-        const result = await response.json();
-        if (cancelled) return;
-        setData(result);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const result: MonthlyResponse = await response.json();
+        if (!cancelled) setMonthly(result);
       } catch (err) {
-        if (cancelled) return;
-        setError(err instanceof Error ? err.message : 'Failed to fetch data');
-        setData(null);
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Failed to fetch data');
+          setMonthly(null);
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
+    })();
+    return () => {
+      cancelled = true;
     };
-
-    fetchDeepDiveData();
-    return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters, retryKey]);
 
+  const rows = useMemo(() => monthly?.data ?? [], [monthly]);
+  const month = monthly?.metadata?.resolvedMonth ?? filters.month;
+
+  // Keep a valid selection: requested name → requested dex id → top-ranked Pokémon.
   useEffect(() => {
-    if (data) {
-      const rows = data.data || [];
-      const targetId = phaseState.data.selectedPokemonId;
-      const next = targetId ? rows.find((row) => row.pokemonId === targetId) : undefined;
-      if (next) {
-        setSelectedPokemon(next);
-      } else if (rows.length > 0 && !selectedPokemon) {
-        setSelectedPokemon(rows[0]);
+    if (rows.length === 0) return;
+    if (selectedName && rows.some((row) => row.pokemonName === selectedName)) return;
+    const wantedName = phaseState.data.selectedPokemonName;
+    const wantedId = phaseState.data.selectedPokemonId;
+    const next =
+      (wantedName && rows.find((row) => row.pokemonName === wantedName)) ||
+      (wantedId && rows.find((row) => row.pokemonId === wantedId)) ||
+      rows[0];
+    setSelectedName(next.pokemonName);
+  }, [rows, selectedName, phaseState.data.selectedPokemonName, phaseState.data.selectedPokemonId]);
+
+  const selected = rows.find((row) => row.pokemonName === selectedName) ?? null;
+
+  // 2. Moveset details (moves, items, spreads, …) for the selected Pokémon.
+  useEffect(() => {
+    if (!selected || !month) return;
+    let cancelled = false;
+    setDetailsLoading(true);
+    setDetailsError(null);
+    setDetails(null);
+    (async () => {
+      try {
+        const params = new URLSearchParams({
+          platform: selected.platform,
+          generation: selected.generation,
+          format: selected.format,
+          month,
+          name: selected.pokemonName,
+        });
+        const response = await fetch(`/api/usage/pokemon?${params.toString()}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const result: SubstatsResponse = await response.json();
+        if (!cancelled) setDetails(result);
+      } catch (err) {
+        if (!cancelled) setDetailsError(err instanceof Error ? err.message : 'Failed to load details');
+      } finally {
+        if (!cancelled) setDetailsLoading(false);
       }
-    }
-  }, [data, phaseState.data.selectedPokemonId, selectedPokemon]);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [selected, month]);
 
-  const formatSubstatsData = (
-    substats: UsageRow['substats'],
-    type: 'moves' | 'items' | 'abilities'
-  ): Array<{ name: string; percentage: number }> => {
-    const values = substats?.[type];
-    if (!values) return [];
-    return values.map((item) => ({
-      name: item.name,
-      percentage: item.pct
-    }));
-  };
-
-  // Handle loading and error states
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -131,279 +157,179 @@ export default function UsageDeepDivePhase({
     );
   }
 
-  if (error) {
+  if (error || !selected) {
     return (
-      <div className="space-y-6">
-        <div className="text-center py-4">
-          <div className="text-red-600 dark:text-red-400 mb-2">No Data Available</div>
-          <div className="text-gray-600 dark:text-gray-400 text-sm mb-4">{error}</div>
-          <button
-            type="button"
-            onClick={() => setRetryKey(k => k + 1)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Retry
-          </button>
-        </div>
+      <div className="text-center py-8 space-y-3">
+        <div className="text-gray-700 dark:text-gray-300">{error ? 'No Data Available' : 'No data found'}</div>
+        {error && <div className="text-sm text-gray-500">{error}</div>}
+        <button
+          type="button"
+          onClick={() => setRetryKey((k) => k + 1)}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          Retry
+        </button>
       </div>
     );
   }
 
-  const rows = data?.data || [];
-  
-  if (!data || rows.length === 0 || !selectedPokemon) {
-    return (
-      <div className="space-y-6">
-        <div className="text-center py-4">
-          <div className="text-gray-600 dark:text-gray-400 mb-2">No data found</div>
-          <div className="text-gray-500 dark:text-gray-500 text-sm">
-            Try adjusting your filters or selecting a different time period
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const movesData = formatSubstatsData(selectedPokemon.substats, 'moves');
-  const itemsData = formatSubstatsData(selectedPokemon.substats, 'items');
-  const abilitiesData = formatSubstatsData(selectedPokemon.substats, 'abilities');
+  const sub = details?.substats ?? null;
+  const topSpread = sub?.spreads?.[0];
+  const commonMoves = sub?.moves?.slice(0, 4).map((m) => m.name) ?? [];
 
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-          Deep Dive Analysis
-        </h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Deep Dive Analysis</h2>
         <p className="text-gray-600 dark:text-gray-400">
-          Detailed move sets, items, abilities, and strategies
+          Moves, items, abilities, Tera types, EV spreads and teammates from Smogon&apos;s moveset statistics
         </p>
       </div>
 
-      {/* Pokemon Selector */}
+      {/* Picker */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Select Pokémon for Analysis:
+        <label htmlFor="deepdive-pokemon" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Select Pokémon for analysis:
         </label>
         <select
-          value={selectedPokemon.pokemonId}
-          aria-label="Select Pokémon for analysis"
-          onChange={(e) => {
-            const pokemon = rows.find(p => p.pokemonId === Number(e.target.value));
-            if (pokemon) setSelectedPokemon(pokemon);
-          }}
-          className="w-full max-w-xs px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+          id="deepdive-pokemon"
+          value={selected.pokemonName}
+          onChange={(e) => setSelectedName(e.target.value)}
+          className="w-full max-w-sm px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
         >
-          {rows.map((pokemon, index) => (
-            <option key={`${pokemon.pokemonId}-${pokemon.platform}-${pokemon.format}-${index}`} value={pokemon.pokemonId}>
-              {pokemon.pokemonName} ({pokemon.platform} {pokemon.format})
+          {rows.map((row) => (
+            <option key={row.pokemonName} value={row.pokemonName}>
+              #{row.rank} {row.pokemonName} ({row.usagePercent.toFixed(2)}%)
             </option>
           ))}
         </select>
       </div>
 
-      {/* Pokemon Overview */}
+      {/* Overview */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
         <div className="flex items-center gap-4 mb-4">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
-            {selectedPokemon.pokemonId}
+          <div className="w-20 h-20 shrink-0">
+            <LazyImage
+              key={selected.pokemonName}
+              srcList={usageSpriteUrls(selected.pokemonName, 'large')}
+              alt={selected.pokemonName}
+              width={80}
+              height={80}
+              imgClassName="w-20 h-20 object-contain"
+            />
           </div>
           <div>
-            <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-              {selectedPokemon.pokemonName}
-            </h3>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">{selected.pokemonName}</h3>
             <p className="text-gray-600 dark:text-gray-400">
-              #{selectedPokemon.rank} in {selectedPokemon.platform} {selectedPokemon.format}
-            </p>
-            <p className="text-lg font-semibold text-blue-600 dark:text-blue-400">
-              {selectedPokemon.usagePercent}% usage
+              #{selected.rank} in {selected.format.replace(/_/g, ' ')} · {month}
             </p>
           </div>
         </div>
-        
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              {selectedPokemon.rank}
-            </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">Current Rank</div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">#{selected.rank}</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">Usage rank</div>
+          </div>
+          <div className="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{selected.usagePercent.toFixed(2)}%</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">of teams (weighted)</div>
           </div>
           <div className="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
             <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              {selectedPokemon.usagePercent}%
+              {selected.sampleSize?.toLocaleString() ?? '—'}
             </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">Usage Rate</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">Teams using it</div>
           </div>
           <div className="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
             <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              {selectedPokemon.sampleSize?.toLocaleString() || 'N/A'}
+              {monthly?.metadata?.totalBattles?.toLocaleString() ?? '—'}
             </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">Sample Size</div>
-          </div>
-          <div className="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              {selectedPokemon.month}
-            </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">Data Month</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">Battles in format</div>
           </div>
         </div>
       </div>
 
-      {/* Moves Analysis */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-          Most Popular Moves
-        </h3>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={movesData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis 
-                  dataKey="name" 
-                  stroke="#6B7280"
-                  fontSize={10}
-                  angle={-45}
-                  textAnchor="end"
-                  height={60}
-                />
-                <YAxis stroke="#6B7280" fontSize={12} />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="percentage" fill="#3B82F6" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={movesData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percentage }) => `${name}: ${percentage}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="percentage"
-                >
-                  {movesData.map((entry, index: number) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+      {detailsLoading && (
+        <div className="flex items-center justify-center gap-3 py-10 text-gray-600 dark:text-gray-400">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+          Loading moveset statistics…
         </div>
-      </div>
+      )}
 
-      {/* Items Analysis */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-          Item Usage Distribution
-        </h3>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={itemsData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis 
-                  dataKey="name" 
-                  stroke="#6B7280"
-                  fontSize={10}
-                  angle={-45}
-                  textAnchor="end"
-                  height={60}
-                />
-                <YAxis stroke="#6B7280" fontSize={12} />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="percentage" fill="#10B981" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="space-y-3">
-            {itemsData.map((item, index: number) => (
-              <div key={item.name} className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                  {item.name}
-                </span>
-                <div className="flex items-center gap-2">
-                  <div className="w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                    <div 
-                      className="bg-green-500 h-2 rounded-full"
-                      style={{ width: `${item.percentage}%` }}
-                    />
-                  </div>
-                  <span className="text-sm text-gray-600 dark:text-gray-400 w-12 text-right">
-                    {item.percentage}%
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
+      {!detailsLoading && (detailsError || (details && !sub)) && (
+        <div className="rounded-lg border border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-900/20 p-4 text-sm text-amber-900 dark:text-amber-200">
+          {detailsError
+            ? `Couldn't load moveset statistics (${detailsError}).`
+            : `Smogon's moveset statistics for ${month} don't include ${selected.pokemonName}.`}
         </div>
-      </div>
+      )}
 
-      {/* Abilities Analysis */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-          Ability Usage
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {abilitiesData.map((ability, index: number) => (
-            <div key={ability.name} className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="font-semibold text-purple-900 dark:text-purple-100">
-                  {ability.name}
-                </h4>
-                <span className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                  {ability.percentage}%
-                </span>
-              </div>
-              <div className="w-full bg-purple-200 dark:bg-purple-800 rounded-full h-2">
-                <div 
-                  className="bg-purple-600 h-2 rounded-full"
-                  style={{ width: `${ability.percentage}%` }}
-                />
-              </div>
-              <p className="text-sm text-purple-700 dark:text-purple-300 mt-2">
-                Primary ability used in competitive play
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
+      {sub && (
+        <>
+          {/* Most common choices, built only from the top entry of each real distribution */}
+          <section className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-5">
+            <h3 className="font-semibold text-blue-900 dark:text-blue-100">Most common choices</h3>
+            <p className="text-xs text-blue-800/80 dark:text-blue-200/80 mb-3">
+              The most popular option in each category. They are counted separately, so this is not necessarily one
+              exact set.
+            </p>
+            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm text-blue-900 dark:text-blue-100">
+              {sub.items?.[0] && (
+                <div><dt className="inline font-semibold">Item: </dt><dd className="inline">{sub.items[0].name} ({sub.items[0].pct.toFixed(1)}%)</dd></div>
+              )}
+              {sub.abilities?.[0] && (
+                <div><dt className="inline font-semibold">Ability: </dt><dd className="inline">{sub.abilities[0].name} ({sub.abilities[0].pct.toFixed(1)}%)</dd></div>
+              )}
+              {sub.teraTypes?.[0] && (
+                <div><dt className="inline font-semibold">Tera type: </dt><dd className="inline">{sub.teraTypes[0].name} ({sub.teraTypes[0].pct.toFixed(1)}%)</dd></div>
+              )}
+              {topSpread && (
+                <div><dt className="inline font-semibold">Spread: </dt><dd className="inline">{topSpread.nature} {topSpread.evs} ({topSpread.pct.toFixed(1)}%)</dd></div>
+              )}
+              {commonMoves.length > 0 && (
+                <div className="sm:col-span-2"><dt className="inline font-semibold">Moves: </dt><dd className="inline">{commonMoves.join(' / ')}</dd></div>
+              )}
+            </dl>
+          </section>
 
-      {/* Strategic Insights */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
-          <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-3">
-            🎯 Strategy Analysis
-          </h4>
-          <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-2">
-            <li>• <strong>Primary Role:</strong> {selectedPokemon.pokemonName === 'Great Tusk' ? 'Physical Attacker & Hazard Control' : 
-              selectedPokemon.pokemonName === 'Landorus-Therian' ? 'Defensive Pivot & Stealth Rock Setter' :
-              selectedPokemon.pokemonName === 'Gholdengo' ? 'Special Attacker & Hazard Control' :
-              'Fast Special Attacker & Pivot'}</li>
-            <li>• <strong>Key Move:</strong> {movesData[0]?.name || 'N/A'} ({movesData[0]?.percentage}% usage)</li>
-            <li>• <strong>Preferred Item:</strong> {itemsData[0]?.name || 'N/A'} ({itemsData[0]?.percentage}% usage)</li>
-            <li>• <strong>Meta Position:</strong> {selectedPokemon.usagePercent >= 30 ? 'Tier 1 Threat' : 
-              selectedPokemon.usagePercent >= 15 ? 'Tier 2 Threat' : 'Niche Pick'}</li>
-          </ul>
-        </div>
-        
-        <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-800 rounded-lg p-6">
-          <h4 className="font-semibold text-green-900 dark:text-green-100 mb-3">
-            📊 Usage Context
-          </h4>
-          <ul className="text-sm text-green-800 dark:text-green-200 space-y-2">
-            <li>• <strong>Platform:</strong> {selectedPokemon.platform.replace('_', ' ')}</li>
-            <li>• <strong>Format:</strong> {selectedPokemon.format}</li>
-            <li>• <strong>Generation:</strong> {selectedPokemon.generation}</li>
-            <li>• <strong>Sample Size:</strong> {selectedPokemon.sampleSize?.toLocaleString() || 'Unknown'} battles</li>
-            <li>• <strong>Data Source:</strong> {selectedPokemon.source?.label || 'Unknown'}</li>
-          </ul>
-        </div>
-      </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <PctList
+              title="Moves"
+              entries={sub.moves}
+              color="bg-blue-500"
+              note="Share of sets running each move. Sets have up to 4 moves, so these add up to about 400%."
+            />
+            <PctList title="Items" entries={sub.items} color="bg-green-500" />
+            <PctList title="Abilities" entries={sub.abilities} color="bg-purple-500" />
+            <PctList title="Tera types" entries={sub.teraTypes} color="bg-pink-500" />
+            <PctList
+              title="Teammates"
+              entries={sub.teammates}
+              color="bg-amber-500"
+              note="Pokémon most often on the same team."
+            />
+            {sub.spreads && sub.spreads.length > 0 && (
+              <PctList
+                title="EV spreads"
+                entries={sub.spreads.map((s) => ({ name: `${s.nature} ${s.evs}`, pct: s.pct }))}
+                color="bg-teal-500"
+                note="Nature and HP/Atk/Def/SpA/SpD/Spe EVs."
+              />
+            )}
+          </div>
+        </>
+      )}
+
+      <p className="text-xs text-gray-500 dark:text-gray-400">
+        Source:{' '}
+        {details?.sourceUrl ? (
+          <a href={details.sourceUrl} target="_blank" rel="noopener noreferrer" className="underline hover:text-blue-600">
+            Smogon moveset statistics ({month})
+          </a>
+        ) : (
+          selected.source?.label ?? 'Smogon usage statistics'
+        )}
+      </p>
     </div>
   );
 }

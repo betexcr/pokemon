@@ -1,4 +1,4 @@
-import type { UsageRow, UsageSubstats } from '@/types/usage';
+import type { UsageSubstats } from '@/types/usage';
 import { smogonStatsMonthPath } from './smogonMonth';
 import { SMOGON_STATS_BASE, smogonFetch } from './smogonDiscovery';
 
@@ -115,38 +115,8 @@ export async function fetchSmogonMovesetText(month: string, stem: string): Promi
   const pathMonth = smogonStatsMonthPath(month);
   const url = `${SMOGON_STATS_BASE}/${pathMonth}/moveset/${stem}-0.txt`;
   // Moveset dumps are several MB; Next's data cache refuses entries over 2MB, so don't try.
-  // The parsed rows are cached in-process by the usage service instead.
+  // The usage service keeps a few recent dumps in memory instead (getMovesetText).
   const res = await smogonFetch(url, { cache: 'no-store', timeoutMs: 15_000 });
   if (!res.ok) return null;
   return res.text();
-}
-
-const SUBSTAT_TOP_K = 18;
-
-/**
- * Attach moveset substats to the first `topK` rows (by rank) when the moveset dump exists.
- */
-export async function enrichRowsWithMovesetSubstats(
-  rows: UsageRow[],
-  month: string,
-  stem: string,
-  topK: number = SUBSTAT_TOP_K
-): Promise<UsageRow[]> {
-  if (rows.length === 0) return rows;
-  const sorted = [...rows].sort((a, b) => a.rank - b.rank);
-  const head = sorted.slice(0, topK);
-  const text = await fetchSmogonMovesetText(month, stem);
-  if (!text) return rows;
-
-  const byName = new Map<string, UsageSubstats | undefined>();
-  for (const row of head) {
-    if (byName.has(row.pokemonName)) continue;
-    byName.set(row.pokemonName, parseSmogonMovesetBlockForPokemon(text, row.pokemonName));
-  }
-
-  return rows.map((row) => {
-    const sub = byName.get(row.pokemonName);
-    if (!sub) return row;
-    return { ...row, substats: sub };
-  });
 }

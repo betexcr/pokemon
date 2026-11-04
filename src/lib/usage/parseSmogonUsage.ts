@@ -1,46 +1,25 @@
 import type { Format, Generation, Platform, UsageRow } from '@/types/usage';
+import { dexIdForSpecies } from './species';
 
 type UsageMonth = `${number}-${number}`;
 
-const NAME_OVERRIDES: Record<string, number> = {
-  'great-tusk': 984,
-  'flutter-mane': 987,
-  'iron-bundle': 991,
-  'iron-valiant': 1006,
-  'roaring-moon': 1005,
-  'walking-wake': 1009,
-  'raging-bolt': 1021,
-  'iron-crown': 1023,
-  'iron-boulder': 1022,
-  'gouging-fire': 1020,
-  'ting-lu': 1003,
-  'chien-pao': 1002,
-  'wo-chien': 1001,
-  'chi-yu': 1004,
-  'koraidon': 1007,
-  'miraidon': 1008,
-  'landorus-therian': 645,
-  'tornadus-therian': 641,
-  'thundurus-therian': 642,
-  'enamorus-therian': 905,
-};
-
-function slugifyPokemonName(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/['.:%]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/[^\w-]/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '');
+/**
+ * National dex number for a Smogon species name (base species for formes such as
+ * "Landorus-Therian"); 0 when the name is unknown. Previously unknown names were hashed into
+ * a pseudo-random id, which showed the wrong Pokémon's image.
+ */
+export function inferPokemonId(name: string): number {
+  return dexIdForSpecies(name);
 }
 
-export function inferPokemonId(name: string): number {
-  const slug = slugifyPokemonName(name);
-  if (NAME_OVERRIDES[slug]) return NAME_OVERRIDES[slug];
-  let hash = 0;
-  for (let i = 0; i < slug.length; i += 1) hash = (hash * 31 + slug.charCodeAt(i)) >>> 0;
-  return (hash % 1025) + 1;
+/** Header stats of a Smogon usage file ("Total battles: N", "Avg. weight/team: X"). */
+export function parseSmogonUsageHeader(text: string): { totalBattles?: number; avgWeightPerTeam?: number } {
+  const battles = text.match(/Total battles:\s*(\d+)/i);
+  const weight = text.match(/Avg\. weight\/team:\s*([\d.]+)/i);
+  return {
+    totalBattles: battles ? Number.parseInt(battles[1], 10) : undefined,
+    avgWeightPerTeam: weight ? Number.parseFloat(weight[1]) : undefined,
+  };
 }
 
 function asUsageMonth(month: string): UsageMonth {
