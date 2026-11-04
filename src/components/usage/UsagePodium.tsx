@@ -4,7 +4,7 @@ import React from 'react';
 import { UsageRow } from '@/types/usage';
 import { Trophy, Medal, Award } from 'lucide-react';
 import LazyImage from '@/components/LazyImage';
-import { getPokemonImageUrl, getPokemonFallbackImage } from '@/lib/api';
+import { usageSpriteUrls } from '@/lib/usage/species';
 
 interface UsagePodiumProps {
   top3: UsageRow[];
@@ -45,11 +45,7 @@ export default function UsagePodium({ top3 }: UsagePodiumProps) {
     return (
       <div className="w-16 h-16 relative">
         <LazyImage
-          srcList={[
-            getPokemonImageUrl(pokemon.pokemonId, 'default', 'large'),
-            getPokemonFallbackImage(pokemon.pokemonId),
-            "/placeholder-pokemon.png"
-          ]}
+          srcList={usageSpriteUrls(pokemon.pokemonName, 'large')}
           alt={pokemon.pokemonName}
           width={64}
           height={64}

@@ -7,13 +7,13 @@ import { UsageFilters, UsagePhaseState, UsagePhase, UsageRow } from '@/types/usa
 interface UsageTrendsPhaseProps {
   filters: UsageFilters;
   phaseState: UsagePhaseState;
-  onPhaseChange: (phase: UsagePhase, selectedPokemonId?: number) => void;
+  onPhaseChange: (phase: UsagePhase, selectedPokemonId?: number, selectedPokemonName?: string) => void;
   onMonthResolved?: (requestedMonth: string, resolvedMonth: string) => void;
 }
 
 interface TrendDataPoint {
   month: string;
-  [pokemonName: string]: string | number;
+  [pokemonName: string]: string | number | null;
 }
 
 interface HistoricalData {
@@ -70,22 +70,7 @@ export default function UsageTrendsPhase({
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [availablePokemon, setAvailablePokemon] = useState<string[]>([]);
-
-  // Generate list of recent months for trend analysis
-  const getRecentMonths = (count: number = 6): string[] => {
-    const months: string[] = [];
-    // Start at last month: Smogon only publishes a month's stats after it ends.
-    for (let i = 1; i <= count; i++) {
-      const date = new Date();
-      date.setDate(1);
-      date.setMonth(date.getMonth() - i);
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      months.push(`${year}-${month}`);
-    }
-    
-    return months.reverse(); // Reverse to get chronological order
-  };
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     if (!filters.platforms[0] || !filters.generations[0] || !filters.formats[0]) {
@@ -98,87 +83,21 @@ export default function UsageTrendsPhase({
 
     const fetchTrendsData = async () => {
       try {
-        try {
-          const response = await fetch(
-            `/api/usage/trends?platform=${filters.platforms[0]}&generation=${filters.generations[0]}&format=${filters.formats[0]}&months=6`
-          );
-          if (cancelled) return;
-
-          if (response.ok) {
-            const result = await response.json();
-            if (cancelled) return;
-            if (result.historicalData && result.historicalData.length > 0) {
-              const historicalData = result.historicalData;
-              const latestData = historicalData[historicalData.length - 1];
-              const topPokemon = latestData.data.slice(0, 6).map((pokemon: UsageRow) => pokemon.pokemonName);
-
-              setAvailablePokemon(topPokemon);
-              if (topPokemon.length > 0 && !topPokemon.includes(selectedPokemon)) {
-                setSelectedPokemon(topPokemon[0]);
-              }
-
-              const trendChartData: TrendDataPoint[] = historicalData.map((monthData: HistoricalData) => {
-                const dataPoint: TrendDataPoint = { month: monthData.month };
-                topPokemon.forEach((pokemonName: string) => {
-                  const pokemonData = monthData.data.find((p: UsageRow) => p.pokemonName === pokemonName);
-                  dataPoint[pokemonName] = pokemonData ? pokemonData.usagePercent : 0;
-                });
-                return dataPoint;
-              });
-
-              const rankChartData: TrendDataPoint[] = historicalData.map((monthData: HistoricalData) => {
-                const dataPoint: TrendDataPoint = { month: monthData.month };
-                topPokemon.forEach((pokemonName: string) => {
-                  const pokemonData = monthData.data.find((p: UsageRow) => p.pokemonName === pokemonName);
-                  dataPoint[pokemonName] = pokemonData ? pokemonData.rank : 0;
-                });
-                return dataPoint;
-              });
-
-              setTrendData(trendChartData);
-              setRankData(rankChartData);
-              setLoading(false);
-              return;
-            }
-          }
-        } catch (trendsApiErr) {
-          if (cancelled) return;
-          console.warn('Trends API failed, falling back to monthly API:', trendsApiErr);
-        }
-
-        const months = getRecentMonths(6);
-        const historicalData: HistoricalData[] = [];
-
-        for (const month of months) {
-          if (cancelled) return;
-          try {
-            const response = await fetch(
-              `/api/usage/monthly?platform=${filters.platforms[0]}&generation=${filters.generations[0]}&format=${filters.formats[0]}&month=${month}`
-            );
-            if (cancelled) return;
-            if (response.ok) {
-              const result = await response.json();
-              if (cancelled) return;
-              // The API may serve an earlier month when this one is unpublished; skip duplicates.
-              const servedMonth: string = result.metadata?.resolvedMonth ?? month;
-              if (
-                result.data &&
-                result.data.length > 0 &&
-                !historicalData.some((entry) => entry.month === servedMonth)
-              ) {
-                historicalData.push({ month: servedMonth, data: result.data });
-              }
-            }
-          } catch (err) {
-            if (cancelled) return;
-            console.warn(`Failed to fetch data for ${month}:`, err);
-          }
-        }
-
+        const params = new URLSearchParams({
+          platform: filters.platforms[0],
+          generation: filters.generations[0],
+          format: filters.formats[0],
+          months: '6',
+        });
+        const response = await fetch(`/api/usage/trends?${params.toString()}`);
         if (cancelled) return;
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const result = await response.json();
+        if (cancelled) return;
+
+        const historicalData: HistoricalData[] = result.historicalData ?? [];
         if (historicalData.length === 0) {
           setError('No historical data available for the selected filters');
-          setLoading(false);
           return;
         }
 
@@ -190,29 +109,22 @@ export default function UsageTrendsPhase({
           setSelectedPokemon(topPokemon[0]);
         }
 
-        const trendChartData: TrendDataPoint[] = historicalData.map(monthData => {
-          const dataPoint: TrendDataPoint = { month: monthData.month };
-          topPokemon.forEach((pokemonName: string) => {
-            const pokemonData = monthData.data.find((p: UsageRow) => p.pokemonName === pokemonName);
-            dataPoint[pokemonName] = pokemonData ? pokemonData.usagePercent : 0;
+        const series = (field: 'usagePercent' | 'rank'): TrendDataPoint[] =>
+          historicalData.map((monthData) => {
+            const dataPoint: TrendDataPoint = { month: monthData.month };
+            topPokemon.forEach((pokemonName: string) => {
+              const pokemonData = monthData.data.find((p: UsageRow) => p.pokemonName === pokemonName);
+              // Missing from a month's top 50 → no point (null) rather than a misleading 0.
+              dataPoint[pokemonName] = pokemonData ? pokemonData[field] : null;
+            });
+            return dataPoint;
           });
-          return dataPoint;
-        });
 
-        const rankChartData: TrendDataPoint[] = historicalData.map(monthData => {
-          const dataPoint: TrendDataPoint = { month: monthData.month };
-          topPokemon.forEach((pokemonName: string) => {
-            const pokemonData = monthData.data.find((p: UsageRow) => p.pokemonName === pokemonName);
-            dataPoint[pokemonName] = pokemonData ? pokemonData.rank : 0;
-          });
-          return dataPoint;
-        });
-
-        setTrendData(trendChartData);
-        setRankData(rankChartData);
+        setTrendData(series('usagePercent'));
+        setRankData(series('rank'));
       } catch (err) {
         if (cancelled) return;
-        setError('Failed to fetch trends data');
+        setError('Failed to load usage trends. Please try again.');
         console.error('Trends data fetch error:', err);
       } finally {
         if (!cancelled) setLoading(false);
@@ -222,7 +134,7 @@ export default function UsageTrendsPhase({
     fetchTrendsData();
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.platforms, filters.generations, filters.formats]);
+  }, [filters.platforms, filters.generations, filters.formats, retryKey]);
 
   if (loading) {
     return (
@@ -252,6 +164,13 @@ export default function UsageTrendsPhase({
           <p className="text-red-600 dark:text-red-400">
             {error}
           </p>
+          <button
+            type="button"
+            onClick={() => setRetryKey((k) => k + 1)}
+            className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );
@@ -412,7 +331,9 @@ export default function UsageTrendsPhase({
         const latest = trendData[trendData.length - 1];
         const previous = trendData[trendData.length - 2];
         
-        const trends = availablePokemon.map(pokemon => {
+        const trends = availablePokemon
+          .filter(pokemon => typeof latest[pokemon] === 'number' && typeof previous[pokemon] === 'number')
+          .map(pokemon => {
           const latestUsage = latest[pokemon] as number;
           const previousUsage = previous[pokemon] as number;
           const change = latestUsage - previousUsage;
@@ -432,7 +353,7 @@ export default function UsageTrendsPhase({
                 <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
                   {trendingUp.slice(0, 2).map(trend => (
                     <li key={trend.pokemon}>
-                      • {trend.pokemon}: +{trend.change.toFixed(1)}% this month
+                      • {trend.pokemon}: +{trend.change.toFixed(1)}% vs {String(previous.month)}
                     </li>
                   ))}
                 </ul>
@@ -446,7 +367,7 @@ export default function UsageTrendsPhase({
                 <ul className="text-sm text-red-800 dark:text-red-200 space-y-1">
                   {trendingDown.slice(0, 2).map(trend => (
                     <li key={trend.pokemon}>
-                      • {trend.pokemon}: {trend.change.toFixed(1)}% this month
+                      • {trend.pokemon}: {trend.change.toFixed(1)}% vs {String(previous.month)}
                     </li>
                   ))}
                 </ul>

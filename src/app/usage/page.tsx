@@ -37,6 +37,7 @@ type SearchParams = {
   sortBy?: string;
   sortOrder?: string;
   pokemonId?: string;
+  pokemon?: string;
 };
 
 const PLATFORM_VALUES: Platform[] = ['SMOGON_SINGLES', 'VGC_OFFICIAL', 'BSS_OFFICIAL', 'OTHER'];
@@ -68,6 +69,7 @@ export default async function UsagePage({
   const sortByParam = pickSingle(params.sortBy);
   const sortOrderParam = pickSingle(params.sortOrder);
   const pokemonIdParam = pickSingle(params.pokemonId);
+  const pokemonNameParam = pickSingle(params.pokemon)?.trim().slice(0, 60) || undefined;
 
   const filters: UsageFilters = {
     platforms: platform && PLATFORM_VALUES.includes(platform as Platform) ? [platform as Platform] : ['SMOGON_SINGLES'],
@@ -127,6 +129,7 @@ export default async function UsagePage({
             initialFilters={filters}
             initialPhase={phase}
             initialSelectedPokemonId={Number.isFinite(initialSelectedPokemonId) ? initialSelectedPokemonId : undefined}
+            initialSelectedPokemonName={pokemonNameParam}
           />
         </Suspense>
         </main>

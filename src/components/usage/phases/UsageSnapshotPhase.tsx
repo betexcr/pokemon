@@ -10,7 +10,7 @@ import { Info, TrendingUp } from 'lucide-react';
 interface UsageSnapshotPhaseProps {
   filters: UsageFilters;
   phaseState: UsagePhaseState;
-  onPhaseChange: (phase: UsagePhase, selectedPokemonId?: number) => void;
+  onPhaseChange: (phase: UsagePhase, selectedPokemonId?: number, selectedPokemonName?: string) => void;
   /** Called when the API served a different month than requested (requested one not published). */
   onMonthResolved?: (requestedMonth: string, resolvedMonth: string) => void;
 }
@@ -24,6 +24,7 @@ interface UsageSnapshotData {
     formats?: string[];
     months?: string[];
     sampleSize?: number;
+    totalBattles?: number;
     source?: string;
     dataQuality?: 'live' | 'empty';
     lastUpdated?: string;
@@ -143,8 +144,8 @@ export default function UsageSnapshotPhase({
   }
 
   const top3 = rows.slice(0, 3);
-  const totalUsage = rows.reduce((sum, row) => sum + row.usagePercent, 0);
-  const averageUsage = totalUsage / rows.length;
+  const leader = rows[0];
+  const shownMonth = data.metadata?.resolvedMonth ?? filters.month;
 
   return (
     <div className="space-y-6">
@@ -183,29 +184,34 @@ export default function UsageSnapshotPhase({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/20 p-4 rounded-lg border">
           <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-            {rows.length}
+            {data.metadata?.totalBattles ? data.metadata.totalBattles.toLocaleString() : '—'}
           </div>
           <div className="text-sm text-gray-600 dark:text-gray-400">
-            Pokémon Tracked
+            Battles analyzed{shownMonth ? ` (${shownMonth})` : ''}
           </div>
         </div>
         <div className="bg-gradient-to-br from-green-500/20 to-green-600/20 p-4 rounded-lg border">
           <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-            {totalUsage.toFixed(1)}%
+            {rows.length.toLocaleString()}
           </div>
           <div className="text-sm text-gray-600 dark:text-gray-400">
-            Total Usage
+            Different Pokémon used
           </div>
         </div>
         <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/20 p-4 rounded-lg border">
-          <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-            {averageUsage.toFixed(1)}%
+          <div className="text-2xl font-bold text-purple-600 dark:text-purple-400 truncate">
+            {leader ? `${leader.usagePercent.toFixed(1)}%` : '—'}
           </div>
-          <div className="text-sm text-gray-600 dark:text-gray-400">
-            Average Usage
+          <div className="text-sm text-gray-600 dark:text-gray-400 truncate">
+            Most used{leader ? `: ${leader.pokemonName}` : ''}
           </div>
         </div>
       </div>
+      <p className="text-xs text-gray-500 dark:text-gray-400 -mt-2">
+        <strong>Usage %</strong> is the share of teams that brought a Pokémon, weighted by player rating
+        (Smogon&apos;s standard usage stats). Each team has six Pokémon, so the percentages add up to
+        roughly 600%, not 100%.
+      </p>
 
       {/* Podium */}
       <div className="bg-gradient-to-br from-yellow-500/10 to-orange-500/10 p-6 rounded-lg border">
@@ -231,7 +237,7 @@ export default function UsageSnapshotPhase({
           sortOrder={filters.sortOrder}
           onRowClick={(row) => {
             // Navigate to deep dive phase with selected Pokémon
-            onPhaseChange('deepdive', row.pokemonId);
+            onPhaseChange('deepdive', row.pokemonId, row.pokemonName);
           }}
         />
       </div>

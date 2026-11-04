@@ -1,5 +1,5 @@
-import type { Format, Generation, Platform, UsageRow } from '@/types/usage';
-import { inferPokemonId, parseSmogonUsageText } from '@/lib/usage/parseSmogonUsage';
+import type { Format, Generation, Platform, UsageRow, UsageSubstats } from '@/types/usage';
+import { inferPokemonId, parseSmogonUsageHeader, parseSmogonUsageText } from '@/lib/usage/parseSmogonUsage';
 import {
   clampToPublishableMonth,
   latestPublishableUsageMonth,
@@ -8,8 +8,7 @@ import {
 } from '@/lib/usage/smogonMonth';
 import { SMOGON_STATS_BASE, smogonFetch } from '@/lib/usage/smogonDiscovery';
 import { resolveSmogonUsageFile } from '@/lib/usage/smogonResolve';
-import { enrichRowsWithMovesetSubstats } from '@/lib/usage/smogonMoveset';
-import { probeSmogonUsageFileExists } from '@/lib/usage/smogonProbe';
+import { fetchSmogonMovesetText, parseSmogonMovesetBlockForPokemon } from '@/lib/usage/smogonMoveset';
 
 const CACHE_TTL_MS = 1000 * 60 * 30;
 
@@ -33,7 +32,6 @@ function availabilityConcurrency(): number {
 
 type UsageKey = `${Platform}|${Generation}|${Format}|${string}`;
 type UsageMonth = `${number}-${number}`;
-type MonthHasDataMode = 'availability' | 'strict';
 
 interface MonthlyUsageResponse {
   data: UsageRow[];
@@ -44,6 +42,8 @@ interface MonthlyUsageResponse {
     formats: Format[];
     months: string[];
     sampleSize?: number;
+    /** "Total battles" from the Smogon file header. */
+    totalBattles?: number;
     source: string;
     sourceUrl?: string;
     dataQuality: 'live' | 'empty';
@@ -71,9 +71,24 @@ interface AvailabilityResponse {
   availability: Partial<Record<Format, Partial<Record<Generation, string[]>>>>;
 }
 
-const monthlyCache = new Map<UsageKey, { expires: number; data: UsageRow[] }>();
+interface MonthlyRows {
+  rows: UsageRow[];
+  totalBattles?: number;
+}
+
+export interface PokemonSubstatsResponse {
+  pokemonName: string;
+  month: string;
+  substats: UsageSubstats | null;
+  sourceUrl?: string;
+}
+
+const monthlyCache = new Map<UsageKey, { expires: number; data: MonthlyRows }>();
+/** Moveset dumps are several MB each: keep only a few in memory. */
+const movesetTextCache = new Map<string, { expires: number; text: string }>();
+const MOVESET_CACHE_MAX = 4;
 const monthExistsCache = new Map<string, { expires: number; exists: boolean }>();
-/** Shared raw text for a stats file URL so monthly fetch and strict probes can reuse work. */
+/** Raw usage-file text by stats URL, shared across monthly and trends requests. */
 const usageFileCache = new Map<string, { expires: number; text: string }>();
 
 function usageFileCacheKey(pathMonth: string, filename: string): string {
@@ -172,12 +187,13 @@ async function fetchSmogonMonthlyRows(
   generation: Generation,
   format: Format,
   month: string
-): Promise<UsageRow[]> {
+): Promise<MonthlyRows> {
   const normalizedMonth = normalizeMonth(month);
+  const fallback = (): MonthlyRows => ({
+    rows: allowUsageFallback() ? getFallbackRows(platform, generation, format, normalizedMonth) : [],
+  });
   const resolved = await resolveSmogonUsageFile(platform, generation, format, normalizedMonth);
-  if (!resolved) {
-    return allowUsageFallback() ? getFallbackRows(platform, generation, format, normalizedMonth) : [];
-  }
+  if (!resolved) return fallback();
 
   const pathMonth = smogonStatsMonthPath(normalizedMonth);
   const sourceUrl = `${SMOGON_STATS_BASE}/${pathMonth}/${resolved.filename}`;
@@ -191,16 +207,14 @@ async function fetchSmogonMonthlyRows(
       next: { revalidate: 3600 },
     });
 
-    if (!res.ok) {
-      return allowUsageFallback() ? getFallbackRows(platform, generation, format, normalizedMonth) : [];
-    }
+    if (!res.ok) return fallback();
 
     text = await res.text();
     usageFileCache.set(fk, { expires: Date.now() + CACHE_TTL_MS, text });
   }
 
   const sourceLabel = rowSourceLabel(platform, generation, format, normalizedMonth);
-  let parsed = parseSmogonUsageText(text, {
+  const parsed = parseSmogonUsageText(text, {
     platform,
     generation,
     format,
@@ -209,17 +223,11 @@ async function fetchSmogonMonthlyRows(
     sourceLabel,
   });
 
-  if (parsed.length === 0) {
-    return allowUsageFallback() ? getFallbackRows(platform, generation, format, normalizedMonth) : [];
-  }
+  if (parsed.length === 0) return fallback();
 
-  try {
-    parsed = await enrichRowsWithMovesetSubstats(parsed, normalizedMonth, resolved.stem);
-  } catch {
-    // Moveset is optional; combined usage still valid
-  }
-
-  return parsed;
+  // Moveset details (moves, items, spreads, …) are loaded per Pokémon by getPokemonSubstats:
+  // the moveset dump is several MB, too heavy to fetch for every snapshot or trends month.
+  return { rows: parsed, totalBattles: parseSmogonUsageHeader(text).totalBattles };
 }
 
 function cacheKey(platform: Platform, generation: Generation, format: Format, month: string): UsageKey {
@@ -231,15 +239,15 @@ async function getMonthlyRows(
   generation: Generation,
   format: Format,
   month: string
-): Promise<UsageRow[]> {
+): Promise<MonthlyRows> {
   const normalizedMonth = normalizeMonth(month);
   const key = cacheKey(platform, generation, format, normalizedMonth);
   const cached = monthlyCache.get(key);
   if (cached && cached.expires > Date.now()) return cached.data;
 
-  const rows = await fetchSmogonMonthlyRows(platform, generation, format, normalizedMonth);
-  monthlyCache.set(key, { expires: Date.now() + CACHE_TTL_MS, data: rows });
-  return rows;
+  const result = await fetchSmogonMonthlyRows(platform, generation, format, normalizedMonth);
+  monthlyCache.set(key, { expires: Date.now() + CACHE_TTL_MS, data: result });
+  return result;
 }
 
 /** Most recent publishable months, newest first (the in-progress month never has stats). */
@@ -247,61 +255,27 @@ function getRecentMonths(months: number): string[] {
   return monthsBackFrom(latestPublishableUsageMonth(), months);
 }
 
+/** Rows per month returned by the trends endpoint. */
+const TRENDS_ROW_LIMIT = 50;
+
 /** How many months to walk back when the requested month has no published stats. */
 const MONTHLY_FALLBACK_LOOKBACK = 6;
 
+/** Whether Smogon's monthly index lists a usage file for these filters (no download). */
 async function monthHasData(
   platform: Platform,
   generation: Generation,
   format: Format,
-  month: string,
-  mode: MonthHasDataMode
+  month: string
 ): Promise<boolean> {
-  const cacheKey = `${platform}|${generation}|${format}|${normalizeMonth(month)}|${mode}`;
-  const cached = monthExistsCache.get(cacheKey);
+  const key = `${platform}|${generation}|${format}|${normalizeMonth(month)}`;
+  const cached = monthExistsCache.get(key);
   if (cached && cached.expires > Date.now()) return cached.exists;
 
-  const normalizedMonth = normalizeMonth(month);
-  const resolved = await resolveSmogonUsageFile(platform, generation, format, normalizedMonth);
-  if (!resolved) {
-    const exists = allowUsageFallback();
-    monthExistsCache.set(cacheKey, { expires: Date.now() + CACHE_TTL_MS, exists });
-    return exists;
-  }
-
-  if (mode === 'availability') {
-    monthExistsCache.set(cacheKey, { expires: Date.now() + CACHE_TTL_MS, exists: true });
-    return true;
-  }
-
-  const pathMonth = smogonStatsMonthPath(normalizedMonth);
-  const sourceUrl = `${SMOGON_STATS_BASE}/${pathMonth}/${resolved.filename}`;
-  const fk = usageFileCacheKey(pathMonth, resolved.filename);
-  const cachedFile = usageFileCache.get(fk);
-  if (cachedFile && cachedFile.expires > Date.now()) {
-    const sourceLabel = rowSourceLabel(platform, generation, format, normalizedMonth);
-    const parsed = parseSmogonUsageText(cachedFile.text, {
-      platform,
-      generation,
-      format,
-      month: normalizedMonth,
-      sourceUrl,
-      sourceLabel,
-    });
-    const exists = parsed.length > 0 || allowUsageFallback();
-    monthExistsCache.set(cacheKey, { expires: Date.now() + CACHE_TTL_MS, exists });
-    return exists;
-  }
-
-  const ok = await probeSmogonUsageFileExists(sourceUrl);
-  if (!ok) {
-    const exists = allowUsageFallback();
-    monthExistsCache.set(cacheKey, { expires: Date.now() + CACHE_TTL_MS, exists });
-    return exists;
-  }
-
-  monthExistsCache.set(cacheKey, { expires: Date.now() + CACHE_TTL_MS, exists: true });
-  return true;
+  const resolved = await resolveSmogonUsageFile(platform, generation, format, normalizeMonth(month));
+  const exists = resolved ? true : allowUsageFallback();
+  monthExistsCache.set(key, { expires: Date.now() + CACHE_TTL_MS, exists });
+  return exists;
 }
 
 export async function getMonthlyUsageSummary(params: {
@@ -317,9 +291,12 @@ export async function getMonthlyUsageSummary(params: {
   const candidates = monthsBackFrom(clampToPublishableMonth(requestedMonth), MONTHLY_FALLBACK_LOOKBACK);
   let resolvedMonth = candidates[0] ?? requestedMonth;
   let rows: UsageRow[] = [];
+  let totalBattles: number | undefined;
   for (const month of candidates) {
-    rows = await getMonthlyRows(params.platform, params.generation, params.format, month);
-    if (rows.length > 0) {
+    const result = await getMonthlyRows(params.platform, params.generation, params.format, month);
+    if (result.rows.length > 0) {
+      rows = result.rows;
+      totalBattles = result.totalBattles;
       resolvedMonth = month;
       break;
     }
@@ -336,6 +313,7 @@ export async function getMonthlyUsageSummary(params: {
       formats: [params.format],
       months: [resolvedMonth],
       sampleSize,
+      totalBattles,
       source: metadataSourceLabel(params.platform),
       sourceUrl: filtered[0]?.source.url,
       dataQuality: filtered.length > 0 ? 'live' : 'empty',
@@ -354,19 +332,23 @@ export async function getUsageTrends(params: {
   top50Only?: boolean;
 }): Promise<TrendsResponse> {
   const months = Math.max(1, Math.min(params.months ?? 6, 12));
-  const candidates = getRecentMonths(Math.max(months + 4, months));
-  const historicalData: Array<{ month: string; data: UsageRow[] }> = [];
-
-  for (const month of candidates) {
-    if (historicalData.length >= months) break;
-    const hasData = await monthHasData(params.platform, params.generation, params.format, month, 'strict');
-    if (!hasData) continue;
-    const rows = await getMonthlyRows(params.platform, params.generation, params.format, month);
-    historicalData.push({
-      month,
-      data: params.top50Only ? rows.filter((row) => row.rank <= 50) : rows,
-    });
-  }
+  // A couple of spare months in case the newest ones are not published for this format yet.
+  const candidates = getRecentMonths(months + 2);
+  // Fetch usage files in parallel (no moveset dumps): sequential fetching with movesets
+  // exceeded the function time limit, so the Trends tab never finished loading.
+  const perMonth = await mapWithConcurrency(candidates, 4, async (month) => {
+    try {
+      return { month, rows: (await getMonthlyRows(params.platform, params.generation, params.format, month)).rows };
+    } catch {
+      return { month, rows: [] as UsageRow[] };
+    }
+  });
+  // Trends only chart the leaders: keep payloads small.
+  const limit = params.top50Only ? 50 : TRENDS_ROW_LIMIT;
+  const historicalData = perMonth
+    .filter((entry) => entry.rows.length > 0)
+    .slice(0, months)
+    .map((entry) => ({ month: entry.month, data: entry.rows.filter((row) => row.rank <= limit) }));
 
   return {
     historicalData: historicalData.reverse(),
@@ -424,7 +406,7 @@ export async function getUsageAvailability(platform: Platform): Promise<Availabi
     availability[format] = {};
     for (const generation of generations) {
       const existsFlags = await mapWithConcurrency(recentMonths, concurrency, (m) =>
-        monthHasData(platform, generation, format, m, 'availability')
+        monthHasData(platform, generation, format, m)
       );
       const foundMonths = recentMonths.filter((_, i) => existsFlags[i]);
       availability[format]![generation] = foundMonths;
@@ -435,5 +417,44 @@ export async function getUsageAvailability(platform: Platform): Promise<Availabi
     platform,
     formats,
     availability,
+  };
+}
+
+async function getMovesetText(month: string, stem: string): Promise<string | null> {
+  const key = `${normalizeMonth(month)}/${stem}`;
+  const hit = movesetTextCache.get(key);
+  if (hit && hit.expires > Date.now()) return hit.text;
+  const text = await fetchSmogonMovesetText(month, stem);
+  if (!text) return null;
+  if (movesetTextCache.size >= MOVESET_CACHE_MAX) {
+    const oldest = movesetTextCache.keys().next().value;
+    if (oldest !== undefined) movesetTextCache.delete(oldest);
+  }
+  movesetTextCache.set(key, { expires: Date.now() + CACHE_TTL_MS, text });
+  return text;
+}
+
+/**
+ * Moves, items, abilities, Tera types, EV spreads and teammates for one Pokémon, from
+ * Smogon's moveset dump for the given month (the Deep Dive view).
+ */
+export async function getPokemonSubstats(params: {
+  platform: Platform;
+  generation: Generation;
+  format: Format;
+  month: string;
+  pokemonName: string;
+}): Promise<PokemonSubstatsResponse> {
+  const month = normalizeMonth(params.month);
+  const empty: PokemonSubstatsResponse = { pokemonName: params.pokemonName, month, substats: null };
+  const resolved = await resolveSmogonUsageFile(params.platform, params.generation, params.format, month);
+  if (!resolved) return empty;
+  const text = await getMovesetText(month, resolved.stem);
+  if (!text) return empty;
+  return {
+    pokemonName: params.pokemonName,
+    month,
+    substats: parseSmogonMovesetBlockForPokemon(text, params.pokemonName) ?? null,
+    sourceUrl: `${SMOGON_STATS_BASE}/${smogonStatsMonthPath(month)}/moveset/${resolved.stem}-0.txt`,
   };
 }
