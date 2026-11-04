@@ -14,7 +14,7 @@ export interface WikiEdition {
   lang: string
   label: string
   region: EditionRegion
-  /** PokeAPI `pokemon-species.names[].language.name` values to try, in order. */
+  /** PokeAPI `pokemon-species.names[].language.name` values (lowercase, e.g. `ja-hrkt`) to try, in order. */
   pokeapiLanguages: string[]
   /** Disambiguation suffixes tried before the bare name, e.g. ` (Pokémon)`. */
   qualifierSuffixes: string[]
@@ -22,9 +22,9 @@ export interface WikiEdition {
 
 export const WIKI_EDITIONS: WikiEdition[] = [
   { lang: 'en', label: 'English', region: 'English', pokeapiLanguages: ['en'], qualifierSuffixes: [' (Pokémon)'] },
-  { lang: 'ja', label: 'Japanese', region: 'Asia', pokeapiLanguages: ['ja-Hrkt', 'ja'], qualifierSuffixes: [' (ポケモン)'] },
+  { lang: 'ja', label: 'Japanese', region: 'Asia', pokeapiLanguages: ['ja-hrkt', 'ja'], qualifierSuffixes: [' (ポケモン)'] },
   { lang: 'ko', label: 'Korean', region: 'Asia', pokeapiLanguages: ['ko'], qualifierSuffixes: [' (포켓몬)'] },
-  { lang: 'zh', label: 'Chinese', region: 'Asia', pokeapiLanguages: ['zh-Hant', 'zh-Hans'], qualifierSuffixes: [' (宝可梦)', ' (寶可夢)'] },
+  { lang: 'zh', label: 'Chinese', region: 'Asia', pokeapiLanguages: ['zh-hant', 'zh-hans'], qualifierSuffixes: [' (宝可梦)', ' (寶可夢)'] },
   { lang: 'de', label: 'German', region: 'Europe', pokeapiLanguages: ['de'], qualifierSuffixes: [' (Pokémon)'] },
   { lang: 'fr', label: 'French', region: 'Europe', pokeapiLanguages: ['fr'], qualifierSuffixes: [' (Pokémon)'] },
   { lang: 'es', label: 'Spanish', region: 'Europe', pokeapiLanguages: ['es'], qualifierSuffixes: [' (Pokémon)'] },

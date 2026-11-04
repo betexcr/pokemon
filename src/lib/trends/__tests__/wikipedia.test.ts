@@ -150,10 +150,10 @@ describe('helpers', () => {
 
   it('pickLocalizedName respects language priority', () => {
     const names = [
-      { name: 'ピカチュウ', language: { name: 'ja-Hrkt' } },
+      { name: 'ピカチュウ', language: { name: 'ja-hrkt' } },
       { name: 'Pikachu', language: { name: 'en' } },
     ]
-    expect(pickLocalizedName(names, ['ja-Hrkt', 'ja'])).toBe('ピカチュウ')
+    expect(pickLocalizedName(names, ['ja-hrkt', 'ja'])).toBe('ピカチュウ')
     expect(pickLocalizedName(names, ['ko'])).toBeNull()
   })
 

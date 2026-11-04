@@ -32,6 +32,8 @@ export interface PokemonPopularity {
     generation: number | null
   }
   metric: 'avg_daily_pageviews'
+  /** False when some Wikipedia lookups failed (e.g. rate limited); totals are then understated. */
+  complete: boolean
   coverage: { start: string; end: string } | null
   yearly: Array<{ year: number; values: Record<PopularityRegion, number>; partial: boolean }>
   monthly: Array<{ month: string; values: Record<PopularityRegion, number> }>

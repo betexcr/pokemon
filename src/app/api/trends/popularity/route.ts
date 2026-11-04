@@ -24,9 +24,11 @@ export async function GET(req: NextRequest) {
 
   try {
     const data = await getPokemonPopularity(slug)
-    return NextResponse.json(data, {
-      headers: { 'Cache-Control': 'public, s-maxage=43200, stale-while-revalidate=86400' },
-    })
+    // Partial results (some Wikipedia lookups rate limited) must not be CDN-cached for long.
+    const cacheControl = data.complete
+      ? 'public, s-maxage=43200, stale-while-revalidate=86400'
+      : 'public, s-maxage=60'
+    return NextResponse.json(data, { headers: { 'Cache-Control': cacheControl } })
   } catch (error) {
     if (error instanceof PopularityNotFoundError) {
       return NextResponse.json({ error: error.message }, { status: 404 })
