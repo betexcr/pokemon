@@ -2,6 +2,30 @@ import { smogonStatsMonthPath } from './smogonMonth';
 
 export const SMOGON_STATS_BASE = 'https://www.smogon.com/stats';
 
+const SMOGON_USER_AGENT = 'PokeBattles-UsageMeta/1.0 (+https://pokebattles.vercel.app/usage)';
+const DEFAULT_TIMEOUT_MS = 12_000;
+
+/**
+ * fetch() wrapper for smogon.com/stats: identifies the client and bounds latency so a slow
+ * upstream cannot hang a serverless invocation. Network errors and timeouts surface as a
+ * synthetic 504 response instead of throwing, so callers can treat them like "not available".
+ */
+export async function smogonFetch(
+  url: string,
+  init: RequestInit & { next?: { revalidate?: number }; timeoutMs?: number } = {}
+): Promise<Response> {
+  const { timeoutMs = DEFAULT_TIMEOUT_MS, headers, ...rest } = init;
+  try {
+    return await fetch(url, {
+      ...rest,
+      headers: { 'User-Agent': SMOGON_USER_AGENT, Accept: 'text/plain, text/html;q=0.9, */*;q=0.5', ...(headers ?? {}) },
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+  } catch {
+    return new Response(null, { status: 504, statusText: 'Smogon fetch failed' });
+  }
+}
+
 const indexCache = new Map<string, { expires: number; filenames: string[] }>();
 const INDEX_TTL_MS = 1000 * 60 * 15;
 
@@ -16,10 +40,10 @@ export async function fetchSmogonIndexFilenames(month: string): Promise<string[]
   if (hit && hit.expires > Date.now()) return hit.filenames;
 
   const url = `${SMOGON_STATS_BASE}/${pathMonth}/`;
-  let res = await fetch(url, { next: { revalidate: 3600 } });
+  let res = await smogonFetch(url, { next: { revalidate: 3600 } });
   if (!res.ok) {
     await new Promise((r) => setTimeout(r, 350));
-    res = await fetch(url, { next: { revalidate: 3600 } });
+    res = await smogonFetch(url, { next: { revalidate: 3600 } });
   }
   if (!res.ok) {
     indexCache.set(cacheKey, { expires: Date.now() + 60_000, filenames: [] });

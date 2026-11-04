@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
 import PokemonPageClient from './PokemonPageClient'
-import { getAllValidPokemonIds } from '@/lib/api'
 import { cacheUtils } from '@/lib/sharedPokemonCache'
 
 // Preload evolution chain Pokemon for faster navigation
@@ -25,21 +24,15 @@ async function preloadEvolutionChain(pokemon: any) {
   }
 }
 
-export async function generateStaticParams() {
-  try {
-    // Get all valid Pokemon IDs from the API
-    const validPokemonIds = await getAllValidPokemonIds()
-    return validPokemonIds.map(id => ({ 
-      id: id.toString() 
-    }))
-  } catch (error) {
-    console.error('Failed to generate static params:', error)
-    // Fallback to a reasonable range if the API fails
-    const fallbackIds = Array.from({ length: 1000 }, (_, i) => i + 1)
-    return fallbackIds.map(id => ({ 
-      id: id.toString() 
-    }))
-  }
+// Detail pages are rendered on first request and cached (ISR) instead of prerendering
+// 1,000+ PokeAPI-backed pages at build time. Build-time prerendering made Vercel deploys
+// slow and fragile: any PokeAPI timeout / 429 failed the build or baked a 404 into it.
+// 1h: a transient PokeAPI failure (404 render) self-heals quickly; healthy pages are served from cache.
+export const revalidate = 3600
+export const dynamicParams = true
+
+export async function generateStaticParams(): Promise<Array<{ id: string }>> {
+  return []
 }
 
 export async function generateMetadata(props: { params: Promise<{ id: string }> }): Promise<Metadata> {

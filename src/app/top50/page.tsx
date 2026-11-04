@@ -3,6 +3,7 @@ import Script from 'next/script'
 import { Suspense } from 'react'
 import Top50PageClient from './Top50PageClient'
 import { top50Pokemon } from '@/data/top50Pokemon'
+import { SITE_URL } from '@/lib/site/siteUrl'
 
 export const metadata: Metadata = {
   title: 'Pokémon Top 50 Popularity Popup Book',
@@ -16,7 +17,6 @@ export const metadata: Metadata = {
   }
 }
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://pokemon-indol-tau.vercel.app'
 
 export default function Top50Page() {
   return (

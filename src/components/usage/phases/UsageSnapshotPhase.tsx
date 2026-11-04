@@ -11,6 +11,8 @@ interface UsageSnapshotPhaseProps {
   filters: UsageFilters;
   phaseState: UsagePhaseState;
   onPhaseChange: (phase: UsagePhase, selectedPokemonId?: number) => void;
+  /** Called when the API served a different month than requested (requested one not published). */
+  onMonthResolved?: (requestedMonth: string, resolvedMonth: string) => void;
 }
 
 interface UsageSnapshotData {
@@ -25,13 +27,17 @@ interface UsageSnapshotData {
     source?: string;
     dataQuality?: 'live' | 'empty';
     lastUpdated?: string;
+    sourceUrl?: string;
+    requestedMonth?: string;
+    resolvedMonth?: string;
   };
 }
 
 export default function UsageSnapshotPhase({ 
   filters, 
   phaseState, 
-  onPhaseChange 
+  onPhaseChange,
+  onMonthResolved
 }: UsageSnapshotPhaseProps) {
   const [data, setData] = useState<UsageSnapshotData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -62,9 +68,13 @@ export default function UsageSnapshotPhase({
 
         if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 
-        const result = await response.json();
+        const result: UsageSnapshotData = await response.json();
         if (cancelled) return;
         setData(result);
+        const resolved = result.metadata?.resolvedMonth;
+        if (resolved && filters.month && resolved !== filters.month && (result.data?.length ?? 0) > 0) {
+          onMonthResolved?.(filters.month, resolved);
+        }
       } catch (err) {
         if (cancelled) return;
         setError(err instanceof Error ? err.message : 'Failed to fetch data');
@@ -147,6 +157,19 @@ export default function UsageSnapshotPhase({
           <p className="text-gray-600 dark:text-gray-400">
             Current competitive landscape overview
           </p>
+          {data.metadata?.sourceUrl && (
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Source:{' '}
+              <a
+                href={data.metadata.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-blue-600 dark:hover:text-blue-400"
+              >
+                {data.metadata.source ?? 'Smogon usage stats'} · {data.metadata.resolvedMonth}
+              </a>
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
           <Info className="h-4 w-4" />

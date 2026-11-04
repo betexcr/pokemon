@@ -3,6 +3,9 @@ import { getUsageTrends } from '@/lib/usage/service';
 import type { Format, Generation, Platform } from '@/types/usage';
 import { checkRateLimit, clientIpFromRequest } from '@/lib/server/rate-limit';
 
+// Cold Smogon fetches (index + usage + multi-MB moveset dump) can exceed the 10s default.
+export const maxDuration = 60;
+
 const PLATFORMS: Platform[] = ['SMOGON_SINGLES', 'VGC_OFFICIAL', 'BSS_OFFICIAL', 'OTHER'];
 const GENERATIONS: Generation[] = ['GEN5', 'GEN6', 'GEN7', 'GEN8', 'GEN9'];
 const FORMATS: Format[] = [
@@ -19,7 +22,9 @@ function isOneOf<T extends string>(value: string, allowed: readonly T[]): value 
 export async function GET(req: NextRequest) {
   try {
     const ip = clientIpFromRequest(req);
-    const rl = await checkRateLimit(`usage-trends:${ip}`, 60, 60_000);
+    // Read-only and CDN-cached: if Redis is unavailable, fall back to an in-memory limiter
+    // instead of the production default of denying every request (which blanked /usage).
+    const rl = await checkRateLimit(`usage-trends:${ip}`, 60, 60_000, { onRedisError: 'memory' });
     if (!rl.allowed) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
     }
