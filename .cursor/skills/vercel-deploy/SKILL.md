@@ -11,7 +11,7 @@ description: >-
 ## Platform
 
 - **Host:** Vercel — install `npm ci`, build `npm run build`, Node 22 ([`vercel.json`](../../vercel.json), `engines` in `package.json`)
-- **Commit author:** must be `Alberto Munoz <betomunozcr@gmail.com>` (Hobby plan, Vercel account `albmunmu` / GitHub `betexcr`); other authors get **Deployment Blocked**. Set `git config user.name/user.email` before committing.
+- **Commit author:** must resolve to GitHub `betexcr` (`betomunozcr@gmail.com` or `121463215+betexcr@users.noreply.github.com`); Hobby plan, Vercel account `albmunmu`. Other authors get **Deployment Blocked**. Set the repo identity from `gh auth` (see guide) or commit via the GitHub API as `betexcr`.
 - **Full guide + failure playbook:** [docs/VERCEL_DEPLOYMENT.md](../../docs/VERCEL_DEPLOYMENT.md)
 - **Before pushing:** `npm run verify:deploy` (lockfile sync + single lockfile + build)
 - **Canonical prod URL:** `https://pokebattles.vercel.app`
@@ -90,7 +90,7 @@ Use Vercel CLI or GitHub integration for preview/production deploys. Never commi
 
 | Symptom | Check |
 |---------|-------|
-| Deployment **Blocked**, no build log | Commit author is not `betomunozcr@gmail.com` |
+| Deployment **Blocked**, no build log | Commit author does not resolve to GitHub `betexcr` |
 | Deployment fails at install (`npm ci … not in sync`) | `npm install`, commit `package-lock.json` |
 | Deployment fails prerendering a page | Build-time fetch; add fallback / on-demand ISR |
 | Battles stuck on "Loading" | `NEXT_PUBLIC_FIREBASE_DATABASE_URL`, RTDB rules |

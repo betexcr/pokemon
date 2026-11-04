@@ -34,17 +34,19 @@ try {
 }
 
 // 3. Commit author: the Vercel Hobby project only deploys commits authored by its owner.
-const DEPLOY_AUTHOR_EMAIL = 'betomunozcr@gmail.com';
+// Emails GitHub maps to betexcr (the account linked to the Vercel project).
+const DEPLOY_AUTHOR_EMAILS = ['betomunozcr@gmail.com', '121463215+betexcr@users.noreply.github.com'];
+const accepted = DEPLOY_AUTHOR_EMAILS.join(' or ');
 try {
   const email = execSync('git config user.email', { stdio: 'pipe' }).toString().trim();
   const headAuthor = execSync("git log -1 --format=%ae", { stdio: 'pipe' }).toString().trim();
-  if (email !== DEPLOY_AUTHOR_EMAIL) {
-    fail(`git user.email is "${email}"; Vercel only deploys commits authored by ${DEPLOY_AUTHOR_EMAIL}. Run: git config user.email "${DEPLOY_AUTHOR_EMAIL}"`);
+  if (!DEPLOY_AUTHOR_EMAILS.includes(email)) {
+    fail(`git user.email is "${email}"; Vercel only deploys commits authored by ${accepted}. See docs/VERCEL_DEPLOYMENT.md (set it from gh auth).`);
   } else {
-    ok(`git user.email is ${DEPLOY_AUTHOR_EMAIL}`);
+    ok(`git user.email is ${email}`);
   }
-  if (headAuthor !== DEPLOY_AUTHOR_EMAIL) {
-    console.warn(`  ! HEAD commit is authored by ${headAuthor}; Vercel will block a push whose head commit is not by ${DEPLOY_AUTHOR_EMAIL}.`);
+  if (!DEPLOY_AUTHOR_EMAILS.includes(headAuthor)) {
+    console.warn(`  ! HEAD commit is authored by ${headAuthor}; Vercel will block a push whose head commit is not by ${accepted}.`);
   }
 } catch {
   console.warn('  ! Could not read git identity (not a git checkout?)');

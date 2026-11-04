@@ -13,28 +13,59 @@ npm run verify:deploy -- --no-build   # lockfile checks only (~5s)
 
 The Vercel project lives on the **Hobby** plan of Vercel account **`albmunmu`**, connected to GitHub user **`betexcr`**. Hobby projects do not allow collaborators, so Vercel **blocks any deployment whose Git commit author is not that account** (*"Deployment Blocked: the commit author did not have contributing access to the project"*). The build never even starts.
 
-Deployments that work are authored by:
+Vercel resolves the commit author to a GitHub account, so any email GitHub maps to **`betexcr`** works:
+
+| Accepted author email | Notes |
+|-----------------------|-------|
+| `betomunozcr@gmail.com` | Verified email on `betexcr` |
+| `121463215+betexcr@users.noreply.github.com` | `betexcr`'s GitHub noreply address (derived from `gh auth`) |
 
 | Field | Value |
 |-------|-------|
-| Commit author | `Alberto Munoz <betomunozcr@gmail.com>` |
-| GitHub user | `betexcr` |
+| GitHub user | `betexcr` (id `121463215`) |
 | Vercel account | `albmunmu` |
 
-Before committing from any new machine, container, CI job, or AI agent (Cursor, Claude Code, Copilot, etc.):
+Not accepted: work/other identities such as `alberto@atreyus.ai`, or AI-agent identities such as `noreply@anthropic.com`.
+
+### Option A: take the identity from `gh auth` (recommended)
+
+Set it **per repo** (no `--global`, so other repos keep their own identity). Check `gh auth status` shows `betexcr` first.
+
+PowerShell:
+
+```powershell
+$u = gh api user | ConvertFrom-Json
+git config user.name  $u.login
+git config user.email "$($u.id)+$($u.login)@users.noreply.github.com"
+git log -1 --format='%an <%ae>'
+```
+
+bash:
+
+```bash
+git config user.name  "$(gh api user --jq .login)"
+git config user.email "$(gh api user --jq '"\(.id)+\(.login)@users.noreply.github.com"')"
+git log -1 --format='%an <%ae>'
+```
+
+### Option B: set it explicitly
 
 ```bash
 git config user.name  "Alberto Munoz"
 git config user.email "betomunozcr@gmail.com"
-git log -1 --format='%an <%ae>'   # verify before pushing
 ```
+
+### AI agents (Claude Code, Cursor, …)
+
+An agent's local `git commit` uses whatever identity its environment configures (often a bot address that Vercel blocks). Agents connected to GitHub as `betexcr` should create commits **through the GitHub API** (e.g. the GitHub MCP `push_files` / `create_or_update_file` tools): GitHub authors those as `betexcr` **and signs them**, so they deploy on Vercel and show as **Verified**. Otherwise, set the repo identity with Option A before committing.
 
 Rules:
 
-- Vercel checks the commit a push points at (the branch head). If an agent pushed commits under another identity, add a commit authored by `betomunozcr@gmail.com` on top (or re-author the branch) and push again.
+- Vercel checks the commit a push points at (the branch head). If commits were pushed under another identity, add a commit authored by `betexcr` on top (simplest: any small commit via the GitHub web UI or API), or re-author the branch with the correct identity configured:
+  `git rebase <base> --exec 'git commit --amend --no-edit --reset-author'` then `git push --force-with-lease`. Run `git config user.email` **first**: `--reset-author` uses whatever identity is configured.
 - `Co-authored-by:` trailers are fine; only the **author** field matters.
 - When merging a PR into `main`, use **Create a merge commit** or **Squash and merge** from GitHub while logged in as `betexcr` (the resulting commit is authored by you). **Rebase and merge** keeps the original authors and gets blocked if any are not you.
-- `npm run verify:deploy` warns when the configured `git config user.email` differs from `betomunozcr@gmail.com`.
+- `npm run verify:deploy` fails when `git config user.email` is not one of the accepted emails and warns when the head commit's author is not.
 - Alternatives if more people/agents need to deploy: upgrade the Vercel project to Pro and invite them, or deploy via the Vercel CLI with a token (`vercel --prod`), which is not subject to the Git author check.
 
 ## How Vercel builds this project
