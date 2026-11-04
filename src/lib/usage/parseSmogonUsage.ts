@@ -63,18 +63,29 @@ export function parseSmogonUsageText(
   const rows: UsageRow[] = [];
   const lines = text.split('\n');
 
+  // Smogon's combined usage tables look like:
+  //  | Rank | Pokemon            | Usage %   | Raw    | %       | Real   | %       |
+  //  | 1    | Great Tusk         | 31.32479% | 134557 | 28.032% | 106283 | 27.982% |
+  // Parse by cells instead of a fixed-width regex so extra/missing trailing columns
+  // (older dumps omit the Real columns) never make every row silently fail to match.
   for (const line of lines) {
-    const match = line.match(
-      /\|\s*(\d+)\s*\|\s*(.+?)\s*\|\s*([\d.]+)%\s*\|\s*([\d.]+)\s*\|\s*[\d.]+%\s*\|\s*[\d.]+%\s*\|/
-    );
-    if (!match) continue;
+    const trimmed = line.trim();
+    if (!trimmed.startsWith('|')) continue;
+    const cells = trimmed
+      .split('|')
+      .slice(1, -1)
+      .map((cell) => cell.trim());
+    if (cells.length < 4) continue;
 
-    const rank = Number.parseInt(match[1], 10);
-    if (!Number.isFinite(rank)) continue;
+    const [rankCell, nameCell, usageCell, rawCell] = cells;
+    if (!/^\d+$/.test(rankCell)) continue; // skips the header row ("Rank")
+    const usageMatch = usageCell.match(/^([\d.]+)%$/);
+    if (!usageMatch || !nameCell) continue;
 
-    const pokemonName = match[2].trim();
-    const usagePercent = Number.parseFloat(match[3]);
-    const sampleSize = Number.parseInt(match[4], 10);
+    const rank = Number.parseInt(rankCell, 10);
+    const pokemonName = nameCell;
+    const usagePercent = Number.parseFloat(usageMatch[1]);
+    const sampleSize = /^\d+$/.test(rawCell) ? Number.parseInt(rawCell, 10) : Number.NaN;
 
     rows.push({
       pokemonId: inferPokemonId(pokemonName),
