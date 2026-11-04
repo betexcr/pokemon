@@ -1,497 +1,305 @@
-import { describe, it, expect, beforeEach, afterEach, vi, Mock } from 'vitest';
-import { rtdbService } from '../firebase-rtdb-service';
+/**
+ * RTDB security model tests.
+ *
+ * Authorization for live battles is enforced by the Realtime Database rules
+ * (`src/lib/firebase-rtdb-rules.json`, deployed via firebase.json), not by the client
+ * service. These tests therefore check two things for every guarantee:
+ *   1. the deployed rule source actually contains the guard, and
+ *   2. `rtdbService` writes/reads exactly the paths and shapes those rules expect,
+ *      and handles rule rejections (PERMISSION_DENIED) the way callers rely on.
+ */
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-// Mock Firebase RTDB
-vi.mock('firebase/database', () => ({
-  ref: vi.fn(),
+const fb = vi.hoisted(() => ({
   set: vi.fn(),
   get: vi.fn(),
-  remove: vi.fn(),
   update: vi.fn(),
+  remove: vi.fn(),
   onValue: vi.fn(),
-  off: vi.fn(),
-  push: vi.fn(),
-  serverTimestamp: vi.fn(() => ({ '.sv': 'timestamp' }))
 }));
 
-// Mock Firebase app
-vi.mock('../firebase', () => ({
-  rtdb: {
-    ref: vi.fn(),
-    child: vi.fn(),
-    set: vi.fn(),
-    get: vi.fn(),
-    remove: vi.fn(),
-    update: vi.fn(),
-    on: vi.fn(),
-    off: vi.fn()
-  }
+vi.mock('firebase/database', () => ({
+  ref: (_db: unknown, path: string) => ({ path }),
+  set: fb.set,
+  get: fb.get,
+  update: fb.update,
+  remove: fb.remove,
+  onValue: fb.onValue,
+  off: vi.fn(),
+  push: vi.fn(),
+  serverTimestamp: () => ({ '.sv': 'timestamp' }),
 }));
+
+vi.mock('../firebase', () => ({ rtdb: { fake: true } }));
+
+import { rtdbService } from '../firebase-rtdb-service';
+
+type Rule = string | boolean;
+type RuleNode = { [key: string]: Rule | RuleNode };
+
+const rules = JSON.parse(
+  readFileSync(join(process.cwd(), 'src/lib/firebase-rtdb-rules.json'), 'utf8')
+).rules as RuleNode;
+const battle = (rules.battles as RuleNode).$bid as RuleNode;
+const node = (path: string): RuleNode =>
+  path.split('/').reduce<RuleNode>((acc, key) => acc[key] as RuleNode, rules);
+const rule = (path: string, op: '.read' | '.write' | '.validate'): Rule => node(path)[op];
+
+const IS_PARTICIPANT =
+  "root.child('battles/'+$bid+'/meta/players/p1/uid').val() == auth.uid || root.child('battles/'+$bid+'/meta/players/p2/uid').val() == auth.uid";
+const choiceWrite = rule('battles/$bid/turns/$turn/choices/$uid', '.write') as string;
+
+/** Swap the service's RTDB handle (private `db` field) for a test. */
+function setDb(value: unknown) {
+  (rtdbService as unknown as { db: unknown }).db = value;
+}
+
+const snap = (val: unknown) => ({ val: () => val, exists: () => val !== null && val !== undefined });
+const paths = (mock: ReturnType<typeof vi.fn>) => mock.mock.calls.map(([r]) => (r as { path: string }).path);
 
 describe('RTDB Security Rules Tests', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
+    setDb({ fake: true });
+    fb.set.mockResolvedValue(undefined);
+    fb.update.mockResolvedValue(undefined);
+    fb.remove.mockResolvedValue(undefined);
+    fb.onValue.mockReturnValue(() => {});
   });
 
   describe('Authentication Requirements', () => {
-    it('should require authentication for all operations', async () => {
-      // Mock unauthenticated user
-      vi.doMock('../firebase', () => ({
-        rtdb: null
-      }));
+    it('should require authentication for all operations', () => {
+      // Default deny at the root.
+      expect(rules['.read']).toBe(false);
+      expect(rules['.write']).toBe(false);
 
-      await expect(rtdbService.updatePresence('test-uid', true))
-        .rejects.toThrow('RTDB not initialized');
+      // Every rule that grants access requires an authenticated user.
+      const walk = (n: RuleNode, at: string) => {
+        for (const [key, value] of Object.entries(n)) {
+          if (key === '.read' || key === '.write') {
+            if (value !== false) expect(value, `${at}/${key}`).toContain('auth != null');
+          } else if (typeof value === 'object') {
+            walk(value, `${at}/${key}`);
+          }
+        }
+      };
+      walk(rules, '');
+    });
 
-      await expect(rtdbService.joinLobby('test-uid', 'us-central1', {}))
-        .rejects.toThrow('RTDB not initialized');
+    it('should refuse to operate when RTDB is not initialized', async () => {
+      setDb(null);
+      await expect(rtdbService.updatePresence('test-uid', true)).rejects.toThrow('RTDB not initialized');
+      await expect(
+        rtdbService.joinLobby('test-uid', 'us-central1', { format: 'singles', minRating: 0 })
+      ).rejects.toThrow('RTDB not initialized');
+      await expect(rtdbService.createBattle('battle-123', 'p1', 'P1', [], 'p2', 'P2', [])).rejects.toThrow(
+        'RTDB not initialized'
+      );
+      await expect(
+        rtdbService.submitChoice('battle-123', 1, 'p1', { action: 'move', payload: { moveId: 'tackle' } } as never)
+      ).rejects.toThrow('RTDB not initialized');
 
-      await expect(rtdbService.createBattle('battle-123', 'p1', 'P1', [], 'p2', 'P2', []))
-        .rejects.toThrow('RTDB not initialized');
+      const cb = vi.fn();
+      rtdbService.onBattleMeta('battle-123', cb);
+      expect(cb).toHaveBeenCalledWith(null);
+      expect(fb.onValue).not.toHaveBeenCalled();
     });
   });
 
   describe('Presence Rules', () => {
     it('should only allow users to update their own presence', async () => {
-      const mockRef = { path: 'presence/test-uid' };
-      (rtdbService as any).rtdb = { ref: vi.fn().mockReturnValue(mockRef) };
+      expect(rule('presence/$uid', '.write')).toBe('auth != null && auth.uid == $uid');
+      expect(rule('presence/$uid', '.read')).toBe('auth != null && auth.uid == $uid');
 
-      // Mock Firebase auth
-      vi.doMock('../firebase', () => ({
-        auth: {
-          currentUser: {
-            uid: 'test-uid'
-          }
-        }
-      }));
-
-      // This should work - user updating their own presence
-      await expect(rtdbService.updatePresence('test-uid', true)).resolves.not.toThrow();
-
-      // This should fail - user trying to update another user's presence
-      await expect(rtdbService.updatePresence('other-uid', true)).rejects.toThrow();
+      await rtdbService.updatePresence('test-uid', true);
+      expect(paths(fb.update)).toEqual(['presence/test-uid']);
     });
 
     it('should validate presence data structure', async () => {
-      const mockRef = { path: 'presence/test-uid' };
-      (rtdbService as any).rtdb = { ref: vi.fn().mockReturnValue(mockRef) };
-
-      // Mock Firebase auth
-      vi.doMock('../firebase', () => ({
-        auth: {
-          currentUser: {
-            uid: 'test-uid'
-          }
-        }
-      }));
-
-      // Valid presence update
-      await expect(rtdbService.updatePresence('test-uid', true)).resolves.not.toThrow();
-
-      // Invalid presence update (should be caught by security rules)
-      // Note: In a real test, this would be caught by Firebase security rules
-      // Here we're testing the service layer behavior
+      await rtdbService.updatePresence('test-uid', false);
+      expect(fb.update).toHaveBeenCalledWith(
+        { path: 'presence/test-uid' },
+        { connected: false, lastActiveAt: { '.sv': 'timestamp' } }
+      );
     });
   });
 
   describe('Lobby Rules', () => {
     it('should only allow users to join/leave their own lobby entries', async () => {
-      const mockRef = { path: 'lobbies/us-central1/queue/test-uid' };
-      (rtdbService as any).rtdb = { ref: vi.fn().mockReturnValue(mockRef) };
+      expect(rule('lobbies/$region/queue/$uid', '.write')).toBe('auth != null && auth.uid == $uid');
+      expect(rule('lobbies/$region/queue/$uid', '.read')).toBe('auth != null && auth.uid == $uid');
 
-      // Mock Firebase auth
-      vi.doMock('../firebase', () => ({
-        auth: {
-          currentUser: {
-            uid: 'test-uid'
-          }
-        }
-      }));
-
-      // Valid lobby operations
-      await expect(rtdbService.joinLobby('test-uid', 'us-central1', {})).resolves.not.toThrow();
-      await expect(rtdbService.leaveLobby('test-uid', 'us-central1')).resolves.not.toThrow();
-
-      // Invalid lobby operations (should be caught by security rules)
-      await expect(rtdbService.joinLobby('other-uid', 'us-central1', {})).rejects.toThrow();
-      await expect(rtdbService.leaveLobby('other-uid', 'us-central1')).rejects.toThrow();
+      await rtdbService.joinLobby('test-uid', 'us-central1', { format: 'singles', minRating: 1000 });
+      await rtdbService.leaveLobby('test-uid', 'us-central1');
+      expect(paths(fb.set)).toEqual(['lobbies/us-central1/queue/test-uid']);
+      expect(paths(fb.remove)).toEqual(['lobbies/us-central1/queue/test-uid']);
     });
 
     it('should validate lobby data structure', async () => {
-      const mockRef = { path: 'lobbies/us-central1/queue/test-uid' };
-      (rtdbService as any).rtdb = { ref: vi.fn().mockReturnValue(mockRef) };
+      expect(rule('lobbies/$region/queue/$uid/joinedAt', '.validate')).toContain('newData.isNumber()');
 
-      // Mock Firebase auth
-      vi.doMock('../firebase', () => ({
-        auth: {
-          currentUser: {
-            uid: 'test-uid'
-          }
-        }
-      }));
-
-      // Valid lobby data
-      const validPrefs = {
-        format: 'singles',
-        minRating: 1000
-      };
-
-      await expect(rtdbService.joinLobby('test-uid', 'us-central1', validPrefs)).resolves.not.toThrow();
-
-      // Invalid lobby data (should be caught by security rules)
-      const invalidPrefs = {
-        format: 'invalid-format',
-        minRating: -1000
-      };
-
-      // Note: In a real test, this would be caught by Firebase security rules
-      // Here we're testing the service layer behavior
+      const prefs = { format: 'singles', minRating: 1200 };
+      await rtdbService.joinLobby('test-uid', 'us-central1', prefs);
+      expect(fb.set).toHaveBeenCalledWith(
+        { path: 'lobbies/us-central1/queue/test-uid' },
+        { joinedAt: { '.sv': 'timestamp' }, prefs }
+      );
     });
   });
 
   describe('Battle Rules', () => {
-    it('should only allow battle participants to access battle data', async () => {
-      const mockRef = { path: 'battles/battle-123/meta' };
-      (rtdbService as any).rtdb = { ref: vi.fn().mockReturnValue(mockRef) };
+    it('should only allow battle participants to access battle data', () => {
+      for (const key of ['meta', 'public', 'participants']) {
+        const read = (battle[key] as RuleNode)['.read'] as string;
+        expect(read, key).toContain('auth != null');
+        expect(read, key).toContain(IS_PARTICIPANT);
+      }
+      expect(rule('battles/$bid/turns/$turn/resolution', '.read')).toContain(IS_PARTICIPANT);
+      // Private state: only the owning player, never the opponent.
+      expect(rule('battles/$bid/private/$uid', '.read')).toBe('auth != null && auth.uid == $uid');
 
-      // Mock Firebase auth for battle participant
-      vi.doMock('../firebase', () => ({
-        auth: {
-          currentUser: {
-            uid: 'p1-uid'
-          }
-        }
-      }));
-
-      // Valid battle access
-      await expect(rtdbService.onBattleMeta('battle-123', vi.fn())).resolves.not.toThrow();
-      await expect(rtdbService.onBattlePublic('battle-123', vi.fn())).resolves.not.toThrow();
-      await expect(rtdbService.onBattlePrivate('battle-123', 'p1-uid', vi.fn())).resolves.not.toThrow();
-
-      // Invalid battle access (should be caught by security rules)
-      await expect(rtdbService.onBattlePrivate('battle-123', 'other-uid', vi.fn())).rejects.toThrow();
+      rtdbService.onBattleMeta('battle-123', vi.fn());
+      rtdbService.onBattlePublic('battle-123', vi.fn());
+      rtdbService.onBattlePrivate('battle-123', 'p1-uid', vi.fn());
+      expect(paths(fb.onValue)).toEqual([
+        'battles/battle-123/meta',
+        'battles/battle-123/public',
+        'battles/battle-123/private/p1-uid',
+      ]);
     });
 
     it('should only allow choice submission during choosing phase', async () => {
-      const mockRef = { path: 'battles/battle-123/turns/1/choices/test-uid' };
-      (rtdbService as any).rtdb = { ref: vi.fn().mockReturnValue(mockRef) };
+      expect(choiceWrite).toContain("root.child('battles/'+$bid+'/meta/phase').val() == 'choosing'");
+      expect(choiceWrite).toContain("('' + root.child('battles/'+$bid+'/meta/turn').val()) == $turn");
+      expect(choiceWrite).toContain('auth.uid == $uid');
+      expect(choiceWrite).toContain(IS_PARTICIPANT);
 
-      // Mock Firebase auth
-      vi.doMock('../firebase', () => ({
-        auth: {
-          currentUser: {
-            uid: 'test-uid'
-          }
-        }
-      }));
-
-      // Valid choice submission
-      const validChoice = {
-        action: 'move',
-        payload: { moveId: 'thunderbolt', target: 'opponent' }
-      };
-
-      await expect(rtdbService.submitChoice('battle-123', 1, 'test-uid', validChoice)).resolves.not.toThrow();
-
-      // Invalid choice submission (should be caught by security rules)
-      const invalidChoice = {
-        action: 'invalid-action',
-        payload: {}
-      };
-
-      // Note: In a real test, this would be caught by Firebase security rules
-      // Here we're testing the service layer behavior
+      fb.get.mockResolvedValueOnce(snap(3)).mockResolvedValueOnce(snap(null));
+      await rtdbService.submitChoice('battle-123', 2, 'test-uid', { action: 'move', payload: { moveId: 'tackle' } } as never);
+      expect(paths(fb.set)).toEqual(['battles/battle-123/turns/2/choices/test-uid']);
     });
 
     it('should validate choice data structure', async () => {
-      const mockRef = { path: 'battles/battle-123/turns/1/choices/test-uid' };
-      (rtdbService as any).rtdb = { ref: vi.fn().mockReturnValue(mockRef) };
+      expect(choiceWrite).toContain("newData.child('action').isString()");
+      expect(choiceWrite).toContain(
+        "(newData.child('action').val() == 'move' || newData.child('action').val() == 'switch')"
+      );
+      // Forfeit is a server-side action, never a client choice.
+      expect(choiceWrite).not.toContain("'forfeit'");
 
-      // Mock Firebase auth
-      vi.doMock('../firebase', () => ({
-        auth: {
-          currentUser: {
-            uid: 'test-uid'
-          }
-        }
-      }));
-
-      // Valid move choice
-      const moveChoice = {
-        action: 'move',
-        payload: { moveId: 'thunderbolt', target: 'opponent' }
-      };
-
-      await expect(rtdbService.submitChoice('battle-123', 1, 'test-uid', moveChoice)).resolves.not.toThrow();
-
-      // Valid switch choice
-      const switchChoice = {
-        action: 'switch',
-        payload: { switchToIndex: 1 }
-      };
-
-      await expect(rtdbService.submitChoice('battle-123', 1, 'test-uid', switchChoice)).resolves.not.toThrow();
-
-      // Valid forfeit choice
-      const forfeitChoice = {
-        action: 'forfeit',
-        payload: {}
-      };
-
-      await expect(rtdbService.submitChoice('battle-123', 1, 'test-uid', forfeitChoice)).resolves.not.toThrow();
+      fb.get.mockResolvedValueOnce(snap(1)).mockResolvedValueOnce(snap(null));
+      await rtdbService.submitChoice('battle-123', 1, 'test-uid', { action: 'switch', payload: { switchToIndex: 2 } } as never);
+      const written = fb.set.mock.calls[0][1] as Record<string, unknown>;
+      expect(written).toMatchObject({ action: 'switch', payload: { switchToIndex: 2 } });
+      expect(written.committedAt).toEqual({ '.sv': 'timestamp' });
     });
 
     it('should prevent duplicate choice submissions', async () => {
-      const mockRef = { path: 'battles/battle-123/turns/1/choices/test-uid' };
-      (rtdbService as any).rtdb = { ref: vi.fn().mockReturnValue(mockRef) };
+      expect(choiceWrite).toContain('!data.exists()');
 
-      // Mock Firebase auth
-      vi.doMock('../firebase', () => ({
-        auth: {
-          currentUser: {
-            uid: 'test-uid'
-          }
-        }
-      }));
-
-      const choice = {
-        action: 'move',
-        payload: { moveId: 'thunderbolt', target: 'opponent' }
-      };
-
-      // First submission should succeed
-      await expect(rtdbService.submitChoice('battle-123', 1, 'test-uid', choice)).resolves.not.toThrow();
-
-      // Second submission should fail (caught by security rules)
-      // Note: In a real test, this would be caught by Firebase security rules
-      // Here we're testing the service layer behavior
+      // Choice already exists for this turn: the service must not attempt a second write.
+      fb.get.mockResolvedValueOnce(snap(1)).mockResolvedValueOnce(snap({ action: 'move' }));
+      await rtdbService.submitChoice('battle-123', 1, 'test-uid', { action: 'move', payload: { moveId: 'tackle' } } as never);
+      expect(fb.set).not.toHaveBeenCalled();
     });
 
     it('should validate client version for choice submissions', async () => {
-      const mockRef = { path: 'battles/battle-123/turns/1/choices/test-uid' };
-      (rtdbService as any).rtdb = { ref: vi.fn().mockReturnValue(mockRef) };
+      expect(choiceWrite).toContain(
+        "newData.child('clientVersion').val() == root.child('battles/'+$bid+'/meta/version').val()"
+      );
 
-      // Mock Firebase auth
-      vi.doMock('../firebase', () => ({
-        auth: {
-          currentUser: {
-            uid: 'test-uid'
-          }
-        }
-      }));
+      // The service reads meta/version and echoes it as clientVersion.
+      fb.get.mockResolvedValueOnce(snap(7)).mockResolvedValueOnce(snap(null));
+      await rtdbService.submitChoice('battle-123', 4, 'test-uid', { action: 'move', payload: { moveId: 'tackle' } } as never);
+      expect(paths(fb.get)[0]).toBe('battles/battle-123/meta/version');
+      expect((fb.set.mock.calls[0][1] as { clientVersion: number }).clientVersion).toBe(7);
+    });
 
-      const choice = {
-        action: 'move',
-        payload: { moveId: 'thunderbolt', target: 'opponent' }
-      };
+    it('should treat a rules rejection (PERMISSION_DENIED) as a no-op but surface other errors', async () => {
+      fb.get.mockResolvedValue(snap(null));
+      fb.set.mockRejectedValueOnce(new Error('PERMISSION_DENIED: Permission denied'));
+      await expect(
+        rtdbService.submitChoice('battle-123', 1, 'test-uid', { action: 'move', payload: { moveId: 'tackle' } } as never)
+      ).resolves.toBeUndefined();
 
-      // Valid choice with correct client version
-      await expect(rtdbService.submitChoice('battle-123', 1, 'test-uid', choice)).resolves.not.toThrow();
-
-      // Invalid choice with wrong client version (should be caught by security rules)
-      // Note: In a real test, this would be caught by Firebase security rules
-      // Here we're testing the service layer behavior
+      fb.set.mockRejectedValueOnce(new Error('network down'));
+      await expect(
+        rtdbService.submitChoice('battle-123', 1, 'test-uid', { action: 'move', payload: { moveId: 'tackle' } } as never)
+      ).rejects.toThrow('network down');
     });
   });
 
   describe('Data Validation', () => {
-    it('should validate Pokemon data structure in battle creation', async () => {
-      const mockMetaRef = { path: 'battles/battle-123/meta' };
-      const mockPublicRef = { path: 'battles/battle-123/public' };
-      const mockP1PrivateRef = { path: 'battles/battle-123/private/p1-uid' };
-      const mockP2PrivateRef = { path: 'battles/battle-123/private/p2-uid' };
-
-      (rtdbService as any).rtdb = { ref: vi.fn().mockReturnValue(mockMetaRef) };
-
-      // Mock Firebase auth
-      vi.doMock('../firebase', () => ({
-        auth: {
-          currentUser: {
-            uid: 'p1-uid'
-          }
-        }
-      }));
-
-      // Valid Pokemon data
-      const validPokemon = {
+    const team = [
+      {
         pokemon: { name: 'Pikachu', types: [{ type: { name: 'electric' } }] },
         level: 50,
         currentHp: 100,
         maxHp: 100,
-        statModifiers: { attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0, accuracy: 0, evasion: 0 }
-      };
+        statModifiers: { attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0, accuracy: 0, evasion: 0 },
+      },
+    ];
 
-      await expect(rtdbService.createBattle(
-        'battle-123',
-        'p1-uid',
-        'Player 1',
-        [validPokemon],
-        'p2-uid',
-        'Player 2',
-        [validPokemon]
-      )).resolves.not.toThrow();
-
-      // Invalid Pokemon data (should be caught by security rules)
-      const invalidPokemon = {
-        pokemon: { name: '', types: [] }, // Invalid name and types
-        level: -1, // Invalid level
-        currentHp: 1000, // Invalid HP (higher than max)
-        maxHp: 100,
-        statModifiers: {} // Missing required fields
-      };
-
-      // Note: In a real test, this would be caught by Firebase security rules
-      // Here we're testing the service layer behavior
+    it('should validate Pokemon data structure in battle creation', async () => {
+      await rtdbService.createBattle('battle-123', 'p1-uid', 'Player 1', team, 'p2-uid', 'Player 2', team);
+      expect(paths(fb.set)).toEqual([
+        'battles/battle-123/meta',
+        'battles/battle-123/public',
+        'battles/battle-123/private/p1-uid',
+        'battles/battle-123/private/p2-uid',
+      ]);
+      // Each player's private state lands under their own uid only.
+      expect(JSON.stringify(fb.set.mock.calls[2][1])).toContain('Pikachu');
     });
 
     it('should validate battle metadata structure', async () => {
-      const mockMetaRef = { path: 'battles/battle-123/meta' };
-      (rtdbService as any).rtdb = { ref: vi.fn().mockReturnValue(mockMetaRef) };
-
-      // Mock Firebase auth
-      vi.doMock('../firebase', () => ({
-        auth: {
-          currentUser: {
-            uid: 'p1-uid'
-          }
-        }
-      }));
-
-      // Valid battle creation
-      const validTeam = [{
-        pokemon: { name: 'Pikachu', types: [{ type: { name: 'electric' } }] },
-        level: 50,
-        currentHp: 100,
-        maxHp: 100,
-        statModifiers: { attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0, accuracy: 0, evasion: 0 }
-      }];
-
-      await expect(rtdbService.createBattle(
-        'battle-123',
-        'p1-uid',
-        'Player 1',
-        validTeam,
-        'p2-uid',
-        'Player 2',
-        validTeam
-      )).resolves.not.toThrow();
-
-      // Invalid battle creation (should be caught by security rules)
-      // Note: In a real test, this would be caught by Firebase security rules
-      // Here we're testing the service layer behavior
+      await rtdbService.createBattle('battle-123', 'p1-uid', 'Player 1', team, 'p2-uid', 'Player 2', team);
+      const meta = fb.set.mock.calls[0][1] as Record<string, unknown>;
+      // These fields are what the choice-write rule reads (players, phase, turn, version).
+      expect(meta).toMatchObject({
+        players: { p1: { uid: 'p1-uid', name: 'Player 1' }, p2: { uid: 'p2-uid', name: 'Player 2' } },
+        phase: 'choosing',
+        turn: 1,
+        version: 1,
+      });
+      expect(paths(fb.update)).toEqual(['battles/battle-123/participants']);
     });
   });
 
   describe('Access Control', () => {
-    it('should prevent unauthorized access to private battle data', async () => {
-      const mockRef = { path: 'battles/battle-123/private/other-uid' };
-      (rtdbService as any).rtdb = { ref: vi.fn().mockReturnValue(mockRef) };
-
-      // Mock Firebase auth for non-participant
-      vi.doMock('../firebase', () => ({
-        auth: {
-          currentUser: {
-            uid: 'other-uid'
-          }
-        }
-      }));
-
-      // Should fail - trying to access private data of another user
-      await expect(rtdbService.onBattlePrivate('battle-123', 'other-uid', vi.fn())).rejects.toThrow();
+    it('should prevent unauthorized access to private battle data', () => {
+      expect(rule('battles/$bid/private/$uid', '.read')).toBe('auth != null && auth.uid == $uid');
+      expect(rule('battles/$bid/private/$uid', '.write')).toBe(false);
+      expect(rule('battles/$bid/turns/$turn/choices/$uid', '.read')).toBe('auth != null && auth.uid == $uid');
     });
 
-    it('should prevent unauthorized access to battle meta', async () => {
-      const mockRef = { path: 'battles/battle-123/meta' };
-      (rtdbService as any).rtdb = { ref: vi.fn().mockReturnValue(mockRef) };
-
-      // Mock Firebase auth for non-participant
-      vi.doMock('../firebase', () => ({
-        auth: {
-          currentUser: {
-            uid: 'other-uid'
-          }
-        }
-      }));
-
-      // Should fail - trying to access battle meta without being a participant
-      await expect(rtdbService.onBattleMeta('battle-123', vi.fn())).rejects.toThrow();
+    it('should prevent unauthorized access to battle meta', () => {
+      expect(rule('battles/$bid/meta', '.read')).toContain(IS_PARTICIPANT);
+      expect(rule('battles/$bid/server', '.read')).toBe(false);
     });
 
-    it('should prevent unauthorized access to battle public state', async () => {
-      const mockRef = { path: 'battles/battle-123/public' };
-      (rtdbService as any).rtdb = { ref: vi.fn().mockReturnValue(mockRef) };
-
-      // Mock Firebase auth for non-participant
-      vi.doMock('../firebase', () => ({
-        auth: {
-          currentUser: {
-            uid: 'other-uid'
-          }
-        }
-      }));
-
-      // Should fail - trying to access battle public state without being a participant
-      await expect(rtdbService.onBattlePublic('battle-123', vi.fn())).rejects.toThrow();
+    it('should prevent unauthorized access to battle public state', () => {
+      expect(rule('battles/$bid/public', '.read')).toContain(IS_PARTICIPANT);
+      expect(rule('battles/$bid/turns/$turn/resolution', '.read')).toContain(IS_PARTICIPANT);
     });
   });
 
   describe('Write Protection', () => {
-    it('should prevent direct writes to battle meta', async () => {
-      const mockRef = { path: 'battles/battle-123/meta' };
-      (rtdbService as any).rtdb = { ref: vi.fn().mockReturnValue(mockRef) };
-
-      // Mock Firebase auth
-      vi.doMock('../firebase', () => ({
-        auth: {
-          currentUser: {
-            uid: 'p1-uid'
-          }
-        }
-      }));
-
-      // Should fail - trying to write to battle meta directly
-      // Note: In a real test, this would be caught by Firebase security rules
-      // Here we're testing the service layer behavior
+    it('should prevent direct writes to battle meta', () => {
+      expect(rule('battles/$bid/meta', '.write')).toBe(false);
+      expect(rule('battles/$bid/participants', '.write')).toBe(false);
     });
 
-    it('should prevent direct writes to battle public state', async () => {
-      const mockRef = { path: 'battles/battle-123/public' };
-      (rtdbService as any).rtdb = { ref: vi.fn().mockReturnValue(mockRef) };
-
-      // Mock Firebase auth
-      vi.doMock('../firebase', () => ({
-        auth: {
-          currentUser: {
-            uid: 'p1-uid'
-          }
-        }
-      }));
-
-      // Should fail - trying to write to battle public state directly
-      // Note: In a real test, this would be caught by Firebase security rules
-      // Here we're testing the service layer behavior
+    it('should prevent direct writes to battle public state', () => {
+      expect(rule('battles/$bid/public', '.write')).toBe(false);
+      expect(rule('battles/$bid/turns/$turn/resolution', '.write')).toBe(false);
     });
 
-    it('should prevent direct writes to battle private state', async () => {
-      const mockRef = { path: 'battles/battle-123/private/p1-uid' };
-      (rtdbService as any).rtdb = { ref: vi.fn().mockReturnValue(mockRef) };
-
-      // Mock Firebase auth
-      vi.doMock('../firebase', () => ({
-        auth: {
-          currentUser: {
-            uid: 'p1-uid'
-          }
-        }
-      }));
-
-      // Should fail - trying to write to battle private state directly
-      // Note: In a real test, this would be caught by Firebase security rules
-      // Here we're testing the service layer behavior
+    it('should prevent direct writes to battle private state', () => {
+      expect(rule('battles/$bid/private/$uid', '.write')).toBe(false);
+      expect(rule('battles/$bid/server', '.write')).toBe(false);
     });
   });
 });
