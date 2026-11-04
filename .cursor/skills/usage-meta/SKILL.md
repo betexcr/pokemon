@@ -19,7 +19,7 @@ Competitive Pokémon usage tracking across Smogon Singles, VGC, BSS — generati
 | `/usage` | Usage meta dashboard |
 | `/usage-simple` | Simplified usage view |
 | `/usage-demo` | Demo / prototype |
-| `/trends` | Usage trend analysis |
+| `/trends` | Popularity trends from real Wikipedia pageviews (`/api/trends/popularity`) |
 | `/meta` | Meta overview |
 | `/top50` | Top 50 popular Pokémon (PopupBook UI) |
 | `/test-usage` | Usage testing page |
@@ -30,7 +30,7 @@ Competitive Pokémon usage tracking across Smogon Singles, VGC, BSS — generati
 |------|------|
 | `src/lib/usage/` | Usage data ingestion, parsing, types |
 | `src/lib/meta/` | Meta aggregation helpers |
-| `src/lib/trends/` | Trend calculation |
+| `src/lib/trends/` | Popularity trends: `wikipedia.ts` (pure title selection + aggregation), `popularityService.ts` (server fetch of PokeAPI names + Wikimedia pageviews) |
 | `src/data/top50Pokemon.ts` | Static top-50 dataset |
 | `src/components/top50/` | PopupBook and related UI |
 | `src/components/usage/` | Usage dashboard components |
@@ -41,6 +41,7 @@ Competitive Pokémon usage tracking across Smogon Singles, VGC, BSS — generati
 ## Data sources
 
 - Smogon usage stats (monthly, by format/generation)
+- Wikimedia Pageviews API for `/trends` popularity (keyless; server sends a descriptive User-Agent). Regions are Wikipedia language groups: English (en), Asia (ja/ko/zh), Europe (de/fr/es/it), Global (sum). Metric is average daily user pageviews; legacy `region=US|EU` URLs map to English/Europe.
 - Source attribution with clickable links in UI
 - Static fallbacks in `src/data/` when live ingest unavailable
 
