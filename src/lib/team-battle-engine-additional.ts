@@ -19,6 +19,8 @@ import {
   consumePpForMove,
   getTeamForPokemon,
   isSafeguardActive,
+  effectiveItem,
+  syncItemSuppression,
 } from './team-battle-engine';
 import { recordMoveDataMiss } from './battle-engine-metrics';
 import { calculateComprehensiveDamage, calculateTypeEffectiveness, TypeName } from './damage-calculator';
@@ -58,7 +60,9 @@ import { COUNTER_MOVES, getCounterDamage, moveFailsTryCondition, recordDamageTak
 
 // Process start-of-turn effects
 export async function processStartOfTurn(state: BattleState): Promise<void> {
-  
+  // Magic Room is stored on the field; mirror it onto every Pokémon for item checks
+  syncItemSuppression(state);
+
   // 1. Update field condition messages (weather, terrain)
   if (state.field.weather) {
     const weatherMessages: Record<string, string> = {
@@ -486,47 +490,47 @@ type ScriptedStatusMoveHandler = (ctx: {
 
 const scriptedStatusMoveHandlers: Record<string, ScriptedStatusMoveHandler> = {
   'sunny-day': ({ state, attacker }) => {
-    state.field.weather = { kind: 'sun', turns: getWeatherDuration('sun', attacker.heldItem), source: attacker.pokemon.name };
+    state.field.weather = { kind: 'sun', turns: getWeatherDuration('sun', effectiveItem(attacker)), source: attacker.pokemon.name };
     state.battleLog.push({ type: 'status_effect', message: 'The sunlight turned harsh!' });
     return true;
   },
   'rain-dance': ({ state, attacker }) => {
-    state.field.weather = { kind: 'rain', turns: getWeatherDuration('rain', attacker.heldItem), source: attacker.pokemon.name };
+    state.field.weather = { kind: 'rain', turns: getWeatherDuration('rain', effectiveItem(attacker)), source: attacker.pokemon.name };
     state.battleLog.push({ type: 'status_effect', message: 'It started to rain!' });
     return true;
   },
   sandstorm: ({ state, attacker }) => {
-    state.field.weather = { kind: 'sandstorm', turns: getWeatherDuration('sandstorm', attacker.heldItem), source: attacker.pokemon.name };
+    state.field.weather = { kind: 'sandstorm', turns: getWeatherDuration('sandstorm', effectiveItem(attacker)), source: attacker.pokemon.name };
     state.battleLog.push({ type: 'status_effect', message: 'A sandstorm kicked up!' });
     return true;
   },
   hail: ({ state, attacker }) => {
-    state.field.weather = { kind: 'snow', turns: getWeatherDuration('snow', attacker.heldItem), source: attacker.pokemon.name };
+    state.field.weather = { kind: 'snow', turns: getWeatherDuration('snow', effectiveItem(attacker)), source: attacker.pokemon.name };
     state.battleLog.push({ type: 'status_effect', message: 'It started to snow!' });
     return true;
   },
   snowscape: ({ state, attacker }) => {
-    state.field.weather = { kind: 'snow', turns: getWeatherDuration('snow', attacker.heldItem), source: attacker.pokemon.name };
+    state.field.weather = { kind: 'snow', turns: getWeatherDuration('snow', effectiveItem(attacker)), source: attacker.pokemon.name };
     state.battleLog.push({ type: 'status_effect', message: 'It started to snow!' });
     return true;
   },
   'electric-terrain': ({ state, attacker }) => {
-    state.field.terrain = { kind: 'electric', turns: getTerrainDuration(attacker.heldItem), source: attacker.pokemon.name };
+    state.field.terrain = { kind: 'electric', turns: getTerrainDuration(effectiveItem(attacker)), source: attacker.pokemon.name };
     state.battleLog.push({ type: 'status_effect', message: 'An electric current runs across the battlefield!' });
     return true;
   },
   'grassy-terrain': ({ state, attacker }) => {
-    state.field.terrain = { kind: 'grassy', turns: getTerrainDuration(attacker.heldItem), source: attacker.pokemon.name };
+    state.field.terrain = { kind: 'grassy', turns: getTerrainDuration(effectiveItem(attacker)), source: attacker.pokemon.name };
     state.battleLog.push({ type: 'status_effect', message: 'Grass grew to cover the battlefield!' });
     return true;
   },
   'misty-terrain': ({ state, attacker }) => {
-    state.field.terrain = { kind: 'misty', turns: getTerrainDuration(attacker.heldItem), source: attacker.pokemon.name };
+    state.field.terrain = { kind: 'misty', turns: getTerrainDuration(effectiveItem(attacker)), source: attacker.pokemon.name };
     state.battleLog.push({ type: 'status_effect', message: 'Mist swirled around the battlefield!' });
     return true;
   },
   'psychic-terrain': ({ state, attacker }) => {
-    state.field.terrain = { kind: 'psychic', turns: getTerrainDuration(attacker.heldItem), source: attacker.pokemon.name };
+    state.field.terrain = { kind: 'psychic', turns: getTerrainDuration(effectiveItem(attacker)), source: attacker.pokemon.name };
     state.battleLog.push({ type: 'status_effect', message: 'The battlefield got weird!' });
     return true;
   },
@@ -538,6 +542,29 @@ const scriptedStatusMoveHandlers: Record<string, ScriptedStatusMoveHandler> = {
     } else {
       state.field.rooms.trickRoom = { turns: 5 };
       state.battleLog.push({ type: 'status_effect', message: `${attacker.pokemon.name} twisted the dimensions!` });
+    }
+    return true;
+  },
+  'magic-room': ({ state }) => {
+    if (!state.field.rooms) state.field.rooms = {};
+    if (state.field.rooms.magicRoom) {
+      delete state.field.rooms.magicRoom;
+      state.battleLog.push({ type: 'status_effect', message: 'Magic Room wore off, and held items regained their effects!' });
+    } else {
+      state.field.rooms.magicRoom = { turns: 5 };
+      state.battleLog.push({ type: 'status_effect', message: "It created a bizarre area in which Pokémon's held items lose their effects!" });
+    }
+    syncItemSuppression(state);
+    return true;
+  },
+  'wonder-room': ({ state }) => {
+    if (!state.field.rooms) state.field.rooms = {};
+    if (state.field.rooms.wonderRoom) {
+      delete state.field.rooms.wonderRoom;
+      state.battleLog.push({ type: 'status_effect', message: 'Wonder Room wore off, and Defense and Sp. Def stats returned to normal!' });
+    } else {
+      state.field.rooms.wonderRoom = { turns: 5 };
+      state.battleLog.push({ type: 'status_effect', message: 'It created a bizarre area in which Defense and Sp. Def stats are swapped!' });
     }
     return true;
   },
@@ -614,21 +641,45 @@ function absorbHitWithSubstitute(
 
 /** Self-targeting / pivot move sets live in battle-move-constants.ts */
 
+/** What Baton Pass hands to the replacement: stat stages and a subset of volatiles. */
+type BatonPassTransfer = {
+  statModifiers: BattlePokemon['statModifiers'];
+  volatile: Partial<BattlePokemon['volatile']>;
+};
+
+function captureBatonPass(pokemon: BattlePokemon): BatonPassTransfer {
+  const v = pokemon.volatile;
+  const passed: Partial<BattlePokemon['volatile']> = {};
+  if (v.substitute) passed.substitute = { ...v.substitute };
+  if (v.confusion) passed.confusion = { ...v.confusion };
+  if (v.leechSeed) {
+    passed.leechSeed = v.leechSeed;
+    if (v.leechSeedSource) passed.leechSeedSource = { ...v.leechSeedSource };
+  }
+  if (v.aquaRing) passed.aquaRing = v.aquaRing;
+  if (v.perishSong) passed.perishSong = { ...v.perishSong };
+  return { statModifiers: { ...pokemon.statModifiers }, volatile: passed };
+}
+
 async function performPivotSwitch(
   state: BattleState,
   user: 'player' | 'opponent',
-): Promise<void> {
+  options: { batonPass?: boolean } = {},
+): Promise<boolean> {
   const team = user === 'player' ? state.player : state.opponent;
   const outgoing = getCurrentPokemon(team);
-  if (outgoing.currentHp <= 0) return;
+  if (outgoing.currentHp <= 0) return false;
   const nextIndex = getNextAvailableBenchPokemon(team);
-  if (nextIndex === null) return;
+  if (nextIndex === null) return false;
 
+  const transfer = options.batonPass ? captureBatonPass(outgoing) : null;
   applySwitchOutAbilities(outgoing);
-  outgoing.volatile.protect = undefined;
-  outgoing.volatile.flinched = false;
   switchToPokemon(team, nextIndex);
   const replacement = getCurrentPokemon(team);
+  if (transfer) {
+    replacement.statModifiers = transfer.statModifiers;
+    Object.assign(replacement.volatile, transfer.volatile);
+  }
   state.battleLog.push({
     type: 'pokemon_sent_out',
     message: `Go! ${replacement.pokemon.name}!`,
@@ -636,6 +687,62 @@ async function performPivotSwitch(
   });
   await runEntrySequence(state, user, replacement);
   replacement.volatile.justSwitchedIn = true;
+  return true;
+}
+
+/** Roar / Whirlwind (status) and Dragon Tail / Circle Throw (after damage) drag out a random bench Pokémon. */
+const PHAZING_STATUS_MOVES = new Set(['roar', 'whirlwind']);
+const PHAZING_DAMAGE_MOVES = new Set(['dragon-tail', 'circle-throw']);
+
+const PHAZE_BLOCKING_ABILITIES: Record<string, string> = {
+  'suction-cups': 'Suction Cups',
+  'guard-dog': 'Guard Dog',
+};
+
+/**
+ * Force the target side to switch to a random healthy bench Pokémon.
+ * Returns true when a switch happened. `logFailure` writes "But it failed!" when nothing can come in.
+ */
+async function forceTargetSwitch(
+  state: BattleState,
+  targetSide: 'player' | 'opponent',
+  logFailure: boolean,
+): Promise<boolean> {
+  const team = targetSide === 'player' ? state.player : state.opponent;
+  const target = getCurrentPokemon(team);
+  if (target.currentHp <= 0) return false;
+
+  const blocker = PHAZE_BLOCKING_ABILITIES[target.currentAbility?.toLowerCase() ?? ''];
+  if (blocker) {
+    state.battleLog.push({
+      type: 'status_effect',
+      message: `${target.pokemon.name} anchors itself with ${blocker}!`,
+      pokemon: target.pokemon.name,
+    });
+    return false;
+  }
+
+  const candidates = team.pokemon
+    .map((p, i) => ({ p, i }))
+    .filter(({ p, i }) => i !== team.currentIndex && p.currentHp > 0)
+    .map(({ i }) => i);
+  if (candidates.length === 0) {
+    if (logFailure) state.battleLog.push({ type: 'status_effect', message: 'But it failed!' });
+    return false;
+  }
+
+  const nextIndex = candidates[rngNextInt(state.rng, candidates.length)];
+  applySwitchOutAbilities(target);
+  switchToPokemon(team, nextIndex);
+  const incoming = getCurrentPokemon(team);
+  state.battleLog.push({
+    type: 'pokemon_sent_out',
+    message: `${incoming.pokemon.name} was dragged out!`,
+    pokemon: incoming.pokemon.name,
+  });
+  await runEntrySequence(state, targetSide, incoming);
+  incoming.volatile.justSwitchedIn = true;
+  return true;
 }
 
 function tryAbilityAbsorb(
@@ -756,7 +863,7 @@ async function executeMoveAction(
   }
 
   // Choice items lock the user into the selected move
-  const itemLower = attacker.heldItem?.toLowerCase();
+  const itemLower = effectiveItem(attacker);
   if (
     (itemLower === 'choice-scarf' || itemLower === 'choice-band' || itemLower === 'choice-specs') &&
     moveId.toLowerCase() !== 'struggle'
@@ -819,6 +926,18 @@ async function executeMoveAction(
   // Handle status moves (no direct damage).
   // Note: moves with power=null (like seismic-toss, night-shade) are NOT status moves.
   if (move.category === 'Status') {
+    if (PHAZING_STATUS_MOVES.has(moveLower)) {
+      // Sound/wind phazing ignores Protect and Substitute in this engine
+      await forceTargetSwitch(state, user === 'player' ? 'opponent' : 'player', true);
+      return;
+    }
+    if (moveLower === 'baton-pass') {
+      if (!(await performPivotSwitch(state, user, { batonPass: true }))) {
+        state.battleLog.push({ type: 'status_effect', message: 'But it failed!' });
+      }
+      return;
+    }
+
     const scripted = scriptedStatusMoveHandlers[moveLower];
     if (scripted?.({ state, attacker, defender, isPlayer })) {
       return;
@@ -900,7 +1019,7 @@ async function executeMoveAction(
 
     // Screen-setting moves
     const attackerSide = isPlayer ? state.player : state.opponent;
-    const screenTurns = getScreenDuration(attacker.heldItem);
+    const screenTurns = getScreenDuration(effectiveItem(attacker));
     if (moveLower === 'reflect') {
       attackerSide.sideConditions.screens.reflect = { turns: screenTurns };
       state.battleLog.push({ type: 'status_effect', message: `Reflect raised ${attacker.pokemon.name}'s team's Defense!` });
@@ -1039,7 +1158,10 @@ async function executeMoveAction(
     let attackStat = isPhysical
       ? calculateStat(attackerAttackStat, attacker.level)
       : calculateStat(attackerSpecialAttackStat, attacker.level);
-    let defenseStat = isPhysical
+    // Wonder Room swaps every Pokémon's raw Defense and Sp. Def (stat stages are not swapped)
+    const wonderRoom = !!state.field.rooms?.wonderRoom;
+    const usesDefenseStat = isPhysical !== wonderRoom;
+    let defenseStat = usesDefenseStat
       ? calculateStat(defenderDefenseStat, defender.level)
       : calculateStat(defenderSpecialDefenseStat, defender.level);
 
@@ -1173,7 +1295,7 @@ async function executeMoveAction(
 
     // Check for Focus Sash / Sturdy (survive at 1 HP from full HP)
     const defenderAbility = defender.currentAbility?.toLowerCase();
-    const defenderItem = defender.heldItem?.toLowerCase();
+    const defenderItem = effectiveItem(defender);
     const isFullHp = defender.currentHp === defender.maxHp;
     const wouldFaint = defender.currentHp - damage <= 0;
     
@@ -1267,7 +1389,7 @@ async function executeMoveAction(
       }
       
       // Rocky Helmet: 1/6 max HP recoil
-      const defenderItem = defender.heldItem?.toLowerCase();
+      const defenderItem = effectiveItem(defender);
       if (defenderItem === 'rocky-helmet') {
         const recoil = Math.floor(attacker.maxHp / 6);
         attacker.currentHp = Math.max(0, attacker.currentHp - recoil);
@@ -1374,7 +1496,7 @@ async function executeMoveAction(
   }
   
   // Apply Life Orb recoil (10% max HP)
-  const attackerItem = attacker.heldItem?.toLowerCase();
+  const attackerItem = effectiveItem(attacker);
   if (attackerItem === 'life-orb' && totalDamageDealt > 0) {
     const lifeOrbRecoil = Math.floor(attacker.maxHp / 10);
     attacker.currentHp = Math.max(0, attacker.currentHp - lifeOrbRecoil);
@@ -1461,6 +1583,11 @@ async function executeMoveAction(
     }
   }
 
+  // Dragon Tail / Circle Throw drag the target out after a hit that reached its HP
+  if (PHAZING_DAMAGE_MOVES.has(moveLower) && hpDamageDealt > 0 && defender.currentHp > 0 && attacker.currentHp > 0) {
+    await forceTargetSwitch(state, user === 'player' ? 'opponent' : 'player', false);
+  }
+
   // Pivot moves: auto-switch to next available bench Pokémon
   if (PIVOT_MOVES.has(moveLower) && moveLower !== 'parting-shot' && totalDamageDealt > 0 && attacker.currentHp > 0) {
     await performPivotSwitch(state, user);
@@ -1518,6 +1645,8 @@ function applyBeastBoost(attacker: BattlePokemon, state: BattleState): void {
 export async function runEntrySequence(state: BattleState, switchingSide: 'player' | 'opponent', incomingPokemon: BattlePokemon): Promise<void> {
   incomingPokemon.volatile.moveActionsSinceEntry = 0;
   incomingPokemon.volatile.lastDamageTaken = undefined;
+  if (state.field.rooms?.magicRoom) incomingPokemon.volatile.itemSuppressed = true;
+  else delete incomingPokemon.volatile.itemSuppressed;
 
   const switchingTeam = switchingSide === 'player' ? state.player : state.opponent;
 
@@ -1613,11 +1742,22 @@ export async function runBattleTurnFromQueue(
 
   await processStartOfTurn(state);
 
+  // A move belongs to the Pokémon that chose it: if that side's active Pokémon was replaced
+  // mid-turn (Roar, Dragon Tail, ...), the newcomer does not use it.
+  const activeAtTurnStart = {
+    player: state.player.currentIndex,
+    opponent: state.opponent.currentIndex,
+  };
+
   for (const action of queue) {
     if (action.type === 'switch') {
+      activeAtTurnStart[action.user] = action.switchIndex ?? activeAtTurnStart[action.user];
       await resolveSwitch(state, action);
     } else if ((action.type === 'move' || action.type === 'pursuit') && action.moveId) {
-      await resolveMove(state, action);
+      const team = action.user === 'player' ? state.player : state.opponent;
+      if (team.currentIndex === activeAtTurnStart[action.user]) {
+        await resolveMove(state, action);
+      }
     }
 
     state.player.faintedCount = state.player.pokemon.filter((p) => p.currentHp <= 0).length;
@@ -1642,10 +1782,22 @@ export async function processEndOfTurn(state: BattleState): Promise<void> {
   applyTerrainHealing(state);
   applyLeechSeed(state);
   applyBindingDamage(state);
+  const roomsBefore = { ...(state.field.rooms ?? {}) };
   decrementFieldTimers(state.field, {
     player: state.player.sideConditions.screens,
     opponent: state.opponent.sideConditions.screens,
   });
+  const roomsAfter = state.field.rooms ?? {};
+  if (roomsBefore.trickRoom && !roomsAfter.trickRoom) {
+    state.battleLog.push({ type: 'status_effect', message: 'The twisted dimensions returned to normal!' });
+  }
+  if (roomsBefore.magicRoom && !roomsAfter.magicRoom) {
+    state.battleLog.push({ type: 'status_effect', message: 'Magic Room wore off, and held items regained their effects!' });
+  }
+  if (roomsBefore.wonderRoom && !roomsAfter.wonderRoom) {
+    state.battleLog.push({ type: 'status_effect', message: 'Wonder Room wore off, and Defense and Sp. Def stats returned to normal!' });
+  }
+  syncItemSuppression(state);
 
   applyEndOfTurnStatus(state, getCurrentPokemon(state.player));
   applyEndOfTurnStatus(state, getCurrentPokemon(state.opponent));
@@ -1673,7 +1825,7 @@ function processItemResiduals(state: BattleState): void {
     const pokemon = getCurrentPokemon(team);
     if (pokemon.currentHp <= 0) return;
 
-    const item = pokemon.heldItem?.toLowerCase();
+    const item = effectiveItem(pokemon);
     if (!item) return;
 
     if (item === 'shell-bell' && pokemon.volatile.damageDealtThisTurn) {

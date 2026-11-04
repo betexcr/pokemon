@@ -2,6 +2,7 @@
  * Pure helpers for the live damage path (`executeMoveAction` → `calculateComprehensiveDamage`).
  * Behavior must match the previous inline prep in team-battle-engine-additional.ts.
  */
+import { effectiveItem } from './battle-item-access';
 import type { BattlePokemon } from './team-battle-engine';
 import type { TypeName } from './damage-calculator';
 import type { BattleRng } from './battle-rng';
@@ -104,8 +105,8 @@ export function computeAttackDefensePowerMultipliers(params: {
   defender: BattlePokemon;
 }): { attackMultiplier: number; defenseMultiplier: number; powerMultiplier: number } {
   const { isPhysical, attacker, defender } = params;
-  const attackerItem = attacker.heldItem?.toLowerCase();
-  const defenderItem = defender.heldItem?.toLowerCase();
+  const attackerItem = effectiveItem(attacker);
+  const defenderItem = effectiveItem(defender);
   const defenderAbility = defender.currentAbility?.toLowerCase();
 
   let attackMultiplier = 1;
@@ -233,6 +234,6 @@ export function prepareLiveDamageModifiers(params: {
     cannotCrit: crit.cannotCrit,
     attackerAbility: attacker.currentAbility?.toLowerCase(),
     defenderAbility: defender.currentAbility?.toLowerCase(),
-    attackerItem: attacker.heldItem?.toLowerCase(),
+    attackerItem: effectiveItem(attacker),
   };
 }

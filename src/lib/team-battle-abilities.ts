@@ -1,3 +1,4 @@
+import { effectiveItem } from './battle-item-access';
 import { BattleState, getCurrentPokemon } from './team-battle-engine';
 import { BattlePokemon } from './team-battle-engine';
 import type { WeatherKind, TerrainKind } from './team-battle-types';
@@ -23,7 +24,7 @@ export function handleOnEntryAbilities(state: BattleState, side: 'player' | 'opp
 
   const opponentTeam = side === 'player' ? state.opponent : state.player;
   const opponentActive = getCurrentPokemon(opponentTeam);
-  const item = incoming.heldItem;
+  const item = effectiveItem(incoming);
 
   const setWeather = (kind: WeatherKind) => {
     if (kind === 'none') return;

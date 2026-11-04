@@ -1,3 +1,5 @@
+import { effectiveItem } from './battle-item-access';
+export { effectiveItem } from './battle-item-access';
 import { Pokemon, Move } from '@/types/pokemon';
 import { CompiledMove } from './adapters/pokeapiMoveAdapter';
 import { getMove, getCachedMove } from './moveCache';
@@ -63,6 +65,10 @@ export type BattlePokemon = {
     moveActionsSinceEntry?: number;
     /** HP damage taken from an opposing attack this turn (Counter / Mirror Coat / Metal Burst). Cleared each turn. */
     lastDamageTaken?: { amount: number; category: 'Physical' | 'Special' };
+    /** Held item has no effect (Magic Room). Synced from the field by `syncItemSuppression`. */
+    itemSuppressed?: boolean;
+    /** Berry eaten earlier (Harvest restores it). */
+    lastConsumedBerry?: string;
   };
   // Ability system
   currentAbility?: string;
@@ -205,6 +211,10 @@ const FALLBACK_PRIORITY: Record<string, number> = {
   'mach-punch': 1,
   'vacuum-wave': 1,
   'trick-room': -6,
+  'roar': -6,
+  'whirlwind': -6,
+  'dragon-tail': -6,
+  'circle-throw': -6,
   'wonder-room': -6,
   'magic-room': -6,
 };
@@ -267,7 +277,7 @@ export function getEffectiveSpeed(
   if (ability === 'slush-rush' && weather === 'snow') finalSpeed = Math.floor(finalSpeed * 2);
   if (ability === 'surge-surfer' && terrain === 'electric') finalSpeed = Math.floor(finalSpeed * 2);
 
-  const item = pokemon.heldItem?.toLowerCase();
+  const item = effectiveItem(pokemon);
   if (item === 'choice-scarf') finalSpeed = Math.floor(finalSpeed * 1.5);
   if (item === 'iron-ball') finalSpeed = Math.floor(finalSpeed * 0.5);
   if (pokemon.volatile.unburdenActive) finalSpeed = Math.floor(finalSpeed * 2);
@@ -410,7 +420,7 @@ export function canUseMove(
   }
 
   // Assault Vest: cannot select status moves
-  if (pokemon.heldItem?.toLowerCase() === 'assault-vest' && idLower !== 'struggle') {
+  if (effectiveItem(pokemon) === 'assault-vest' && idLower !== 'struggle') {
     const fullMove = getCachedMove(moveId);
     if (fullMove?.category === 'Status') {
       return { canUse: false, reason: 'assault vest' };
@@ -882,8 +892,49 @@ export function switchToPokemon(team: BattleTeam, index: number): void {
   }
 }
 
-/** Regenerator heal 1/3 and Natural Cure status clear on voluntary switch-out. */
+/** Mirror Magic Room onto every Pokémon so item checks without `state` access can honour it. */
+export function syncItemSuppression(state: BattleState): void {
+  const suppressed = !!state.field.rooms?.magicRoom;
+  for (const team of [state.player, state.opponent]) {
+    for (const mon of team.pokemon) {
+      if (!mon.volatile) mon.volatile = {};
+      if (suppressed) mon.volatile.itemSuppressed = true;
+      else delete mon.volatile.itemSuppressed;
+    }
+  }
+}
+
+const ZERO_STAT_STAGES: BattlePokemon['statModifiers'] = {
+  attack: 0,
+  defense: 0,
+  specialAttack: 0,
+  specialDefense: 0,
+  speed: 0,
+  accuracy: 0,
+  evasion: 0,
+};
+
+/**
+ * Leaving the field clears stat stages and volatile conditions (confusion, Substitute, Encore,
+ * Taunt, choice lock, Leech Seed, toxic counter, ...). Status, consumed-item flags and Wish persist.
+ */
+export function resetOnSwitchOut(pokemon: BattlePokemon): void {
+  const v = pokemon.volatile ?? {};
+  const kept: BattlePokemon['volatile'] = {};
+  if (v.focusSashUsed) kept.focusSashUsed = v.focusSashUsed;
+  if (v.lastConsumedBerry) kept.lastConsumedBerry = v.lastConsumedBerry;
+  if (v.wish) kept.wish = v.wish;
+  if (v.itemSuppressed) kept.itemSuppressed = v.itemSuppressed;
+  pokemon.volatile = kept;
+  pokemon.statModifiers = { ...ZERO_STAT_STAGES };
+}
+
+/**
+ * Switch-out hook: clears stat stages / volatiles, then Regenerator heal 1/3 and Natural Cure status clear.
+ * Used for voluntary switches, pivots, Baton Pass (after capturing what it passes) and forced switches.
+ */
 export function applySwitchOutAbilities(pokemon: BattlePokemon): void {
+  resetOnSwitchOut(pokemon);
   if (pokemon.currentHp <= 0) return;
   // Leaving the field cancels multi-turn locks (no fatigue confusion on voluntary switch)
   pokemon.volatile.rampage = undefined;

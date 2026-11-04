@@ -1,3 +1,4 @@
+import { effectiveItem } from './battle-item-access';
 import { BattleState, getCurrentPokemon, BattleTeam } from './team-battle-engine';
 import { FieldState, FieldSideScreens } from './team-battle-types';
 import { getPokemonTypes, isGrounded } from './team-battle-hazards';
@@ -21,10 +22,12 @@ export function decrementFieldTimers(field: FieldState, screens: { player: Field
   }
 
   if (!field.rooms) field.rooms = {};
-  if (field.rooms.trickRoom) {
-    field.rooms.trickRoom.turns -= 1;
-    if (field.rooms.trickRoom.turns <= 0) {
-      delete field.rooms.trickRoom;
+  for (const room of ['trickRoom', 'magicRoom', 'wonderRoom'] as const) {
+    const active = field.rooms[room];
+    if (!active) continue;
+    active.turns -= 1;
+    if (active.turns <= 0) {
+      delete field.rooms[room];
     }
   }
 
@@ -63,7 +66,7 @@ export function applyWeatherResidual(state: BattleState): void {
       if (pokemon.currentHp <= 0) return;
       const types = getPokemonTypes(pokemon);
       const ability = pokemon.currentAbility?.toLowerCase();
-      const item = pokemon.heldItem?.toLowerCase();
+      const item = effectiveItem(pokemon);
       const immune =
         types.includes('rock') ||
         types.includes('ground') ||

@@ -1,3 +1,4 @@
+import { effectiveItem } from './battle-item-access';
 import { BattlePokemon } from './team-battle-engine';
 import { SideHazards } from './team-battle-types';
 import { calculateTypeEffectiveness, TypeName } from './damage-calculator';
@@ -49,7 +50,7 @@ export function applyEntryHazards(pokemon: BattlePokemon, hazards: SideHazards):
   let applyStickyWeb = false;
 
   // Heavy-Duty Boots skip all entry hazards
-  const item = pokemon.heldItem?.toLowerCase();
+  const item = effectiveItem(pokemon);
   if (item === 'heavy-duty-boots') {
     return { damage: 0 };
   }

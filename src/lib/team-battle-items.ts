@@ -1,3 +1,4 @@
+import { effectiveItem } from './battle-item-access';
 import { BattlePokemon, BattleState, BattleTeam } from './team-battle-engine';
 import { clearStatus } from './team-battle-status';
 import { rngRollChance } from './battle-rng';
@@ -61,8 +62,8 @@ export function tryConsumeBerry(
   target: BattlePokemon,
   targetSide: 'player' | 'opponent'
 ): void {
-  if (!target.heldItem || target.currentHp <= 0) return;
-  const item = target.heldItem.toLowerCase();
+  const item = effectiveItem(target);
+  if (!item || target.currentHp <= 0) return;
 
   const foe = targetSide === 'player' ? state.opponent : state.player;
   if (teamHasUnnerveOnField(foe)) {
@@ -164,11 +165,10 @@ export function checkTypeResistBerry(
   effectiveness: number,
   targetSide: 'player' | 'opponent' = 'opponent'
 ): number {
-  if (!target.heldItem || target.currentHp <= 0) return 1;
+  const item = effectiveItem(target);
+  if (!item || target.currentHp <= 0) return 1;
   const foe = targetSide === 'player' ? state.opponent : state.player;
   if (teamHasUnnerveOnField(foe)) return 1;
-
-  const item = target.heldItem.toLowerCase();
 
   if (!(item in TYPE_RESIST_BERRIES)) return 1;
 
