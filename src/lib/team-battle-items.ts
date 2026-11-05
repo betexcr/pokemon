@@ -10,7 +10,7 @@ function teamHasUnnerveOnField(team: BattleTeam): boolean {
   );
 }
 
-const STAT_BOOST_BERRIES: Record<string, keyof BattlePokemon['statModifiers']> = {
+export const STAT_BOOST_BERRIES: Record<string, keyof BattlePokemon['statModifiers']> = {
   'liechi-berry': 'attack',
   'ganlon-berry': 'defense',
   'salac-berry': 'speed',
@@ -18,7 +18,7 @@ const STAT_BOOST_BERRIES: Record<string, keyof BattlePokemon['statModifiers']> =
   'apicot-berry': 'specialDefense',
 };
 
-const TYPE_RESIST_BERRIES: Record<string, string> = {
+export const TYPE_RESIST_BERRIES: Record<string, string> = {
   'occa-berry': 'fire',
   'passho-berry': 'water',
   'wacan-berry': 'electric',

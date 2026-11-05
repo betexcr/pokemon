@@ -14,6 +14,7 @@ import {
 import { resumeBattleTurnAfterSwitch, runBattleTurnFromQueue, type TurnOutcome } from '@/lib/team-battle-engine-additional';
 import { createBattleRng } from '@/lib/battle-rng';
 import { createFieldState, EMPTY_HAZARDS } from '@/lib/team-battle-types';
+import { sanitizeBattleItem } from '@/lib/battle-items-catalog';
 import { canTerastallize, resolveTeraType } from '@/lib/team-battle-tera';
 import { getCachedMove } from '@/lib/moveCache';
 import { resolveBattleAbility } from '@/lib/battle-default-ability';
@@ -169,7 +170,7 @@ async function hydrateSlot(raw: any): Promise<BattlePokemon> {
     statusTurns: 0,
     volatile: ensureVolatile(raw),
     statModifiers: ensureStatModifiers(raw),
-    heldItem: raw.heldItem || undefined,
+    heldItem: sanitizeBattleItem(raw.heldItem ?? raw.item),
     currentAbility: resolveBattleAbility(raw, abilities),
     teraType: resolveTeraType(raw.teraType, types),
     originalAbility: resolveBattleAbility({ ability: raw.ability }, abilities),

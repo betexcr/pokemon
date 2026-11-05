@@ -25,6 +25,8 @@ import ConfirmDialog from '@/components/ConfirmDialog'
 import AppHeader from '@/components/AppHeader'
 import PokemonSelector from '@/components/PokemonSelector'
 import { DEFAULT_NATURE, NATURES, type NatureName, type NatureStat } from '@/data/natures'
+import { BATTLE_ITEMS, getBattleItem, sanitizeBattleItem, type BattleItemCategory } from '@/lib/battle-items-catalog'
+const ITEM_CATEGORIES: BattleItemCategory[] = ['Choice & power', 'Recovery & defense', 'Field & utility', 'Berries', 'Type boost']
 import { TERA_TYPES, isTeraType, resolveTeraType } from '@/lib/team-battle-tera'
 
 const formatTeraLabel = (t: string) => t.charAt(0).toUpperCase() + t.slice(1)
@@ -62,7 +64,8 @@ const normalizeTeamSlots = (slots?: Array<Partial<TeamSlot>> | null): TeamSlot[]
       moves,
       nature: slot.nature ?? DEFAULT_NATURE,
       isShiny: slot.isShiny ?? false,
-      ...(isTeraType(slot.teraType) ? { teraType: slot.teraType } : {})
+      ...(isTeraType(slot.teraType) ? { teraType: slot.teraType } : {}),
+      ...(sanitizeBattleItem(slot.item) ? { item: sanitizeBattleItem(slot.item) } : {})
     }
   })
 }
@@ -1506,6 +1509,33 @@ export default function TeamBuilderPage() {
                           </span>
                         )
                       })()}
+                    </div>
+                  )}
+
+                  {/* Held Item Selector */}
+                  {poke && (
+                    <div className="mb-3 flex items-center gap-3">
+                      <label htmlFor={`held-item-${idx}`} className="text-xs font-medium text-muted flex-shrink-0">Item</label>
+                      <select
+                        id={`held-item-${idx}`}
+                        value={slot.item ?? ''}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => setSlot(idx, { item: sanitizeBattleItem(e.target.value) })}
+                        className="px-2 py-1 border border-border rounded text-xs bg-surface text-text max-w-[14rem]"
+                        data-testid={`held-item-${idx}`}
+                      >
+                        <option value="">No item</option>
+                        {ITEM_CATEGORIES.map((category) => (
+                          <optgroup key={category} label={category}>
+                            {BATTLE_ITEMS.filter((i) => i.category === category).map((i) => (
+                              <option key={i.id} value={i.id}>{i.label}</option>
+                            ))}
+                          </optgroup>
+                        ))}
+                      </select>
+                      {getBattleItem(slot.item) && (
+                        <span className="text-xs text-muted truncate">{getBattleItem(slot.item)!.effect}</span>
+                      )}
                     </div>
                   )}
 

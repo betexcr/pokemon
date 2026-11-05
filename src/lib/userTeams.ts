@@ -17,6 +17,7 @@ import {
   FirestoreError
 } from 'firebase/firestore'
 import { DEFAULT_NATURE, NatureName } from '@/data/natures'
+import { sanitizeBattleItem } from '@/lib/battle-items-catalog'
 import { isTeraType, type TeraType } from '@/lib/team-battle-tera'
 import { getDb as getClientDb, hasFirebaseClientConfig } from './firebase/client'
 import { firebaseErrorLogger } from './firebaseErrorLogger'
@@ -41,6 +42,8 @@ export interface TeamSlot {
   isShiny?: boolean;
   /** Tera Type for battles; omitted means the species' primary type. */
   teraType?: TeraType;
+  /** Held item id (see battle-items-catalog.ts); omitted means no item. */
+  item?: string;
 }
 
 type StoredTeamSlot = Omit<TeamSlot, 'nature'> & { nature?: NatureName };
@@ -84,6 +87,7 @@ function normalizeSlot(slot: StoredTeamSlot | null | undefined): TeamSlot {
     isShiny: normalized.isShiny ?? false,
     // Only stored when chosen: Firestore rejects undefined fields
     ...(isTeraType(normalized.teraType) ? { teraType: normalized.teraType.toLowerCase() as TeraType } : {}),
+    ...(sanitizeBattleItem(normalized.item) ? { item: sanitizeBattleItem(normalized.item) } : {}),
   };
 }
 

@@ -3,6 +3,7 @@
  * Always hydrates base stats from absolute PokeAPI — never trusts client stats/maxHp.
  */
 
+import { sanitizeBattleItem } from '../battle-items-catalog';
 import { resolveTeraType } from '../team-battle-tera';
 
 const POKEAPI_ABSOLUTE = 'https://pokeapi.co/api/v2/pokemon';
@@ -172,6 +173,8 @@ export async function normalizeTeamForRTDB(
         nature,
         // Chosen in the team builder, else the species' primary type
         ...(resolveTeraType(slot.teraType, types) ? { teraType: resolveTeraType(slot.teraType, types) } : {}),
+        // Only engine-supported items reach battle snapshots
+        ...(sanitizeBattleItem(slot.item ?? slot.heldItem) ? { heldItem: sanitizeBattleItem(slot.item ?? slot.heldItem) } : {}),
         statModifiers: {},
         status: null,
         originalIndex: index,
