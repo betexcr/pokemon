@@ -64,8 +64,8 @@ import { stabTypeNames, teraPowerFloor, teraStabOverride, terastallize } from '.
 import { OHKO_MOVES, ohkoFailure, ohkoHitChance, terrainPulseVariant, weatherBallVariant } from './team-battle-move-variants';
 import { transformBlocked, transformInto } from './team-battle-transform';
 import { breakIllusion, maskIllusions, startIllusion } from './team-battle-illusion';
-import { applyIceFaceStats, applyStanceChange, updateHpForms } from './team-battle-forms';
-import { SOUND_MOVES, isTrapped, itemAccuracyMultiplier, itemPowerMultiplier, loadedDiceHits, makesContactFor, umbrellaBlocksWeather } from './team-battle-held-items';
+import { applyIceFaceStats, applyItemForms, applyStanceChange, updateHpForms } from './team-battle-forms';
+import { GEM_TYPES, PLATE_TYPES, SOUND_MOVES, isTrapped, isUnremovableItem, itemAccuracyMultiplier, itemPowerMultiplier, loadedDiceHits, makesContactFor, umbrellaBlocksWeather } from './team-battle-held-items';
 
 // Process start-of-turn effects
 export async function processStartOfTurn(state: BattleState): Promise<void> {
@@ -75,6 +75,7 @@ export async function processStartOfTurn(state: BattleState): Promise<void> {
   // Leads never ran an entry sequence: start Illusion / HP-based forms on their first turn
   for (const side of ['player', 'opponent'] as const) {
     const lead = getCurrentPokemon(side === 'player' ? state.player : state.opponent);
+    applyItemForms(state, lead, PLATE_TYPES[effectiveItem(lead) ?? ''], effectiveItem(lead));
     if (lead.volatile.moveActionsSinceEntry === undefined && !lead.volatile.illusion) startIllusion(state, side, lead);
     updateHpForms(state, lead);
   }
@@ -781,6 +782,10 @@ const scriptedStatusMoveHandlers: Record<string, ScriptedStatusMoveHandler> = {
     return true;
   },
   trick: ({ state, attacker, defender }) => {
+    if (isUnremovableItem(attacker) || isUnremovableItem(defender)) {
+      state.battleLog.push({ type: 'status_effect', message: 'But it failed!' });
+      return true;
+    }
     const aItem = attacker.heldItem;
     const dItem = defender.heldItem;
     attacker.heldItem = dItem;
@@ -796,6 +801,10 @@ const scriptedStatusMoveHandlers: Record<string, ScriptedStatusMoveHandler> = {
     return true;
   },
   switcheroo: ({ state, attacker, defender }) => {
+    if (isUnremovableItem(attacker) || isUnremovableItem(defender)) {
+      state.battleLog.push({ type: 'status_effect', message: 'But it failed!' });
+      return true;
+    }
     const aItem = attacker.heldItem;
     const dItem = defender.heldItem;
     attacker.heldItem = dItem;
@@ -1239,6 +1248,10 @@ async function executeMoveAction(
   if (moveLower === 'weather-ball') {
     const variant = weatherBallVariant(state.field.weather?.kind);
     if (variant) move = { ...move, type: variant.type as typeof move.type, power: variant.power };
+  } else if (moveLower === 'judgment') {
+    // Judgment takes the type of the user's Plate
+    const plateType = PLATE_TYPES[effectiveItem(attacker) ?? ''];
+    if (plateType) move = { ...move, type: (plateType.charAt(0).toUpperCase() + plateType.slice(1)) as typeof move.type };
   } else if (moveLower === 'terrain-pulse') {
     const variant = terrainPulseVariant(state.field.terrain?.kind, isGrounded(attacker));
     if (variant) move = { ...move, type: variant.type as typeof move.type, power: variant.power };
@@ -1533,6 +1546,19 @@ async function executeMoveAction(
 
   // Sheer Force: +30% power for moves with secondary effects, which are then dropped (and Life Orb recoil with them)
   const sheerForce = abilityOf(attacker) === 'sheer-force' && hasSheerForceSecondary(move, moveLower);
+
+  // Gems: consumed to boost the first damaging move of their type (not fixed-damage moves or immune targets)
+  let gemBoost = 1;
+  const gemType = GEM_TYPES[effectiveItem(attacker) ?? ''];
+  if (gemType && typeof move.power === 'number' && move.power > 0 && String(move.type).toLowerCase() === gemType) {
+    const defTypes = getPokemonTypes(defender).map((t) => toDamageTypeName(String(t)));
+    if (calculateTypeEffectiveness(toDamageTypeName(gemType), defTypes) > 0) {
+      const gemLabel = `${gemType.charAt(0).toUpperCase()}${gemType.slice(1)} Gem`;
+      removeHeldItem(attacker);
+      gemBoost = 1.3;
+      state.battleLog.push({ type: 'status_effect', message: `The ${gemLabel} strengthened ${attacker.pokemon.name}'s power!`, pokemon: attacker.pokemon.name });
+    }
+  }
   
   // Determine number of hits
   const hitCount = move.hits && move.hits.min !== move.hits.max
@@ -1653,7 +1679,7 @@ async function executeMoveAction(
       defender,
     });
     if (sheerForce) prep.powerMultiplier *= 1.3;
-    prep.powerMultiplier *= itemPowerMultiplier(attacker, move.category, moveLower);
+    prep.powerMultiplier *= itemPowerMultiplier(attacker, move.category, moveLower) * gemBoost;
     // ...and their stat stages come from the same stat (critical hits ignore drops)
     if (moveLower === 'foul-play' || moveLower === 'body-press') {
       const stage = moveLower === 'foul-play' ? defender.statModifiers.attack : attacker.statModifiers.defense;
@@ -2039,7 +2065,7 @@ async function executeMoveAction(
   }
 
   // Knock Off: remove held item after a successful hit (not blocked by Substitute alone when damage dealt to HP — skip if only hit sub)
-  if (moveLower === 'knock-off' && totalDamageDealt > 0 && defender.heldItem && !hitSubstitute) {
+  if (moveLower === 'knock-off' && totalDamageDealt > 0 && defender.heldItem && !hitSubstitute && !isUnremovableItem(defender)) {
     const removed = removeHeldItem(defender);
     defender.volatile.choiceLock = undefined;
     if (removed) {
@@ -2141,6 +2167,7 @@ function applyBeastBoost(attacker: BattlePokemon, state: BattleState): void {
 export async function runEntrySequence(state: BattleState, switchingSide: 'player' | 'opponent', incomingPokemon: BattlePokemon): Promise<void> {
   incomingPokemon.volatile.moveActionsSinceEntry = 0;
   incomingPokemon.volatile.lastDamageTaken = undefined;
+  applyItemForms(state, incomingPokemon, PLATE_TYPES[effectiveItem(incomingPokemon) ?? ''], effectiveItem(incomingPokemon));
   startIllusion(state, switchingSide, incomingPokemon);
   if (state.field.rooms?.magicRoom) incomingPokemon.volatile.itemSuppressed = true;
   else delete incomingPokemon.volatile.itemSuppressed;

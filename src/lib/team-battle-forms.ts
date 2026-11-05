@@ -103,3 +103,46 @@ export function applyIceFaceStats(mon: BattlePokemon, face: 'ice' | 'noice'): vo
   // Keep a Transform / form snapshot (restored on switch-out) in the same face
   if (mon.volatile.formChange) mon.volatile.formChange.stats = swap(mon.volatile.formChange.stats);
 }
+
+/** Crowned forms (base stats except HP; HP is unchanged) and their types. */
+const CROWNED: Record<string, { item: string; stats: StatLine; types: string[]; message: string }> = {
+  zacian: {
+    item: 'rusted-sword',
+    stats: { attack: 170, defense: 115, 'special-attack': 80, 'special-defense': 115, speed: 148 },
+    types: ['fairy', 'steel'],
+    message: 'became Zacian, the Crowned Sword!',
+  },
+  zamazenta: {
+    item: 'rusted-shield',
+    stats: { attack: 130, defense: 145, 'special-attack': 80, 'special-defense': 145, speed: 128 },
+    types: ['fighting', 'steel'],
+    message: 'became Zamazenta, the Crowned Shield!',
+  },
+};
+
+const typeEntries = (types: string[]) => types.map((t, i) => ({ slot: i + 1, type: { name: t, url: '' } })) as any;
+
+/**
+ * Forms a held item sets for the whole battle: Rusted Sword / Shield crown Zacian / Zamazenta, and a
+ * Plate makes Arceus (Multitype) its type. Applied when the Pokémon first appears.
+ */
+export function applyItemForms(state: BattleState, mon: BattlePokemon, plateType: string | undefined, item: string | undefined): void {
+  if (mon.itemForm || mon.currentHp <= 0 || mon.volatile.transform) return;
+  const name = mon.pokemon.name.toLowerCase();
+  for (const [species, crowned] of Object.entries(CROWNED)) {
+    if (name.startsWith(species) && item === crowned.item) {
+      mon.itemForm = `${species}-crowned`;
+      const stats = (mon.pokemon.stats ?? []).map((s: any) => {
+        const stat = s.stat?.name || s.name;
+        return stat in crowned.stats ? { ...s, base_stat: crowned.stats[stat as keyof StatLine] } : s;
+      });
+      mon.pokemon = { ...mon.pokemon, stats, types: typeEntries(crowned.types) };
+      state.battleLog.push({ type: 'status_effect', message: `${mon.pokemon.name} ${crowned.message}`, pokemon: mon.pokemon.name });
+      return;
+    }
+  }
+  if (name.startsWith('arceus') && abilityOf(mon) === 'multitype' && plateType && !mon.terastallized) {
+    mon.itemForm = `arceus-${plateType}`;
+    mon.pokemon = { ...mon.pokemon, types: typeEntries([plateType]) };
+  }
+}

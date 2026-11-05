@@ -1,6 +1,6 @@
 import { effectiveItem } from './battle-item-access';
 import { revertTransform } from './team-battle-transform';
-import { isTrapped, rollMoveFirst } from './team-battle-held-items';
+import { isTrapped, rollMoveFirst, speciesItemSpeedMultiplier } from './team-battle-held-items';
 import { changeStatStage } from './team-battle-stat-stages';
 import { paradoxMultiplier } from './team-battle-paradox';
 export { effectiveItem } from './battle-item-access';
@@ -124,6 +124,8 @@ export type BattlePokemon = {
   terastallized?: boolean;
   /** Types before Terastallizing (STAB still counts them). */
   originalTypes?: Pokemon['types'];
+  /** Form set by a held item for the whole battle (Zacian / Zamazenta Crowned, Arceus Plate type). */
+  itemForm?: string;
   /** Disguise / Ice Face: already used up (Disguise stays busted for the battle). */
   disguiseBusted?: boolean;
   iceFaceBroken?: boolean;
@@ -364,6 +366,7 @@ export function getEffectiveSpeed(
   if (item === 'iron-ball') finalSpeed = Math.floor(finalSpeed * 0.5);
   if (pokemon.volatile.unburdenActive) finalSpeed = Math.floor(finalSpeed * 2);
   finalSpeed = Math.floor(finalSpeed * paradoxMultiplier(pokemon, 'speed'));
+  finalSpeed = Math.floor(finalSpeed * speciesItemSpeedMultiplier(pokemon));
 
   // Tailwind doubles speed (Gen IV+)
   if (tailwindActive) {

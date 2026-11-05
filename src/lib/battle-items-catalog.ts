@@ -1,9 +1,30 @@
 // Held items players can pick in the team builder: only items the battle engine implements.
 // Shared by the team builder UI, offline battle setup and server-side team normalization.
 
-export type BattleItemCategory = 'Choice & power' | 'Recovery & defense' | 'Berries' | 'Field & utility' | 'Type boost';
+export type BattleItemCategory =
+  | 'Choice & power' | 'Recovery & defense' | 'Berries' | 'Field & utility' | 'Type boost' | 'Gems' | 'Species items';
 
-export type BattleItemInfo = { id: string; label: string; category: BattleItemCategory; effect: string };
+export type BattleItemInfo = {
+  id: string;
+  label: string;
+  category: BattleItemCategory;
+  effect: string;
+  /** Species-specific items: PokeAPI name prefixes they work for (the team builder only offers them there). */
+  species?: string[];
+};
+
+const TYPES_18 = [
+  'normal', 'fire', 'water', 'electric', 'grass', 'ice', 'fighting', 'poison', 'ground',
+  'flying', 'psychic', 'bug', 'rock', 'ghost', 'dragon', 'dark', 'steel', 'fairy',
+];
+
+const PLATES: Array<[string, string]> = [
+  ['flame-plate', 'Fire'], ['splash-plate', 'Water'], ['zap-plate', 'Electric'], ['meadow-plate', 'Grass'],
+  ['icicle-plate', 'Ice'], ['fist-plate', 'Fighting'], ['toxic-plate', 'Poison'], ['earth-plate', 'Ground'],
+  ['sky-plate', 'Flying'], ['mind-plate', 'Psychic'], ['insect-plate', 'Bug'], ['stone-plate', 'Rock'],
+  ['spooky-plate', 'Ghost'], ['draco-plate', 'Dragon'], ['dread-plate', 'Dark'], ['iron-plate', 'Steel'],
+  ['pixie-plate', 'Fairy'],
+];
 
 const TYPE_BOOST: Array<[string, string]> = [
   ['charcoal', 'Fire'], ['mystic-water', 'Water'], ['magnet', 'Electric'], ['miracle-seed', 'Grass'],
@@ -120,7 +141,36 @@ export const BATTLE_ITEMS: readonly BattleItemInfo[] = [
     id, label: title(id), category: 'Berries', effect: `Halves one super-effective ${type} hit${type === 'Normal' ? ' (any Normal hit)' : ''}`,
   })),
   ...TYPE_BOOST.map(([id, type]): BattleItemInfo => ({ id, label: title(id), category: 'Type boost', effect: `${type} moves x1.2` })),
+  ...PLATES.map(([id, type]): BattleItemInfo => ({
+    id, label: title(id), category: 'Type boost', effect: `${type} moves x1.2; Arceus and Judgment become ${type}`,
+  })),
+  ...TYPES_18.map((t): BattleItemInfo => ({
+    id: `${t}-gem`, label: title(`${t}-gem`), category: 'Gems', effect: `First ${title(t)} move x1.3, then used up`,
+  })),
+  { id: 'light-ball', label: 'Light Ball', category: 'Species items', effect: 'Pikachu: Attack and Sp. Atk x2', species: ['pikachu'] },
+  { id: 'thick-club', label: 'Thick Club', category: 'Species items', effect: 'Cubone / Marowak: Attack x2', species: ['cubone', 'marowak'] },
+  { id: 'leek', label: 'Leek', category: 'Species items', effect: "Farfetch'd / Sirfetch'd: crit ratio +2", species: ['farfetchd', 'sirfetchd'] },
+  { id: 'lucky-punch', label: 'Lucky Punch', category: 'Species items', effect: 'Chansey: crit ratio +2', species: ['chansey'] },
+  { id: 'deep-sea-tooth', label: 'Deep Sea Tooth', category: 'Species items', effect: 'Clamperl: Sp. Atk x2', species: ['clamperl'] },
+  { id: 'deep-sea-scale', label: 'Deep Sea Scale', category: 'Species items', effect: 'Clamperl: Sp. Def x2', species: ['clamperl'] },
+  { id: 'metal-powder', label: 'Metal Powder', category: 'Species items', effect: 'Ditto: Defense x2 (until it Transforms)', species: ['ditto'] },
+  { id: 'quick-powder', label: 'Quick Powder', category: 'Species items', effect: 'Ditto: Speed x2 (until it Transforms)', species: ['ditto'] },
+  { id: 'soul-dew', label: 'Soul Dew', category: 'Species items', effect: 'Latios / Latias: Dragon and Psychic moves x1.2', species: ['latios', 'latias'] },
+  { id: 'adamant-orb', label: 'Adamant Orb', category: 'Species items', effect: 'Dialga: Dragon and Steel moves x1.2', species: ['dialga'] },
+  { id: 'adamant-crystal', label: 'Adamant Crystal', category: 'Species items', effect: 'Dialga: Dragon and Steel moves x1.2', species: ['dialga'] },
+  { id: 'lustrous-orb', label: 'Lustrous Orb', category: 'Species items', effect: 'Palkia: Dragon and Water moves x1.2', species: ['palkia'] },
+  { id: 'lustrous-globe', label: 'Lustrous Globe', category: 'Species items', effect: 'Palkia: Dragon and Water moves x1.2', species: ['palkia'] },
+  { id: 'griseous-orb', label: 'Griseous Orb', category: 'Species items', effect: 'Giratina: Dragon and Ghost moves x1.2', species: ['giratina'] },
+  { id: 'griseous-core', label: 'Griseous Core', category: 'Species items', effect: 'Giratina: Dragon and Ghost moves x1.2', species: ['giratina'] },
+  { id: 'rusted-sword', label: 'Rusted Sword', category: 'Species items', effect: 'Zacian becomes the Crowned Sword', species: ['zacian'] },
+  { id: 'rusted-shield', label: 'Rusted Shield', category: 'Species items', effect: 'Zamazenta becomes the Crowned Shield', species: ['zamazenta'] },
 ];
+
+/** Items the team builder offers for a species (species-specific items only for their species). */
+export function itemsForSpecies(speciesName: string | undefined): BattleItemInfo[] {
+  const name = (speciesName ?? '').toLowerCase();
+  return BATTLE_ITEMS.filter((i) => !i.species || i.species.some((sp) => name.startsWith(sp)));
+}
 
 const BY_ID = new Map(BATTLE_ITEMS.map((i) => [i.id, i]));
 

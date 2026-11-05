@@ -176,6 +176,7 @@ async function hydrateTeam(team: any[], stats?: HydrationStats): Promise<BattleP
             // Tera state persists in the private team snapshot between turns
             teraType: resolveTeraType(p.teraType, p.originalTypes ?? pokemon.types),
             disguiseBusted: p.disguiseBusted === true || undefined,
+            itemForm: typeof p.itemForm === 'string' ? p.itemForm : undefined,
             iceFaceBroken: p.iceFaceBroken === true || undefined,
             terastallized: p.terastallized === true || undefined,
             originalTypes: Array.isArray(p.originalTypes) ? p.originalTypes : undefined,

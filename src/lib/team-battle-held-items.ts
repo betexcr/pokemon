@@ -67,7 +67,7 @@ export function itemAccuracyMultiplier(attacker: BattlePokemon, defender: Battle
 export function itemCritStages(attacker: BattlePokemon): number {
   const item = effectiveItem(attacker);
   const lens = item === 'scope-lens' || item === 'razor-claw' ? 1 : 0;
-  return lens + (attacker.volatile.critBoost ?? 0);
+  return lens + (attacker.volatile.critBoost ?? 0) + speciesItemCritStages(attacker);
 }
 
 /** Loaded Dice: 2-5 hit moves hit 4-5 times; 10-hit moves (Population Bomb) at least 4. */
@@ -91,4 +91,113 @@ export function umbrellaBlocksWeather(state: Pick<BattleState, 'field'>, attacke
   const weather = state.field.weather?.kind;
   if (weather !== 'sun' && weather !== 'rain') return false;
   return effectiveItem(attacker) === 'utility-umbrella' || effectiveItem(defender) === 'utility-umbrella';
+}
+
+// ---------------------------------------------------------------------------
+// Plates, Gems and species-specific items
+// ---------------------------------------------------------------------------
+
+/** Plates: x1.2 to one type; Arceus (Multitype) and its Judgment take the Plate's type. */
+export const PLATE_TYPES: Readonly<Record<string, string>> = {
+  'flame-plate': 'fire', 'splash-plate': 'water', 'zap-plate': 'electric', 'meadow-plate': 'grass',
+  'icicle-plate': 'ice', 'fist-plate': 'fighting', 'toxic-plate': 'poison', 'earth-plate': 'ground',
+  'sky-plate': 'flying', 'mind-plate': 'psychic', 'insect-plate': 'bug', 'stone-plate': 'rock',
+  'spooky-plate': 'ghost', 'draco-plate': 'dragon', 'dread-plate': 'dark', 'iron-plate': 'steel',
+  'pixie-plate': 'fairy',
+};
+
+/** Gems: consumed to power up the first damaging move of their type by 30%. */
+export const GEM_TYPES: Readonly<Record<string, string>> = {
+  'normal-gem': 'normal', 'fire-gem': 'fire', 'water-gem': 'water', 'electric-gem': 'electric',
+  'grass-gem': 'grass', 'ice-gem': 'ice', 'fighting-gem': 'fighting', 'poison-gem': 'poison',
+  'ground-gem': 'ground', 'flying-gem': 'flying', 'psychic-gem': 'psychic', 'bug-gem': 'bug',
+  'rock-gem': 'rock', 'ghost-gem': 'ghost', 'dragon-gem': 'dragon', 'dark-gem': 'dark',
+  'steel-gem': 'steel', 'fairy-gem': 'fairy',
+};
+
+/** Species (PokeAPI name prefixes) each species-specific item works for. */
+export const SPECIES_ITEMS: Readonly<Record<string, readonly string[]>> = {
+  'light-ball': ['pikachu'],
+  'thick-club': ['cubone', 'marowak'],
+  'leek': ['farfetchd', 'sirfetchd'],
+  'lucky-punch': ['chansey'],
+  'deep-sea-tooth': ['clamperl'],
+  'deep-sea-scale': ['clamperl'],
+  'metal-powder': ['ditto'],
+  'quick-powder': ['ditto'],
+  'soul-dew': ['latios', 'latias'],
+  'adamant-orb': ['dialga'],
+  'adamant-crystal': ['dialga'],
+  'lustrous-orb': ['palkia'],
+  'lustrous-globe': ['palkia'],
+  'griseous-orb': ['giratina'],
+  'griseous-core': ['giratina'],
+  'rusted-sword': ['zacian'],
+  'rusted-shield': ['zamazenta'],
+};
+
+/** Move types boosted x1.2 by the legendary orbs / Soul Dew. */
+const SPECIES_POWER_TYPES: Readonly<Record<string, readonly string[]>> = {
+  'soul-dew': ['dragon', 'psychic'],
+  'adamant-orb': ['dragon', 'steel'],
+  'adamant-crystal': ['dragon', 'steel'],
+  'lustrous-orb': ['dragon', 'water'],
+  'lustrous-globe': ['dragon', 'water'],
+  'griseous-orb': ['dragon', 'ghost'],
+  'griseous-core': ['dragon', 'ghost'],
+};
+
+const speciesName = (mon: BattlePokemon) => mon.pokemon.name.toLowerCase();
+
+/** True when `mon` holds `item` and is a species that item works for (Ditto's powders stop after Transform). */
+export function holdsSpeciesItem(mon: BattlePokemon | undefined, item: string): boolean {
+  if (!mon || effectiveItem(mon) !== item) return false;
+  const species = SPECIES_ITEMS[item];
+  if (!species?.some((sp) => speciesName(mon).startsWith(sp))) return false;
+  if ((item === 'metal-powder' || item === 'quick-powder') && mon.volatile?.transform) return false;
+  return true;
+}
+
+/** Stat / power multipliers from species-specific items for one hit. */
+export function speciesItemMultipliers(
+  attacker: BattlePokemon,
+  defender: BattlePokemon,
+  isPhysical: boolean,
+  moveType: string,
+): { attack: number; defense: number; power: number } {
+  let attack = 1;
+  let defense = 1;
+  let power = 1;
+  if (holdsSpeciesItem(attacker, 'light-ball')) attack *= 2;
+  if (isPhysical && holdsSpeciesItem(attacker, 'thick-club')) attack *= 2;
+  if (!isPhysical && holdsSpeciesItem(attacker, 'deep-sea-tooth')) attack *= 2;
+  if (!isPhysical && holdsSpeciesItem(defender, 'deep-sea-scale')) defense *= 2;
+  if (isPhysical && holdsSpeciesItem(defender, 'metal-powder')) defense *= 2;
+  const type = moveType.toLowerCase();
+  for (const [item, types] of Object.entries(SPECIES_POWER_TYPES)) {
+    if (types.includes(type) && holdsSpeciesItem(attacker, item)) power *= 1.2;
+  }
+  return { attack, defense, power };
+}
+
+/** Leek / Lucky Punch: +2 critical-hit stages for their species. */
+export function speciesItemCritStages(attacker: BattlePokemon): number {
+  return holdsSpeciesItem(attacker, 'leek') || holdsSpeciesItem(attacker, 'lucky-punch') ? 2 : 0;
+}
+
+/** Quick Powder doubles an untransformed Ditto's Speed. */
+export function speciesItemSpeedMultiplier(mon: BattlePokemon): number {
+  return holdsSpeciesItem(mon, 'quick-powder') ? 2 : 1;
+}
+
+/** Items that cannot be knocked off or swapped while held by the species they define. */
+export function isUnremovableItem(mon: BattlePokemon | undefined): boolean {
+  if (!mon?.heldItem) return false;
+  const item = mon.heldItem.toLowerCase();
+  const name = speciesName(mon);
+  if (PLATE_TYPES[item] && name.startsWith('arceus')) return true;
+  if (item === 'rusted-sword' && name.startsWith('zacian')) return true;
+  if (item === 'rusted-shield' && name.startsWith('zamazenta')) return true;
+  if ((item === 'griseous-orb' || item === 'griseous-core') && name.startsWith('giratina')) return true;
+  return false;
 }

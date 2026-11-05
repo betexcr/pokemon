@@ -2,6 +2,7 @@
  * Pure helpers for the live damage path (`executeMoveAction` → `calculateComprehensiveDamage`).
  * Behavior must match the previous inline prep in team-battle-engine-additional.ts.
  */
+import { PLATE_TYPES, speciesItemMultipliers } from './team-battle-held-items';
 import { itemCritStages } from './team-battle-held-items';
 import { effectiveItem } from './battle-item-access';
 import { targetAbility } from './team-battle-ability-rules';
@@ -124,9 +125,16 @@ export function computeAttackDefensePowerMultipliers(params: {
   if (defenderAbility === 'ice-scales' && !isPhysical) defenseMultiplier *= 2;
 
   const moveTypeLower = params.moveType.toLowerCase();
-  if (attackerItem && TYPE_BOOST_ITEMS[attackerItem] === moveTypeLower) {
+  // Type-boost items and Plates: x1.2 to their type
+  if (attackerItem && (TYPE_BOOST_ITEMS[attackerItem] ?? PLATE_TYPES[attackerItem]) === moveTypeLower) {
     powerMultiplier *= 1.2;
   }
+
+  // Species-specific items (Light Ball, Thick Club, Deep Sea Tooth / Scale, Metal Powder, orbs, Soul Dew)
+  const species = speciesItemMultipliers(attacker, defender, isPhysical, params.moveType);
+  attackMultiplier *= species.attack;
+  defenseMultiplier *= species.defense;
+  powerMultiplier *= species.power;
 
   // Protosynthesis / Quark Drive
   attackMultiplier *= paradoxMultiplier(attacker, isPhysical ? 'attack' : 'specialAttack');

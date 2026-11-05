@@ -25,8 +25,8 @@ import ConfirmDialog from '@/components/ConfirmDialog'
 import AppHeader from '@/components/AppHeader'
 import PokemonSelector from '@/components/PokemonSelector'
 import { DEFAULT_NATURE, NATURES, type NatureName, type NatureStat } from '@/data/natures'
-import { BATTLE_ITEMS, getBattleItem, sanitizeBattleItem, type BattleItemCategory } from '@/lib/battle-items-catalog'
-const ITEM_CATEGORIES: BattleItemCategory[] = ['Choice & power', 'Recovery & defense', 'Field & utility', 'Berries', 'Type boost']
+import { getBattleItem, itemsForSpecies, sanitizeBattleItem, type BattleItemCategory } from '@/lib/battle-items-catalog'
+const ITEM_CATEGORIES: BattleItemCategory[] = ['Species items', 'Choice & power', 'Recovery & defense', 'Field & utility', 'Berries', 'Type boost', 'Gems']
 import { TERA_TYPES, isTeraType, resolveTeraType } from '@/lib/team-battle-tera'
 
 const formatTeraLabel = (t: string) => t.charAt(0).toUpperCase() + t.slice(1)
@@ -1525,13 +1525,18 @@ export default function TeamBuilderPage() {
                         data-testid={`held-item-${idx}`}
                       >
                         <option value="">No item</option>
-                        {ITEM_CATEGORIES.map((category) => (
-                          <optgroup key={category} label={category}>
-                            {BATTLE_ITEMS.filter((i) => i.category === category).map((i) => (
-                              <option key={i.id} value={i.id}>{i.label}</option>
-                            ))}
-                          </optgroup>
-                        ))}
+                        {ITEM_CATEGORIES.map((category) => {
+                          // Species-specific items only appear for the species that can use them
+                          const options = itemsForSpecies(poke.name).filter((i) => i.category === category)
+                          if (options.length === 0) return null
+                          return (
+                            <optgroup key={category} label={category}>
+                              {options.map((i) => (
+                                <option key={i.id} value={i.id}>{i.label}</option>
+                              ))}
+                            </optgroup>
+                          )
+                        })}
                       </select>
                       {getBattleItem(slot.item) && (
                         <span className="text-xs text-muted truncate">{getBattleItem(slot.item)!.effect}</span>
