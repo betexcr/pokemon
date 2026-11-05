@@ -108,6 +108,8 @@ export interface RTDBBattlePrivate {
     moveId?: string;
     turnsLeft?: number;
   };
+  /** Terastallization already used this battle. */
+  teraUsed?: boolean;
 }
 
 export interface RTDBChoice {
@@ -116,6 +118,8 @@ export interface RTDBChoice {
     moveId?: string;
     target?: string;
     switchToIndex?: number;
+    /** Terastallize before this move (once per battle). */
+    terastallize?: boolean;
   };
   committedAt: number;
   clientVersion: number;

@@ -1,5 +1,6 @@
 "use client";
 
+import { TeraToggle } from '@/components/battle/TeraToggle';
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useOfflineBattleState, type OfflineBattleConfig } from '@/hooks/useOfflineBattleState';
 import Tooltip from '@/components/Tooltip';
@@ -31,8 +32,9 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
 }) => {
   const {
     loading, error, meta, pub, me, meUid, oppUid,
-    legalMoves, legalSwitchIndexes, chooseMove, chooseSwitch, forfeit,
+    legalMoves, legalSwitchIndexes, chooseMove, chooseSwitch, forfeit, tera,
   } = useOfflineBattleState(config);
+  const [teraArmed, setTeraArmed] = useState(false);
 
   const [moveInfo, setMoveInfo] = useState<Record<string, any>>({});
   const [pendingAction, setPendingAction] = useState<{ turn: number; type: 'move' | 'switch'; id: string | number } | null>(null);
@@ -131,12 +133,13 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
     if (!meta || waitingForResolution) return;
     setPendingAction({ turn: meta.turn, type: 'move', id: moveId });
     try {
-      await chooseMove(moveId);
+      await chooseMove(moveId, { terastallize: teraArmed && tera.available });
+      setTeraArmed(false);
     } catch (e: unknown) {
       console.error('Move selection failed:', e);
     }
     setPendingAction(null);
-  }, [meta, waitingForResolution, chooseMove]);
+  }, [meta, waitingForResolution, chooseMove, teraArmed, tera.available]);
 
   const handlePokemonSwitch = useCallback(async (idx: number) => {
     if (!meta || waitingForResolution) return;
@@ -335,6 +338,13 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
             {/* Move Selection (hidden while picking a pivot replacement) */}
             {!meta.pendingSwitch && (
             <div className="mb-6">
+              <TeraToggle
+                available={tera.available}
+                teraType={tera.type}
+                armed={teraArmed}
+                disabled={waitingForResolution}
+                onToggle={setTeraArmed}
+              />
               <h4 className="font-medium mb-3">Moves</h4>
               <div className="grid grid-cols-2 gap-3">
                 {legalMoves.map((move, index) => {

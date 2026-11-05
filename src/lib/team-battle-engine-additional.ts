@@ -60,6 +60,7 @@ import { COUNTER_MOVES, getCounterDamage, moveFailsTryCondition, recordDamageTak
 import { changeStatStage, checkWhiteHerb, triggerWeaknessPolicy } from './team-battle-stat-stages';
 import { abilityOf, targetAbility } from './team-battle-ability-rules';
 import { updateParadoxBoosts } from './team-battle-paradox';
+import { stabTypeNames, teraPowerFloor, teraStabOverride, terastallize } from './team-battle-tera';
 
 // Process start-of-turn effects
 export async function processStartOfTurn(state: BattleState): Promise<void> {
@@ -1316,14 +1317,15 @@ async function executeMoveAction(
       defender,
     });
     if (sheerForce) prep.powerMultiplier *= 1.3;
+    prep.movePower = teraPowerFloor(attacker, String(prep.moveType), prep.movePower, move);
 
     const damageResult = calculateComprehensiveDamage({
       level: attacker.level,
       movePower: prep.movePower,
       moveType: prep.moveType,
-      attackerTypes: attacker.pokemon.types.map(type =>
-        toDamageTypeName(typeof type === 'string' ? type : type.type?.name || 'normal')
-      ),
+      // Terastallized attackers keep STAB on their original types as well as the Tera Type
+      attackerTypes: stabTypeNames(attacker).map((t) => toDamageTypeName(t)),
+      stabOverride: teraStabOverride(attacker, String(prep.moveType), prep.attackerAbility === 'adaptability'),
       defenderTypes: defender.pokemon.types.map(type =>
         toDamageTypeName(typeof type === 'string' ? type : type.type?.name || 'normal')
       ),
@@ -1852,6 +1854,11 @@ export async function runBattleTurnFromQueue(
   state.actionQueue = queue;
 
   await processStartOfTurn(state);
+
+  // Terastallization happens at the start of the turn, before anyone moves (in turn order)
+  for (const action of queue) {
+    if (action.type === 'move' && action.terastallize) terastallize(state, action.user);
+  }
 
   // A move belongs to the Pokémon that chose it: if that side's active Pokémon was replaced
   // mid-turn (Roar, Dragon Tail, ...), the newcomer does not use it.

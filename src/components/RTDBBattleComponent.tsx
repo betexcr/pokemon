@@ -13,6 +13,7 @@ import { BattleTurnManager } from '@/components/multiplayer/BattleTurnManager';
 import { BattleEndScreen } from '@/components/multiplayer/BattleEndScreen';
 import { useForfeit } from '@/hooks/useMultiplayerBattle';
 import { BattleTextBox } from '@/components/battle/BattleTextBox';
+import { TeraToggle } from '@/components/battle/TeraToggle';
 import { trackEvent } from '@/lib/analytics';
 import { shouldClearPendingAction } from '@/lib/battle-private-volatiles';
 import { useReducedMotionPref } from '@/hooks/useReducedMotionPref';
@@ -57,8 +58,10 @@ const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
     legalSwitchIndexes,
     chooseMove,
     chooseSwitch,
-    forfeit
+    forfeit,
+    tera,
   } = useBattleState(battleId);
+  const [teraArmed, setTeraArmed] = useState(false);
 
   // duplicate state/effects removed (using direct imports below)
 
@@ -252,12 +255,13 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
         }
       }
       
-      await chooseMove(moveId, target);
+      await chooseMove(moveId, target, { terastallize: teraArmed && !!tera?.available });
+      setTeraArmed(false);
     } catch (err) {
       console.error('Failed to submit move:', err);
       setPendingAction(null);
     }
-  }, [meta, waitingForResolution, pendingAction, viewMode, moveInfo, chooseMove]);
+  }, [meta, waitingForResolution, pendingAction, viewMode, moveInfo, chooseMove, teraArmed, tera?.available]);
 
   // Listen for custom move events from E2E testing
   useEffect(() => {
@@ -642,6 +646,13 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
           {/* Move Selection (hidden while a pivot replacement is being picked) */}
           {!meta.pendingSwitch && (
           <div className="mb-6">
+            <TeraToggle
+              available={!!tera?.available}
+              teraType={tera?.type}
+              armed={teraArmed}
+              disabled={waitingForResolution}
+              onToggle={setTeraArmed}
+            />
             <h4 className="font-medium mb-3">Moves</h4>
             <div className="grid grid-cols-2 gap-3">
               {legalMoves.map((move, index) => {

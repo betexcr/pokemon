@@ -25,6 +25,9 @@ import ConfirmDialog from '@/components/ConfirmDialog'
 import AppHeader from '@/components/AppHeader'
 import PokemonSelector from '@/components/PokemonSelector'
 import { DEFAULT_NATURE, NATURES, type NatureName, type NatureStat } from '@/data/natures'
+import { TERA_TYPES, isTeraType, resolveTeraType } from '@/lib/team-battle-tera'
+
+const formatTeraLabel = (t: string) => t.charAt(0).toUpperCase() + t.slice(1)
 import { analyzeTeam, type TeamAnalysis } from '@/lib/team/engine'
 import { convertTeamSlotsToSimple } from '@/lib/team/converter'
 import TypeRadar from '@/components/team/TypeRadar'
@@ -58,7 +61,8 @@ const normalizeTeamSlots = (slots?: Array<Partial<TeamSlot>> | null): TeamSlot[]
       level: clampedLevel,
       moves,
       nature: slot.nature ?? DEFAULT_NATURE,
-      isShiny: slot.isShiny ?? false
+      isShiny: slot.isShiny ?? false,
+      ...(isTeraType(slot.teraType) ? { teraType: slot.teraType } : {})
     }
   })
 }
@@ -662,6 +666,8 @@ export default function TeamBuilderPage() {
       const merged = { ...s, ...patch }
       if (isPokemonChange) {
         merged.moves = [] as MoveData[]
+        // A Tera Type chosen for the previous species does not carry over
+        delete merged.teraType
       }
       // If removing Pokémon, normalize level and clear moves
       if (patch.id === null) {
@@ -1500,6 +1506,31 @@ export default function TeamBuilderPage() {
                           </span>
                         )
                       })()}
+                    </div>
+                  )}
+
+                  {/* Tera Type Selector */}
+                  {poke && (
+                    <div className="mb-3 flex items-center gap-3">
+                      <label htmlFor={`tera-type-${idx}`} className="text-xs font-medium text-muted flex-shrink-0">Tera Type</label>
+                      <select
+                        id={`tera-type-${idx}`}
+                        value={slot.teraType ?? ''}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => {
+                          const value = e.target.value
+                          setSlot(idx, { teraType: isTeraType(value) ? value : undefined })
+                        }}
+                        className="px-2 py-1 border border-border rounded text-xs bg-surface text-text capitalize"
+                        data-testid={`tera-type-${idx}`}
+                      >
+                        <option value="">
+                          Default ({formatTeraLabel(resolveTeraType(undefined, (poke as any).types) ?? 'normal')})
+                        </option>
+                        {TERA_TYPES.map((t) => (
+                          <option key={t} value={t}>{formatTeraLabel(t)}</option>
+                        ))}
+                      </select>
                     </div>
                   )}
 

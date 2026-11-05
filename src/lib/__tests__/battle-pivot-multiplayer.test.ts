@@ -185,3 +185,48 @@ describe('resolveTurn with a pending pivot pick', () => {
     expect(meta()).toMatchObject({ phase: 'choosing', turn: 1, version: 1 });
   });
 });
+
+describe('resolveTurn with Terastallization', () => {
+  it('terastallizes, persists it privately, reveals it publicly and records it in the replay', async () => {
+    const p1 = db.get(`battles/${BID}/private/${P1}`);
+    p1.team[0].teraType = 'water';
+    db.set(`battles/${BID}/private/${P1}`, p1);
+
+    choose(P1, { action: 'move', payload: { moveId: 'tackle', terastallize: true }, clientVersion: 1 });
+    choose(P2, { action: 'move', payload: { moveId: 'tackle' }, clientVersion: 1 });
+    await resolveTurn(BID);
+
+    const priv = db.get(`battles/${BID}/private/${P1}`);
+    expect(priv.teraUsed).toBe(true);
+    expect(priv.team[0].terastallized).toBe(true);
+    expect(priv.team[0].pokemon.types.map((t: any) => t.type.name)).toEqual(['water']);
+    const active = db.get(`battles/${BID}/public/p1/active`);
+    expect(active).toMatchObject({ terastallized: true, teraType: 'water', types: ['water'] });
+    expect(db.get(`battles/${BID}/turns/1/resolution`).replay.p1Action).toMatchObject({ terastallize: true });
+    expect(db.get(`battles/${BID}/public`).battleLog[0].message).toBe('p-lead terastallized into the Water type!');
+  });
+
+  it('drops a second Tera request and reports it', async () => {
+    const p1 = db.get(`battles/${BID}/private/${P1}`);
+    p1.team[0].teraType = 'water';
+    db.set(`battles/${BID}/private/${P1}`, p1);
+    choose(P1, { action: 'move', payload: { moveId: 'tackle', terastallize: true }, clientVersion: 1 });
+    choose(P2, { action: 'move', payload: { moveId: 'tackle' }, clientVersion: 1 });
+    await resolveTurn(BID);
+
+    choose(P1, { action: 'move', payload: { moveId: 'tackle', terastallize: true }, clientVersion: 2 }, 2);
+    choose(P2, { action: 'move', payload: { moveId: 'tackle' }, clientVersion: 2 }, 2);
+    await resolveTurn(BID);
+
+    expect(meta().turn).toBe(3);
+    expect(db.get(`battles/${BID}/public/lastValidation`)).toMatchObject({ turn: 2, p1: 'tera_unavailable', normalized: true });
+    expect(db.get(`battles/${BID}/turns/2/resolution`).replay.p1Action.terastallize).toBeUndefined();
+  });
+
+  it('defaults the Tera Type to the primary type when the slot has none', async () => {
+    choose(P2, { action: 'move', payload: { moveId: 'tackle', terastallize: true }, clientVersion: 1 });
+    choose(P1, { action: 'move', payload: { moveId: 'tackle' }, clientVersion: 1 });
+    await resolveTurn(BID);
+    expect(db.get(`battles/${BID}/public/p2/active`)).toMatchObject({ terastallized: true, teraType: 'normal' });
+  });
+});

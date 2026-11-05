@@ -175,6 +175,7 @@ export function calculateComprehensiveDamage({
   isHighCritMove = false,
   hasSuperLuck = false,
   defenderGrounded = true,
+  stabOverride,
   ignoreAttackerStages = false,
   ignoreDefenderStages = false,
   cannotCrit = false,
@@ -216,6 +217,8 @@ export function calculateComprehensiveDamage({
   isHighCritMove?: boolean;
   hasSuperLuck?: boolean;
   defenderGrounded?: boolean;
+  /** Replaces the computed STAB multiplier (Terastallized into one of its original types: 2x, 2.25x with Adaptability). */
+  stabOverride?: number;
   ignoreAttackerStages?: boolean;
   ignoreDefenderStages?: boolean;
   cannotCrit?: boolean;
@@ -255,7 +258,7 @@ export function calculateComprehensiveDamage({
   }
   
   // Calculate STAB
-  const stab = getStabMultiplier(moveType, attackerTypes, hasAdaptability);
+  const stab = stabOverride ?? getStabMultiplier(moveType, attackerTypes, hasAdaptability);
   
   // Calculate weather modifier
   const weatherMod = getWeatherModifier(moveType, weather);

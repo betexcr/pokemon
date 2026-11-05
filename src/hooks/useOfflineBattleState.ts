@@ -14,6 +14,8 @@ import {
 import { resumeBattleTurnAfterSwitch, runBattleTurnFromQueue, type TurnOutcome } from '@/lib/team-battle-engine-additional';
 import { createBattleRng } from '@/lib/battle-rng';
 import { createFieldState, EMPTY_HAZARDS } from '@/lib/team-battle-types';
+import { canTerastallize, resolveTeraType } from '@/lib/team-battle-tera';
+import { getCachedMove } from '@/lib/moveCache';
 import { resolveBattleAbility } from '@/lib/battle-default-ability';
 import { chooseAIAction } from '@/lib/offline-battle-ai';
 import { getPokemon } from '@/lib/api';
@@ -32,6 +34,8 @@ type PublicMon = {
   status: null | string;
   boosts: Record<string, number>;
   volatiles?: Record<string, unknown>;
+  terastallized?: boolean;
+  teraType?: string;
 };
 
 type PublicState = Record<string, any> & {
@@ -65,9 +69,11 @@ type TeamMon = {
   item?: string; ability?: string; moves: MoveEntry[];
   status?: string | null; fainted?: boolean;
   hp?: { cur: number; max: number };
+  teraType?: string | null;
+  terastallized?: boolean;
 };
 
-type PrivateState = { team: TeamMon[]; currentIndex?: number };
+type PrivateState = { team: TeamMon[]; currentIndex?: number; teraUsed?: boolean };
 
 type UseOfflineBattleReturn = {
   loading: boolean;
@@ -80,10 +86,12 @@ type UseOfflineBattleReturn = {
   timeLeftSec: number;
   legalMoves: Array<MoveEntry>;
   legalSwitchIndexes: number[];
-  chooseMove: (moveId: string) => Promise<void>;
+  chooseMove: (moveId: string, options?: { terastallize?: boolean }) => Promise<void>;
   chooseSwitch: (idx: number) => Promise<void>;
   forfeit: () => Promise<void>;
   writeChoice: (choice: any) => Promise<void>;
+  /** Whether the player can Terastallize this turn, and into what. */
+  tera: { available: boolean; type: string | null };
 };
 
 // ---------------------------------------------------------------------------
@@ -163,6 +171,7 @@ async function hydrateSlot(raw: any): Promise<BattlePokemon> {
     statModifiers: ensureStatModifiers(raw),
     heldItem: raw.heldItem || undefined,
     currentAbility: resolveBattleAbility(raw, abilities),
+    teraType: resolveTeraType(raw.teraType, types),
     originalAbility: resolveBattleAbility({ ability: raw.ability }, abilities),
   };
 }
@@ -186,6 +195,8 @@ function makePublicActive(mon: BattlePokemon): PublicMon {
       spd: mon.statModifiers?.specialDefense || 0,
       spe: mon.statModifiers?.speed || 0,
     },
+    // Tera is public once it happens
+    ...(mon.terastallized && mon.teraType ? { terastallized: true, teraType: mon.teraType } : {}),
   };
 }
 
@@ -212,8 +223,11 @@ function projectPrivate(team: BattleTeam): PrivateState {
         status: p.status || null,
         fainted: p.currentHp <= 0,
         hp: { cur: Math.max(0, p.currentHp), max: p.maxHp },
+        teraType: p.teraType ?? null,
+        terastallized: !!p.terastallized,
       };
     }),
+    teraUsed: !!team.teraUsed,
   };
 }
 
@@ -235,6 +249,18 @@ function projectPublic(state: BattleState): PublicState {
 // ---------------------------------------------------------------------------
 // Main hook
 // ---------------------------------------------------------------------------
+
+/**
+ * AI Terastallizes when its chosen move matches its Tera Type (offensive Tera),
+ * or when its active Pokémon is the last one standing.
+ */
+function aiShouldTerastallize(state: BattleState, moveId: string | undefined): boolean {
+  if (!moveId || !canTerastallize(state, state.opponent)) return false;
+  const active = getCurrentPokemon(state.opponent);
+  const moveType = String(getCachedMove(moveId)?.type ?? '').toLowerCase();
+  if (moveType && moveType === active.teraType?.toLowerCase()) return true;
+  return state.opponent.pokemon.filter((p) => p.currentHp > 0).length === 1;
+}
 
 const PLAYER_UID = 'offline-player';
 const AI_UID = 'offline-ai';
@@ -467,7 +493,7 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
       // AI chooses its action
       const aiAction = chooseAIAction(state.opponent, state.player);
       const opponentAction: BattleAction = aiAction.type === 'move'
-        ? { type: 'move', moveId: aiAction.moveId, target: 'player' }
+        ? { type: 'move', moveId: aiAction.moveId, target: 'player', ...(aiShouldTerastallize(state, aiAction.moveId) ? { terastallize: true } : {}) }
         : { type: 'switch', switchIndex: aiAction.switchIndex!, target: 'player' };
 
       // Set resolving phase
@@ -506,10 +532,11 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
   // Player actions
   // ---------------------------------------------------------------------------
 
-  const chooseMove = useCallback(async (moveId: string) => {
+  const chooseMove = useCallback(async (moveId: string, options?: { terastallize?: boolean }) => {
     if (!battleState || !meta || meta.phase !== 'choosing') return;
     if (battleState.pendingSwitch) return; // only a switch can answer a pivot prompt
-    const action: BattleAction = { type: 'move', moveId, target: 'opponent' };
+    const terastallize = !!options?.terastallize && canTerastallize(battleState, battleState.player);
+    const action: BattleAction = { type: 'move', moveId, target: 'opponent', ...(terastallize ? { terastallize } : {}) };
     await resolveTurnLocally(battleState, meta, action);
   }, [battleState, meta, resolveTurnLocally]);
 
@@ -564,12 +591,19 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
       .map(({ i }) => i);
   }, [battleState]);
 
+  const tera = useMemo(() => {
+    if (!battleState || battleState.pendingSwitch) return { available: false, type: null as string | null };
+    const active = getCurrentPokemon(battleState.player);
+    return { available: canTerastallize(battleState, battleState.player), type: active.teraType ?? null };
+  }, [battleState]);
+
   return {
     loading,
     error,
     meta,
     pub,
     me,
+    tera,
     meUid: PLAYER_UID,
     oppUid: AI_UID,
     timeLeftSec: 120,

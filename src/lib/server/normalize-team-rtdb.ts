@@ -3,6 +3,8 @@
  * Always hydrates base stats from absolute PokeAPI — never trusts client stats/maxHp.
  */
 
+import { resolveTeraType } from '../team-battle-tera';
+
 const POKEAPI_ABSOLUTE = 'https://pokeapi.co/api/v2/pokemon';
 
 const ALLOWED_NATURES = new Set([
@@ -168,6 +170,8 @@ export async function normalizeTeamForRTDB(
         currentHp,
         maxHp,
         nature,
+        // Chosen in the team builder, else the species' primary type
+        ...(resolveTeraType(slot.teraType, types) ? { teraType: resolveTeraType(slot.teraType, types) } : {}),
         statModifiers: {},
         status: null,
         originalIndex: index,

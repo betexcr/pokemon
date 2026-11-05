@@ -88,12 +88,20 @@ export type BattlePokemon = {
     evasion: number;
   };
   heldItem?: string;
+  /** Tera Type (lowercase type id); defaults to the species' primary type. */
+  teraType?: string;
+  /** True once this Pokémon has Terastallized (lasts the rest of the battle). */
+  terastallized?: boolean;
+  /** Types before Terastallizing (STAB still counts them). */
+  originalTypes?: Pokemon['types'];
 };
 
 export type BattleTeam = {
   pokemon: BattlePokemon[];
   currentIndex: number;
   faintedCount: number;
+  /** Terastallization is once per battle per side. */
+  teraUsed?: boolean;
   // Side conditions
   sideConditions: {
     screens: FieldSideScreens;
@@ -133,6 +141,7 @@ export type BattleState = {
     switchIndex?: number;
     priority: number;
     speed: number;
+    terastallize?: boolean;
   }>;
   // Field state
   field: FieldState;
@@ -181,6 +190,8 @@ export type BattleAction = {
   moveId?: string;
   target?: 'player' | 'opponent';
   switchIndex?: number;
+  /** Terastallize at the start of this turn before moving. */
+  terastallize?: boolean;
 };
 
 export type BattleRuleProfile = 'simplified' | 'cart_like';
@@ -625,6 +636,7 @@ export function buildActionQueue(state: BattleState, playerAction: BattleAction,
       user: 'player',
       moveId: playerAction.moveId,
       target: playerAction.target,
+      ...(playerAction.terastallize ? { terastallize: true } : {}),
       priority: getMovePriority(playerAction.moveId || '', getCurrentPokemon(state.player)),
       speed: getEffectiveSpeed(getCurrentPokemon(state.player), isTailwindActive(state.player), state.field)
     });
@@ -644,6 +656,7 @@ export function buildActionQueue(state: BattleState, playerAction: BattleAction,
       user: 'opponent',
       moveId: opponentAction.moveId,
       target: opponentAction.target,
+      ...(opponentAction.terastallize ? { terastallize: true } : {}),
       priority: getMovePriority(opponentAction.moveId || '', getCurrentPokemon(state.opponent)),
       speed: getEffectiveSpeed(getCurrentPokemon(state.opponent), isTailwindActive(state.opponent), state.field)
     });

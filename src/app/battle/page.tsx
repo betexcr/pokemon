@@ -114,7 +114,8 @@ function BattlePage() {
         id: slot.id,
         level: slot.level,
         moves: Array.isArray((slot as any).moves) ? (slot as any).moves : [],
-        nature: (slot as any).nature || 'hardy'
+        nature: (slot as any).nature || 'hardy',
+        ...((slot as any).teraType ? { teraType: (slot as any).teraType } : {})
       }));
       localStorage.setItem('pokemon-current-team', JSON.stringify(currentTeamData));
     } catch (error) {

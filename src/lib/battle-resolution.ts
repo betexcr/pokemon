@@ -1,3 +1,4 @@
+import { canTerastallize, resolveTeraType } from './team-battle-tera';
 import { resolveBattleAbility } from './battle-default-ability';
 import { getRtdbOps, type RtdbOps } from './rtdb-access';
 import {
@@ -170,6 +171,10 @@ async function hydrateTeam(team: any[], stats?: HydrationStats): Promise<BattleP
             statModifiers: ensureStatModifiers(p),
             heldItem: p.heldItem || undefined,
             currentAbility: resolveBattleAbility(p, pokemon.abilities),
+            // Tera state persists in the private team snapshot between turns
+            teraType: resolveTeraType(p.teraType, p.originalTypes ?? pokemon.types),
+            terastallized: p.terastallized === true || undefined,
+            originalTypes: Array.isArray(p.originalTypes) ? p.originalTypes : undefined,
             originalAbility: p.originalAbility || resolveBattleAbility({ ability: p.ability }, pokemon.abilities),
         } as BattlePokemon;
     }));
@@ -218,6 +223,7 @@ async function fetchBattleState(battleId: string, ops: RtdbOps, hydrationStats?:
         pokemon: p1HydratedTeam,
         currentIndex: p1Private.currentIndex ?? 0,
         faintedCount: p1HydratedTeam.filter(p => p.currentHp <= 0).length,
+        teraUsed: p1Private.teraUsed === true,
         sideConditions: {
             screens: mapScreens(publicState?.field?.screens?.p1),
             hazards: mapHazards(publicState?.field?.hazards?.p1),
@@ -228,6 +234,7 @@ async function fetchBattleState(battleId: string, ops: RtdbOps, hydrationStats?:
         pokemon: p2HydratedTeam,
         currentIndex: p2Private.currentIndex ?? 0,
         faintedCount: p2HydratedTeam.filter(p => p.currentHp <= 0).length,
+        teraUsed: p2Private.teraUsed === true,
         sideConditions: {
             screens: mapScreens(publicState?.field?.screens?.p2),
             hazards: mapHazards(publicState?.field?.hazards?.p2),
@@ -275,6 +282,7 @@ function privateUpdatesFromTeam(team: BattleTeam) {
     return {
         team: team.pokemon,
         currentIndex: team.currentIndex,
+        teraUsed: !!team.teraUsed,
         ...volatileProj,
     };
 }
@@ -461,14 +469,16 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
                 type: p1Choice.action as 'move' | 'switch',
                 moveId: p1Choice.payload?.moveId,
                 switchIndex: p1Choice.payload?.switchToIndex,
-                target: 'opponent'
+                target: 'opponent',
+                terastallize: p1Choice.payload?.terastallize === true,
             };
 
             const p2ActionRaw: BattleAction = {
                 type: p2Choice.action as 'move' | 'switch',
                 moveId: p2Choice.payload?.moveId,
                 switchIndex: p2Choice.payload?.switchToIndex,
-                target: 'player'
+                target: 'player',
+                terastallize: p2Choice.payload?.terastallize === true,
             };
 
             const profile: BattleRuleProfile = meta.ruleProfile ?? 'simplified';
@@ -510,12 +520,20 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
                 return;
             }
 
-            p1Action = n1.action;
-            p2Action = n2.action;
+            // Terastallize only with a move, once per battle, and only with a Tera Type; otherwise drop it
+            const withTera = (raw: BattleAction, action: BattleAction, team: BattleTeam) => {
+                if (!raw.terastallize) return { action: { ...action, terastallize: undefined }, dropped: false };
+                const ok = action.type === 'move' && canTerastallize(battleState!, team);
+                return { action: { ...action, terastallize: ok ? true : undefined }, dropped: !ok };
+            };
+            const t1 = withTera(p1ActionRaw, n1.action, battleState.player);
+            const t2 = withTera(p2ActionRaw, n2.action, battleState.opponent);
+            p1Action = t1.action;
+            p2Action = t2.action;
             validationInfo = {
-                p1: n1.reasonCode ?? null,
-                p2: n2.reasonCode ?? null,
-                normalized: !!(n1.normalized || n2.normalized),
+                p1: n1.reasonCode ?? (t1.dropped ? 'tera_unavailable' : null),
+                p2: n2.reasonCode ?? (t2.dropped ? 'tera_unavailable' : null),
+                normalized: !!(n1.normalized || n2.normalized || t1.dropped || t2.dropped),
             };
 
             const queue = buildActionQueue(battleState, p1Action, p2Action);
@@ -559,7 +577,9 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
                 spe: mon.statModifiers?.speed || 0,
                 acc: mon.statModifiers?.accuracy || 0,
                 eva: mon.statModifiers?.evasion || 0
-            }
+            },
+            // Tera is public once it happens (types above already show the Tera Type)
+            ...(mon.terastallized && mon.teraType ? { terastallized: true, teraType: mon.teraType } : {}),
         });
 
         const makeBenchPublic = (team: typeof currentState.player) =>
@@ -581,8 +601,8 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
             stateHashAfter,
             replay: {
                 turn: meta.turn,
-                p1Action: { type: p1Action.type, moveId: p1Action.moveId, switchIndex: p1Action.switchIndex, target: p1Action.target },
-                p2Action: { type: p2Action.type, moveId: p2Action.moveId, switchIndex: p2Action.switchIndex, target: p2Action.target },
+                p1Action: { type: p1Action.type, moveId: p1Action.moveId, switchIndex: p1Action.switchIndex, target: p1Action.target, ...(p1Action.terastallize ? { terastallize: true } : {}) },
+                p2Action: { type: p2Action.type, moveId: p2Action.moveId, switchIndex: p2Action.switchIndex, target: p2Action.target, ...(p2Action.terastallize ? { terastallize: true } : {}) },
                 // Live RNG state stays Admin-only under battles/.../server — do not expose in client-readable resolution
             },
             validation: validationInfo,

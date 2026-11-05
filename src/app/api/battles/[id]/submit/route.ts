@@ -50,7 +50,7 @@ export async function POST(
         }
 
         const body = await request.json();
-        const { action, moveId, target, switchToIndex, clientVersion } = body;
+        const { action, moveId, target, switchToIndex, clientVersion, terastallize } = body;
 
         if (!['move', 'switch', 'forfeit'].includes(action)) {
             return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
@@ -168,6 +168,8 @@ export async function POST(
             if (action === 'move') {
                 payload.moveId = moveId;
                 if (target !== undefined) payload.target = target;
+                // Eligibility (once per battle, Tera Type set) is checked when the turn resolves
+                if (terastallize === true) payload.terastallize = true;
             } else if (action === 'switch') {
                 payload.switchToIndex = switchToIndex;
             }

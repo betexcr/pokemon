@@ -130,6 +130,7 @@ function setHook(overrides: Overrides = {}) {
     chooseMove: vi.fn().mockResolvedValue(undefined),
     chooseSwitch: vi.fn().mockResolvedValue(undefined),
     forfeit: vi.fn(),
+    tera: { available: false, type: null },
     ...rest,
   };
   return hookState.current as Record<string, ReturnType<typeof vi.fn>> & Record<string, unknown>;
@@ -233,7 +234,7 @@ describe('RTDBBattleComponent', () => {
         fireEvent.click(moveButton('thunderbolt'));
       });
 
-      expect(hook.chooseMove).toHaveBeenCalledWith('thunderbolt', undefined);
+      expect(hook.chooseMove).toHaveBeenCalledWith('thunderbolt', undefined, { terastallize: false });
       expect(screen.getByText('Action locked in for turn 1')).toBeInTheDocument();
       expect(screen.getByText('Waiting for opponent…')).toBeInTheDocument();
       expect(moveButton('thunderbolt')).toHaveAttribute('aria-pressed', 'true');
@@ -302,6 +303,30 @@ describe('RTDBBattleComponent', () => {
       });
       expect(hook.chooseSwitch).toHaveBeenCalledWith(1);
       expect(screen.getByText('Action locked in for turn 1')).toBeInTheDocument();
+    });
+  });
+
+  describe('Terastallization', () => {
+    it('hides the toggle when Tera is unavailable', () => {
+      setHook();
+      renderBattle();
+      expect(screen.queryByTestId('tera-toggle')).not.toBeInTheDocument();
+    });
+
+    it('arms Tera and sends it with the next move', async () => {
+      const hook = setHook({ tera: { available: true, type: 'water' } });
+      renderBattle();
+      const toggle = screen.getByTestId('tera-toggle');
+      expect(toggle).toHaveTextContent('Terastallize (Water)');
+      expect(toggle).toHaveAttribute('aria-pressed', 'false');
+
+      fireEvent.click(toggle);
+      expect(screen.getByTestId('tera-toggle')).toHaveAttribute('aria-pressed', 'true');
+
+      await act(async () => {
+        fireEvent.click(moveButton('thunderbolt'));
+      });
+      expect(hook.chooseMove).toHaveBeenCalledWith('thunderbolt', undefined, { terastallize: true });
     });
   });
 

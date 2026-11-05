@@ -65,18 +65,21 @@ type Pokemon = {
   hp?: { cur: number; max: number };
   currentHp?: number;
   maxHp?: number;
+  teraType?: string;
+  terastallized?: boolean;
 };
 
 type PrivateState = {
   team: Pokemon[];
   currentIndex?: number;
+  teraUsed?: boolean;
   choiceLock?: { moveId?: string; locked?: boolean };
   disable?: { moveId?: string; turnsLeft?: number };
   encoreMoveId?: string;
 };
 
 type ChoicePayload =
-  | { action: "move"; payload: { moveId: string; target: "p1" | "p2" }; clientVersion: number }
+  | { action: "move"; payload: { moveId: string; target: "p1" | "p2"; terastallize?: boolean }; clientVersion: number }
   | { action: "switch"; payload: { switchToIndex: number }; clientVersion: number }
   | { action: "forfeit"; payload: Record<string, never>; clientVersion: number };
 
@@ -96,9 +99,11 @@ type UseBattleState = {
   legalSwitchIndexes: number[];
 
   writeChoice: (choice: ChoicePayload) => Promise<void>;
-  chooseMove: (moveId: string, target?: "p1" | "p2") => Promise<void>;
+  chooseMove: (moveId: string, target?: "p1" | "p2", options?: { terastallize?: boolean }) => Promise<void>;
   chooseSwitch: (idx: number) => Promise<void>;
   forfeit: () => Promise<void>;
+  /** Whether I can Terastallize this turn (UI hint; the server re-checks), and into what. */
+  tera: { available: boolean; type: string | null };
 };
 
 function isChoosing(meta: Meta | null) {
@@ -424,7 +429,13 @@ export function useBattleState(battleId: string): UseBattleState {
       headers,
       body: JSON.stringify(
         choice.action === 'move'
-          ? { action: 'move', moveId: choice.payload.moveId, target: choice.payload.target, clientVersion: choice.clientVersion }
+          ? {
+              action: 'move',
+              moveId: choice.payload.moveId,
+              target: choice.payload.target,
+              clientVersion: choice.clientVersion,
+              ...(choice.payload.terastallize ? { terastallize: true } : {}),
+            }
           : choice.action === 'forfeit'
             ? { action: 'forfeit', clientVersion: choice.clientVersion }
             : { action: 'switch', switchToIndex: choice.payload.switchToIndex, clientVersion: choice.clientVersion }
@@ -452,10 +463,22 @@ export function useBattleState(battleId: string): UseBattleState {
     }
   }, [battleId, meUid, meta]);
 
-  const chooseMove = useCallback(async (moveId: string, target: "p1" | "p2" = "p2") => {
+  const tera = useMemo(() => {
+    const active = myPrivateActive;
+    const type = active?.teraType ?? null;
+    const available = !!type && !me?.teraUsed && !active?.terastallized && !meta?.pendingSwitch;
+    return { available, type };
+  }, [myPrivateActive, me?.teraUsed, meta?.pendingSwitch]);
+
+  const chooseMove = useCallback(async (moveId: string, target: "p1" | "p2" = "p2", options?: { terastallize?: boolean }) => {
     if (!meta) throw new Error("No meta");
-    await writeChoice({ action: "move", payload: { moveId, target }, clientVersion: meta.version });
-  }, [writeChoice, meta]);
+    const terastallize = !!options?.terastallize && tera.available;
+    await writeChoice({
+      action: "move",
+      payload: { moveId, target, ...(terastallize ? { terastallize: true } : {}) },
+      clientVersion: meta.version,
+    });
+  }, [writeChoice, meta, tera.available]);
 
   const chooseSwitch = useCallback(async (idx: number) => {
     if (!meta) throw new Error("No meta");
@@ -477,6 +500,7 @@ export function useBattleState(battleId: string): UseBattleState {
     writeChoice,
     chooseMove,
     chooseSwitch,
-    forfeit
+    forfeit,
+    tera,
   };
 }
