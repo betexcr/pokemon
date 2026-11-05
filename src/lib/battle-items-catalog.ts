@@ -162,6 +162,9 @@ export const BATTLE_ITEMS: readonly BattleItemInfo[] = [
   { id: 'lustrous-globe', label: 'Lustrous Globe', category: 'Species items', effect: 'Palkia: Dragon and Water moves x1.2', species: ['palkia'] },
   { id: 'griseous-orb', label: 'Griseous Orb', category: 'Species items', effect: 'Giratina: Dragon and Ghost moves x1.2', species: ['giratina'] },
   { id: 'griseous-core', label: 'Griseous Core', category: 'Species items', effect: 'Giratina: Dragon and Ghost moves x1.2', species: ['giratina'] },
+  { id: 'wellspring-mask', label: 'Wellspring Mask', category: 'Species items', effect: 'Ogerpon: Ivy Cudgel becomes Water-type; moves x1.2', species: ['ogerpon'] },
+  { id: 'hearthflame-mask', label: 'Hearthflame Mask', category: 'Species items', effect: 'Ogerpon: Ivy Cudgel becomes Fire-type; moves x1.2', species: ['ogerpon'] },
+  { id: 'cornerstone-mask', label: 'Cornerstone Mask', category: 'Species items', effect: 'Ogerpon: Ivy Cudgel becomes Rock-type; moves x1.2', species: ['ogerpon'] },
   { id: 'rusted-sword', label: 'Rusted Sword', category: 'Species items', effect: 'Zacian becomes the Crowned Sword', species: ['zacian'] },
   { id: 'rusted-shield', label: 'Rusted Shield', category: 'Species items', effect: 'Zamazenta becomes the Crowned Shield', species: ['zamazenta'] },
 ];

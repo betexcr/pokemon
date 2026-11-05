@@ -18,6 +18,7 @@ const BINDING_MOVES: Record<string, { kind: string; fraction: number }> = {
   'snap-trap': { kind: 'Snap Trap', fraction: 1 / 8 },
   clamp: { kind: 'Clamp', fraction: 1 / 8 },
   bind: { kind: 'Bind', fraction: 1 / 8 },
+  'thunder-cage': { kind: 'Thunder Cage', fraction: 1 / 8 },
 };
 
 export function lastUsedMoveId(pokemon: BattlePokemon): string | undefined {

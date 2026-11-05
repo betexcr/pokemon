@@ -195,6 +195,9 @@ export async function loadMoveFromPokeAPI(idOrName: number | string): Promise<Co
     target: mv.target?.name,
     shortEffect: extractShortEffect(mv.effect_entries, mv.effect_chance),
     ...parseSecondary(mv.meta),
+    ...(((mv.meta as { flinch_chance?: number })?.flinch_chance ?? 0) > 0
+      ? { flinchChance: (mv.meta as { flinch_chance: number }).flinch_chance }
+      : {}),
     statChanges: parseTopLevelStatChanges(mv)
   };
 

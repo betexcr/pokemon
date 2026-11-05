@@ -80,7 +80,9 @@ export function loadedDiceHits(attacker: BattlePokemon, min: number, max: number
 
 /** Bound by a binding move and cannot switch out (Ghost types and Shed Shell holders always can). */
 export function isTrapped(mon: BattlePokemon): boolean {
-  if (!mon.volatile?.binding || mon.currentHp <= 0) return false;
+  const v = mon.volatile;
+  const held = !!(v?.binding || v?.trapped || v?.jawLock || v?.noRetreat || v?.fairyLocked);
+  if (!held || mon.currentHp <= 0) return false;
   if (effectiveItem(mon) === 'shed-shell') return false;
   const types = (mon.pokemon.types ?? []).map((t: any) => String(typeof t === 'string' ? t : t?.type?.name ?? '').toLowerCase());
   return !types.includes('ghost');
@@ -134,6 +136,9 @@ export const SPECIES_ITEMS: Readonly<Record<string, readonly string[]>> = {
   'griseous-core': ['giratina'],
   'rusted-sword': ['zacian'],
   'rusted-shield': ['zamazenta'],
+  'wellspring-mask': ['ogerpon'],
+  'hearthflame-mask': ['ogerpon'],
+  'cornerstone-mask': ['ogerpon'],
 };
 
 /** Move types boosted x1.2 by the legendary orbs / Soul Dew. */
@@ -173,6 +178,8 @@ export function speciesItemMultipliers(
   if (!isPhysical && holdsSpeciesItem(attacker, 'deep-sea-tooth')) attack *= 2;
   if (!isPhysical && holdsSpeciesItem(defender, 'deep-sea-scale')) defense *= 2;
   if (isPhysical && holdsSpeciesItem(defender, 'metal-powder')) defense *= 2;
+  // Ogerpon's masks boost all of its moves
+  if (['wellspring-mask', 'hearthflame-mask', 'cornerstone-mask'].some((m) => holdsSpeciesItem(attacker, m))) power *= 1.2;
   const type = moveType.toLowerCase();
   for (const [item, types] of Object.entries(SPECIES_POWER_TYPES)) {
     if (types.includes(type) && holdsSpeciesItem(attacker, item)) power *= 1.2;
@@ -198,6 +205,7 @@ export function isUnremovableItem(mon: BattlePokemon | undefined): boolean {
   if (PLATE_TYPES[item] && name.startsWith('arceus')) return true;
   if (item === 'rusted-sword' && name.startsWith('zacian')) return true;
   if (item === 'rusted-shield' && name.startsWith('zamazenta')) return true;
+  if (item.endsWith('-mask') && name.startsWith('ogerpon')) return true;
   if ((item === 'griseous-orb' || item === 'griseous-core') && name.startsWith('giratina')) return true;
   return false;
 }

@@ -45,6 +45,7 @@ import {
   illegalRejectMetaFields,
   softFailChoosingFields,
 } from './battle-private-volatiles';
+import { applyEngineExtras, captureEngineExtras, type EngineExtras } from './battle-engine-extras';
 
 export { RecoverableResolutionError, isRecoverableResolutionFailure };
 
@@ -181,6 +182,10 @@ async function hydrateTeam(team: any[], stats?: HydrationStats): Promise<BattleP
             terastallized: p.terastallized === true || undefined,
             originalTypes: Array.isArray(p.originalTypes) ? p.originalTypes : undefined,
             originalAbility: p.originalAbility || resolveBattleAbility({ ability: p.ability }, pokemon.abilities),
+            gender: p.gender === 'male' || p.gender === 'female' || p.gender === 'genderless' ? p.gender : undefined,
+            ateBerry: p.ateBerry === true || undefined,
+            consumedItem: typeof p.consumedItem === 'string' ? p.consumedItem : undefined,
+            abilityChanged: p.abilityChanged === true || undefined,
         } as BattlePokemon;
     }));
     return hydratedTeam;
@@ -194,7 +199,7 @@ async function fetchBattleState(battleId: string, ops: RtdbOps, hydrationStats?:
         ops.get(`battles/${battleId}/private/${meta.players.p1.uid}`) as Promise<RTDBBattlePrivate>,
         ops.get(`battles/${battleId}/private/${meta.players.p2.uid}`) as Promise<RTDBBattlePrivate>,
         ops.get(`battles/${battleId}/public`) as Promise<RTDBBattlePublic>,
-        ops.get(`battles/${battleId}/server`) as Promise<{ battleRng?: RTDBBattleMeta['battleRng'] } | null>,
+        ops.get(`battles/${battleId}/server`) as Promise<{ battleRng?: RTDBBattleMeta['battleRng']; engineExtras?: EngineExtras } | null>,
     ]);
 
     if (!p1Private || !p2Private || !publicState) {
@@ -266,7 +271,7 @@ async function fetchBattleState(battleId: string, ops: RtdbOps, hydrationStats?:
         rooms.gravity = { turns: typeof roomsRaw.gravity === 'number' ? roomsRaw.gravity : roomsRaw.gravity.turns };
     }
 
-    return {
+    const restored: BattleState = {
         player: p1Team,
         opponent: p2Team,
         turn: meta.turn,
@@ -282,6 +287,9 @@ async function fetchBattleState(battleId: string, ops: RtdbOps, hydrationStats?:
             rooms,
         }
     };
+    // Tailwind, Safeguard, Mist, Healing Wish, Future Sight, Fairy Lock, ... (Admin-only)
+    applyEngineExtras(restored, serverState?.engineExtras);
+    return restored;
 }
 
 function privateUpdatesFromTeam(team: BattleTeam) {
@@ -731,6 +739,7 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
         };
 
         const rngStored = battleRngToStored(currentState.rng);
+        const engineExtras = captureEngineExtras(currentState);
         const nextVersion = (meta.version ?? 1) + 1;
         const nextDeadline = Date.now() + TURN_DEADLINE_MS;
 
@@ -758,6 +767,7 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
                     [`battles/${battleId}/private/${meta.players.p2.uid}`]: p2Updates,
                     [`battles/${battleId}/public`]: publicUpdates,
                     [`battles/${battleId}/server/battleRng`]: rngStored,
+                    [`battles/${battleId}/server/engineExtras`]: engineExtras,
                     [`battles/${battleId}/meta/battleRng`]: null,
                     [`battles/${battleId}/meta/phase`]: 'choosing',
                     [`battles/${battleId}/meta/version`]: nextVersion,
@@ -772,6 +782,7 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
                     ops.update(`battles/${battleId}/private/${meta.players.p2.uid}`, p2Updates),
                     ops.update(`battles/${battleId}/public`, publicUpdates),
                     ops.set(`battles/${battleId}/server/battleRng`, rngStored),
+                    ops.set(`battles/${battleId}/server/engineExtras`, engineExtras),
                     ops.update(`battles/${battleId}/meta`, replacementMeta),
                     ops.set(`battles/${battleId}/turns/${meta.turn}/choices`, null),
                 ]);
@@ -804,6 +815,7 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
                     [`battles/${battleId}/public`]: publicUpdates,
                     [`battles/${battleId}/meta/battleRng`]: null,
                     [`battles/${battleId}/server/battleRng`]: rngStored,
+                    [`battles/${battleId}/server/engineExtras`]: engineExtras,
                     [`battles/${battleId}/server/pendingTurn`]: stored,
                     [`battles/${battleId}/meta/phase`]: 'choosing',
                     [`battles/${battleId}/meta/version`]: nextVersion,
@@ -818,6 +830,7 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
                     ops.update(`battles/${battleId}/private/${meta.players.p2.uid}`, p2Updates),
                     ops.update(`battles/${battleId}/public`, publicUpdates),
                     ops.set(`battles/${battleId}/server/battleRng`, rngStored),
+                    ops.set(`battles/${battleId}/server/engineExtras`, engineExtras),
                     ops.set(`battles/${battleId}/server/pendingTurn`, stored),
                     ops.update(`battles/${battleId}/meta`, {
                         battleRng: null,
@@ -845,6 +858,7 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
                     [`battles/${battleId}/public`]: publicUpdates,
                     [`battles/${battleId}/meta/battleRng`]: null,
                     [`battles/${battleId}/server/battleRng`]: rngStored,
+                    [`battles/${battleId}/server/engineExtras`]: engineExtras,
                     [`battles/${battleId}/meta/resolvingStartedAt`]: null,
                     [`battles/${battleId}/meta/phase`]: 'ended',
                     [`battles/${battleId}/meta/winnerUid`]: winnerUid,
@@ -870,6 +884,7 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
                         pendingReplacement: null,
                     }),
                     ops.set(`battles/${battleId}/server/battleRng`, rngStored),
+                    ops.set(`battles/${battleId}/server/engineExtras`, engineExtras),
                     ops.set(`battles/${battleId}/server/pendingTurn`, null),
                     ops.set(`battles/${battleId}/turns/${meta.turn}/resolution`, replayResolution),
                     ops.set(`battles/${battleId}/turns/${meta.turn}/choices`, null),
@@ -904,6 +919,7 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
                     [`battles/${battleId}/meta/pendingSwitch`]: null,
                     [`battles/${battleId}/meta/pendingReplacement`]: pendingReplacementMeta,
                     [`battles/${battleId}/server/battleRng`]: rngStored,
+                    [`battles/${battleId}/server/engineExtras`]: engineExtras,
                     [`battles/${battleId}/server/pendingTurn`]: null,
                     [`battles/${battleId}/private/${meta.players.p1.uid}`]: p1Updates,
                     [`battles/${battleId}/private/${meta.players.p2.uid}`]: p2Updates,
@@ -915,6 +931,7 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
                 await Promise.all([
                     ops.update(`battles/${battleId}/meta`, metaUpdates),
                     ops.set(`battles/${battleId}/server/battleRng`, rngStored),
+                    ops.set(`battles/${battleId}/server/engineExtras`, engineExtras),
                     ops.set(`battles/${battleId}/server/pendingTurn`, null),
                     ops.update(`battles/${battleId}/private/${meta.players.p1.uid}`, p1Updates),
                     ops.update(`battles/${battleId}/private/${meta.players.p2.uid}`, p2Updates),

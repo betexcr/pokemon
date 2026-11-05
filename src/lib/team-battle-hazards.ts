@@ -17,7 +17,7 @@ function stealthRockDamage(pokemon: BattlePokemon): number {
 }
 
 export function isGrounded(pokemon: BattlePokemon): boolean {
-  if (pokemon.volatile?.gravityGrounded) return true;
+  if (pokemon.volatile?.gravityGrounded || pokemon.volatile?.smackedDown) return true;
   if (effectiveItem(pokemon) === 'iron-ball') return true;
   const isFlying = pokemon.pokemon.types.some(typeEntry => {
     const type = typeof typeEntry === 'string' ? typeEntry : typeEntry.type?.name || '';

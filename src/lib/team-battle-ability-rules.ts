@@ -29,6 +29,8 @@ export function abilityOf(pokemon: BattlePokemon | undefined): string | undefine
 }
 
 export function hasMoldBreaker(pokemon: BattlePokemon | undefined): boolean {
+  // Sunsteel Strike / Moongeist Beam / Photon Geyser act like Mold Breaker for that move
+  if (pokemon?.volatile?.moldBreakerMove) return true;
   const ability = abilityOf(pokemon);
   return !!ability && MOLD_BREAKER_ABILITIES.has(ability);
 }

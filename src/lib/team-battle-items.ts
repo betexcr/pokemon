@@ -54,6 +54,8 @@ export const TYPE_RESIST_BERRIES: Record<string, string> = {
 
 function consumeItem(target: BattlePokemon) {
   target.volatile.lastConsumedBerry = target.heldItem;
+  if (target.heldItem?.endsWith('-berry')) target.ateBerry = true;
+  target.consumedItem = target.heldItem;
   target.heldItem = undefined;
   if (target.currentAbility?.toLowerCase() === 'unburden') {
     target.volatile.unburdenActive = true;
@@ -327,4 +329,53 @@ export function tryHarvestBerry(state: BattleState, target: BattlePokemon): void
 
 function formatBerryName(item: string): string {
   return item.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+
+/**
+ * Eat `berry` right now regardless of HP thresholds (Stuff Cheeks, Teatime, Pluck / Bug Bite, Fling).
+ * The berry is not removed from anyone here: callers decide whose item it was.
+ */
+export function forceEatBerry(state: BattleState, mon: BattlePokemon, berry: string): void {
+  if (!berry.endsWith('-berry') || mon.currentHp <= 0) return;
+  mon.ateBerry = true;
+  const name = formatBerryName(berry);
+  const healBy = (amount: number) => {
+    const before = mon.currentHp;
+    mon.currentHp = Math.min(mon.maxHp, mon.currentHp + Math.floor(amount));
+    if (mon.currentHp > before) {
+      state.battleLog.push({ type: 'healing', message: `${mon.pokemon.name} restored HP with the ${name}!`, pokemon: mon.pokemon.name, healing: Math.round(((mon.currentHp - before) / mon.maxHp) * 100) });
+    }
+  };
+  if (berry === 'sitrus-berry') return healBy(mon.maxHp / 4);
+  if (berry === 'oran-berry') return healBy(10);
+  if (THIRD_HEAL_BERRIES.has(berry)) return healBy(mon.maxHp / 3);
+  if (berry === 'lum-berry') {
+    if (mon.status) clearStatus(mon);
+    mon.volatile.confusion = undefined;
+    return;
+  }
+  const cure = STATUS_CURE_BERRIES[berry];
+  if (cure) {
+    if (cure === 'confusion') mon.volatile.confusion = undefined;
+    else if (mon.status && cure.includes(mon.status)) clearStatus(mon);
+    return;
+  }
+  if (berry === 'leppa-berry') {
+    const slot = mon.moves.find((m) => m.pp < m.maxPp);
+    if (slot) slot.pp = Math.min(slot.maxPp, slot.pp + 10);
+    return;
+  }
+  if (berry in STAT_BOOST_BERRIES) {
+    changeStatStage(state, mon, STAT_BOOST_BERRIES[berry], 1, { reason: `thanks to the ${name}` });
+    return;
+  }
+  if (berry === 'kee-berry') changeStatStage(state, mon, 'defense', 1, { reason: `thanks to the ${name}` });
+  else if (berry === 'maranga-berry') changeStatStage(state, mon, 'specialDefense', 1, { reason: `thanks to the ${name}` });
+  else if (berry === 'lansat-berry') mon.volatile.critBoost = 2;
+  else if (berry === 'micle-berry') mon.volatile.micleBoost = true;
+  else if (berry === 'starf-berry') {
+    const stats = ['attack', 'defense', 'specialAttack', 'specialDefense', 'speed'] as const;
+    const open = stats.filter((st) => mon.statModifiers[st] < 6);
+    if (open.length) changeStatStage(state, mon, open[rngNextInt(state.rng, open.length)], 2, { reason: `thanks to the ${name}` });
+  } else if (berry === 'enigma-berry') healBy(mon.maxHp / 4);
 }

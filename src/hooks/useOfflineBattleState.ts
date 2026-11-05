@@ -524,6 +524,8 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
       const newMeta = { ...currentMeta, phase: 'resolving' as const };
       setMeta(newMeta);
 
+      // Turn-based effects (Retaliate, Future Sight) read the engine's turn counter
+      state.turn = currentMeta.turn;
       const queue = buildActionQueue(state, playerAction, opponentAction);
       // The player picks their own pivot replacements; the AI sends in its next healthy Pokémon
       const outcome = await runBattleTurnFromQueue(state, queue, { clearBattleLog: true, manualSwitchSides: ['player'] });

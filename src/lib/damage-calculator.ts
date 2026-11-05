@@ -176,6 +176,7 @@ export function calculateComprehensiveDamage({
   hasSuperLuck = false,
   defenderGrounded = true,
   stabOverride,
+  typeEffectMultiplier = 1,
   ignoreAttackerStages = false,
   ignoreDefenderStages = false,
   cannotCrit = false,
@@ -219,6 +220,8 @@ export function calculateComprehensiveDamage({
   defenderGrounded?: boolean;
   /** Replaces the computed STAB multiplier (Terastallized into one of its original types: 2x, 2.25x with Adaptability). */
   stabOverride?: number;
+  /** Extra type-effectiveness factor (Freeze-Dry vs Water x4, Tar Shot vs Fire x2); ignored when immune. */
+  typeEffectMultiplier?: number;
   ignoreAttackerStages?: boolean;
   ignoreDefenderStages?: boolean;
   cannotCrit?: boolean;
@@ -246,6 +249,7 @@ export function calculateComprehensiveDamage({
   
   // Calculate type effectiveness
   let typeEffect = calculateTypeEffectiveness(moveType, defenderTypes);
+  if (typeEffect > 0) typeEffect *= typeEffectMultiplier;
   
   // Apply Tinted Lens (doubles not-very-effective damage)
   if (hasTintedLens && typeEffect < 1) {

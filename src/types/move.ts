@@ -14,6 +14,8 @@ export interface RuntimeMove {
   critRateStage: number;        // +0..+3 (affects odds table you already have)
   // Secondary effects
   ailment?: { kind: string; chance: number }; // e.g., {kind:"paralysis", chance:10}
+  /** Chance (%) the target flinches (PokeAPI meta.flinch_chance); PokeAPI never reports flinch as an ailment. */
+  flinchChance?: number;
   statChanges?: Array<{ stat: "atk"|"def"|"spa"|"spd"|"spe"|"acc"|"eva"; stages: number; chance: number }>;
   hits?: { min: number; max: number } | null; // multihit like Fury Swipes
   recoil?: { fraction: number } | null;        // e.g., 1/3 for Take Down (positive = recoil)

@@ -17,6 +17,10 @@ export function getForcedBattleMoveId(pokemon: BattlePokemon): string | null {
   if (pokemon.volatile.rampage && pokemon.volatile.rampage.turnsLeft > 0) {
     return pokemon.volatile.rampage.move;
   }
+  // Rollout keeps going for up to five turns
+  if (pokemon.volatile.rollout && pokemon.volatile.rollout.count > 0 && pokemon.volatile.rollout.count < 5) {
+    return 'rollout';
+  }
   return null;
 }
 

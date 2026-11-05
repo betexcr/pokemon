@@ -1,6 +1,7 @@
+import { getForcedBattleMoveId } from './battle-multiturn';
 import { effectiveItem } from './battle-item-access';
 import { revertTransform } from './team-battle-transform';
-import { isTrapped, rollMoveFirst, speciesItemSpeedMultiplier } from './team-battle-held-items';
+import { SOUND_MOVES, isTrapped, rollMoveFirst, speciesItemSpeedMultiplier } from './team-battle-held-items';
 import { changeStatStage } from './team-battle-stat-stages';
 import { paradoxMultiplier } from './team-battle-paradox';
 export { effectiveItem } from './battle-item-access';
@@ -40,7 +41,8 @@ export type BattlePokemon = {
     encore?: { move: string; turns: number };
     taunt?: { turns: number };
     disable?: { move: string; turns: number };
-    protect?: { counter: number; active?: boolean };
+    /** Protect family; `kind` is the move used (King's Shield, Spiky Shield, Endure, ...). */
+    protect?: { counter: number; active?: boolean; kind?: string };
     perishSong?: { turns: number };
     flinched?: boolean;
     binding?: { kind: string; turnsLeft: number; fraction: number };
@@ -95,6 +97,47 @@ export type BattlePokemon = {
     formChange?: { form: string; types: Pokemon['types']; stats: Pokemon['stats'] };
     /** Eject Pack: stats were lowered; the holder switches out once the move settles. */
     ejectPackPending?: boolean;
+    /** Raw stat replacements (Power / Guard Split, Speed Swap, Power Trick). */
+    statOverrides?: Partial<Record<'attack' | 'defense' | 'special-attack' | 'special-defense' | 'speed', number>>;
+    /** Moves used since entering (Last Resort). */
+    movesUsedSinceEntry?: string[];
+    /** The user's last move failed, missed or was blocked (Stomping Tantrum, Temper Flare). */
+    lastMoveFailed?: boolean;
+    /** A stat was lowered this turn (Lash Out). */
+    statsLoweredThisTurn?: boolean;
+    stockpile?: { count: number; def: number; spd: number };
+    /** Trapped by Mean Look / Block (released when the trapper leaves). */
+    trapped?: { by: 'player' | 'opponent' };
+    /** Jaw Lock: neither Pokémon can switch while both stay in. */
+    jawLock?: { by: 'player' | 'opponent' };
+    noRetreat?: boolean;
+    /** Mirrors Fairy Lock from the field. */
+    fairyLocked?: boolean;
+    infatuated?: { by: 'player' | 'opponent' };
+    torment?: boolean;
+    /** This Pokémon used Imprison. */
+    imprisoning?: boolean;
+    /** Moves sealed by the foe's Imprison. */
+    imprisonedMoves?: string[];
+    throatChop?: { turns: number };
+    syrupBomb?: { turns: number };
+    /** Next move cannot miss (Lock-On), turns left. */
+    lockOn?: number;
+    /** Glaive Rush: incoming moves can't miss and deal double damage until the user moves again. */
+    glaiveRush?: boolean;
+    smackedDown?: boolean;
+    /** Tar Shot: Fire moves are super effective (x2) against this Pokémon. */
+    tarShot?: boolean;
+    /** Beak Blast charging: contact attackers get burned. */
+    beakBlast?: boolean;
+    /** This move ignores the target's ability (Sunsteel Strike, Moongeist Beam, Photon Geyser). */
+    moldBreakerMove?: boolean;
+    /** Morpeko (Hunger Switch) Hangry Mode. */
+    hangry?: boolean;
+    rollout?: { count: number };
+    defenseCurl?: boolean;
+    /** Consecutive successful Fury Cutter hits. */
+    furyCutter?: number;
     /** Metronome (item): consecutive uses of the same move. */
     metronomeStreak?: number;
     /** Micle Berry: next move's accuracy x1.2. */
@@ -126,6 +169,12 @@ export type BattlePokemon = {
   originalTypes?: Pokemon['types'];
   /** Form set by a held item for the whole battle (Zacian / Zamazenta Crowned, Arceus Plate type). */
   itemForm?: string;
+  /** Unknown unless the team records it (Attract checks it when known). */
+  gender?: 'male' | 'female' | 'genderless';
+  /** Has eaten a Berry this battle (Belch). */
+  ateBerry?: boolean;
+  /** Last held item used up (Recycle restores it). */
+  consumedItem?: string;
   /** Disguise / Ice Face: already used up (Disguise stays busted for the battle). */
   disguiseBusted?: boolean;
   iceFaceBroken?: boolean;
@@ -143,7 +192,24 @@ export type BattleTeam = {
     hazards: SideHazards;
     tailwind?: { turns: number };
     luckyChant?: { turns: number };
+    /** Healing Wish / Lunar Dance waiting for the next Pokémon to come in. */
+    healingWish?: 'healing-wish' | 'lunar-dance';
+    /** Future Sight / Doom Desire landing on this side at the end of a later turn. */
+    futureAttack?: {
+      move: 'future-sight' | 'doom-desire';
+      turns: number;
+      user: string;
+      level: number;
+      attackStat: number;
+      attackerTypes: string[];
+      power: number;
+      type: string;
+    };
   };
+  /** Turn number (state.turn) on which a member of this team last fainted (Retaliate). */
+  lastFaintTurn?: number;
+  /** Fainted members counted at the last end of turn. */
+  faintTally?: number;
 };
 
 export type BattleLogEntry = {
@@ -216,6 +282,14 @@ export type BattleState = {
   pendingReplacements?: PendingReplacement[];
   /** Transient: true while queued actions run (entry-time picks may pause the turn). */
   resolvingActions?: boolean;
+  /** Last move used by any Pokémon (Copycat). */
+  lastMoveInBattle?: string;
+  /** Transient: last move used this turn (Fusion Flare / Fusion Bolt). */
+  lastMoveThisTurn?: string;
+  /** Transient: the action being resolved (target-moved-first checks). */
+  currentAction?: BattleState['actionQueue'][number];
+  /** Transient: HP damage the last executed move dealt (Chloroblast, Rollout, Fury Cutter). */
+  lastHitDamage?: number;
 };
 
 /** Why a turn paused mid-way for a player's pick. */
@@ -296,6 +370,9 @@ const FALLBACK_PRIORITY: Record<string, number> = {
   'trick-room': -6,
   'roar': -6,
   'focus-punch': -3,
+  'beak-blast': -3,
+  'teleport': -6,
+  'upper-hand': 3,
   'whirlwind': -6,
   'dragon-tail': -6,
   'circle-throw': -6,
@@ -304,10 +381,12 @@ const FALLBACK_PRIORITY: Record<string, number> = {
 };
 
 // Calculate move priority (higher number = higher priority); prefers cached move metadata when available
-export function getMovePriority(moveId: string, pokemon?: BattlePokemon): number {
+export function getMovePriority(moveId: string, pokemon?: BattlePokemon, field?: { terrain?: { kind?: string } }): number {
   const id = moveId.toLowerCase();
   const cached = getCachedMove(id);
   let priority = cached?.priority ?? FALLBACK_PRIORITY[id] ?? 0;
+  // Grassy Glide: +1 priority on Grassy Terrain for a grounded user
+  if (id === 'grassy-glide' && field?.terrain?.kind === 'grassy' && pokemon && isGroundedForPriority(pokemon)) priority += 1;
 
   const ability = pokemon?.currentAbility?.toLowerCase();
   if (!ability || !pokemon) return priority;
@@ -340,10 +419,12 @@ export function getEffectiveSpeed(
   field?: { weather?: { kind?: string }; terrain?: { kind?: string } }
 ): number {
   const baseSpeed = pokemon.pokemon.stats?.find((stat: any) => (stat.stat?.name || stat.name) === 'speed')?.base_stat || 50;
-  let calculatedSpeed = calculateStat(baseSpeed, pokemon.level);
+  // Speed Swap replaces the raw Speed stat for as long as the Pokémon stays in
+  const speedOverride = pokemon.volatile?.statOverrides?.speed;
+  let calculatedSpeed = typeof speedOverride === 'number' ? speedOverride : calculateStat(baseSpeed, pokemon.level);
   // Apply nature: +10% to increased stat, -10% to decreased stat
   try {
-    if (pokemon.nature) {
+    if (pokemon.nature && typeof speedOverride !== 'number') {
       const { getNature } = require('@/data/natures') as typeof import('@/data/natures');
       const n = getNature(pokemon.nature);
       if (n.increasedStat === 'speed') calculatedSpeed = Math.floor(calculatedSpeed * 1.1);
@@ -458,8 +539,8 @@ export function canUseMove(
     if (move.disabled) return { canUse: false, reason: 'disabled' };
   }
 
-  // Check status conditions
-  if (pokemon.status === 'asleep') {
+  // Check status conditions (Sleep Talk and Snore are used while asleep)
+  if (pokemon.status === 'asleep' && idLower !== 'sleep-talk' && idLower !== 'snore') {
     return { canUse: false, reason: 'fast asleep' };
   }
   if (pokemon.status === 'frozen') {
@@ -503,6 +584,17 @@ export function canUseMove(
     if (fullMove?.category === 'Status') {
       return { canUse: false, reason: 'taunted' };
     }
+  }
+
+  // Torment: not the same move twice in a row; Imprison: moves the foe also knows; Throat Chop: sound moves
+  if (pokemon.volatile.torment && pokemon.volatile.lastMoveUsed?.toLowerCase() === idLower && idLower !== 'struggle') {
+    return { canUse: false, reason: 'tormented' };
+  }
+  if (pokemon.volatile.imprisonedMoves?.includes(idLower)) {
+    return { canUse: false, reason: 'unable to use its sealed move' };
+  }
+  if (pokemon.volatile.throatChop && pokemon.volatile.throatChop.turns > 0 && SOUND_MOVES.has(idLower)) {
+    return { canUse: false, reason: 'unable to use sound moves after Throat Chop' };
   }
 
   // Assault Vest: cannot select status moves
@@ -561,14 +653,8 @@ export function normalizeServerBattleAction(
     const mon = getCurrentPokemon(team);
     const idLower = moveId.toLowerCase();
 
-    const forced =
-      mon.volatile.mustRecharge
-        ? '__recharge__'
-        : mon.volatile.twoTurn?.kind === 'pending'
-          ? mon.volatile.twoTurn.move
-          : mon.volatile.rampage && mon.volatile.rampage.turnsLeft > 0
-            ? mon.volatile.rampage.move
-            : null;
+    // Recharge, pending two-turn moves, rampages and Rollout lock the choice
+    const forced = getForcedBattleMoveId(mon);
     if (forced && idLower !== forced) {
       return {
         action: { type: 'move', moveId: forced, target: action.target },
@@ -647,6 +733,12 @@ export function normalizeServerBattleAction(
   return { action, normalized: false, errorCode: 'unknown_action' };
 }
 
+function isGroundedForPriority(mon: BattlePokemon): boolean {
+  if (mon.volatile.gravityGrounded || mon.volatile.smackedDown) return true;
+  const types = (mon.pokemon.types ?? []).map((t: any) => String(typeof t === 'string' ? t : t?.type?.name ?? '').toLowerCase());
+  return !types.includes('flying') && mon.currentAbility?.toLowerCase() !== 'levitate' && effectiveItem(mon) !== 'air-balloon';
+}
+
 function moveFirstField(mon: BattlePokemon, foe: BattlePokemon, state: BattleState): { moveFirst?: 'quick-claw' | 'custap-berry' } {
   const berriesBlocked = foe.currentAbility?.toLowerCase() === 'unnerve' && foe.currentHp > 0;
   const source = rollMoveFirst(mon, state.rng, berriesBlocked);
@@ -697,7 +789,7 @@ export function buildActionQueue(state: BattleState, playerAction: BattleAction,
       target: playerAction.target,
       ...(playerAction.terastallize ? { terastallize: true } : {}),
       ...moveFirstField(getCurrentPokemon(state.player), getCurrentPokemon(state.opponent), state),
-      priority: getMovePriority(playerAction.moveId || '', getCurrentPokemon(state.player)),
+      priority: getMovePriority(playerAction.moveId || '', getCurrentPokemon(state.player), state.field),
       speed: getEffectiveSpeed(getCurrentPokemon(state.player), isTailwindActive(state.player), state.field)
     });
   }
@@ -718,7 +810,7 @@ export function buildActionQueue(state: BattleState, playerAction: BattleAction,
       target: opponentAction.target,
       ...(opponentAction.terastallize ? { terastallize: true } : {}),
       ...moveFirstField(getCurrentPokemon(state.opponent), getCurrentPokemon(state.player), state),
-      priority: getMovePriority(opponentAction.moveId || '', getCurrentPokemon(state.opponent)),
+      priority: getMovePriority(opponentAction.moveId || '', getCurrentPokemon(state.opponent), state.field),
       speed: getEffectiveSpeed(getCurrentPokemon(state.opponent), isTailwindActive(state.opponent), state.field)
     });
   }
@@ -948,6 +1040,11 @@ export function resetOnSwitchOut(pokemon: BattlePokemon): void {
   }
   if (v.typeChange && !pokemon.terastallized) {
     pokemon.pokemon = { ...pokemon.pokemon, types: v.typeChange };
+  }
+  // Skill Swap / Gastro Acid / Entrainment / Worry Seed last until the Pokémon leaves
+  if (pokemon.abilityChanged) {
+    pokemon.currentAbility = pokemon.originalAbility;
+    pokemon.abilityChanged = undefined;
   }
   const kept: BattlePokemon['volatile'] = {};
   if (v.focusSashUsed) kept.focusSashUsed = v.focusSashUsed;

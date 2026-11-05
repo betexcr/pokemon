@@ -22,7 +22,7 @@ export function decrementFieldTimers(field: FieldState, screens: { player: Field
   }
 
   if (!field.rooms) field.rooms = {};
-  for (const room of ['trickRoom', 'magicRoom', 'wonderRoom', 'gravity'] as const) {
+  for (const room of ['trickRoom', 'magicRoom', 'wonderRoom', 'gravity', 'fairyLock'] as const) {
     const active = field.rooms[room];
     if (!active) continue;
     active.turns -= 1;
@@ -51,6 +51,10 @@ export function decrementFieldTimers(field: FieldState, screens: { player: Field
     if (side.tailwind) {
       side.tailwind.turns -= 1;
       if (side.tailwind.turns <= 0) delete side.tailwind;
+    }
+    if (side.mist) {
+      side.mist.turns -= 1;
+      if (side.mist.turns <= 0) delete side.mist;
     }
   };
 

@@ -24,7 +24,7 @@ import {
 } from './team-battle-engine';
 import { recordMoveDataMiss } from './battle-engine-metrics';
 import { calculateComprehensiveDamage, calculateTypeEffectiveness, TypeName } from './damage-calculator';
-import { getMove } from './moveCache';
+import { getCachedMove, getMove } from './moveCache';
 import { applyEntryHazards, isGrounded, getPokemonTypes } from './team-battle-hazards';
 import {
   applyVolatileAndHazardScripts,
@@ -63,6 +63,35 @@ import { updateParadoxBoosts } from './team-battle-paradox';
 import { stabTypeNames, teraPowerFloor, teraStabOverride, terastallize } from './team-battle-tera';
 import { OHKO_MOVES, ohkoFailure, ohkoHitChance, terrainPulseVariant, weatherBallVariant } from './team-battle-move-variants';
 import { transformBlocked, transformInto } from './team-battle-transform';
+import {
+  ABILITY_IGNORING_MOVES,
+  ALWAYS_CRIT_MOVES,
+  CRASH_MOVES,
+  DEFENSE_TARGETING_MOVES,
+  HALF_HP_COST_MOVES,
+  IGNORE_TARGET_STAGES_MOVES,
+  NON_CALLABLE_MOVES,
+  PER_HIT_ACCURACY_MOVES,
+  PROTECT_BYPASS_MOVES,
+  PROTECT_MOVES,
+  SCREEN_BREAKING_MOVES,
+  SELF_KO_MOVES,
+  beatUpPowers,
+  bypassesSubstitute,
+  flingPower,
+  gen9AccuracyOverride,
+  gen9AfterHit,
+  gen9BasePower,
+  gen9MoveVariant,
+  gen9StatusMoveScripts,
+  gen9TryFailure,
+  gen9TypeEffectMultiplier,
+  rollPresent,
+  typesOf,
+} from './team-battle-gen9-moves';
+import { rawStat, stageMultiplier } from './battle-stats';
+import { forceEatBerry } from './team-battle-items';
+import { METRONOME_MOVES } from '@/data/metronome-moves';
 import { breakIllusion, maskIllusions, startIllusion } from './team-battle-illusion';
 import { applyIceFaceStats, applyItemForms, applyStanceChange, updateHpForms } from './team-battle-forms';
 import { GEM_TYPES, PLATE_TYPES, SOUND_MOVES, isTrapped, isUnremovableItem, itemAccuracyMultiplier, itemPowerMultiplier, loadedDiceHits, makesContactFor, umbrellaBlocksWeather } from './team-battle-held-items';
@@ -119,6 +148,18 @@ export async function processStartOfTurn(state: BattleState): Promise<void> {
   const playerPokemon = getCurrentPokemon(state.player);
   const opponentPokemon = getCurrentPokemon(state.opponent);
   
+  state.lastMoveThisTurn = undefined;
+  for (const mon of [playerPokemon, opponentPokemon]) {
+    mon.volatile.statsLoweredThisTurn = undefined;
+  }
+  // Beak Blast heats up before anyone moves
+  for (const queued of state.actionQueue ?? []) {
+    if (queued.type === 'move' && queued.moveId?.toLowerCase() === 'beak-blast') {
+      const mon = queued.user === 'player' ? playerPokemon : opponentPokemon;
+      mon.volatile.beakBlast = true;
+      state.battleLog.push({ type: 'status_effect', message: `${mon.pokemon.name} started heating up its beak!`, pokemon: mon.pokemon.name });
+    }
+  }
   playerPokemon.volatile.flinched = false;
   playerPokemon.volatile.justSwitchedIn = false;
   playerPokemon.volatile.lastDamageTaken = undefined;
@@ -222,8 +263,10 @@ export async function resolveMove(state: BattleState, action: BattleState['actio
 
   // Every move action (including recharge / sleep / flinch turns) counts toward Fake Out's first-turn gate
   attacker.volatile.moveActionsSinceEntry = (attacker.volatile.moveActionsSinceEntry ?? 0) + 1;
-  // Destiny Bond only lasts until the user's next move
+  // Destiny Bond / Glaive Rush only last until the user's next move
   attacker.volatile.destinyBond = undefined;
+  attacker.volatile.glaiveRush = undefined;
+  state.currentAction = action;
 
   // Forced recharge turn after Hyper Beam family
   if (moveId === RECHARGE_MOVE_ID || attacker.volatile.mustRecharge) {
@@ -255,6 +298,7 @@ export async function resolveMove(state: BattleState, action: BattleState['actio
     if (attacker.volatile.rampage) {
       endRampageWithConfusion(state, attacker);
     }
+    markMoveFailed(attacker);
     return;
   }
 
@@ -268,7 +312,19 @@ export async function resolveMove(state: BattleState, action: BattleState['actio
     if (attacker.volatile.rampage) {
       endRampageWithConfusion(state, attacker);
     }
+    markMoveFailed(attacker);
     return;
+  }
+
+  // Attract: 50% chance to be immobilized by love
+  if (attacker.volatile.infatuated) {
+    const foe = getCurrentPokemon(attacker.volatile.infatuated.by === 'player' ? state.player : state.opponent);
+    state.battleLog.push({ type: 'status_effect', message: `${attacker.pokemon.name} is in love with ${foe.pokemon.name}!`, pokemon: attacker.pokemon.name });
+    if (rngRollChance(state.rng, 0.5)) {
+      state.battleLog.push({ type: 'status_effect', message: `${attacker.pokemon.name} is immobilized by love!`, pokemon: attacker.pokemon.name });
+      markMoveFailed(attacker);
+      return;
+    }
   }
 
   let move: Awaited<ReturnType<typeof getMove>> | null = null;
@@ -351,6 +407,33 @@ export async function resolveMove(state: BattleState, action: BattleState['actio
     }
   }
 
+  // Gen 9 conditions (Dream Eater, Poltergeist, Upper Hand, Belch, Damp vs Explosion, ...)
+  const defenderSideId = action.user === 'player' ? 'opponent' : 'player';
+  const queueForTry = state.actionQueue ?? [];
+  const tryIdx = queueForTry.indexOf(action);
+  const targetPending = (tryIdx >= 0 ? queueForTry.slice(tryIdx + 1) : [])
+    .find((a) => a.user === defenderSideId && (a.type === 'move' || a.type === 'pursuit') && a.moveId);
+  const gen9Failure = gen9TryFailure({
+    state,
+    attacker,
+    defender,
+    moveLower,
+    targetPendingMove: targetPending?.moveId
+      ? { moveId: targetPending.moveId, priority: targetPending.priority, category: getCachedMove(targetPending.moveId)?.category }
+      : undefined,
+  });
+  if (gen9Failure) {
+    consumePpForMove(attacker, moveId);
+    attacker.volatile.lastMoveUsed = moveId;
+    state.battleLog.push({ type: 'move_used', message: `${attacker.pokemon.name} used ${moveId}!`, pokemon: attacker.pokemon.name, move: moveId });
+    state.battleLog.push({ type: 'status_effect', message: gen9Failure });
+    markMoveFailed(attacker);
+    return;
+  }
+  if (moveLower === 'poltergeist' && defender.heldItem) {
+    state.battleLog.push({ type: 'status_effect', message: `${defender.pokemon.name} is about to be attacked by its ${defender.heldItem}!`, pokemon: defender.pokemon.name });
+  }
+
   // onTry conditions (Fake Out, Sucker Punch, Counter, ...) fail before the accuracy roll
   if (await moveFailsTryCondition(state, action, attacker, defender, moveLower)) {
     consumePpForMove(attacker, moveId);
@@ -362,12 +445,17 @@ export async function resolveMove(state: BattleState, action: BattleState['actio
       move: moveId,
     });
     state.battleLog.push({ type: 'status_effect', message: 'But it failed!' });
+    markMoveFailed(attacker);
     return;
   }
 
-  if (move.accuracy != null && !move.bypassAccuracyCheck) {
+  // Weather, Lock-On and Glaive Rush can make a move a sure hit (or change its accuracy)
+  const accuracyOverride = gen9AccuracyOverride(state, attacker, defender, moveLower);
+  attacker.volatile.lockOn = undefined;
+  if (move.accuracy != null && !move.bypassAccuracyCheck && accuracyOverride !== Infinity) {
     const accStage = attacker.statModifiers?.accuracy ?? 0;
-    const evaStage = defender.statModifiers?.evasion ?? 0;
+    // Darkest Lariat / Sacred Sword ignore evasion boosts
+    const evaStage = IGNORE_TARGET_STAGES_MOVES.has(moveLower) ? 0 : defender.statModifiers?.evasion ?? 0;
     const mult = getAccuracyMultiplier(accStage - evaStage);
     // Zoom Lens: did the target already act this turn?
     const defenderSide = action.user === 'player' ? 'opponent' : 'player';
@@ -377,7 +465,7 @@ export async function resolveMove(state: BattleState, action: BattleState['actio
     // OHKO moves ignore stat stages and use the level gap; Gravity boosts everything else x5/3
     const hitChance = OHKO_MOVES.has(moveLower)
       ? ohkoHitChance(attacker, defender, moveLower)
-      : (move.accuracy / 100) * mult * (state.field.rooms?.gravity ? 5 / 3 : 1) * itemAccuracyMultiplier(attacker, defender, targetAlreadyMoved);
+      : ((accuracyOverride ?? move.accuracy) / 100) * mult * (state.field.rooms?.gravity ? 5 / 3 : 1) * itemAccuracyMultiplier(attacker, defender, targetAlreadyMoved);
     attacker.volatile.micleBoost = undefined;
     if (!rngRollChance(state.rng, hitChance)) {
       consumePpForMove(attacker, moveId);
@@ -405,11 +493,23 @@ export async function resolveMove(state: BattleState, action: BattleState['actio
       if (pendingTwoTurn) {
         clearTwoTurnState(attacker);
       }
+      markMoveFailed(attacker);
+      applyCrashDamage(state, attacker, moveLower);
+      finishMove(state, attacker, moveLower, 0);
       return;
     }
   }
 
+  // Sunsteel Strike / Moongeist Beam / Photon Geyser ignore the target's ability
+  if (ABILITY_IGNORING_MOVES.has(moveLower)) attacker.volatile.moldBreakerMove = true;
+  state.lastHitDamage = 0;
+  const logStart = state.battleLog.length;
   await executeMoveAction(state, attacker, defender, moveId, action.user === 'player', action.user);
+  attacker.volatile.moldBreakerMove = undefined;
+  attacker.volatile.lastMoveFailed = state.battleLog.slice(logStart).some((e) =>
+    /But it failed|doesn't affect|wasn't affected|attack missed/.test(e.message)
+    || (e.message.endsWith('protected itself!') && e.pokemon !== attacker.pokemon.name));
+  finishMove(state, attacker, moveLower, state.lastHitDamage ?? 0);
 
   // Throat Spray: using a sound move raises Sp. Atk
   if (SOUND_MOVES.has(moveLower) && attacker.currentHp > 0 && effectiveItem(attacker) === 'throat-spray') {
@@ -459,6 +559,232 @@ function afterActionItemChecks(state: BattleState): void {
     mon.volatile.recentBoosts = undefined;
     tryConsumeBerry(state, mon, side);
   }
+}
+
+/** King's Shield / Spiky Shield / Baneful Bunker / Burning Bulwark / Silk Trap punish contact. */
+function applyProtectContactEffects(state: BattleState, attacker: BattlePokemon, defender: BattlePokemon, contact: boolean): void {
+  const kind = defender.volatile.protect?.kind;
+  if (!contact || !kind || attacker.currentHp <= 0) return;
+  const types = typesOf(attacker);
+  switch (kind) {
+    case 'kings-shield':
+    case 'king-s-shield':
+      changeStatStage(state, attacker, 'attack', -1, { source: defender });
+      break;
+    case 'silk-trap':
+      changeStatStage(state, attacker, 'speed', -1, { source: defender });
+      break;
+    case 'spiky-shield': {
+      if (abilityOf(attacker) === 'magic-guard') break;
+      attacker.currentHp = Math.max(0, attacker.currentHp - Math.floor(attacker.maxHp / 8));
+      state.battleLog.push({ type: 'status_damage', message: `${attacker.pokemon.name} was hurt!`, pokemon: attacker.pokemon.name });
+      if (attacker.currentHp <= 0) state.battleLog.push({ type: 'pokemon_fainted', message: `${attacker.pokemon.name} fainted!`, pokemon: attacker.pokemon.name });
+      break;
+    }
+    case 'baneful-bunker':
+      if (!attacker.status && !types.includes('poison') && !types.includes('steel')) {
+        applyStatus(attacker, 'poisoned');
+        state.battleLog.push({ type: 'status_applied', message: `${attacker.pokemon.name} was poisoned!`, pokemon: attacker.pokemon.name, status: 'POISONED' });
+      }
+      break;
+    case 'burning-bulwark':
+      if (!attacker.status && !types.includes('fire')) {
+        applyStatus(attacker, 'burned');
+        state.battleLog.push({ type: 'status_applied', message: `${attacker.pokemon.name} was burned!`, pokemon: attacker.pokemon.name, status: 'BURNED' });
+      }
+      break;
+    default:
+      break;
+  }
+}
+
+/** Fling: some thrown items affect the target. */
+function applyFlungItem(state: BattleState, attacker: BattlePokemon, defender: BattlePokemon, item: string): void {
+  const types = typesOf(defender);
+  const inflict = (status: NonNullable<BattlePokemon['status']>, label: string, immune: string[]) => {
+    if (defender.status || immune.some((t) => types.includes(t))) return;
+    applyStatus(defender, status);
+    state.battleLog.push({ type: 'status_applied', message: `${defender.pokemon.name} was ${label}!`, pokemon: defender.pokemon.name, status: status.toUpperCase() });
+  };
+  if (item === 'flame-orb') inflict('burned', 'burned', ['fire']);
+  else if (item === 'toxic-orb') inflict('badly-poisoned', 'badly poisoned', ['poison', 'steel']);
+  else if (item === 'poison-barb') inflict('poisoned', 'poisoned', ['poison', 'steel']);
+  else if (item === 'light-ball') inflict('paralyzed', 'paralyzed', ['electric']);
+  else if (item === 'kings-rock' || item === 'razor-fang') defender.volatile.flinched = true;
+  else if (item === 'white-herb') {
+    for (const k of Object.keys(defender.statModifiers) as Array<keyof BattlePokemon['statModifiers']>) {
+      if (defender.statModifiers[k] < 0) defender.statModifiers[k] = 0;
+    }
+  } else if (item === 'mental-herb') {
+    defender.volatile.taunt = undefined;
+    defender.volatile.encore = undefined;
+    defender.volatile.disable = undefined;
+    defender.volatile.torment = undefined;
+    defender.volatile.infatuated = undefined;
+  } else if (item.endsWith('-berry')) {
+    forceEatBerry(state, defender, item);
+  }
+  void attacker;
+}
+
+/** Sleep Talk / Copycat / Metronome: announce and run another move (no PP, own accuracy roll). */
+async function callMove(
+  state: BattleState,
+  attacker: BattlePokemon,
+  defender: BattlePokemon,
+  calledId: string,
+  isPlayer: boolean,
+  user: 'player' | 'opponent',
+): Promise<void> {
+  const called = await getMove(calledId);
+  if (!called) {
+    state.battleLog.push({ type: 'status_effect', message: 'But it failed!' });
+    return;
+  }
+  state.battleLog.push({ type: 'move_used', message: `${attacker.pokemon.name} used ${calledId}!`, pokemon: attacker.pokemon.name, move: calledId });
+  const override = gen9AccuracyOverride(state, attacker, defender, calledId);
+  if (called.accuracy != null && !called.bypassAccuracyCheck && override !== Infinity && !SELF_STATUS_MOVES.has(calledId)) {
+    const stage = Math.max(-6, Math.min(6, (attacker.statModifiers.accuracy ?? 0) - (defender.statModifiers.evasion ?? 0)));
+    const chance = ((override ?? called.accuracy) / 100) * getAccuracyMultiplier(stage);
+    if (!rngRollChance(state.rng, Math.min(1, chance))) {
+      state.battleLog.push({ type: 'move_missed', message: `${attacker.pokemon.name}'s attack missed!`, pokemon: attacker.pokemon.name, move: calledId });
+      return;
+    }
+  }
+  await executeMoveAction(state, attacker, defender, calledId, isPlayer, user, false, true);
+}
+
+/** Status moves that switch, faint the user, or call other moves. Returns true when handled. */
+async function runGen9AsyncStatusMove(
+  state: BattleState,
+  attacker: BattlePokemon,
+  defender: BattlePokemon,
+  moveLower: string,
+  isPlayer: boolean,
+  user: 'player' | 'opponent',
+): Promise<boolean> {
+  const team = user === 'player' ? state.player : state.opponent;
+  const fail = () => state.battleLog.push({ type: 'status_effect', message: 'But it failed!' });
+  switch (moveLower) {
+    case 'teleport':
+      if (getSwitchCandidates(team).length === 0) fail();
+      else await requestPivotSwitch(state, user);
+      return true;
+    case 'chilly-reception':
+      state.battleLog.push({ type: 'status_effect', message: `${attacker.pokemon.name} is preparing to tell a chillingly bad joke!`, pokemon: attacker.pokemon.name });
+      scriptedStatusMoveHandlers.snowscape({ state, attacker, defender, isPlayer });
+      if (getSwitchCandidates(team).length > 0) await requestPivotSwitch(state, user);
+      return true;
+    case 'healing-wish':
+    case 'lunar-dance':
+      team.sideConditions.healingWish = moveLower;
+      attacker.currentHp = 0;
+      state.battleLog.push({ type: 'pokemon_fainted', message: `${attacker.pokemon.name} fainted!`, pokemon: attacker.pokemon.name });
+      team.faintedCount = team.pokemon.filter((p) => p.currentHp <= 0).length;
+      return true;
+    case 'sleep-talk': {
+      const options = attacker.moves
+        .map((m) => m.id.toLowerCase())
+        .filter((id) => id !== 'sleep-talk' && !NON_CALLABLE_MOVES.has(id) && getTwoTurnKind(id) === null);
+      if (options.length === 0) {
+        fail();
+        return true;
+      }
+      await callMove(state, attacker, defender, options[rngNextInt(state.rng, options.length)], isPlayer, user);
+      return true;
+    }
+    case 'copycat':
+      await callMove(state, attacker, defender, state.lastMoveInBattle!, isPlayer, user);
+      return true;
+    case 'metronome': {
+      const known = new Set(attacker.moves.map((m) => m.id.toLowerCase()));
+      const pool = METRONOME_MOVES.filter((id) => !NON_CALLABLE_MOVES.has(id) && !known.has(id));
+      await callMove(state, attacker, defender, pool[rngNextInt(state.rng, pool.length)], isPlayer, user);
+      return true;
+    }
+    case 'recycle':
+      if (attacker.heldItem || !attacker.consumedItem) {
+        fail();
+        return true;
+      }
+      attacker.heldItem = attacker.consumedItem;
+      attacker.consumedItem = undefined;
+      attacker.volatile.unburdenActive = undefined;
+      state.battleLog.push({ type: 'status_effect', message: `${attacker.pokemon.name} found one ${attacker.heldItem}!`, pokemon: attacker.pokemon.name });
+      return true;
+    case 'stuff-cheeks': {
+      const berry = removeHeldItem(attacker)!;
+      attacker.consumedItem = berry;
+      forceEatBerry(state, attacker, berry);
+      changeStatStage(state, attacker, 'defense', 2);
+      return true;
+    }
+    case 'teatime': {
+      state.battleLog.push({ type: 'status_effect', message: 'It\'s teatime! Everyone dug in to their Berries!' });
+      for (const mon of [attacker, defender]) {
+        const item = effectiveItem(mon);
+        if (mon.currentHp > 0 && item?.endsWith('-berry')) {
+          removeHeldItem(mon);
+          mon.consumedItem = item;
+          forceEatBerry(state, mon, item);
+        }
+      }
+      return true;
+    }
+    case 'defense-curl':
+      attacker.volatile.defenseCurl = true;
+      return false;
+    default:
+      return false;
+  }
+}
+
+/** Remember that the user's move failed / missed (Stomping Tantrum, Temper Flare) and break streaks. */
+function markMoveFailed(attacker: BattlePokemon): void {
+  attacker.volatile.lastMoveFailed = true;
+  attacker.volatile.rollout = undefined;
+  attacker.volatile.furyCutter = undefined;
+}
+
+/** High Jump Kick, Jump Kick, Axe Kick, Supercell Slam: 1/2 max HP crash damage on a miss or failure. */
+function applyCrashDamage(state: BattleState, attacker: BattlePokemon, moveLower: string): void {
+  if (!CRASH_MOVES.has(moveLower) || attacker.currentHp <= 0 || abilityOf(attacker) === 'magic-guard') return;
+  attacker.currentHp = Math.max(0, attacker.currentHp - Math.floor(attacker.maxHp / 2));
+  state.battleLog.push({ type: 'status_damage', message: `${attacker.pokemon.name} kept going and crashed!`, pokemon: attacker.pokemon.name });
+  if (attacker.currentHp <= 0) {
+    state.battleLog.push({ type: 'pokemon_fainted', message: `${attacker.pokemon.name} fainted!`, pokemon: attacker.pokemon.name });
+  }
+}
+
+/**
+ * After a move ran (hit or miss): self-KO moves, Steel Beam / Chloroblast HP cost, Rollout / Fury Cutter
+ * streaks, Beak Blast ending, and "last move this turn" for the Fusion moves.
+ */
+function finishMove(state: BattleState, attacker: BattlePokemon, moveLower: string, damageDealt: number): void {
+  attacker.volatile.beakBlast = undefined;
+  state.lastMoveThisTurn = moveLower;
+  const faint = (why?: string) => {
+    if (attacker.currentHp <= 0) return;
+    attacker.currentHp = 0;
+    if (why) state.battleLog.push({ type: 'status_damage', message: why, pokemon: attacker.pokemon.name });
+    state.battleLog.push({ type: 'pokemon_fainted', message: `${attacker.pokemon.name} fainted!`, pokemon: attacker.pokemon.name });
+  };
+  if (SELF_KO_MOVES.has(moveLower)) faint();
+  if (attacker.currentHp > 0 && HALF_HP_COST_MOVES.has(moveLower) && (moveLower === 'steel-beam' || damageDealt > 0)
+      && abilityOf(attacker) !== 'magic-guard') {
+    attacker.currentHp = Math.max(0, attacker.currentHp - Math.ceil(attacker.maxHp / 2));
+    state.battleLog.push({ type: 'status_damage', message: `${attacker.pokemon.name} lost some of its HP!`, pokemon: attacker.pokemon.name });
+    if (attacker.currentHp <= 0) {
+      state.battleLog.push({ type: 'pokemon_fainted', message: `${attacker.pokemon.name} fainted!`, pokemon: attacker.pokemon.name });
+    }
+  }
+  if (moveLower === 'rollout' && damageDealt > 0) {
+    const count = (attacker.volatile.rollout?.count ?? 0) + 1;
+    attacker.volatile.rollout = count >= 5 ? undefined : { count };
+  } else if (moveLower !== 'rollout') {
+    attacker.volatile.rollout = undefined;
+  }
+  attacker.volatile.furyCutter = moveLower === 'fury-cutter' && damageDealt > 0 ? (attacker.volatile.furyCutter ?? 0) + 1 : undefined;
 }
 
 /** Eject Pack holders whose stats were lowered switch out (consuming the pack). */
@@ -582,7 +908,8 @@ function applyMoveAilment(
 const SELF_STAT_DROP_MOVES = new Set([
   'close-combat', 'superpower', 'overheat', 'draco-meteor', 'leaf-storm',
   'v-create', 'hammer-arm', 'psycho-boost', 'shell-smash', 'fleur-cannon',
-  'hyperspace-fury', 'clanging-scales',
+  'hyperspace-fury', 'clanging-scales', 'scale-shot', 'make-it-rain', 'armor-cannon', 'headlong-rush', 'spin-out',
+  'ice-hammer', 'dragon-ascent', 'hammer-arm',
 ]);
 
 /** Ailments that are part of a move's main effect rather than a Sheer Force-able secondary. */
@@ -592,6 +919,7 @@ const PRIMARY_AILMENTS = new Set(['none', 'trap', 'unknown']);
 function hasSheerForceSecondary(move: any, moveLower: string): boolean {
   if (move.category === 'Status' || SELF_STAT_DROP_MOVES.has(moveLower)) return false;
   if (move.ailment?.kind && !PRIMARY_AILMENTS.has(move.ailment.kind)) return true;
+  if (typeof move.flinchChance === 'number' && move.flinchChance > 0) return true;
   return Array.isArray(move.statChanges) && move.statChanges.length > 0;
 }
 
@@ -628,11 +956,19 @@ function applyMoveSecondaryStatChanges(
   }
 }
 
+/** Flinch from PokeAPI `flinchChance` (or an explicit `ailment.kind === 'flinch'` in hand-written move data). */
+export function moveFlinchChance(move: any): number {
+  if (typeof move?.flinchChance === 'number' && move.flinchChance > 0) return move.flinchChance / 100;
+  if (move?.ailment?.kind === 'flinch') {
+    const raw = move.ailment.chance ?? 0;
+    return raw === 0 ? 1 : raw / 100;
+  }
+  return 0;
+}
+
 function applyMoveFlinch(state: BattleState, move: any, defender: BattlePokemon): void {
-  if (move.ailment?.kind !== 'flinch') return;
-  const raw = move.ailment.chance ?? 0;
-  const chance = raw === 0 ? 1 : raw / 100;
-  if (rngRollChance(state.rng, chance)) {
+  const chance = moveFlinchChance(move);
+  if (chance > 0 && rngRollChance(state.rng, chance)) {
     defender.volatile.flinched = true;
   }
 }
@@ -1206,8 +1542,16 @@ async function executeMoveAction(
   user: 'player' | 'opponent',
   /** Set when Magic Bounce sends a status move back: the reflector neither spends PP nor "uses" the move. */
   reflected = false,
+  /** Called by Sleep Talk / Copycat / Metronome: no PP, already announced. */
+  called = false,
 ): Promise<void> {
-  if (!reflected) {
+  // Copycat copies the move that was called, never the calling move itself
+  if (!reflected && !['struggle', 'copycat', 'sleep-talk', 'metronome'].includes(moveId.toLowerCase())) {
+    state.lastMoveInBattle = moveId.toLowerCase();
+    const used = attacker.volatile.movesUsedSinceEntry ?? [];
+    if (!used.includes(moveId)) attacker.volatile.movesUsedSinceEntry = [...used, moveId];
+  }
+  if (!reflected && !called) {
     consumePpForMove(attacker, moveId);
 
     // Metronome (item): +20% per consecutive use of the same move
@@ -1256,6 +1600,8 @@ async function executeMoveAction(
     const variant = terrainPulseVariant(state.field.terrain?.kind, isGrounded(attacker));
     if (variant) move = { ...move, type: variant.type as typeof move.type, power: variant.power };
   }
+  move = gen9MoveVariant(state, attacker, defender, move as any, moveLower) as typeof move;
+  if (ALWAYS_CRIT_MOVES.has(moveLower)) move = { ...move, critRateStage: 3 };
   if (!reflected) {
     applyStanceChange(state, attacker, moveId, move.category);
     applyProtean(state, attacker, String(move.type), moveLower);
@@ -1341,6 +1687,22 @@ async function executeMoveAction(
       return;
     }
 
+    // Protect blocks foe-targeting status moves (King's Shield / Silk Trap only stop attacks)
+    const prot = defender.volatile.protect;
+    if (prot?.active && prot.kind !== 'endure' && prot.kind !== 'kings-shield' && prot.kind !== 'king-s-shield' && prot.kind !== 'silk-trap'
+        && isReflectableStatusMove(move, moveLower) && defender !== attacker) {
+      state.battleLog.push({ type: 'status_effect', message: `${defender.pokemon.name} protected itself!`, pokemon: defender.pokemon.name });
+      return;
+    }
+
+    if (await runGen9AsyncStatusMove(state, attacker, defender, moveLower, isPlayer, user)) {
+      return;
+    }
+    const gen9Script = gen9StatusMoveScripts[moveLower];
+    if (gen9Script?.({ state, attacker, defender, isPlayer })) {
+      return;
+    }
+
     const scripted = scriptedStatusMoveHandlers[moveLower];
     if (scripted?.({ state, attacker, defender, isPlayer })) {
       return;
@@ -1397,15 +1759,19 @@ async function executeMoveAction(
     }
 
     // Protect / Detect
-    if (moveLower === 'protect' || moveLower === 'detect' || moveLower === 'baneful-bunker' || moveLower === 'kings-shield' || moveLower === 'king-s-shield' || moveLower === 'spiky-shield') {
+    if (PROTECT_MOVES.has(moveLower)) {
       const prot = attacker.volatile.protect;
       const consecutiveUses = prot?.counter ?? 0;
       const successChance = 1 / Math.pow(3, consecutiveUses);
-      if (rngRollChance(state.rng, successChance)) {
-        attacker.volatile.protect = { active: true, counter: consecutiveUses + 1 };
+      // Protect-family moves fail when the user moves last in the turn
+      const queue = state.actionQueue ?? [];
+      const idx = state.currentAction ? queue.indexOf(state.currentAction) : -1;
+      const movesLast = idx >= 0 && !queue.slice(idx + 1).some((a) => a.type === 'move' || a.type === 'pursuit');
+      if (!movesLast && rngRollChance(state.rng, successChance)) {
+        attacker.volatile.protect = { active: true, counter: consecutiveUses + 1, kind: moveLower };
         state.battleLog.push({
           type: 'status_effect',
-          message: `${attacker.pokemon.name} protected itself!`,
+          message: moveLower === 'endure' ? `${attacker.pokemon.name} braced itself!` : `${attacker.pokemon.name} protected itself!`,
           pokemon: attacker.pokemon.name,
         });
       } else {
@@ -1499,9 +1865,13 @@ async function executeMoveAction(
   }
   
   // Check if defender is protected
-  if (defender.volatile.protect && defender.volatile.protect.active) {
-    // Feint and moves with "bypassesProtect" can bypass Protect
-    const bypassesProtect = moveId === 'feint' || move.bypassesProtect;
+  if (defender.volatile.protect && defender.volatile.protect.active && defender.volatile.protect.kind !== 'endure') {
+    // Feint, Hyperspace Hole and moves with "bypassesProtect" go through Protect (Feint also lifts it)
+    const bypassesProtect = PROTECT_BYPASS_MOVES.has(moveLower) || move.bypassesProtect;
+    if (bypassesProtect && moveLower === 'feint') {
+      defender.volatile.protect.active = false;
+      state.battleLog.push({ type: 'status_effect', message: `${defender.pokemon.name} fell for the feint!`, pokemon: defender.pokemon.name });
+    }
     
     if (!bypassesProtect) {
       state.battleLog.push({
@@ -1509,6 +1879,8 @@ async function executeMoveAction(
         message: `${defender.pokemon.name} protected itself!`,
         pokemon: defender.pokemon.name
       });
+      applyProtectContactEffects(state, attacker, defender, makesContactFor(attacker, move, moveLower));
+      applyCrashDamage(state, attacker, moveLower);
       
       // Increment protect counter for next turn
       if (!defender.volatile.protect.counter) {
@@ -1532,6 +1904,73 @@ async function executeMoveAction(
   // Ability absorbs / immunities before damage
   if (tryAbilityAbsorb(state, attacker, defender, String(move.type), move.category)) {
     return;
+  }
+
+  // Future Sight / Doom Desire: the attack lands two turns later on whoever is there
+  if (moveLower === 'future-sight' || moveLower === 'doom-desire') {
+    const foeTeam = isPlayer ? state.opponent : state.player;
+    foeTeam.sideConditions.futureAttack = {
+      move: moveLower,
+      turns: 3,
+      user: attacker.pokemon.name,
+      level: attacker.level,
+      attackStat: Math.floor(rawStat(attacker, 'special-attack') * stageMultiplier(attacker.statModifiers.specialAttack)),
+      attackerTypes: stabTypeNames(attacker).map((t) => String(t).toLowerCase()),
+      power: typeof move.power === 'number' && move.power > 0 ? move.power : 120,
+      type: String(move.type || (moveLower === 'doom-desire' ? 'Steel' : 'Psychic')),
+    };
+    state.battleLog.push({
+      type: 'status_effect',
+      message: moveLower === 'future-sight' ? `${attacker.pokemon.name} foresaw an attack!` : `${attacker.pokemon.name} chose Doom Desire as its destiny!`,
+      pokemon: attacker.pokemon.name,
+    });
+    return;
+  }
+
+  // Brick Break / Psychic Fangs / Raging Bull shatter screens first
+  if (SCREEN_BREAKING_MOVES.has(moveLower)) {
+    const foeScreens = (isPlayer ? state.opponent : state.player).sideConditions.screens;
+    if (foeScreens.reflect || foeScreens.lightScreen || foeScreens.auroraVeil) {
+      foeScreens.reflect = undefined;
+      foeScreens.lightScreen = undefined;
+      foeScreens.auroraVeil = undefined;
+      state.battleLog.push({ type: 'status_effect', message: `${attacker.pokemon.name} shattered the barrier!`, pokemon: attacker.pokemon.name });
+    }
+  }
+
+  // Fling: throws the held item (its power and, for some items, its effect)
+  let flungItem: string | undefined;
+  if (moveLower === 'fling') {
+    flungItem = removeHeldItem(attacker);
+    if (flungItem) {
+      attacker.consumedItem = flungItem;
+      move = { ...move, power: flingPower(flungItem) };
+      state.battleLog.push({ type: 'status_effect', message: `${attacker.pokemon.name} flung its ${flungItem}!`, pokemon: attacker.pokemon.name });
+    }
+  }
+
+  // Present: random power or a heal for the target
+  if (moveLower === 'present') {
+    const power = rollPresent(state);
+    if (power === 0) {
+      const before = defender.currentHp;
+      defender.currentHp = Math.min(defender.maxHp, defender.currentHp + Math.floor(defender.maxHp / 4));
+      state.battleLog.push({ type: 'healing', message: `${defender.pokemon.name} restored HP!`, pokemon: defender.pokemon.name, healing: Math.round(((defender.currentHp - before) / defender.maxHp) * 100) });
+      return;
+    }
+    move = { ...move, power };
+  }
+
+  // Situational base power (Stored Power, Payback, Hard Press, Last Respects, Rollout, ...)
+  {
+    const queueNow = state.actionQueue ?? [];
+    const idxNow = state.currentAction ? queueNow.indexOf(state.currentAction) : -1;
+    const foeSide = user === 'player' ? 'opponent' : 'player';
+    const targetMovedFirst = idxNow >= 0 && queueNow.slice(0, idxNow).some((a) => a.user === foeSide && a.type !== 'switch');
+    const bp = gen9BasePower({
+      state, attacker, defender, moveLower, moveType: String(move.type), basePower: typeof move.power === 'number' ? move.power : 0, targetMovedFirst,
+    });
+    if (bp > 0 && bp !== move.power) move = { ...move, power: bp };
   }
 
   // Air Balloon: immune to Ground-type attacks while the balloon is up
@@ -1561,9 +2000,21 @@ async function executeMoveAction(
   }
   
   // Determine number of hits
-  const hitCount = move.hits && move.hits.min !== move.hits.max
-    ? loadedDiceHits(attacker, move.hits.min, move.hits.max, state.rng) ?? determineHitCount(move, attacker, state.rng)
-    : determineHitCount(move, attacker, state.rng);
+  // Triple Kick / Triple Axel / Population Bomb roll accuracy per hit; Beat Up hits once per teammate
+  const perHit = PER_HIT_ACCURACY_MOVES[moveLower];
+  const beatUp = moveLower === 'beat-up' ? beatUpPowers(state, attacker) : null;
+  const skillLink = abilityOf(attacker) === 'skill-link';
+  const hitCount = beatUp
+    ? beatUp.length
+    : perHit
+      ? (moveLower === 'population-bomb' && effectiveItem(attacker) === 'loaded-dice' && !skillLink
+        ? 4 + rngNextInt(state.rng, 7)
+        : perHit.hits)
+      : move.hits && move.hits.min !== move.hits.max
+        ? loadedDiceHits(attacker, move.hits.min, move.hits.max, state.rng) ?? determineHitCount(move, attacker, state.rng)
+        : determineHitCount(move, attacker, state.rng);
+  const rollsEachHit = !!perHit && !skillLink && effectiveItem(attacker) !== 'loaded-dice';
+  const baseMove = move;
   /** Last hit's type effectiveness (Enigma Berry). */
   let lastEffectiveness = 1;
   const contact = makesContactFor(attacker, move, moveLower);
@@ -1581,30 +2032,29 @@ async function executeMoveAction(
     if (defender.currentHp <= 0) {
       break; // Stop hitting if target fainted
     }
+    if (beatUp) move = { ...baseMove, power: beatUp[i] };
+    if (perHit) {
+      if (perHit.powerStep > 0) move = { ...baseMove, power: perHit.powerStep * (i + 1) };
+      if (i > 0 && rollsEachHit && typeof baseMove.accuracy === 'number') {
+        const acc = (baseMove.accuracy / 100) * getAccuracyMultiplier(Math.max(-6, Math.min(6, (attacker.statModifiers.accuracy ?? 0) - (defender.statModifiers.evasion ?? 0))));
+        if (!rngRollChance(state.rng, Math.min(1, acc))) break;
+      }
+    }
     
     const defenderSideConditions = isPlayer ? state.opponent.sideConditions : state.player.sideConditions;
 
     // Get stats from the Pokemon data structure
-    const attackerAttackStat = attacker.pokemon.stats?.find((s: any) => (s.stat?.name || s.name) === 'attack')?.base_stat || 50;
-    const attackerSpecialAttackStat = attacker.pokemon.stats?.find((s: any) => (s.stat?.name || s.name) === 'special-attack')?.base_stat || 50;
-    const defenderDefenseStat = defender.pokemon.stats?.find((s: any) => (s.stat?.name || s.name) === 'defense')?.base_stat || 50;
-    const defenderSpecialDefenseStat = defender.pokemon.stats?.find((s: any) => (s.stat?.name || s.name) === 'special-defense')?.base_stat || 50;
-    
     const isPhysical = move.category === 'Physical';
-    let attackStat = isPhysical
-      ? calculateStat(attackerAttackStat, attacker.level)
-      : calculateStat(attackerSpecialAttackStat, attacker.level);
+    // Raw stats honour Power / Guard Split, Speed Swap and Power Trick
+    let attackStat = rawStat(attacker, isPhysical ? 'attack' : 'special-attack');
     // Foul Play uses the target's Attack; Body Press uses the user's Defense
-    const baseStatOf = (mon: BattlePokemon, name: string) =>
-      mon.pokemon.stats?.find((st: any) => (st.stat?.name || st.name) === name)?.base_stat || 50;
-    if (moveLower === 'foul-play') attackStat = calculateStat(baseStatOf(defender, 'attack'), defender.level);
-    if (moveLower === 'body-press') attackStat = calculateStat(baseStatOf(attacker, 'defense'), attacker.level);
-    // Wonder Room swaps every Pokémon's raw Defense and Sp. Def (stat stages are not swapped)
+    if (moveLower === 'foul-play') attackStat = rawStat(defender, 'attack');
+    if (moveLower === 'body-press') attackStat = rawStat(attacker, 'defense');
+    // Psyshock / Psystrike / Secret Sword hit Defense; Wonder Room swaps every raw Defense and Sp. Def
     const wonderRoom = !!state.field.rooms?.wonderRoom;
-    const usesDefenseStat = isPhysical !== wonderRoom;
-    let defenseStat = usesDefenseStat
-      ? calculateStat(defenderDefenseStat, defender.level)
-      : calculateStat(defenderSpecialDefenseStat, defender.level);
+    const hitsDefense = isPhysical || DEFENSE_TARGETING_MOVES.has(moveLower);
+    const usesDefenseStat = hitsDefense !== wonderRoom;
+    let defenseStat = rawStat(defender, usesDefenseStat ? 'defense' : 'special-defense');
 
     // Sandstorm Rock SpD / Snow Ice Def
     const weatherKind = state.field.weather?.kind;
@@ -1626,6 +2076,8 @@ async function executeMoveAction(
       'super-fang': (_a, d) => Math.max(1, Math.floor(d.currentHp / 2)),
       'endeavor': (a, d) => Math.max(0, d.currentHp - a.currentHp),
       'final-gambit': (a) => a.currentHp,
+      ruination: (_a, d) => Math.max(1, Math.floor(d.currentHp / 2)),
+      'natures-madness': (_a, d) => Math.max(1, Math.floor(d.currentHp / 2)),
       // One-hit KO moves (failure and accuracy were handled before the move ran)
       fissure: (_a, d) => d.currentHp,
       guillotine: (_a, d) => d.currentHp,
@@ -1650,7 +2102,7 @@ async function executeMoveAction(
         return;
       }
       const fixedDmg = applyDisguiseShields(state, attacker, defender, fixedFn(attacker, defender), move.category);
-      if (absorbHitWithSubstitute(state, defender, fixedDmg)) {
+      if (!bypassesSubstitute(attacker, moveLower) && absorbHitWithSubstitute(state, defender, fixedDmg)) {
         hitSubstitute = true;
         totalDamageDealt += fixedDmg;
         actualHits++;
@@ -1686,6 +2138,13 @@ async function executeMoveAction(
       prep.attackStatStages = prep.isCrit ? Math.max(0, stage) : stage;
     }
     prep.movePower = teraPowerFloor(attacker, String(prep.moveType), prep.movePower, move);
+    if (DEFENSE_TARGETING_MOVES.has(moveLower)) {
+      const stage = defender.statModifiers.defense;
+      prep.defenseStatStages = prep.attackerAbility === 'unaware' && !prep.isCrit ? 0 : prep.isCrit ? Math.min(0, stage) : stage;
+    }
+    if (IGNORE_TARGET_STAGES_MOVES.has(moveLower)) prep.defenseStatStages = 0;
+    // Glaive Rush: the user takes double damage until it moves again
+    if (defender.volatile.glaiveRush) prep.powerMultiplier *= 2;
 
     const damageResult = calculateComprehensiveDamage({
       level: attacker.level,
@@ -1729,6 +2188,7 @@ async function executeMoveAction(
       defenseMultiplier: prep.defenseMultiplier,
       powerMultiplier: prep.powerMultiplier,
       defenderGrounded: isGrounded(defender),
+      typeEffectMultiplier: gen9TypeEffectMultiplier(defender, moveLower, String(prep.moveType)),
       rng: state.rng,
     });
     
@@ -1746,8 +2206,8 @@ async function executeMoveAction(
     );
     damage = Math.floor(damage * berryMult);
 
-    // Substitute absorbs damage before real HP / sash
-    if (absorbHitWithSubstitute(state, defender, damage)) {
+    // Substitute absorbs damage before real HP / sash (sound moves and Infiltrator go through)
+    if (!bypassesSubstitute(attacker, moveLower) && absorbHitWithSubstitute(state, defender, damage)) {
       hitSubstitute = true;
       totalDamageDealt += damage;
       actualHits++;
@@ -1756,6 +2216,15 @@ async function executeMoveAction(
 
     // Disguise / Ice Face take the hit instead (once)
     damage = applyDisguiseShields(state, attacker, defender, damage, move.category);
+
+    // False Swipe / Hold Back leave the target at 1 HP; Endure hangs on at 1 HP
+    if ((moveLower === 'false-swipe' || moveLower === 'hold-back') && damage >= defender.currentHp) {
+      damage = Math.max(0, defender.currentHp - 1);
+    }
+    if (defender.volatile.protect?.active && defender.volatile.protect.kind === 'endure' && damage >= defender.currentHp) {
+      damage = Math.max(0, defender.currentHp - 1);
+      state.battleLog.push({ type: 'status_effect', message: `${defender.pokemon.name} endured the hit!`, pokemon: defender.pokemon.name });
+    }
 
     // Check for Focus Sash / Sturdy (survive at 1 HP from full HP)
     const defenderAbility = targetAbility(attacker, defender); // Sturdy is breakable
@@ -1804,6 +2273,11 @@ async function executeMoveAction(
     // Trigger contact abilities per hit (Rough Skin, Iron Barbs, Static, etc.)
     if (contact) {
       const defenderAbility = defender.currentAbility?.toLowerCase();
+      // Beak Blast charging burns attackers that touch the user
+      if (defender.volatile.beakBlast && !attacker.status && attacker.currentHp > 0) {
+        applyStatus(attacker, 'burned');
+        state.battleLog.push({ type: 'status_applied', message: `${attacker.pokemon.name} was burned!`, pokemon: attacker.pokemon.name, status: 'BURNED' });
+      }
       
       // Rough Skin / Iron Barbs: 1/8 max HP recoil
       if (defenderAbility === 'rough-skin' || defenderAbility === 'iron-barbs') {
@@ -2036,7 +2510,7 @@ async function executeMoveAction(
     // King's Rock / Razor Fang: 10% flinch on hits from moves without their own flinch chance
     const attackerItemNow = effectiveItem(attacker);
     if ((attackerItemNow === 'kings-rock' || attackerItemNow === 'razor-fang') && !cloaked && hpDamageDealt > 0
-        && move.ailment?.kind !== 'flinch' && rngRollChance(state.rng, 0.1)) {
+        && moveFlinchChance(move) === 0 && rngRollChance(state.rng, 0.1)) {
       defender.volatile.flinched = true;
     }
     applyBindingOnHit(state, moveId.toLowerCase(), defender, attacker);
@@ -2077,6 +2551,10 @@ async function executeMoveAction(
     }
   }
   
+  gen9AfterHit({ state, attacker, defender, moveLower, moveType: String(move.type), hpDamage: hpDamageDealt, hitSubstitute });
+  if (flungItem && hpDamageDealt > 0 && defender.currentHp > 0 && !hitSubstitute) applyFlungItem(state, attacker, defender, flungItem);
+  state.lastHitDamage = hpDamageDealt;
+
   // Check if Pokemon fainted
   if (defender.currentHp <= 0) {
     state.battleLog.push({
@@ -2167,6 +2645,34 @@ function applyBeastBoost(attacker: BattlePokemon, state: BattleState): void {
 export async function runEntrySequence(state: BattleState, switchingSide: 'player' | 'opponent', incomingPokemon: BattlePokemon): Promise<void> {
   incomingPokemon.volatile.moveActionsSinceEntry = 0;
   incomingPokemon.volatile.lastDamageTaken = undefined;
+  incomingPokemon.volatile.movesUsedSinceEntry = [];
+  if (state.field.rooms?.fairyLock) incomingPokemon.volatile.fairyLocked = true;
+  // The Pokémon that left took its Mean Look / Jaw Lock / Attract / Imprison with it
+  const foeTeamNow = switchingSide === 'player' ? state.opponent : state.player;
+  const foeActive = foeTeamNow.pokemon[foeTeamNow.currentIndex];
+  if (foeActive) {
+    const fv = foeActive.volatile;
+    if (fv.trapped?.by === switchingSide) fv.trapped = undefined;
+    if (fv.infatuated?.by === switchingSide) fv.infatuated = undefined;
+    fv.jawLock = undefined;
+    fv.imprisonedMoves = undefined;
+  }
+  // Healing Wish / Lunar Dance: the replacement is fully healed
+  const ownTeam = switchingSide === 'player' ? state.player : state.opponent;
+  const wish = ownTeam.sideConditions.healingWish;
+  if (wish && incomingPokemon.currentHp > 0 && (incomingPokemon.currentHp < incomingPokemon.maxHp || incomingPokemon.status
+      || (wish === 'lunar-dance' && incomingPokemon.moves.some((m) => m.pp < m.maxPp)))) {
+    ownTeam.sideConditions.healingWish = undefined;
+    incomingPokemon.currentHp = incomingPokemon.maxHp;
+    clearStatus(incomingPokemon);
+    if (wish === 'lunar-dance') for (const m of incomingPokemon.moves) m.pp = m.maxPp;
+    state.battleLog.push({
+      type: 'healing',
+      message: wish === 'lunar-dance' ? `${incomingPokemon.pokemon.name} became cloaked in mystical moonlight!` : `The healing wish came true for ${incomingPokemon.pokemon.name}!`,
+      pokemon: incomingPokemon.pokemon.name,
+      healing: 100,
+    });
+  }
   applyItemForms(state, incomingPokemon, PLATE_TYPES[effectiveItem(incomingPokemon) ?? ''], effectiveItem(incomingPokemon));
   startIllusion(state, switchingSide, incomingPokemon);
   if (state.field.rooms?.magicRoom) incomingPokemon.volatile.itemSuppressed = true;
@@ -2527,12 +3033,98 @@ export async function processEndOfTurn(state: BattleState): Promise<void> {
   
   // 4. Volatile decrements
   processVolatileDecrements(state);
+  processGen9EndOfTurn(state);
   
   // 5. Check faints from residuals
   checkResidualFaints(state);
+  noteFaintTurns(state);
 
   // 6. Weather / terrain that just ended may switch paradox boosts off (or trigger Booster Energy)
   updateParadoxBoosts(state);
+}
+
+/** Future Sight / Doom Desire landing, Syrup Bomb, Throat Chop / Lock-On timers, Hunger Switch, Fairy Lock. */
+function processGen9EndOfTurn(state: BattleState): void {
+  for (const team of [state.player, state.opponent]) {
+    const fa = team.sideConditions.futureAttack;
+    if (fa) {
+      fa.turns -= 1;
+      if (fa.turns <= 0) {
+        team.sideConditions.futureAttack = undefined;
+        const target = getCurrentPokemon(team);
+        if (target.currentHp > 0) {
+          state.battleLog.push({ type: 'status_effect', message: `${target.pokemon.name} took the ${fa.move} attack!`, pokemon: target.pokemon.name });
+          const typeName = toDamageTypeName(fa.type.toLowerCase());
+          const defTypes = getPokemonTypes(target).map((t) => toDamageTypeName(String(t)));
+          if (calculateTypeEffectiveness(typeName, defTypes) === 0) {
+            state.battleLog.push({ type: 'status_effect', message: `It doesn't affect ${target.pokemon.name}...`, pokemon: target.pokemon.name });
+          } else {
+            const result = calculateComprehensiveDamage({
+              level: fa.level,
+              movePower: fa.power,
+              moveType: typeName,
+              attackerTypes: fa.attackerTypes.map((t) => toDamageTypeName(t)),
+              defenderTypes: defTypes,
+              attackStat: fa.attackStat,
+              defenseStat: Math.floor(rawStat(target, 'special-defense') * stageMultiplier(target.statModifiers.specialDefense)),
+              attackStatStages: 0,
+              defenseStatStages: 0,
+              isPhysical: false,
+              hasLightScreen: !!team.sideConditions.screens.lightScreen,
+              hasAuroraVeil: !!team.sideConditions.screens.auroraVeil,
+              cannotCrit: true,
+              rng: state.rng,
+            });
+            const dmg = target.volatile.substitute ? 0 : result.damage;
+            if (!absorbHitWithSubstitute(state, target, result.damage)) {
+              target.currentHp = Math.max(0, target.currentHp - dmg);
+              state.battleLog.push({
+                type: 'damage_dealt',
+                message: `${target.pokemon.name} took ${dmg} damage! (${Math.round((target.currentHp / target.maxHp) * 100)}% HP left)`,
+                pokemon: target.pokemon.name,
+                damage: dmg,
+              });
+              if (target.currentHp <= 0) {
+                state.battleLog.push({ type: 'pokemon_fainted', message: `${target.pokemon.name} fainted!`, pokemon: target.pokemon.name });
+              }
+            }
+          }
+        }
+      }
+    }
+
+    const mon = getCurrentPokemon(team);
+    if (!mon || mon.currentHp <= 0) continue;
+    const v = mon.volatile;
+    if (v.syrupBomb) {
+      changeStatStage(state, mon, 'speed', -1, { reason: 'due to the sticky syrup', quietFailure: true });
+      v.syrupBomb.turns -= 1;
+      if (v.syrupBomb.turns <= 0) v.syrupBomb = undefined;
+    }
+    if (v.throatChop) {
+      v.throatChop.turns -= 1;
+      if (v.throatChop.turns <= 0) v.throatChop = undefined;
+    }
+    if (v.lockOn) {
+      v.lockOn -= 1;
+      if (v.lockOn <= 0) v.lockOn = undefined;
+    }
+    v.fairyLocked = !!state.field.rooms?.fairyLock || undefined;
+    // Hunger Switch: Morpeko flips between Full Belly and Hangry Mode
+    if (abilityOf(mon) === 'hunger-switch' && !mon.terastallized) {
+      v.hangry = !v.hangry;
+      state.battleLog.push({ type: 'status_effect', message: `${mon.pokemon.name} transformed!`, pokemon: mon.pokemon.name });
+    }
+  }
+}
+
+/** Remember the turn a team member last fainted (Retaliate). */
+function noteFaintTurns(state: BattleState): void {
+  for (const team of [state.player, state.opponent]) {
+    const fainted = team.pokemon.filter((p) => p.currentHp <= 0).length;
+    if (fainted > (team.faintTally ?? 0)) team.lastFaintTurn = state.turn;
+    team.faintTally = fainted;
+  }
 }
 
 /** Ice Face comes back whenever an Eiscue is out in snow (on entry, when snow starts, at end of turn). */

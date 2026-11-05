@@ -79,6 +79,18 @@ export function changeStatStage(
   if (ability === 'contrary') amount = -amount;
   if (ability === 'simple') amount *= 2;
 
+  // Mist protects the whole side from foe-caused drops
+  if (amount < 0 && fromFoe && 'player' in state) {
+    const full = state as BattleState;
+    const side = full.player.pokemon.includes(target) ? full.player : full.opponent.pokemon.includes(target) ? full.opponent : null;
+    if (side?.sideConditions?.screens?.mist && abilityOf(source) !== 'infiltrator') {
+      if (!quietFailure) {
+        state.battleLog.push({ type: 'status_effect', message: `${name} is protected by the mist!`, pokemon: name });
+      }
+      return 0;
+    }
+  }
+
   // Clear Amulet blocks every stat drop caused by a foe
   if (amount < 0 && fromFoe && effectiveItem(target) === 'clear-amulet') {
     if (!quietFailure) {
@@ -121,6 +133,7 @@ export function changeStatStage(
   }
   target.statModifiers[stat] = after;
   if (delta < 0 && effectiveItem(target) === 'eject-pack') target.volatile.ejectPackPending = true;
+  if (delta < 0) target.volatile.statsLoweredThisTurn = true;
   // Mirror Herb on the other side copies boosts gained this action
   if (delta > 0) {
     target.volatile.recentBoosts = { ...(target.volatile.recentBoosts ?? {}), [stat]: (target.volatile.recentBoosts?.[stat] ?? 0) + delta };
