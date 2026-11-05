@@ -35,7 +35,11 @@ Both share the same engine in `src/lib/team-battle-engine.ts` and `team-battle-e
 | File | Role |
 |------|------|
 | `src/lib/team-battle-engine.ts` | State machine, action queue, speed / priority / `canUseMove` |
-| `src/lib/team-battle-engine-additional.ts` | Turn execution, **live damage path** (`executeMoveAction` → `prepareLiveDamageModifiers` → `calculateComprehensiveDamage`), entry hazards, pivots |
+| `src/lib/team-battle-engine-additional.ts` | Turn execution, **live damage path** (`executeMoveAction` → `prepareLiveDamageModifiers` → `calculateComprehensiveDamage`), `resolveMove`, turn runner (`runBattleTurnFromQueue`) |
+| `src/lib/team-battle-switching.ts` | Pivots, forced switches, Revival Blessing, Eject Pack, switch-in sequence (`runEntrySequence`) |
+| `src/lib/team-battle-end-of-turn.ts` | End of turn: residuals, timers, delayed effects (`processEndOfTurn`) |
+| `src/lib/team-battle-move-helpers.ts` / `team-battle-status-scripts.ts` | Move helpers (ailments, secondaries, Substitute, absorbs) / scripted status moves |
+| `src/lib/team-battle-gen9-moves.ts` / `team-battle-gen9-abilities.ts` | Gen 9 move and ability hooks |
 | `src/lib/battle-damage-modifiers.ts` | Shared live damage prep (BP hooks, items, Unaware/crit stages) |
 | `src/lib/battle-move-constants.ts` | Pivot / self-status / type-boost item tables |
 | `src/lib/team-battle-scripts.ts` | Volatile setters + hazard clear (Encore, Tailwind, Defog, …) |

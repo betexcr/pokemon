@@ -10,9 +10,13 @@ This document maps the long-form Gen 9 reference ([battle_mechanics.md](./battle
 | Canonical turn slice | [`src/lib/team-battle-engine-additional.ts`](src/lib/team-battle-engine-additional.ts) (`runBattleTurnFromQueue`, `resolveMove`, `resolveSwitch`) |
 | PP, move usability | [`src/lib/team-battle-engine.ts`](src/lib/team-battle-engine.ts) (`canUseMove`, `consumePpForMove`, `allMovesOutOfPp`) |
 | Move execution, multi-hit, many move scripts | [`src/lib/team-battle-engine-additional.ts`](src/lib/team-battle-engine-additional.ts) (`executeMoveAction`, `applyStatusMoveEffects`) |
+| Move helpers (accuracy, hit counts, ailments, secondary effects, Substitute, Protect punishments, absorbs) | [`src/lib/team-battle-move-helpers.ts`](src/lib/team-battle-move-helpers.ts) |
+| Scripted status moves (weather / terrain setters, rooms, Gravity, Curse, Trick, Transform) | [`src/lib/team-battle-status-scripts.ts`](src/lib/team-battle-status-scripts.ts) |
+| Switching, pivots, forced switches, Revival Blessing, switch-in sequence | [`src/lib/team-battle-switching.ts`](src/lib/team-battle-switching.ts) (`runEntrySequence`, `requestPivotSwitch`) |
+| End of turn (residuals, timers, delayed effects) | [`src/lib/team-battle-end-of-turn.ts`](src/lib/team-battle-end-of-turn.ts) (`processEndOfTurn`) |
 | Damage formula, STAB, weather, items | [`src/lib/damage-calculator.ts`](src/lib/damage-calculator.ts), live prep in [`src/lib/battle-damage-modifiers.ts`](src/lib/battle-damage-modifiers.ts) + `executeMoveAction` |
 | Status, volatiles, terrain status blocks | [`src/lib/team-battle-status.ts`](src/lib/team-battle-status.ts), setters in [`src/lib/team-battle-scripts.ts`](src/lib/team-battle-scripts.ts) |
-| Hazards, switch-in | [`src/lib/team-battle-hazards.ts`](src/lib/team-battle-hazards.ts), `runEntrySequence` in additional |
+| Hazards, switch-in | [`src/lib/team-battle-hazards.ts`](src/lib/team-battle-hazards.ts), `runEntrySequence` in [`team-battle-switching.ts`](src/lib/team-battle-switching.ts) |
 | Weather / terrain timers, screens | [`src/lib/team-battle-field.ts`](src/lib/team-battle-field.ts), [`src/lib/team-battle-types.ts`](src/lib/team-battle-types.ts) |
 | Terastallization | [`src/lib/team-battle-tera.ts`](src/lib/team-battle-tera.ts) |
 | Abilities (subset) | [`src/lib/team-battle-abilities.ts`](src/lib/team-battle-abilities.ts), end-of-turn in additional |
