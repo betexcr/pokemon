@@ -48,12 +48,18 @@ The multiplayer battle system has **core gameplay wired end-to-end**: choices ar
 
 ## 🔴 Not Implemented (or Incomplete)
 
-### Hardening and UX
+- **Double battles** – product-deferred (the engine is singles only)
+- **Live E2E in CI** – `npm run test:e2e:multiplayer` needs a Firebase project (client config + Admin credentials); it is not run in CI
 
-- **Disconnect / reconnect** – Robust reconnection and stale-state recovery
-- **Guest validation** – Optional anti-cheat: guest verifies host-posted resolution
-- **Post-battle** – Rich stats, rematch, aggressive room/battle cleanup policies
-- **Abandonment** – Scheduled deletion of stale battles/rooms
+### Hardening (Wave 3, done)
+
+- **Disconnect / reconnect** – `useBattleState` tracks the real connection (`.info/connected`), reads the player's own stored choice for the turn (a reload shows "waiting for opponent"), and a watchdog calls `POST /api/battles/[id]/sync` ([`battle-sync.ts`](src/lib/battle-sync.ts)) when the deadline passed, a resolution looks stuck, after a reconnect, or when the tab becomes visible. The server then enforces the deadline, resolves a turn whose choices are all in, recovers a stale resolution, or closes a battle whose final turn was written. All idempotent.
+- **Resolution audit** – turns are resolved only by the server, so the old "guest verifies the host's resolution" idea no longer applies. Instead each client checks that the action recorded in `turns/{turn}/resolution.replay` for its side matches what it submitted (unless the server reported a normalization or rejection) and shows a notice in the battle log otherwise ([`battle-resolution-audit.ts`](src/lib/battle-resolution-audit.ts)).
+- **Post-battle** – the server keeps per-side totals (HP lost, persisted with the engine extras) and publishes `public/stats` (knockouts, Pokémon left, damage dealt / taken as a share of team HP) shown on the end screen. **Rematch:** `POST /api/battles/[id]/rematch` ([`battle-rematch.ts`](src/lib/battle-rematch.ts)) records each request under `battles/{id}/rematch` (Admin-written, participant-readable); once both asked, the room is reset to ready with the same teams and both clients go back to it.
+- **Abandonment** – `GET /api/maintenance/cleanup` (Vercel Cron, daily, needs `CRON_SECRET` and the Admin SDK; [`battle-cleanup.ts`](src/lib/server/battle-cleanup.ts)) ends battles stuck past their deadline, deletes ended battles after 7 days and abandoned ones after 3, deletes open lobbies after a day and closed rooms after a week. RTDB rules index `battles` by `meta/createdAt` for it.
+- **Battle screen** – `public/conditions` ([`battle-conditions.ts`](src/lib/battle-conditions.ts)) lists weather / terrain / rooms, each side's screens, hazards and pending effects, and each active Pokémon's visible conditions; both battle screens render it.
+
+**Deploy notes:** set `CRON_SECRET` in Vercel; deploy the RTDB rules (`firebase deploy --only database`) for the new `rematch` node and the `meta/createdAt` index.
 
 ### Recently hardened (Wave 1–2)
 
