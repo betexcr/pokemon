@@ -22,7 +22,8 @@ export function isGrounded(pokemon: BattlePokemon): boolean {
     return type.toLowerCase() === 'flying';
   });
   const hasLevitate = pokemon.currentAbility?.toLowerCase() === 'levitate';
-  return !isFlying && !hasLevitate;
+  const hasAirBalloon = effectiveItem(pokemon) === 'air-balloon';
+  return !isFlying && !hasLevitate && !hasAirBalloon;
 }
 
 function spikesDamage(pokemon: BattlePokemon, layers: number): number {

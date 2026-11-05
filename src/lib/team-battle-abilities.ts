@@ -1,4 +1,5 @@
 import { effectiveItem } from './battle-item-access';
+import { changeStatStage } from './team-battle-stat-stages';
 import { BattleState, getCurrentPokemon } from './team-battle-engine';
 import { BattlePokemon } from './team-battle-engine';
 import type { WeatherKind, TerrainKind } from './team-battle-types';
@@ -11,12 +12,11 @@ const INTIMIDATE_IMMUNE = new Set([
   'scrappy',
 ]);
 
-const ATK_DROP_BLOCKERS = new Set([
-  'clear-body',
-  'white-smoke',
-  'hyper-cutter',
-  'full-metal-body',
-]);
+const MOLD_BREAKER_ANNOUNCEMENTS: Record<string, string> = {
+  'mold-breaker': 'breaks the mold!',
+  teravolt: 'is radiating a bursting aura!',
+  turboblaze: 'is radiating a blazing aura!',
+};
 
 export function handleOnEntryAbilities(state: BattleState, side: 'player' | 'opponent', incoming: BattlePokemon): void {
   const ability = incoming.currentAbility?.toLowerCase();
@@ -57,37 +57,25 @@ export function handleOnEntryAbilities(state: BattleState, side: 'player' | 'opp
         });
         break;
       }
-      if (ATK_DROP_BLOCKERS.has(foeAbility)) {
-        state.battleLog.push({
-          type: 'status_effect',
-          message: `${opponentActive.pokemon.name}'s ${foeAbility} prevented its Attack from falling!`,
-          pokemon: opponentActive.pokemon.name,
-        });
+      if (foeAbility === 'guard-dog') {
+        // Guard Dog turns Intimidate into an Attack boost
+        changeStatStage(state, opponentActive, 'attack', 1, { reason: 'thanks to Guard Dog' });
         break;
       }
 
-      opponentActive.statModifiers.attack = Math.max(-6, opponentActive.statModifiers.attack - 1);
+      // Clear Body / Hyper Cutter blocking, Contrary, Defiant / Competitive and White Herb (after entry)
+      // are handled by the shared stat-stage logic.
+      changeStatStage(state, opponentActive, 'attack', -1, { source: incoming, reason: 'due to Intimidate' });
+      break;
+    }
+    case 'mold-breaker':
+    case 'teravolt':
+    case 'turboblaze': {
       state.battleLog.push({
         type: 'status_effect',
-        message: `${opponentActive.pokemon.name}'s Attack fell due to Intimidate!`,
-        pokemon: opponentActive.pokemon.name,
+        message: `${incoming.pokemon.name} ${MOLD_BREAKER_ANNOUNCEMENTS[ability]}`,
+        pokemon: incoming.pokemon.name,
       });
-
-      if (foeAbility === 'defiant') {
-        opponentActive.statModifiers.attack = Math.min(6, opponentActive.statModifiers.attack + 2);
-        state.battleLog.push({
-          type: 'status_effect',
-          message: `${opponentActive.pokemon.name}'s Defiant sharply raised its Attack!`,
-          pokemon: opponentActive.pokemon.name,
-        });
-      } else if (foeAbility === 'competitive') {
-        opponentActive.statModifiers.specialAttack = Math.min(6, opponentActive.statModifiers.specialAttack + 2);
-        state.battleLog.push({
-          type: 'status_effect',
-          message: `${opponentActive.pokemon.name}'s Competitive sharply raised its Sp. Atk!`,
-          pokemon: opponentActive.pokemon.name,
-        });
-      }
       break;
     }
     case 'drizzle': {
@@ -171,21 +159,7 @@ export function handleOnEntryAbilities(state: BattleState, side: 'player' | 'opp
         stats.find((s: any) => (s.stat?.name || s.name) === name)?.base_stat ?? 50;
       const def = base('defense');
       const spd = base('special-defense');
-      if (spd >= def) {
-        incoming.statModifiers.attack = Math.min(6, incoming.statModifiers.attack + 1);
-        state.battleLog.push({
-          type: 'status_effect',
-          message: `${incoming.pokemon.name}'s Download raised its Attack!`,
-          pokemon: incoming.pokemon.name,
-        });
-      } else {
-        incoming.statModifiers.specialAttack = Math.min(6, incoming.statModifiers.specialAttack + 1);
-        state.battleLog.push({
-          type: 'status_effect',
-          message: `${incoming.pokemon.name}'s Download raised its Sp. Atk!`,
-          pokemon: incoming.pokemon.name,
-        });
-      }
+      changeStatStage(state, incoming, spd >= def ? 'attack' : 'specialAttack', 1, { reason: 'thanks to Download' });
       break;
     }
     case 'frisk': {

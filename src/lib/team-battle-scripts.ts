@@ -2,6 +2,7 @@
  * Move scripts that set/clear volatiles and hazards (Battle Engine M1+).
  * Called from executeMoveAction once a status (or special damage) move resolves.
  */
+import { changeStatStage } from './team-battle-stat-stages';
 import type { BattlePokemon, BattleState, BattleTeam } from './team-battle-engine';
 import { getCurrentPokemon } from './team-battle-engine';
 import type { SideHazards } from './team-battle-types';
@@ -230,7 +231,7 @@ export function applyVolatileAndHazardScripts(
     clearSideHazards(defenderSide.sideConditions.hazards);
     clearSideHazards(attackerSide.sideConditions.hazards);
     // Lower foe evasion by 1
-    defender.statModifiers.evasion = Math.max(-6, defender.statModifiers.evasion - 1);
+    changeStatStage(state, defender, 'evasion', -1, { source: attacker });
     // Remove screens on both sides
     delete attackerSide.sideConditions.screens.reflect;
     delete attackerSide.sideConditions.screens.lightScreen;

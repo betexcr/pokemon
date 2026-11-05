@@ -57,11 +57,16 @@ import { tryConsumeBerry, tryHarvestBerry, checkTypeResistBerry, removeHeldItem 
 import { PIVOT_MOVES, SELF_STATUS_MOVES } from './battle-move-constants';
 import { prepareLiveDamageModifiers, toDamageTypeName } from './battle-damage-modifiers';
 import { COUNTER_MOVES, getCounterDamage, moveFailsTryCondition, recordDamageTaken } from './team-battle-move-conditions';
+import { changeStatStage, checkWhiteHerb, triggerWeaknessPolicy } from './team-battle-stat-stages';
+import { abilityOf, targetAbility } from './team-battle-ability-rules';
+import { updateParadoxBoosts } from './team-battle-paradox';
 
 // Process start-of-turn effects
 export async function processStartOfTurn(state: BattleState): Promise<void> {
   // Magic Room is stored on the field; mirror it onto every Pokémon for item checks
   syncItemSuppression(state);
+  // Booster Energy / field-driven paradox boosts for the leads (and after Magic Room changes)
+  updateParadoxBoosts(state);
 
   // 1. Update field condition messages (weather, terrain)
   if (state.field.weather) {
@@ -330,6 +335,10 @@ export async function resolveMove(state: BattleState, action: BattleState['actio
   }
 
   await executeMoveAction(state, attacker, defender, moveId, action.user === 'player', action.user);
+
+  // White Herb restores lowered stats once the move's effects have settled (Shell Smash, Intimidate, ...)
+  checkWhiteHerb(state, getCurrentPokemon(state.player));
+  checkWhiteHerb(state, getCurrentPokemon(state.opponent));
 }
 
 // Determine hit count for multi-hit moves
@@ -382,11 +391,6 @@ const STATUS_LABELS: Record<string, string> = {
 const STAT_ABBR_TO_NAME: Record<string, keyof BattlePokemon['statModifiers']> = {
   atk: 'attack', def: 'defense', spa: 'specialAttack',
   spd: 'specialDefense', spe: 'speed', acc: 'accuracy', eva: 'evasion',
-};
-
-const STAT_DISPLAY: Record<keyof BattlePokemon['statModifiers'], string> = {
-  attack: 'Attack', defense: 'Defense', specialAttack: 'Special Attack',
-  specialDefense: 'Special Defense', speed: 'Speed', accuracy: 'Accuracy', evasion: 'Evasion',
 };
 
 function applyMoveAilment(
@@ -446,29 +450,43 @@ const SELF_STAT_DROP_MOVES = new Set([
   'hyperspace-fury', 'clanging-scales',
 ]);
 
+/** Ailments that are part of a move's main effect rather than a Sheer Force-able secondary. */
+const PRIMARY_AILMENTS = new Set(['none', 'trap', 'unknown']);
+
+/** Damaging moves whose extra effects are "secondary" (Sheer Force boosts them and removes the effects). */
+function hasSheerForceSecondary(move: any, moveLower: string): boolean {
+  if (move.category === 'Status' || SELF_STAT_DROP_MOVES.has(moveLower)) return false;
+  if (move.ailment?.kind && !PRIMARY_AILMENTS.has(move.ailment.kind)) return true;
+  return Array.isArray(move.statChanges) && move.statChanges.length > 0;
+}
+
+/** PokeAPI targets of status moves whose stat changes land on the user. */
+const SELF_TARGETS = new Set(['user', 'users-field', 'user-and-allies', 'user-or-ally', 'ally', 'all-allies']);
+
 function applyMoveSecondaryStatChanges(
   state: BattleState, move: any,
   attacker: BattlePokemon, defender: BattlePokemon,
-  _isSecondary = false,
+  isSecondary = false,
 ): void {
   if (!move.statChanges || move.statChanges.length === 0) return;
   const selfDrop = SELF_STAT_DROP_MOVES.has(move.name?.toLowerCase?.() ?? '');
+  const isStatus = move.category === 'Status';
+  const declaredTarget: string | undefined = typeof move.target === 'string' ? move.target : undefined;
   for (const sc of move.statChanges) {
     const chance = (sc.chance ?? 100) / 100;
     if (!rngRollChance(state.rng, chance)) continue;
-    const target = selfDrop ? attacker : (sc.stages > 0 ? attacker : defender);
+    let target: BattlePokemon;
+    if (selfDrop) target = attacker;
+    else if (isStatus && declaredTarget) target = SELF_TARGETS.has(declaredTarget) ? attacker : defender;
+    // Damaging moves (and status moves without target metadata): boosts go to the user, drops to the foe
+    else target = sc.stages > 0 ? attacker : defender;
     const statName = STAT_ABBR_TO_NAME[sc.stat];
     if (!statName) continue;
-    const old = target.statModifiers[statName];
-    target.statModifiers[statName] = Math.max(-6, Math.min(6, old + sc.stages));
-    const delta = target.statModifiers[statName] - old;
-    if (delta !== 0) {
-      state.battleLog.push({
-        type: 'status_effect',
-        message: `${target.pokemon.name}'s ${STAT_DISPLAY[statName]} ${delta > 0 ? 'rose' : 'fell'}!`,
-        pokemon: target.pokemon.name,
-      });
-    }
+    changeStatStage(state, target, statName, sc.stages, {
+      source: attacker,
+      // Chance-based riders on attacks fail silently; status moves announce "won't go any higher"
+      quietFailure: isSecondary && !isStatus,
+    });
   }
 }
 
@@ -690,6 +708,18 @@ async function performPivotSwitch(
   return true;
 }
 
+/** PokeAPI targets that aim a status move at the foe (or its side), i.e. what Magic Bounce can reflect. */
+const FOE_TARGETS = new Set(['selected-pokemon', 'all-opponents', 'opponents-field', 'random-opponent', 'all-other-pokemon']);
+const HAZARD_MOVES = new Set(['stealth-rock', 'spikes', 'toxic-spikes', 'sticky-web']);
+/** Foe-targeting status moves without Showdown's `reflectable` flag. */
+const NON_REFLECTABLE_MOVES = new Set(['trick', 'switcheroo', 'transform', 'sketch', 'mimic', 'curse', 'destiny-bond', 'baton-pass', 'magic-room', 'wonder-room', 'trick-room']);
+
+function isReflectableStatusMove(move: { category?: string; target?: string }, moveLower: string): boolean {
+  if (move.category !== 'Status' || NON_REFLECTABLE_MOVES.has(moveLower)) return false;
+  if (typeof move.target === 'string') return FOE_TARGETS.has(move.target);
+  return HAZARD_MOVES.has(moveLower) || !SELF_STATUS_MOVES.has(moveLower);
+}
+
 /** Roar / Whirlwind (status) and Dragon Tail / Circle Throw (after damage) drag out a random bench Pokémon. */
 const PHAZING_STATUS_MOVES = new Set(['roar', 'whirlwind']);
 const PHAZING_DAMAGE_MOVES = new Set(['dragon-tail', 'circle-throw']);
@@ -707,12 +737,14 @@ async function forceTargetSwitch(
   state: BattleState,
   targetSide: 'player' | 'opponent',
   logFailure: boolean,
+  source?: BattlePokemon,
 ): Promise<boolean> {
   const team = targetSide === 'player' ? state.player : state.opponent;
   const target = getCurrentPokemon(team);
   if (target.currentHp <= 0) return false;
 
-  const blocker = PHAZE_BLOCKING_ABILITIES[target.currentAbility?.toLowerCase() ?? ''];
+  // Suction Cups / Guard Dog are breakable: Mold Breaker phazers ignore them
+  const blocker = PHAZE_BLOCKING_ABILITIES[targetAbility(source, target) ?? ''];
   if (blocker) {
     state.battleLog.push({
       type: 'status_effect',
@@ -752,7 +784,7 @@ function tryAbilityAbsorb(
   moveTypeRaw: string,
   moveCategory: string,
 ): boolean {
-  const ability = defender.currentAbility?.toLowerCase();
+  const ability = targetAbility(attacker, defender);
   if (!ability) return false;
   const moveType = moveTypeRaw.toLowerCase();
 
@@ -775,16 +807,8 @@ function tryAbilityAbsorb(
     }
   };
 
-  const boostStat = (
-    key: 'attack' | 'specialAttack' | 'speed',
-    label: string,
-  ) => {
-    defender.statModifiers[key] = Math.min(6, defender.statModifiers[key] + 1);
-    state.battleLog.push({
-      type: 'status_effect',
-      message: `${defender.pokemon.name}'s ${ability} raised its ${label}!`,
-      pokemon: defender.pokemon.name,
-    });
+  const boostStat = (key: 'attack' | 'specialAttack' | 'speed') => {
+    changeStatStage(state, defender, key, 1, { reason: `thanks to its ${ability}` });
   };
 
   if (ability === 'flash-fire' && moveType === 'fire') {
@@ -805,19 +829,19 @@ function tryAbilityAbsorb(
     return true;
   }
   if (ability === 'storm-drain' && moveType === 'water') {
-    boostStat('specialAttack', 'Sp. Atk');
+    boostStat('specialAttack');
     return true;
   }
   if (ability === 'lightning-rod' && moveType === 'electric') {
-    boostStat('specialAttack', 'Sp. Atk');
+    boostStat('specialAttack');
     return true;
   }
   if (ability === 'sap-sipper' && moveType === 'grass') {
-    boostStat('attack', 'Attack');
+    boostStat('attack');
     return true;
   }
   if (ability === 'motor-drive' && moveType === 'electric') {
-    boostStat('speed', 'Speed');
+    boostStat('speed');
     return true;
   }
   if (ability === 'levitate' && moveType === 'ground') {
@@ -854,30 +878,34 @@ async function executeMoveAction(
   defender: BattlePokemon,
   moveId: string,
   isPlayer: boolean,
-  user: 'player' | 'opponent'
+  user: 'player' | 'opponent',
+  /** Set when Magic Bounce sends a status move back: the reflector neither spends PP nor "uses" the move. */
+  reflected = false,
 ): Promise<void> {
-  consumePpForMove(attacker, moveId);
+  if (!reflected) {
+    consumePpForMove(attacker, moveId);
 
-  if (moveId.toLowerCase() !== 'struggle') {
-    attacker.volatile.lastMoveUsed = moveId;
+    if (moveId.toLowerCase() !== 'struggle') {
+      attacker.volatile.lastMoveUsed = moveId;
+    }
+
+    // Choice items lock the user into the selected move
+    const itemLower = effectiveItem(attacker);
+    if (
+      (itemLower === 'choice-scarf' || itemLower === 'choice-band' || itemLower === 'choice-specs') &&
+      moveId.toLowerCase() !== 'struggle'
+    ) {
+      attacker.volatile.choiceLock = moveId;
+    }
+
+    // Log the move usage
+    state.battleLog.push({
+      type: 'move_used',
+      message: `${attacker.pokemon.name} used ${moveId}!`,
+      pokemon: attacker.pokemon.name,
+      move: moveId
+    });
   }
-
-  // Choice items lock the user into the selected move
-  const itemLower = effectiveItem(attacker);
-  if (
-    (itemLower === 'choice-scarf' || itemLower === 'choice-band' || itemLower === 'choice-specs') &&
-    moveId.toLowerCase() !== 'struggle'
-  ) {
-    attacker.volatile.choiceLock = moveId;
-  }
-
-  // Log the move usage
-  state.battleLog.push({
-    type: 'move_used',
-    message: `${attacker.pokemon.name} used ${moveId}!`,
-    pokemon: attacker.pokemon.name,
-    move: moveId
-  });
   
   // Get move data
   const move = await getMove(moveId);
@@ -926,9 +954,20 @@ async function executeMoveAction(
   // Handle status moves (no direct damage).
   // Note: moves with power=null (like seismic-toss, night-shade) are NOT status moves.
   if (move.category === 'Status') {
+    // Magic Bounce reflects foe-targeting status moves (breakable; a bounced move cannot bounce again)
+    if (!reflected && isReflectableStatusMove(move, moveLower) && targetAbility(attacker, defender) === 'magic-bounce') {
+      state.battleLog.push({
+        type: 'status_effect',
+        message: `${defender.pokemon.name} bounced the ${moveId} back!`,
+        pokemon: defender.pokemon.name,
+      });
+      await executeMoveAction(state, defender, attacker, moveId, !isPlayer, user === 'player' ? 'opponent' : 'player', true);
+      return;
+    }
+
     if (PHAZING_STATUS_MOVES.has(moveLower)) {
       // Sound/wind phazing ignores Protect and Substitute in this engine
-      await forceTargetSwitch(state, user === 'player' ? 'opponent' : 'player', true);
+      await forceTargetSwitch(state, user === 'player' ? 'opponent' : 'player', true, attacker);
       return;
     }
     if (moveLower === 'baton-pass') {
@@ -1130,12 +1169,27 @@ async function executeMoveAction(
   if (tryAbilityAbsorb(state, attacker, defender, String(move.type), move.category)) {
     return;
   }
+
+  // Air Balloon: immune to Ground-type attacks while the balloon is up
+  if (String(move.type).toLowerCase() === 'ground' && effectiveItem(defender) === 'air-balloon') {
+    state.battleLog.push({
+      type: 'status_effect',
+      message: `It doesn't affect ${defender.pokemon.name}...`,
+      pokemon: defender.pokemon.name,
+    });
+    return;
+  }
+
+  // Sheer Force: +30% power for moves with secondary effects, which are then dropped (and Life Orb recoil with them)
+  const sheerForce = abilityOf(attacker) === 'sheer-force' && hasSheerForceSecondary(move, moveLower);
   
   // Determine number of hits
   const hitCount = determineHitCount(move, attacker, state.rng);
   let totalDamageDealt = 0;
   /** Damage that reached the defender's HP (not a Substitute) — feeds Counter / Mirror Coat / Metal Burst. */
   let hpDamageDealt = 0;
+  /** A super-effective hit reached HP (Weakness Policy). */
+  let superEffectiveHpHit = false;
   let actualHits = 0;
   let hitSubstitute = false;
   
@@ -1228,6 +1282,7 @@ async function executeMoveAction(
       attacker,
       defender,
     });
+    if (sheerForce) prep.powerMultiplier *= 1.3;
 
     const damageResult = calculateComprehensiveDamage({
       level: attacker.level,
@@ -1274,6 +1329,7 @@ async function executeMoveAction(
     });
     
     let damage = damageResult.damage;
+    const superEffective = (damageResult.effectiveness ?? 1) > 1;
 
     // Type-resist berries (Unnerve-aware)
     const berryMult = checkTypeResistBerry(
@@ -1294,7 +1350,7 @@ async function executeMoveAction(
     }
 
     // Check for Focus Sash / Sturdy (survive at 1 HP from full HP)
-    const defenderAbility = defender.currentAbility?.toLowerCase();
+    const defenderAbility = targetAbility(attacker, defender); // Sturdy is breakable
     const defenderItem = effectiveItem(defender);
     const isFullHp = defender.currentHp === defender.maxHp;
     const wouldFaint = defender.currentHp - damage <= 0;
@@ -1333,6 +1389,7 @@ async function executeMoveAction(
     const hpBeforeHit = defender.currentHp;
     defender.currentHp = Math.max(0, defender.currentHp - damage);
     hpDamageDealt += hpBeforeHit - defender.currentHp;
+    if (superEffective && hpBeforeHit > defender.currentHp) superEffectiveHpHit = true;
     totalDamageDealt += damage;
     actualHits++;
     
@@ -1429,6 +1486,19 @@ async function executeMoveAction(
   
   recordDamageTaken(defender, hpDamageDealt, move.category);
 
+  // Air Balloon pops when an attack reaches HP
+  if (hpDamageDealt > 0 && effectiveItem(defender) === 'air-balloon') {
+    removeHeldItem(defender);
+    state.battleLog.push({
+      type: 'status_effect',
+      message: `${defender.pokemon.name}'s Air Balloon popped!`,
+      pokemon: defender.pokemon.name,
+    });
+  }
+  if (superEffectiveHpHit) {
+    triggerWeaknessPolicy(state, defender);
+  }
+
   // Track damage for Shell Bell
   if (!attacker.volatile.damageDealtThisTurn) {
     attacker.volatile.damageDealtThisTurn = 0;
@@ -1497,7 +1567,7 @@ async function executeMoveAction(
   
   // Apply Life Orb recoil (10% max HP)
   const attackerItem = effectiveItem(attacker);
-  if (attackerItem === 'life-orb' && totalDamageDealt > 0) {
+  if (attackerItem === 'life-orb' && totalDamageDealt > 0 && !sheerForce) {
     const lifeOrbRecoil = Math.floor(attacker.maxHp / 10);
     attacker.currentHp = Math.max(0, attacker.currentHp - lifeOrbRecoil);
     state.battleLog.push({
@@ -1525,9 +1595,14 @@ async function executeMoveAction(
   // Apply secondary effects from damaging moves (ailments, stat changes, flinch)
   // Substitute blocks most secondary effects when it absorbed the hit
   if (defender.currentHp > 0 && !hitSubstitute) {
-    applyMoveAilment(state, move, attacker, defender, true);
-    applyMoveSecondaryStatChanges(state, move, attacker, defender, true);
-    applyMoveFlinch(state, move, defender);
+    if (!sheerForce) {
+      applyMoveAilment(state, move, attacker, defender, true);
+      applyMoveSecondaryStatChanges(state, move, attacker, defender, true);
+      applyMoveFlinch(state, move, defender);
+    } else if (SELF_STAT_DROP_MOVES.has(moveLower)) {
+      // Not a secondary effect: Close Combat's drops still apply (and such moves are never boosted)
+      applyMoveSecondaryStatChanges(state, move, attacker, defender, true);
+    }
     applyBindingOnHit(state, moveId.toLowerCase(), defender);
   }
 
@@ -1565,19 +1640,9 @@ async function executeMoveAction(
     // Trigger on-faint abilities (Moxie, Soul Heart, Beast Boost)
     const attackerAbility = attacker.currentAbility?.toLowerCase();
     if (attackerAbility === 'moxie') {
-      attacker.statModifiers.attack = Math.min(6, attacker.statModifiers.attack + 1);
-      state.battleLog.push({
-        type: 'status_effect',
-        message: `${attacker.pokemon.name}'s Attack rose thanks to Moxie!`,
-        pokemon: attacker.pokemon.name
-      });
+      changeStatStage(state, attacker, 'attack', 1, { reason: 'thanks to Moxie', quietFailure: true });
     } else if (attackerAbility === 'soul-heart') {
-      attacker.statModifiers.specialAttack = Math.min(6, attacker.statModifiers.specialAttack + 1);
-      state.battleLog.push({
-        type: 'status_effect',
-        message: `${attacker.pokemon.name}'s Special Attack rose!`,
-        pokemon: attacker.pokemon.name
-      });
+      changeStatStage(state, attacker, 'specialAttack', 1, { reason: 'thanks to Soul-Heart', quietFailure: true });
     } else if (attackerAbility === 'beast-boost') {
       applyBeastBoost(attacker, state);
     }
@@ -1585,7 +1650,7 @@ async function executeMoveAction(
 
   // Dragon Tail / Circle Throw drag the target out after a hit that reached its HP
   if (PHAZING_DAMAGE_MOVES.has(moveLower) && hpDamageDealt > 0 && defender.currentHp > 0 && attacker.currentHp > 0) {
-    await forceTargetSwitch(state, user === 'player' ? 'opponent' : 'player', false);
+    await forceTargetSwitch(state, user === 'player' ? 'opponent' : 'player', false, attacker);
   }
 
   // Pivot moves: auto-switch to next available bench Pokémon
@@ -1633,12 +1698,7 @@ function applyBeastBoost(attacker: BattlePokemon, state: BattleState): void {
   for (const c of candidates) {
     if (c.value > best.value) best = c;
   }
-  attacker.statModifiers[best.key] = Math.min(6, attacker.statModifiers[best.key] + 1);
-  state.battleLog.push({
-    type: 'status_effect',
-    message: `${attacker.pokemon.name}'s ${best.label} rose thanks to Beast Boost!`,
-    pokemon: attacker.pokemon.name,
-  });
+  changeStatStage(state, attacker, best.key, 1, { reason: 'thanks to Beast Boost', quietFailure: true });
 }
 
 // Run on-entry sequence for a Pokemon (switchingSide = the side whose Pokemon is switching in)
@@ -1676,11 +1736,11 @@ export async function runEntrySequence(state: BattleState, switchingSide: 'playe
   }
 
   if (result.applyStickyWeb) {
-    incomingPokemon.statModifiers.speed = Math.max(-6, incomingPokemon.statModifiers.speed - 1);
-    state.battleLog.push({
-      type: 'status_effect',
-      message: `${incomingPokemon.pokemon.name}'s Speed was lowered by Sticky Web!`,
-      pokemon: incomingPokemon.pokemon.name,
+    // The web counts as a foe's effect: Clear Body blocks it, Defiant / Competitive trigger
+    const foeTeam = switchingSide === 'player' ? state.opponent : state.player;
+    changeStatStage(state, incomingPokemon, 'speed', -1, {
+      source: foeTeam.pokemon[foeTeam.currentIndex],
+      reason: 'due to Sticky Web',
     });
   }
 
@@ -1693,6 +1753,17 @@ export async function runEntrySequence(state: BattleState, switchingSide: 'playe
   }
 
   handleOnEntryAbilities(state, switchingSide, incomingPokemon);
+
+  if (incomingPokemon.currentHp > 0 && effectiveItem(incomingPokemon) === 'air-balloon') {
+    state.battleLog.push({
+      type: 'status_effect',
+      message: `${incomingPokemon.pokemon.name} floats in the air with its Air Balloon!`,
+      pokemon: incomingPokemon.pokemon.name,
+    });
+  }
+  checkWhiteHerb(state, getCurrentPokemon(state.player));
+  checkWhiteHerb(state, getCurrentPokemon(state.opponent));
+  updateParadoxBoosts(state);
 }
 
 /** After an automatic switch to the next unfainted Pokémon (mid-turn faint), apply hazards and on-entry abilities. */
@@ -1763,6 +1834,9 @@ export async function runBattleTurnFromQueue(
     state.player.faintedCount = state.player.pokemon.filter((p) => p.currentHp <= 0).length;
     state.opponent.faintedCount = state.opponent.pokemon.filter((p) => p.currentHp <= 0).length;
 
+    // Weather / terrain may have changed mid-turn (Sunny Day, Electric Terrain, ...)
+    updateParadoxBoosts(state);
+
     if (isTeamDefeated(state.player) || isTeamDefeated(state.opponent)) {
       break;
     }
@@ -1804,6 +1878,7 @@ export async function processEndOfTurn(state: BattleState): Promise<void> {
   
   // 2. Item residuals
   processItemResiduals(state);
+  processStatusOrbs(state);
   
   // 3. End-of-turn abilities
   processEndOfTurnAbilities(state);
@@ -1813,6 +1888,34 @@ export async function processEndOfTurn(state: BattleState): Promise<void> {
   
   // 5. Check faints from residuals
   checkResidualFaints(state);
+
+  // 6. Weather / terrain that just ended may switch paradox boosts off (or trigger Booster Energy)
+  updateParadoxBoosts(state);
+}
+
+/** Flame Orb / Toxic Orb: inflict the holder's own status at end of turn (Misty Terrain and immunities still apply). */
+function processStatusOrbs(state: BattleState): void {
+  for (const team of [state.player, state.opponent]) {
+    const pokemon = getCurrentPokemon(team);
+    if (pokemon.currentHp <= 0 || pokemon.status) continue;
+    const item = effectiveItem(pokemon);
+    if (item !== 'flame-orb' && item !== 'toxic-orb') continue;
+    const status = item === 'flame-orb' ? 'burned' : 'badly-poisoned';
+    const types = getPokemonTypes(pokemon).map((t) => String(t).toLowerCase());
+    const ability = abilityOf(pokemon);
+    const immune =
+      status === 'burned'
+        ? types.includes('fire') || ability === 'water-veil' || ability === 'water-bubble' || ability === 'thermal-exchange'
+        : types.includes('poison') || types.includes('steel') || ability === 'immunity' || ability === 'pastel-veil';
+    if (immune || ability === 'comatose' || terrainPreventsStatus(state.field.terrain?.kind, pokemon, status)) continue;
+    applyStatus(pokemon, status);
+    state.battleLog.push({
+      type: 'status_applied',
+      message: `${pokemon.pokemon.name} was ${status === 'burned' ? 'burned' : 'badly poisoned'} by the ${item === 'flame-orb' ? 'Flame Orb' : 'Toxic Orb'}!`,
+      pokemon: pokemon.pokemon.name,
+      status: status.toUpperCase(),
+    });
+  }
 }
 
 function processResidualDamage(_state: BattleState): void {
@@ -1885,12 +1988,7 @@ function processEndOfTurnAbilities(state: BattleState): void {
     const ability = pokemon.currentAbility?.toLowerCase();
     switch (ability) {
       case 'speed-boost': {
-        pokemon.statModifiers.speed = Math.min(6, pokemon.statModifiers.speed + 1);
-        state.battleLog.push({
-          type: 'status_effect',
-          message: `${pokemon.pokemon.name}'s Speed rose thanks to Speed Boost!`,
-          pokemon: pokemon.pokemon.name,
-        });
+        changeStatStage(state, pokemon, 'speed', 1, { reason: 'thanks to Speed Boost', quietFailure: true });
         break;
       }
       case 'poison-heal': {

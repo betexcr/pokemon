@@ -1,4 +1,6 @@
 import { effectiveItem } from './battle-item-access';
+import { changeStatStage } from './team-battle-stat-stages';
+import { paradoxMultiplier } from './team-battle-paradox';
 export { effectiveItem } from './battle-item-access';
 import { Pokemon, Move } from '@/types/pokemon';
 import { CompiledMove } from './adapters/pokeapiMoveAdapter';
@@ -69,6 +71,8 @@ export type BattlePokemon = {
     itemSuppressed?: boolean;
     /** Berry eaten earlier (Harvest restores it). */
     lastConsumedBerry?: string;
+    /** Protosynthesis / Quark Drive boost (field-driven or from Booster Energy until switch-out). */
+    paradoxBoost?: { stat: 'attack' | 'defense' | 'specialAttack' | 'specialDefense' | 'speed'; source: 'field' | 'booster' };
   };
   // Ability system
   currentAbility?: string;
@@ -281,6 +285,7 @@ export function getEffectiveSpeed(
   if (item === 'choice-scarf') finalSpeed = Math.floor(finalSpeed * 1.5);
   if (item === 'iron-ball') finalSpeed = Math.floor(finalSpeed * 0.5);
   if (pokemon.volatile.unburdenActive) finalSpeed = Math.floor(finalSpeed * 2);
+  finalSpeed = Math.floor(finalSpeed * paradoxMultiplier(pokemon, 'speed'));
 
   // Tailwind doubles speed (Gen IV+)
   if (tailwindActive) {
@@ -670,19 +675,6 @@ function applyStatModifier(baseStat: number, modifier: number): number {
   return Math.floor(baseStat * multiplier);
 }
 
-function mapStatName(stat: "atk" | "def" | "spa" | "spd" | "spe" | "acc" | "eva"): keyof BattlePokemon['statModifiers'] {
-  const mapping: Record<"atk" | "def" | "spa" | "spd" | "spe" | "acc" | "eva", keyof BattlePokemon['statModifiers']> = {
-    'atk': 'attack',
-    'def': 'defense',
-    'spa': 'specialAttack',
-    'spd': 'specialDefense',
-    'spe': 'speed',
-    'acc': 'accuracy',
-    'eva': 'evasion'
-  };
-  return mapping[stat];
-}
-
 // Apply effects for status moves (stat changes, etc.)
 export async function applyStatusMoveEffects(
   attacker: BattlePokemon,
@@ -756,89 +748,21 @@ export async function applyStatusMoveEffects(
     'laser-focus': { changes: [{ stat: 'accuracy', stages: 2 }], target: 'self' },
   };
 
-  const SELF_STAT_DROP_MOVES = new Set([
-    'close-combat', 'superpower', 'overheat', 'draco-meteor', 'leaf-storm',
-    'v-create', 'hammer-arm', 'psycho-boost', 'shell-smash', 'fleur-cannon',
-    'hyperspace-fury', 'clanging-scales',
-  ]);
-
-  // Check for stat changes from PokeAPI data first
+  // Moves with PokeAPI stat changes are applied once by applyMoveSecondaryStatChanges in the turn
+  // pipeline; only the hard-coded fallback tables below run here.
   if (compiledMove.statChanges && compiledMove.statChanges.length > 0) {
-    const selfDrop = SELF_STAT_DROP_MOVES.has(compiledMove.name?.toLowerCase?.() ?? '');
-    for (const statChange of compiledMove.statChanges) {
-      // Check if the effect triggers
-      const effectRng = battleState.rng || createBattleRng(Date.now());
-      if (rngRollChance(effectRng, (statChange.chance ?? 100) / 100)) {
-        const target = selfDrop ? attacker : (statChange.stages > 0 ? attacker : defender);
-        const statName = mapStatName(statChange.stat);
-        const oldValue = target.statModifiers[statName];
+    return;
+  }
 
-        // Apply stat change (clamp between -6 and +6)
-        target.statModifiers[statName] = Math.max(-6, Math.min(6, oldValue + statChange.stages));
-
-        const newValue = target.statModifiers[statName];
-        const change = newValue - oldValue;
-
-        if (change !== 0) {
-          const statDisplayName = {
-            attack: 'Attack',
-            defense: 'Defense',
-            specialAttack: 'Special Attack',
-            specialDefense: 'Special Defense',
-            speed: 'Speed',
-            accuracy: 'Accuracy',
-            evasion: 'Evasion'
-          }[statName];
-
-          const direction = change > 0 ? 'rose' : 'fell';
-          const targetName = target.pokemon.name;
-
-          battleState.battleLog.push({
-            type: 'status_effect',
-            message: `${targetName}'s ${statDisplayName} ${direction}!`,
-            pokemon: String(targetName)
-          });
-        }
-      }
-    }
-  } else {
-    // Fallback to hardcoded stat changes for moves not in PokeAPI
-    const reductionEntry = statReductionMoves[moveName];
-    const boostEntry = statBoostingMoves[moveName];
-
-    const statDisplayNames: Record<string, string> = {
-      attack: 'Attack', defense: 'Defense', specialAttack: 'Special Attack',
-      specialDefense: 'Special Defense', speed: 'Speed', accuracy: 'Accuracy', evasion: 'Evasion',
-    };
-
-    if (reductionEntry) {
-      const target = reductionEntry.target === 'self' ? attacker : defender;
-      const oldValue = target.statModifiers[reductionEntry.stat];
-      target.statModifiers[reductionEntry.stat] = Math.max(-6, Math.min(6, oldValue + reductionEntry.stages));
-      const change = target.statModifiers[reductionEntry.stat] - oldValue;
-      if (change !== 0) {
-        const targetName = target.pokemon.name;
-        battleState.battleLog.push({
-          type: 'status_effect',
-          message: `${targetName}'s ${statDisplayNames[reductionEntry.stat]} ${change > 0 ? 'rose' : 'fell'}!`,
-          pokemon: String(targetName),
-        });
-      }
-    } else if (boostEntry) {
-      const target = boostEntry.target === 'self' ? attacker : defender;
-      const targetName = target.pokemon.name;
-      for (const { stat, stages } of boostEntry.changes) {
-        const oldValue = target.statModifiers[stat];
-        target.statModifiers[stat] = Math.max(-6, Math.min(6, oldValue + stages));
-        const change = target.statModifiers[stat] - oldValue;
-        if (change !== 0) {
-          battleState.battleLog.push({
-            type: 'status_effect',
-            message: `${targetName}'s ${statDisplayNames[stat]} ${change > 0 ? 'rose' : 'fell'}!`,
-            pokemon: String(targetName),
-          });
-        }
-      }
+  const reductionEntry = statReductionMoves[moveName];
+  const boostEntry = statBoostingMoves[moveName];
+  if (reductionEntry) {
+    const target = reductionEntry.target === 'self' ? attacker : defender;
+    changeStatStage(battleState, target, reductionEntry.stat, reductionEntry.stages, { source: attacker });
+  } else if (boostEntry) {
+    const target = boostEntry.target === 'self' ? attacker : defender;
+    for (const { stat, stages } of boostEntry.changes) {
+      changeStatStage(battleState, target, stat, stages, { source: attacker });
     }
   }
 }

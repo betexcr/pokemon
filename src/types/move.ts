@@ -21,6 +21,8 @@ export interface RuntimeMove {
   // Flags / behavior
   makesContact: boolean;
   bypassAccuracyCheck: boolean;                // true if accuracy is null in PokeAPI
+  /** PokeAPI move target (e.g. "user", "selected-pokemon", "opponents-field"). Absent on older cached moves. */
+  target?: string;
   // Raw effect text (optional for UI/tooltip)
   shortEffect?: string;
 }

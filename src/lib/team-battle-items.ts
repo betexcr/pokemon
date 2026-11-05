@@ -1,4 +1,5 @@
 import { effectiveItem } from './battle-item-access';
+import { changeStatStage } from './team-battle-stat-stages';
 import { BattlePokemon, BattleState, BattleTeam } from './team-battle-engine';
 import { clearStatus } from './team-battle-status';
 import { rngRollChance } from './battle-rng';
@@ -137,18 +138,8 @@ export function tryConsumeBerry(
     const threshold = Math.floor(target.maxHp / 4);
     if (target.currentHp <= threshold) {
       const stat = STAT_BOOST_BERRIES[item];
-      const old = target.statModifiers[stat];
-      target.statModifiers[stat] = Math.min(6, old + 1);
       consumeItem(target);
-      const statDisplay: Record<string, string> = {
-        attack: 'Attack', defense: 'Defense', speed: 'Speed',
-        specialAttack: 'Sp. Atk', specialDefense: 'Sp. Def',
-      };
-      state.battleLog.push({
-        type: 'status_effect',
-        message: `${target.pokemon.name}'s ${formatBerryName(item)} raised its ${statDisplay[stat] || stat}!`,
-        pokemon: target.pokemon.name,
-      });
+      changeStatStage(state, target, stat, 1, { reason: `thanks to its ${formatBerryName(item)}` });
     }
     return;
   }

@@ -3,6 +3,8 @@
  * Behavior must match the previous inline prep in team-battle-engine-additional.ts.
  */
 import { effectiveItem } from './battle-item-access';
+import { targetAbility } from './team-battle-ability-rules';
+import { paradoxMultiplier } from './team-battle-paradox';
 import type { BattlePokemon } from './team-battle-engine';
 import type { TypeName } from './damage-calculator';
 import type { BattleRng } from './battle-rng';
@@ -107,7 +109,7 @@ export function computeAttackDefensePowerMultipliers(params: {
   const { isPhysical, attacker, defender } = params;
   const attackerItem = effectiveItem(attacker);
   const defenderItem = effectiveItem(defender);
-  const defenderAbility = defender.currentAbility?.toLowerCase();
+  const defenderAbility = targetAbility(attacker, defender);
 
   let attackMultiplier = 1;
   let defenseMultiplier = 1;
@@ -124,6 +126,10 @@ export function computeAttackDefensePowerMultipliers(params: {
   if (attackerItem && TYPE_BOOST_ITEMS[attackerItem] === moveTypeLower) {
     powerMultiplier *= 1.2;
   }
+
+  // Protosynthesis / Quark Drive
+  attackMultiplier *= paradoxMultiplier(attacker, isPhysical ? 'attack' : 'specialAttack');
+  defenseMultiplier *= paradoxMultiplier(defender, isPhysical ? 'defense' : 'specialDefense');
 
   return { attackMultiplier, defenseMultiplier, powerMultiplier };
 }
@@ -142,7 +148,7 @@ export function resolveCritAndStatStages(params: {
 } {
   const { attacker, defender, isPhysical, rng } = params;
   const attackerAbility = attacker.currentAbility?.toLowerCase();
-  const defenderAbility = defender.currentAbility?.toLowerCase();
+  const defenderAbility = targetAbility(attacker, defender);
   const unawareAtk = attackerAbility === 'unaware';
   const unawareDef = defenderAbility === 'unaware';
   const cannotCrit =
@@ -233,7 +239,7 @@ export function prepareLiveDamageModifiers(params: {
     isCrit: crit.isCrit,
     cannotCrit: crit.cannotCrit,
     attackerAbility: attacker.currentAbility?.toLowerCase(),
-    defenderAbility: defender.currentAbility?.toLowerCase(),
+    defenderAbility: targetAbility(attacker, defender),
     attackerItem: effectiveItem(attacker),
   };
 }
