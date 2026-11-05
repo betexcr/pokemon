@@ -35,6 +35,9 @@ jobs:
       - name: Integration tests
         run: npm run test:integration
 
+      - name: Component tests
+        run: npm run test:component
+
       - name: Security / rules tests
         run: npm run test:security
 
