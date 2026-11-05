@@ -1,4 +1,4 @@
-import { displaySpecies } from './team-battle-illusion';
+import { displaySpecies, displayTypes, publicBenchEntries } from './team-battle-illusion';
 import { canTerastallize, resolveTeraType } from './team-battle-tera';
 import { resolveBattleAbility } from './battle-default-ability';
 import { getRtdbOps, type RtdbOps } from './rtdb-access';
@@ -625,7 +625,7 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
             // Illusion shows the disguise to the opponent
             species: displaySpecies(mon),
             level: mon.level,
-            types: (mon.pokemon.types || []).map((t: any) => typeof t === 'string' ? t : t.type?.name || t.name || 'normal'),
+            types: displayTypes(mon),
             hp: { cur: Math.max(0, mon.currentHp), max: mon.maxHp },
             status: mon.status || null,
             boosts: {
@@ -641,14 +641,8 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
             ...(mon.terastallized && mon.teraType ? { terastallized: true, teraType: mon.teraType } : {}),
         });
 
-        const makeBenchPublic = (team: typeof currentState.player) =>
-            team.pokemon
-                .filter((_, i) => i !== team.currentIndex)
-                .map((mon) => ({
-                    species: mon.pokemon.name,
-                    fainted: mon.currentHp <= 0,
-                    revealedMoves: mon.moves.map(m => m.id).slice(0, 4)
-                }));
+        // Illusion-aware: the disguised slot shows the real user
+        const makeBenchPublic = (team: typeof currentState.player) => publicBenchEntries(team);
 
         const stateHashAfter = hashBattleState(currentState);
         const replayResolution: RTDBResolution = {

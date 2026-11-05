@@ -54,7 +54,7 @@ import { getWeatherDuration, getTerrainDuration, getScreenDuration } from './tea
 import { applyEndOfTurnStatus, clearStatus, applyStatus, applyStartOfTurnStatus, terrainPreventsStatus, cureTeamStatuses } from './team-battle-status';
 import { BattleRng, rngRollChance, rngNextInt, rngNextFloat } from './battle-rng';
 import { tryConsumeBerry, tryHarvestBerry, checkTypeResistBerry, removeHeldItem } from './team-battle-items';
-import { PIVOT_MOVES, SELF_STATUS_MOVES } from './battle-move-constants';
+import { GRAVITY_BLOCKED_MOVES, PIVOT_MOVES, SELF_STATUS_MOVES } from './battle-move-constants';
 import { prepareLiveDamageModifiers, toDamageTypeName } from './battle-damage-modifiers';
 import { COUNTER_MOVES, getCounterDamage, moveFailsTryCondition, recordDamageTaken } from './team-battle-move-conditions';
 import { changeStatStage, checkWhiteHerb, triggerWeaknessPolicy } from './team-battle-stat-stages';
@@ -64,7 +64,7 @@ import { stabTypeNames, teraPowerFloor, teraStabOverride, terastallize } from '.
 import { OHKO_MOVES, ohkoFailure, ohkoHitChance, terrainPulseVariant, weatherBallVariant } from './team-battle-move-variants';
 import { transformBlocked, transformInto } from './team-battle-transform';
 import { breakIllusion, maskIllusions, startIllusion } from './team-battle-illusion';
-import { applyStanceChange, updateHpForms } from './team-battle-forms';
+import { applyIceFaceStats, applyStanceChange, updateHpForms } from './team-battle-forms';
 
 // Process start-of-turn effects
 export async function processStartOfTurn(state: BattleState): Promise<void> {
@@ -292,6 +292,17 @@ export async function resolveMove(state: BattleState, action: BattleState['actio
     !pendingTwoTurn &&
     getTwoTurnKind(moveLower) != null &&
     !shouldSkipTwoTurnCharge(moveLower, state.field.weather?.kind);
+
+  // Gravity: airborne moves cannot be used (a pending Fly / Bounce charge is cancelled)
+  if (isBlockedByGravity(state, moveLower)) {
+    if (pendingTwoTurn) clearTwoTurnState(attacker);
+    state.battleLog.push({
+      type: 'status_effect',
+      message: `${attacker.pokemon.name} can't use ${moveId} because of gravity!`,
+      pokemon: attacker.pokemon.name,
+    });
+    return;
+  }
 
   // Charge turn: no accuracy check / no damage
   if (startingTwoTurn) {
@@ -636,6 +647,7 @@ const scriptedStatusMoveHandlers: Record<string, ScriptedStatusMoveHandler> = {
     state.field.rooms.gravity = { turns: 5 };
     syncGravity(state);
     state.battleLog.push({ type: 'status_effect', message: 'Gravity intensified!' });
+    groundAirbornePokemon(state);
     return true;
   },
   curse: ({ state, attacker, defender }) => {
@@ -904,7 +916,9 @@ function applyDisguiseShields(state: BattleState, attacker: BattlePokemon, defen
   }
   if (ability === 'ice-face' && category === 'Physical' && !defender.iceFaceBroken) {
     defender.iceFaceBroken = true;
+    applyIceFaceStats(defender, 'noice');
     state.battleLog.push({ type: 'status_effect', message: `${defender.pokemon.name}'s Ice Face took the hit!`, pokemon: defender.pokemon.name });
+    state.battleLog.push({ type: 'status_effect', message: `${defender.pokemon.name} transformed into Noice Face!`, pokemon: defender.pokemon.name });
     return 0;
   }
   return damage;
@@ -2075,8 +2089,11 @@ export async function runEntrySequence(state: BattleState, switchingSide: 'playe
   checkWhiteHerb(state, getCurrentPokemon(state.opponent));
   updateParadoxBoosts(state);
   updateHpForms(state, incomingPokemon);
-  // Eject Pack from entry effects (Intimidate, Sticky Web) switches automatically
-  await checkEjectPacks(state, false);
+  // Switching in during snow restores Ice Face
+  restoreIceFaces(state);
+  // Eject Pack from entry effects (Intimidate, Sticky Web): the player picks while actions resolve;
+  // switch-ins between turns (faint replacements) send the next Pokémon automatically
+  await checkEjectPacks(state, !!state.resolvingActions);
 }
 
 /** After an automatic switch to the next unfainted Pokémon (mid-turn faint), apply hazards and on-entry abilities. */
@@ -2182,6 +2199,7 @@ export async function resumeBattleTurnAfterSwitch(
   state.pendingSwitch = undefined;
   state.actionQueue = remaining;
 
+  state.resolvingActions = true;
   if (pending.reason === 'revival-blessing') {
     reviveTeamMember(state, pending.side, switchIndex);
   } else {
@@ -2190,6 +2208,15 @@ export async function resumeBattleTurnAfterSwitch(
       shedTail: pending.reason === 'shed-tail',
       switchIndex,
     });
+  }
+  // The newcomer's entry (e.g. Intimidate into an Eject Pack) may need another pick.
+  // (Re-read: the switch above can set a new pending pick.)
+  const repick = state.pendingSwitch as BattleState['pendingSwitch'];
+  if (repick && !repick.remainingQueue) {
+    repick.remainingQueue = remaining;
+    repick.activeAtTurnStart = { ...activeAtTurnStart };
+    state.resolvingActions = false;
+    return 'awaiting-switch';
   }
   // Paradox boosts / White Herb for the newcomer were handled by its entry sequence
   return runQueuedActions(state, remaining, activeAtTurnStart);
@@ -2200,6 +2227,7 @@ async function runQueuedActions(
   queue: BattleState['actionQueue'],
   activeAtTurnStart: { player: number; opponent: number },
 ): Promise<TurnOutcome> {
+  state.resolvingActions = true;
   for (let i = 0; i < queue.length; i++) {
     const action = queue[i];
     if (action.type === 'switch') {
@@ -2215,13 +2243,15 @@ async function runQueuedActions(
     state.player.faintedCount = state.player.pokemon.filter((p) => p.currentHp <= 0).length;
     state.opponent.faintedCount = state.opponent.pokemon.filter((p) => p.currentHp <= 0).length;
 
-    // Weather / terrain may have changed mid-turn (Sunny Day, Electric Terrain, ...)
+    // Weather / terrain may have changed mid-turn (Sunny Day, Electric Terrain, Snowscape, ...)
     updateParadoxBoosts(state);
+    restoreIceFaces(state);
     maskIllusions(state);
 
     if (state.pendingSwitch && !state.pendingSwitch.remainingQueue) {
       state.pendingSwitch.remainingQueue = queue.slice(i + 1);
       state.pendingSwitch.activeAtTurnStart = { ...activeAtTurnStart };
+      state.resolvingActions = false;
       return 'awaiting-switch';
     }
 
@@ -2230,6 +2260,7 @@ async function runQueuedActions(
     }
   }
 
+  state.resolvingActions = false;
   await processEndOfTurn(state);
 
   const outcome = await requestFaintReplacements(state);
@@ -2324,13 +2355,9 @@ export async function processEndOfTurn(state: BattleState): Promise<void> {
   syncGravity(state);
   applyCurseAndSaltCure(state);
   for (const team of [state.player, state.opponent]) {
-    const mon = getCurrentPokemon(team);
-    updateHpForms(state, mon);
-    if (mon.iceFaceBroken && mon.currentHp > 0 && state.field.weather?.kind === 'snow' && abilityOf(mon) === 'ice-face') {
-      mon.iceFaceBroken = false;
-      state.battleLog.push({ type: 'status_effect', message: `${mon.pokemon.name}'s Ice Face was restored!`, pokemon: mon.pokemon.name });
-    }
+    updateHpForms(state, getCurrentPokemon(team));
   }
+  restoreIceFaces(state);
 
   applyEndOfTurnStatus(state, getCurrentPokemon(state.player));
   applyEndOfTurnStatus(state, getCurrentPokemon(state.opponent));
@@ -2350,6 +2377,34 @@ export async function processEndOfTurn(state: BattleState): Promise<void> {
 
   // 6. Weather / terrain that just ended may switch paradox boosts off (or trigger Booster Energy)
   updateParadoxBoosts(state);
+}
+
+/** Ice Face comes back whenever an Eiscue is out in snow (on entry, when snow starts, at end of turn). */
+function restoreIceFaces(state: BattleState): void {
+  if (state.field.weather?.kind !== 'snow') return;
+  for (const team of [state.player, state.opponent]) {
+    const mon = getCurrentPokemon(team);
+    if (!mon.iceFaceBroken || mon.currentHp <= 0 || abilityOf(mon) !== 'ice-face') continue;
+    mon.iceFaceBroken = false;
+    applyIceFaceStats(mon, 'ice');
+    state.battleLog.push({ type: 'status_effect', message: `${mon.pokemon.name}'s Ice Face was restored!`, pokemon: mon.pokemon.name });
+  }
+}
+
+export function isBlockedByGravity(state: Pick<BattleState, 'field'>, moveId: string): boolean {
+  return !!state.field.rooms?.gravity && GRAVITY_BLOCKED_MOVES.has(moveId.toLowerCase());
+}
+
+/** Gravity pulls Pokémon out of the sky mid-Fly / Bounce / Sky Drop. */
+function groundAirbornePokemon(state: BattleState): void {
+  for (const team of [state.player, state.opponent]) {
+    const mon = getCurrentPokemon(team);
+    const airborne = mon.volatile.semiInvulnerable && GRAVITY_BLOCKED_MOVES.has(mon.volatile.semiInvulnerable);
+    if (!airborne) continue;
+    clearTwoTurnState(mon);
+    mon.volatile.semiInvulnerable = undefined;
+    state.battleLog.push({ type: 'status_effect', message: `${mon.pokemon.name} couldn't stay airborne because of gravity!`, pokemon: mon.pokemon.name });
+  }
 }
 
 /** Gravity grounds every Pokémon (mirrored onto volatiles so `isGrounded` sees it). */

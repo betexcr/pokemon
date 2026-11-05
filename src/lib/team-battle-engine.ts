@@ -85,7 +85,7 @@ export type BattlePokemon = {
     /** Transform / Imposter: originals restored on switch-out. */
     transform?: { pokemon: unknown; moves: unknown; ability?: string; into: string };
     /** Illusion: shown to the foe as this species until a damaging hit breaks it. */
-    illusion?: { species: string; dexId?: number | null };
+    illusion?: { species: string; dexId?: number | null; types?: string[] };
     /** Protean / Libero already changed type since entering. */
     proteanUsed?: boolean;
     /** Types before a temporary type change (Protean / Libero), restored on switch-out. */
@@ -201,6 +201,8 @@ export type BattleState = {
    * choice of replacement. Both sides pick at once; apply with `applyFaintReplacements`.
    */
   pendingReplacements?: PendingReplacement[];
+  /** Transient: true while queued actions run (entry-time picks may pause the turn). */
+  resolvingActions?: boolean;
 };
 
 /** Why a turn paused mid-way for a player's pick. */

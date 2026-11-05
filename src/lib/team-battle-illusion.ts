@@ -42,6 +42,7 @@ export function startIllusion(state: BattleState, side: 'player' | 'opponent', m
   mon.volatile.illusion = {
     species: disguise.pokemon.name,
     dexId: typeof disguise.pokemon.id === 'number' ? disguise.pokemon.id : null,
+    types: (disguise.pokemon.types ?? []).map((t: any) => String(typeof t === 'string' ? t : t?.type?.name ?? 'normal')),
   };
   // The "Go! X!" line that announced this Pokémon was written just before its entry sequence
   const log = state.battleLog;
@@ -65,4 +66,34 @@ export function breakIllusion(state: BattleState, mon: BattlePokemon): void {
 /** Name the foe sees for this Pokémon. */
 export function displaySpecies(mon: BattlePokemon): string {
   return mon.volatile?.illusion?.species ?? mon.pokemon.name;
+}
+
+/** Types the foe sees for this Pokémon (the disguise's while Illusion holds). */
+export function displayTypes(mon: BattlePokemon): string[] {
+  if (mon.volatile?.illusion?.types?.length) return mon.volatile.illusion.types;
+  return (mon.pokemon.types || []).map((t: any) => (typeof t === 'string' ? t : t.type?.name || t.name || 'normal'));
+}
+
+/**
+ * Public bench (non-active) entries. While the active Pokémon is disguised, the bench slot of the
+ * Pokémon it imitates shows the real user instead, so the foe sees each species once.
+ */
+export function publicBenchEntries(team: BattleState['player']): Array<{ species: string; fainted: boolean; revealedMoves: string[] }> {
+  const active = team.pokemon[team.currentIndex];
+  const disguise = active?.volatile?.illusion?.species;
+  const entry = (mon: BattlePokemon) => ({
+    species: mon.pokemon.name,
+    fainted: mon.currentHp <= 0,
+    revealedMoves: mon.moves.map((m) => m.id).slice(0, 4),
+  });
+  let swapped = false;
+  return team.pokemon
+    .filter((_, i) => i !== team.currentIndex)
+    .map((mon) => {
+      if (disguise && !swapped && active && mon.pokemon.name === disguise) {
+        swapped = true;
+        return entry(active);
+      }
+      return entry(mon);
+    });
 }

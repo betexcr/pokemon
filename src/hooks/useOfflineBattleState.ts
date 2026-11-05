@@ -11,10 +11,11 @@ import {
   allMovesOutOfPp,
   encoredMoveHasNoPp,
 } from '@/lib/team-battle-engine';
-import { applyFaintReplacements, resumeBattleTurnAfterSwitch, runBattleTurnFromQueue, type TurnOutcome } from '@/lib/team-battle-engine-additional';
+import { applyFaintReplacements, isBlockedByGravity, resumeBattleTurnAfterSwitch, runBattleTurnFromQueue, type TurnOutcome } from '@/lib/team-battle-engine-additional';
 import { createBattleRng } from '@/lib/battle-rng';
 import { createFieldState, EMPTY_HAZARDS } from '@/lib/team-battle-types';
 import { sanitizeBattleItem } from '@/lib/battle-items-catalog';
+import { displayTypes, publicBenchEntries } from '@/lib/team-battle-illusion';
 import { canTerastallize, resolveTeraType } from '@/lib/team-battle-tera';
 import { getCachedMove } from '@/lib/moveCache';
 import { resolveBattleAbility } from '@/lib/battle-default-ability';
@@ -188,7 +189,7 @@ function makePublicActive(mon: BattlePokemon): PublicMon {
     species: illusion?.species ?? mon.pokemon.name,
     dexId: illusion ? illusion.dexId ?? null : typeof mon.pokemon.id === 'number' && mon.pokemon.id > 0 ? mon.pokemon.id : null,
     level: mon.level,
-    types: (mon.pokemon.types || []).map((t: any) => typeof t === 'string' ? t : t.type?.name || t.name || 'normal'),
+    types: displayTypes(mon),
     hp: { cur: Math.max(0, mon.currentHp), max: mon.maxHp },
     status: mon.status || null,
     boosts: {
@@ -204,11 +205,8 @@ function makePublicActive(mon: BattlePokemon): PublicMon {
 }
 
 function makeBench(team: BattleTeam) {
-  return team.pokemon.filter((_, i) => i !== team.currentIndex).map(mon => ({
-    species: mon.pokemon.name,
-    fainted: mon.currentHp <= 0,
-    revealedMoves: mon.moves.map(m => m.id).slice(0, 4),
-  }));
+  // Illusion-aware: the disguised slot shows the real user
+  return publicBenchEntries(team);
 }
 
 function projectPrivate(team: BattleTeam): PrivateState {
@@ -622,6 +620,7 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
     }
     return active.moves.filter(m => m.pp > 0 && !m.disabled).map(m => ({
       id: m.id, pp: m.pp, maxPp: m.maxPp,
+      ...(isBlockedByGravity(battleState, m.id) ? { disabled: true, reason: 'Gravity' } : {}),
     }));
   }, [battleState, meta?.ruleProfile]);
 

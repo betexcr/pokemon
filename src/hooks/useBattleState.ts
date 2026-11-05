@@ -1,3 +1,4 @@
+import { GRAVITY_BLOCKED_MOVES } from "@/lib/battle-move-constants";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { onValue, ref as dbRef } from "firebase/database";
 import { onAuthStateChanged, User } from "firebase/auth";
@@ -355,6 +356,7 @@ export function useBattleState(battleId: string): UseBattleState {
     const disableMoveId = me?.disable?.moveId;
     const encoreMoveId = me?.encoreMoveId;
     const taunted = !!myPublicV.taunt;
+    const gravityActive = !!(pub as { field?: { rooms?: { gravity?: unknown } } } | null)?.field?.rooms?.gravity;
     const recharging = !!myPublicV.recharge;
 
     const profile = meta?.ruleProfile ?? 'simplified';
@@ -375,6 +377,7 @@ export function useBattleState(battleId: string): UseBattleState {
       if (!disabled && choiceLockMoveId && m.id !== choiceLockMoveId) { disabled = true; reason = "Choice-lock"; }
       if (!disabled && encoreMoveId && m.id !== encoreMoveId) { disabled = true; reason = "Encore"; }
       if (!disabled && disableMoveId && m.id === disableMoveId) { disabled = true; reason = "Disabled"; }
+      if (!disabled && gravityActive && GRAVITY_BLOCKED_MOVES.has(m.id)) { disabled = true; reason = "Gravity"; }
       if (!disabled && taunted) {
         // optional: you can tag moves with meta; here we do a simple heuristic
         const looksStatus = /protect|substitute|swords-dance|toxic|roost|recover|will-o-wisp|calm-mind|nasty-plot|spikes|stealth-rock|taunt|defog/i.test(m.id);
@@ -384,7 +387,7 @@ export function useBattleState(battleId: string): UseBattleState {
     });
 
     return mapped;
-  }, [myPrivateActive, me?.choiceLock, me?.disable, me?.encoreMoveId, myPublicV.taunt, myPublicV.recharge, meta?.ruleProfile, meta?.pendingSwitch, meta?.pendingReplacement]);
+  }, [myPrivateActive, me?.choiceLock, me?.disable, me?.encoreMoveId, myPublicV.taunt, myPublicV.recharge, meta?.ruleProfile, meta?.pendingSwitch, meta?.pendingReplacement, pub]);
 
   const legalSwitchIndexes = useMemo(() => {
     if (meta?.pendingSwitch && meta.pendingSwitch.uid !== meUid) return [];

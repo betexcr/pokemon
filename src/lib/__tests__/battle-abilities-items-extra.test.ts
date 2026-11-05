@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { CompiledMove } from '../adapters/pokeapiMoveAdapter';
-import { runBattleTurnFromQueue } from '../team-battle-engine-additional';
+import { resumeBattleTurnAfterSwitch, runBattleTurnFromQueue } from '../team-battle-engine-additional';
+import { displayTypes, publicBenchEntries } from '../team-battle-illusion';
 import {
   buildActionQueue,
   getCurrentPokemon,
@@ -22,6 +23,9 @@ const MOVES: Record<string, CompiledMove> = {
   growl: { ...base, id: 45, name: 'growl', type: 'Normal', category: 'Status', power: null, accuracy: 100, statChanges: [sc('atk', -1)], target: 'all-opponents' },
   'kings-shield': { ...base, id: 588, name: 'kings-shield', type: 'Steel', category: 'Status', power: null, accuracy: null, bypassAccuracyCheck: true, priority: 4, target: 'user' },
   splash: { ...base, id: 150, name: 'splash', type: 'Normal', category: 'Status', power: null, accuracy: null, bypassAccuracyCheck: true, target: 'user' },
+  'calm-mind': { ...base, id: 347, name: 'calm-mind', type: 'Psychic', category: 'Status', power: null, accuracy: null, bypassAccuracyCheck: true, target: 'user', statChanges: [sc('spa', 1), sc('spd', 1)] },
+  fly: { ...base, id: 19, name: 'fly', type: 'Flying', category: 'Physical', power: 90, accuracy: 95 },
+  gravity: { ...base, id: 356, name: 'gravity', type: 'Psychic', category: 'Status', power: null, accuracy: null, bypassAccuracyCheck: true, target: 'entire-field' },
 } as unknown as Record<string, CompiledMove>;
 
 vi.mock('../moveCache', () => ({
@@ -211,5 +215,65 @@ describe('Iron Ball', () => {
     s.player.sideConditions.hazards.spikes = 1;
     await play(s, { type: 'switch', switchIndex: 1 });
     expect(P(s).currentHp).toBe(320 - 40);
+  });
+});
+
+describe('remaining simplifications', () => {
+  it('Illusion: the public bench and types stay consistent with the disguise', async () => {
+    const zoroark = makeMon('zoroark', { speed: 30, ability: 'illusion', types: ['dark'] });
+    const s = makeBattle(makeMon('p', { speed: 150 }), zoroark);
+    s.opponent.pokemon.push(makeMon('decoy', { types: ['electric'] }));
+    await play(s, mv('calm-mind'));
+    expect(displayTypes(O(s))).toEqual(['electric']);
+    const bench = publicBenchEntries(s.opponent).map((b) => b.species);
+    expect(bench).toEqual(['o-bench', 'zoroark']);
+    expect(bench).not.toContain('decoy');
+  });
+
+  it('Ice Face: Noice Face stats after the hit, Ice Face stats again when snow restores it', async () => {
+    const s = makeBattle(makeMon('p', { speed: 150 }), makeMon('eiscue', { speed: 50, ability: 'ice-face', stats: { defense: 110, 'special-defense': 90 } }));
+    const log = await play(s, mv('tackle'));
+    expect(log).toContain('eiscue transformed into Noice Face!');
+    expect(baseStat(O(s), 'speed')).toBe(130);
+    expect(baseStat(O(s), 'defense')).toBe(70);
+    // Noice Face persists through switching
+    await play(s, SPLASH, { type: 'switch', switchIndex: 1 });
+    expect(baseStat(s.opponent.pokemon[0], 'speed')).toBe(130);
+    // Coming back in during snow restores Ice Face
+    s.field.weather = { kind: 'snow', turns: 5 };
+    await play(s, SPLASH, { type: 'switch', switchIndex: 0 });
+    expect(O(s).iceFaceBroken).toBe(false);
+    expect(baseStat(O(s), 'speed')).toBe(50);
+    expect(baseStat(O(s), 'defense')).toBe(110);
+  });
+
+  it('Eject Pack after an Intimidate drop lets the player pick, then the turn continues', async () => {
+    const s = makeBattle(makeMon('p', { speed: 150, item: 'eject-pack' }), makeMon('o', { speed: 30 }));
+    s.player.pokemon.push(makeMon('p-bench-2'));
+    s.opponent.pokemon[1].currentAbility = 'intimidate';
+    const outcome = await runBattleTurnFromQueue(
+      s,
+      buildActionQueue(s, mv('tackle'), { type: 'switch', switchIndex: 1 }),
+      { clearBattleLog: true, manualSwitchSides: ['player'] },
+    );
+    expect(outcome).toBe('awaiting-switch');
+    expect(s.pendingSwitch).toMatchObject({ side: 'player', options: [1, 2] });
+    expect(s.battleLog.map((e) => e.message)).toContain('p is switched out by the Eject Pack!');
+
+    expect(await resumeBattleTurnAfterSwitch(s, 2)).toBe('complete');
+    expect(s.player.currentIndex).toBe(2);
+    // The ejected Pokémon's queued tackle does not happen
+    expect(s.battleLog.some((e) => e.message === 'p used tackle!')).toBe(false);
+  });
+
+  it('Gravity blocks airborne moves and pulls a Fly user down', async () => {
+    const s = makeBattle(makeMon('p', { speed: 30 }), makeMon('bird', { speed: 150, types: ['flying'] }));
+    // Bird starts Fly (faster), then Gravity grounds it mid-charge
+    let log = await play(s, mv('gravity'), mv('fly'));
+    expect(log).toContain("bird couldn't stay airborne because of gravity!");
+    expect(O(s).volatile.semiInvulnerable).toBeUndefined();
+    log = await play(s, SPLASH, mv('fly'));
+    expect(log).toContain("bird can't use fly because of gravity!");
+    expect(log).toContain("p can't use splash because of gravity!");
   });
 });

@@ -83,3 +83,23 @@ export function updateHpForms(state: BattleState, mon: BattlePokemon): void {
     else if (!strong && currentForm(mon) === 'wishiwashi-school') clearForm(state, mon, `${mon.pokemon.name} stopped schooling!`);
   }
 }
+
+/** Eiscue's two faces; Noice Face persists through switching until snow restores Ice Face. */
+const EISCUE_FACES = {
+  ice: { defense: 110, 'special-defense': 90, speed: 50 },
+  noice: { defense: 70, 'special-defense': 50, speed: 130 },
+} as const;
+
+/** Swap Eiscue's base stats for its current face (no-op for other species). */
+export function applyIceFaceStats(mon: BattlePokemon, face: 'ice' | 'noice'): void {
+  if (!isSpecies(mon, 'eiscue')) return;
+  const line = EISCUE_FACES[face];
+  const swap = (stats: BattlePokemon['pokemon']['stats']) =>
+    (stats ?? []).map((s: any) => {
+      const name = s.stat?.name || s.name;
+      return name in line ? { ...s, base_stat: line[name as keyof typeof line] } : s;
+    });
+  mon.pokemon = { ...mon.pokemon, stats: swap(mon.pokemon.stats) };
+  // Keep a Transform / form snapshot (restored on switch-out) in the same face
+  if (mon.volatile.formChange) mon.volatile.formChange.stats = swap(mon.volatile.formChange.stats);
+}
