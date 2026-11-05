@@ -1,5 +1,6 @@
 import { effectiveItem } from './battle-item-access';
 import { revertTransform } from './team-battle-transform';
+import { isTrapped, rollMoveFirst } from './team-battle-held-items';
 import { changeStatStage } from './team-battle-stat-stages';
 import { paradoxMultiplier } from './team-battle-paradox';
 export { effectiveItem } from './battle-item-access';
@@ -94,6 +95,14 @@ export type BattlePokemon = {
     formChange?: { form: string; types: Pokemon['types']; stats: Pokemon['stats'] };
     /** Eject Pack: stats were lowered; the holder switches out once the move settles. */
     ejectPackPending?: boolean;
+    /** Metronome (item): consecutive uses of the same move. */
+    metronomeStreak?: number;
+    /** Micle Berry: next move's accuracy x1.2. */
+    micleBoost?: boolean;
+    /** Lansat Berry: +2 critical-hit stages. */
+    critBoost?: number;
+    /** Stat boosts gained during the current action (Mirror Herb copies the foe's). */
+    recentBoosts?: Partial<Record<'attack' | 'defense' | 'specialAttack' | 'specialDefense' | 'speed' | 'accuracy' | 'evasion', number>>;
   };
   // Ability system
   currentAbility?: string;
@@ -166,6 +175,8 @@ export type BattleState = {
     priority: number;
     speed: number;
     terastallize?: boolean;
+    /** Quick Claw / Custap Berry: acts first within its priority bracket this turn. */
+    moveFirst?: 'quick-claw' | 'custap-berry';
   }>;
   // Field state
   field: FieldState;
@@ -537,6 +548,7 @@ export function normalizeServerBattleAction(
     if (idx < 0 || idx >= team.pokemon.length) return { action, normalized: false, errorCode: 'switch_out_of_range' };
     if (idx === team.currentIndex) return { action, normalized: false, errorCode: 'switch_same_slot' };
     if (team.pokemon[idx].currentHp <= 0) return { action, normalized: false, errorCode: 'switch_to_fainted' };
+    if (isTrapped(mon)) return { action, normalized: false, errorCode: 'switch_trapped' };
     return { action, normalized: false };
   }
 
@@ -632,6 +644,12 @@ export function normalizeServerBattleAction(
   return { action, normalized: false, errorCode: 'unknown_action' };
 }
 
+function moveFirstField(mon: BattlePokemon, foe: BattlePokemon, state: BattleState): { moveFirst?: 'quick-claw' | 'custap-berry' } {
+  const berriesBlocked = foe.currentAbility?.toLowerCase() === 'unnerve' && foe.currentHp > 0;
+  const source = rollMoveFirst(mon, state.rng, berriesBlocked);
+  return source ? { moveFirst: source } : {};
+}
+
 // Build and order action queue (Gen-8/9 style)
 export function buildActionQueue(state: BattleState, playerAction: BattleAction, opponentAction: BattleAction): BattleState['actionQueue'] {
   const queue: BattleState['actionQueue'] = [];
@@ -675,6 +693,7 @@ export function buildActionQueue(state: BattleState, playerAction: BattleAction,
       moveId: playerAction.moveId,
       target: playerAction.target,
       ...(playerAction.terastallize ? { terastallize: true } : {}),
+      ...moveFirstField(getCurrentPokemon(state.player), getCurrentPokemon(state.opponent), state),
       priority: getMovePriority(playerAction.moveId || '', getCurrentPokemon(state.player)),
       speed: getEffectiveSpeed(getCurrentPokemon(state.player), isTailwindActive(state.player), state.field)
     });
@@ -695,6 +714,7 @@ export function buildActionQueue(state: BattleState, playerAction: BattleAction,
       moveId: opponentAction.moveId,
       target: opponentAction.target,
       ...(opponentAction.terastallize ? { terastallize: true } : {}),
+      ...moveFirstField(getCurrentPokemon(state.opponent), getCurrentPokemon(state.player), state),
       priority: getMovePriority(opponentAction.moveId || '', getCurrentPokemon(state.opponent)),
       speed: getEffectiveSpeed(getCurrentPokemon(state.opponent), isTailwindActive(state.opponent), state.field)
     });
@@ -717,6 +737,11 @@ export function buildActionQueue(state: BattleState, playerAction: BattleAction,
     // Within same class, order by priority (higher first)
     if (a.priority !== b.priority) {
       return b.priority - a.priority;
+    }
+
+    // Quick Claw / Custap Berry act first within the bracket (Trick Room does not reverse this)
+    if (!!a.moveFirst !== !!b.moveFirst) {
+      return a.moveFirst ? -1 : 1;
     }
 
     // Within same priority, order by speed

@@ -1,3 +1,4 @@
+import { isTrapped } from "@/lib/team-battle-held-items";
 import { GRAVITY_BLOCKED_MOVES } from "@/lib/battle-move-constants";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { onValue, ref as dbRef } from "firebase/database";
@@ -395,6 +396,9 @@ export function useBattleState(battleId: string): UseBattleState {
     if (meta?.pendingSwitch?.options) return meta.pendingSwitch.options;
     if (meta?.pendingReplacement?.uids?.length && (!meUid || !meta.pendingReplacement.uids.includes(meUid))) return [];
     const team = me?.team ?? [];
+    // Bound by a binding move (the server rejects the switch too); faint replacements are always allowed
+    const activeSlot = team[typeof me?.currentIndex === 'number' ? me.currentIndex : 0] as unknown as Parameters<typeof isTrapped>[0] | undefined;
+    if (!meta?.pendingReplacement && activeSlot?.volatile && activeSlot.pokemon && isTrapped(activeSlot)) return [];
     const currentIndex = typeof me?.currentIndex === 'number' ? me.currentIndex : 0;
     const res: number[] = [];
     for (let i = 0; i < team.length; i++) {

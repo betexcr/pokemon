@@ -132,7 +132,9 @@ export function applyLeechSeed(state: BattleState): void {
     if (damage <= 0) return;
 
     targetPokemon.currentHp = Math.max(0, targetPokemon.currentHp - damage);
-    seeder.currentHp = Math.min(seeder.maxHp, seeder.currentHp + damage);
+    // Big Root boosts the seeder's recovery by 30%
+    const heal = effectiveItem(seeder) === 'big-root' ? Math.floor(damage * 1.3) : damage;
+    seeder.currentHp = Math.min(seeder.maxHp, seeder.currentHp + heal);
 
     state.battleLog.push({
       type: 'status_damage',

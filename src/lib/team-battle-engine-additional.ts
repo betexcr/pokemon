@@ -53,7 +53,7 @@ import {
 import { getWeatherDuration, getTerrainDuration, getScreenDuration } from './team-battle-types';
 import { applyEndOfTurnStatus, clearStatus, applyStatus, applyStartOfTurnStatus, terrainPreventsStatus, cureTeamStatuses } from './team-battle-status';
 import { BattleRng, rngRollChance, rngNextInt, rngNextFloat } from './battle-rng';
-import { tryConsumeBerry, tryHarvestBerry, checkTypeResistBerry, removeHeldItem } from './team-battle-items';
+import { tryConsumeBerry, tryHarvestBerry, checkTypeResistBerry, removeHeldItem, applyOnHitBerries } from './team-battle-items';
 import { GRAVITY_BLOCKED_MOVES, PIVOT_MOVES, SELF_STATUS_MOVES } from './battle-move-constants';
 import { prepareLiveDamageModifiers, toDamageTypeName } from './battle-damage-modifiers';
 import { COUNTER_MOVES, getCounterDamage, moveFailsTryCondition, recordDamageTaken } from './team-battle-move-conditions';
@@ -65,6 +65,7 @@ import { OHKO_MOVES, ohkoFailure, ohkoHitChance, terrainPulseVariant, weatherBal
 import { transformBlocked, transformInto } from './team-battle-transform';
 import { breakIllusion, maskIllusions, startIllusion } from './team-battle-illusion';
 import { applyIceFaceStats, applyStanceChange, updateHpForms } from './team-battle-forms';
+import { SOUND_MOVES, isTrapped, itemAccuracyMultiplier, itemPowerMultiplier, loadedDiceHits, makesContactFor, umbrellaBlocksWeather } from './team-battle-held-items';
 
 // Process start-of-turn effects
 export async function processStartOfTurn(state: BattleState): Promise<void> {
@@ -175,6 +176,11 @@ export async function resolveSwitch(state: BattleState, action: BattleState['act
   
   // Clear some volatiles from outgoing Pokemon
   const currentPokemon = getCurrentPokemon(team);
+  // Bound Pokémon cannot switch (Ghost types and Shed Shell holders can)
+  if (isTrapped(currentPokemon)) {
+    state.battleLog.push({ type: 'status_effect', message: `${currentPokemon.pokemon.name} can't escape!`, pokemon: currentPokemon.pokemon.name });
+    return;
+  }
   currentPokemon.volatile.protect = undefined;
   currentPokemon.volatile.flinched = false;
   maskIllusions(state);
@@ -304,8 +310,11 @@ export async function resolveMove(state: BattleState, action: BattleState['actio
     return;
   }
 
-  // Charge turn: no accuracy check / no damage
-  if (startingTwoTurn) {
+  // Power Herb: two-turn moves skip their charge turn (once)
+  if (startingTwoTurn && effectiveItem(attacker) === 'power-herb') {
+    removeHeldItem(attacker);
+    state.battleLog.push({ type: 'status_effect', message: `${attacker.pokemon.name} became fully charged due to its Power Herb!`, pokemon: attacker.pokemon.name });
+  } else if (startingTwoTurn) {
     consumePpForMove(attacker, moveId);
     state.battleLog.push({
       type: 'move_used',
@@ -359,10 +368,16 @@ export async function resolveMove(state: BattleState, action: BattleState['actio
     const accStage = attacker.statModifiers?.accuracy ?? 0;
     const evaStage = defender.statModifiers?.evasion ?? 0;
     const mult = getAccuracyMultiplier(accStage - evaStage);
+    // Zoom Lens: did the target already act this turn?
+    const defenderSide = action.user === 'player' ? 'opponent' : 'player';
+    const queueNow = state.actionQueue ?? [];
+    const idxNow = queueNow.indexOf(action);
+    const targetAlreadyMoved = idxNow >= 0 && !queueNow.slice(idxNow + 1).some((a) => a.user === defenderSide);
     // OHKO moves ignore stat stages and use the level gap; Gravity boosts everything else x5/3
     const hitChance = OHKO_MOVES.has(moveLower)
       ? ohkoHitChance(attacker, defender, moveLower)
-      : (move.accuracy / 100) * mult * (state.field.rooms?.gravity ? 5 / 3 : 1);
+      : (move.accuracy / 100) * mult * (state.field.rooms?.gravity ? 5 / 3 : 1) * itemAccuracyMultiplier(attacker, defender, targetAlreadyMoved);
+    attacker.volatile.micleBoost = undefined;
     if (!rngRollChance(state.rng, hitChance)) {
       consumePpForMove(attacker, moveId);
       state.battleLog.push({
@@ -376,6 +391,12 @@ export async function resolveMove(state: BattleState, action: BattleState['actio
         message: `${attacker.pokemon.name}'s attack missed!`,
         pokemon: attacker.pokemon.name
       });
+      // Blunder Policy: a miss sharply raises Speed (not for one-hit KO moves)
+      if (effectiveItem(attacker) === 'blunder-policy' && !OHKO_MOVES.has(moveLower)) {
+        removeHeldItem(attacker);
+        state.battleLog.push({ type: 'status_effect', message: `${attacker.pokemon.name} used its Blunder Policy!`, pokemon: attacker.pokemon.name });
+        changeStatStage(state, attacker, 'speed', 2);
+      }
       // Miss still advances an already-active rampage lock
       if (attacker.volatile.rampage?.move === moveLower) {
         applyRampageAfterHit(state, attacker, moveId, state.rng);
@@ -389,11 +410,54 @@ export async function resolveMove(state: BattleState, action: BattleState['actio
 
   await executeMoveAction(state, attacker, defender, moveId, action.user === 'player', action.user);
 
+  // Throat Spray: using a sound move raises Sp. Atk
+  if (SOUND_MOVES.has(moveLower) && attacker.currentHp > 0 && effectiveItem(attacker) === 'throat-spray') {
+    removeHeldItem(attacker);
+    changeStatStage(state, attacker, 'specialAttack', 1, { reason: 'thanks to its Throat Spray' });
+  }
+  afterActionItemChecks(state);
+
   // White Herb restores lowered stats once the move's effects have settled (Shell Smash, Intimidate, ...)
   checkWhiteHerb(state, getCurrentPokemon(state.player));
   checkWhiteHerb(state, getCurrentPokemon(state.opponent));
   // Eject Pack: any lowered stat sends the holder out (the player may pick)
   await checkEjectPacks(state, true);
+}
+
+/**
+ * Item reactions once an action settles: Mental Herb (Taunt / Encore / Disable), Mirror Herb (copy the
+ * foe's new boosts), and berries (status cures, Leppa, pinch berries) for both active Pokémon.
+ */
+function afterActionItemChecks(state: BattleState): void {
+  const sides = ['player', 'opponent'] as const;
+  for (const side of sides) {
+    const mon = getCurrentPokemon(side === 'player' ? state.player : state.opponent);
+    if (mon.currentHp <= 0) continue;
+    if (effectiveItem(mon) === 'mental-herb' && (mon.volatile.taunt || mon.volatile.encore || mon.volatile.disable)) {
+      mon.volatile.taunt = undefined;
+      mon.volatile.encore = undefined;
+      mon.volatile.disable = undefined;
+      removeHeldItem(mon);
+      state.battleLog.push({ type: 'status_effect', message: `${mon.pokemon.name} cured its restrictions using its Mental Herb!`, pokemon: mon.pokemon.name });
+    }
+  }
+  for (const side of sides) {
+    const mon = getCurrentPokemon(side === 'player' ? state.player : state.opponent);
+    const foe = getCurrentPokemon(side === 'player' ? state.opponent : state.player);
+    const boosts = foe.volatile.recentBoosts;
+    if (mon.currentHp > 0 && boosts && effectiveItem(mon) === 'mirror-herb') {
+      removeHeldItem(mon);
+      state.battleLog.push({ type: 'status_effect', message: `${mon.pokemon.name} used its Mirror Herb to mirror its opponent's stat changes!`, pokemon: mon.pokemon.name });
+      for (const [stat, amount] of Object.entries(boosts)) {
+        if (amount) changeStatStage(state, mon, stat as keyof BattlePokemon['statModifiers'], amount);
+      }
+    }
+  }
+  for (const side of sides) {
+    const mon = getCurrentPokemon(side === 'player' ? state.player : state.opponent);
+    mon.volatile.recentBoosts = undefined;
+    tryConsumeBerry(state, mon, side);
+  }
 }
 
 /** Eject Pack holders whose stats were lowered switch out (consuming the pack). */
@@ -537,6 +601,8 @@ function applyMoveSecondaryStatChanges(
   state: BattleState, move: any,
   attacker: BattlePokemon, defender: BattlePokemon,
   isSecondary = false,
+  /** Covert Cloak: skip changes aimed at the defender. */
+  defenderShielded = false,
 ): void {
   if (!move.statChanges || move.statChanges.length === 0) return;
   const selfDrop = SELF_STAT_DROP_MOVES.has(move.name?.toLowerCase?.() ?? '');
@@ -552,6 +618,7 @@ function applyMoveSecondaryStatChanges(
     else target = sc.stages > 0 ? attacker : defender;
     const statName = STAT_ABBR_TO_NAME[sc.stat];
     if (!statName) continue;
+    if (defenderShielded && target === defender) continue;
     changeStatStage(state, target, statName, sc.stages, {
       source: attacker,
       // Chance-based riders on attacks fail silently; status moves announce "won't go any higher"
@@ -630,6 +697,14 @@ const scriptedStatusMoveHandlers: Record<string, ScriptedStatusMoveHandler> = {
     } else {
       state.field.rooms.trickRoom = { turns: 5 };
       state.battleLog.push({ type: 'status_effect', message: `${attacker.pokemon.name} twisted the dimensions!` });
+      // Room Service: -1 Speed when Trick Room starts
+      for (const team of [state.player, state.opponent]) {
+        const mon = getCurrentPokemon(team);
+        if (mon.currentHp > 0 && effectiveItem(mon) === 'room-service') {
+          removeHeldItem(mon);
+          changeStatStage(state, mon, 'speed', -1, { reason: 'due to its Room Service' });
+        }
+      }
     }
     return true;
   },
@@ -881,6 +956,14 @@ async function requestPivotSwitch(
   return performPivotSwitch(state, user, options);
 }
 
+/** Items consumed for +1 to a stat when hit by a move of their type. */
+const TYPE_HIT_ITEMS: Record<string, { type: string; stat: keyof BattlePokemon['statModifiers']; label: string }> = {
+  'absorb-bulb': { type: 'water', stat: 'specialAttack', label: 'Absorb Bulb' },
+  'cell-battery': { type: 'electric', stat: 'attack', label: 'Cell Battery' },
+  'snowball': { type: 'ice', stat: 'attack', label: 'Snowball' },
+  'luminous-moss': { type: 'water', stat: 'specialDefense', label: 'Luminous Moss' },
+};
+
 /** Protean / Libero: the user becomes the move's type before acting (once per entry; not while Terastallized). */
 function applyProtean(state: BattleState, mon: BattlePokemon, moveTypeRaw: string, moveLower: string): void {
   const ability = abilityOf(mon);
@@ -1117,6 +1200,10 @@ async function executeMoveAction(
 ): Promise<void> {
   if (!reflected) {
     consumePpForMove(attacker, moveId);
+
+    // Metronome (item): +20% per consecutive use of the same move
+    attacker.volatile.metronomeStreak =
+      attacker.volatile.lastMoveUsed?.toLowerCase() === moveId.toLowerCase() ? (attacker.volatile.metronomeStreak ?? 0) + 1 : 0;
 
     if (moveId.toLowerCase() !== 'struggle') {
       attacker.volatile.lastMoveUsed = moveId;
@@ -1448,7 +1535,12 @@ async function executeMoveAction(
   const sheerForce = abilityOf(attacker) === 'sheer-force' && hasSheerForceSecondary(move, moveLower);
   
   // Determine number of hits
-  const hitCount = determineHitCount(move, attacker, state.rng);
+  const hitCount = move.hits && move.hits.min !== move.hits.max
+    ? loadedDiceHits(attacker, move.hits.min, move.hits.max, state.rng) ?? determineHitCount(move, attacker, state.rng)
+    : determineHitCount(move, attacker, state.rng);
+  /** Last hit's type effectiveness (Enigma Berry). */
+  let lastEffectiveness = 1;
+  const contact = makesContactFor(attacker, move, moveLower);
   let totalDamageDealt = 0;
   /** Damage that reached the defender's HP (not a Substitute) — feeds Counter / Mirror Coat / Metal Burst. */
   let hpDamageDealt = 0;
@@ -1554,12 +1646,14 @@ async function executeMoveAction(
       rng: state.rng,
       move,
       moveId,
-      weatherKind: state.field.weather?.kind,
+      // Utility Umbrella: sun / rain do not change this hit
+      weatherKind: umbrellaBlocksWeather(state, attacker, defender) ? undefined : state.field.weather?.kind,
       terrainKind: state.field.terrain?.kind,
       attacker,
       defender,
     });
     if (sheerForce) prep.powerMultiplier *= 1.3;
+    prep.powerMultiplier *= itemPowerMultiplier(attacker, move.category, moveLower);
     // ...and their stat stages come from the same stat (critical hits ignore drops)
     if (moveLower === 'foul-play' || moveLower === 'body-press') {
       const stage = moveLower === 'foul-play' ? defender.statModifiers.attack : attacker.statModifiers.defense;
@@ -1613,7 +1707,8 @@ async function executeMoveAction(
     });
     
     let damage = damageResult.damage;
-    const superEffective = (damageResult.effectiveness ?? 1) > 1;
+    lastEffectiveness = damageResult.effectiveness ?? 1;
+    const superEffective = lastEffectiveness > 1;
 
     // Type-resist berries (Unnerve-aware)
     const berryMult = checkTypeResistBerry(
@@ -1681,7 +1776,7 @@ async function executeMoveAction(
     actualHits++;
     
     // Trigger contact abilities per hit (Rough Skin, Iron Barbs, Static, etc.)
-    if (move.makesContact) {
+    if (contact) {
       const defenderAbility = defender.currentAbility?.toLowerCase();
       
       // Rough Skin / Iron Barbs: 1/8 max HP recoil
@@ -1856,7 +1951,8 @@ async function executeMoveAction(
   // Apply drain healing (Giga Drain, Drain Punch, etc.)
   if (move.drain && totalDamageDealt > 0) {
     const drainFraction = move.drain.fraction || 0.5; // Default 50%
-    const healAmount = Math.max(1, Math.floor(totalDamageDealt * drainFraction));
+    const bigRoot = effectiveItem(attacker) === 'big-root' ? 1.3 : 1;
+    const healAmount = Math.max(1, Math.floor(totalDamageDealt * drainFraction * bigRoot));
     const oldHp = attacker.currentHp;
     attacker.currentHp = Math.min(attacker.maxHp, attacker.currentHp + healAmount);
     const actualHeal = attacker.currentHp - oldHp;
@@ -1901,15 +1997,33 @@ async function executeMoveAction(
   // Apply secondary effects from damaging moves (ailments, stat changes, flinch)
   // Substitute blocks most secondary effects when it absorbed the hit
   if (defender.currentHp > 0 && !hitSubstitute) {
+    // Covert Cloak protects the holder from secondary effects
+    const cloaked = effectiveItem(defender) === 'covert-cloak';
     if (!sheerForce) {
-      applyMoveAilment(state, move, attacker, defender, true);
-      applyMoveSecondaryStatChanges(state, move, attacker, defender, true);
-      applyMoveFlinch(state, move, defender);
+      if (!cloaked) applyMoveAilment(state, move, attacker, defender, true);
+      applyMoveSecondaryStatChanges(state, move, attacker, defender, true, cloaked);
+      if (!cloaked) applyMoveFlinch(state, move, defender);
     } else if (SELF_STAT_DROP_MOVES.has(moveLower)) {
       // Not a secondary effect: Close Combat's drops still apply (and such moves are never boosted)
       applyMoveSecondaryStatChanges(state, move, attacker, defender, true);
     }
-    applyBindingOnHit(state, moveId.toLowerCase(), defender);
+    // King's Rock / Razor Fang: 10% flinch on hits from moves without their own flinch chance
+    const attackerItemNow = effectiveItem(attacker);
+    if ((attackerItemNow === 'kings-rock' || attackerItemNow === 'razor-fang') && !cloaked && hpDamageDealt > 0
+        && move.ailment?.kind !== 'flinch' && rngRollChance(state.rng, 0.1)) {
+      defender.volatile.flinched = true;
+    }
+    applyBindingOnHit(state, moveId.toLowerCase(), defender, attacker);
+  }
+
+  // Items that react to being hit by a move type (Absorb Bulb, Cell Battery, Snowball, Luminous Moss)
+  if (hpDamageDealt > 0 && defender.currentHp > 0 && !hitSubstitute) {
+    const reaction = TYPE_HIT_ITEMS[effectiveItem(defender) ?? ''];
+    if (reaction && String(move.type).toLowerCase() === reaction.type) {
+      removeHeldItem(defender);
+      changeStatStage(state, defender, reaction.stat, 1, { reason: `thanks to its ${reaction.label}` });
+    }
+    applyOnHitBerries(state, attacker, defender, user === 'player' ? 'opponent' : 'player', move.category, lastEffectiveness);
   }
 
   // Salt Cure: residual damage every turn until the target leaves the field
@@ -2089,6 +2203,7 @@ export async function runEntrySequence(state: BattleState, switchingSide: 'playe
   checkWhiteHerb(state, getCurrentPokemon(state.opponent));
   updateParadoxBoosts(state);
   updateHpForms(state, incomingPokemon);
+  afterActionItemChecks(state);
   // Switching in during snow restores Ice Face
   restoreIceFaces(state);
   // Eject Pack from entry effects (Intimidate, Sticky Web): the player picks while actions resolve;
@@ -2159,6 +2274,20 @@ export async function runBattleTurnFromQueue(
   for (const action of queue) {
     if (action.type === 'move' && action.terastallize) terastallize(state, action.user);
   }
+  // Quick Claw / Custap Berry (rolled when the queue was built)
+  for (const action of queue) {
+    if (action.type !== 'move' || !action.moveFirst) continue;
+    const mon = getCurrentPokemon(action.user === 'player' ? state.player : state.opponent);
+    if (action.moveFirst === 'custap-berry') removeHeldItem(mon);
+    state.battleLog.push({
+      type: 'status_effect',
+      message: action.moveFirst === 'quick-claw'
+        ? `${mon.pokemon.name}'s Quick Claw let it move first!`
+        : `${mon.pokemon.name} can act faster than normal, thanks to its Custap Berry!`,
+      pokemon: mon.pokemon.name,
+    });
+  }
+
   // Focus Punch users tighten their focus before anything else happens
   for (const action of queue) {
     if (action.type === 'move' && action.moveId?.toLowerCase() === 'focus-punch') {

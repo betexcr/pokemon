@@ -15,6 +15,7 @@ import { applyFaintReplacements, isBlockedByGravity, resumeBattleTurnAfterSwitch
 import { createBattleRng } from '@/lib/battle-rng';
 import { createFieldState, EMPTY_HAZARDS } from '@/lib/team-battle-types';
 import { sanitizeBattleItem } from '@/lib/battle-items-catalog';
+import { isTrapped } from '@/lib/team-battle-held-items';
 import { displayTypes, publicBenchEntries } from '@/lib/team-battle-illusion';
 import { canTerastallize, resolveTeraType } from '@/lib/team-battle-tera';
 import { getCachedMove } from '@/lib/moveCache';
@@ -631,6 +632,7 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
     if (replacement) return replacement.options;
     const active = getCurrentPokemon(battleState.player);
     if (getForcedBattleMoveId(active)) return [];
+    if (isTrapped(active)) return []; // bound (Shed Shell / Ghost types can still switch)
     return battleState.player.pokemon
       .map((p, i) => ({ p, i }))
       .filter(({ p, i }) => i !== battleState.player.currentIndex && p.currentHp > 0)

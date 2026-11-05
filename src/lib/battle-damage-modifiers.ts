@@ -2,6 +2,7 @@
  * Pure helpers for the live damage path (`executeMoveAction` → `calculateComprehensiveDamage`).
  * Behavior must match the previous inline prep in team-battle-engine-additional.ts.
  */
+import { itemCritStages } from './team-battle-held-items';
 import { effectiveItem } from './battle-item-access';
 import { targetAbility } from './team-battle-ability-rules';
 import { paradoxMultiplier } from './team-battle-paradox';
@@ -221,7 +222,8 @@ export function prepareLiveDamageModifiers(params: {
   const crit = resolveCritAndStatStages({
     rng,
     isPhysical,
-    critRateStage: typeof move.critRateStage === 'number' ? move.critRateStage : 0,
+    // Scope Lens / Razor Claw / Lansat Berry add critical-hit stages
+    critRateStage: (typeof move.critRateStage === 'number' ? move.critRateStage : 0) + itemCritStages(attacker),
     attacker,
     defender,
   });

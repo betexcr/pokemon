@@ -67,6 +67,11 @@ export function handleOnEntryAbilities(state: BattleState, side: 'player' | 'opp
       // Clear Body / Hyper Cutter blocking, Contrary, Defiant / Competitive and White Herb (after entry)
       // are handled by the shared stat-stage logic.
       changeStatStage(state, opponentActive, 'attack', -1, { source: incoming, reason: 'due to Intimidate' });
+      // Adrenaline Orb: being Intimidated raises Speed
+      if (opponentActive.currentHp > 0 && effectiveItem(opponentActive) === 'adrenaline-orb') {
+        opponentActive.heldItem = undefined;
+        changeStatStage(state, opponentActive, 'speed', 1, { reason: 'thanks to its Adrenaline Orb' });
+      }
       break;
     }
     case 'imposter': {

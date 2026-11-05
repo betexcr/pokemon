@@ -1,6 +1,7 @@
 // Ability lookups that depend on who is acting (Mold Breaker family).
 
 import type { BattlePokemon } from './team-battle-engine';
+import { effectiveItem } from './battle-item-access';
 
 /** Abilities that let the user's moves ignore the target's "breakable" abilities. */
 export const MOLD_BREAKER_ABILITIES = new Set(['mold-breaker', 'teravolt', 'turboblaze']);
@@ -39,7 +40,8 @@ export function hasMoldBreaker(pokemon: BattlePokemon | undefined): boolean {
 export function targetAbility(attacker: BattlePokemon | undefined, target: BattlePokemon): string | undefined {
   const ability = abilityOf(target);
   if (!ability) return undefined;
-  if (attacker && attacker !== target && hasMoldBreaker(attacker) && BREAKABLE_ABILITIES.has(ability)) {
+  // Ability Shield keeps the holder's ability from being ignored
+  if (attacker && attacker !== target && hasMoldBreaker(attacker) && BREAKABLE_ABILITIES.has(ability) && effectiveItem(target) !== 'ability-shield') {
     return undefined;
   }
   return ability;

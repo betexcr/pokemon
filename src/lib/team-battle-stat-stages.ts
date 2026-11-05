@@ -79,6 +79,18 @@ export function changeStatStage(
   if (ability === 'contrary') amount = -amount;
   if (ability === 'simple') amount *= 2;
 
+  // Clear Amulet blocks every stat drop caused by a foe
+  if (amount < 0 && fromFoe && effectiveItem(target) === 'clear-amulet') {
+    if (!quietFailure) {
+      state.battleLog.push({
+        type: 'status_effect',
+        message: `${name}'s Clear Amulet prevents its stats from being lowered!`,
+        pokemon: name,
+      });
+    }
+    return 0;
+  }
+
   if (amount < 0 && fromFoe && ability) {
     const all = ALL_DROP_BLOCKERS[ability];
     const single = SINGLE_DROP_BLOCKERS[ability];
@@ -109,6 +121,10 @@ export function changeStatStage(
   }
   target.statModifiers[stat] = after;
   if (delta < 0 && effectiveItem(target) === 'eject-pack') target.volatile.ejectPackPending = true;
+  // Mirror Herb on the other side copies boosts gained this action
+  if (delta > 0) {
+    target.volatile.recentBoosts = { ...(target.volatile.recentBoosts ?? {}), [stat]: (target.volatile.recentBoosts?.[stat] ?? 0) + delta };
+  }
   state.battleLog.push({
     type: 'status_effect',
     message: `${name}'s ${STAT_DISPLAY[stat]} ${describeChange(delta)}${reason ? ` ${reason}` : ''}!`,

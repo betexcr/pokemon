@@ -2,13 +2,26 @@ import { effectiveItem } from './battle-item-access';
 import { changeStatStage } from './team-battle-stat-stages';
 import { BattlePokemon, BattleState, BattleTeam } from './team-battle-engine';
 import { clearStatus } from './team-battle-status';
-import { rngRollChance } from './battle-rng';
+import { rngNextInt, rngRollChance } from './battle-rng';
 
 function teamHasUnnerveOnField(team: BattleTeam): boolean {
   return team.pokemon.some(
     (p) => p.currentHp > 0 && p.currentAbility?.toLowerCase() === 'unnerve'
   );
 }
+
+/** Berries that cure one status (or confusion). */
+export const STATUS_CURE_BERRIES: Record<string, Array<NonNullable<BattlePokemon['status']>> | 'confusion'> = {
+  'cheri-berry': ['paralyzed'],
+  'chesto-berry': ['asleep'],
+  'pecha-berry': ['poisoned', 'badly-poisoned'],
+  'rawst-berry': ['burned'],
+  'aspear-berry': ['frozen'],
+  'persim-berry': 'confusion',
+};
+
+/** Berries that heal 1/3 max HP at 1/4 HP. */
+export const THIRD_HEAL_BERRIES: ReadonlySet<string> = new Set(['figy-berry', 'wiki-berry', 'mago-berry', 'aguav-berry', 'iapapa-berry']);
 
 export const STAT_BOOST_BERRIES: Record<string, keyof BattlePokemon['statModifiers']> = {
   'liechi-berry': 'attack',
@@ -133,6 +146,70 @@ export function tryConsumeBerry(
     return;
   }
 
+  // Status-curing berries
+  const cure = STATUS_CURE_BERRIES[item];
+  if (cure) {
+    if (cure === 'confusion') {
+      if (!target.volatile.confusion) return;
+      target.volatile.confusion = undefined;
+    } else {
+      if (!target.status || !cure.includes(target.status)) return;
+      clearStatus(target);
+    }
+    consumeItem(target);
+    state.battleLog.push({
+      type: 'status_effect',
+      message: `${target.pokemon.name}'s ${formatBerryName(item)} cured its ${cure === 'confusion' ? 'confusion' : 'status'}!`,
+      pokemon: target.pokemon.name,
+    });
+    return;
+  }
+
+  // Leppa Berry: restores 10 PP to a move that ran out
+  if (item === 'leppa-berry') {
+    const empty = target.moves.find((m) => m.pp <= 0);
+    if (!empty) return;
+    empty.pp = Math.min(empty.maxPp, empty.pp + 10);
+    consumeItem(target);
+    state.battleLog.push({ type: 'status_effect', message: `${target.pokemon.name} restored PP to ${empty.id} with its Leppa Berry!`, pokemon: target.pokemon.name });
+    return;
+  }
+
+  const atQuarter = target.currentHp <= Math.floor(target.maxHp / 4);
+
+  // Figy / Wiki / Mago / Aguav / Iapapa: heal 1/3 at 1/4 HP
+  if (THIRD_HEAL_BERRIES.has(item)) {
+    if (!atQuarter) return;
+    const heal = Math.floor(target.maxHp / 3);
+    target.currentHp = Math.min(target.maxHp, target.currentHp + heal);
+    consumeItem(target);
+    state.battleLog.push({
+      type: 'healing',
+      message: `${target.pokemon.name} restored HP with its ${formatBerryName(item)}!`,
+      pokemon: target.pokemon.name,
+      healing: Math.round((heal / target.maxHp) * 100),
+    });
+    return;
+  }
+
+  // Lansat (+2 crit stages), Starf (a random stat +2), Micle (next move's accuracy x1.2) at 1/4 HP
+  if (item === 'lansat-berry' || item === 'starf-berry' || item === 'micle-berry') {
+    if (!atQuarter) return;
+    consumeItem(target);
+    if (item === 'lansat-berry') {
+      target.volatile.critBoost = 2;
+      state.battleLog.push({ type: 'status_effect', message: `${target.pokemon.name} used its Lansat Berry to get pumped!`, pokemon: target.pokemon.name });
+    } else if (item === 'micle-berry') {
+      target.volatile.micleBoost = true;
+      state.battleLog.push({ type: 'status_effect', message: `${target.pokemon.name} boosted the accuracy of its next move using its Micle Berry!`, pokemon: target.pokemon.name });
+    } else {
+      const stats = ['attack', 'defense', 'specialAttack', 'specialDefense', 'speed'] as const;
+      const open = stats.filter((st) => target.statModifiers[st] < 6);
+      if (open.length) changeStatStage(state, target, open[rngNextInt(state.rng, open.length)], 2, { reason: 'thanks to its Starf Berry' });
+    }
+    return;
+  }
+
   // Stat-boosting berries: +1 stat at 25% HP
   if (item in STAT_BOOST_BERRIES) {
     const threshold = Math.floor(target.maxHp / 4);
@@ -142,6 +219,50 @@ export function tryConsumeBerry(
       changeStatStage(state, target, stat, 1, { reason: `thanks to its ${formatBerryName(item)}` });
     }
     return;
+  }
+}
+
+/**
+ * Berries that react to being hit (after damage): Kee (+1 Def on a physical hit), Maranga (+1 Sp. Def on a
+ * special hit), Jaboca / Rowap (attacker loses 1/8 on a physical / special hit), Enigma (heal 1/4 on a
+ * super-effective hit). Unnerve blocks them.
+ */
+export function applyOnHitBerries(
+  state: BattleState,
+  attacker: BattlePokemon,
+  target: BattlePokemon,
+  targetSide: 'player' | 'opponent',
+  category: string,
+  effectiveness: number,
+): void {
+  const item = effectiveItem(target);
+  if (!item || target.currentHp <= 0) return;
+  const foe = targetSide === 'player' ? state.opponent : state.player;
+  if (teamHasUnnerveOnField(foe)) return;
+  const physical = category === 'Physical';
+  const special = category === 'Special';
+
+  if ((item === 'kee-berry' && physical) || (item === 'maranga-berry' && special)) {
+    consumeItem(target);
+    changeStatStage(state, target, item === 'kee-berry' ? 'defense' : 'specialDefense', 1, { reason: `thanks to its ${formatBerryName(item)}` });
+    return;
+  }
+  if (((item === 'jaboca-berry' && physical) || (item === 'rowap-berry' && special)) && attacker.currentHp > 0) {
+    consumeItem(target);
+    const chip = Math.max(1, Math.floor(attacker.maxHp / 8));
+    attacker.currentHp = Math.max(0, attacker.currentHp - chip);
+    state.battleLog.push({
+      type: 'status_damage',
+      message: `${attacker.pokemon.name} was hurt by ${target.pokemon.name}'s ${formatBerryName(item)}!`,
+      pokemon: attacker.pokemon.name,
+    });
+    return;
+  }
+  if (item === 'enigma-berry' && effectiveness > 1) {
+    consumeItem(target);
+    const heal = Math.floor(target.maxHp / 4);
+    target.currentHp = Math.min(target.maxHp, target.currentHp + heal);
+    state.battleLog.push({ type: 'healing', message: `${target.pokemon.name} restored HP with its Enigma Berry!`, pokemon: target.pokemon.name });
   }
 }
 
