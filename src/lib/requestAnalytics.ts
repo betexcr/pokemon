@@ -103,10 +103,10 @@ class RequestAnalyticsManager {
         ? responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length
         : 0,
       slowestRequest: sortedCompleted.length > 0
-        ? { url: sortedCompleted[sortedCompleted.length - 1]?.url, time: sortedCompleted[sortedCompleted.length - 1]?.responseTime }
+        ? { url: sortedCompleted[sortedCompleted.length - 1]?.url, time: sortedCompleted[sortedCompleted.length - 1]?.responseTime ?? 0 }
         : null,
       fastestRequest: sortedCompleted.length > 0
-        ? { url: sortedCompleted[0]?.url, time: sortedCompleted[0]?.responseTime }
+        ? { url: sortedCompleted[0]?.url, time: sortedCompleted[0]?.responseTime ?? 0 }
         : null,
       requestsByContext,
       requestsByPriority,

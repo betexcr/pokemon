@@ -9,7 +9,7 @@ import { applyVolatileAndHazardScripts, setTailwind, clearSideHazards } from '..
 import { applyEntryHazards } from '../team-battle-hazards';
 import { checkTypeResistBerry, removeHeldItem } from '../team-battle-items';
 import { calculateComprehensiveDamage } from '../damage-calculator';
-import { createBattleRng } from '../battle-rng';
+import { createBattleRng, createBattleRngFromBattleKey } from '../battle-rng';
 import { createFieldState, EMPTY_HAZARDS } from '../team-battle-types';
 import { processEndOfTurn } from '../team-battle-engine-additional';
 
@@ -78,7 +78,7 @@ function makeState(overrides: Partial<BattleState> = {}): BattleState {
     field: createFieldState(),
     battleLog: [],
     actionQueue: [],
-    rng: createBattleRng('m1-m3'),
+    rng: createBattleRngFromBattleKey('m1-m3', 1),
     isComplete: false,
     phase: 'choice',
     ...overrides,
@@ -101,7 +101,7 @@ describe('M1 volatiles + hazards', () => {
 
     def.volatile.disable = undefined;
     expect(applyVolatileAndHazardScripts(state, 'disable', atk, def, true)).toBe(true);
-    expect(def.volatile.disable?.move).toBe('tackle');
+    expect((def.volatile as BattlePokemon['volatile']).disable?.move).toBe('tackle');
 
     expect(applyVolatileAndHazardScripts(state, 'leech-seed', atk, def, true)).toBe(true);
     expect(def.volatile.leechSeed).toBe(true);
@@ -167,7 +167,7 @@ describe('M2 speed + Choice', () => {
   });
 
   it('choiceLock blocks other moves; Assault Vest blocks status', () => {
-    const rng = createBattleRng('choice');
+    const rng = createBattleRngFromBattleKey('choice', 1);
     const locked = makePokemon({
       heldItem: 'choice-band',
       volatile: { choiceLock: 'tackle' },
@@ -209,7 +209,7 @@ describe('M3 damage + resist berries', () => {
   });
 
   it('Guts boosts attack; Technician boosts low BP; Unaware ignores foe Def stages', () => {
-    const rng = createBattleRng('dmg');
+    const rng = createBattleRngFromBattleKey('dmg', 1);
     const base = calculateComprehensiveDamage({
       level: 50,
       movePower: 60,
@@ -223,7 +223,7 @@ describe('M3 damage + resist berries', () => {
       isPhysical: true,
       isBurned: true,
       hasGuts: false,
-      rng: createBattleRng('a'),
+      rng: createBattleRngFromBattleKey('a', 1),
       precomputedCrit: false,
     });
     const guts = calculateComprehensiveDamage({
@@ -237,7 +237,7 @@ describe('M3 damage + resist berries', () => {
       isPhysical: true,
       isBurned: true,
       hasGuts: true,
-      rng: createBattleRng('a'),
+      rng: createBattleRngFromBattleKey('a', 1),
       precomputedCrit: false,
     });
     expect(guts.damage).toBeGreaterThan(base.damage);
@@ -253,7 +253,7 @@ describe('M3 damage + resist berries', () => {
       defenseStat: 100,
       isPhysical: true,
       powerMultiplier: 1,
-      rng: createBattleRng('t'),
+      rng: createBattleRngFromBattleKey('t', 1),
       precomputedCrit: false,
     });
     const noTech = calculateComprehensiveDamage({
@@ -265,7 +265,7 @@ describe('M3 damage + resist berries', () => {
       attackStat: 100,
       defenseStat: 100,
       isPhysical: true,
-      rng: createBattleRng('t'),
+      rng: createBattleRngFromBattleKey('t', 1),
       precomputedCrit: false,
     });
     expect(tech.damage).toBeGreaterThan(noTech.damage);
@@ -294,7 +294,7 @@ describe('M3 damage + resist berries', () => {
       defenseStatStages: 2,
       ignoreDefenderStages: true,
       isPhysical: true,
-      rng: createBattleRng('m1-m3'),
+      rng: createBattleRngFromBattleKey('m1-m3', 1),
       precomputedCrit: false,
     });
     expect(unaware.damage).toBeGreaterThan(boostedDef.damage);
@@ -315,13 +315,13 @@ describe('M3 damage + resist berries', () => {
       ...shared,
       attackStatStages: -2,
       precomputedCrit: false,
-      rng: createBattleRng('c1'),
+      rng: createBattleRngFromBattleKey('c1', 1),
     });
     const critIgnores = calculateComprehensiveDamage({
       ...shared,
       attackStatStages: Math.max(0, -2),
       precomputedCrit: true,
-      rng: createBattleRng('c1'),
+      rng: createBattleRngFromBattleKey('c1', 1),
     });
     expect(critIgnores.damage).toBeGreaterThan(withNeg.damage);
   });
@@ -336,7 +336,7 @@ describe('M3 damage + resist berries', () => {
       attackStat: 100,
       defenseStat: 100,
       isPhysical: false,
-      rng: createBattleRng('av'),
+      rng: createBattleRngFromBattleKey('av', 1),
       precomputedCrit: false,
     });
     const vest = calculateComprehensiveDamage({
@@ -349,7 +349,7 @@ describe('M3 damage + resist berries', () => {
       defenseStat: 100,
       isPhysical: false,
       defenseMultiplier: 1.5,
-      rng: createBattleRng('av'),
+      rng: createBattleRngFromBattleKey('av', 1),
       precomputedCrit: false,
     });
     expect(vest.damage).toBeLessThan(base.damage);

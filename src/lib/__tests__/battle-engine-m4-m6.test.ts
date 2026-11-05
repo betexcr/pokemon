@@ -4,7 +4,7 @@ import { getMovePriority, applySwitchOutAbilities, getCurrentPokemon } from '../
 import { handleOnEntryAbilities } from '../team-battle-abilities';
 import { applyWeatherResidual, getWeatherDuration, getTerrainDuration, getScreenDuration } from '../team-battle-field';
 import { applyEndOfTurnStatus } from '../team-battle-status';
-import { createBattleRng } from '../battle-rng';
+import { createBattleRng, createBattleRngFromBattleKey } from '../battle-rng';
 import { createFieldState, EMPTY_HAZARDS } from '../team-battle-types';
 
 vi.mock('../moveCache', () => {
@@ -63,7 +63,7 @@ function makeState(overrides: Partial<BattleState> = {}): BattleState {
     field: createFieldState(),
     battleLog: [],
     actionQueue: [],
-    rng: createBattleRng('m4-m6'),
+    rng: createBattleRngFromBattleKey('m4-m6', 1),
     isComplete: false,
     phase: 'choice',
     ...overrides,

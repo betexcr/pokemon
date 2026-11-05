@@ -907,8 +907,8 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
       {showEndScreen && meta && (
         <BattleEndScreen
           winner={meta.winnerUid === meUid ? 'player' : meta.winnerUid === oppUid ? 'opponent' : null}
-          playerName={meta.players?.p1?.uid === meUid ? meta.players.p1.name : meta.players?.p2?.name || 'You'}
-          opponentName={meta.players?.p1?.uid === oppUid ? meta.players.p1.name : meta.players?.p2?.name || 'Opponent'}
+          playerName={(meta.players?.p1?.uid === meUid ? meta.players.p1.name : meta.players?.p2?.name) || 'You'}
+          opponentName={(meta.players?.p1?.uid === oppUid ? meta.players.p1.name : meta.players?.p2?.name) || 'Opponent'}
           endReason={meta.endedReason ?? undefined}
           battleStats={{
             turns: meta.turn,

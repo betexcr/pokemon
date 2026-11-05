@@ -1,7 +1,7 @@
 import { rtdbService, type RTDBBattleMeta, type RTDBBattlePublic, type RTDBBattlePrivate, type RTDBChoice } from './firebase-rtdb-service';
 import { BattlePokemon, BattleTeam, BattleState, BattleAction } from './team-battle-engine';
 import { battleRngFromStored, createBattleRng } from './battle-rng';
-import type { FieldState } from './team-battle-types';
+import { EMPTY_HAZARDS, type FieldState } from './team-battle-types';
 export class FirebaseRTDBBattleEngine {
   public readonly battleId: string;
   private meta: RTDBBattleMeta | null = null;
@@ -129,7 +129,7 @@ export class FirebaseRTDBBattleEngine {
 
   private convertToBattleTeam(teamData: any[], publicData: any, currentIndex: number): BattleTeam {
     if (!teamData.length || !publicData?.active) {
-      return { pokemon: [], currentIndex: 0, faintedCount: 0, sideConditions: {} };
+      return { pokemon: [], currentIndex: 0, faintedCount: 0, sideConditions: { screens: {}, hazards: { ...EMPTY_HAZARDS } } };
     }
 
     const benchSlotIndices = teamData.map((_, i) => i).filter((i) => i !== currentIndex);
@@ -183,7 +183,7 @@ export class FirebaseRTDBBattleEngine {
       pokemon,
       currentIndex,
       faintedCount: pokemon.filter((p) => p.currentHp <= 0).length,
-      sideConditions: {},
+      sideConditions: { screens: {}, hazards: { ...EMPTY_HAZARDS } },
     };
   }
 

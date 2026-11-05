@@ -13,6 +13,7 @@ import {
   type DataSnapshot
 } from 'firebase/database';
 import { rtdb } from './firebase';
+import type { FieldState } from './team-battle-types';
 import { createBattleRng, battleRngToStored } from './battle-rng';
 import { hpFromBase, sanitizeEvs } from './battle-evs';
 
@@ -51,6 +52,8 @@ export interface RTDBBattlePublic {
       p1: { reflect: number; lightScreen: number };
       p2: { reflect: number; lightScreen: number };
     };
+    weather?: FieldState['weather'];
+    terrain?: FieldState['terrain'];
   };
   p1: {
     active: {

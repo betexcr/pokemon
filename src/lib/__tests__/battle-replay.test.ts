@@ -6,8 +6,8 @@ import type { BattleState } from '../team-battle-engine';
 
 function makeState(seed: number): BattleState {
   return {
-    player: { pokemon: [], currentIndex: 0, faintedCount: 0, sideConditions: {} },
-    opponent: { pokemon: [], currentIndex: 0, faintedCount: 0, sideConditions: {} },
+    player: { pokemon: [], currentIndex: 0, faintedCount: 0, sideConditions: { screens: {}, hazards: { stealthRock: false, spikes: 0, toxicSpikes: 0, stickyWeb: false } } },
+    opponent: { pokemon: [], currentIndex: 0, faintedCount: 0, sideConditions: { screens: {}, hazards: { stealthRock: false, spikes: 0, toxicSpikes: 0, stickyWeb: false } } },
     turn: 1,
     rng: createBattleRng(seed),
     battleLog: [{ type: 'turn_start', message: 'Turn 1' }],

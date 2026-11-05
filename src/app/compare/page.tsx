@@ -22,6 +22,8 @@ export default function ComparePage() {
   const [sortBy, setSortBy] = useState<'total' | 'hp' | 'attack' | 'defense' | 'special-attack' | 'special-defense' | 'speed'>('total')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [highlightedPokemonId, setHighlightedPokemonId] = useState<number | null>(null)
+  // Bumped by "Retry" to run the loader again (it lives inside the effect)
+  const [reloadNonce, setReloadNonce] = useState(0)
 
   useEffect(() => {
     let cancelled = false
@@ -63,7 +65,7 @@ export default function ComparePage() {
 
     loadSelectedPokemon()
     return () => { cancelled = true }
-  }, [])
+  }, [reloadNonce])
 
   const removePokemon = (pokemonId: number) => {
     const newPokemons = pokemons.filter(p => p.id !== pokemonId)
@@ -147,7 +149,7 @@ export default function ComparePage() {
           <p className="text-red-500 dark:text-red-400 font-semibold mb-4">{error}</p>
           <button
             type="button"
-            onClick={() => loadSelectedPokemon()}
+            onClick={() => setReloadNonce((n) => n + 1)}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition-colors"
           >
             Try Again

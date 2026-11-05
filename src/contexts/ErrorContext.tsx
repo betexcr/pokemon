@@ -12,6 +12,7 @@ export interface ErrorInfo {
     page?: string
     component?: string
     action?: string
+    stack?: string
     data?: any
   }
   severity: 'low' | 'medium' | 'high' | 'critical'

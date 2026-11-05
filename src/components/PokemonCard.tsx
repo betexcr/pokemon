@@ -31,6 +31,7 @@ export default function PokemonCard({
     id: number;
     name: string;
     types: Array<{ type: { name: string } }>;
+    sprites?: { front_default?: string | null; other?: { 'official-artwork'?: { front_default?: string | null } } };
   };
   isFavorite: boolean;
   onToggleFavorite: (id: number) => void;

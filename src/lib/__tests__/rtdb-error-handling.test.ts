@@ -47,7 +47,7 @@ describe('RTDB Error Handling Tests', () => {
       await expect(rtdbService.updatePresence('test-uid', true))
         .rejects.toThrow('RTDB not initialized');
 
-      await expect(rtdbService.joinLobby('test-uid', 'us-central1', {}))
+      await expect(rtdbService.joinLobby('test-uid', 'us-central1', {} as never))
         .rejects.toThrow('RTDB not initialized');
 
       await expect(rtdbService.createBattle('battle-123', 'p1', 'P1', [], 'p2', 'P2', []))
@@ -156,7 +156,7 @@ describe('RTDB Error Handling Tests', () => {
       await expect(rtdbService.submitChoice('battle-123', 1, 'test-uid', null as any))
         .rejects.toThrow('Invalid choice data');
 
-      await expect(rtdbService.submitChoice('battle-123', 1, 'test-uid', {}))
+      await expect(rtdbService.submitChoice('battle-123', 1, 'test-uid', {} as never))
         .rejects.toThrow('Invalid choice data');
     });
   });
@@ -316,7 +316,7 @@ describe('RTDB Error Handling Tests', () => {
       await expect(rtdbService.updatePresence('test-uid', true))
         .rejects.toThrow('Presence update failed');
 
-      await expect(rtdbService.joinLobby('test-uid', 'us-central1', {}))
+      await expect(rtdbService.joinLobby('test-uid', 'us-central1', {} as never))
         .resolves.not.toThrow();
     });
 

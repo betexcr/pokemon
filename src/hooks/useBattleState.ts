@@ -12,7 +12,7 @@ type Meta = {
   createdAt: number | { ".sv": "timestamp" };
   format: "singles";
   ruleSet: "gen9-no-weather";
-  players: { p1: { uid: string }; p2: { uid: string } };
+  players: { p1: { uid: string; name?: string }; p2: { uid: string; name?: string } };
   phase: "choosing" | "resolving" | "ended";
   turn: number;
   version: number;
@@ -60,7 +60,7 @@ type PublicState = {
   };
 } & IdMap<{ active: PublicMon; benchPublic: Array<{ species: string; fainted: boolean; revealedMoves: string[] }> }>;
 
-type Move = { id: string; pp: number };
+type Move = { id: string; pp: number; maxPp?: number };
 type Pokemon = {
   species: string;
   level: number;
@@ -513,7 +513,7 @@ export function useBattleState(battleId: string): UseBattleState {
         const text = await response.text().catch(() => '');
         console.error('API Error (Non-JSON):', text);
         // Extract error from Next.js error page if possible (simple regex)
-        const match = text.match(/<pre>(.*?)<\/pre>/s);
+        const match = text.match(/<pre>([\s\S]*?)<\/pre>/);
         if (match && match[1]) {
              errorMessage = `Server Error: ${match[1].substring(0, 200)}...`;
         } else {

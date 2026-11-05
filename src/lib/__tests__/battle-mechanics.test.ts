@@ -4,7 +4,7 @@ import { canUseMove } from '../team-battle-engine';
 import { applyStartOfTurnStatus, applyEndOfTurnStatus, clearStatus, applyStatus, cureTeamStatuses } from '../team-battle-status';
 import { isGrounded } from '../team-battle-status';
 import { applyWeatherResidual, decrementFieldTimers } from '../team-battle-field';
-import { createBattleRng, BattleRng } from '../battle-rng';
+import { createBattleRng, BattleRng, createBattleRngFromBattleKey } from '../battle-rng';
 import { createFieldState, EMPTY_HAZARDS, FieldSideScreens } from '../team-battle-types';
 
 vi.mock('../moveCache', () => ({
@@ -63,7 +63,7 @@ function makeState(overrides: Partial<BattleState> = {}): BattleState {
     field: createFieldState(),
     battleLog: [],
     actionQueue: [],
-    rng: createBattleRng('test-seed'),
+    rng: createBattleRngFromBattleKey('test-seed', 1),
     ...overrides,
   } as BattleState;
 }

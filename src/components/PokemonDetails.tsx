@@ -21,6 +21,8 @@ interface PokemonDetailsProps {
   loading?: boolean
 }
 
+type MatchupGroup = { title: string; types: string[]; tone: 'danger' | 'ok' | 'immune' };
+
 export default function PokemonDetails({ pokemon, showHeader = true, className = '', loading: externalLoading }: PokemonDetailsProps) {
   const tabStateKey = `pokemon.details.tab.${pokemon.id}`
   const [abilities, setAbilities] = useState<{ name: string; is_hidden?: boolean; description?: string | null }[]>([])
@@ -31,7 +33,7 @@ export default function PokemonDetails({ pokemon, showHeader = true, className =
   const [isMythical, setIsMythical] = useState<boolean>(false)
   const [moves, setMoves] = useState<any[]>([])
   const [evolutionChain, setEvolutionChain] = useState<any[]>([])
-  const [typeMatchups, setTypeMatchups] = useState<any[]>([])
+  const [typeMatchups, setTypeMatchups] = useState<MatchupGroup[]>([])
   const [activeTab, setActiveTab] = useState<'stats' | 'moves' | 'evolution' | 'matchups'>(
     () => loadUiState<'stats' | 'moves' | 'evolution' | 'matchups'>(tabStateKey, 'stats')
   )
@@ -138,8 +140,8 @@ export default function PokemonDetails({ pokemon, showHeader = true, className =
           type.charAt(0).toUpperCase() + type.slice(1).toLowerCase()
         )
         
-        const matchups = getMatchup(defendingTypes)
-        setTypeMatchups(matchups)
+        // getMatchup returns buckets by multiplier; the titled groups are built below
+        const matchups = getMatchup(defendingTypes) as { x4: string[]; x2: string[]; x0_5: string[]; x0_25: string[]; x0: string[] }
         setLoadingMatchups(false)
 
         Promise.allSettled([movesPromise, evolutionPromise])
@@ -150,7 +152,7 @@ export default function PokemonDetails({ pokemon, showHeader = true, className =
         const quarterResists = matchups.x0_25.map(type => type.toLowerCase())
         const immune = matchups.x0.map(type => type.toLowerCase())
         
-        const matchupGroups = [
+        const matchupGroups: MatchupGroup[] = [
           ...(doubleWeak.length > 0 ? [{ title: "Double Weak (4×)", types: doubleWeak, tone: "danger" as const }] : []),
           ...(weakTo.length > 0 ? [{ title: "Weak to (2×)", types: weakTo, tone: "danger" as const }] : []),
           ...(resists.length > 0 ? [{ title: "Resists (0.5×)", types: resists, tone: "ok" as const }] : []),

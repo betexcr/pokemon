@@ -19,7 +19,7 @@ function slot(
       stats: [],
       weight: 100,
       abilities: [],
-    } as BattlePokemon['pokemon'],
+    } as unknown as BattlePokemon['pokemon'],
     level: 50,
     currentHp: hp,
     maxHp: max,
@@ -41,8 +41,8 @@ function slot(
 
 function st(player: BattlePokemon, opp: BattlePokemon): BattleState {
   return {
-    player: { pokemon: [player], currentIndex: 0, faintedCount: 0, sideConditions: {} },
-    opponent: { pokemon: [opp], currentIndex: 0, faintedCount: 0, sideConditions: {} },
+    player: { pokemon: [player], currentIndex: 0, faintedCount: 0, sideConditions: { screens: {}, hazards: { stealthRock: false, spikes: 0, toxicSpikes: 0, stickyWeb: false } } },
+    opponent: { pokemon: [opp], currentIndex: 0, faintedCount: 0, sideConditions: { screens: {}, hazards: { stealthRock: false, spikes: 0, toxicSpikes: 0, stickyWeb: false } } },
     turn: 1,
     rng: createBattleRng(1),
     battleLog: [],

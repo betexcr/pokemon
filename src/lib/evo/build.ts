@@ -149,8 +149,10 @@ export async function buildEvoGraph(options: BuildOptions = {}): Promise<Normali
         if (!hasMatch) continue;
       }
 
-      filteredChains.push(chain);
-      for (const id of extractAllPokemonIds(chain)) allPokemonIds.add(id);
+      // PokeAPI's chain payload (api.ts EvolutionChainData) has the EvolutionChain shape plus extra fields
+      const typedChain = chain as unknown as EvolutionChain;
+      filteredChains.push(typedChain);
+      for (const id of extractAllPokemonIds(typedChain)) allPokemonIds.add(id);
     }
   }
 

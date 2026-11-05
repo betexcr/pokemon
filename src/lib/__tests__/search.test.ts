@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest'
 import { searchPokemonByName } from '@/lib/api'
 
 describe('searchPokemonByName', () => {

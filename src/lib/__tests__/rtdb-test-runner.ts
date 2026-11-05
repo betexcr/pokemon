@@ -219,7 +219,7 @@ describe('RTDB Test Runner - Comprehensive Test Suite', () => {
       await expect(rtdbService.updatePresence('test-uid', true))
         .rejects.toThrow('Partial failure');
 
-      await expect(rtdbService.joinLobby('test-uid', 'us-central1', {}))
+      await expect(rtdbService.joinLobby('test-uid', 'us-central1', {} as never))
         .resolves.not.toThrow();
     });
 
@@ -443,7 +443,7 @@ describe('RTDB Test Runner - Comprehensive Test Suite', () => {
       // Verify all reliability tests completed
       expect(reliabilityResults).toHaveLength(3);
       expect(reliabilityResults[0].attempts).toBeGreaterThan(0);
-      expect(reliabilityResults[1].success + reliabilityResults[1].failures).toBe(20);
+      expect(Number(reliabilityResults[1]?.success) + Number(reliabilityResults[1]?.failures)).toBe(20);
       expect(reliabilityResults[2].memoryIncrease).toBeLessThan(100 * 1024 * 1024);
     });
   });

@@ -645,7 +645,7 @@ export async function getPokemonSpecies(id: number | string): Promise<PokemonSpe
   const url = `${getApiBaseUrl()}/pokemon-species/${numericId}/`
   try {
     
-    const data = await fetchFromAPI(url)
+    const data = await fetchFromAPI<PokemonSpeciesData>(url)
 
     // Cache species data for longer (species data rarely changes)
     await setCache(cacheKey, data, CACHE_TTL.POKEMON_SPECIES * 2)
@@ -682,7 +682,7 @@ export async function getEvolutionChain(id: number | string): Promise<EvolutionC
 
   // Always use numeric ID for API calls (no zero-padding)
   const url = `${getApiBaseUrl()}/evolution-chain/${numericId}/`
-  const data = await fetchFromAPI(url)
+  const data = await fetchFromAPI<EvolutionChainData>(url)
   await setCache(cacheKey, data, CACHE_TTL.EVOLUTION_CHAIN)
   return data
 }
@@ -784,7 +784,7 @@ export async function getType(id: number | string): Promise<PokemonTypeData> {
 
   // Use the ID as-is (could be numeric ID or type name)
   const url = `${getApiBaseUrl()}/type/${id}/`
-  const data = await fetchFromAPI(url)
+  const data = await fetchFromAPI<PokemonTypeData>(url)
   await setCache(cacheKey, data, CACHE_TTL.TYPE)
   return data
 }
@@ -798,7 +798,7 @@ export async function getAbility(id: number | string): Promise<PokemonAbilityDat
 
   // Use the ID as-is (could be numeric ID or ability name)
   const url = `${getApiBaseUrl()}/ability/${id}/`
-  const data = await fetchFromAPI(url)
+  const data = await fetchFromAPI<PokemonAbilityData>(url)
   await setCache(cacheKey, data, CACHE_TTL.ABILITY)
   return data
 }

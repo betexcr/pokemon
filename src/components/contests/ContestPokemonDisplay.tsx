@@ -35,7 +35,7 @@ export default function ContestPokemonDisplay({
     }
   }
 
-  const categoryTheme = getCategoryTheme(selectedCategory)
+  const categoryTheme = getCategoryTheme(selectedCategory ?? null)
 
   const getRoundIcon = (round: string | undefined) => {
     switch (round) {

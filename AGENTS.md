@@ -97,7 +97,7 @@ flowchart TB
 3. **Offline vs multiplayer UI split:** `OfflineBattleComponent` vs `RTDBBattleComponent` — keep battle log / UI changes in sync (both use `BattleTextBox` + `battleLogToDisplayLines`).
 4. **Dev port is 3002** — Playwright and `npm run dev` expect this.
 5. **Two Firebase clients:** eager `firebase.ts` vs lazy `firebase/client.ts` — prefer lazy for lobby/checklist.
-6. **Build ignores TS errors** (`typescript.ignoreBuildErrors: true`) — still fix types locally; CI should aim for `tsc --noEmit` (Wave 3 follow-up).
+6. **Type check is a CI gate:** `npm run typecheck` (`tsc --noEmit`) must stay at 0 errors (CI runs it). `next build` still has `typescript.ignoreBuildErrors: true`, so run the type check yourself before pushing.
 7. **ErrorTip "Gengar" mascot** is generic unknown-error UI, not the failing Pokémon.
 8. **RTDB rules source of truth** is `src/lib/firebase-rtdb-rules.json` (see `firebase.json`). Deploy with `firebase deploy --only database,firestore:rules`. Battle create is Admin-only (`POST /api/battles/create`).
 9. **Commits must be authored by GitHub user `betexcr`** (`betomunozcr@gmail.com` or `121463215+betexcr@users.noreply.github.com`). The Vercel project is on a Hobby plan (account `albmunmu`) and blocks deployments authored by anyone else, including `alberto@atreyus.ai` and AI-agent identities like `noreply@anthropic.com`. Agents connected to GitHub as `betexcr` should commit through the GitHub API (MCP `push_files`), which authors and signs as `betexcr`; otherwise set the repo identity from `gh auth` first. See [docs/VERCEL_DEPLOYMENT.md](docs/VERCEL_DEPLOYMENT.md).
@@ -128,7 +128,7 @@ Conventions: [docs/coding_standards.md](docs/coding_standards.md). Use `@/` impo
 | Offline battle UI | `npx playwright test tests/playwright/offline-battle.spec.ts` |
 | Lobby / multiplayer flow | `npm run test:e2e:multiplayer` |
 | Bracket / championships | `npm run test:unit` (includes bracket tests) |
-| Full CI parity | `npm run lint` + `npm run test:unit` + `npm run build` |
+| Full CI parity | `npm run lint` + `npm run typecheck` + `npm run test:unit` + `npm run build` |
 | Dependencies / `next.config.ts` / `vercel.json` / server pages | `npm run verify:deploy` |
 
 E2E dev server: Playwright auto-starts `npm run dev` on port 3002. See [`.cursor/skills/testing/workflows.md`](.cursor/skills/testing/workflows.md).

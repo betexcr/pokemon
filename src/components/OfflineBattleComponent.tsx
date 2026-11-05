@@ -462,7 +462,7 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
           winner={meta.winnerUid === meUid ? 'player' : meta.winnerUid === oppUid ? 'opponent' : null}
           playerName="You"
           opponentName={meta.players.p2.name || 'Opponent'}
-          endReason={meta.endedReason}
+          endReason={meta.endedReason === 'forfeit' || meta.endedReason === 'timeout' ? meta.endedReason : 'victory'}
           battleStats={{ turns: meta.turn }}
           returnTo={{ path: '/battle', label: 'Back to Battles' }}
         />

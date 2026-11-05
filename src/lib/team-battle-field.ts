@@ -68,7 +68,7 @@ export function applyWeatherResidual(state: BattleState): void {
     [state.player, state.opponent].forEach(team => {
       const pokemon = getCurrentPokemon(team);
       if (pokemon.currentHp <= 0) return;
-      const types = getPokemonTypes(pokemon);
+      const types = getPokemonTypes(pokemon).map((t) => String(t).toLowerCase());
       const ability = pokemon.currentAbility?.toLowerCase();
       const item = effectiveItem(pokemon);
       const immune =

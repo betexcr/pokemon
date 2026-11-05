@@ -8,7 +8,6 @@ import { requestManager } from '../requestManager';
 import { analyticsManager } from '../requestAnalytics';
 import { useRequestCancellation } from '../../hooks/useRequestCancellation';
 import { useViewportCancellation } from '../../hooks/useViewportCancellation';
-import { useRequestAnalytics } from '../../hooks/useRequestAnalytics';
 
 console.log('\n🧪 INTEGRATION TEST: Complete Request Management System\n');
 

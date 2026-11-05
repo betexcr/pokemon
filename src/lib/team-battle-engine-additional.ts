@@ -929,7 +929,7 @@ async function executeMoveAction(
   // Check if defender is protected
   if (defender.volatile.protect && defender.volatile.protect.active && defender.volatile.protect.kind !== 'endure') {
     // Feint, Hyperspace Hole and moves with "bypassesProtect" go through Protect (Feint also lifts it)
-    const bypassesProtect = PROTECT_BYPASS_MOVES.has(moveLower) || move.bypassesProtect
+    const bypassesProtect = PROTECT_BYPASS_MOVES.has(moveLower) || (move as { bypassesProtect?: boolean }).bypassesProtect
       || contactThroughProtect(attacker, makesContactFor(attacker, move, moveLower));
     if (bypassesProtect && moveLower === 'feint') {
       defender.volatile.protect.active = false;
