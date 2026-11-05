@@ -17,6 +17,8 @@ type Meta = {
   winnerUid: string | null;
   endedReason: null | "forfeit" | "timeout";
   ruleProfile?: "simplified" | "cart_like";
+  /** Turn paused for this player to pick a pivot replacement (U-turn, Baton Pass, ...). */
+  pendingSwitch?: { uid: string; reason: "pivot" | "baton-pass" } | null;
 };
 
 type PublicVolatiles = {
@@ -336,6 +338,8 @@ export function useBattleState(battleId: string): UseBattleState {
 
   const legalMoves = useMemo(() => {
     if (!myPrivateActive) return [];
+    // Mid-turn pivot pick (U-turn, Baton Pass, ...): only a switch is legal, and only for that player
+    if (meta?.pendingSwitch) return [];
     let list = (myPrivateActive.moves ?? [])
       .map(normalizeMoveEntry)
       .filter((m): m is ReturnType<typeof normalizeMoveEntry> & { id: string; pp: number; maxPp: number } => Boolean(m));
@@ -373,9 +377,10 @@ export function useBattleState(battleId: string): UseBattleState {
     });
 
     return mapped;
-  }, [myPrivateActive, me?.choiceLock, me?.disable, me?.encoreMoveId, myPublicV.taunt, myPublicV.recharge, meta?.ruleProfile]);
+  }, [myPrivateActive, me?.choiceLock, me?.disable, me?.encoreMoveId, myPublicV.taunt, myPublicV.recharge, meta?.ruleProfile, meta?.pendingSwitch]);
 
   const legalSwitchIndexes = useMemo(() => {
+    if (meta?.pendingSwitch && meta.pendingSwitch.uid !== meUid) return [];
     const team = me?.team ?? [];
     const currentIndex = typeof me?.currentIndex === 'number' ? me.currentIndex : 0;
     const res: number[] = [];
@@ -393,7 +398,7 @@ export function useBattleState(battleId: string): UseBattleState {
       if (!fainted) res.push(i);
     }
     return res;
-  }, [me?.team, me?.currentIndex]);
+  }, [me?.team, me?.currentIndex, meta?.pendingSwitch, meUid]);
 
   const getIdTokenHeader = useCallback(async (): Promise<string> => {
     if (auth?.currentUser) {

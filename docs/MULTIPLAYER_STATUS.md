@@ -38,6 +38,7 @@ The multiplayer battle system has **core gameplay wired end-to-end**: choices ar
 ### Turn-Based Flow
 - **Turn submission** – Choices written under `battles/{id}/turns/{turn}/choices` ✅
 - **Turn resolution** – When both UIDs have a choice, `resolveTurn` updates private teams, public state, battle log, field (weather/screens/hazards), advances `meta.turn`, or ends the battle via `handleBattleEnd` ✅
+- **Mid-turn pivot picks** – When a U-turn / Volt Switch / Flip Turn / Parting Shot / Baton Pass user has two or more bench options, `resolveTurn` pauses the turn: it persists the first half, sets `meta.pendingSwitch = { uid, reason }` on the same `meta.turn`, bumps `meta.version`, clears that turn's choices and stores the rest of the queue in Admin-only `server/pendingTurn`. Only that player submits next, and it must be a legal switch (illegal picks are rejected with `lastValidation = illegal_pivot_switch`). The deadline applies only to them. See [`battle-pending-switch.ts`](src/lib/battle-pending-switch.ts).
 - **Deterministic RNG + replay artifacts** – Resolution restores/stores `server/battleRng` (legacy `meta.battleRng` fallback), writes per-turn replay payloads (actions, RNG before/after, state hash) under `turns/{turn}/resolution`, and records validation/metrics fields for auditing.
 
 ⚠️ **Battle UI** ([src/components/RTDBBattleComponent.tsx](src/components/RTDBBattleComponent.tsx))

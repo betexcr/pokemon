@@ -305,6 +305,36 @@ describe('RTDBBattleComponent', () => {
     });
   });
 
+  describe('pivot replacement pick', () => {
+    it('asks me to pick who comes in and hides the moves', async () => {
+      const hook = setHook({ meta: { pendingSwitch: { uid: ME, reason: 'pivot' } }, legalMoves: [] });
+      renderBattle();
+      expect(screen.getByText('Choose a Pokémon to send in')).toBeInTheDocument();
+      expect(screen.getByTestId('pivot-prompt')).toHaveTextContent('Pick which Pokémon comes in');
+      expect(screen.queryByText('Moves')).not.toBeInTheDocument();
+
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('switch-bulbasaur-1'));
+      });
+      expect(hook.chooseSwitch).toHaveBeenCalledWith(1);
+    });
+
+    it('explains Baton Pass picks', () => {
+      setHook({ meta: { pendingSwitch: { uid: ME, reason: 'baton-pass' } }, legalMoves: [] });
+      renderBattle();
+      expect(screen.getByTestId('pivot-prompt')).toHaveTextContent('Baton Pass');
+    });
+
+    it('shows a waiting state while the opponent picks', () => {
+      setHook({ meta: { pendingSwitch: { uid: OPP, reason: 'pivot' } }, legalMoves: [], legalSwitchIndexes: [] });
+      renderBattle();
+      expect(screen.getByTestId('pivot-waiting')).toHaveTextContent('Waiting for opponent to choose a Pokémon');
+      expect(screen.queryByText('Switch Pokemon')).not.toBeInTheDocument();
+      expect(screen.queryByText('Moves')).not.toBeInTheDocument();
+      expect(screen.getByTestId('forfeit-button')).toBeInTheDocument();
+    });
+  });
+
   describe('battle log', () => {
     it('shows the latest log lines with classification chips', () => {
       setHook({

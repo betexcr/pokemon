@@ -682,13 +682,15 @@ function captureBatonPass(pokemon: BattlePokemon): BatonPassTransfer {
 async function performPivotSwitch(
   state: BattleState,
   user: 'player' | 'opponent',
-  options: { batonPass?: boolean } = {},
+  options: { batonPass?: boolean; switchIndex?: number } = {},
 ): Promise<boolean> {
   const team = user === 'player' ? state.player : state.opponent;
   const outgoing = getCurrentPokemon(team);
   if (outgoing.currentHp <= 0) return false;
-  const nextIndex = getNextAvailableBenchPokemon(team);
-  if (nextIndex === null) return false;
+  const nextIndex = options.switchIndex ?? getNextAvailableBenchPokemon(team);
+  if (nextIndex === null || nextIndex === team.currentIndex || !team.pokemon[nextIndex] || team.pokemon[nextIndex].currentHp <= 0) {
+    return false;
+  }
 
   const transfer = options.batonPass ? captureBatonPass(outgoing) : null;
   applySwitchOutAbilities(outgoing);
@@ -718,6 +720,37 @@ function isReflectableStatusMove(move: { category?: string; target?: string }, m
   if (move.category !== 'Status' || NON_REFLECTABLE_MOVES.has(moveLower)) return false;
   if (typeof move.target === 'string') return FOE_TARGETS.has(move.target);
   return HAZARD_MOVES.has(moveLower) || !SELF_STATUS_MOVES.has(moveLower);
+}
+
+/** Healthy bench Pokémon a side could send in. */
+export function getSwitchCandidates(team: BattleTeam): number[] {
+  return team.pokemon
+    .map((p, i) => ({ p, i }))
+    .filter(({ p, i }) => i !== team.currentIndex && p.currentHp > 0)
+    .map(({ i }) => i);
+}
+
+/**
+ * Pivot moves call this instead of switching directly. When a player controls the side and has a real
+ * choice (two or more healthy bench Pokémon), the turn pauses with `state.pendingSwitch`; otherwise the
+ * next healthy bench Pokémon comes in immediately. Returns false when nothing can come in.
+ */
+async function requestPivotSwitch(
+  state: BattleState,
+  user: 'player' | 'opponent',
+  options: { batonPass?: boolean } = {},
+): Promise<boolean> {
+  const team = user === 'player' ? state.player : state.opponent;
+  if (getCurrentPokemon(team).currentHp <= 0) return false;
+  // A pivot that knocks out the foe's last Pokémon ends the battle; nobody switches
+  if (isTeamDefeated(user === 'player' ? state.opponent : state.player)) return false;
+  const candidates = getSwitchCandidates(team);
+  if (candidates.length === 0) return false;
+  if (state.manualSwitchSides?.includes(user) && candidates.length >= 2) {
+    state.pendingSwitch = { side: user, reason: options.batonPass ? 'baton-pass' : 'pivot', options: candidates };
+    return true;
+  }
+  return performPivotSwitch(state, user, options);
 }
 
 /** Roar / Whirlwind (status) and Dragon Tail / Circle Throw (after damage) drag out a random bench Pokémon. */
@@ -971,7 +1004,7 @@ async function executeMoveAction(
       return;
     }
     if (moveLower === 'baton-pass') {
-      if (!(await performPivotSwitch(state, user, { batonPass: true }))) {
+      if (!(await requestPivotSwitch(state, user, { batonPass: true }))) {
         state.battleLog.push({ type: 'status_effect', message: 'But it failed!' });
       }
       return;
@@ -1120,7 +1153,7 @@ async function executeMoveAction(
 
     if (applyVolatileAndHazardScripts(state, moveLower, attacker, defender, isPlayer)) {
       if (moveLower === 'parting-shot') {
-        await performPivotSwitch(state, user);
+        await requestPivotSwitch(state, user);
       }
       return;
     }
@@ -1129,7 +1162,7 @@ async function executeMoveAction(
     applyMoveAilment(state, move, attacker, defender);
     applyMoveSecondaryStatChanges(state, move, attacker, defender);
     if (moveLower === 'parting-shot') {
-      await performPivotSwitch(state, user);
+      await requestPivotSwitch(state, user);
     }
     return;
   }
@@ -1653,9 +1686,9 @@ async function executeMoveAction(
     await forceTargetSwitch(state, user === 'player' ? 'opponent' : 'player', false, attacker);
   }
 
-  // Pivot moves: auto-switch to next available bench Pokémon
+  // Pivot moves: the player picks the replacement (turn pauses) or the next bench Pokémon comes in
   if (PIVOT_MOVES.has(moveLower) && moveLower !== 'parting-shot' && totalDamageDealt > 0 && attacker.currentHp > 0) {
-    await performPivotSwitch(state, user);
+    await requestPivotSwitch(state, user);
   }
 
   // Multi-turn locks: Outrage/Petal Dance continue; Hyper Beam forces recharge
@@ -1779,7 +1812,12 @@ export async function applyAutoSwitchInEffects(
 export type RunBattleTurnFromQueueOptions = {
   /** When true, clears `state.battleLog` before this turn slice (multiplayer / offline per-turn log). */
   clearBattleLog?: boolean;
+  /** Sides whose pivot replacements a player picks (the turn pauses with `state.pendingSwitch`). */
+  manualSwitchSides?: Array<'player' | 'opponent'>;
 };
+
+/** `awaiting-switch`: paused for `state.pendingSwitch`; call `resumeBattleTurnAfterSwitch` with the pick. */
+export type TurnOutcome = 'complete' | 'awaiting-switch';
 
 async function autoReplaceFaintedActive(state: BattleState, side: 'player' | 'opponent'): Promise<void> {
   const team = side === 'player' ? state.player : state.opponent;
@@ -1805,10 +1843,12 @@ export async function runBattleTurnFromQueue(
   state: BattleState,
   queue: BattleState['actionQueue'],
   options?: RunBattleTurnFromQueueOptions
-): Promise<void> {
+): Promise<TurnOutcome> {
   if (options?.clearBattleLog) {
     state.battleLog = [];
   }
+  state.manualSwitchSides = options?.manualSwitchSides;
+  state.pendingSwitch = undefined;
   state.actionQueue = queue;
 
   await processStartOfTurn(state);
@@ -1820,7 +1860,43 @@ export async function runBattleTurnFromQueue(
     opponent: state.opponent.currentIndex,
   };
 
-  for (const action of queue) {
+  return runQueuedActions(state, queue, activeAtTurnStart);
+}
+
+/**
+ * Finish a turn paused for a pivot replacement: send in `switchIndex` (passing Baton Pass effects),
+ * then run the rest of the turn and end-of-turn effects. May pause again if a later pivot needs a pick.
+ */
+export async function resumeBattleTurnAfterSwitch(
+  state: BattleState,
+  switchIndex: number,
+  options?: Pick<RunBattleTurnFromQueueOptions, 'manualSwitchSides'>,
+): Promise<TurnOutcome> {
+  const pending = state.pendingSwitch;
+  if (!pending) throw new Error('No switch is pending');
+  if (!pending.options.includes(switchIndex)) throw new Error(`Illegal switch choice: ${switchIndex}`);
+  if (options?.manualSwitchSides) state.manualSwitchSides = options.manualSwitchSides;
+
+  const remaining = pending.remainingQueue ?? [];
+  const activeAtTurnStart = pending.activeAtTurnStart ?? {
+    player: state.player.currentIndex,
+    opponent: state.opponent.currentIndex,
+  };
+  state.pendingSwitch = undefined;
+  state.actionQueue = remaining;
+
+  await performPivotSwitch(state, pending.side, { batonPass: pending.reason === 'baton-pass', switchIndex });
+  // Paradox boosts / White Herb for the newcomer were handled by its entry sequence
+  return runQueuedActions(state, remaining, activeAtTurnStart);
+}
+
+async function runQueuedActions(
+  state: BattleState,
+  queue: BattleState['actionQueue'],
+  activeAtTurnStart: { player: number; opponent: number },
+): Promise<TurnOutcome> {
+  for (let i = 0; i < queue.length; i++) {
+    const action = queue[i];
     if (action.type === 'switch') {
       activeAtTurnStart[action.user] = action.switchIndex ?? activeAtTurnStart[action.user];
       await resolveSwitch(state, action);
@@ -1837,6 +1913,12 @@ export async function runBattleTurnFromQueue(
     // Weather / terrain may have changed mid-turn (Sunny Day, Electric Terrain, ...)
     updateParadoxBoosts(state);
 
+    if (state.pendingSwitch && !state.pendingSwitch.remainingQueue) {
+      state.pendingSwitch.remainingQueue = queue.slice(i + 1);
+      state.pendingSwitch.activeAtTurnStart = { ...activeAtTurnStart };
+      return 'awaiting-switch';
+    }
+
     if (isTeamDefeated(state.player) || isTeamDefeated(state.opponent)) {
       break;
     }
@@ -1846,6 +1928,7 @@ export async function runBattleTurnFromQueue(
 
   await autoReplaceFaintedActive(state, 'player');
   await autoReplaceFaintedActive(state, 'opponent');
+  return 'complete';
 }
 
 // Process end-of-turn effects

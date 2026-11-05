@@ -34,6 +34,8 @@ export interface RTDBBattleMeta {
   battleRng?: { seed: number; state: number; calls: number };
   /** Behavior profile for legality/edge rules. */
   ruleProfile?: 'simplified' | 'cart_like';
+  /** Turn paused for this player to pick a pivot replacement (see battle-pending-switch.ts). */
+  pendingSwitch?: { uid: string; reason: 'pivot' | 'baton-pass' } | null;
 }
 
 export interface RTDBBattlePublic {
@@ -135,8 +137,8 @@ export interface RTDBResolution {
     rngAfter?: { seed: number; state: number; calls: number };
   };
   validation?: {
-    p1?: string;
-    p2?: string;
+    p1?: string | null;
+    p2?: string | null;
     normalized?: boolean;
   };
   metrics?: {

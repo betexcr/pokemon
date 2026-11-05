@@ -156,6 +156,24 @@ export type BattleState = {
   currentTurn?: 'host' | 'guest';
   /** Feature-gate scaffold for future mechanics (Tera/doubles). */
   featureFlags?: BattleFeatureFlags;
+  /**
+   * Set while a turn is paused for a player to pick the Pokémon a pivot move (U-turn, Volt Switch,
+   * Flip Turn, Parting Shot, Baton Pass) sends in. Resume with `resumeBattleTurnAfterSwitch`.
+   */
+  pendingSwitch?: PendingSwitchRequest;
+  /** Sides whose pivot replacements a player chooses; other sides send in the next healthy bench Pokémon. */
+  manualSwitchSides?: Array<'player' | 'opponent'>;
+};
+
+export type PendingSwitchRequest = {
+  side: 'player' | 'opponent';
+  reason: 'pivot' | 'baton-pass';
+  /** Bench indexes the player may send in. */
+  options: number[];
+  /** Actions of this turn still to run after the switch. */
+  remainingQueue?: BattleState['actionQueue'];
+  /** Active indexes when the turn started (a Pokémon switched in mid-turn does not use its predecessor's move). */
+  activeAtTurnStart?: { player: number; opponent: number };
 };
 
 export type BattleAction = {

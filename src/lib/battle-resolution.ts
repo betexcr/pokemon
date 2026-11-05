@@ -1,3 +1,4 @@
+import { resolveBattleAbility } from './battle-default-ability';
 import { getRtdbOps, type RtdbOps } from './rtdb-access';
 import {
     BattleState,
@@ -10,7 +11,18 @@ import {
     normalizeServerBattleAction,
     type BattleRuleProfile,
 } from './team-battle-engine';
-import { runBattleTurnFromQueue } from './team-battle-engine-additional';
+import {
+    getSwitchCandidates,
+    resumeBattleTurnAfterSwitch,
+    runBattleTurnFromQueue,
+    type TurnOutcome,
+} from './team-battle-engine-additional';
+import {
+    allRequiredChoicesPresent,
+    requiredChoiceUids,
+    toRtdbValue,
+    type StoredPendingTurn,
+} from './battle-pending-switch';
 import {
     cloneBattleRng,
     battleRngFromStored,
@@ -157,6 +169,8 @@ async function hydrateTeam(team: any[], stats?: HydrationStats): Promise<BattleP
             volatile: ensureVolatile(p),
             statModifiers: ensureStatModifiers(p),
             heldItem: p.heldItem || undefined,
+            currentAbility: resolveBattleAbility(p, pokemon.abilities),
+            originalAbility: p.originalAbility || resolveBattleAbility({ ability: p.ability }, pokemon.abilities),
         } as BattlePokemon;
     }));
     return hydratedTeam;
@@ -281,8 +295,10 @@ export async function enforceTurnDeadline(battleId: string, authToken?: string):
     const choices = (await ops.get(`battles/${battleId}/turns/${meta.turn}/choices`)) as Record<string, RTDBChoice> | null;
     const p1Id = meta.players.p1.uid;
     const p2Id = meta.players.p2.uid;
-    const p1Ready = !!choices?.[p1Id];
-    const p2Ready = !!choices?.[p2Id];
+    // While a pivot pick is pending only that player owes a choice; the other is never "idle"
+    const required = requiredChoiceUids(meta);
+    const p1Ready = !required.includes(p1Id) || !!choices?.[p1Id];
+    const p2Ready = !required.includes(p2Id) || !!choices?.[p2Id];
 
     if (p1Ready && p2Ready) return false;
 
@@ -310,7 +326,7 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
     }
 
     const choices = await ops.get(`battles/${battleId}/turns/${metaEarly.turn}/choices`) as Record<string, RTDBChoice>;
-    if (!choices || !choices[metaEarly.players.p1.uid] || !choices[metaEarly.players.p2.uid]) {
+    if (!allRequiredChoicesPresent(metaEarly, choices)) {
         return;
     }
 
@@ -372,70 +388,140 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
             throw new RecoverableResolutionError('Failed to reconstruct battle state');
         }
 
-        const p1Choice = choices[meta.players.p1.uid];
-        const p2Choice = choices[meta.players.p2.uid];
-
-        const p1ActionRaw: BattleAction = {
-            type: p1Choice.action as 'move' | 'switch',
-            moveId: p1Choice.payload?.moveId,
-            switchIndex: p1Choice.payload?.switchToIndex,
-            target: 'opponent'
-        };
-
-        const p2ActionRaw: BattleAction = {
-            type: p2Choice.action as 'move' | 'switch',
-            moveId: p2Choice.payload?.moveId,
-            switchIndex: p2Choice.payload?.switchToIndex,
-            target: 'player'
-        };
-
-        const profile: BattleRuleProfile = meta.ruleProfile ?? 'simplified';
-        const n1 = normalizeServerBattleAction(battleState.player, p1ActionRaw, profile);
-        const n2 = normalizeServerBattleAction(battleState.opponent, p2ActionRaw, profile);
-        if (n1.normalized) recordNormalizedAction();
-        if (n2.normalized) recordNormalizedAction();
-
-        if (n1.errorCode || n2.errorCode) {
-            recordIllegalActionRejected();
-            console.error('resolveTurn: illegal choices — rejecting and returning to choosing', {
-                battleId,
-                v1: n1.errorCode,
-                v2: n2.errorCode,
-            });
-            const rejectMeta = illegalRejectMetaFields(meta, TURN_DEADLINE_MS);
-            const multi: Record<string, unknown> = {
-                [`battles/${battleId}/public/lastValidation`]: {
-                    turn: meta.turn,
-                    p1: n1.errorCode ?? null,
-                    p2: n2.errorCode ?? null,
-                    normalized: false,
-                },
-                [`battles/${battleId}/turns/${meta.turn}/choices`]: null,
-                [`battles/${battleId}/meta/phase`]: rejectMeta.phase,
-                [`battles/${battleId}/meta/resolvingStartedAt`]: rejectMeta.resolvingStartedAt,
-                [`battles/${battleId}/meta/version`]: rejectMeta.version,
-                [`battles/${battleId}/meta/deadlineAt`]: rejectMeta.deadlineAt,
-            };
-            if (ops.updateMulti) {
-                await ops.updateMulti(multi);
-            } else {
-                await ops.set(`battles/${battleId}/turns/${meta.turn}/choices`, null);
-                await ops.update(`battles/${battleId}/public`, {
-                    lastValidation: multi[`battles/${battleId}/public/lastValidation`],
-                } as any);
-                await ops.update(`battles/${battleId}/meta`, rejectMeta);
-            }
-            return;
-        }
-
-        const p1Action = n1.action;
-        const p2Action = n2.action;
-
-        const queue = buildActionQueue(battleState, p1Action, p2Action);
+        const BOTH_SIDES: Array<'player' | 'opponent'> = ['player', 'opponent'];
         const currentState = battleState;
         const rngBefore = cloneBattleRng(currentState.rng);
+        let p1Action: BattleAction;
+        let p2Action: BattleAction;
+        let validationInfo: { p1: string | null; p2: string | null; normalized: boolean };
+        let outcome: TurnOutcome;
 
-        await runBattleTurnFromQueue(currentState, queue, { clearBattleLog: true });
+        if (meta.pendingSwitch) {
+            // Second half of a turn paused for a pivot pick: only the pivoting player's switch counts
+            const pendingUid = meta.pendingSwitch.uid;
+            const side: 'player' | 'opponent' = pendingUid === meta.players.p1.uid ? 'player' : 'opponent';
+            const stored = (await ops.get(`battles/${battleId}/server/pendingTurn`)) as StoredPendingTurn | null;
+            const usable = stored && stored.turn === meta.turn && stored.side === side ? stored : null;
+            const team = side === 'player' ? currentState.player : currentState.opponent;
+            const options = usable?.options ?? getSwitchCandidates(team);
+            const pick = choices[pendingUid];
+            const switchIndex = pick?.action === 'switch' ? pick.payload?.switchToIndex : undefined;
+
+            if (typeof switchIndex !== 'number' || !options.includes(switchIndex)) {
+                recordIllegalActionRejected();
+                const rejectMeta = illegalRejectMetaFields(meta, TURN_DEADLINE_MS);
+                const sideKey = side === 'player' ? 'p1' : 'p2';
+                const multi: Record<string, unknown> = {
+                    [`battles/${battleId}/public/lastValidation`]: {
+                        turn: meta.turn,
+                        p1: sideKey === 'p1' ? 'illegal_pivot_switch' : null,
+                        p2: sideKey === 'p2' ? 'illegal_pivot_switch' : null,
+                        normalized: false,
+                    },
+                    [`battles/${battleId}/turns/${meta.turn}/choices`]: null,
+                    [`battles/${battleId}/meta/phase`]: rejectMeta.phase,
+                    [`battles/${battleId}/meta/resolvingStartedAt`]: rejectMeta.resolvingStartedAt,
+                    [`battles/${battleId}/meta/version`]: rejectMeta.version,
+                    [`battles/${battleId}/meta/deadlineAt`]: rejectMeta.deadlineAt,
+                };
+                if (ops.updateMulti) {
+                    await ops.updateMulti(multi);
+                } else {
+                    await ops.set(`battles/${battleId}/turns/${meta.turn}/choices`, null);
+                    await ops.update(`battles/${battleId}/public`, {
+                        lastValidation: multi[`battles/${battleId}/public/lastValidation`],
+                    } as any);
+                    await ops.update(`battles/${battleId}/meta`, rejectMeta);
+                }
+                return;
+            }
+
+            if (!usable) {
+                // Snapshot missing (e.g. manual cleanup): finish the turn without the rest of the queue
+                console.error('resolveTurn: pending turn snapshot missing; resuming with an empty queue', { battleId, turn: meta.turn });
+            }
+            currentState.pendingSwitch = {
+                side,
+                reason: meta.pendingSwitch.reason,
+                options,
+                remainingQueue: usable?.remainingQueue ?? [],
+                activeAtTurnStart: usable?.activeAtTurnStart,
+            };
+            currentState.battleLog = Array.isArray(usable?.battleLog) ? usable!.battleLog : [];
+            const pivotPick: BattleAction = { type: 'switch', switchIndex, target: side === 'player' ? 'opponent' : 'player' };
+            p1Action = usable?.p1Action ?? (side === 'player' ? pivotPick : { type: 'move' });
+            p2Action = usable?.p2Action ?? (side === 'opponent' ? pivotPick : { type: 'move' });
+            validationInfo = usable?.validation ?? { p1: null, p2: null, normalized: false };
+            outcome = await resumeBattleTurnAfterSwitch(currentState, switchIndex, { manualSwitchSides: BOTH_SIDES });
+        } else {
+            const p1Choice = choices[meta.players.p1.uid];
+            const p2Choice = choices[meta.players.p2.uid];
+
+            const p1ActionRaw: BattleAction = {
+                type: p1Choice.action as 'move' | 'switch',
+                moveId: p1Choice.payload?.moveId,
+                switchIndex: p1Choice.payload?.switchToIndex,
+                target: 'opponent'
+            };
+
+            const p2ActionRaw: BattleAction = {
+                type: p2Choice.action as 'move' | 'switch',
+                moveId: p2Choice.payload?.moveId,
+                switchIndex: p2Choice.payload?.switchToIndex,
+                target: 'player'
+            };
+
+            const profile: BattleRuleProfile = meta.ruleProfile ?? 'simplified';
+            const n1 = normalizeServerBattleAction(battleState.player, p1ActionRaw, profile);
+            const n2 = normalizeServerBattleAction(battleState.opponent, p2ActionRaw, profile);
+            if (n1.normalized) recordNormalizedAction();
+            if (n2.normalized) recordNormalizedAction();
+
+            if (n1.errorCode || n2.errorCode) {
+                recordIllegalActionRejected();
+                console.error('resolveTurn: illegal choices — rejecting and returning to choosing', {
+                    battleId,
+                    v1: n1.errorCode,
+                    v2: n2.errorCode,
+                });
+                const rejectMeta = illegalRejectMetaFields(meta, TURN_DEADLINE_MS);
+                const multi: Record<string, unknown> = {
+                    [`battles/${battleId}/public/lastValidation`]: {
+                        turn: meta.turn,
+                        p1: n1.errorCode ?? null,
+                        p2: n2.errorCode ?? null,
+                        normalized: false,
+                    },
+                    [`battles/${battleId}/turns/${meta.turn}/choices`]: null,
+                    [`battles/${battleId}/meta/phase`]: rejectMeta.phase,
+                    [`battles/${battleId}/meta/resolvingStartedAt`]: rejectMeta.resolvingStartedAt,
+                    [`battles/${battleId}/meta/version`]: rejectMeta.version,
+                    [`battles/${battleId}/meta/deadlineAt`]: rejectMeta.deadlineAt,
+                };
+                if (ops.updateMulti) {
+                    await ops.updateMulti(multi);
+                } else {
+                    await ops.set(`battles/${battleId}/turns/${meta.turn}/choices`, null);
+                    await ops.update(`battles/${battleId}/public`, {
+                        lastValidation: multi[`battles/${battleId}/public/lastValidation`],
+                    } as any);
+                    await ops.update(`battles/${battleId}/meta`, rejectMeta);
+                }
+                return;
+            }
+
+            p1Action = n1.action;
+            p2Action = n2.action;
+            validationInfo = {
+                p1: n1.reasonCode ?? null,
+                p2: n2.reasonCode ?? null,
+                normalized: !!(n1.normalized || n2.normalized),
+            };
+
+            const queue = buildActionQueue(battleState, p1Action, p2Action);
+            // Both players pick their own pivot replacements (the turn pauses; see battle-pending-switch.ts)
+            outcome = await runBattleTurnFromQueue(currentState, queue, { clearBattleLog: true, manualSwitchSides: BOTH_SIDES });
+        }
 
         const playerDefeated = isTeamDefeated(currentState.player);
         const opponentDefeated = isTeamDefeated(currentState.opponent);
@@ -499,11 +585,7 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
                 p2Action: { type: p2Action.type, moveId: p2Action.moveId, switchIndex: p2Action.switchIndex, target: p2Action.target },
                 // Live RNG state stays Admin-only under battles/.../server — do not expose in client-readable resolution
             },
-            validation: {
-                p1: n1.reasonCode,
-                p2: n2.reasonCode,
-                normalized: !!(n1.normalized || n2.normalized),
-            },
+            validation: validationInfo,
             metrics: {
                 resolveDurationMs: Date.now() - startedAt,
                 hydrationFallbackCount: hydrationStats.placeholderStatsUsed,
@@ -567,15 +649,67 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
                 : '',
             lastValidation: {
                 turn: meta.turn,
-                p1: n1.reasonCode ?? null,
-                p2: n2.reasonCode ?? null,
-                normalized: !!(n1.normalized || n2.normalized),
+                ...validationInfo,
             },
         };
 
         const rngStored = battleRngToStored(currentState.rng);
         const nextVersion = (meta.version ?? 1) + 1;
         const nextDeadline = Date.now() + TURN_DEADLINE_MS;
+
+        if (outcome === 'awaiting-switch' && currentState.pendingSwitch && !currentState.isComplete) {
+            // Pause mid-turn: persist the state so far, keep the same turn number, and ask the pivoting
+            // player for a switch. The rest of the queue stays server-side.
+            const pending = currentState.pendingSwitch;
+            const pendingUid = pending.side === 'player' ? meta.players.p1.uid : meta.players.p2.uid;
+            const stored: StoredPendingTurn = toRtdbValue({
+                turn: meta.turn,
+                side: pending.side,
+                reason: pending.reason,
+                options: pending.options,
+                remainingQueue: pending.remainingQueue ?? [],
+                activeAtTurnStart: pending.activeAtTurnStart,
+                battleLog: currentState.battleLog,
+                p1Action,
+                p2Action,
+                validation: validationInfo,
+            });
+            const pendingMeta = { uid: pendingUid, reason: pending.reason };
+            if (ops.updateMulti) {
+                await ops.updateMulti({
+                    [`battles/${battleId}/private/${meta.players.p1.uid}`]: p1Updates,
+                    [`battles/${battleId}/private/${meta.players.p2.uid}`]: p2Updates,
+                    [`battles/${battleId}/public`]: publicUpdates,
+                    [`battles/${battleId}/meta/battleRng`]: null,
+                    [`battles/${battleId}/server/battleRng`]: rngStored,
+                    [`battles/${battleId}/server/pendingTurn`]: stored,
+                    [`battles/${battleId}/meta/phase`]: 'choosing',
+                    [`battles/${battleId}/meta/version`]: nextVersion,
+                    [`battles/${battleId}/meta/deadlineAt`]: nextDeadline,
+                    [`battles/${battleId}/meta/resolvingStartedAt`]: null,
+                    [`battles/${battleId}/meta/pendingSwitch`]: pendingMeta,
+                    [`battles/${battleId}/turns/${meta.turn}/choices`]: null,
+                });
+            } else {
+                await Promise.all([
+                    ops.update(`battles/${battleId}/private/${meta.players.p1.uid}`, p1Updates),
+                    ops.update(`battles/${battleId}/private/${meta.players.p2.uid}`, p2Updates),
+                    ops.update(`battles/${battleId}/public`, publicUpdates),
+                    ops.set(`battles/${battleId}/server/battleRng`, rngStored),
+                    ops.set(`battles/${battleId}/server/pendingTurn`, stored),
+                    ops.update(`battles/${battleId}/meta`, {
+                        battleRng: null,
+                        phase: 'choosing',
+                        version: nextVersion,
+                        deadlineAt: nextDeadline,
+                        resolvingStartedAt: null,
+                        pendingSwitch: pendingMeta,
+                    }),
+                    ops.set(`battles/${battleId}/turns/${meta.turn}/choices`, null),
+                ]);
+            }
+            return;
+        }
 
         if (currentState.isComplete) {
             let winnerUid: string | null = null;
@@ -593,6 +727,8 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
                     [`battles/${battleId}/meta/phase`]: 'ended',
                     [`battles/${battleId}/meta/winnerUid`]: winnerUid,
                     [`battles/${battleId}/meta/endedReason`]: 'victory',
+                    [`battles/${battleId}/meta/pendingSwitch`]: null,
+                    [`battles/${battleId}/server/pendingTurn`]: null,
                     [`battles/${battleId}/turns/${meta.turn}/resolution`]: replayResolution,
                     [`battles/${battleId}/turns/${meta.turn}/choices`]: null,
                 });
@@ -607,8 +743,10 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
                         phase: 'ended',
                         winnerUid,
                         endedReason: 'victory',
+                        pendingSwitch: null,
                     }),
                     ops.set(`battles/${battleId}/server/battleRng`, rngStored),
+                    ops.set(`battles/${battleId}/server/pendingTurn`, null),
                     ops.set(`battles/${battleId}/turns/${meta.turn}/resolution`, replayResolution),
                     ops.set(`battles/${battleId}/turns/${meta.turn}/choices`, null),
                 ]);
@@ -628,6 +766,7 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
                 deadlineAt: nextDeadline,
                 resolvingStartedAt: null,
                 battleRng: null,
+                pendingSwitch: null,
             };
             if (ops.updateMulti) {
                 await ops.updateMulti({
@@ -637,7 +776,9 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
                     [`battles/${battleId}/meta/deadlineAt`]: metaUpdates.deadlineAt,
                     [`battles/${battleId}/meta/resolvingStartedAt`]: null,
                     [`battles/${battleId}/meta/battleRng`]: null,
+                    [`battles/${battleId}/meta/pendingSwitch`]: null,
                     [`battles/${battleId}/server/battleRng`]: rngStored,
+                    [`battles/${battleId}/server/pendingTurn`]: null,
                     [`battles/${battleId}/private/${meta.players.p1.uid}`]: p1Updates,
                     [`battles/${battleId}/private/${meta.players.p2.uid}`]: p2Updates,
                     [`battles/${battleId}/public`]: publicUpdates,
@@ -648,6 +789,7 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
                 await Promise.all([
                     ops.update(`battles/${battleId}/meta`, metaUpdates),
                     ops.set(`battles/${battleId}/server/battleRng`, rngStored),
+                    ops.set(`battles/${battleId}/server/pendingTurn`, null),
                     ops.update(`battles/${battleId}/private/${meta.players.p1.uid}`, p1Updates),
                     ops.update(`battles/${battleId}/private/${meta.players.p2.uid}`, p2Updates),
                     ops.update(`battles/${battleId}/public`, publicUpdates),

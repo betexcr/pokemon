@@ -11,9 +11,10 @@ import {
   allMovesOutOfPp,
   encoredMoveHasNoPp,
 } from '@/lib/team-battle-engine';
-import { runBattleTurnFromQueue } from '@/lib/team-battle-engine-additional';
+import { resumeBattleTurnAfterSwitch, runBattleTurnFromQueue, type TurnOutcome } from '@/lib/team-battle-engine-additional';
 import { createBattleRng } from '@/lib/battle-rng';
 import { createFieldState, EMPTY_HAZARDS } from '@/lib/team-battle-types';
+import { resolveBattleAbility } from '@/lib/battle-default-ability';
 import { chooseAIAction } from '@/lib/offline-battle-ai';
 import { getPokemon } from '@/lib/api';
 import type { GYM_CHAMPIONS } from '@/lib/gym_champions';
@@ -51,6 +52,8 @@ type Meta = {
   winnerUid: string | null;
   endedReason: null | 'forfeit' | string;
   ruleProfile?: 'simplified' | 'cart_like';
+  /** Turn paused for this player to pick the Pokémon a pivot move (U-turn, Baton Pass, ...) sends in. */
+  pendingSwitch?: { uid: string; reason: 'pivot' | 'baton-pass' } | null;
 };
 
 type MoveEntry = { id: string; pp: number; maxPp?: number; disabled?: boolean; reason?: string };
@@ -159,6 +162,8 @@ async function hydrateSlot(raw: any): Promise<BattlePokemon> {
     volatile: ensureVolatile(raw),
     statModifiers: ensureStatModifiers(raw),
     heldItem: raw.heldItem || undefined,
+    currentAbility: resolveBattleAbility(raw, abilities),
+    originalAbility: resolveBattleAbility({ ability: raw.ability }, abilities),
   };
 }
 
@@ -405,6 +410,51 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
   // Turn resolution (runs the same engine as multiplayer)
   // ---------------------------------------------------------------------------
 
+  /** Publish engine state after a turn slice: either paused for the player's pivot pick or finished. */
+  const publishTurnOutcome = useCallback((state: BattleState, currentMeta: Meta, outcome: TurnOutcome) => {
+    if (outcome === 'awaiting-switch' && state.pendingSwitch) {
+      // Same turn continues once the player picks; bump version so the UI treats it as a fresh choice
+      const pausedMeta: Meta = {
+        ...currentMeta,
+        phase: 'choosing',
+        version: currentMeta.version + 1,
+        pendingSwitch: { uid: PLAYER_UID, reason: state.pendingSwitch.reason },
+        deadlineAt: Date.now() + 120_000,
+      };
+      setBattleState({ ...state });
+      setMeta(pausedMeta);
+      setPub(projectPublic(state));
+      setMe(projectPrivate(state.player));
+      return;
+    }
+
+    // Check win condition
+    if (isTeamDefeated(state.player)) {
+      state.isComplete = true;
+      state.winner = 'opponent';
+      state.battleLog.push({ type: 'battle_end', message: `${currentMeta.players.p2.name} won!` });
+    } else if (isTeamDefeated(state.opponent)) {
+      state.isComplete = true;
+      state.winner = 'player';
+      state.battleLog.push({ type: 'battle_end', message: 'You won!' });
+    }
+
+    const updatedMeta: Meta = {
+      ...currentMeta,
+      turn: currentMeta.turn + 1,
+      version: currentMeta.version + 1,
+      phase: state.isComplete ? 'ended' : 'choosing',
+      winnerUid: state.isComplete ? (state.winner === 'player' ? PLAYER_UID : AI_UID) : null,
+      deadlineAt: Date.now() + 120_000,
+      pendingSwitch: null,
+    };
+
+    setBattleState({ ...state });
+    setMeta(updatedMeta);
+    setPub(projectPublic(state));
+    setMe(projectPrivate(state.player));
+  }, []);
+
   const resolveTurnLocally = useCallback(async (
     state: BattleState,
     currentMeta: Meta,
@@ -425,40 +475,32 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
       setMeta(newMeta);
 
       const queue = buildActionQueue(state, playerAction, opponentAction);
-      await runBattleTurnFromQueue(state, queue, { clearBattleLog: true });
-
-      // Check win condition
-      if (isTeamDefeated(state.player)) {
-        state.isComplete = true;
-        state.winner = 'opponent';
-        state.battleLog.push({ type: 'battle_end', message: `${currentMeta.players.p2.name} won!` });
-      } else if (isTeamDefeated(state.opponent)) {
-        state.isComplete = true;
-        state.winner = 'player';
-        state.battleLog.push({ type: 'battle_end', message: 'You won!' });
-      }
-
-      // Update all state
-      const updatedMeta: Meta = {
-        ...currentMeta,
-        turn: currentMeta.turn + 1,
-        version: currentMeta.version + 1,
-        phase: state.isComplete ? 'ended' : 'choosing',
-        winnerUid: state.isComplete ? (state.winner === 'player' ? PLAYER_UID : AI_UID) : null,
-        deadlineAt: Date.now() + 120_000,
-      };
-
-      setBattleState({ ...state });
-      setMeta(updatedMeta);
-      setPub(projectPublic(state));
-      setMe(projectPrivate(state.player));
+      // The player picks their own pivot replacements; the AI sends in its next healthy Pokémon
+      const outcome = await runBattleTurnFromQueue(state, queue, { clearBattleLog: true, manualSwitchSides: ['player'] });
+      publishTurnOutcome(state, currentMeta, outcome);
     } catch (err: unknown) {
       console.error('Offline battle resolution error:', err);
       setError(err instanceof Error ? err.message : 'Battle resolution failed');
     } finally {
       resolving.current = false;
     }
-  }, []);
+  }, [publishTurnOutcome]);
+
+  /** Continue a turn paused for the player's U-turn / Baton Pass replacement. */
+  const resumeTurnLocally = useCallback(async (state: BattleState, currentMeta: Meta, switchIndex: number) => {
+    if (resolving.current) return;
+    resolving.current = true;
+    try {
+      setMeta({ ...currentMeta, phase: 'resolving' });
+      const outcome = await resumeBattleTurnAfterSwitch(state, switchIndex, { manualSwitchSides: ['player'] });
+      publishTurnOutcome(state, currentMeta, outcome);
+    } catch (err: unknown) {
+      console.error('Offline battle resume error:', err);
+      setError(err instanceof Error ? err.message : 'Battle resolution failed');
+    } finally {
+      resolving.current = false;
+    }
+  }, [publishTurnOutcome]);
 
   // ---------------------------------------------------------------------------
   // Player actions
@@ -466,15 +508,20 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
 
   const chooseMove = useCallback(async (moveId: string) => {
     if (!battleState || !meta || meta.phase !== 'choosing') return;
+    if (battleState.pendingSwitch) return; // only a switch can answer a pivot prompt
     const action: BattleAction = { type: 'move', moveId, target: 'opponent' };
     await resolveTurnLocally(battleState, meta, action);
   }, [battleState, meta, resolveTurnLocally]);
 
   const chooseSwitch = useCallback(async (idx: number) => {
     if (!battleState || !meta || meta.phase !== 'choosing') return;
+    if (battleState.pendingSwitch) {
+      await resumeTurnLocally(battleState, meta, idx);
+      return;
+    }
     const action: BattleAction = { type: 'switch', switchIndex: idx, target: 'opponent' };
     await resolveTurnLocally(battleState, meta, action);
-  }, [battleState, meta, resolveTurnLocally]);
+  }, [battleState, meta, resolveTurnLocally, resumeTurnLocally]);
 
   const forfeit = useCallback(async () => {
     if (!meta) return;
@@ -487,6 +534,7 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
 
   const legalMoves = useMemo(() => {
     if (!battleState) return [];
+    if (battleState.pendingSwitch) return [];
     const active = getCurrentPokemon(battleState.player);
     const forced = getForcedBattleMoveId(active);
     if (forced) {
@@ -507,6 +555,7 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
 
   const legalSwitchIndexes = useMemo(() => {
     if (!battleState) return [];
+    if (battleState.pendingSwitch) return battleState.pendingSwitch.options;
     const active = getCurrentPokemon(battleState.player);
     if (getForcedBattleMoveId(active)) return [];
     return battleState.player.pokemon

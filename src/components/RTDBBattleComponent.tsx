@@ -430,6 +430,10 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
   }
   if (!meta || !pub) return <div className="p-8 text-center" role="status">Waiting for battle data...</div>;
 
+  // Mid-turn pivot pick (U-turn, Baton Pass, ...): who is choosing?
+  const myPivotPick = !!meta.pendingSwitch && meta.pendingSwitch.uid === meUid;
+  const opponentPivotPick = !!meta.pendingSwitch && meta.pendingSwitch.uid !== meUid;
+
   // Reuse early-computed side keys for active Pokemon lookup
   const mySide = mySideEarly;
   const oppSide = oppSideEarly;
@@ -590,7 +594,33 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
       {meta.phase !== 'ended' && (
         <div className="border-t border-border bg-surface/90 backdrop-blur p-3 sm:p-4">
           <div>
-            <h3 className="text-lg font-semibold mb-4">Choose Your Action</h3>
+            <h3 className="text-lg font-semibold mb-4">
+              {myPivotPick ? 'Choose a Pokémon to send in' : 'Choose Your Action'}
+            </h3>
+
+            {myPivotPick && (
+              <div
+                role="status"
+                aria-live="polite"
+                className="mb-4 rounded-md border border-primary/40 bg-primary/10 px-3 py-2 text-sm text-primary"
+                data-testid="pivot-prompt"
+              >
+                {meta.pendingSwitch?.reason === 'baton-pass'
+                  ? 'Baton Pass: pick who receives the stat changes.'
+                  : 'Pick which Pokémon comes in to finish the turn.'}
+              </div>
+            )}
+            {opponentPivotPick && (
+              <div
+                role="status"
+                aria-live="polite"
+                className="mb-4 flex items-center justify-center gap-2 text-sm text-muted"
+                data-testid="pivot-waiting"
+              >
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                Waiting for opponent to choose a Pokémon…
+              </div>
+            )}
 
             {waitingForResolution && (
               <div
@@ -609,7 +639,8 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
               </div>
             )}
 
-          {/* Move Selection */}
+          {/* Move Selection (hidden while a pivot replacement is being picked) */}
+          {!meta.pendingSwitch && (
           <div className="mb-6">
             <h4 className="font-medium mb-3">Moves</h4>
             <div className="grid grid-cols-2 gap-3">
@@ -702,7 +733,10 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
             </div>
           </div>
 
+          )}
+
           {/* Pokemon Switch */}
+          {!opponentPivotPick && (
           <div className="mb-4">
             <h4 className="font-medium mb-3">Switch Pokemon</h4>
             <div className="grid grid-cols-3 gap-2">
@@ -771,6 +805,8 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
               })}
             </div>
           </div>
+
+          )}
 
           {/* Forfeit Button */}
           <div className="text-center">
