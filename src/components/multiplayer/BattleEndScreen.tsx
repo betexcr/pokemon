@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Trophy, Medal, ArrowLeft } from 'lucide-react';
+import { Trophy, Medal, ArrowLeft, RotateCcw } from 'lucide-react';
 
 interface Props {
   winner: 'player' | 'opponent' | null;
@@ -13,8 +13,24 @@ interface Props {
     turns: number;
     damageDealt?: number;
     damageTaken?: number;
+    /** Opposing Pokémon knocked out. */
+    kos?: number;
+    /** Own Pokémon still standing, out of teamSize. */
+    remaining?: number;
+    teamSize?: number;
+    /** Percent of the opposing / own team's total HP. */
+    damageDealtPct?: number;
+    damageTakenPct?: number;
   };
   returnTo?: { path: string; label: string };
+  /** Multiplayer rematch: both players must ask; then both go back to their room. */
+  rematch?: {
+    mine: boolean;
+    theirs: boolean;
+    onRequest: () => void;
+    busy?: boolean;
+    error?: string | null;
+  };
 }
 
 /**
@@ -27,6 +43,7 @@ export function BattleEndScreen({
   endReason = 'victory',
   battleStats,
   returnTo = { path: '/lobby', label: 'Return to Lobby' },
+  rematch,
 }: Props) {
   const router = useRouter();
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -154,6 +171,30 @@ export function BattleEndScreen({
                 <span className="font-semibold">{battleStats.damageTaken}</span>
               </div>
             )}
+            {battleStats.kos !== undefined && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Knockouts:</span>
+                <span className="font-semibold" data-testid="end-kos">{battleStats.kos}</span>
+              </div>
+            )}
+            {battleStats.remaining !== undefined && battleStats.teamSize !== undefined && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Pokémon left:</span>
+                <span className="font-semibold">{battleStats.remaining} / {battleStats.teamSize}</span>
+              </div>
+            )}
+            {battleStats.damageDealtPct !== undefined && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Damage dealt:</span>
+                <span className="font-semibold">{battleStats.damageDealtPct}% of their team&apos;s HP</span>
+              </div>
+            )}
+            {battleStats.damageTakenPct !== undefined && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Damage taken:</span>
+                <span className="font-semibold">{battleStats.damageTakenPct}% of your team&apos;s HP</span>
+              </div>
+            )}
           </div>
         )}
         
@@ -181,15 +222,28 @@ export function BattleEndScreen({
             {returnTo.label}
           </button>
           
-          {/* Optional: Add rematch button in future
-          <button
-            onClick={() => {}}
-            className="w-full px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors flex items-center justify-center gap-2"
-          >
-            <RotateCcw className="w-4 h-4" />
-            Request Rematch
-          </button>
-          */}
+          {rematch && (
+            <>
+              <button
+                type="button"
+                onClick={rematch.onRequest}
+                disabled={rematch.mine || rematch.busy}
+                className="w-full px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
+                data-testid="rematch-button"
+              >
+                <RotateCcw className="w-4 h-4" />
+                {rematch.mine
+                  ? 'Waiting for your opponent…'
+                  : rematch.theirs
+                    ? 'Accept rematch'
+                    : 'Request rematch'}
+              </button>
+              {!rematch.mine && rematch.theirs && (
+                <p className="text-xs text-muted-foreground">{opponentName} wants a rematch.</p>
+              )}
+              {rematch.error && <p className="text-xs text-red-500" role="alert">{rematch.error}</p>}
+            </>
+          )}
         </div>
       </div>
     </div>

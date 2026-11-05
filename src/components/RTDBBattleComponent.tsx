@@ -1,3 +1,4 @@
+import { useRouter } from 'next/navigation';
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useBattleState } from '@/hooks/useBattleState';
 import Tooltip from '@/components/Tooltip';
@@ -63,7 +64,29 @@ const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
     tera,
     myChoiceSubmitted,
     reconnectedAt,
+    rematch,
+    requestRematch,
   } = useBattleState(battleId);
+  const router = useRouter();
+  const [rematchBusy, setRematchBusy] = useState(false);
+  const [rematchError, setRematchError] = useState<string | null>(null);
+  // Both players asked for a rematch: go back to the room (reset to ready with the same teams)
+  useEffect(() => {
+    if (rematch.roomId) router.push(`/lobby/${rematch.roomId}`);
+  }, [rematch.roomId, router]);
+  const onRequestRematch = useCallback(async () => {
+    setRematchBusy(true);
+    setRematchError(null);
+    try {
+      const result = await requestRematch();
+      if (result.status === 'ready' && result.roomId) router.push(`/lobby/${result.roomId}`);
+      else if (result.status === 'unavailable') setRematchError(result.reason ?? 'A rematch is not available.');
+    } catch (err) {
+      setRematchError(err instanceof Error ? err.message : 'Failed to request a rematch');
+    } finally {
+      setRematchBusy(false);
+    }
+  }, [requestRematch, router]);
   const [teraArmed, setTeraArmed] = useState(false);
 
   // duplicate state/effects removed (using direct imports below)
@@ -879,10 +902,18 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
           winner={meta.winnerUid === meUid ? 'player' : meta.winnerUid === oppUid ? 'opponent' : null}
           playerName={meta.players?.p1?.uid === meUid ? meta.players.p1.name : meta.players?.p2?.name || 'You'}
           opponentName={meta.players?.p1?.uid === oppUid ? meta.players.p1.name : meta.players?.p2?.name || 'Opponent'}
-          endReason={meta.endedReason}
+          endReason={meta.endedReason ?? undefined}
           battleStats={{
-            turns: meta.turn
+            turns: meta.turn,
+            ...(mySideEarly && (pub as any)?.stats?.[mySideEarly] ? {
+              kos: (pub as any).stats[mySideEarly].kos,
+              remaining: (pub as any).stats[mySideEarly].remaining,
+              teamSize: (pub as any).stats[mySideEarly].teamSize,
+              damageDealtPct: (pub as any).stats[mySideEarly].damageDealtPct,
+              damageTakenPct: (pub as any).stats[mySideEarly].damageTakenPct,
+            } : {}),
           }}
+          rematch={{ ...rematch, onRequest: onRequestRematch, busy: rematchBusy, error: rematchError }}
         />
       )}
     </div>

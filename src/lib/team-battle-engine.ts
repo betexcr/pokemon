@@ -318,6 +318,8 @@ export type BattleState = {
    * the next healthy one. Not serialized; multiplayer never sets it.
    */
   autoSwitchPicker?: (state: BattleState, side: 'player' | 'opponent', candidates: number[]) => number;
+  /** Multiplayer: HP lost per side over the battle (end-of-battle stats). */
+  battleStats?: { p1: { damageTaken: number }; p2: { damageTaken: number } };
 };
 
 /** Why a turn paused mid-way for a player's pick. */

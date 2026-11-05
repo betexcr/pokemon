@@ -47,6 +47,7 @@ import {
 } from './battle-private-volatiles';
 import { applyEngineExtras, captureEngineExtras, type EngineExtras } from './battle-engine-extras';
 import { maxHpFor, sanitizeEvs } from './battle-evs';
+import { accumulateBattleTotals, hpSnapshot, publicBattleStats } from './battle-summary-stats';
 
 export { RecoverableResolutionError, isRecoverableResolutionFailure };
 
@@ -420,6 +421,7 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
         const BOTH_SIDES: Array<'player' | 'opponent'> = ['player', 'opponent'];
         const currentState = battleState;
         const rngBefore = cloneBattleRng(currentState.rng);
+        const hpBefore = hpSnapshot(currentState);
         let p1Action: BattleAction;
         let p2Action: BattleAction;
         let validationInfo: { p1: string | null; p2: string | null; normalized: boolean };
@@ -629,6 +631,9 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
             currentState.battleLog.push({ type: 'battle_end', message: `${meta.players.p1.name} won!` });
         }
 
+        // End-of-battle stats: HP lost this segment (persisted with the engine extras)
+        accumulateBattleTotals(currentState, hpBefore);
+
         const p1Updates = privateUpdatesFromTeam(currentState.player);
         const p2Updates = privateUpdatesFromTeam(currentState.opponent);
 
@@ -734,6 +739,7 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
                 active: makePublicActive(p2ActiveNow),
                 benchPublic: makeBenchPublic(currentState.opponent)
             },
+            stats: publicBattleStats(currentState),
             lastResultSummary: currentState.battleLog.length > 0
                 ? currentState.battleLog.map(l => l.message).join(' ')
                 : '',

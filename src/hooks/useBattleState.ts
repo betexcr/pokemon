@@ -49,6 +49,8 @@ type PublicState = {
     screens: IdMap<{ reflect: number; lightScreen: number }>;
   };
   lastResultSummary?: string;
+  /** Per-side totals for the end-of-battle screen (see battle-summary-stats.ts). */
+  stats?: Record<'p1' | 'p2', { kos: number; remaining: number; teamSize: number; damageDealtPct: number; damageTakenPct: number }>;
   lastValidation?: {
     turn: number;
     p1?: string | null;
@@ -116,6 +118,9 @@ type UseBattleState = {
   reconnectedAt: number | null;
   /** Ask the server to unstick the battle (deadline passed, stuck resolution). Throttled unless forced. */
   syncNow: (force?: boolean) => Promise<void>;
+  /** After the battle: who asked for a rematch, and the room to return to once both did. */
+  rematch: { mine: boolean; theirs: boolean; roomId: string | null };
+  requestRematch: () => Promise<{ status: string; roomId?: string; reason?: string }>;
 };
 
 const SYNC_MIN_INTERVAL_MS = 10_000;
@@ -580,6 +585,33 @@ export function useBattleState(battleId: string): UseBattleState {
     if (reconnectedAt) void syncNow(true);
   }, [reconnectedAt, syncNow]);
 
+  // Rematch requests (Admin-written; participants can read)
+  const [rematchRaw, setRematchRaw] = useState<Record<string, unknown> | null>(null);
+  useEffect(() => {
+    const database = rtdb;
+    if (!database || !meUid || meta?.phase !== 'ended') return;
+    const unsub = onValue(
+      dbRef(database, `/battles/${battleId}/rematch`),
+      (s) => setRematchRaw((s.val() as Record<string, unknown> | null) ?? null),
+      () => setRematchRaw(null),
+    );
+    return () => unsub();
+  }, [battleId, meUid, meta?.phase]);
+  const rematch = useMemo(() => ({
+    mine: !!(meUid && rematchRaw?.[meUid]),
+    theirs: !!(oppUid && rematchRaw?.[oppUid]),
+    roomId: typeof rematchRaw?.roomId === 'string' ? (rematchRaw.roomId as string) : null,
+  }), [rematchRaw, meUid, oppUid]);
+
+  const requestRematch = useCallback(async (): Promise<{ status: string; roomId?: string; reason?: string }> => {
+    const tokenHeader = await getIdTokenHeader();
+    if (!tokenHeader) throw new Error('User not authenticated');
+    const res = await fetch(`/api/battles/${battleId}/rematch`, { method: 'POST', headers: { Authorization: tokenHeader } });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body?.error || 'Failed to request a rematch');
+    return body;
+  }, [battleId, getIdTokenHeader]);
+
   return {
     loading, error, meta, pub, me, meUid, oppUid,
     connectionStatus,
@@ -594,5 +626,7 @@ export function useBattleState(battleId: string): UseBattleState {
     myChoiceSubmitted,
     reconnectedAt,
     syncNow,
+    rematch,
+    requestRematch,
   };
 }

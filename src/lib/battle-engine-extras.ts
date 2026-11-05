@@ -20,6 +20,8 @@ export type EngineExtras = {
   p2: SideExtras;
   fairyLock?: number;
   lastMoveInBattle?: string;
+  /** HP lost per side (end-of-battle stats). */
+  battleStats?: { p1: { damageTaken: number }; p2: { damageTaken: number } };
 };
 
 /** RTDB rejects `undefined`: keep only defined keys. */
@@ -47,6 +49,7 @@ export function captureEngineExtras(state: BattleState): EngineExtras {
     p2: captureSide(state.opponent),
     fairyLock: state.field.rooms?.fairyLock?.turns,
     lastMoveInBattle: state.lastMoveInBattle,
+    battleStats: state.battleStats,
   });
 }
 
@@ -73,4 +76,10 @@ export function applyEngineExtras(state: BattleState, extras: EngineExtras | nul
     state.field.rooms.fairyLock = { turns: extras.fairyLock };
   }
   if (extras.lastMoveInBattle) state.lastMoveInBattle = extras.lastMoveInBattle;
+  if (extras.battleStats?.p1 && extras.battleStats?.p2) {
+    state.battleStats = {
+      p1: { damageTaken: Number(extras.battleStats.p1.damageTaken) || 0 },
+      p2: { damageTaken: Number(extras.battleStats.p2.damageTaken) || 0 },
+    };
+  }
 }

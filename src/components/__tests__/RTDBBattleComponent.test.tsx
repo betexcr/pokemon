@@ -33,14 +33,20 @@ vi.mock('@/lib/moveCache', () => ({
 }));
 
 // Headless host-side resolver: talks to Firebase, irrelevant to rendering.
+const routerPush = vi.fn();
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: routerPush, replace: vi.fn(), back: vi.fn(), prefetch: vi.fn() }),
+}));
+
 vi.mock('@/components/multiplayer/BattleTurnManager', () => ({
   BattleTurnManager: () => null,
 }));
 
 vi.mock('@/components/multiplayer/BattleEndScreen', () => ({
-  BattleEndScreen: (props: { winner: string | null; endReason?: string }) => (
+  BattleEndScreen: (props: { winner: string | null; endReason?: string; battleStats?: { kos?: number }; rematch?: { onRequest: () => void } }) => (
     <div data-testid="end-screen">
-      winner:{String(props.winner)} reason:{String(props.endReason)}
+      winner:{String(props.winner)} reason:{String(props.endReason)} kos:{String(props.battleStats?.kos)}
+      <button type="button" onClick={() => props.rematch?.onRequest()}>rematch</button>
     </div>
   ),
 }));
@@ -131,6 +137,11 @@ function setHook(overrides: Overrides = {}) {
     chooseSwitch: vi.fn().mockResolvedValue(undefined),
     forfeit: vi.fn(),
     tera: { available: false, type: null },
+    myChoiceSubmitted: false,
+    reconnectedAt: null,
+    syncNow: vi.fn(),
+    rematch: { mine: false, theirs: false, roomId: null },
+    requestRematch: vi.fn().mockResolvedValue({ status: 'waiting' }),
     ...rest,
   };
   return hookState.current as Record<string, ReturnType<typeof vi.fn>> & Record<string, unknown>;
@@ -431,5 +442,31 @@ describe('RTDBBattleComponent', () => {
     renderBattle();
     fireEvent.click(screen.getByTestId('forfeit-button'));
     expect(forfeitHandler).toHaveBeenCalled();
+  });
+});
+
+describe('RTDBBattleComponent reconnect and post-battle', () => {
+  it('waits for the opponent when my choice is already stored (after a reload)', () => {
+    setHook({ myChoiceSubmitted: true });
+    renderBattle();
+    expect(screen.getByText(/Waiting for opponent/i)).toBeTruthy();
+  });
+
+  it('shows end-of-battle stats and asks for a rematch', async () => {
+    const hook = setHook({
+      meta: { phase: 'ended', winnerUid: ME },
+      pub: { stats: { p1: { kos: 3, remaining: 2, teamSize: 6, damageDealtPct: 80, damageTakenPct: 40 }, p2: { kos: 4, remaining: 0, teamSize: 6, damageDealtPct: 40, damageTakenPct: 80 } } },
+    });
+    renderBattle();
+    // I am p1 (Ash): my knockouts
+    expect(screen.getByTestId('end-screen').textContent).toMatch(/kos:3/);
+    fireEvent.click(screen.getByText('rematch'));
+    await waitFor(() => expect(hook.requestRematch).toHaveBeenCalled());
+  });
+
+  it('goes back to the room once both players asked for a rematch', async () => {
+    setHook({ meta: { phase: 'ended', winnerUid: ME }, rematch: { mine: true, theirs: true, roomId: 'room-7' } });
+    renderBattle();
+    await waitFor(() => expect(routerPush).toHaveBeenCalledWith('/lobby/room-7'));
   });
 });
