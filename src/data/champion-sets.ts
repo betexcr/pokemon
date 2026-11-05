@@ -15,6 +15,13 @@ export type ChampionSet = {
 export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
   "koga-kanto": [
     {
+      "moves": [
+        "gunk-shot",
+        "explosion",
+        "fire-blast",
+        "toxic-spikes"
+      ],
+      "ability": "levitate",
       "nature": "adamant",
       "evs": {
         "hp": 124,
@@ -38,6 +45,13 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       }
     },
     {
+      "moves": [
+        "gunk-shot",
+        "explosion",
+        "fire-blast",
+        "toxic-spikes"
+      ],
+      "ability": "levitate",
       "nature": "adamant",
       "evs": {
         "hp": 124,
@@ -64,26 +78,33 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
   ],
   "sabrina-kanto": [
     {
-      "nature": "adamant",
+      "moves": [
+        "psychic",
+        "shadow-ball",
+        "energy-ball",
+        "psyshock"
+      ],
+      "ability": "magic-guard",
+      "nature": "timid",
       "evs": {
-        "hp": 124,
-        "attack": 124,
-        "speed": 0
+        "special-attack": 124,
+        "speed": 124,
+        "hp": 0
       }
     },
     {
       "moves": [
         "psychic",
         "dazzling-gleam",
-        "nasty-plot",
-        "focus-blast"
+        "focus-blast",
+        "mystical-fire"
       ],
       "ability": "filter",
-      "nature": "modest",
+      "nature": "timid",
       "evs": {
-        "hp": 124,
         "special-attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     },
     {
@@ -94,40 +115,39 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
         "sleep-powder"
       ],
       "ability": "tinted-lens",
-      "nature": "modest",
+      "nature": "timid",
       "evs": {
-        "hp": 124,
         "special-attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     },
     {
       "moves": [
         "psychic",
-        "counter",
+        "focus-blast",
         "shadow-ball",
         "psyshock"
       ],
       "ability": "magic-guard",
       "item": "sitrus-berry",
-      "nature": "modest",
+      "nature": "timid",
       "evs": {
-        "hp": 124,
         "special-attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     }
   ],
   "blaine-kanto": [
     {
-      "nature": "adamant",
-      "evs": {
-        "hp": 124,
-        "attack": 124,
-        "speed": 0
-      }
-    },
-    {
+      "moves": [
+        "flare-blitz",
+        "close-combat",
+        "double-edge",
+        "raging-fury"
+      ],
+      "ability": "intimidate",
       "nature": "adamant",
       "evs": {
         "hp": 124,
@@ -140,14 +160,29 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
         "flare-blitz",
         "high-horsepower",
         "wild-charge",
+        "double-edge"
+      ],
+      "ability": "flash-fire",
+      "nature": "jolly",
+      "evs": {
+        "attack": 124,
+        "speed": 124,
+        "hp": 0
+      }
+    },
+    {
+      "moves": [
+        "flare-blitz",
+        "high-horsepower",
+        "wild-charge",
         "swords-dance"
       ],
       "ability": "flash-fire",
-      "nature": "adamant",
+      "nature": "jolly",
       "evs": {
-        "hp": 124,
         "attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     },
     {
@@ -169,6 +204,13 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
   ],
   "giovanni-kanto": [
     {
+      "moves": [
+        "earthquake",
+        "stone-edge",
+        "megahorn",
+        "double-edge"
+      ],
+      "ability": "lightning-rod",
       "nature": "adamant",
       "evs": {
         "hp": 124,
@@ -186,9 +228,9 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       "ability": "arena-trap",
       "nature": "adamant",
       "evs": {
-        "hp": 124,
         "attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     },
     {
@@ -216,9 +258,9 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       "ability": "sheer-force",
       "nature": "modest",
       "evs": {
-        "hp": 124,
         "special-attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     },
     {
@@ -276,10 +318,10 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
     },
     {
       "moves": [
-        "body-press",
         "scald",
         "iron-defense",
-        "slack-off"
+        "slack-off",
+        "body-press"
       ],
       "ability": "regenerator",
       "item": "life-orb",
@@ -295,16 +337,16 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       "moves": [
         "ice-beam",
         "psyshock",
-        "nasty-plot",
-        "focus-blast"
+        "focus-blast",
+        "nasty-plot"
       ],
       "ability": "dry-skin",
       "item": "life-orb",
       "nature": "modest",
       "evs": {
-        "hp": 252,
         "special-attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       }
     },
     {
@@ -327,12 +369,19 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
   ],
   "bruno-elite": [
     {
+      "moves": [
+        "head-smash",
+        "earthquake",
+        "double-edge",
+        "dragon-dance"
+      ],
+      "ability": "rock-head",
       "item": "eviolite",
-      "nature": "adamant",
+      "nature": "careful",
       "evs": {
         "hp": 252,
-        "attack": 252,
-        "speed": 4
+        "special-defense": 252,
+        "attack": 4
       }
     },
     {
@@ -360,22 +409,29 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
         "knock-off"
       ],
       "ability": "reckless",
-      "item": "life-orb",
-      "nature": "adamant",
+      "item": "choice-scarf",
+      "nature": "jolly",
       "evs": {
-        "hp": 252,
         "attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       },
       "teraType": "fighting"
     },
     {
+      "moves": [
+        "head-smash",
+        "earthquake",
+        "double-edge",
+        "dragon-dance"
+      ],
+      "ability": "rock-head",
       "item": "eviolite",
-      "nature": "adamant",
+      "nature": "careful",
       "evs": {
         "hp": 252,
-        "attack": 252,
-        "speed": 4
+        "special-defense": 252,
+        "attack": 4
       }
     },
     {
@@ -400,20 +456,27 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       "moves": [
         "sludge-wave",
         "shadow-ball",
-        "nasty-plot",
-        "focus-blast"
+        "focus-blast",
+        "nasty-plot"
       ],
       "ability": "cursed-body",
       "item": "life-orb",
       "nature": "modest",
       "evs": {
-        "hp": 252,
         "special-attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       },
       "teraType": "dark"
     },
     {
+      "moves": [
+        "brave-bird",
+        "double-edge",
+        "u-turn",
+        "roost"
+      ],
+      "ability": "infiltrator",
       "item": "eviolite",
       "nature": "adamant",
       "evs": {
@@ -423,12 +486,19 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       }
     },
     {
+      "moves": [
+        "sludge-wave",
+        "shadow-ball",
+        "focus-blast",
+        "nasty-plot"
+      ],
+      "ability": "levitate",
       "item": "eviolite",
-      "nature": "adamant",
+      "nature": "modest",
       "evs": {
-        "hp": 252,
-        "attack": 252,
-        "speed": 4
+        "special-attack": 252,
+        "speed": 252,
+        "hp": 4
       }
     },
     {
@@ -452,16 +522,16 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       "moves": [
         "sludge-wave",
         "shadow-ball",
-        "nasty-plot",
-        "focus-blast"
+        "focus-blast",
+        "nasty-plot"
       ],
       "ability": "cursed-body",
       "item": "life-orb",
       "nature": "modest",
       "evs": {
-        "hp": 252,
         "special-attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       },
       "teraType": "dark"
     }
@@ -476,11 +546,11 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       ],
       "ability": "intimidate",
       "item": "life-orb",
-      "nature": "adamant",
+      "nature": "jolly",
       "evs": {
-        "hp": 252,
         "attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       },
       "teraType": "ground"
     },
@@ -524,11 +594,11 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       ],
       "ability": "unnerve",
       "item": "life-orb",
-      "nature": "adamant",
+      "nature": "jolly",
       "evs": {
-        "hp": 252,
         "attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       }
     },
     {
@@ -540,11 +610,11 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       ],
       "ability": "multiscale",
       "item": "life-orb",
-      "nature": "adamant",
+      "nature": "jolly",
       "evs": {
-        "hp": 252,
         "attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       },
       "teraType": "steel"
     }
@@ -570,18 +640,32 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
   ],
   "jasmine-johto": [
     {
-      "nature": "adamant",
+      "moves": [
+        "steel-beam",
+        "thunderbolt",
+        "tera-blast",
+        "toxic"
+      ],
+      "ability": "magnet-pull",
+      "nature": "calm",
       "evs": {
         "hp": 124,
-        "attack": 124,
-        "speed": 0
+        "special-defense": 124,
+        "special-attack": 0
       }
     },
     {
-      "nature": "adamant",
+      "moves": [
+        "steel-beam",
+        "thunderbolt",
+        "rest",
+        "tera-blast"
+      ],
+      "ability": "magnet-pull",
+      "nature": "modest",
       "evs": {
         "hp": 124,
-        "attack": 124,
+        "special-attack": 124,
         "speed": 0
       }
     },
@@ -614,10 +698,10 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       ],
       "ability": "thick-fat",
       "item": "sitrus-berry",
-      "nature": "impish",
+      "nature": "careful",
       "evs": {
         "hp": 124,
-        "defense": 124,
+        "special-defense": 124,
         "attack": 0
       }
     }
@@ -676,11 +760,11 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       ],
       "ability": "swift-swim",
       "item": "sitrus-berry",
-      "nature": "modest",
+      "nature": "timid",
       "evs": {
-        "hp": 124,
         "special-attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     }
   ],
@@ -688,16 +772,16 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
     {
       "moves": [
         "psychic",
-        "calm-mind",
         "air-slash",
-        "roost"
+        "heat-wave",
+        "calm-mind"
       ],
       "ability": "magic-bounce",
-      "nature": "modest",
+      "nature": "timid",
       "evs": {
-        "hp": 124,
         "special-attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     },
     {
@@ -718,15 +802,15 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       "moves": [
         "ice-beam",
         "psyshock",
-        "nasty-plot",
-        "focus-blast"
+        "focus-blast",
+        "nasty-plot"
       ],
       "ability": "dry-skin",
-      "nature": "modest",
+      "nature": "timid",
       "evs": {
-        "hp": 124,
         "special-attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     },
     {
@@ -734,7 +818,7 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
         "psyshock",
         "scald",
         "calm-mind",
-        "slack-off"
+        "psychic-noise"
       ],
       "ability": "regenerator",
       "nature": "modest",
@@ -747,17 +831,17 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
     {
       "moves": [
         "psychic",
-        "calm-mind",
         "air-slash",
-        "roost"
+        "heat-wave",
+        "calm-mind"
       ],
       "ability": "magic-bounce",
       "item": "sitrus-berry",
-      "nature": "modest",
+      "nature": "timid",
       "evs": {
-        "hp": 124,
         "special-attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     }
   ],
@@ -785,11 +869,11 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
         "sleep-powder"
       ],
       "ability": "tinted-lens",
-      "nature": "modest",
+      "nature": "timid",
       "evs": {
-        "hp": 124,
         "special-attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     },
     {
@@ -800,10 +884,10 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
         "stealth-rock"
       ],
       "ability": "sturdy",
-      "nature": "impish",
+      "nature": "careful",
       "evs": {
         "hp": 124,
-        "defense": 124,
+        "special-defense": 124,
         "attack": 0
       }
     },
@@ -863,11 +947,11 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
         "swords-dance"
       ],
       "ability": "unburden",
-      "nature": "adamant",
+      "nature": "jolly",
       "evs": {
-        "hp": 124,
         "attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     },
     {
@@ -886,11 +970,18 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       }
     },
     {
-      "nature": "adamant",
+      "moves": [
+        "head-smash",
+        "earthquake",
+        "double-edge",
+        "dragon-dance"
+      ],
+      "ability": "rock-head",
+      "nature": "careful",
       "evs": {
         "hp": 124,
-        "attack": 124,
-        "speed": 0
+        "special-defense": 124,
+        "attack": 0
       }
     },
     {
@@ -944,15 +1035,15 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       "moves": [
         "sludge-wave",
         "shadow-ball",
-        "nasty-plot",
-        "focus-blast"
+        "focus-blast",
+        "nasty-plot"
       ],
       "ability": "cursed-body",
       "nature": "modest",
       "evs": {
-        "hp": 124,
         "special-attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     },
     {
@@ -972,18 +1063,18 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
     },
     {
       "moves": [
-        "sucker-punch",
         "fire-blast",
-        "nasty-plot",
-        "sludge-bomb"
+        "dark-pulse",
+        "sludge-bomb",
+        "nasty-plot"
       ],
       "ability": "flash-fire",
       "item": "sitrus-berry",
-      "nature": "modest",
+      "nature": "timid",
       "evs": {
-        "hp": 124,
         "special-attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     }
   ],
@@ -996,11 +1087,11 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
         "temper-flare"
       ],
       "ability": "intimidate",
-      "nature": "adamant",
+      "nature": "jolly",
       "evs": {
-        "hp": 124,
         "attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     },
     {
@@ -1011,11 +1102,11 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
         "dragon-dance"
       ],
       "ability": "multiscale",
-      "nature": "adamant",
+      "nature": "jolly",
       "evs": {
-        "hp": 124,
         "attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     },
     {
@@ -1026,11 +1117,11 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
         "tera-blast"
       ],
       "ability": "multiscale",
-      "nature": "adamant",
+      "nature": "jolly",
       "evs": {
-        "hp": 124,
         "attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     },
     {
@@ -1041,26 +1132,26 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
         "aqua-tail"
       ],
       "ability": "unnerve",
-      "nature": "adamant",
+      "nature": "jolly",
       "evs": {
-        "hp": 124,
         "attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     },
     {
       "moves": [
-        "earthquake",
         "flamethrower",
         "hurricane",
-        "focus-blast"
+        "focus-blast",
+        "earthquake"
       ],
       "ability": "blaze",
-      "nature": "modest",
+      "nature": "timid",
       "evs": {
-        "hp": 124,
         "special-attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     },
     {
@@ -1072,11 +1163,11 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       ],
       "ability": "multiscale",
       "item": "life-orb",
-      "nature": "adamant",
+      "nature": "jolly",
       "evs": {
-        "hp": 252,
         "attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       },
       "teraType": "steel"
     }
@@ -1094,11 +1185,11 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       ],
       "ability": "truant",
       "item": "sitrus-berry",
-      "nature": "adamant",
+      "nature": "jolly",
       "evs": {
-        "hp": 124,
         "attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     }
   ],
@@ -1111,19 +1202,19 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
         "quick-attack"
       ],
       "ability": "guts",
-      "nature": "adamant",
+      "nature": "jolly",
       "evs": {
-        "hp": 124,
         "attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     },
     {
       "moves": [
         "hydro-pump",
         "hurricane",
-        "u-turn",
-        "weather-ball"
+        "weather-ball",
+        "u-turn"
       ],
       "ability": "drizzle",
       "nature": "modest",
@@ -1140,10 +1231,10 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
         "spikes"
       ],
       "ability": "sturdy",
-      "nature": "impish",
+      "nature": "careful",
       "evs": {
         "hp": 124,
-        "defense": 124,
+        "special-defense": 124,
         "attack": 0
       }
     },
@@ -1183,8 +1274,8 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
     {
       "moves": [
         "psychic",
-        "roost",
         "heat-wave",
+        "roost",
         "thunder-wave"
       ],
       "ability": "magic-bounce",
@@ -1199,8 +1290,8 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       "moves": [
         "psychic",
         "power-gem",
-        "nasty-plot",
-        "earth-power"
+        "earth-power",
+        "nasty-plot"
       ],
       "ability": "levitate",
       "nature": "modest",
@@ -1219,10 +1310,10 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       ],
       "ability": "levitate",
       "item": "sitrus-berry",
-      "nature": "impish",
+      "nature": "careful",
       "evs": {
         "hp": 124,
-        "defense": 124,
+        "special-defense": 124,
         "attack": 0
       }
     }
@@ -1230,10 +1321,10 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
   "wallace-hoenn": [
     {
       "moves": [
-        "flip-turn",
-        "endeavor",
         "surf",
-        "substitute"
+        "endeavor",
+        "substitute",
+        "flip-turn"
       ],
       "ability": "swift-swim",
       "nature": "impish",
@@ -1259,11 +1350,18 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       }
     },
     {
-      "nature": "adamant",
+      "moves": [
+        "ice-beam",
+        "surf",
+        "toxic",
+        "double-edge"
+      ],
+      "ability": "thick-fat",
+      "nature": "bold",
       "evs": {
         "hp": 124,
-        "attack": 124,
-        "speed": 0
+        "defense": 124,
+        "special-attack": 0
       }
     },
     {
@@ -1284,8 +1382,8 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
     {
       "moves": [
         "scald",
-        "recover",
         "ice-beam",
+        "recover",
         "dragon-tail"
       ],
       "ability": "competitive",
@@ -1354,9 +1452,9 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       "ability": "speed-boost",
       "nature": "adamant",
       "evs": {
-        "hp": 124,
         "attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     },
     {
@@ -1429,10 +1527,10 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       ],
       "ability": "prankster",
       "item": "leftovers",
-      "nature": "impish",
+      "nature": "careful",
       "evs": {
         "hp": 252,
-        "defense": 252,
+        "special-defense": 252,
         "attack": 4
       },
       "teraType": "poison"
@@ -1455,20 +1553,34 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
   ],
   "glacia-elite-hoenn": [
     {
+      "moves": [
+        "ice-beam",
+        "surf",
+        "toxic",
+        "double-edge"
+      ],
+      "ability": "thick-fat",
       "item": "eviolite",
-      "nature": "adamant",
+      "nature": "bold",
       "evs": {
         "hp": 252,
-        "attack": 252,
-        "speed": 4
+        "defense": 252,
+        "special-attack": 4
       }
     },
     {
+      "moves": [
+        "ice-beam",
+        "surf",
+        "toxic",
+        "double-edge"
+      ],
+      "ability": "thick-fat",
       "item": "eviolite",
-      "nature": "adamant",
+      "nature": "modest",
       "evs": {
         "hp": 252,
-        "attack": 252,
+        "special-attack": 252,
         "speed": 4
       }
     },
@@ -1510,8 +1622,8 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       "moves": [
         "ice-beam",
         "surf",
-        "super-fang",
-        "toxic"
+        "toxic",
+        "super-fang"
       ],
       "ability": "thick-fat",
       "item": "life-orb",
@@ -1525,6 +1637,13 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
   ],
   "drake-elite-hoenn": [
     {
+      "moves": [
+        "outrage",
+        "double-edge",
+        "dragon-dance",
+        "crunch"
+      ],
+      "ability": "rock-head",
       "item": "eviolite",
       "nature": "adamant",
       "evs": {
@@ -1558,12 +1677,12 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
         "u-turn"
       ],
       "ability": "levitate",
-      "item": "life-orb",
-      "nature": "adamant",
+      "item": "choice-scarf",
+      "nature": "jolly",
       "evs": {
-        "hp": 252,
         "attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       },
       "teraType": "ground"
     },
@@ -1575,12 +1694,12 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
         "u-turn"
       ],
       "ability": "levitate",
-      "item": "life-orb",
-      "nature": "adamant",
+      "item": "choice-scarf",
+      "nature": "jolly",
       "evs": {
-        "hp": 252,
         "attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       },
       "teraType": "ground"
     },
@@ -1593,11 +1712,11 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       ],
       "ability": "intimidate",
       "item": "life-orb",
-      "nature": "adamant",
+      "nature": "jolly",
       "evs": {
-        "hp": 252,
         "attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       },
       "teraType": "dragon"
     }
@@ -1709,16 +1828,16 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       "moves": [
         "close-combat",
         "meteor-mash",
-        "extreme-speed",
-        "stone-edge"
+        "swords-dance",
+        "extreme-speed"
       ],
       "ability": "justified",
       "item": "sitrus-berry",
-      "nature": "adamant",
+      "nature": "jolly",
       "evs": {
-        "hp": 124,
         "attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     }
   ],
@@ -1736,19 +1855,26 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       "item": "sitrus-berry",
       "nature": "adamant",
       "evs": {
-        "hp": 124,
         "attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     }
   ],
   "byron-sinnoh": [
     {
-      "nature": "adamant",
+      "moves": [
+        "iron-head",
+        "earthquake",
+        "psychic",
+        "body-slam"
+      ],
+      "ability": "levitate",
+      "nature": "impish",
       "evs": {
         "hp": 124,
-        "attack": 124,
-        "speed": 0
+        "defense": 124,
+        "attack": 0
       }
     },
     {
@@ -1785,11 +1911,18 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
   ],
   "candice-sinnoh": [
     {
-      "nature": "adamant",
+      "moves": [
+        "wood-hammer",
+        "double-edge",
+        "ice-spinner",
+        "iron-tail"
+      ],
+      "ability": "snow-warning",
+      "nature": "impish",
       "evs": {
         "hp": 124,
-        "attack": 124,
-        "speed": 0
+        "defense": 124,
+        "attack": 0
       }
     },
     {
@@ -1802,9 +1935,9 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       "ability": "inner-focus",
       "nature": "adamant",
       "evs": {
-        "hp": 124,
         "attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     },
     {
@@ -1815,11 +1948,11 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
         "ice-punch"
       ],
       "ability": "pure-power",
-      "nature": "adamant",
+      "nature": "jolly",
       "evs": {
-        "hp": 124,
         "attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     },
     {
@@ -1865,9 +1998,9 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       "ability": "technician",
       "nature": "adamant",
       "evs": {
-        "hp": 124,
         "attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     },
     {
@@ -1922,8 +2055,8 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
     {
       "moves": [
         "bug-buzz",
-        "quiver-dance",
-        "air-cutter"
+        "air-cutter",
+        "quiver-dance"
       ],
       "ability": "swarm",
       "item": "sitrus-berry",
@@ -1959,12 +2092,12 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
         "stone-edge"
       ],
       "ability": "moxie",
-      "item": "life-orb",
-      "nature": "adamant",
+      "item": "choice-scarf",
+      "nature": "jolly",
       "evs": {
-        "hp": 252,
         "attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       },
       "teraType": "bug"
     },
@@ -1995,10 +2128,10 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       ],
       "ability": "unaware",
       "item": "leftovers",
-      "nature": "impish",
+      "nature": "careful",
       "evs": {
         "hp": 252,
-        "defense": 252,
+        "special-defense": 252,
         "attack": 4
       },
       "teraType": "fairy"
@@ -2022,9 +2155,9 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
     },
     {
       "moves": [
-        "explosion",
         "earthquake",
         "stone-edge",
+        "explosion",
         "rock-polish"
       ],
       "ability": "sturdy",
@@ -2063,10 +2196,10 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       ],
       "ability": "sand-stream",
       "item": "leftovers",
-      "nature": "impish",
+      "nature": "careful",
       "evs": {
         "hp": 252,
-        "defense": 252,
+        "special-defense": 252,
         "attack": 4
       },
       "teraType": "dragon"
@@ -2082,11 +2215,11 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       ],
       "ability": "flash-fire",
       "item": "life-orb",
-      "nature": "adamant",
+      "nature": "jolly",
       "evs": {
-        "hp": 252,
         "attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       }
     },
     {
@@ -2108,8 +2241,8 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
     {
       "moves": [
         "shadow-ball",
-        "calm-mind",
         "air-slash",
+        "calm-mind",
         "strength-sap"
       ],
       "ability": "aftermath",
@@ -2133,9 +2266,9 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       "item": "choice-band",
       "nature": "adamant",
       "evs": {
-        "hp": 252,
         "attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       }
     },
     {
@@ -2147,11 +2280,11 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       ],
       "ability": "blaze",
       "item": "life-orb",
-      "nature": "adamant",
+      "nature": "jolly",
       "evs": {
-        "hp": 252,
         "attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       },
       "teraType": "dark"
     }
@@ -2165,20 +2298,20 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
         "mystical-fire"
       ],
       "ability": "filter",
-      "item": "life-orb",
-      "nature": "modest",
+      "item": "choice-scarf",
+      "nature": "timid",
       "evs": {
-        "hp": 252,
         "special-attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       }
     },
     {
       "moves": [
         "hyper-voice",
         "psyshock",
-        "nasty-plot",
-        "thunderbolt"
+        "thunderbolt",
+        "nasty-plot"
       ],
       "ability": "sap-sipper",
       "item": "eviolite",
@@ -2198,29 +2331,29 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
         "ice-punch"
       ],
       "ability": "pure-power",
-      "item": "life-orb",
-      "nature": "adamant",
+      "item": "choice-scarf",
+      "nature": "jolly",
       "evs": {
-        "hp": 252,
         "attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       },
       "teraType": "fighting"
     },
     {
       "moves": [
         "psychic",
-        "nasty-plot",
         "focus-blast",
-        "shadow-ball"
+        "shadow-ball",
+        "psyshock"
       ],
       "ability": "magic-guard",
       "item": "life-orb",
-      "nature": "modest",
+      "nature": "timid",
       "evs": {
-        "hp": 252,
         "special-attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       }
     },
     {
@@ -2263,8 +2396,8 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       "moves": [
         "leaf-storm",
         "sludge-bomb",
-        "synthesis",
-        "spikes"
+        "giga-drain",
+        "synthesis"
       ],
       "ability": "natural-cure",
       "item": "black-sludge",
@@ -2277,10 +2410,10 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
     },
     {
       "moves": [
-        "earthquake",
         "surf",
-        "recover",
-        "ice-beam"
+        "earthquake",
+        "ice-beam",
+        "recover"
       ],
       "ability": "storm-drain",
       "item": "life-orb",
@@ -2296,24 +2429,24 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       "moves": [
         "focus-blast",
         "flash-cannon",
-        "nasty-plot",
-        "aura-sphere"
+        "aura-sphere",
+        "nasty-plot"
       ],
       "ability": "inner-focus",
       "item": "life-orb",
-      "nature": "modest",
+      "nature": "timid",
       "evs": {
-        "hp": 252,
         "special-attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       },
       "teraType": "fighting"
     },
     {
       "moves": [
         "scald",
-        "recover",
         "ice-beam",
+        "recover",
         "dragon-tail"
       ],
       "ability": "competitive",
@@ -2335,11 +2468,11 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       ],
       "ability": "rough-skin",
       "item": "life-orb",
-      "nature": "adamant",
+      "nature": "jolly",
       "evs": {
-        "hp": 252,
         "attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       },
       "teraType": "fire"
     }
@@ -2367,17 +2500,17 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
   "skyla-unova": [
     {
       "moves": [
-        "calm-mind",
         "air-slash",
-        "roost",
-        "heat-wave"
+        "heat-wave",
+        "calm-mind",
+        "roost"
       ],
       "ability": "simple",
-      "nature": "modest",
+      "nature": "timid",
       "evs": {
-        "hp": 124,
         "special-attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     },
     {
@@ -2414,26 +2547,33 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
   ],
   "brycen-unova": [
     {
-      "nature": "adamant",
+      "moves": [
+        "blizzard",
+        "flash-cannon",
+        "hyper-voice",
+        "ice-beam"
+      ],
+      "ability": "ice-body",
+      "nature": "bold",
       "evs": {
         "hp": 124,
-        "attack": 124,
-        "speed": 0
+        "defense": 124,
+        "special-attack": 0
       }
     },
     {
       "moves": [
         "ice-beam",
+        "tera-blast",
         "recover",
-        "rapid-spin",
-        "tera-blast"
+        "rapid-spin"
       ],
       "ability": "levitate",
-      "nature": "modest",
+      "nature": "timid",
       "evs": {
-        "hp": 124,
         "special-attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     },
     {
@@ -2455,6 +2595,13 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
   ],
   "drayden-unova": [
     {
+      "moves": [
+        "outrage",
+        "double-edge",
+        "superpower",
+        "iron-head"
+      ],
+      "ability": "mold-breaker",
       "nature": "adamant",
       "evs": {
         "hp": 124,
@@ -2486,21 +2633,21 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       ],
       "ability": "mold-breaker",
       "item": "sitrus-berry",
-      "nature": "adamant",
+      "nature": "jolly",
       "evs": {
-        "hp": 124,
         "attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     }
   ],
   "shauntal-elite-unova": [
     {
       "moves": [
-        "body-press",
         "shadow-ball",
         "iron-defense",
-        "rest"
+        "rest",
+        "body-press"
       ],
       "ability": "mummy",
       "nature": "adamant",
@@ -2514,8 +2661,8 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       "moves": [
         "scald",
         "shadow-ball",
-        "recover",
-        "ice-beam"
+        "ice-beam",
+        "recover"
       ],
       "ability": "water-absorb",
       "nature": "modest",
@@ -2549,11 +2696,11 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       ],
       "ability": "flash-fire",
       "item": "life-orb",
-      "nature": "modest",
+      "nature": "timid",
       "evs": {
-        "hp": 252,
         "special-attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       },
       "teraType": "fire"
     }
@@ -2615,11 +2762,11 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       ],
       "ability": "intimidate",
       "item": "sitrus-berry",
-      "nature": "adamant",
+      "nature": "jolly",
       "evs": {
-        "hp": 124,
         "attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     }
   ],
@@ -2627,9 +2774,9 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
     {
       "moves": [
         "psychic",
-        "calm-mind",
-        "recover",
-        "focus-blast"
+        "focus-blast",
+        "psyshock",
+        "calm-mind"
       ],
       "ability": "magic-guard",
       "nature": "modest",
@@ -2649,16 +2796,16 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       "ability": "tinted-lens",
       "nature": "modest",
       "evs": {
-        "hp": 124,
         "special-attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     },
     {
       "moves": [
         "psychic",
-        "moonlight",
         "moonblast",
+        "moonlight",
         "thunder-wave"
       ],
       "ability": "synchronize",
@@ -2690,7 +2837,6 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
   "marshal-elite-unova": [
     {
       "moves": [
-        "storm-throw",
         "facade",
         "bulk-up",
         "knock-off"
@@ -2711,11 +2857,11 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
         "stone-edge"
       ],
       "ability": "mold-breaker",
-      "nature": "adamant",
+      "nature": "jolly",
       "evs": {
-        "hp": 124,
         "attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     },
     {
@@ -2744,9 +2890,9 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       "item": "choice-band",
       "nature": "adamant",
       "evs": {
-        "hp": 252,
         "attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       },
       "teraType": "fighting"
     }
@@ -2754,7 +2900,7 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
   "alder-champion-unova": [
     {
       "moves": [
-        "u-turn",
+        "bug-buzz",
         "sludge-bomb",
         "focus-blast",
         "spikes"
@@ -2770,10 +2916,10 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
     },
     {
       "moves": [
-        "head-charge",
         "close-combat",
         "earthquake",
-        "throat-chop"
+        "throat-chop",
+        "swords-dance"
       ],
       "ability": "reckless",
       "item": "life-orb",
@@ -2802,9 +2948,9 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
     },
     {
       "moves": [
-        "explosion",
         "blizzard",
         "flash-cannon",
+        "explosion",
         "freeze-dry"
       ],
       "ability": "snow-warning",
@@ -2836,8 +2982,8 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       "moves": [
         "fire-blast",
         "bug-buzz",
-        "quiver-dance",
-        "morning-sun"
+        "giga-drain",
+        "fiery-dance"
       ],
       "ability": "flame-body",
       "item": "life-orb",
@@ -2855,16 +3001,16 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       "moves": [
         "draco-meteor",
         "dark-pulse",
-        "u-turn",
-        "nasty-plot"
+        "fire-blast",
+        "flash-cannon"
       ],
       "ability": "levitate",
-      "item": "life-orb",
-      "nature": "modest",
+      "item": "choice-scarf",
+      "nature": "timid",
       "evs": {
-        "hp": 252,
         "special-attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       },
       "teraType": "dark"
     },
@@ -2910,11 +3056,11 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       ],
       "ability": "defeatist",
       "item": "life-orb",
-      "nature": "adamant",
+      "nature": "jolly",
       "evs": {
-        "hp": 252,
         "attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       }
     },
     {
@@ -2942,11 +3088,11 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       ],
       "ability": "mold-breaker",
       "item": "life-orb",
-      "nature": "adamant",
+      "nature": "jolly",
       "evs": {
-        "hp": 252,
         "attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       },
       "teraType": "steel"
     }
@@ -2963,11 +3109,11 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       ],
       "ability": "unburden",
       "item": "sitrus-berry",
-      "nature": "adamant",
+      "nature": "jolly",
       "evs": {
-        "hp": 124,
         "attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     }
   ],
@@ -2987,6 +3133,13 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       }
     },
     {
+      "moves": [
+        "power-whip",
+        "sludge-wave",
+        "double-edge",
+        "sucker-punch"
+      ],
+      "ability": "chlorophyll",
       "nature": "adamant",
       "evs": {
         "hp": 124,
@@ -3078,22 +3231,22 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       "moves": [
         "psychic",
         "dazzling-gleam",
-        "nasty-plot",
-        "focus-blast"
+        "focus-blast",
+        "mystical-fire"
       ],
       "ability": "filter",
-      "nature": "modest",
+      "nature": "timid",
       "evs": {
-        "hp": 124,
         "special-attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     },
     {
       "moves": [
+        "hyper-voice",
         "calm-mind",
-        "wish",
-        "hyper-voice"
+        "wish"
       ],
       "ability": "pixilate",
       "item": "sitrus-berry",
@@ -3109,9 +3262,9 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
     {
       "moves": [
         "psyshock",
-        "calm-mind",
         "air-slash",
-        "roost"
+        "heat-wave",
+        "calm-mind"
       ],
       "ability": "magic-guard",
       "nature": "modest",
@@ -3174,17 +3327,17 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
     {
       "moves": [
         "ice-beam",
+        "tera-blast",
         "recover",
-        "rapid-spin",
-        "tera-blast"
+        "rapid-spin"
       ],
       "ability": "levitate",
       "item": "sitrus-berry",
-      "nature": "modest",
+      "nature": "timid",
       "evs": {
-        "hp": 252,
         "special-attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       },
       "teraType": "electric"
     },
@@ -3197,10 +3350,10 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       ],
       "ability": "sturdy",
       "item": "leftovers",
-      "nature": "impish",
+      "nature": "careful",
       "evs": {
         "hp": 252,
-        "defense": 252,
+        "special-defense": 252,
         "attack": 4
       },
       "teraType": "fighting"
@@ -3211,16 +3364,16 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       "moves": [
         "fire-blast",
         "hyper-voice",
-        "work-up",
-        "dark-pulse"
+        "dark-pulse",
+        "work-up"
       ],
       "ability": "unnerve",
       "item": "life-orb",
-      "nature": "modest",
+      "nature": "timid",
       "evs": {
-        "hp": 252,
         "special-attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       },
       "teraType": "fire"
     },
@@ -3233,10 +3386,10 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       ],
       "ability": "drought",
       "item": "leftovers",
-      "nature": "bold",
+      "nature": "calm",
       "evs": {
         "hp": 252,
-        "defense": 252,
+        "special-defense": 252,
         "special-attack": 4
       },
       "teraType": "dragon"
@@ -3245,8 +3398,8 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       "moves": [
         "fire-blast",
         "shadow-ball",
-        "calm-mind",
-        "energy-ball"
+        "energy-ball",
+        "calm-mind"
       ],
       "ability": "flame-body",
       "item": "life-orb",
@@ -3279,10 +3432,10 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
   "kalos-elite-siebold": [
     {
       "moves": [
-        "u-turn",
         "ice-beam",
         "water-pulse",
-        "dragon-pulse"
+        "dragon-pulse",
+        "aura-sphere"
       ],
       "ability": "mega-launcher",
       "item": "choice-specs",
@@ -3319,11 +3472,11 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       ],
       "ability": "intimidate",
       "item": "life-orb",
-      "nature": "adamant",
+      "nature": "jolly",
       "evs": {
-        "hp": 252,
         "attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       },
       "teraType": "ground"
     },
@@ -3353,20 +3506,20 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       ],
       "ability": "prankster",
       "item": "leftovers",
-      "nature": "impish",
+      "nature": "careful",
       "evs": {
         "hp": 252,
-        "defense": 252,
+        "special-defense": 252,
         "attack": 4
       },
       "teraType": "water"
     },
     {
       "moves": [
-        "body-press",
         "flash-cannon",
         "power-gem",
-        "iron-defense"
+        "iron-defense",
+        "rest"
       ],
       "ability": "magnet-pull",
       "item": "life-orb",
@@ -3417,8 +3570,8 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       "moves": [
         "draco-meteor",
         "sludge-wave",
-        "flip-turn",
-        "focus-blast"
+        "focus-blast",
+        "toxic-spikes"
       ],
       "ability": "adaptability",
       "item": "life-orb",
@@ -3468,15 +3621,15 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
         "draco-meteor",
         "boomburst",
         "hurricane",
-        "u-turn"
+        "flamethrower"
       ],
       "ability": "infiltrator",
       "item": "life-orb",
-      "nature": "modest",
+      "nature": "timid",
       "evs": {
-        "hp": 252,
         "special-attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       },
       "teraType": "normal"
     }
@@ -3491,11 +3644,11 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       ],
       "ability": "unburden",
       "item": "life-orb",
-      "nature": "adamant",
+      "nature": "jolly",
       "evs": {
-        "hp": 252,
         "attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       },
       "teraType": "fighting"
     },
@@ -3507,7 +3660,7 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
         "earthquake"
       ],
       "ability": "rock-head",
-      "item": "life-orb",
+      "item": "choice-scarf",
       "nature": "adamant",
       "evs": {
         "hp": 252,
@@ -3540,27 +3693,27 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       ],
       "ability": "frisk",
       "item": "leftovers",
-      "nature": "impish",
+      "nature": "careful",
       "evs": {
         "hp": 252,
-        "defense": 252,
+        "special-defense": 252,
         "attack": 4
       }
     },
     {
       "moves": [
         "draco-meteor",
-        "power-whip",
-        "earthquake",
-        "knock-off"
+        "fire-blast",
+        "sludge-bomb",
+        "scald"
       ],
       "ability": "sap-sipper",
       "item": "leftovers",
-      "nature": "impish",
+      "nature": "bold",
       "evs": {
         "hp": 252,
         "defense": 252,
-        "attack": 4
+        "special-attack": 4
       },
       "teraType": "fire"
     },
@@ -3568,16 +3721,16 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       "moves": [
         "moonblast",
         "psychic",
-        "calm-mind",
-        "focus-blast"
+        "focus-blast",
+        "mystical-fire"
       ],
       "ability": "trace",
-      "item": "life-orb",
-      "nature": "modest",
+      "item": "choice-scarf",
+      "nature": "timid",
       "evs": {
-        "hp": 252,
         "special-attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       },
       "teraType": "fairy"
     }
@@ -3590,14 +3743,21 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
         "thunder-wave"
       ],
       "ability": "prankster",
-      "nature": "impish",
+      "nature": "careful",
       "evs": {
         "hp": 124,
-        "defense": 124,
+        "special-defense": 124,
         "attack": 0
       }
     },
     {
+      "moves": [
+        "earthquake",
+        "foul-play",
+        "double-edge",
+        "aqua-tail"
+      ],
+      "ability": "intimidate",
       "nature": "adamant",
       "evs": {
         "hp": 124,
@@ -3616,9 +3776,9 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       "item": "sitrus-berry",
       "nature": "adamant",
       "evs": {
-        "hp": 124,
         "attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     }
   ],
@@ -3640,10 +3800,10 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
     },
     {
       "moves": [
-        "earthquake",
         "surf",
-        "recover",
-        "sludge-bomb"
+        "earthquake",
+        "sludge-bomb",
+        "recover"
       ],
       "ability": "storm-drain",
       "nature": "bold",
@@ -3697,11 +3857,11 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       ],
       "ability": "defiant",
       "item": "eviolite",
-      "nature": "adamant",
+      "nature": "jolly",
       "evs": {
-        "hp": 252,
         "attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       }
     },
     {
@@ -3797,20 +3957,20 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       ],
       "ability": "sand-rush",
       "item": "life-orb",
-      "nature": "adamant",
+      "nature": "jolly",
       "evs": {
-        "hp": 252,
         "attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       },
       "teraType": "fighting"
     },
     {
       "moves": [
-        "body-press",
         "flash-cannon",
         "power-gem",
-        "iron-defense"
+        "iron-defense",
+        "rest"
       ],
       "ability": "magnet-pull",
       "item": "life-orb",
@@ -3824,9 +3984,9 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
     },
     {
       "moves": [
-        "explosion",
         "earthquake",
         "stone-edge",
+        "explosion",
         "rock-polish"
       ],
       "ability": "sturdy",
@@ -3849,10 +4009,10 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       ],
       "ability": "prankster",
       "item": "leftovers",
-      "nature": "impish",
+      "nature": "careful",
       "evs": {
         "hp": 252,
-        "defense": 252,
+        "special-defense": 252,
         "attack": 4
       },
       "teraType": "poison"
@@ -3860,8 +4020,8 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
     {
       "moves": [
         "shadow-ball",
-        "calm-mind",
         "air-slash",
+        "calm-mind",
         "strength-sap"
       ],
       "ability": "aftermath",
@@ -3911,15 +4071,15 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       "moves": [
         "power-whip",
         "poltergeist",
-        "anchor-shot",
-        "synthesis"
+        "synthesis",
+        "rapid-spin"
       ],
       "ability": "steelworker",
       "item": "leftovers",
-      "nature": "impish",
+      "nature": "careful",
       "evs": {
         "hp": 252,
-        "defense": 252,
+        "special-defense": 252,
         "attack": 4
       }
     }
@@ -3979,17 +4139,17 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
     {
       "moves": [
         "hurricane",
+        "revelation-dance",
         "quiver-dance",
-        "roost",
-        "revelation-dance"
+        "roost"
       ],
       "ability": "dancer",
       "item": "life-orb",
-      "nature": "modest",
+      "nature": "timid",
       "evs": {
-        "hp": 252,
         "special-attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       },
       "teraType": "ground"
     },
@@ -4020,11 +4180,11 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       ],
       "ability": "sand-rush",
       "item": "life-orb",
-      "nature": "adamant",
+      "nature": "jolly",
       "evs": {
-        "hp": 252,
         "attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       },
       "teraType": "fighting"
     },
@@ -4032,16 +4192,16 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       "moves": [
         "fire-blast",
         "solar-beam",
-        "nasty-plot",
-        "scorching-sands"
+        "scorching-sands",
+        "nasty-plot"
       ],
       "ability": "drought",
       "item": "life-orb",
-      "nature": "modest",
+      "nature": "timid",
       "evs": {
-        "hp": 252,
         "special-attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       },
       "teraType": "fire"
     },
@@ -4065,12 +4225,12 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
     {
       "moves": [
         "thunderbolt",
-        "body-press",
         "flash-cannon",
-        "volt-switch"
+        "volt-switch",
+        "body-press"
       ],
       "ability": "analytic",
-      "item": "life-orb",
+      "item": "choice-scarf",
       "nature": "modest",
       "evs": {
         "hp": 252,
@@ -4140,10 +4300,10 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       ],
       "ability": "iron-fist",
       "item": "leftovers",
-      "nature": "impish",
+      "nature": "careful",
       "evs": {
         "hp": 252,
-        "defense": 252,
+        "special-defense": 252,
         "attack": 4
       },
       "teraType": "fighting"
@@ -4153,15 +4313,15 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
         "draco-meteor",
         "boomburst",
         "hurricane",
-        "u-turn"
+        "flamethrower"
       ],
       "ability": "infiltrator",
       "item": "life-orb",
-      "nature": "modest",
+      "nature": "timid",
       "evs": {
-        "hp": 252,
         "special-attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       },
       "teraType": "normal"
     },
@@ -4176,9 +4336,9 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       "item": "choice-band",
       "nature": "adamant",
       "evs": {
-        "hp": 252,
         "attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       },
       "teraType": "fighting"
     },
@@ -4282,10 +4442,17 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
   ],
   "allister-galar": [
     {
-      "nature": "adamant",
+      "moves": [
+        "shadow-ball",
+        "iron-defense",
+        "rest",
+        "energy-ball"
+      ],
+      "ability": "mummy",
+      "nature": "modest",
       "evs": {
         "hp": 124,
-        "attack": 124,
+        "special-attack": 124,
         "speed": 0
       }
     },
@@ -4307,9 +4474,9 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
     {
       "moves": [
         "shadow-ball",
-        "strength-sap",
         "earth-power",
-        "ice-beam"
+        "ice-beam",
+        "hydro-pump"
       ],
       "ability": "weak-armor",
       "nature": "modest",
@@ -4323,16 +4490,16 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       "moves": [
         "sludge-wave",
         "shadow-ball",
-        "nasty-plot",
-        "focus-blast"
+        "focus-blast",
+        "nasty-plot"
       ],
       "ability": "cursed-body",
       "item": "sitrus-berry",
       "nature": "modest",
       "evs": {
-        "hp": 124,
         "special-attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     }
   ],
@@ -4369,10 +4536,10 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
     },
     {
       "moves": [
-        "nasty-plot",
         "air-slash",
-        "roost",
-        "aura-sphere"
+        "aura-sphere",
+        "nasty-plot",
+        "roost"
       ],
       "ability": "serene-grace",
       "nature": "modest",
@@ -4385,9 +4552,9 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
     {
       "moves": [
         "alluring-voice",
+        "psyshock",
         "calm-mind",
-        "recover",
-        "psyshock"
+        "recover"
       ],
       "ability": "aroma-veil",
       "item": "sitrus-berry",
@@ -4453,10 +4620,10 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       ],
       "ability": "flame-body",
       "item": "sitrus-berry",
-      "nature": "impish",
+      "nature": "careful",
       "evs": {
         "hp": 124,
-        "defense": 124,
+        "special-defense": 124,
         "attack": 0
       }
     }
@@ -4466,8 +4633,8 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       "moves": [
         "bug-buzz",
         "ice-beam",
-        "quiver-dance",
-        "tera-blast"
+        "tera-blast",
+        "giga-drain"
       ],
       "ability": "ice-scales",
       "nature": "modest",
@@ -4487,9 +4654,9 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       "ability": "sheer-force",
       "nature": "adamant",
       "evs": {
-        "hp": 124,
         "attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     },
     {
@@ -4563,10 +4730,10 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
         "knock-off"
       ],
       "ability": "aftermath",
-      "nature": "impish",
+      "nature": "careful",
       "evs": {
         "hp": 124,
-        "defense": 124,
+        "special-defense": 124,
         "attack": 0
       }
     },
@@ -4581,18 +4748,18 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       "item": "sitrus-berry",
       "nature": "adamant",
       "evs": {
-        "hp": 124,
         "attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     }
   ],
   "raihan-galar": [
     {
       "moves": [
-        "explosion",
         "stone-edge",
         "superpower",
+        "explosion",
         "earthquake"
       ],
       "ability": "sand-stream",
@@ -4611,11 +4778,11 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
         "u-turn"
       ],
       "ability": "levitate",
-      "nature": "adamant",
+      "nature": "jolly",
       "evs": {
-        "hp": 124,
         "attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     },
     {
@@ -4636,9 +4803,9 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
     {
       "moves": [
         "draco-meteor",
-        "body-press",
         "flash-cannon",
-        "iron-defense"
+        "iron-defense",
+        "body-press"
       ],
       "ability": "light-metal",
       "item": "sitrus-berry",
@@ -4656,7 +4823,7 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
         "iron-head",
         "shadow-ball",
         "toxic",
-        "kings-shield"
+        "substitute"
       ],
       "ability": "stance-change",
       "item": "leftovers",
@@ -4736,18 +4903,18 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
     },
     {
       "moves": [
-        "earthquake",
         "flamethrower",
         "hurricane",
-        "focus-blast"
+        "focus-blast",
+        "earthquake"
       ],
       "ability": "blaze",
-      "item": "life-orb",
-      "nature": "modest",
+      "item": "choice-scarf",
+      "nature": "timid",
       "evs": {
-        "hp": 252,
         "special-attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       },
       "teraType": "dragon"
     }
@@ -4812,11 +4979,11 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       ],
       "ability": "reckless",
       "item": "sitrus-berry",
-      "nature": "adamant",
+      "nature": "jolly",
       "evs": {
-        "hp": 124,
         "attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     }
   ],
@@ -4859,10 +5026,10 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
         "shadow-sneak"
       ],
       "ability": "fluffy",
-      "nature": "impish",
+      "nature": "careful",
       "evs": {
         "hp": 124,
-        "defense": 124,
+        "special-defense": 124,
         "attack": 0
       }
     },
@@ -4886,8 +5053,8 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
   "tulip-paldea": [
     {
       "moves": [
-        "body-slam",
         "psychic-noise",
+        "body-slam",
         "wish",
         "protect"
       ],
@@ -4903,30 +5070,30 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       "moves": [
         "moonblast",
         "psychic",
-        "calm-mind",
-        "focus-blast"
+        "focus-blast",
+        "mystical-fire"
       ],
       "ability": "trace",
-      "nature": "modest",
+      "nature": "timid",
       "evs": {
-        "hp": 124,
         "special-attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     },
     {
       "moves": [
         "lumina-crash",
-        "u-turn",
         "dazzling-gleam",
-        "shadow-ball"
+        "shadow-ball",
+        "u-turn"
       ],
       "ability": "speed-boost",
       "nature": "modest",
       "evs": {
-        "hp": 124,
         "special-attack": 124,
-        "speed": 0
+        "speed": 124,
+        "hp": 0
       }
     },
     {
@@ -4950,8 +5117,8 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       "moves": [
         "bug-buzz",
         "ice-beam",
-        "quiver-dance",
-        "tera-blast"
+        "tera-blast",
+        "giga-drain"
       ],
       "ability": "ice-scales",
       "nature": "modest",
@@ -5012,17 +5179,17 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
     {
       "moves": [
         "lumina-crash",
-        "u-turn",
         "dazzling-gleam",
-        "shadow-ball"
+        "shadow-ball",
+        "u-turn"
       ],
       "ability": "speed-boost",
       "item": "choice-specs",
       "nature": "modest",
       "evs": {
-        "hp": 252,
         "special-attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       },
       "teraType": "fairy"
     },
@@ -5035,10 +5202,10 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       ],
       "ability": "sturdy",
       "item": "leftovers",
-      "nature": "impish",
+      "nature": "careful",
       "evs": {
         "hp": 252,
-        "defense": 252,
+        "special-defense": 252,
         "attack": 4
       },
       "teraType": "fighting"
@@ -5103,11 +5270,11 @@ export const CHAMPION_SETS: Record<string, Array<ChampionSet | null>> = {
       ],
       "ability": "toxic-debris",
       "item": "life-orb",
-      "nature": "modest",
+      "nature": "timid",
       "evs": {
-        "hp": 252,
         "special-attack": 252,
-        "speed": 4
+        "speed": 252,
+        "hp": 4
       },
       "teraType": "grass"
     }

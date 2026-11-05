@@ -8,9 +8,12 @@
 //   node scripts/generate-champion-sets.mjs <showdown-data-dir>
 //
 // where <showdown-data-dir> contains:
-//   pokedex.ts, moves.json (moves keyed by id), rb/gen9-sets.json ... rb/gen3-sets.json
-//   (raw files from github.com/smogon/pokemon-showdown: data/pokedex.ts, data/moves.ts -> JSON,
-//    data/random-battles/genN/sets.json)
+//   pokedex.ts, learnsets.ts, moves.json (moves keyed by id), rb/gen9-sets.json ... rb/gen3-sets.json
+//   (raw files from github.com/smogon/pokemon-showdown: data/pokedex.ts, data/learnsets.ts,
+//    data/moves.ts -> JSON, data/random-battles/genN/sets.json)
+//
+// Unevolved Pokémon (no random-battle set of their own) borrow the set of the first evolution that has
+// one, keeping only moves they can learn (learnsets.ts), topped up from their own learnset.
 //
 // Difficulty follows the games: below level 30 trainers keep level-up moves and no items (no entry here);
 // from 30 they get curated moves, natures and half EVs, and only their ace holds an item; from 50
@@ -34,23 +37,38 @@ const pokeapiId = (name) =>
 // --- Pokédex: dex number -> species (base forms only)
 const dexSrc = fs.readFileSync(path.join(dataDir, 'pokedex.ts'), 'utf8');
 const speciesByNum = new Map();
+const speciesById = new Map();
 for (const m of dexSrc.matchAll(/^\t(\w+): \{\n([\s\S]*?)^\t\},/gm)) {
   const [, key, body] = m;
   const num = body.match(/\bnum: (-?\d+)/);
   if (!num || body.includes('baseSpecies:')) continue;
-  const stats = body.match(/baseStats: \{hp: (\d+), atk: (\d+), def: (\d+), spa: (\d+), spd: (\d+), spe: (\d+)\}/);
+  const stats = body.match(/baseStats: \{\s*hp: (\d+), atk: (\d+), def: (\d+), spa: (\d+), spd: (\d+), spe: (\d+)\s*\}/);
   const types = [...(body.match(/types: \[([^\]]*)\]/)?.[1] ?? '').matchAll(/"([^"]+)"/g)].map((x) => x[1].toLowerCase());
-  const ability0 = body.match(/abilities: \{0: "([^"]+)"/)?.[1];
-  if (!speciesByNum.has(Number(num[1]))) {
-    speciesByNum.set(Number(num[1]), {
-      id: key,
-      stats: stats ? { hp: +stats[1], atk: +stats[2], def: +stats[3], spa: +stats[4], spd: +stats[5], spe: +stats[6] } : null,
-      types,
-      ability0,
-      nfe: /\bevos: \[/.test(body),
-    });
-  }
+  const ability0 = body.match(/abilities: \{\s*0: "([^"]+)"/)?.[1];
+  const abilities = [...(body.match(/abilities: \{([^}]*)\}/)?.[1] ?? '').matchAll(/"([^"]+)"/g)].map((x) => x[1]);
+  const evos = [...(body.match(/evos: \[([^\]]*)\]/)?.[1] ?? '').matchAll(/"([^"]+)"/g)].map((x) => toID(x[1]));
+  const entry = {
+    id: key,
+    stats: stats ? { hp: +stats[1], atk: +stats[2], def: +stats[3], spa: +stats[4], spd: +stats[5], spe: +stats[6] } : null,
+    types,
+    ability0,
+    abilities,
+    evos,
+    nfe: evos.length > 0,
+  };
+  speciesById.set(key, entry);
+  if (!speciesByNum.has(Number(num[1]))) speciesByNum.set(Number(num[1]), entry);
 }
+
+// --- Learnsets: species id -> set of move ids it can learn in any generation
+const learnSrc = fs.readFileSync(path.join(dataDir, 'learnsets.ts'), 'utf8');
+const learnsets = new Map();
+for (const m of learnSrc.matchAll(/^\t(\w+): \{\n\t\tlearnset: \{\n([\s\S]*?)\n\t\t\},/gm)) {
+  learnsets.set(m[1], new Set([...m[2].matchAll(/^\t\t\t(\w+): \[/gm)].map((x) => x[1])));
+}
+
+const parsedStats = [...speciesByNum.values()].filter((sp) => sp.stats).length;
+if (parsedStats < speciesByNum.size * 0.9) throw new Error(`pokedex.ts: base stats parsed for only ${parsedStats}/${speciesByNum.size} species`);
 
 const moves = JSON.parse(fs.readFileSync(path.join(dataDir, 'moves.json'), 'utf8'));
 const GENS = ['gen9', 'gen8', 'gen7', 'gen6', 'gen5', 'gen4', 'gen3'];
@@ -78,6 +96,19 @@ const RECOVERY = new Set(['recover', 'roost', 'slackoff', 'softboiled', 'synthes
 const SETUP = new Set(['swordsdance', 'nastyplot', 'dragondance', 'calmmind', 'bulkup', 'quiverdance', 'shellsmash', 'shiftgear', 'coil', 'agility', 'rockpolish', 'curse', 'bellydrum', 'victorydance', 'tidyup', 'tailglow', 'geomancy', 'workup', 'growth', 'honeclaws', 'irondefense', 'cosmicpower', 'autotomize', 'clangoroussoul', 'noretreat', 'filletaway']);
 const HAZARDS = new Set(['stealthrock', 'spikes', 'toxicspikes', 'stickyweb']);
 const STATUSERS = new Set(['toxic', 'willowisp', 'thunderwave', 'spore', 'sleeppowder', 'yawn', 'glare', 'hypnosis', 'stunspore', 'nuzzle']);
+// Moves that only work in specific situations, or are hard to use well: never auto-picked
+const CONDITIONAL = new Set([
+  'steelroller', 'dreameater', 'belch', 'lastresort', 'focuspunch', 'snore', 'sleeptalk', 'fling', 'naturalgift',
+  'synchronoise', 'burnup', 'doubleshock', 'spitup', 'swallow', 'stockpile', 'rest', 'futuresight', 'doomdesire',
+  'skyattack', 'solarbeam', 'solarblade', 'razorwind', 'skullbash', 'meteorbeam', 'electroshot', 'dig', 'fly', 'bounce',
+  'dive', 'phantomforce', 'shadowforce', 'hyperbeam', 'gigaimpact', 'blastburn', 'frenzyplant', 'hydrocannon',
+  'rockwrecker', 'roaroftime', 'prismaticlaser', 'eternabeam', 'outrage', 'thrash', 'petaldance', 'uproar', 'rollout',
+  'iceball', 'bide', 'counter', 'mirrorcoat', 'metalburst', 'endeavor', 'finalgambit', 'memento', 'healingwish',
+  'lunardance', 'mistyexplosion', 'perishsong', 'destinybond', 'grudge', 'trumpcard', 'present', 'magnitude',
+  'beatup', 'feint', 'fakeout', 'firstimpression', 'suckerpunch', 'upperhand', 'struggle', 'captivate', 'attract',
+  'frustration', 'return', 'secretpower', 'naturepower', 'round', 'echoedvoice', 'furycutter',
+]);
+const SELF_KO = new Set(['explosion', 'selfdestruct']);
 const SKIP = (id) => id.startsWith('hiddenpower');
 
 function scoreMove(id, species, physicalLean) {
@@ -101,13 +132,16 @@ function scoreMove(id, species, physicalLean) {
   return { score, damaging: true, type: mv.type, category: mv.category };
 }
 
-function pickMoves(pool, species) {
+function pickMoves(pool, species, preferred = null) {
   const lean = species.stats ? species.stats.atk >= species.stats.spa : true;
-  const scored = pool
-    .map((m) => toID(m))
-    .filter((id) => !SKIP(id) && moves[id])
+  const scored = [...new Set(pool.map((m) => toID(m)))]
+    .filter((id) => !SKIP(id) && moves[id] && !moves[id].isNonstandard && !moves[id].isZ && !moves[id].isMax)
     .map((id) => ({ id, ...scoreMove(id, species, lean) }))
-    .filter((m) => m.score > 0);
+    .filter((m) => m.score > 0)
+    // Moves from a curated set beat raw learnset picks
+    // Moves from a curated set beat raw learnset picks; outside curated sets, skip situational moves
+    .filter((m) => (preferred ? preferred.has(m.id) || !CONDITIONAL.has(m.id) : true))
+    .map((m) => (preferred && preferred.has(m.id) ? { ...m, score: m.score + 40 } : m));
   const chosen = [];
   const types = new Set();
   let statusCount = 0;
@@ -119,6 +153,8 @@ function pickMoves(pool, species) {
       if (m.damaging && types.has(m.type)) m.eff *= 0.55;
       if (!m.damaging && statusCount >= 2) m.eff = -1;
       if (m.kind === 'setup' && setupCount >= 1) m.eff = -1;
+      // At most one self-KO move, and only as a last resort
+      if (SELF_KO.has(m.id)) m.eff = chosen.some((c) => SELF_KO.has(c.id)) ? -1 : m.eff * 0.4;
     }
     remaining.sort((a, b) => b.eff - a.eff || a.id.localeCompare(b.id));
     const next = remaining.shift();
@@ -139,14 +175,32 @@ function buildSet(slot, slotIndex, champion) {
   if (!species || slot.level < 30) return null;
   const tier = slot.level >= 50 ? 'full' : 'half';
   const isAce = slotIndex === champion.slots.length - 1;
-  const gen = GENS.find((g) => randomSets[g][species.id]);
-  const entry = gen ? randomSets[gen][species.id] : null;
-  const sets = entry?.sets ?? [];
+  // Own random-battle set, else the first evolution (depth-first) that has one
+  const findSets = (sp, depth = 0) => {
+    const gen = GENS.find((g) => randomSets[g][sp.id]);
+    if (gen) return { sets: randomSets[gen][sp.id].sets ?? [], borrowed: depth > 0 };
+    for (const evo of sp.evos ?? []) {
+      const next = speciesById.get(evo);
+      const found = next && depth < 3 ? findSets(next, depth + 1) : null;
+      if (found) return found;
+    }
+    return null;
+  };
+  const found = findSets(species);
+  const sets = found?.sets ?? [];
   const preferred = isAce
     ? sets.find((s) => /Sweeper|Attacker|Wallbreaker/.test(s.role)) ?? sets[0]
     : sets[slotIndex % Math.max(1, sets.length)];
 
-  const picked = preferred ? pickMoves(preferred.movepool, species) : [];
+  let picked = [];
+  if (preferred && !found.borrowed) {
+    picked = pickMoves(preferred.movepool, species);
+  } else {
+    // Borrowed set: keep what this species can learn, topped up from its own learnset
+    const learnable = learnsets.get(species.id) ?? new Set();
+    const borrowedPool = (preferred?.movepool ?? []).map(toID).filter((id) => learnable.has(id));
+    picked = pickMoves([...borrowedPool, ...learnable], species, new Set(borrowedPool));
+  }
   const damaging = picked.filter((m) => m.damaging);
   const physicalCount = damaging.filter((m) => m.category === 'Physical').length;
   const physical = damaging.length ? physicalCount * 2 >= damaging.length : (species.stats?.atk ?? 0) >= (species.stats?.spa ?? 0);
@@ -183,8 +237,9 @@ function buildSet(slot, slotIndex, champion) {
     item = 'sitrus-berry';
   }
 
-  const abilityName = preferred?.abilities?.[0] ?? species.ability0;
-  const teraType = preferred?.teraTypes?.[0]?.toLowerCase();
+  const setAbility = (preferred?.abilities ?? []).find((a) => !found?.borrowed || species.abilities.includes(a));
+  const abilityName = setAbility ?? species.ability0;
+  const teraType = found?.borrowed ? undefined : preferred?.teraTypes?.[0]?.toLowerCase();
   return {
     ...(picked.length >= 2 ? { moves: picked.map((m) => pokeapiId(moves[m.id].name)) } : {}),
     ...(abilityName ? { ability: pokeapiId(abilityName) } : {}),

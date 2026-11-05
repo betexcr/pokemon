@@ -1,7 +1,8 @@
 import { isTrapped } from "@/lib/team-battle-held-items";
 import { GRAVITY_BLOCKED_MOVES } from "@/lib/battle-move-constants";
 import { useEffect, useMemo, useState, useCallback, useRef } from "react";
-import { onValue, ref as dbRef } from "firebase/database";
+import { get as dbGet, onValue, ref as dbRef } from "firebase/database";
+import { auditAppliedAction, type SubmittedAction } from "@/lib/battle-resolution-audit";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { rtdb, auth } from "@/lib/firebase";
 
@@ -121,6 +122,8 @@ type UseBattleState = {
   /** After the battle: who asked for a rematch, and the room to return to once both did. */
   rematch: { mine: boolean; theirs: boolean; roomId: string | null };
   requestRematch: () => Promise<{ status: string; roomId?: string; reason?: string }>;
+  /** Set when the server applied a different action than the one I submitted (and did not explain why). */
+  auditWarning: string | null;
 };
 
 const SYNC_MIN_INTERVAL_MS = 10_000;
@@ -149,6 +152,8 @@ export function useBattleState(battleId: string): UseBattleState {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [connectionStatus, setConnectionStatus] = useState<"online" | "reconnecting" | "offline">("online");
+  /** Last choice I submitted, audited against the turn's resolution. */
+  const lastSubmittedRef = useRef<{ turn: number; action: SubmittedAction } | null>(null);
 
   const meUid = user?.uid ?? null;
   const oppUid = useMemo(() => {
@@ -466,6 +471,12 @@ export function useBattleState(battleId: string): UseBattleState {
   const writeChoice = useCallback(async (choice: ChoicePayload) => {
     if (!meUid || !meta) throw new Error("No auth or meta");
     if (choice.action !== 'forfeit' && !isChoosing(meta)) throw new Error("Not in choosing phase");
+    // Remember what I submitted so the turn's resolution can be audited (see battle-resolution-audit.ts)
+    if (choice.action === 'move') {
+      lastSubmittedRef.current = { turn: meta.turn, action: { type: 'move', moveId: choice.payload.moveId, terastallize: choice.payload.terastallize } };
+    } else if (choice.action === 'switch') {
+      lastSubmittedRef.current = { turn: meta.turn, action: { type: 'switch', switchIndex: choice.payload.switchToIndex } };
+    }
 
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     const tokenHeader = await getIdTokenHeader();
@@ -585,6 +596,26 @@ export function useBattleState(battleId: string): UseBattleState {
     if (reconnectedAt) void syncNow(true);
   }, [reconnectedAt, syncNow]);
 
+  // Audit: once the turn I submitted for is resolved, check the server applied my action
+  const [auditWarning, setAuditWarning] = useState<string | null>(null);
+  useEffect(() => {
+    const database = rtdb;
+    const submitted = lastSubmittedRef.current;
+    if (!database || !submitted || !mySide || !meta) return;
+    // The turn moved on (or ended): its resolution is written
+    if (meta.turn === submitted.turn && meta.phase !== 'ended') return;
+    lastSubmittedRef.current = null;
+    void dbGet(dbRef(database, `/battles/${battleId}/turns/${submitted.turn}/resolution`))
+      .then((snap) => {
+        const result = auditAppliedAction(submitted.action, snap.val(), mySide);
+        if (!result.ok) {
+          setAuditWarning(`Turn ${submitted.turn}: ${result.reason}.`);
+          console.warn('useBattleState: resolution audit mismatch', { battleId, turn: submitted.turn, reason: result.reason });
+        }
+      })
+      .catch(() => { /* resolution not readable: nothing to audit */ });
+  }, [battleId, meta?.turn, meta?.phase, mySide]);
+
   // Rematch requests (Admin-written; participants can read)
   const [rematchRaw, setRematchRaw] = useState<Record<string, unknown> | null>(null);
   useEffect(() => {
@@ -628,5 +659,6 @@ export function useBattleState(battleId: string): UseBattleState {
     syncNow,
     rematch,
     requestRematch,
+    auditWarning,
   };
 }

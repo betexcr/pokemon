@@ -66,6 +66,7 @@ const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
     reconnectedAt,
     rematch,
     requestRematch,
+    auditWarning,
   } = useBattleState(battleId);
   const router = useRouter();
   const [rematchBusy, setRematchBusy] = useState(false);
@@ -148,9 +149,10 @@ const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
   }, [pub]);
   const battleLogWithValidation = useMemo(() => {
     const base = (pub?.battleLog as any[] | undefined) ?? [];
-    if (!validationNotice) return base;
-    return [...base, { type: 'engine_warning', message: validationNotice }];
-  }, [pub?.battleLog, validationNotice]);
+    const notices = [validationNotice, auditWarning && `Action check: ${auditWarning}`].filter(Boolean) as string[];
+    if (!notices.length) return base;
+    return [...base, ...notices.map((message) => ({ type: 'engine_warning', message }))];
+  }, [pub?.battleLog, validationNotice, auditWarning]);
 
   const activePhase: 'choosing' | 'resolving' = waitingForResolution ? 'resolving' : 'choosing';
 
