@@ -182,9 +182,11 @@ async function hydrateSlot(raw: any): Promise<BattlePokemon> {
 // ---------------------------------------------------------------------------
 
 function makePublicActive(mon: BattlePokemon): PublicMon {
+  // Illusion shows the disguise (name and sprite) to the opponent
+  const illusion = mon.volatile?.illusion;
   return {
-    species: mon.pokemon.name,
-    dexId: typeof mon.pokemon.id === 'number' && mon.pokemon.id > 0 ? mon.pokemon.id : null,
+    species: illusion?.species ?? mon.pokemon.name,
+    dexId: illusion ? illusion.dexId ?? null : typeof mon.pokemon.id === 'number' && mon.pokemon.id > 0 ? mon.pokemon.id : null,
     level: mon.level,
     types: (mon.pokemon.types || []).map((t: any) => typeof t === 'string' ? t : t.type?.name || t.name || 'normal'),
     hp: { cur: Math.max(0, mon.currentHp), max: mon.maxHp },

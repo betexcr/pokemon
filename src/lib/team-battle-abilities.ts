@@ -1,4 +1,5 @@
 import { effectiveItem } from './battle-item-access';
+import { transformInto } from './team-battle-transform';
 import { changeStatStage } from './team-battle-stat-stages';
 import { BattleState, getCurrentPokemon } from './team-battle-engine';
 import { BattlePokemon } from './team-battle-engine';
@@ -66,6 +67,17 @@ export function handleOnEntryAbilities(state: BattleState, side: 'player' | 'opp
       // Clear Body / Hyper Cutter blocking, Contrary, Defiant / Competitive and White Herb (after entry)
       // are handled by the shared stat-stage logic.
       changeStatStage(state, opponentActive, 'attack', -1, { source: incoming, reason: 'due to Intimidate' });
+      break;
+    }
+    case 'imposter': {
+      // Transform into the opposing Pokémon on entry
+      if (opponentActive.currentHp > 0 && transformInto(incoming, opponentActive)) {
+        state.battleLog.push({
+          type: 'status_effect',
+          message: `${incoming.pokemon.name} transformed into ${opponentActive.pokemon.name}!`,
+          pokemon: incoming.pokemon.name,
+        });
+      }
       break;
     }
     case 'mold-breaker':

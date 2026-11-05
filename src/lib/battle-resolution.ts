@@ -1,3 +1,4 @@
+import { displaySpecies } from './team-battle-illusion';
 import { canTerastallize, resolveTeraType } from './team-battle-tera';
 import { resolveBattleAbility } from './battle-default-ability';
 import { getRtdbOps, type RtdbOps } from './rtdb-access';
@@ -174,6 +175,8 @@ async function hydrateTeam(team: any[], stats?: HydrationStats): Promise<BattleP
             currentAbility: resolveBattleAbility(p, pokemon.abilities),
             // Tera state persists in the private team snapshot between turns
             teraType: resolveTeraType(p.teraType, p.originalTypes ?? pokemon.types),
+            disguiseBusted: p.disguiseBusted === true || undefined,
+            iceFaceBroken: p.iceFaceBroken === true || undefined,
             terastallized: p.terastallized === true || undefined,
             originalTypes: Array.isArray(p.originalTypes) ? p.originalTypes : undefined,
             originalAbility: p.originalAbility || resolveBattleAbility({ ability: p.ability }, pokemon.abilities),
@@ -619,7 +622,8 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
         const p2ActiveNow = getCurrentPokemon(currentState.opponent);
 
         const makePublicActive = (mon: typeof p1ActiveNow) => ({
-            species: mon.pokemon.name,
+            // Illusion shows the disguise to the opponent
+            species: displaySpecies(mon),
             level: mon.level,
             types: (mon.pokemon.types || []).map((t: any) => typeof t === 'string' ? t : t.type?.name || t.name || 'normal'),
             hp: { cur: Math.max(0, mon.currentHp), max: mon.maxHp },

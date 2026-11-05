@@ -92,6 +92,8 @@ export type BattlePokemon = {
     typeChange?: Pokemon['types'];
     /** Form change (Stance Change, Zen Mode, Schooling): original data restored on switch-out. */
     formChange?: { form: string; types: Pokemon['types']; stats: Pokemon['stats'] };
+    /** Eject Pack: stats were lowered; the holder switches out once the move settles. */
+    ejectPackPending?: boolean;
   };
   // Ability system
   currentAbility?: string;

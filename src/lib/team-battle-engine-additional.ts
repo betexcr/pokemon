@@ -63,12 +63,20 @@ import { updateParadoxBoosts } from './team-battle-paradox';
 import { stabTypeNames, teraPowerFloor, teraStabOverride, terastallize } from './team-battle-tera';
 import { OHKO_MOVES, ohkoFailure, ohkoHitChance, terrainPulseVariant, weatherBallVariant } from './team-battle-move-variants';
 import { transformBlocked, transformInto } from './team-battle-transform';
+import { breakIllusion, maskIllusions, startIllusion } from './team-battle-illusion';
+import { applyStanceChange, updateHpForms } from './team-battle-forms';
 
 // Process start-of-turn effects
 export async function processStartOfTurn(state: BattleState): Promise<void> {
   // Magic Room / Gravity are stored on the field; mirror them onto every Pokémon
   syncItemSuppression(state);
   syncGravity(state);
+  // Leads never ran an entry sequence: start Illusion / HP-based forms on their first turn
+  for (const side of ['player', 'opponent'] as const) {
+    const lead = getCurrentPokemon(side === 'player' ? state.player : state.opponent);
+    if (lead.volatile.moveActionsSinceEntry === undefined && !lead.volatile.illusion) startIllusion(state, side, lead);
+    updateHpForms(state, lead);
+  }
   // Booster Energy / field-driven paradox boosts for the leads (and after Magic Room changes)
   updateParadoxBoosts(state);
 
@@ -169,6 +177,7 @@ export async function resolveSwitch(state: BattleState, action: BattleState['act
   const currentPokemon = getCurrentPokemon(team);
   currentPokemon.volatile.protect = undefined;
   currentPokemon.volatile.flinched = false;
+  maskIllusions(state);
   applySwitchOutAbilities(currentPokemon);
   
   // Perform the switch
@@ -372,6 +381,23 @@ export async function resolveMove(state: BattleState, action: BattleState['actio
   // White Herb restores lowered stats once the move's effects have settled (Shell Smash, Intimidate, ...)
   checkWhiteHerb(state, getCurrentPokemon(state.player));
   checkWhiteHerb(state, getCurrentPokemon(state.opponent));
+  // Eject Pack: any lowered stat sends the holder out (the player may pick)
+  await checkEjectPacks(state, true);
+}
+
+/** Eject Pack holders whose stats were lowered switch out (consuming the pack). */
+async function checkEjectPacks(state: BattleState, allowPrompt: boolean): Promise<void> {
+  for (const side of ['player', 'opponent'] as const) {
+    const team = side === 'player' ? state.player : state.opponent;
+    const mon = getCurrentPokemon(team);
+    if (!mon.volatile.ejectPackPending) continue;
+    delete mon.volatile.ejectPackPending;
+    if (mon.currentHp <= 0 || effectiveItem(mon) !== 'eject-pack' || getSwitchCandidates(team).length === 0) continue;
+    removeHeldItem(mon);
+    state.battleLog.push({ type: 'status_effect', message: `${mon.pokemon.name} is switched out by the Eject Pack!`, pokemon: mon.pokemon.name });
+    if (allowPrompt) await requestPivotSwitch(state, side);
+    else await performPivotSwitch(state, side);
+  }
 }
 
 // Determine hit count for multi-hit moves
@@ -778,6 +804,7 @@ async function performPivotSwitch(
     : options.shedTail
       ? { statModifiers: undefined, volatile: { substitute: { hp: Math.floor(outgoing.maxHp / 4) } } }
       : null;
+  maskIllusions(state);
   applySwitchOutAbilities(outgoing);
   switchToPokemon(team, nextIndex);
   const replacement = getCurrentPokemon(team);
@@ -831,7 +858,7 @@ async function requestPivotSwitch(
   if (isTeamDefeated(user === 'player' ? state.opponent : state.player)) return false;
   const candidates = getSwitchCandidates(team);
   if (candidates.length === 0) return false;
-  if (state.manualSwitchSides?.includes(user) && candidates.length >= 2) {
+  if (state.manualSwitchSides?.includes(user) && candidates.length >= 2 && !state.pendingSwitch) {
     state.pendingSwitch = {
       side: user,
       reason: options.batonPass ? 'baton-pass' : options.shedTail ? 'shed-tail' : 'pivot',
@@ -840,6 +867,47 @@ async function requestPivotSwitch(
     return true;
   }
   return performPivotSwitch(state, user, options);
+}
+
+/** Protean / Libero: the user becomes the move's type before acting (once per entry; not while Terastallized). */
+function applyProtean(state: BattleState, mon: BattlePokemon, moveTypeRaw: string, moveLower: string): void {
+  const ability = abilityOf(mon);
+  if ((ability !== 'protean' && ability !== 'libero') || mon.volatile.proteanUsed || mon.terastallized) return;
+  if (moveLower === 'struggle' || moveLower === RECHARGE_MOVE_ID) return;
+  const moveType = moveTypeRaw.toLowerCase();
+  const current = getPokemonTypes(mon).map((t) => String(t).toLowerCase());
+  mon.volatile.proteanUsed = true;
+  if (current.length === 1 && current[0] === moveType) return;
+  if (!mon.volatile.typeChange) mon.volatile.typeChange = mon.pokemon.types;
+  mon.pokemon = { ...mon.pokemon, types: [{ slot: 1, type: { name: moveType, url: '' } }] as any };
+  state.battleLog.push({
+    type: 'status_effect',
+    message: `${mon.pokemon.name} transformed into the ${moveType.charAt(0).toUpperCase()}${moveType.slice(1)} type!`,
+    pokemon: mon.pokemon.name,
+  });
+}
+
+/**
+ * Disguise (any damaging hit) and Ice Face (physical hits) take one hit for the holder.
+ * Mold Breaker ignores both. Returns the damage that still reaches HP.
+ */
+function applyDisguiseShields(state: BattleState, attacker: BattlePokemon, defender: BattlePokemon, damage: number, category: string): number {
+  if (damage <= 0 || defender.currentHp <= 0) return damage;
+  const ability = targetAbility(attacker, defender);
+  if (ability === 'disguise' && !defender.disguiseBusted) {
+    defender.disguiseBusted = true;
+    state.battleLog.push({ type: 'status_effect', message: 'Its disguise served it as a decoy!', pokemon: defender.pokemon.name });
+    const chip = Math.max(1, Math.floor(defender.maxHp / 8));
+    defender.currentHp = Math.max(0, defender.currentHp - chip);
+    state.battleLog.push({ type: 'status_damage', message: `${defender.pokemon.name}'s disguise was busted!`, pokemon: defender.pokemon.name });
+    return 0;
+  }
+  if (ability === 'ice-face' && category === 'Physical' && !defender.iceFaceBroken) {
+    defender.iceFaceBroken = true;
+    state.battleLog.push({ type: 'status_effect', message: `${defender.pokemon.name}'s Ice Face took the hit!`, pokemon: defender.pokemon.name });
+    return 0;
+  }
+  return damage;
 }
 
 /** Revival Blessing: a fainted party member returns with half its max HP and no status. */
@@ -914,6 +982,7 @@ async function forceTargetSwitch(
   }
 
   const nextIndex = candidates[rngNextInt(state.rng, candidates.length)];
+  maskIllusions(state);
   applySwitchOutAbilities(target);
   switchToPokemon(team, nextIndex);
   const incoming = getCurrentPokemon(team);
@@ -1072,6 +1141,10 @@ async function executeMoveAction(
   } else if (moveLower === 'terrain-pulse') {
     const variant = terrainPulseVariant(state.field.terrain?.kind, isGrounded(attacker));
     if (variant) move = { ...move, type: variant.type as typeof move.type, power: variant.power };
+  }
+  if (!reflected) {
+    applyStanceChange(state, attacker, moveId, move.category);
+    applyProtean(state, attacker, String(move.type), moveLower);
   }
   const attackerAbilityEarly = attacker.currentAbility?.toLowerCase();
   const effectivePriority = getMovePriority(moveId, attacker);
@@ -1444,7 +1517,7 @@ async function executeMoveAction(
         });
         return;
       }
-      const fixedDmg = fixedFn(attacker, defender);
+      const fixedDmg = applyDisguiseShields(state, attacker, defender, fixedFn(attacker, defender), move.category);
       if (absorbHitWithSubstitute(state, defender, fixedDmg)) {
         hitSubstitute = true;
         totalDamageDealt += fixedDmg;
@@ -1545,6 +1618,9 @@ async function executeMoveAction(
       actualHits++;
       continue;
     }
+
+    // Disguise / Ice Face take the hit instead (once)
+    damage = applyDisguiseShields(state, attacker, defender, damage, move.category);
 
     // Check for Focus Sash / Sturdy (survive at 1 HP from full HP)
     const defenderAbility = targetAbility(attacker, defender); // Sturdy is breakable
@@ -1682,6 +1758,7 @@ async function executeMoveAction(
   });
   
   recordDamageTaken(defender, hpDamageDealt, move.category);
+  if (hpDamageDealt > 0) breakIllusion(state, defender);
 
   // Air Balloon pops when an attack reaches HP
   if (hpDamageDealt > 0 && effectiveItem(defender) === 'air-balloon') {
@@ -1694,6 +1771,24 @@ async function executeMoveAction(
   }
   if (superEffectiveHpHit) {
     triggerWeaknessPolicy(state, defender);
+  }
+
+  // Eject Button (holder leaves) / Red Card (attacker is dragged out); either cancels the attacker's pivot
+  let pivotCancelled = false;
+  const defenderSide = user === 'player' ? 'opponent' : 'player';
+  if (hpDamageDealt > 0 && defender.currentHp > 0 && !hitSubstitute) {
+    const defenderItemNow = effectiveItem(defender);
+    const defenderTeam = defenderSide === 'player' ? state.player : state.opponent;
+    if (defenderItemNow === 'eject-button' && getSwitchCandidates(defenderTeam).length > 0) {
+      removeHeldItem(defender);
+      state.battleLog.push({ type: 'status_effect', message: `${defender.pokemon.name} is switched out with the Eject Button!`, pokemon: defender.pokemon.name });
+      await requestPivotSwitch(state, defenderSide);
+      pivotCancelled = true;
+    } else if (defenderItemNow === 'red-card' && attacker.currentHp > 0) {
+      removeHeldItem(defender);
+      state.battleLog.push({ type: 'status_effect', message: `${defender.pokemon.name} held up its Red Card against ${attacker.pokemon.name}!`, pokemon: defender.pokemon.name });
+      pivotCancelled = await forceTargetSwitch(state, user, false, defender);
+    }
   }
 
   // Track damage for Shell Bell
@@ -1867,7 +1962,7 @@ async function executeMoveAction(
   }
 
   // Pivot moves: the player picks the replacement (turn pauses) or the next bench Pokémon comes in
-  if (PIVOT_MOVES.has(moveLower) && moveLower !== 'parting-shot' && totalDamageDealt > 0 && attacker.currentHp > 0) {
+  if (PIVOT_MOVES.has(moveLower) && moveLower !== 'parting-shot' && totalDamageDealt > 0 && attacker.currentHp > 0 && !pivotCancelled) {
     await requestPivotSwitch(state, user);
   }
 
@@ -1918,6 +2013,7 @@ function applyBeastBoost(attacker: BattlePokemon, state: BattleState): void {
 export async function runEntrySequence(state: BattleState, switchingSide: 'player' | 'opponent', incomingPokemon: BattlePokemon): Promise<void> {
   incomingPokemon.volatile.moveActionsSinceEntry = 0;
   incomingPokemon.volatile.lastDamageTaken = undefined;
+  startIllusion(state, switchingSide, incomingPokemon);
   if (state.field.rooms?.magicRoom) incomingPokemon.volatile.itemSuppressed = true;
   else delete incomingPokemon.volatile.itemSuppressed;
   if (state.field.rooms?.gravity) incomingPokemon.volatile.gravityGrounded = true;
@@ -1978,6 +2074,9 @@ export async function runEntrySequence(state: BattleState, switchingSide: 'playe
   checkWhiteHerb(state, getCurrentPokemon(state.player));
   checkWhiteHerb(state, getCurrentPokemon(state.opponent));
   updateParadoxBoosts(state);
+  updateHpForms(state, incomingPokemon);
+  // Eject Pack from entry effects (Intimidate, Sticky Web) switches automatically
+  await checkEjectPacks(state, false);
 }
 
 /** After an automatic switch to the next unfainted Pokémon (mid-turn faint), apply hazards and on-entry abilities. */
@@ -2118,6 +2217,7 @@ async function runQueuedActions(
 
     // Weather / terrain may have changed mid-turn (Sunny Day, Electric Terrain, ...)
     updateParadoxBoosts(state);
+    maskIllusions(state);
 
     if (state.pendingSwitch && !state.pendingSwitch.remainingQueue) {
       state.pendingSwitch.remainingQueue = queue.slice(i + 1);
@@ -2132,7 +2232,9 @@ async function runQueuedActions(
 
   await processEndOfTurn(state);
 
-  return requestFaintReplacements(state);
+  const outcome = await requestFaintReplacements(state);
+  maskIllusions(state);
+  return outcome;
 }
 
 /**
@@ -2221,6 +2323,14 @@ export async function processEndOfTurn(state: BattleState): Promise<void> {
   syncItemSuppression(state);
   syncGravity(state);
   applyCurseAndSaltCure(state);
+  for (const team of [state.player, state.opponent]) {
+    const mon = getCurrentPokemon(team);
+    updateHpForms(state, mon);
+    if (mon.iceFaceBroken && mon.currentHp > 0 && state.field.weather?.kind === 'snow' && abilityOf(mon) === 'ice-face') {
+      mon.iceFaceBroken = false;
+      state.battleLog.push({ type: 'status_effect', message: `${mon.pokemon.name}'s Ice Face was restored!`, pokemon: mon.pokemon.name });
+    }
+  }
 
   applyEndOfTurnStatus(state, getCurrentPokemon(state.player));
   applyEndOfTurnStatus(state, getCurrentPokemon(state.opponent));

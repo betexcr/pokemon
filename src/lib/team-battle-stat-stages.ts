@@ -108,6 +108,7 @@ export function changeStatStage(
     return 0;
   }
   target.statModifiers[stat] = after;
+  if (delta < 0 && effectiveItem(target) === 'eject-pack') target.volatile.ejectPackPending = true;
   state.battleLog.push({
     type: 'status_effect',
     message: `${name}'s ${STAT_DISPLAY[stat]} ${describeChange(delta)}${reason ? ` ${reason}` : ''}!`,
