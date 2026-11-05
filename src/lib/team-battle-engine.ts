@@ -5,6 +5,8 @@ import { SOUND_MOVES, isTrapped, rollMoveFirst, speciesItemSpeedMultiplier } fro
 import { changeStatStage } from './team-battle-stat-stages';
 import { paradoxMultiplier } from './team-battle-paradox';
 import { abilitySpeedMultiplier, abilityTurnOrder } from './team-battle-gen9-abilities';
+import { rawStat } from './battle-stats';
+import type { EvSpread } from './battle-evs';
 export { effectiveItem } from './battle-item-access';
 import { Pokemon, Move } from '@/types/pokemon';
 import { CompiledMove } from './adapters/pokeapiMoveAdapter';
@@ -106,6 +108,8 @@ export type BattlePokemon = {
     lastMoveFailed?: boolean;
     /** A stat was lowered this turn (Lash Out). */
     statsLoweredThisTurn?: boolean;
+    /** A stat was raised this turn (Burning Jealousy, Alluring Voice). */
+    statsRaisedThisTurn?: boolean;
     stockpile?: { count: number; def: number; spd: number };
     /** Trapped by Mean Look / Block (released when the trapper leaves). */
     trapped?: { by: 'player' | 'opponent' };
@@ -180,6 +184,10 @@ export type BattlePokemon = {
   itemForm?: string;
   /** Unknown unless the team records it (Attract checks it when known). */
   gender?: 'male' | 'female' | 'genderless';
+  /** Effort values from the team slot (IVs are always 31). */
+  evs?: EvSpread;
+  /** Stellar Tera: move types whose one-time boost was used. */
+  stellarBoostedTypes?: string[];
   /** Has eaten a Berry this battle (Belch). */
   ateBerry?: boolean;
   /** Last held item used up (Recycle restores it). */
@@ -305,6 +313,11 @@ export type BattleState = {
   currentAction?: BattleState['actionQueue'][number];
   /** Transient: HP damage the last executed move dealt (Chloroblast, Rollout, Fury Cutter). */
   lastHitDamage?: number;
+  /**
+   * Offline only: picks the Pokémon an automatic side sends in (faint replacements, pivots) instead of
+   * the next healthy one. Not serialized; multiplayer never sets it.
+   */
+  autoSwitchPicker?: (state: BattleState, side: 'player' | 'opponent', candidates: number[]) => number;
 };
 
 /** Why a turn paused mid-way for a player's pick. */
@@ -347,10 +360,6 @@ export type NormalizedServerActionResult = {
   errorCode?: string;
 };
 
-// Helper functions
-function calculateHp(baseHp: number, level: number): number {
-  return Math.floor(((2 * baseHp + 31) * level) / 100) + level + 10;
-}
 
 /** Moves that restore HP (used by Triage priority). */
 const TRIAGE_HEALING_MOVES = new Set([
@@ -433,19 +442,8 @@ export function getEffectiveSpeed(
   tailwindActive = false,
   field?: { weather?: { kind?: string }; terrain?: { kind?: string } }
 ): number {
-  const baseSpeed = pokemon.pokemon.stats?.find((stat: any) => (stat.stat?.name || stat.name) === 'speed')?.base_stat || 50;
-  // Speed Swap replaces the raw Speed stat for as long as the Pokémon stays in
-  const speedOverride = pokemon.volatile?.statOverrides?.speed;
-  let calculatedSpeed = typeof speedOverride === 'number' ? speedOverride : calculateStat(baseSpeed, pokemon.level);
-  // Apply nature: +10% to increased stat, -10% to decreased stat
-  try {
-    if (pokemon.nature && typeof speedOverride !== 'number') {
-      const { getNature } = require('@/data/natures') as typeof import('@/data/natures');
-      const n = getNature(pokemon.nature);
-      if (n.increasedStat === 'speed') calculatedSpeed = Math.floor(calculatedSpeed * 1.1);
-      if (n.decreasedStat === 'speed') calculatedSpeed = Math.floor(calculatedSpeed * 0.9);
-    }
-  } catch (e) { console.warn('Failed to load natures for speed calc:', e); }
+  // Raw Speed: EVs and nature included; Speed Swap replaces it while the Pokémon stays in
+  const calculatedSpeed = rawStat(pokemon, 'speed');
   let finalSpeed = applyStatModifier(calculatedSpeed, pokemon.statModifiers?.speed || 0);
 
   const ability = pokemon.currentAbility?.toLowerCase();
@@ -577,11 +575,9 @@ export function canUseMove(
     }
     if (rngRollChance(rng, 1 / 3)) {
       const basePower = 40;
-      const baseAtk = pokemon.pokemon.stats?.find((s: any) => (s.stat?.name || s.name) === 'attack')?.base_stat ?? 50;
-      const baseDef = pokemon.pokemon.stats?.find((s: any) => (s.stat?.name || s.name) === 'defense')?.base_stat ?? 50;
       const level = pokemon.level ?? 50;
-      let atkStat = applyStatModifier(calculateStat(baseAtk, level), pokemon.statModifiers?.attack || 0);
-      const defStat = applyStatModifier(calculateStat(baseDef, level), pokemon.statModifiers?.defense || 0);
+      let atkStat = applyStatModifier(rawStat(pokemon, 'attack'), pokemon.statModifiers?.attack || 0);
+      const defStat = applyStatModifier(rawStat(pokemon, 'defense'), pokemon.statModifiers?.defense || 0);
       if (pokemon.status === 'burned') atkStat = Math.floor(atkStat * 0.5);
       const confusionDmg = Math.max(1, Math.floor(((2 * level / 5 + 2) * basePower * atkStat / defStat) / 50 + 2));
       pokemon.currentHp = Math.max(0, pokemon.currentHp - confusionDmg);

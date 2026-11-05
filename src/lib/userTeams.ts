@@ -19,6 +19,7 @@ import {
 import { DEFAULT_NATURE, NatureName } from '@/data/natures'
 import { sanitizeBattleItem } from '@/lib/battle-items-catalog'
 import { isTeraType, type TeraType } from '@/lib/team-battle-tera'
+import { sanitizeEvs, type EvSpread } from '@/lib/battle-evs'
 import { getDb as getClientDb, hasFirebaseClientConfig } from './firebase/client'
 import { firebaseErrorLogger } from './firebaseErrorLogger'
 import { reportApiError } from './errorReporting'
@@ -44,6 +45,10 @@ export interface TeamSlot {
   teraType?: TeraType;
   /** Held item id (see battle-items-catalog.ts); omitted means no item. */
   item?: string;
+  /** Effort values (252 per stat, 510 total); omitted means none. IVs are always 31. */
+  evs?: EvSpread;
+  /** Omitted means unknown (Attract / Cute Charm / Rivalry only act on known genders). */
+  gender?: 'male' | 'female' | 'genderless';
 }
 
 type StoredTeamSlot = Omit<TeamSlot, 'nature'> & { nature?: NatureName };
@@ -88,7 +93,13 @@ function normalizeSlot(slot: StoredTeamSlot | null | undefined): TeamSlot {
     // Only stored when chosen: Firestore rejects undefined fields
     ...(isTeraType(normalized.teraType) ? { teraType: normalized.teraType.toLowerCase() as TeraType } : {}),
     ...(sanitizeBattleItem(normalized.item) ? { item: sanitizeBattleItem(normalized.item) } : {}),
+    ...(sanitizeEvs(normalized.evs) ? { evs: sanitizeEvs(normalized.evs) } : {}),
+    ...(isSlotGender(normalized.gender) ? { gender: normalized.gender } : {}),
   };
+}
+
+export function isSlotGender(value: unknown): value is NonNullable<TeamSlot['gender']> {
+  return value === 'male' || value === 'female' || value === 'genderless';
 }
 
 // Convert Firestore document to SavedTeam

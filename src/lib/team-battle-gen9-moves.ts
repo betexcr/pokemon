@@ -248,6 +248,10 @@ export function gen9MoveVariant<T extends MoveShape>(state: BattleState, attacke
     case 'tera-blast': {
       if (!attacker.terastallized || !attacker.teraType) return move;
       const physical = atk(attacker, true) > atk(attacker, false);
+      // Stellar Tera Blast: 100 power, super effective on Terastallized targets
+      if (attacker.teraType.toLowerCase() === 'stellar') {
+        return { ...move, type: 'Stellar', power: 100, category: physical ? 'Physical' : 'Special' };
+      }
       return { ...move, type: TYPE_LABEL(attacker.teraType), category: physical ? 'Physical' : 'Special' };
     }
     case 'photon-geyser':
@@ -260,7 +264,7 @@ export function gen9MoveVariant<T extends MoveShape>(state: BattleState, attacke
       return { ...move, category: physical ? 'Physical' : 'Special', makesContact: physical };
     }
     case 'revelation-dance': {
-      const t = attacker.terastallized && attacker.teraType ? attacker.teraType : typesOf(attacker)[0];
+      const t = attacker.terastallized && attacker.teraType && attacker.teraType !== 'stellar' ? attacker.teraType : typesOf(attacker)[0];
       return t ? { ...move, type: TYPE_LABEL(t) } : move;
     }
     case 'aura-wheel':
@@ -818,6 +822,7 @@ export function gen9TypeEffectMultiplier(defender: BattlePokemon, moveLower: str
   let mult = 1;
   if (moveLower === 'freeze-dry' && typesOf(defender).includes('water')) mult *= 4;
   if (defender.volatile.tarShot && moveType.toLowerCase() === 'fire') mult *= 2;
+  if (moveType.toLowerCase() === 'stellar' && defender.terastallized) mult *= 2;
   return mult;
 }
 
@@ -953,4 +958,9 @@ export function gen9AfterHit(ctx: AfterHitContext): void {
     if (moveLower === 'spit-up') releaseStockpile(state, attacker);
   }
   if (moveLower === 'glaive-rush') attacker.volatile.glaiveRush = true;
+  // Stellar Tera Blast lowers the user's Attack and Sp. Atk
+  if (moveLower === 'tera-blast' && ctx.moveType.toLowerCase() === 'stellar' && (hpDamage > 0 || ctx.hitSubstitute)) {
+    changeStatStage(state, attacker, 'attack', -1);
+    changeStatStage(state, attacker, 'specialAttack', -1);
+  }
 }

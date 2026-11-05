@@ -4,6 +4,7 @@
 import type { BattlePokemon, BattleState } from './team-battle-engine';
 import { effectiveItem } from './battle-item-access';
 import { abilityOf } from './team-battle-ability-rules';
+import { rawStat, type RawStatName } from './battle-stats';
 
 export type ParadoxStat = 'attack' | 'defense' | 'specialAttack' | 'specialDefense' | 'speed';
 
@@ -31,9 +32,7 @@ export function bestParadoxStat(pokemon: BattlePokemon): ParadoxStat {
   let best: ParadoxStat = 'attack';
   let bestValue = -1;
   for (const { key, api } of STAT_ORDER) {
-    const base =
-      pokemon.pokemon.stats?.find((s: any) => (s.stat?.name || s.name) === api)?.base_stat ?? 50;
-    const raw = Math.floor(((2 * base + 31) * pokemon.level) / 100) + 5;
+    const raw = rawStat(pokemon, api as RawStatName);
     const value = raw * stageMultiplier(pokemon.statModifiers[key] ?? 0);
     if (value > bestValue) {
       best = key;

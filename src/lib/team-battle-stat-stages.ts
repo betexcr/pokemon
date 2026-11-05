@@ -135,6 +135,8 @@ export function changeStatStage(
   target.statModifiers[stat] = after;
   if (delta < 0 && effectiveItem(target) === 'eject-pack') target.volatile.ejectPackPending = true;
   if (delta < 0) target.volatile.statsLoweredThisTurn = true;
+  // Burning Jealousy / Alluring Voice only work on targets whose stats rose this turn
+  if (delta > 0) target.volatile.statsRaisedThisTurn = true;
   // Mirror Herb on the other side copies boosts gained this action
   if (delta > 0) {
     target.volatile.recentBoosts = { ...(target.volatile.recentBoosts ?? {}), [stat]: (target.volatile.recentBoosts?.[stat] ?? 0) + delta };

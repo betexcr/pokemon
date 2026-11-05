@@ -14,6 +14,7 @@ import {
 } from 'firebase/database';
 import { rtdb } from './firebase';
 import { createBattleRng, battleRngToStored } from './battle-rng';
+import { hpFromBase, sanitizeEvs } from './battle-evs';
 
 export interface RTDBBattleMeta {
   createdAt: number;
@@ -319,9 +320,8 @@ class FirebaseRTDBService {
       const baseHp = typeof hpStat?.base_stat === 'number' ? hpStat.base_stat : 
                      typeof hpStat === 'number' ? hpStat : 50;
       
-      // Pokemon HP formula: floor(((2 * Base + IV + floor(EV/4)) * Level) / 100) + Level + 10
-      // Assuming max IVs (31) and no EVs for simplicity
-      maxHp = Math.floor(((2 * baseHp + 31) * level) / 100) + level + 10;
+      // HP formula with 31 IVs and the slot's HP EVs
+      maxHp = hpFromBase(baseHp, level, sanitizeEvs(pokemon.evs)?.hp ?? 0);
     } else {
       maxHp = 100; // Fallback
     }

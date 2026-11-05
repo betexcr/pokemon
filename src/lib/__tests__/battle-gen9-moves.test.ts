@@ -13,6 +13,7 @@ import { createBattleRng } from '../battle-rng';
 import { createFieldState, EMPTY_HAZARDS } from '../team-battle-types';
 import { isTrapped } from '../team-battle-held-items';
 import { captureEngineExtras, applyEngineExtras } from '../battle-engine-extras';
+import { terastallize } from '../team-battle-tera';
 
 const base = { critRateStage: 0, bypassAccuracyCheck: false, hits: null, makesContact: false, priority: 0, pp: 20 } as const;
 const phys = (name: string, type: string, power: number, extra: Record<string, unknown> = {}) =>
@@ -67,6 +68,8 @@ const MOVES: Record<string, CompiledMove> = Object.fromEntries(
     status('toxic', 'Poison', { accuracy: 90, bypassAccuracyCheck: false, ailment: { kind: 'badly-poisoned', chance: 0 } }),
     status('reflect', 'Psychic'),
     status('splash'),
+    spec('burning-jealousy', 'Fire', 70, { ailment: { kind: 'burn', chance: 100 } }),
+    status('swords-dance', 'Normal', { target: 'user', statChanges: [{ stat: 'atk', stages: 2, chance: 100 }] }),
   ].map((m) => [m.name, m as unknown as CompiledMove]),
 );
 
@@ -419,6 +422,55 @@ describe('status-move scripts', () => {
     await play(s, mv('tackle'));
     log = await play(s, mv('last-resort'));
     expect(log).not.toContain('But it failed!');
+  });
+});
+
+describe('loose ends', () => {
+  it('Burning Jealousy only burns a target whose stats rose this turn', async () => {
+    let s = makeBattle(makeMon('user', { speed: 10 }), makeMon('target', { speed: 30 }));
+    await play(s, mv('burning-jealousy'), mv('splash'));
+    expect(O(s).status).toBeUndefined();
+    s = makeBattle(makeMon('user', { speed: 10 }), makeMon('target', { speed: 30 }));
+    await play(s, mv('burning-jealousy'), mv('swords-dance'));
+    expect(O(s).status).toBe('burned');
+  });
+
+  it('Assault Vest does not soften Psyshock', async () => {
+    const plain = await damage(fast(), 'psyshock', makeMon('target', { speed: 30 }));
+    const vest = await damage(fast(), 'psyshock', makeMon('target', { speed: 30, item: 'assault-vest' }));
+    expect(vest).toBe(plain);
+    const psychicVest = await damage(fast(), 'psychic', makeMon('target', { speed: 30, item: 'assault-vest' }));
+    expect(psychicVest).toBeLessThan(await damage(fast(), 'psychic', makeMon('target', { speed: 30 })));
+  });
+
+  it('Stellar Tera keeps the typing and turns Tera Blast into a neutral Stellar hit', async () => {
+    const user = fast();
+    user.teraType = 'stellar';
+    const s = makeBattle(user, makeMon('target', { speed: 30, types: ['ghost'] }));
+    expect(terastallize(s, 'player')).toBe(true);
+    expect(P(s).pokemon.types.map((t: any) => t.type.name)).toEqual(['normal']);
+    await play(s, mv('tera-blast'));
+    // A Normal-type Tera Blast would not touch a Ghost
+    expect(O(s).currentHp).toBeLessThan(400);
+    expect(P(s).statModifiers.attack).toBe(-1);
+    expect(P(s).statModifiers.specialAttack).toBe(-1);
+  });
+
+  it('Stellar boosts each type once (x2 for original types)', async () => {
+    const make = () => {
+      const u = fast();
+      u.teraType = 'stellar';
+      return u;
+    };
+    const plain = await damage(fast(), 'tackle');
+    const s = makeBattle(make());
+    terastallize(s, 'player');
+    await play(s, mv('tackle'));
+    const first = hit(s);
+    await play(s, mv('tackle'));
+    const second = hit(s);
+    expect(first / plain).toBeGreaterThan(1.2);
+    expect(second / plain).toBeLessThan(1.15);
   });
 });
 

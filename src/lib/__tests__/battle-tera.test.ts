@@ -161,7 +161,8 @@ describe('Terastallization', () => {
 describe('resolveTeraType', () => {
   it('uses a valid chosen type, else the primary type', () => {
     expect(resolveTeraType('Fairy', [{ type: { name: 'fire' } }])).toBe('fairy');
-    expect(resolveTeraType('stellar', [{ type: { name: 'fire' } }])).toBe('fire');
+    expect(resolveTeraType('stellar', [{ type: { name: 'fire' } }])).toBe('stellar');
+    expect(resolveTeraType('shadow', [{ type: { name: 'fire' } }])).toBe('fire');
     expect(resolveTeraType(undefined, ['water', 'ground'])).toBe('water');
     expect(resolveTeraType(undefined, [])).toBeUndefined();
   });

@@ -1,5 +1,6 @@
 import { createBattleRng, battleRngToStored } from '@/lib/battle-rng';
 import type { RtdbOps } from '@/lib/rtdb-access';
+import { hpFromBase, sanitizeEvs } from '@/lib/battle-evs';
 
 const TURN_DEADLINE_MS = 30_000;
 
@@ -50,7 +51,7 @@ function createPublicPokemonData(pokemon: any) {
       : stats.hp;
     const baseHp =
       typeof hpStat?.base_stat === 'number' ? hpStat.base_stat : typeof hpStat === 'number' ? hpStat : 50;
-    maxHp = Math.floor(((2 * baseHp + 31) * level) / 100) + level + 10;
+    maxHp = hpFromBase(baseHp, level, sanitizeEvs(pokemon.evs)?.hp ?? 0);
   } else {
     maxHp = 100;
   }

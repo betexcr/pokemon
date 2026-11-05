@@ -46,6 +46,7 @@ import {
   softFailChoosingFields,
 } from './battle-private-volatiles';
 import { applyEngineExtras, captureEngineExtras, type EngineExtras } from './battle-engine-extras';
+import { maxHpFor, sanitizeEvs } from './battle-evs';
 
 export { RecoverableResolutionError, isRecoverableResolutionFailure };
 
@@ -152,10 +153,9 @@ async function hydrateTeam(team: any[], stats?: HydrationStats): Promise<BattleP
             };
         }) : [{ id: 'tackle', pp: 35, maxPp: 35 }];
 
-        const hpStat = pokemon.stats.find((s: any) => (s.stat?.name || s.name) === 'hp');
-        const baseHp = hpStat?.base_stat ?? 50;
         const level = typeof p.level === 'number' ? p.level : 50;
-        const calculatedMaxHp = Math.floor(((2 * baseHp + 31) * level) / 100) + level + 10;
+        const evs = sanitizeEvs(p.evs);
+        const calculatedMaxHp = maxHpFor(pokemon.stats, level, evs);
         const maxHp = typeof p.maxHp === 'number' && p.maxHp > 0 ? p.maxHp : calculatedMaxHp;
         const currentHp = typeof p.currentHp === 'number' && p.currentHp >= 0
             ? Math.min(p.currentHp, maxHp)
@@ -183,6 +183,8 @@ async function hydrateTeam(team: any[], stats?: HydrationStats): Promise<BattleP
             originalTypes: Array.isArray(p.originalTypes) ? p.originalTypes : undefined,
             originalAbility: p.originalAbility || resolveBattleAbility({ ability: p.ability }, pokemon.abilities),
             gender: p.gender === 'male' || p.gender === 'female' || p.gender === 'genderless' ? p.gender : undefined,
+            evs,
+            stellarBoostedTypes: Array.isArray(p.stellarBoostedTypes) ? p.stellarBoostedTypes : undefined,
             ateBerry: p.ateBerry === true || undefined,
             consumedItem: typeof p.consumedItem === 'string' ? p.consumedItem : undefined,
             abilityChanged: p.abilityChanged === true || undefined,

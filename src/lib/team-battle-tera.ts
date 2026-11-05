@@ -4,13 +4,19 @@
 //   original type gets 2x STAB (2.25x with Adaptability).
 // - Tera-type moves below 60 base power are raised to 60 (not multi-hit or priority moves).
 // The change lasts for the rest of the battle, including after switching out.
+// Stellar: the defensive typing does not change; the first move of each type gets a one-time boost
+// (x2 for the user's original types, x1.2 for others; Terapagos boosts every use), and Tera Blast
+// becomes a 100-power Stellar move that is super effective on Terastallized targets.
 
 import type { BattlePokemon, BattleState, BattleTeam } from './team-battle-engine';
 
 export const TERA_TYPES = [
   'normal', 'fire', 'water', 'electric', 'grass', 'ice', 'fighting', 'poison', 'ground',
-  'flying', 'psychic', 'bug', 'rock', 'ghost', 'dragon', 'dark', 'steel', 'fairy',
+  'flying', 'psychic', 'bug', 'rock', 'ghost', 'dragon', 'dark', 'steel', 'fairy', 'stellar',
 ] as const;
+
+export const isStellar = (pokemon: BattlePokemon | undefined): boolean =>
+  !!pokemon?.terastallized && pokemon.teraType?.toLowerCase() === 'stellar';
 export type TeraType = (typeof TERA_TYPES)[number];
 
 export function isTeraType(value: unknown): value is TeraType {
@@ -55,7 +61,8 @@ export function terastallize(state: BattleState, side: 'player' | 'opponent'): b
   const mon = team.pokemon[team.currentIndex];
   const tera = mon.teraType!.toLowerCase();
   mon.originalTypes = mon.originalTypes ?? mon.pokemon.types;
-  mon.pokemon = { ...mon.pokemon, types: [{ slot: 1, type: { name: tera, url: '' } }] as any };
+  // Stellar keeps the original defensive typing
+  if (tera !== 'stellar') mon.pokemon = { ...mon.pokemon, types: [{ slot: 1, type: { name: tera, url: '' } }] as any };
   mon.terastallized = true;
   team.teraUsed = true;
   state.battleLog.push({
@@ -69,14 +76,32 @@ export function terastallize(state: BattleState, side: 'player' | 'opponent'): b
 /** Types that give this attacker STAB: its original types plus, once Terastallized, the Tera Type. */
 export function stabTypeNames(pokemon: BattlePokemon): string[] {
   const types = originalTypeNames(pokemon);
-  if (pokemon.terastallized && pokemon.teraType) types.push(pokemon.teraType.toLowerCase());
+  if (pokemon.terastallized && pokemon.teraType && !isStellar(pokemon)) types.push(pokemon.teraType.toLowerCase());
   return Array.from(new Set(types));
+}
+
+/** Stellar: this move type still has its one-time boost available. */
+function stellarBoostAvailable(pokemon: BattlePokemon, moveType: string): boolean {
+  if (pokemon.pokemon.name.toLowerCase().startsWith('terapagos')) return true;
+  return !(pokemon.stellarBoostedTypes ?? []).includes(moveType.toLowerCase());
+}
+
+/** Stellar: use up the boost for this move type (call after the move hits). */
+export function consumeStellarBoost(pokemon: BattlePokemon, moveType: string): void {
+  if (!isStellar(pokemon) || moveType.toLowerCase() === 'stellar') return;
+  const t = moveType.toLowerCase();
+  if (!(pokemon.stellarBoostedTypes ?? []).includes(t)) pokemon.stellarBoostedTypes = [...(pokemon.stellarBoostedTypes ?? []), t];
 }
 
 /** STAB override for a Terastallized attacker using its Tera Type that is also an original type. */
 export function teraStabOverride(pokemon: BattlePokemon, moveType: string, hasAdaptability: boolean): number | undefined {
   if (!pokemon.terastallized || !pokemon.teraType) return undefined;
   const mt = moveType.toLowerCase();
+  if (isStellar(pokemon)) {
+    if (mt === 'stellar') return 1.2;
+    if (!stellarBoostAvailable(pokemon, mt)) return undefined;
+    return originalTypeNames(pokemon).includes(mt) ? 2 : 1.2;
+  }
   if (mt !== pokemon.teraType.toLowerCase()) return undefined;
   if (!originalTypeNames(pokemon).includes(mt)) return undefined;
   return hasAdaptability ? 2.25 : 2;
@@ -89,7 +114,7 @@ export function teraPowerFloor(
   power: number,
   move: { hits?: unknown; priority?: number },
 ): number {
-  if (!pokemon.terastallized || !pokemon.teraType) return power;
+  if (!pokemon.terastallized || !pokemon.teraType || isStellar(pokemon)) return power;
   if (moveType.toLowerCase() !== pokemon.teraType.toLowerCase()) return power;
   if (power <= 0 || power >= 60 || move.hits || (move.priority ?? 0) > 0) return power;
   return 60;

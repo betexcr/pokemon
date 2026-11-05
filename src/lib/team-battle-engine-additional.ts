@@ -60,7 +60,7 @@ import { COUNTER_MOVES, getCounterDamage, moveFailsTryCondition, recordDamageTak
 import { changeStatStage, checkWhiteHerb, triggerWeaknessPolicy } from './team-battle-stat-stages';
 import { abilityOf, targetAbility } from './team-battle-ability-rules';
 import { updateParadoxBoosts } from './team-battle-paradox';
-import { stabTypeNames, teraPowerFloor, teraStabOverride, terastallize } from './team-battle-tera';
+import { consumeStellarBoost, stabTypeNames, teraPowerFloor, teraStabOverride, terastallize } from './team-battle-tera';
 import { OHKO_MOVES, ohkoFailure, ohkoHitChance, terrainPulseVariant, weatherBallVariant } from './team-battle-move-variants';
 import { transformBlocked, transformInto } from './team-battle-transform';
 import {
@@ -172,6 +172,7 @@ export async function processStartOfTurn(state: BattleState): Promise<void> {
   state.lastMoveThisTurn = undefined;
   for (const mon of [playerPokemon, opponentPokemon]) {
     mon.volatile.statsLoweredThisTurn = undefined;
+    mon.volatile.statsRaisedThisTurn = undefined;
   }
   // Beak Blast heats up before anyone moves
   for (const queued of state.actionQueue ?? []) {
@@ -891,6 +892,9 @@ function applyMoveAilment(
   isSecondary = false,
 ): void {
   if (!move.ailment || move.ailment.kind === 'flinch' || move.ailment.kind === 'none') return;
+  // Burning Jealousy (burn) / Alluring Voice (confusion) only affect a target whose stats rose this turn
+  const ailmentMove = String(move.name ?? '').toLowerCase();
+  if ((ailmentMove === 'burning-jealousy' || ailmentMove === 'alluring-voice') && !defender.volatile.statsRaisedThisTurn) return;
 
   if (move.ailment.kind === 'confusion') {
     if (defender.volatile.confusion) return;
@@ -1258,7 +1262,9 @@ async function performPivotSwitch(
   const team = user === 'player' ? state.player : state.opponent;
   const outgoing = getCurrentPokemon(team);
   if (outgoing.currentHp <= 0) return false;
-  const nextIndex = options.switchIndex ?? getNextAvailableBenchPokemon(team);
+  const autoCandidates = getSwitchCandidates(team);
+  const nextIndex = options.switchIndex
+    ?? (state.autoSwitchPicker && autoCandidates.length ? state.autoSwitchPicker(state, user, autoCandidates) : getNextAvailableBenchPokemon(team));
   if (nextIndex === null || nextIndex === team.currentIndex || !team.pokemon[nextIndex] || team.pokemon[nextIndex].currentHp <= 0) {
     return false;
   }
@@ -2204,6 +2210,9 @@ async function executeMoveAction(
     prep.defenseMultiplier *= abilityMods.defense;
     prep.powerMultiplier *= abilityMods.power * ateBoost * (parentalBond && i === 1 ? 0.25 : 1);
     if (DEFENSE_TARGETING_MOVES.has(moveLower)) {
+      // Psyshock hits Defense: Assault Vest (Sp. Def) does nothing, Fur Coat (Defense) does
+      if (effectiveItem(defender) === 'assault-vest') prep.defenseMultiplier /= 1.5;
+      if (targetAbility(attacker, defender) === 'fur-coat') prep.defenseMultiplier *= 2;
       const stage = defender.statModifiers.defense;
       prep.defenseStatStages = prep.attackerAbility === 'unaware' && !prep.isCrit ? 0 : prep.isCrit ? Math.min(0, stage) : stage;
     }
@@ -2639,6 +2648,7 @@ async function executeMoveAction(
   }
   
   gen9AfterHit({ state, attacker, defender, moveLower, moveType: String(move.type), hpDamage: hpDamageDealt, hitSubstitute });
+  if (actualHits > 0) consumeStellarBoost(attacker, String(move.type));
   if (!hitSubstitute) applyMagician(state, attacker, defender, hpDamageDealt);
   if (flungItem && hpDamageDealt > 0 && defender.currentHp > 0 && !hitSubstitute) applyFlungItem(state, attacker, defender, flungItem);
   state.lastHitDamage = hpDamageDealt;
@@ -2862,7 +2872,8 @@ async function autoReplaceFaintedActive(state: BattleState, side: 'player' | 'op
   const team = side === 'player' ? state.player : state.opponent;
   const active = getCurrentPokemon(team);
   if (active.currentHp > 0) return;
-  const nextIndex = getNextAvailablePokemon(team);
+  const healthy = getSwitchCandidates(team);
+  const nextIndex = state.autoSwitchPicker && healthy.length ? state.autoSwitchPicker(state, side, healthy) : getNextAvailablePokemon(team);
   if (nextIndex === null || nextIndex === team.currentIndex) return;
   team.currentIndex = nextIndex;
   const newPokemon = getCurrentPokemon(team);

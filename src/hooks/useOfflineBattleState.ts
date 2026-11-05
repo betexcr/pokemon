@@ -20,10 +20,11 @@ import { displayTypes, publicBenchEntries } from '@/lib/team-battle-illusion';
 import { canTerastallize, resolveTeraType } from '@/lib/team-battle-tera';
 import { getCachedMove } from '@/lib/moveCache';
 import { resolveBattleAbility } from '@/lib/battle-default-ability';
-import { chooseAIAction } from '@/lib/offline-battle-ai';
+import { chooseAIAction, chooseAIReplacement } from '@/lib/offline-battle-ai';
 import { getPokemon } from '@/lib/api';
 import type { GYM_CHAMPIONS } from '@/lib/gym_champions';
 import { getForcedBattleMoveId, RECHARGE_MOVE_ID } from '@/lib/battle-multiturn';
+import { maxHpFor, sanitizeEvs, type EvSpread } from '@/lib/battle-evs';
 
 // ---------------------------------------------------------------------------
 // Types that mirror what useBattleState returns
@@ -154,10 +155,9 @@ async function hydrateSlot(raw: any): Promise<BattlePokemon> {
       })
     : [{ id: 'tackle', pp: 35, maxPp: 35 }];
 
-  const hpStat = stats.find((s: any) => (s.stat?.name || s.name) === 'hp');
-  const baseHp = hpStat?.base_stat ?? 50;
   const level = typeof raw.level === 'number' ? raw.level : 50;
-  const calculatedMaxHp = Math.floor(((2 * baseHp + 31) * level) / 100) + level + 10;
+  const evs = sanitizeEvs(raw.evs);
+  const calculatedMaxHp = maxHpFor(stats, level, evs);
   const maxHp = typeof raw.maxHp === 'number' && raw.maxHp > 0 ? raw.maxHp : calculatedMaxHp;
   const currentHp = typeof raw.currentHp === 'number' && raw.currentHp > 0 ? raw.currentHp : maxHp;
 
@@ -176,6 +176,8 @@ async function hydrateSlot(raw: any): Promise<BattlePokemon> {
     currentAbility: resolveBattleAbility(raw, abilities),
     teraType: resolveTeraType(raw.teraType, types),
     originalAbility: resolveBattleAbility({ ability: raw.ability }, abilities),
+    ...(evs ? { evs } : {}),
+    ...(raw.gender === 'male' || raw.gender === 'female' || raw.gender === 'genderless' ? { gender: raw.gender } : {}),
   };
 }
 
@@ -267,7 +269,37 @@ function aiShouldTerastallize(state: BattleState, moveId: string | undefined): b
 const PLAYER_UID = 'offline-player';
 const AI_UID = 'offline-ai';
 
-function loadPlayerTeamFromStorage(): Array<{ id: number; level?: number; moves?: string[]; nature?: string }> {
+/** A team slot as stored for battle (team builder / battle setup). */
+export type OfflineTeamSlot = {
+  id: number;
+  level?: number;
+  moves?: string[];
+  nature?: string;
+  teraType?: string;
+  heldItem?: string;
+  evs?: EvSpread;
+  gender?: 'male' | 'female' | 'genderless';
+};
+
+function storedSlot(s: any): OfflineTeamSlot {
+  const item = sanitizeBattleItem(s.heldItem ?? s.item);
+  const evs = sanitizeEvs(s.evs);
+  return {
+    id: Number(s.id),
+    level: typeof s.level === 'number' ? s.level : 50,
+    moves: Array.isArray(s.moves)
+      ? s.moves.slice(0, 4).map((m: any) => typeof m === 'string' ? m : m?.name || m?.id).filter(Boolean) as string[]
+      : undefined,
+    nature: typeof s.nature === 'string' ? s.nature : undefined,
+    // Team-builder choices: Tera Type, held item, EVs, gender
+    ...(typeof s.teraType === 'string' ? { teraType: s.teraType } : {}),
+    ...(item ? { heldItem: item } : {}),
+    ...(evs ? { evs } : {}),
+    ...(s.gender === 'male' || s.gender === 'female' || s.gender === 'genderless' ? { gender: s.gender } : {}),
+  };
+}
+
+function loadPlayerTeamFromStorage(): OfflineTeamSlot[] {
   if (typeof window === 'undefined') return [];
   try {
     const raw = localStorage.getItem('pokemon-current-team');
@@ -275,14 +307,7 @@ function loadPlayerTeamFromStorage(): Array<{ id: number; level?: number; moves?
       const parsed = JSON.parse(raw);
       const team = (Array.isArray(parsed) ? parsed : [])
         .filter((s: any) => s && s.id != null)
-        .map((s: any) => ({
-          id: Number(s.id),
-          level: typeof s.level === 'number' ? s.level : 50,
-          moves: Array.isArray(s.moves)
-            ? s.moves.slice(0, 4).map((m: any) => typeof m === 'string' ? m : m?.name || m?.id).filter(Boolean) as string[]
-            : undefined,
-          nature: typeof s.nature === 'string' ? s.nature : undefined,
-        }));
+        .map(storedSlot);
       if (team.length > 0) return team;
     }
     const savedRaw = localStorage.getItem('pokemon-team-builder');
@@ -292,14 +317,7 @@ function loadPlayerTeamFromStorage(): Array<{ id: number; level?: number; moves?
       if (first?.slots) {
         return first.slots
           .filter((s: any) => s && s.id != null)
-          .map((s: any) => ({
-            id: Number(s.id),
-            level: typeof s.level === 'number' ? s.level : 50,
-            moves: Array.isArray(s.moves)
-              ? s.moves.slice(0, 4).map((m: any) => typeof m === 'string' ? m : m?.name || m?.id).filter(Boolean) as string[]
-              : undefined,
-            nature: typeof s.nature === 'string' ? s.nature : undefined,
-          }));
+          .map(storedSlot);
       }
     }
   } catch { /* ignore */ }
@@ -307,7 +325,7 @@ function loadPlayerTeamFromStorage(): Array<{ id: number; level?: number; moves?
 }
 
 export interface OfflineBattleConfig {
-  playerTeam?: Array<{ id: number; level?: number; moves?: string[]; nature?: string }>;
+  playerTeam?: OfflineTeamSlot[];
   opponentChampion: (typeof GYM_CHAMPIONS)[number];
 }
 
@@ -341,7 +359,10 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
         const playerSlots = await Promise.all(
           rawTeam.map(async (slot) => {
             const moves = (slot.moves || []).map(name => ({ id: name || 'tackle', name: name || 'tackle', pp: 20, maxPp: 20 }));
-            return hydrateSlot({ id: slot.id, level: slot.level || 50, moves, nature: slot.nature });
+            return hydrateSlot({
+              id: slot.id, level: slot.level || 50, moves, nature: slot.nature,
+              teraType: slot.teraType, heldItem: slot.heldItem, evs: slot.evs, gender: slot.gender,
+            });
           }),
         );
         if (cancelled) return;
@@ -514,8 +535,9 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
     resolving.current = true;
 
     try {
-      // AI chooses its action
-      const aiAction = chooseAIAction(state.opponent, state.player);
+      // AI chooses its action (and, during the turn, which Pokémon it sends in)
+      state.autoSwitchPicker = chooseAIReplacement;
+      const aiAction = await chooseAIAction(state, 'opponent');
       const opponentAction: BattleAction = aiAction.type === 'move'
         ? { type: 'move', moveId: aiAction.moveId, target: 'player', ...(aiShouldTerastallize(state, aiAction.moveId) ? { terastallize: true } : {}) }
         : { type: 'switch', switchIndex: aiAction.switchIndex!, target: 'player' };
@@ -544,6 +566,7 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
     resolving.current = true;
     try {
       state.battleLog = [];
+      state.autoSwitchPicker = chooseAIReplacement;
       const outcome = await applyFaintReplacements(state, { player: switchIndex });
       publishTurnOutcome(state, currentMeta, outcome, { turnAlreadyAdvanced: true });
     } catch (err: unknown) {
@@ -560,6 +583,7 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
     resolving.current = true;
     try {
       setMeta({ ...currentMeta, phase: 'resolving' });
+      state.autoSwitchPicker = chooseAIReplacement;
       const outcome = await resumeBattleTurnAfterSwitch(state, switchIndex, { manualSwitchSides: ['player'] });
       publishTurnOutcome(state, currentMeta, outcome);
     } catch (err: unknown) {

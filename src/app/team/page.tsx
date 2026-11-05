@@ -19,7 +19,8 @@ import {
   type TeamSlot,
   type MoveData
 } from '@/lib/userTeams'
-import { updateTeamInFirebase } from '@/lib/userTeams'
+import { updateTeamInFirebase, isSlotGender } from '@/lib/userTeams'
+import { EV_STATS, EV_STAT_LABEL, MAX_EVS_PER_STAT, MAX_EVS_TOTAL, evTotal, sanitizeEvs } from '@/lib/battle-evs'
 import AuthModal from '@/components/auth/AuthModal'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import AppHeader from '@/components/AppHeader'
@@ -65,7 +66,9 @@ const normalizeTeamSlots = (slots?: Array<Partial<TeamSlot>> | null): TeamSlot[]
       nature: slot.nature ?? DEFAULT_NATURE,
       isShiny: slot.isShiny ?? false,
       ...(isTeraType(slot.teraType) ? { teraType: slot.teraType } : {}),
-      ...(sanitizeBattleItem(slot.item) ? { item: sanitizeBattleItem(slot.item) } : {})
+      ...(sanitizeBattleItem(slot.item) ? { item: sanitizeBattleItem(slot.item) } : {}),
+      ...(sanitizeEvs(slot.evs) ? { evs: sanitizeEvs(slot.evs) } : {}),
+      ...(isSlotGender(slot.gender) ? { gender: slot.gender } : {})
     }
   })
 }
@@ -669,8 +672,9 @@ export default function TeamBuilderPage() {
       const merged = { ...s, ...patch }
       if (isPokemonChange) {
         merged.moves = [] as MoveData[]
-        // A Tera Type chosen for the previous species does not carry over
+        // A Tera Type or gender chosen for the previous species does not carry over
         delete merged.teraType
+        delete merged.gender
       }
       // If removing Pokémon, normalize level and clear moves
       if (patch.id === null) {
@@ -1566,6 +1570,66 @@ export default function TeamBuilderPage() {
                           <option key={t} value={t}>{formatTeraLabel(t)}</option>
                         ))}
                       </select>
+                    </div>
+                  )}
+
+                  {/* Gender (Attract, Cute Charm, Rivalry) */}
+                  {poke && (
+                    <div className="mb-3 flex items-center gap-3">
+                      <label htmlFor={`gender-${idx}`} className="text-xs font-medium text-muted flex-shrink-0">Gender</label>
+                      <select
+                        id={`gender-${idx}`}
+                        value={slot.gender ?? ''}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => setSlot(idx, { gender: isSlotGender(e.target.value) ? e.target.value : undefined })}
+                        className="px-2 py-1 border border-border rounded text-xs bg-surface text-text"
+                        data-testid={`gender-${idx}`}
+                      >
+                        <option value="">Unspecified</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="genderless">Genderless</option>
+                      </select>
+                    </div>
+                  )}
+
+                  {/* EV spread */}
+                  {poke && (
+                    <div className="mb-3" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-medium text-muted">EVs</span>
+                        <span
+                          className={`text-xs ${evTotal(slot.evs) > MAX_EVS_TOTAL ? 'text-red-500' : 'text-muted'}`}
+                          data-testid={`ev-total-${idx}`}
+                        >
+                          {evTotal(slot.evs)} / {MAX_EVS_TOTAL}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-3 sm:grid-cols-6 gap-1">
+                        {EV_STATS.map((stat) => (
+                          <label key={stat} className="flex flex-col items-center text-[10px] text-muted">
+                            {EV_STAT_LABEL[stat]}
+                            <input
+                              type="number"
+                              min={0}
+                              max={MAX_EVS_PER_STAT}
+                              step={4}
+                              inputMode="numeric"
+                              value={slot.evs?.[stat] ?? 0}
+                              onChange={(e) => {
+                                const value = Math.max(0, Math.min(MAX_EVS_PER_STAT, Math.floor(Number(e.target.value) || 0)))
+                                const others = evTotal(slot.evs) - (slot.evs?.[stat] ?? 0)
+                                // Never exceed the 510 total: cap this stat at what is left
+                                const capped = Math.min(value, MAX_EVS_TOTAL - others)
+                                setSlot(idx, { evs: sanitizeEvs({ ...(slot.evs ?? {}), [stat]: capped }) })
+                              }}
+                              className="w-full px-1 py-0.5 border border-border rounded text-xs bg-surface text-text text-center"
+                              aria-label={`${EV_STAT_LABEL[stat]} EVs`}
+                              data-testid={`ev-${stat}-${idx}`}
+                            />
+                          </label>
+                        ))}
+                      </div>
                     </div>
                   )}
 
