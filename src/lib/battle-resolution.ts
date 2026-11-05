@@ -186,6 +186,9 @@ async function hydrateTeam(team: any[], stats?: HydrationStats): Promise<BattleP
             ateBerry: p.ateBerry === true || undefined,
             consumedItem: typeof p.consumedItem === 'string' ? p.consumedItem : undefined,
             abilityChanged: p.abilityChanged === true || undefined,
+            intrepidUsed: p.intrepidUsed === true || undefined,
+            dauntlessUsed: p.dauntlessUsed === true || undefined,
+            syrupUsed: p.syrupUsed === true || undefined,
         } as BattlePokemon;
     }));
     return hydratedTeam;
@@ -549,8 +552,8 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
             };
 
             const profile: BattleRuleProfile = meta.ruleProfile ?? 'simplified';
-            const n1 = normalizeServerBattleAction(battleState.player, p1ActionRaw, profile);
-            const n2 = normalizeServerBattleAction(battleState.opponent, p2ActionRaw, profile);
+            const n1 = normalizeServerBattleAction(battleState.player, p1ActionRaw, profile, getCurrentPokemon(battleState.opponent));
+            const n2 = normalizeServerBattleAction(battleState.opponent, p2ActionRaw, profile, getCurrentPokemon(battleState.player));
             if (n1.normalized) recordNormalizedAction();
             if (n2.normalized) recordNormalizedAction();
 

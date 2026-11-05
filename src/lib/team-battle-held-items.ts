@@ -6,6 +6,7 @@ import { effectiveItem } from './battle-item-access';
 import { abilityOf } from './team-battle-ability-rules';
 import type { BattleRng } from './battle-rng';
 import { rngNextInt, rngRollChance } from './battle-rng';
+import { isGrounded } from './team-battle-hazards';
 
 export const PUNCHING_MOVES: ReadonlySet<string> = new Set([
   'bullet-punch', 'comet-punch', 'dizzy-punch', 'double-iron-bash', 'drain-punch', 'dynamic-punch', 'fire-punch',
@@ -32,6 +33,7 @@ export function rollMoveFirst(mon: BattlePokemon, rng: BattleRng, berriesBlocked
 /** Contact after Punching Glove (punches) and Protective Pads (all moves) on the attacker. */
 export function makesContactFor(attacker: BattlePokemon, move: { makesContact?: boolean }, moveLower: string): boolean {
   if (!move.makesContact) return false;
+  if (abilityOf(attacker) === 'long-reach') return false;
   const item = effectiveItem(attacker);
   if (item === 'protective-pads') return false;
   if (item === 'punching-glove' && PUNCHING_MOVES.has(moveLower)) return false;
@@ -78,14 +80,27 @@ export function loadedDiceHits(attacker: BattlePokemon, min: number, max: number
   return null;
 }
 
-/** Bound by a binding move and cannot switch out (Ghost types and Shed Shell holders always can). */
-export function isTrapped(mon: BattlePokemon): boolean {
+/**
+ * Cannot switch out: binding moves, Mean Look, Jaw Lock, No Retreat, Fairy Lock, or the foe's
+ * Shadow Tag / Arena Trap / Magnet Pull. Ghost types and Shed Shell holders always can.
+ */
+export function isTrapped(mon: BattlePokemon, foe?: BattlePokemon): boolean {
   const v = mon.volatile;
-  const held = !!(v?.binding || v?.trapped || v?.jawLock || v?.noRetreat || v?.fairyLocked);
+  const held = !!(v?.binding || v?.trapped || v?.jawLock || v?.noRetreat || v?.fairyLocked) || trappedByAbility(mon, foe);
   if (!held || mon.currentHp <= 0) return false;
   if (effectiveItem(mon) === 'shed-shell') return false;
   const types = (mon.pokemon.types ?? []).map((t: any) => String(typeof t === 'string' ? t : t?.type?.name ?? '').toLowerCase());
   return !types.includes('ghost');
+}
+
+function trappedByAbility(mon: BattlePokemon, foe: BattlePokemon | undefined): boolean {
+  if (!foe || foe.currentHp <= 0) return false;
+  const ab = abilityOf(foe);
+  const types = (mon.pokemon.types ?? []).map((t: any) => String(typeof t === 'string' ? t : t?.type?.name ?? '').toLowerCase());
+  if (ab === 'shadow-tag') return abilityOf(mon) !== 'shadow-tag';
+  if (ab === 'arena-trap') return isGrounded(mon);
+  if (ab === 'magnet-pull') return types.includes('steel');
+  return false;
 }
 
 /** Utility Umbrella: sun / rain do not affect moves the holder uses or takes. */

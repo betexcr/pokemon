@@ -90,6 +90,27 @@ import {
   typesOf,
 } from './team-battle-gen9-moves';
 import { rawStat, stageMultiplier } from './battle-stats';
+import {
+  abilityAccuracyModifier,
+  abilityDamageModifiers,
+  abilityFinalDamageMultiplier,
+  abilityMoveTypeChange,
+  applyAttackerHitAbilities,
+  applyEndOfTurnAbilities,
+  applyEntryAbilities,
+  applyHitReactionAbilities,
+  applyKoAbilities,
+  applyMagician,
+  applySereneGrace,
+  applySynchronize,
+  contactThroughProtect,
+  ignoresEvasion,
+  ignoresGhostImmunity,
+  opportunistCopies,
+  pressurePpCost,
+  updateWeatherTerrainForms,
+  wantsEmergencyExit,
+} from './team-battle-gen9-abilities';
 import { forceEatBerry } from './team-battle-items';
 import { METRONOME_MOVES } from '@/data/metronome-moves';
 import { breakIllusion, maskIllusions, startIllusion } from './team-battle-illusion';
@@ -219,7 +240,7 @@ export async function resolveSwitch(state: BattleState, action: BattleState['act
   // Clear some volatiles from outgoing Pokemon
   const currentPokemon = getCurrentPokemon(team);
   // Bound Pokémon cannot switch (Ghost types and Shed Shell holders can)
-  if (isTrapped(currentPokemon)) {
+  if (isTrapped(currentPokemon, getCurrentPokemon(action.user === 'player' ? state.opponent : state.player))) {
     state.battleLog.push({ type: 'status_effect', message: `${currentPokemon.pokemon.name} can't escape!`, pokemon: currentPokemon.pokemon.name });
     return;
   }
@@ -308,6 +329,7 @@ export async function resolveMove(state: BattleState, action: BattleState['actio
       message: `${attacker.pokemon.name} flinched and couldn't move!`,
       pokemon: attacker.pokemon.name
     });
+    if (abilityOf(attacker) === 'steadfast') changeStatStage(state, attacker, 'speed', 1, { reason: 'thanks to Steadfast' });
     attacker.volatile.flinched = false;
     if (attacker.volatile.rampage) {
       endRampageWithConfusion(state, attacker);
@@ -451,11 +473,13 @@ export async function resolveMove(state: BattleState, action: BattleState['actio
 
   // Weather, Lock-On and Glaive Rush can make a move a sure hit (or change its accuracy)
   const accuracyOverride = gen9AccuracyOverride(state, attacker, defender, moveLower);
+  // Compound Eyes / Victory Star / Hustle; No Guard on either side makes every move hit
+  const abilityAccuracy = abilityAccuracyModifier(attacker, defender, move.category);
   attacker.volatile.lockOn = undefined;
-  if (move.accuracy != null && !move.bypassAccuracyCheck && accuracyOverride !== Infinity) {
+  if (move.accuracy != null && !move.bypassAccuracyCheck && accuracyOverride !== Infinity && abilityAccuracy !== Infinity) {
     const accStage = attacker.statModifiers?.accuracy ?? 0;
     // Darkest Lariat / Sacred Sword ignore evasion boosts
-    const evaStage = IGNORE_TARGET_STAGES_MOVES.has(moveLower) ? 0 : defender.statModifiers?.evasion ?? 0;
+    const evaStage = IGNORE_TARGET_STAGES_MOVES.has(moveLower) || ignoresEvasion(attacker) ? 0 : defender.statModifiers?.evasion ?? 0;
     const mult = getAccuracyMultiplier(accStage - evaStage);
     // Zoom Lens: did the target already act this turn?
     const defenderSide = action.user === 'player' ? 'opponent' : 'player';
@@ -465,7 +489,7 @@ export async function resolveMove(state: BattleState, action: BattleState['actio
     // OHKO moves ignore stat stages and use the level gap; Gravity boosts everything else x5/3
     const hitChance = OHKO_MOVES.has(moveLower)
       ? ohkoHitChance(attacker, defender, moveLower)
-      : ((accuracyOverride ?? move.accuracy) / 100) * mult * (state.field.rooms?.gravity ? 5 / 3 : 1) * itemAccuracyMultiplier(attacker, defender, targetAlreadyMoved);
+      : ((accuracyOverride ?? move.accuracy) / 100) * mult * (state.field.rooms?.gravity ? 5 / 3 : 1) * itemAccuracyMultiplier(attacker, defender, targetAlreadyMoved) * abilityAccuracy;
     attacker.volatile.micleBoost = undefined;
     if (!rngRollChance(state.rng, hitChance)) {
       consumePpForMove(attacker, moveId);
@@ -501,7 +525,9 @@ export async function resolveMove(state: BattleState, action: BattleState['actio
   }
 
   // Sunsteel Strike / Moongeist Beam / Photon Geyser ignore the target's ability
-  if (ABILITY_IGNORING_MOVES.has(moveLower)) attacker.volatile.moldBreakerMove = true;
+  if (ABILITY_IGNORING_MOVES.has(moveLower) || (abilityOf(attacker) === 'mycelium-might' && move.category === 'Status')) {
+    attacker.volatile.moldBreakerMove = true;
+  }
   state.lastHitDamage = 0;
   const logStart = state.battleLog.length;
   await executeMoveAction(state, attacker, defender, moveId, action.user === 'player', action.user);
@@ -546,9 +572,13 @@ function afterActionItemChecks(state: BattleState): void {
     const mon = getCurrentPokemon(side === 'player' ? state.player : state.opponent);
     const foe = getCurrentPokemon(side === 'player' ? state.opponent : state.player);
     const boosts = foe.volatile.recentBoosts;
-    if (mon.currentHp > 0 && boosts && effectiveItem(mon) === 'mirror-herb') {
-      removeHeldItem(mon);
-      state.battleLog.push({ type: 'status_effect', message: `${mon.pokemon.name} used its Mirror Herb to mirror its opponent's stat changes!`, pokemon: mon.pokemon.name });
+    if (mon.currentHp > 0 && boosts && (opportunistCopies(mon) || effectiveItem(mon) === 'mirror-herb')) {
+      if (opportunistCopies(mon)) {
+        state.battleLog.push({ type: 'status_effect', message: `${mon.pokemon.name} copied its opponent's stat changes with Opportunist!`, pokemon: mon.pokemon.name });
+      } else {
+        removeHeldItem(mon);
+        state.battleLog.push({ type: 'status_effect', message: `${mon.pokemon.name} used its Mirror Herb to mirror its opponent's stat changes!`, pokemon: mon.pokemon.name });
+      }
       for (const [stat, amount] of Object.entries(boosts)) {
         if (amount) changeStatStage(state, mon, stat as keyof BattlePokemon['statModifiers'], amount);
       }
@@ -558,6 +588,7 @@ function afterActionItemChecks(state: BattleState): void {
     const mon = getCurrentPokemon(side === 'player' ? state.player : state.opponent);
     mon.volatile.recentBoosts = undefined;
     tryConsumeBerry(state, mon, side);
+    updateWeatherTerrainForms(state, mon);
   }
 }
 
@@ -903,6 +934,7 @@ function applyMoveAilment(
     pokemon: defender.pokemon.name,
     status: status as string,
   });
+  applySynchronize(state, defender, _attacker);
 }
 
 const SELF_STAT_DROP_MOVES = new Set([
@@ -1553,6 +1585,9 @@ async function executeMoveAction(
   }
   if (!reflected && !called) {
     consumePpForMove(attacker, moveId);
+    // Pressure: one extra PP for moves aimed at the holder
+    const ppSlot = attacker.moves.find((m) => m.id === moveId);
+    if (ppSlot && ppSlot.pp > 0 && pressurePpCost(defender, !SELF_STATUS_MOVES.has(moveId.toLowerCase()))) ppSlot.pp -= 1;
 
     // Metronome (item): +20% per consecutive use of the same move
     attacker.volatile.metronomeStreak =
@@ -1602,6 +1637,18 @@ async function executeMoveAction(
   }
   move = gen9MoveVariant(state, attacker, defender, move as any, moveLower) as typeof move;
   if (ALWAYS_CRIT_MOVES.has(moveLower)) move = { ...move, critRateStage: 3 };
+  // -ate abilities / Normalize / Liquid Voice change the type (and boost the -ates and Normalize)
+  let ateBoost = 1;
+  const ate = abilityMoveTypeChange(attacker, String(move.type), moveLower, move.category);
+  if (ate) {
+    move = { ...move, type: (ate.type.charAt(0).toUpperCase() + ate.type.slice(1)) as typeof move.type };
+    ateBoost = ate.boost;
+  }
+  move = applySereneGrace(attacker, move as any) as typeof move;
+  // Merciless: always a critical hit on a poisoned target
+  if (abilityOf(attacker) === 'merciless' && (defender.status === 'poisoned' || defender.status === 'badly-poisoned')) {
+    move = { ...move, critRateStage: 3 };
+  }
   if (!reflected) {
     applyStanceChange(state, attacker, moveId, move.category);
     applyProtean(state, attacker, String(move.type), moveLower);
@@ -1867,7 +1914,8 @@ async function executeMoveAction(
   // Check if defender is protected
   if (defender.volatile.protect && defender.volatile.protect.active && defender.volatile.protect.kind !== 'endure') {
     // Feint, Hyperspace Hole and moves with "bypassesProtect" go through Protect (Feint also lifts it)
-    const bypassesProtect = PROTECT_BYPASS_MOVES.has(moveLower) || move.bypassesProtect;
+    const bypassesProtect = PROTECT_BYPASS_MOVES.has(moveLower) || move.bypassesProtect
+      || contactThroughProtect(attacker, makesContactFor(attacker, move, moveLower));
     if (bypassesProtect && moveLower === 'feint') {
       defender.volatile.protect.active = false;
       state.battleLog.push({ type: 'status_effect', message: `${defender.pokemon.name} fell for the feint!`, pokemon: defender.pokemon.name });
@@ -2004,7 +2052,7 @@ async function executeMoveAction(
   const perHit = PER_HIT_ACCURACY_MOVES[moveLower];
   const beatUp = moveLower === 'beat-up' ? beatUpPowers(state, attacker) : null;
   const skillLink = abilityOf(attacker) === 'skill-link';
-  const hitCount = beatUp
+  const baseHitCount = beatUp
     ? beatUp.length
     : perHit
       ? (moveLower === 'population-bomb' && effectiveItem(attacker) === 'loaded-dice' && !skillLink
@@ -2013,8 +2061,17 @@ async function executeMoveAction(
       : move.hits && move.hits.min !== move.hits.max
         ? loadedDiceHits(attacker, move.hits.min, move.hits.max, state.rng) ?? determineHitCount(move, attacker, state.rng)
         : determineHitCount(move, attacker, state.rng);
+  // Parental Bond: single-hit attacks strike twice, the second at 1/4 power
+  const parentalBond = abilityOf(attacker) === 'parental-bond' && baseHitCount === 1 && !beatUp && !perHit
+    && !SELF_KO_MOVES.has(moveLower) && !OHKO_MOVES.has(moveLower)
+    && !['fling', 'final-gambit', 'endeavor', 'struggle'].includes(moveLower);
+  const hitCount = parentalBond ? 2 : baseHitCount;
   const rollsEachHit = !!perHit && !skillLink && effectiveItem(attacker) !== 'loaded-dice';
   const baseMove = move;
+  const defenderHpAtStart = defender.currentHp;
+  const queueForOrder = state.actionQueue ?? [];
+  const orderIdx = state.currentAction ? queueForOrder.indexOf(state.currentAction) : -1;
+  const movesLastInTurn = orderIdx >= 0 && !queueForOrder.slice(orderIdx + 1).some((a) => a.type === 'move' || a.type === 'pursuit');
   /** Last hit's type effectiveness (Enigma Berry). */
   let lastEffectiveness = 1;
   const contact = makesContactFor(attacker, move, moveLower);
@@ -2092,7 +2149,8 @@ async function executeMoveAction(
     if (fixedFn) {
       // Fixed-damage moves still respect type immunity (Seismic Toss vs Ghost, Mirror Coat vs Dark, ...)
       const atkType = toDamageTypeName(String(move.type || 'normal'));
-      const defTypes = getPokemonTypes(defender).map((t) => toDamageTypeName(String(t)));
+      const defTypes = getPokemonTypes(defender).map((t) => toDamageTypeName(String(t)))
+        .filter((t) => !(t === 'Ghost' && ignoresGhostImmunity(attacker, String(atkType))));
       if (calculateTypeEffectiveness(atkType, defTypes) === 0) {
         state.battleLog.push({
           type: 'status_effect',
@@ -2138,6 +2196,13 @@ async function executeMoveAction(
       prep.attackStatStages = prep.isCrit ? Math.max(0, stage) : stage;
     }
     prep.movePower = teraPowerFloor(attacker, String(prep.moveType), prep.movePower, move);
+    const abilityMods = abilityDamageModifiers({
+      state, attacker, defender, moveLower, moveType: String(prep.moveType), isPhysical: prep.isPhysical,
+      contact, hasRecoil: !!move.recoil, movesLast: movesLastInTurn,
+    });
+    prep.attackMultiplier *= abilityMods.attack;
+    prep.defenseMultiplier *= abilityMods.defense;
+    prep.powerMultiplier *= abilityMods.power * ateBoost * (parentalBond && i === 1 ? 0.25 : 1);
     if (DEFENSE_TARGETING_MOVES.has(moveLower)) {
       const stage = defender.statModifiers.defense;
       prep.defenseStatStages = prep.attackerAbility === 'unaware' && !prep.isCrit ? 0 : prep.isCrit ? Math.min(0, stage) : stage;
@@ -2156,7 +2221,8 @@ async function executeMoveAction(
       // A grounded Flying type (Gravity, Iron Ball) takes Ground moves neutrally
       defenderTypes: defender.pokemon.types
         .map((type) => toDamageTypeName(typeof type === 'string' ? type : type.type?.name || 'normal'))
-        .filter((t) => !(t === 'Flying' && String(prep.moveType).toLowerCase() === 'ground' && isGrounded(defender))),
+        .filter((t) => !(t === 'Flying' && String(prep.moveType).toLowerCase() === 'ground' && isGrounded(defender)))
+        .filter((t) => !(t === 'Ghost' && ignoresGhostImmunity(attacker, String(prep.moveType)))),
       attackStat: attackStat,
       defenseStat: defenseStat,
       attackStatStages: prep.attackStatStages,
@@ -2192,7 +2258,7 @@ async function executeMoveAction(
       rng: state.rng,
     });
     
-    let damage = damageResult.damage;
+    let damage = Math.floor(damageResult.damage * abilityFinalDamageMultiplier(attacker, damageResult.effectiveness ?? 1));
     lastEffectiveness = damageResult.effectiveness ?? 1;
     const superEffective = lastEffectiveness > 1;
 
@@ -2340,6 +2406,14 @@ async function executeMoveAction(
         });
       }
     }
+
+    // Abilities reacting to the hit (Stamina, Weak Armor, Mummy, Innards Out, ...) and the attacker's on-hit abilities
+    const hitCtx = {
+      state, attacker, defender, moveLower, moveType: String(prep.moveType), category: move.category, contact,
+      damage: hpBeforeHit - defender.currentHp, hpBefore: hpBeforeHit, isCrit: prep.isCrit,
+    };
+    applyHitReactionAbilities(hitCtx);
+    applyAttackerHitAbilities({ ...hitCtx, moveHasFlinch: moveFlinchChance(move) > 0 });
     
     // Check if attacker fainted from recoil
     if (attacker.currentHp <= 0) {
@@ -2348,6 +2422,7 @@ async function executeMoveAction(
       break;
     }
   }
+  if (String(move.type).toLowerCase() === 'electric') attacker.volatile.charged = undefined;
   
   // Log multi-hit if applicable
   if (actualHits > 1) {
@@ -2397,6 +2472,11 @@ async function executeMoveAction(
       removeHeldItem(defender);
       state.battleLog.push({ type: 'status_effect', message: `${defender.pokemon.name} held up its Red Card against ${attacker.pokemon.name}!`, pokemon: defender.pokemon.name });
       pivotCancelled = await forceTargetSwitch(state, user, false, defender);
+    } else if (wantsEmergencyExit(defender, defenderHpAtStart) && getSwitchCandidates(defenderTeam).length > 0) {
+      // Emergency Exit / Wimp Out: dropping to half HP sends the holder back
+      state.battleLog.push({ type: 'status_effect', message: `${defender.pokemon.name} rushed back to safety!`, pokemon: defender.pokemon.name });
+      await requestPivotSwitch(state, defenderSide);
+      pivotCancelled = true;
     }
   }
 
@@ -2425,7 +2505,7 @@ async function executeMoveAction(
         pokemon: attacker.pokemon.name
       });
     }
-  } else if (move.recoil && totalDamageDealt > 0) {
+  } else if (move.recoil && totalDamageDealt > 0 && abilityOf(attacker) !== 'rock-head' && abilityOf(attacker) !== 'magic-guard') {
     const recoilFraction = move.recoil.fraction || 0.33; // Default 1/3
     const recoilDamage = Math.max(1, Math.floor(totalDamageDealt * recoilFraction));
     attacker.currentHp = Math.max(0, attacker.currentHp - recoilDamage);
@@ -2453,8 +2533,15 @@ async function executeMoveAction(
     const drainFraction = move.drain.fraction || 0.5; // Default 50%
     const bigRoot = effectiveItem(attacker) === 'big-root' ? 1.3 : 1;
     const healAmount = Math.max(1, Math.floor(totalDamageDealt * drainFraction * bigRoot));
+    if (targetAbility(attacker, defender) === 'liquid-ooze') {
+      attacker.currentHp = Math.max(0, attacker.currentHp - healAmount);
+      state.battleLog.push({ type: 'status_damage', message: `${attacker.pokemon.name} sucked up the liquid ooze!`, pokemon: attacker.pokemon.name });
+      if (attacker.currentHp <= 0) state.battleLog.push({ type: 'pokemon_fainted', message: `${attacker.pokemon.name} fainted!`, pokemon: attacker.pokemon.name });
+    }
     const oldHp = attacker.currentHp;
-    attacker.currentHp = Math.min(attacker.maxHp, attacker.currentHp + healAmount);
+    if (targetAbility(attacker, defender) !== 'liquid-ooze' && attacker.currentHp > 0) {
+      attacker.currentHp = Math.min(attacker.maxHp, attacker.currentHp + healAmount);
+    }
     const actualHeal = attacker.currentHp - oldHp;
     
     if (actualHeal > 0) {
@@ -2552,6 +2639,7 @@ async function executeMoveAction(
   }
   
   gen9AfterHit({ state, attacker, defender, moveLower, moveType: String(move.type), hpDamage: hpDamageDealt, hitSubstitute });
+  if (!hitSubstitute) applyMagician(state, attacker, defender, hpDamageDealt);
   if (flungItem && hpDamageDealt > 0 && defender.currentHp > 0 && !hitSubstitute) applyFlungItem(state, attacker, defender, flungItem);
   state.lastHitDamage = hpDamageDealt;
 
@@ -2586,6 +2674,7 @@ async function executeMoveAction(
     } else if (attackerAbility === 'beast-boost') {
       applyBeastBoost(attacker, state);
     }
+    applyKoAbilities(state, attacker);
   }
 
   // Dragon Tail / Circle Throw drag the target out after a hit that reached its HP
@@ -2724,6 +2813,7 @@ export async function runEntrySequence(state: BattleState, switchingSide: 'playe
   }
 
   handleOnEntryAbilities(state, switchingSide, incomingPokemon);
+  applyEntryAbilities(state, incomingPokemon);
 
   if (incomingPokemon.currentHp > 0 && effectiveItem(incomingPokemon) === 'air-balloon') {
     state.battleLog.push({
@@ -3045,6 +3135,8 @@ export async function processEndOfTurn(state: BattleState): Promise<void> {
 
 /** Future Sight / Doom Desire landing, Syrup Bomb, Throat Chop / Lock-On timers, Hunger Switch, Fairy Lock. */
 function processGen9EndOfTurn(state: BattleState): void {
+  applyEndOfTurnAbilities(state);
+  for (const team of [state.player, state.opponent]) updateWeatherTerrainForms(state, getCurrentPokemon(team));
   for (const team of [state.player, state.opponent]) {
     const fa = team.sideConditions.futureAttack;
     if (fa) {

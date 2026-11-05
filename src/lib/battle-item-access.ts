@@ -7,5 +7,7 @@ import type { BattlePokemon } from './team-battle-engine';
  */
 export function effectiveItem(pokemon: BattlePokemon | undefined): string | undefined {
   if (!pokemon || pokemon.volatile?.itemSuppressed) return undefined;
+  // Klutz: the holder's item has no effect
+  if (pokemon.currentAbility?.toLowerCase() === 'klutz') return undefined;
   return pokemon.heldItem?.toLowerCase();
 }

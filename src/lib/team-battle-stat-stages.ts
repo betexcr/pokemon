@@ -39,7 +39,8 @@ const SINGLE_DROP_BLOCKERS: Record<string, { stat: StatKey; label: string }> = {
   'hyper-cutter': { stat: 'attack', label: 'Hyper Cutter' },
   'big-pecks': { stat: 'defense', label: 'Big Pecks' },
   'keen-eye': { stat: 'accuracy', label: 'Keen Eye' },
-  'mind-eye': { stat: 'accuracy', label: "Mind's Eye" },
+  'minds-eye': { stat: 'accuracy', label: "Mind's Eye" },
+  illuminate: { stat: 'accuracy', label: 'Illuminate' },
 };
 
 function describeChange(delta: number): string {

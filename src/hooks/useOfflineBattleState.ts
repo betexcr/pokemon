@@ -634,7 +634,8 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
     if (replacement) return replacement.options;
     const active = getCurrentPokemon(battleState.player);
     if (getForcedBattleMoveId(active)) return [];
-    if (isTrapped(active)) return []; // bound (Shed Shell / Ghost types can still switch)
+    // Bound / Mean Look / Shadow Tag and co. (Shed Shell holders and Ghost types can still switch)
+    if (isTrapped(active, getCurrentPokemon(battleState.opponent))) return [];
     return battleState.player.pokemon
       .map((p, i) => ({ p, i }))
       .filter(({ p, i }) => i !== battleState.player.currentIndex && p.currentHp > 0)

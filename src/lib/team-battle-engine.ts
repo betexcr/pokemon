@@ -4,6 +4,7 @@ import { revertTransform } from './team-battle-transform';
 import { SOUND_MOVES, isTrapped, rollMoveFirst, speciesItemSpeedMultiplier } from './team-battle-held-items';
 import { changeStatStage } from './team-battle-stat-stages';
 import { paradoxMultiplier } from './team-battle-paradox';
+import { abilitySpeedMultiplier, abilityTurnOrder } from './team-battle-gen9-abilities';
 export { effectiveItem } from './battle-item-access';
 import { Pokemon, Move } from '@/types/pokemon';
 import { CompiledMove } from './adapters/pokeapiMoveAdapter';
@@ -138,6 +139,14 @@ export type BattlePokemon = {
     defenseCurl?: boolean;
     /** Consecutive successful Fury Cutter hits. */
     furyCutter?: number;
+    /** Electromorphosis / Wind Power: the next Electric move has double power. */
+    charged?: boolean;
+    /** Slow Start turns left. */
+    slowStart?: number;
+    /** Cud Chew: eat this berry again at the end of the next turn. */
+    cudChew?: { berry: string; turns: number };
+    /** An item was used up this turn (Pickup). */
+    consumedThisTurn?: boolean;
     /** Metronome (item): consecutive uses of the same move. */
     metronomeStreak?: number;
     /** Micle Berry: next move's accuracy x1.2. */
@@ -175,6 +184,10 @@ export type BattlePokemon = {
   ateBerry?: boolean;
   /** Last held item used up (Recycle restores it). */
   consumedItem?: string;
+  /** Once-per-battle entry abilities already used (Intrepid Sword, Dauntless Shield, Supersweet Syrup). */
+  intrepidUsed?: boolean;
+  dauntlessUsed?: boolean;
+  syrupUsed?: boolean;
   /** Disguise / Ice Face: already used up (Disguise stays busted for the battle). */
   disguiseBusted?: boolean;
   iceFaceBroken?: boolean;
@@ -244,7 +257,9 @@ export type BattleState = {
     speed: number;
     terastallize?: boolean;
     /** Quick Claw / Custap Berry: acts first within its priority bracket this turn. */
-    moveFirst?: 'quick-claw' | 'custap-berry';
+    moveFirst?: 'quick-claw' | 'custap-berry' | 'quick-draw';
+    /** Stall / Mycelium Might: acts last within its priority bracket. */
+    moveLast?: boolean;
   }>;
   // Field state
   field: FieldState;
@@ -453,8 +468,10 @@ export function getEffectiveSpeed(
   if (tailwindActive) {
     finalSpeed = Math.floor(finalSpeed * 2);
   }
+  // Quick Feet (x1.5 when statused, ignores the paralysis drop) / Slow Start
+  finalSpeed = Math.floor(finalSpeed * abilitySpeedMultiplier(pokemon));
   // Paralysis halves speed (Gen 7+)
-  if (pokemon.status === 'paralyzed') {
+  if (pokemon.status === 'paralyzed' && ability !== 'quick-feet') {
     finalSpeed = Math.floor(finalSpeed * 0.5);
   }
   return finalSpeed;
@@ -631,7 +648,9 @@ export function validateServerBattleAction(team: BattleTeam, action: BattleActio
 export function normalizeServerBattleAction(
   team: BattleTeam,
   action: BattleAction,
-  profile: BattleRuleProfile = 'simplified'
+  profile: BattleRuleProfile = 'simplified',
+  /** The opposing active Pokémon (Shadow Tag / Arena Trap / Magnet Pull). */
+  foeActive?: BattlePokemon,
 ): NormalizedServerActionResult {
   if (action.type === 'switch') {
     const mon = getCurrentPokemon(team);
@@ -643,7 +662,7 @@ export function normalizeServerBattleAction(
     if (idx < 0 || idx >= team.pokemon.length) return { action, normalized: false, errorCode: 'switch_out_of_range' };
     if (idx === team.currentIndex) return { action, normalized: false, errorCode: 'switch_same_slot' };
     if (team.pokemon[idx].currentHp <= 0) return { action, normalized: false, errorCode: 'switch_to_fainted' };
-    if (isTrapped(mon)) return { action, normalized: false, errorCode: 'switch_trapped' };
+    if (isTrapped(mon, foeActive)) return { action, normalized: false, errorCode: 'switch_trapped' };
     return { action, normalized: false };
   }
 
@@ -739,10 +758,20 @@ function isGroundedForPriority(mon: BattlePokemon): boolean {
   return !types.includes('flying') && mon.currentAbility?.toLowerCase() !== 'levitate' && effectiveItem(mon) !== 'air-balloon';
 }
 
-function moveFirstField(mon: BattlePokemon, foe: BattlePokemon, state: BattleState): { moveFirst?: 'quick-claw' | 'custap-berry' } {
-  const berriesBlocked = foe.currentAbility?.toLowerCase() === 'unnerve' && foe.currentHp > 0;
+function moveFirstField(
+  mon: BattlePokemon,
+  foe: BattlePokemon,
+  state: BattleState,
+  moveId?: string,
+): { moveFirst?: 'quick-claw' | 'custap-berry' | 'quick-draw'; moveLast?: boolean } {
+  const foeAbility = foe.currentAbility?.toLowerCase();
+  const berriesBlocked = (foeAbility === 'unnerve' || foeAbility === 'as-one-glastrier' || foeAbility === 'as-one-spectrier') && foe.currentHp > 0;
   const source = rollMoveFirst(mon, state.rng, berriesBlocked);
-  return source ? { moveFirst: source } : {};
+  if (source) return { moveFirst: source };
+  const order = abilityTurnOrder(mon, moveId ? getCachedMove(moveId)?.category : undefined, state.rng);
+  if (order === 'first') return { moveFirst: 'quick-draw' };
+  if (order === 'last') return { moveLast: true };
+  return {};
 }
 
 // Build and order action queue (Gen-8/9 style)
@@ -788,7 +817,7 @@ export function buildActionQueue(state: BattleState, playerAction: BattleAction,
       moveId: playerAction.moveId,
       target: playerAction.target,
       ...(playerAction.terastallize ? { terastallize: true } : {}),
-      ...moveFirstField(getCurrentPokemon(state.player), getCurrentPokemon(state.opponent), state),
+      ...moveFirstField(getCurrentPokemon(state.player), getCurrentPokemon(state.opponent), state, playerAction.moveId),
       priority: getMovePriority(playerAction.moveId || '', getCurrentPokemon(state.player), state.field),
       speed: getEffectiveSpeed(getCurrentPokemon(state.player), isTailwindActive(state.player), state.field)
     });
@@ -809,7 +838,7 @@ export function buildActionQueue(state: BattleState, playerAction: BattleAction,
       moveId: opponentAction.moveId,
       target: opponentAction.target,
       ...(opponentAction.terastallize ? { terastallize: true } : {}),
-      ...moveFirstField(getCurrentPokemon(state.opponent), getCurrentPokemon(state.player), state),
+      ...moveFirstField(getCurrentPokemon(state.opponent), getCurrentPokemon(state.player), state, opponentAction.moveId),
       priority: getMovePriority(opponentAction.moveId || '', getCurrentPokemon(state.opponent), state.field),
       speed: getEffectiveSpeed(getCurrentPokemon(state.opponent), isTailwindActive(state.opponent), state.field)
     });
@@ -837,6 +866,9 @@ export function buildActionQueue(state: BattleState, playerAction: BattleAction,
     // Quick Claw / Custap Berry act first within the bracket (Trick Room does not reverse this)
     if (!!a.moveFirst !== !!b.moveFirst) {
       return a.moveFirst ? -1 : 1;
+    }
+    if (!!a.moveLast !== !!b.moveLast) {
+      return a.moveLast ? 1 : -1;
     }
 
     // Within same priority, order by speed
