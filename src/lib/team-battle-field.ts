@@ -22,7 +22,7 @@ export function decrementFieldTimers(field: FieldState, screens: { player: Field
   }
 
   if (!field.rooms) field.rooms = {};
-  for (const room of ['trickRoom', 'magicRoom', 'wonderRoom'] as const) {
+  for (const room of ['trickRoom', 'magicRoom', 'wonderRoom', 'gravity'] as const) {
     const active = field.rooms[room];
     if (!active) continue;
     active.turns -= 1;

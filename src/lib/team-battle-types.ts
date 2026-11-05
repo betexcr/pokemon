@@ -19,6 +19,8 @@ type FieldRooms = {
   trickRoom?: { turns: number };
   wonderRoom?: { turns: number };
   magicRoom?: { turns: number };
+  /** Grounds every Pokémon and boosts accuracy (x5/3) for 5 turns. */
+  gravity?: { turns: number };
 };
 
 export type FieldSideScreens = {

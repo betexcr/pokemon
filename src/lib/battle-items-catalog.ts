@@ -48,7 +48,7 @@ export const BATTLE_ITEMS: readonly BattleItemInfo[] = [
   { id: 'red-card', label: 'Red Card', category: 'Field & utility', effect: 'Forces the attacker out after a hit' },
   { id: 'flame-orb', label: 'Flame Orb', category: 'Field & utility', effect: 'Burns the holder at end of turn' },
   { id: 'toxic-orb', label: 'Toxic Orb', category: 'Field & utility', effect: 'Badly poisons the holder at end of turn' },
-  { id: 'iron-ball', label: 'Iron Ball', category: 'Field & utility', effect: 'Halves Speed' },
+  { id: 'iron-ball', label: 'Iron Ball', category: 'Field & utility', effect: 'Halves Speed, grounds the holder' },
   { id: 'light-clay', label: 'Light Clay', category: 'Field & utility', effect: 'Screens last 8 turns' },
   { id: 'heat-rock', label: 'Heat Rock', category: 'Field & utility', effect: 'Sun lasts 8 turns' },
   { id: 'damp-rock', label: 'Damp Rock', category: 'Field & utility', effect: 'Rain lasts 8 turns' },

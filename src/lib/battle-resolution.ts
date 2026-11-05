@@ -258,6 +258,9 @@ async function fetchBattleState(battleId: string, ops: RtdbOps, hydrationStats?:
     if (roomsRaw.wonderRoom?.turns || roomsRaw.wonderRoom) {
         rooms.wonderRoom = { turns: typeof roomsRaw.wonderRoom === 'number' ? roomsRaw.wonderRoom : roomsRaw.wonderRoom.turns };
     }
+    if (roomsRaw.gravity?.turns || roomsRaw.gravity) {
+        rooms.gravity = { turns: typeof roomsRaw.gravity === 'number' ? roomsRaw.gravity : roomsRaw.gravity.turns };
+    }
 
     return {
         player: p1Team,
@@ -673,6 +676,9 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
         }
         if (currentState.field?.rooms?.wonderRoom) {
             roomsOut.wonderRoom = { turns: currentState.field.rooms.wonderRoom.turns };
+        }
+        if (currentState.field?.rooms?.gravity) {
+            roomsOut.gravity = { turns: currentState.field.rooms.gravity.turns };
         }
 
         const publicUpdates: any = {

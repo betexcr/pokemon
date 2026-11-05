@@ -1,4 +1,5 @@
 import { effectiveItem } from './battle-item-access';
+import { revertTransform } from './team-battle-transform';
 import { changeStatStage } from './team-battle-stat-stages';
 import { paradoxMultiplier } from './team-battle-paradox';
 export { effectiveItem } from './battle-item-access';
@@ -73,6 +74,24 @@ export type BattlePokemon = {
     lastConsumedBerry?: string;
     /** Protosynthesis / Quark Drive boost (field-driven or from Booster Energy until switch-out). */
     paradoxBoost?: { stat: 'attack' | 'defense' | 'specialAttack' | 'specialDefense' | 'speed'; source: 'field' | 'booster' };
+    /** Destiny Bond: if KO'd by the foe before the user's next move, the attacker faints too. */
+    destinyBond?: boolean;
+    /** Ghost-type Curse: loses 1/4 max HP each end of turn. */
+    cursed?: boolean;
+    /** Salt Cure: loses 1/8 max HP each end of turn (1/4 for Water / Steel). */
+    saltCure?: boolean;
+    /** Gravity grounds everyone. Synced from the field. */
+    gravityGrounded?: boolean;
+    /** Transform / Imposter: originals restored on switch-out. */
+    transform?: { pokemon: unknown; moves: unknown; ability?: string; into: string };
+    /** Illusion: shown to the foe as this species until a damaging hit breaks it. */
+    illusion?: { species: string; dexId?: number | null };
+    /** Protean / Libero already changed type since entering. */
+    proteanUsed?: boolean;
+    /** Types before a temporary type change (Protean / Libero), restored on switch-out. */
+    typeChange?: Pokemon['types'];
+    /** Form change (Stance Change, Zen Mode, Schooling): original data restored on switch-out. */
+    formChange?: { form: string; types: Pokemon['types']; stats: Pokemon['stats'] };
   };
   // Ability system
   currentAbility?: string;
@@ -94,6 +113,9 @@ export type BattlePokemon = {
   terastallized?: boolean;
   /** Types before Terastallizing (STAB still counts them). */
   originalTypes?: Pokemon['types'];
+  /** Disguise / Ice Face: already used up (Disguise stays busted for the battle). */
+  disguiseBusted?: boolean;
+  iceFaceBroken?: boolean;
 };
 
 export type BattleTeam = {
@@ -256,6 +278,7 @@ const FALLBACK_PRIORITY: Record<string, number> = {
   'vacuum-wave': 1,
   'trick-room': -6,
   'roar': -6,
+  'focus-punch': -3,
   'whirlwind': -6,
   'dragon-tail': -6,
   'circle-throw': -6,
@@ -885,7 +908,15 @@ const ZERO_STAT_STAGES: BattlePokemon['statModifiers'] = {
  * Taunt, choice lock, Leech Seed, toxic counter, ...). Status, consumed-item flags and Wish persist.
  */
 export function resetOnSwitchOut(pokemon: BattlePokemon): void {
+  // Undo temporary changes to the Pokémon's own data before clearing volatiles
+  revertTransform(pokemon);
   const v = pokemon.volatile ?? {};
+  if (v.formChange) {
+    pokemon.pokemon = { ...pokemon.pokemon, types: v.formChange.types, stats: v.formChange.stats };
+  }
+  if (v.typeChange && !pokemon.terastallized) {
+    pokemon.pokemon = { ...pokemon.pokemon, types: v.typeChange };
+  }
   const kept: BattlePokemon['volatile'] = {};
   if (v.focusSashUsed) kept.focusSashUsed = v.focusSashUsed;
   if (v.lastConsumedBerry) kept.lastConsumedBerry = v.lastConsumedBerry;

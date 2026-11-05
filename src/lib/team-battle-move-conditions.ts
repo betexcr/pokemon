@@ -94,6 +94,11 @@ export async function moveFailsTryCondition(
     return !(await isDamagingMove(pending.moveId));
   }
 
+  // Destiny Bond fails when used twice in a row
+  if (id === 'destiny-bond') {
+    return attacker.volatile.lastMoveUsed?.toLowerCase() === 'destiny-bond';
+  }
+
   if (COUNTER_MOVES[id]) {
     return getCounterDamage(attacker, id) === null;
   }
