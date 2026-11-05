@@ -49,6 +49,15 @@ export interface TeamSlot {
   evs?: EvSpread;
   /** Omitted means unknown (Attract / Cute Charm / Rivalry only act on known genders). */
   gender?: 'male' | 'female' | 'genderless';
+  /** PokeAPI ability id (regular or hidden); omitted means the species' first regular ability. */
+  ability?: string;
+}
+
+const ABILITY_ID_RE = /^[a-z0-9-]{1,40}$/;
+export function sanitizeSlotAbility(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const id = value.trim().toLowerCase();
+  return ABILITY_ID_RE.test(id) ? id : undefined;
 }
 
 type StoredTeamSlot = Omit<TeamSlot, 'nature'> & { nature?: NatureName };
@@ -95,6 +104,7 @@ function normalizeSlot(slot: StoredTeamSlot | null | undefined): TeamSlot {
     ...(sanitizeBattleItem(normalized.item) ? { item: sanitizeBattleItem(normalized.item) } : {}),
     ...(sanitizeEvs(normalized.evs) ? { evs: sanitizeEvs(normalized.evs) } : {}),
     ...(isSlotGender(normalized.gender) ? { gender: normalized.gender } : {}),
+    ...(sanitizeSlotAbility(normalized.ability) ? { ability: sanitizeSlotAbility(normalized.ability) } : {}),
   };
 }
 

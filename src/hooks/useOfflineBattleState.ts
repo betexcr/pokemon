@@ -19,12 +19,13 @@ import { isTrapped } from '@/lib/team-battle-held-items';
 import { displayTypes, publicBenchEntries } from '@/lib/team-battle-illusion';
 import { canTerastallize, resolveTeraType } from '@/lib/team-battle-tera';
 import { getCachedMove } from '@/lib/moveCache';
-import { resolveBattleAbility } from '@/lib/battle-default-ability';
+import { legalSlotAbility, resolveBattleAbility } from '@/lib/battle-default-ability';
 import { chooseAIAction, chooseAIReplacement } from '@/lib/offline-battle-ai';
 import { getPokemon } from '@/lib/api';
 import type { GYM_CHAMPIONS } from '@/lib/gym_champions';
 import { getForcedBattleMoveId, RECHARGE_MOVE_ID } from '@/lib/battle-multiturn';
 import { maxHpFor, sanitizeEvs, type EvSpread } from '@/lib/battle-evs';
+import { CHAMPION_SETS } from '@/data/champion-sets';
 
 // ---------------------------------------------------------------------------
 // Types that mirror what useBattleState returns
@@ -157,6 +158,7 @@ async function hydrateSlot(raw: any): Promise<BattlePokemon> {
 
   const level = typeof raw.level === 'number' ? raw.level : 50;
   const evs = sanitizeEvs(raw.evs);
+  const chosenAbility = abilities.length ? legalSlotAbility(raw.ability, abilities) : raw.ability;
   const calculatedMaxHp = maxHpFor(stats, level, evs);
   const maxHp = typeof raw.maxHp === 'number' && raw.maxHp > 0 ? raw.maxHp : calculatedMaxHp;
   const currentHp = typeof raw.currentHp === 'number' && raw.currentHp > 0 ? raw.currentHp : maxHp;
@@ -173,9 +175,10 @@ async function hydrateSlot(raw: any): Promise<BattlePokemon> {
     volatile: ensureVolatile(raw),
     statModifiers: ensureStatModifiers(raw),
     heldItem: sanitizeBattleItem(raw.heldItem ?? raw.item),
-    currentAbility: resolveBattleAbility(raw, abilities),
+    // A chosen ability must be one the species can have (else its first regular ability)
+    currentAbility: resolveBattleAbility({ ability: chosenAbility }, abilities),
     teraType: resolveTeraType(raw.teraType, types),
-    originalAbility: resolveBattleAbility({ ability: raw.ability }, abilities),
+    originalAbility: resolveBattleAbility({ ability: chosenAbility }, abilities),
     ...(evs ? { evs } : {}),
     ...(raw.gender === 'male' || raw.gender === 'female' || raw.gender === 'genderless' ? { gender: raw.gender } : {}),
   };
@@ -279,6 +282,7 @@ export type OfflineTeamSlot = {
   heldItem?: string;
   evs?: EvSpread;
   gender?: 'male' | 'female' | 'genderless';
+  ability?: string;
 };
 
 function storedSlot(s: any): OfflineTeamSlot {
@@ -296,6 +300,7 @@ function storedSlot(s: any): OfflineTeamSlot {
     ...(item ? { heldItem: item } : {}),
     ...(evs ? { evs } : {}),
     ...(s.gender === 'male' || s.gender === 'female' || s.gender === 'genderless' ? { gender: s.gender } : {}),
+    ...(typeof s.ability === 'string' && s.ability ? { ability: s.ability } : {}),
   };
 }
 
@@ -362,14 +367,27 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
             return hydrateSlot({
               id: slot.id, level: slot.level || 50, moves, nature: slot.nature,
               teraType: slot.teraType, heldItem: slot.heldItem, evs: slot.evs, gender: slot.gender,
+              ability: slot.ability,
             });
           }),
         );
         if (cancelled) return;
 
+        // Curated sets for leaders at level 30+ (moves, ability, item, nature, EVs, Tera Type);
+        // early leaders keep level-up moves and no items, as in the games
+        const championSets = CHAMPION_SETS[config.opponentChampion.id] ?? [];
         const championSlots = await Promise.all(
-          config.opponentChampion.team.slots.map(async (slot) => {
-            return hydrateSlot({ id: slot.id, level: slot.level || 50 });
+          config.opponentChampion.team.slots.map(async (slot, i) => {
+            const set = championSets[i];
+            return hydrateSlot({
+              id: slot.id,
+              level: slot.level || 50,
+              ...(set?.moves ? { moves: set.moves.map((id) => ({ id, pp: 20, maxPp: 20 })) } : {}),
+              ...(set?.ability ? { ability: set.ability } : {}),
+              ...(set?.item ? { heldItem: set.item } : {}),
+              ...(set ? { nature: set.nature, evs: set.evs } : {}),
+              ...(set?.teraType ? { teraType: set.teraType } : {}),
+            });
           }),
         );
         if (cancelled) return;

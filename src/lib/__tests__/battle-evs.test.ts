@@ -47,3 +47,26 @@ describe('EV spreads', () => {
     expect(rawStat(mon({ nature: 'modest' }), 'attack')).toBe(Math.floor(rawStat(mon(), 'attack') * 0.9));
   });
 });
+
+describe('team builder helpers', () => {
+  it('computes all six stats for a slot', async () => {
+    const { slotStats, fixedGenderForRate } = await import('../battle-evs');
+    const stats = ['hp', 'attack', 'defense', 'special-attack', 'special-defense', 'speed'].map((n) => ({ stat: { name: n }, base_stat: 100 }));
+    const s = slotStats(stats, 100, 'adamant', { attack: 252 });
+    expect(s.hp).toBe(hpFromBase(100, 100));
+    expect(s.attack).toBe(otherStatFromBase(100, 100, 252, 1.1));
+    expect(s['special-attack']).toBe(otherStatFromBase(100, 100, 0, 0.9));
+    expect(fixedGenderForRate(-1)).toBe('genderless');
+    expect(fixedGenderForRate(0)).toBe('male');
+    expect(fixedGenderForRate(8)).toBe('female');
+    expect(fixedGenderForRate(4)).toBeUndefined();
+  });
+
+  it('only accepts abilities the species can have', async () => {
+    const { legalSlotAbility } = await import('../battle-default-ability');
+    const abilities = [{ ability: { name: 'blaze' }, is_hidden: false, slot: 1 }, { ability: { name: 'solar-power' }, is_hidden: true, slot: 3 }];
+    expect(legalSlotAbility('solar-power', abilities)).toBe('solar-power');
+    expect(legalSlotAbility('Solar Power', abilities)).toBe('solar-power');
+    expect(legalSlotAbility('drought', abilities)).toBeUndefined();
+  });
+});

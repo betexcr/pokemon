@@ -6,6 +6,7 @@
 import { sanitizeBattleItem } from '../battle-items-catalog';
 import { maxHpFor, sanitizeEvs } from '../battle-evs';
 import { resolveTeraType } from '../team-battle-tera';
+import { legalSlotAbility } from '../battle-default-ability';
 
 const POKEAPI_ABSOLUTE = 'https://pokeapi.co/api/v2/pokemon';
 
@@ -172,6 +173,8 @@ export async function normalizeTeamForRTDB(
         ...(sanitizeBattleItem(slot.item ?? slot.heldItem) ? { heldItem: sanitizeBattleItem(slot.item ?? slot.heldItem) } : {}),
         ...(evs ? { evs } : {}),
         ...(gender ? { gender } : {}),
+        // Chosen ability only when the species can have it (hidden abilities included)
+        ...(legalSlotAbility(slot.ability, abilities as never) ? { ability: legalSlotAbility(slot.ability, abilities as never) } : {}),
         statModifiers: {},
         status: null,
         originalIndex: index,

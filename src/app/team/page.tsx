@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Pokemon } from '@/types/pokemon'
-import { getPokemonList, getPokemon, getMovesBatched } from '@/lib/api'
+import { getPokemonList, getPokemon, getMovesBatched, getPokemonSpecies } from '@/lib/api'
 import { formatPokemonName, getShowdownAnimatedSprite } from '@/lib/utils'
 import Image from 'next/image'
 import TypeBadgeWithTooltip from '@/components/TypeBadgeWithTooltip'
@@ -19,8 +19,8 @@ import {
   type TeamSlot,
   type MoveData
 } from '@/lib/userTeams'
-import { updateTeamInFirebase, isSlotGender } from '@/lib/userTeams'
-import { EV_STATS, EV_STAT_LABEL, MAX_EVS_PER_STAT, MAX_EVS_TOTAL, evTotal, sanitizeEvs } from '@/lib/battle-evs'
+import { updateTeamInFirebase, isSlotGender, sanitizeSlotAbility } from '@/lib/userTeams'
+import { EV_STATS, EV_STAT_LABEL, MAX_EVS_PER_STAT, MAX_EVS_TOTAL, evTotal, fixedGenderForRate, sanitizeEvs, slotStats } from '@/lib/battle-evs'
 import AuthModal from '@/components/auth/AuthModal'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import AppHeader from '@/components/AppHeader'
@@ -68,7 +68,8 @@ const normalizeTeamSlots = (slots?: Array<Partial<TeamSlot>> | null): TeamSlot[]
       ...(isTeraType(slot.teraType) ? { teraType: slot.teraType } : {}),
       ...(sanitizeBattleItem(slot.item) ? { item: sanitizeBattleItem(slot.item) } : {}),
       ...(sanitizeEvs(slot.evs) ? { evs: sanitizeEvs(slot.evs) } : {}),
-      ...(isSlotGender(slot.gender) ? { gender: slot.gender } : {})
+      ...(isSlotGender(slot.gender) ? { gender: slot.gender } : {}),
+      ...(sanitizeSlotAbility(slot.ability) ? { ability: sanitizeSlotAbility(slot.ability) } : {})
     }
   })
 }
@@ -409,6 +410,42 @@ export default function TeamBuilderPage() {
     }
   }, [])
 
+  // Species gender ratios (PokeAPI gender_rate) for slots, to lock single-gender / genderless species
+  const [genderRateById, setGenderRateById] = useState<Record<number, number>>({})
+  const slotSpeciesKey = teamSlots.map((s) => s.id ?? '').join(',')
+  useEffect(() => {
+    const missing = Array.from(new Set(teamSlots.map((s) => s.id).filter((id): id is number => typeof id === 'number' && !(id in genderRateById))))
+    if (missing.length === 0) return
+    let cancelled = false
+    void Promise.all(missing.map(async (id) => {
+      try {
+        const species = await getPokemonSpecies(id)
+        return [id, typeof species?.gender_rate === 'number' ? species.gender_rate : 4] as const
+      } catch {
+        return [id, 4] as const // unknown: leave the choice to the player
+      }
+    })).then((entries) => {
+      if (!cancelled) setGenderRateById((prev) => ({ ...prev, ...Object.fromEntries(entries) }))
+    })
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slotSpeciesKey])
+  useEffect(() => {
+    // Species that always have one gender (or none) get it set automatically
+    setTeamSlots((prev) => {
+      let changed = false
+      const next = prev.map((s) => {
+        const fixed = typeof s.id === 'number' ? fixedGenderForRate(genderRateById[s.id]) : undefined
+        if (!fixed || s.gender === fixed) return s
+        changed = true
+        return { ...s, gender: fixed }
+      })
+      if (!changed) return prev
+      persistCurrentTeam(next)
+      return next
+    })
+  }, [genderRateById, slotSpeciesKey, persistCurrentTeam])
+
   // Persist display Pokemon cache to localStorage
   const persistDisplayPokemon = useCallback((pokemonCache: Record<number, Pokemon>) => {
     try {
@@ -672,9 +709,10 @@ export default function TeamBuilderPage() {
       const merged = { ...s, ...patch }
       if (isPokemonChange) {
         merged.moves = [] as MoveData[]
-        // A Tera Type or gender chosen for the previous species does not carry over
+        // A Tera Type, gender or ability chosen for the previous species does not carry over
         delete merged.teraType
         delete merged.gender
+        delete merged.ability
       }
       // If removing Pokémon, normalize level and clear moves
       if (patch.id === null) {
@@ -1573,25 +1611,53 @@ export default function TeamBuilderPage() {
                     </div>
                   )}
 
-                  {/* Gender (Attract, Cute Charm, Rivalry) */}
-                  {poke && (
+                  {/* Ability (regular or hidden) */}
+                  {poke && Array.isArray(poke.abilities) && poke.abilities.length > 0 && (
                     <div className="mb-3 flex items-center gap-3">
-                      <label htmlFor={`gender-${idx}`} className="text-xs font-medium text-muted flex-shrink-0">Gender</label>
+                      <label htmlFor={`ability-${idx}`} className="text-xs font-medium text-muted flex-shrink-0">Ability</label>
                       <select
-                        id={`gender-${idx}`}
-                        value={slot.gender ?? ''}
+                        id={`ability-${idx}`}
+                        value={slot.ability ?? ''}
                         onClick={(e) => e.stopPropagation()}
-                        onChange={(e) => setSlot(idx, { gender: isSlotGender(e.target.value) ? e.target.value : undefined })}
-                        className="px-2 py-1 border border-border rounded text-xs bg-surface text-text"
-                        data-testid={`gender-${idx}`}
+                        onChange={(e) => setSlot(idx, { ability: sanitizeSlotAbility(e.target.value) })}
+                        className="px-2 py-1 border border-border rounded text-xs bg-surface text-text capitalize"
+                        data-testid={`ability-${idx}`}
                       >
-                        <option value="">Unspecified</option>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                        <option value="genderless">Genderless</option>
+                        <option value="">Default</option>
+                        {[...poke.abilities]
+                          .sort((a, b) => Number(a.is_hidden) - Number(b.is_hidden) || a.slot - b.slot)
+                          .map((a) => (
+                            <option key={a.ability.name} value={a.ability.name}>
+                              {a.ability.name.replace(/-/g, ' ')}{a.is_hidden ? ' (Hidden)' : ''}
+                            </option>
+                          ))}
                       </select>
                     </div>
                   )}
+
+                  {/* Gender (Attract, Cute Charm, Rivalry); fixed for single-gender and genderless species */}
+                  {poke && (() => {
+                    const fixed = typeof slot.id === 'number' ? fixedGenderForRate(genderRateById[slot.id]) : undefined
+                    return (
+                      <div className="mb-3 flex items-center gap-3">
+                        <label htmlFor={`gender-${idx}`} className="text-xs font-medium text-muted flex-shrink-0">Gender</label>
+                        <select
+                          id={`gender-${idx}`}
+                          value={fixed ?? slot.gender ?? ''}
+                          disabled={!!fixed}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => setSlot(idx, { gender: isSlotGender(e.target.value) ? e.target.value : undefined })}
+                          className="px-2 py-1 border border-border rounded text-xs bg-surface text-text disabled:opacity-70"
+                          data-testid={`gender-${idx}`}
+                        >
+                          <option value="">Unspecified</option>
+                          {(!fixed || fixed === 'male') && <option value="male">Male</option>}
+                          {(!fixed || fixed === 'female') && <option value="female">Female</option>}
+                          {fixed === 'genderless' && <option value="genderless">Genderless</option>}
+                        </select>
+                      </div>
+                    )
+                  })()}
 
                   {/* EV spread */}
                   {poke && (
@@ -1630,6 +1696,23 @@ export default function TeamBuilderPage() {
                           </label>
                         ))}
                       </div>
+                      {/* Battle stats with this level, nature and EVs (31 IVs) */}
+                      {Array.isArray(poke.stats) && poke.stats.length > 0 && (() => {
+                        const stats = slotStats(poke.stats as never, slot.level, slot.nature, slot.evs)
+                        const nature = NATURES.find((n) => n.value === slot.nature)
+                        return (
+                          <div className="grid grid-cols-3 sm:grid-cols-6 gap-1 mt-1" data-testid={`stats-${idx}`}>
+                            {EV_STATS.map((stat) => (
+                              <span
+                                key={stat}
+                                className={`text-center text-[11px] font-medium ${nature?.increasedStat === stat ? 'text-green-600' : nature?.decreasedStat === stat ? 'text-red-500' : 'text-text'}`}
+                              >
+                                {stats[stat]}
+                              </span>
+                            ))}
+                          </div>
+                        )
+                      })()}
                     </div>
                   )}
 

@@ -65,6 +65,31 @@ export function otherStatFromBase(base: number, level: number, ev = 0, natureMul
   return Math.floor((Math.floor(((2 * base + IV + Math.floor(ev / 4)) * level) / 100) + 5) * natureMult);
 }
 
+/** All six battle stats for a species stat list (PokeAPI shape), level, nature and EVs. */
+export function slotStats(
+  stats: Array<{ base_stat?: number; stat?: { name?: string }; name?: string }> | undefined,
+  level: number,
+  nature: string | undefined,
+  evs?: EvSpread,
+): Record<EvStat, number> {
+  const base = (s: EvStat) => stats?.find((x) => (x.stat?.name || x.name) === s)?.base_stat ?? 50;
+  const out = {} as Record<EvStat, number>;
+  for (const s of EV_STATS) {
+    out[s] = s === 'hp'
+      ? hpFromBase(base('hp'), level, evs?.hp ?? 0)
+      : otherStatFromBase(base(s), level, evs?.[s] ?? 0, natureMultiplier(nature, s));
+  }
+  return out;
+}
+
+/** Gender a species always has (PokeAPI gender_rate: -1 genderless, 0 always male, 8 always female). */
+export function fixedGenderForRate(rate: number | undefined): 'male' | 'female' | 'genderless' | undefined {
+  if (rate === -1) return 'genderless';
+  if (rate === 0) return 'male';
+  if (rate === 8) return 'female';
+  return undefined;
+}
+
 /** Max HP for a species stat list (PokeAPI shape) with an optional EV spread. */
 export function maxHpFor(stats: Array<{ base_stat?: number; stat?: { name?: string }; name?: string }> | undefined, level: number, evs?: EvSpread): number {
   const base = stats?.find((s) => (s.stat?.name || s.name) === 'hp')?.base_stat ?? 50;

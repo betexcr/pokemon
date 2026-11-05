@@ -114,6 +114,31 @@ export interface RtdbOps {
     path: string,
     transform: (current: any) => any
   ): Promise<{ committed: boolean; snapshot: any }>;
+  /**
+   * Admin only: mark the Firestore battle (and its room) finished. Lives here so shared modules such as
+   * handleBattleEnd never import firebase-admin (it would be pulled into client bundles).
+   */
+  markFirestoreBattleEnded?(battleId: string, fields: Record<string, unknown>): Promise<'updated' | 'missing'>;
+}
+
+async function adminMarkFirestoreBattleEnded(battleId: string, fields: Record<string, unknown>): Promise<'updated' | 'missing'> {
+  const admin = require('firebase-admin') as typeof import('firebase-admin');
+  const db = admin.firestore();
+  const snap = await db.collection('battles').doc(battleId).get();
+  if (!snap.exists) return 'missing';
+  const data = snap.data()!;
+  await snap.ref.update({ ...fields, updatedAt: admin.firestore.FieldValue.serverTimestamp() });
+  if (data.roomId) {
+    try {
+      await db.collection('battle_rooms').doc(data.roomId).update({
+        status: 'finished',
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    } catch (roomErr) {
+      console.warn(`markFirestoreBattleEnded: failed to update room ${data.roomId}:`, roomErr);
+    }
+  }
+  return 'updated';
 }
 
 export type GetRtdbOpsOptions = {
@@ -135,6 +160,7 @@ export function getRtdbOps(authToken?: string, options?: GetRtdbOpsOptions): Rtd
       update: adminUpdate,
       updateMulti: adminUpdateMulti,
       transaction: adminTransaction,
+      markFirestoreBattleEnded: adminMarkFirestoreBattleEnded,
     };
   }
 

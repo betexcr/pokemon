@@ -35,3 +35,20 @@ export function resolveBattleAbility(
   const visible = parsed.filter((e) => !e.hidden).sort((a, b) => a.slot - b.slot);
   return (visible[0] ?? parsed[0])?.id;
 }
+
+/** Ability ids a species can have (regular and hidden), from PokeAPI ability entries. */
+export function speciesAbilityIds(abilities: AbilityEntry[] | null | undefined): string[] {
+  return (Array.isArray(abilities) ? abilities : [])
+    .map((entry) => (typeof entry === 'string' ? toId(entry) : toId(entry?.ability?.name ?? entry?.name)))
+    .filter((id): id is string => !!id);
+}
+
+/**
+ * A team slot's chosen ability if the species can have it (hidden abilities included), else undefined.
+ * Multiplayer snapshots use this so a client cannot give a Pokémon an ability it cannot have.
+ */
+export function legalSlotAbility(chosen: unknown, abilities: AbilityEntry[] | null | undefined): string | undefined {
+  const id = toId(chosen);
+  if (!id) return undefined;
+  return speciesAbilityIds(abilities).includes(id) ? id : undefined;
+}
