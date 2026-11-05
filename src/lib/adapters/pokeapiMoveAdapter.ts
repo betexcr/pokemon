@@ -175,6 +175,7 @@ export async function loadMoveFromPokeAPI(idOrName: number | string): Promise<Co
     effect_chance?: number;
     min_hits?: number;
     max_hits?: number;
+    target?: { name?: string };
   };
 
   const rm: RuntimeMove = {
@@ -191,8 +192,12 @@ export async function loadMoveFromPokeAPI(idOrName: number | string): Promise<Co
     hits: parseHits(mv),
     makesContact: !!(mv.meta as { makes_contact?: boolean })?.makes_contact,
     bypassAccuracyCheck: mv.accuracy === null, // per PokeAPI: null -> no accuracy check
+    target: mv.target?.name,
     shortEffect: extractShortEffect(mv.effect_entries, mv.effect_chance),
     ...parseSecondary(mv.meta),
+    ...(((mv.meta as { flinch_chance?: number })?.flinch_chance ?? 0) > 0
+      ? { flinchChance: (mv.meta as { flinch_chance: number }).flinch_chance }
+      : {}),
     statChanges: parseTopLevelStatChanges(mv)
   };
 

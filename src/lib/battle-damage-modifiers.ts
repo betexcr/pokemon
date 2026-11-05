@@ -2,6 +2,11 @@
  * Pure helpers for the live damage path (`executeMoveAction` → `calculateComprehensiveDamage`).
  * Behavior must match the previous inline prep in team-battle-engine-additional.ts.
  */
+import { PLATE_TYPES, speciesItemMultipliers } from './team-battle-held-items';
+import { itemCritStages } from './team-battle-held-items';
+import { effectiveItem } from './battle-item-access';
+import { targetAbility } from './team-battle-ability-rules';
+import { paradoxMultiplier } from './team-battle-paradox';
 import type { BattlePokemon } from './team-battle-engine';
 import type { TypeName } from './damage-calculator';
 import type { BattleRng } from './battle-rng';
@@ -104,9 +109,9 @@ export function computeAttackDefensePowerMultipliers(params: {
   defender: BattlePokemon;
 }): { attackMultiplier: number; defenseMultiplier: number; powerMultiplier: number } {
   const { isPhysical, attacker, defender } = params;
-  const attackerItem = attacker.heldItem?.toLowerCase();
-  const defenderItem = defender.heldItem?.toLowerCase();
-  const defenderAbility = defender.currentAbility?.toLowerCase();
+  const attackerItem = effectiveItem(attacker);
+  const defenderItem = effectiveItem(defender);
+  const defenderAbility = targetAbility(attacker, defender);
 
   let attackMultiplier = 1;
   let defenseMultiplier = 1;
@@ -120,9 +125,20 @@ export function computeAttackDefensePowerMultipliers(params: {
   if (defenderAbility === 'ice-scales' && !isPhysical) defenseMultiplier *= 2;
 
   const moveTypeLower = params.moveType.toLowerCase();
-  if (attackerItem && TYPE_BOOST_ITEMS[attackerItem] === moveTypeLower) {
+  // Type-boost items and Plates: x1.2 to their type
+  if (attackerItem && (TYPE_BOOST_ITEMS[attackerItem] ?? PLATE_TYPES[attackerItem]) === moveTypeLower) {
     powerMultiplier *= 1.2;
   }
+
+  // Species-specific items (Light Ball, Thick Club, Deep Sea Tooth / Scale, Metal Powder, orbs, Soul Dew)
+  const species = speciesItemMultipliers(attacker, defender, isPhysical, params.moveType);
+  attackMultiplier *= species.attack;
+  defenseMultiplier *= species.defense;
+  powerMultiplier *= species.power;
+
+  // Protosynthesis / Quark Drive
+  attackMultiplier *= paradoxMultiplier(attacker, isPhysical ? 'attack' : 'specialAttack');
+  defenseMultiplier *= paradoxMultiplier(defender, isPhysical ? 'defense' : 'specialDefense');
 
   return { attackMultiplier, defenseMultiplier, powerMultiplier };
 }
@@ -141,7 +157,7 @@ export function resolveCritAndStatStages(params: {
 } {
   const { attacker, defender, isPhysical, rng } = params;
   const attackerAbility = attacker.currentAbility?.toLowerCase();
-  const defenderAbility = defender.currentAbility?.toLowerCase();
+  const defenderAbility = targetAbility(attacker, defender);
   const unawareAtk = attackerAbility === 'unaware';
   const unawareDef = defenderAbility === 'unaware';
   const cannotCrit =
@@ -214,7 +230,8 @@ export function prepareLiveDamageModifiers(params: {
   const crit = resolveCritAndStatStages({
     rng,
     isPhysical,
-    critRateStage: typeof move.critRateStage === 'number' ? move.critRateStage : 0,
+    // Scope Lens / Razor Claw / Lansat Berry add critical-hit stages
+    critRateStage: (typeof move.critRateStage === 'number' ? move.critRateStage : 0) + itemCritStages(attacker),
     attacker,
     defender,
   });
@@ -232,7 +249,7 @@ export function prepareLiveDamageModifiers(params: {
     isCrit: crit.isCrit,
     cannotCrit: crit.cannotCrit,
     attackerAbility: attacker.currentAbility?.toLowerCase(),
-    defenderAbility: defender.currentAbility?.toLowerCase(),
-    attackerItem: attacker.heldItem?.toLowerCase(),
+    defenderAbility: targetAbility(attacker, defender),
+    attackerItem: effectiveItem(attacker),
   };
 }

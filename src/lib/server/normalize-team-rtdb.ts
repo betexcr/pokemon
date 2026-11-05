@@ -3,6 +3,11 @@
  * Always hydrates base stats from absolute PokeAPI — never trusts client stats/maxHp.
  */
 
+import { sanitizeBattleItem } from '../battle-items-catalog';
+import { maxHpFor, sanitizeEvs } from '../battle-evs';
+import { resolveTeraType } from '../team-battle-tera';
+import { legalSlotAbility } from '../battle-default-ability';
+
 const POKEAPI_ABSOLUTE = 'https://pokeapi.co/api/v2/pokemon';
 
 const ALLOWED_NATURES = new Set([
@@ -142,17 +147,11 @@ export async function normalizeTeamForRTDB(
         .map((t: any) => (typeof t === 'string' ? t : t?.type?.name || t?.name))
         .filter(Boolean);
 
-      let maxHp: number;
-      if (stats.length > 0) {
-        const hpStat = stats.find((s: any) => s.stat?.name === 'hp' || s.name === 'hp') as
-          | { base_stat?: number }
-          | undefined;
-        const baseHp = typeof hpStat?.base_stat === 'number' ? hpStat.base_stat : 50;
-        maxHp = Math.floor(((2 * baseHp + 31) * level) / 100) + level + 10;
-      } else {
-        maxHp = Math.floor(((2 * 50 + 31) * level) / 100) + level + 10;
-      }
+      // EVs from the team builder (sanitized: 252 per stat, 510 total); IVs are 31
+      const evs = sanitizeEvs(slot.evs);
+      const maxHp = maxHpFor(stats as Parameters<typeof maxHpFor>[0], level, evs);
       const currentHp = maxHp;
+      const gender = slot.gender === 'male' || slot.gender === 'female' || slot.gender === 'genderless' ? slot.gender : undefined;
 
       return {
         pokemon: {
@@ -168,6 +167,14 @@ export async function normalizeTeamForRTDB(
         currentHp,
         maxHp,
         nature,
+        // Chosen in the team builder, else the species' primary type
+        ...(resolveTeraType(slot.teraType, types) ? { teraType: resolveTeraType(slot.teraType, types) } : {}),
+        // Only engine-supported items reach battle snapshots
+        ...(sanitizeBattleItem(slot.item ?? slot.heldItem) ? { heldItem: sanitizeBattleItem(slot.item ?? slot.heldItem) } : {}),
+        ...(evs ? { evs } : {}),
+        ...(gender ? { gender } : {}),
+        // Chosen ability only when the species can have it (hidden abilities included)
+        ...(legalSlotAbility(slot.ability, abilities as never) ? { ability: legalSlotAbility(slot.ability, abilities as never) } : {}),
         statModifiers: {},
         status: null,
         originalIndex: index,

@@ -60,7 +60,7 @@ describe('Battle Flow Integration Tests', () => {
         height: 4,
         abilities: [{ ability: { name: 'static' }, is_hidden: false }],
         sprites: { front_default: 'pikachu.png' }
-      },
+      } as unknown as BattlePokemon['pokemon'],
       level: 50,
       currentHp: 100,
       maxHp: 100,
@@ -76,7 +76,7 @@ describe('Battle Flow Integration Tests', () => {
       pokemon: [mockPokemon],
       currentIndex: 0,
       faintedCount: 0,
-      sideConditions: {}
+      sideConditions: { screens: {}, hazards: { stealthRock: false, spikes: 0, toxicSpikes: 0, stickyWeb: false } }
     };
 
     return {
@@ -122,7 +122,7 @@ describe('Battle Flow Integration Tests', () => {
       ) {
         this.isInitialized = true;
         (this as unknown as { currentUserUid: string }).currentUserUid = 'test-user-uid';
-        stateChangeCallback = onStateChange;
+        stateChangeCallback = onStateChange as typeof stateChangeCallback;
         phaseChangeCallback = onPhaseChange;
         return Promise.resolve();
       });
@@ -187,7 +187,7 @@ describe('Battle Flow Integration Tests', () => {
       ) {
         this.isInitialized = true;
         (this as unknown as { currentUserUid: string }).currentUserUid = 'test-user-uid';
-        stateChangeCallback = onStateChange;
+        stateChangeCallback = onStateChange as typeof stateChangeCallback;
         phaseChangeCallback = onPhaseChange;
         return Promise.resolve();
       });
@@ -205,7 +205,7 @@ describe('Battle Flow Integration Tests', () => {
           height: 4,
           abilities: [],
           sprites: { front_default: 'pikachu.png' }
-        },
+        } as unknown as BattlePokemon['pokemon'],
         level: 50,
         currentHp: 50, // Damaged
         maxHp: 100,
@@ -224,7 +224,7 @@ describe('Battle Flow Integration Tests', () => {
           height: 6,
           abilities: [],
           sprites: { front_default: 'charmander.png' }
-        },
+        } as unknown as BattlePokemon['pokemon'],
         level: 50,
         currentHp: 100, // Full health
         maxHp: 100,
@@ -238,7 +238,7 @@ describe('Battle Flow Integration Tests', () => {
           pokemon: [mockPokemon1, mockPokemon2],
           currentIndex: 0,
           faintedCount: 0,
-          sideConditions: {}
+          sideConditions: { screens: {}, hazards: { stealthRock: false, spikes: 0, toxicSpikes: 0, stickyWeb: false } }
         }
       });
 
@@ -278,7 +278,7 @@ describe('Battle Flow Integration Tests', () => {
       ) {
         this.isInitialized = true;
         (this as unknown as { currentUserUid: string }).currentUserUid = 'test-user-uid';
-        stateChangeCallback = onStateChange;
+        stateChangeCallback = onStateChange as typeof stateChangeCallback;
         phaseChangeCallback = onPhaseChange;
         return Promise.resolve();
       });
@@ -308,7 +308,7 @@ describe('Battle Flow Integration Tests', () => {
       ) {
         this.isInitialized = true;
         (this as unknown as { currentUserUid: string }).currentUserUid = 'test-user-uid';
-        stateChangeCallback = onStateChange;
+        stateChangeCallback = onStateChange as typeof stateChangeCallback;
         phaseChangeCallback = onPhaseChange;
         return Promise.resolve();
       });
@@ -340,7 +340,7 @@ describe('Battle Flow Integration Tests', () => {
       ) {
         this.isInitialized = true;
         (this as unknown as { currentUserUid: string }).currentUserUid = 'test-user-uid';
-        stateChangeCallback = onStateChange;
+        stateChangeCallback = onStateChange as typeof stateChangeCallback;
         phaseChangeCallback = onPhaseChange;
         return Promise.resolve();
       });
@@ -378,7 +378,7 @@ describe('Battle Flow Integration Tests', () => {
       ) {
         this.isInitialized = true;
         (this as unknown as { currentUserUid: string }).currentUserUid = 'test-user-uid';
-        stateChangeCallback = onStateChange;
+        stateChangeCallback = onStateChange as typeof stateChangeCallback;
         phaseChangeCallback = onPhaseChange;
         return Promise.resolve();
       });
@@ -433,7 +433,7 @@ describe('Battle Flow Integration Tests', () => {
       ) {
         this.isInitialized = true;
         (this as unknown as { currentUserUid: string }).currentUserUid = 'test-user-uid';
-        stateChangeCallback = onStateChange;
+        stateChangeCallback = onStateChange as typeof stateChangeCallback;
         return Promise.resolve();
       });
 
@@ -468,7 +468,7 @@ describe('Battle Flow Integration Tests', () => {
       ) {
         this.isInitialized = true;
         (this as unknown as { currentUserUid: string }).currentUserUid = 'test-user-uid';
-        stateChangeCallback = onStateChange;
+        stateChangeCallback = onStateChange as typeof stateChangeCallback;
         return Promise.resolve();
       });
 

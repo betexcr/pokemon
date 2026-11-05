@@ -48,7 +48,7 @@ export async function pingRedis(ms = DEFAULT_TIMEOUT_MS): Promise<boolean> {
   if (!redis) return false;
   try {
     const pong = await withTimeout(redis.ping(), ms);
-    return pong === 'PONG' || pong === 'pong' || pong === true || pong === 'OK';
+    return ['PONG', 'OK'].includes(String(pong).toUpperCase());
   } catch {
     return false;
   }

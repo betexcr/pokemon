@@ -2,6 +2,8 @@
  * Move scripts that set/clear volatiles and hazards (Battle Engine M1+).
  * Called from executeMoveAction once a status (or special damage) move resolves.
  */
+import { effectiveItem } from './battle-item-access';
+import { changeStatStage } from './team-battle-stat-stages';
 import type { BattlePokemon, BattleState, BattleTeam } from './team-battle-engine';
 import { getCurrentPokemon } from './team-battle-engine';
 import type { SideHazards } from './team-battle-types';
@@ -16,6 +18,7 @@ const BINDING_MOVES: Record<string, { kind: string; fraction: number }> = {
   'snap-trap': { kind: 'Snap Trap', fraction: 1 / 8 },
   clamp: { kind: 'Clamp', fraction: 1 / 8 },
   bind: { kind: 'Bind', fraction: 1 / 8 },
+  'thunder-cage': { kind: 'Thunder Cage', fraction: 1 / 8 },
 };
 
 export function lastUsedMoveId(pokemon: BattlePokemon): string | undefined {
@@ -230,7 +233,7 @@ export function applyVolatileAndHazardScripts(
     clearSideHazards(defenderSide.sideConditions.hazards);
     clearSideHazards(attackerSide.sideConditions.hazards);
     // Lower foe evasion by 1
-    defender.statModifiers.evasion = Math.max(-6, defender.statModifiers.evasion - 1);
+    changeStatStage(state, defender, 'evasion', -1, { source: attacker });
     // Remove screens on both sides
     delete attackerSide.sideConditions.screens.reflect;
     delete attackerSide.sideConditions.screens.lightScreen;
@@ -266,12 +269,19 @@ export function applyVolatileAndHazardScripts(
 export function applyBindingOnHit(
   state: BattleState,
   moveLower: string,
-  defender: BattlePokemon
+  defender: BattlePokemon,
+  attacker?: BattlePokemon,
 ): void {
   const info = BINDING_MOVES[moveLower];
   if (!info || defender.currentHp <= 0) return;
   if (defender.volatile.binding) return;
-  defender.volatile.binding = { kind: info.kind, turnsLeft: 4, fraction: info.fraction };
+  // Grip Claw: 7 turns; Binding Band: 1/6 per turn instead of 1/8
+  const item = effectiveItem(attacker);
+  defender.volatile.binding = {
+    kind: info.kind,
+    turnsLeft: item === 'grip-claw' ? 7 : 4,
+    fraction: item === 'binding-band' ? 1 / 6 : info.fraction,
+  };
   state.battleLog.push({
     type: 'status_effect',
     message: `${defender.pokemon.name} was trapped by ${info.kind}!`,

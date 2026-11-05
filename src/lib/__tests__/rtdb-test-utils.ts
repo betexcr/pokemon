@@ -3,6 +3,7 @@ import { rtdbService } from '../firebase-rtdb-service';
 import { FirebaseRTDBBattleEngine } from '../battle-engine-rtdb';
 import { BattleFlowEngine } from '../battle-engine-rtdb';
 import { BattleState, BattlePokemon, BattleTeam } from '../team-battle-engine';
+import { createBattleRng } from '../battle-rng';
 
 // Mock Firebase RTDB
 vi.mock('firebase/database', () => ({
@@ -50,7 +51,7 @@ export class RTDBTestUtils {
         height: 4,
         abilities: [{ ability: { name: 'static' }, is_hidden: false }],
         sprites: { front_default: 'pikachu.png' }
-      },
+      } as unknown as BattlePokemon['pokemon'],
       level: 50,
       currentHp: 100,
       maxHp: 100,
@@ -69,7 +70,7 @@ export class RTDBTestUtils {
       pokemon: [this.createMockPokemon()],
       currentIndex: 0,
       faintedCount: 0,
-      sideConditions: {},
+      sideConditions: { screens: {}, hazards: { stealthRock: false, spikes: 0, toxicSpikes: 0, stickyWeb: false } },
       ...overrides
     };
   }
@@ -79,7 +80,7 @@ export class RTDBTestUtils {
       player: this.createMockTeam(),
       opponent: this.createMockTeam(),
       turn: 1,
-      rng: 12345,
+      rng: createBattleRng(12345),
       battleLog: [],
       isComplete: false,
       phase: 'choice',

@@ -38,6 +38,8 @@ The multiplayer battle system has **core gameplay wired end-to-end**: choices ar
 ### Turn-Based Flow
 - **Turn submission** – Choices written under `battles/{id}/turns/{turn}/choices` ✅
 - **Turn resolution** – When both UIDs have a choice, `resolveTurn` updates private teams, public state, battle log, field (weather/screens/hazards), advances `meta.turn`, or ends the battle via `handleBattleEnd` ✅
+- **Mid-turn pivot picks** – When a U-turn / Volt Switch / Flip Turn / Parting Shot / Baton Pass user has two or more bench options, `resolveTurn` pauses the turn: it persists the first half, sets `meta.pendingSwitch = { uid, reason }` on the same `meta.turn`, bumps `meta.version`, clears that turn's choices and stores the rest of the queue in Admin-only `server/pendingTurn`. Only that player submits next, and it must be a legal switch (illegal picks are rejected with `lastValidation = illegal_pivot_switch`). The deadline applies only to them. See [`battle-pending-switch.ts`](src/lib/battle-pending-switch.ts).
+- **Faint replacement picks** – When a turn ends with a fainted active and two or more healthy options, the turn's resolution is written and `meta.turn` advances with `meta.pendingReplacement = { uids }`. Each listed player submits a switch (simultaneously, blind); `resolveTurn` applies them without changing the turn number, then normal choices resume. A newcomer knocked out by hazards triggers another pick.
 - **Deterministic RNG + replay artifacts** – Resolution restores/stores `server/battleRng` (legacy `meta.battleRng` fallback), writes per-turn replay payloads (actions, RNG before/after, state hash) under `turns/{turn}/resolution`, and records validation/metrics fields for auditing.
 
 ⚠️ **Battle UI** ([src/components/RTDBBattleComponent.tsx](src/components/RTDBBattleComponent.tsx))
@@ -46,12 +48,18 @@ The multiplayer battle system has **core gameplay wired end-to-end**: choices ar
 
 ## 🔴 Not Implemented (or Incomplete)
 
-### Hardening and UX
+- **Double battles** – product-deferred (the engine is singles only)
+- **Live E2E in CI** – `npm run test:e2e:multiplayer` needs a Firebase project (client config + Admin credentials); it is not run in CI
 
-- **Disconnect / reconnect** – Robust reconnection and stale-state recovery
-- **Guest validation** – Optional anti-cheat: guest verifies host-posted resolution
-- **Post-battle** – Rich stats, rematch, aggressive room/battle cleanup policies
-- **Abandonment** – Scheduled deletion of stale battles/rooms
+### Hardening (Wave 3, done)
+
+- **Disconnect / reconnect** – `useBattleState` tracks the real connection (`.info/connected`), reads the player's own stored choice for the turn (a reload shows "waiting for opponent"), and a watchdog calls `POST /api/battles/[id]/sync` ([`battle-sync.ts`](src/lib/battle-sync.ts)) when the deadline passed, a resolution looks stuck, after a reconnect, or when the tab becomes visible. The server then enforces the deadline, resolves a turn whose choices are all in, recovers a stale resolution, or closes a battle whose final turn was written. All idempotent.
+- **Resolution audit** – turns are resolved only by the server, so the old "guest verifies the host's resolution" idea no longer applies. Instead each client checks that the action recorded in `turns/{turn}/resolution.replay` for its side matches what it submitted (unless the server reported a normalization or rejection) and shows a notice in the battle log otherwise ([`battle-resolution-audit.ts`](src/lib/battle-resolution-audit.ts)).
+- **Post-battle** – the server keeps per-side totals (HP lost, persisted with the engine extras) and publishes `public/stats` (knockouts, Pokémon left, damage dealt / taken as a share of team HP) shown on the end screen. **Rematch:** `POST /api/battles/[id]/rematch` ([`battle-rematch.ts`](src/lib/battle-rematch.ts)) records each request under `battles/{id}/rematch` (Admin-written, participant-readable); once both asked, the room is reset to ready with the same teams and both clients go back to it.
+- **Abandonment** – `GET /api/maintenance/cleanup` (Vercel Cron, daily, needs `CRON_SECRET` and the Admin SDK; [`battle-cleanup.ts`](src/lib/server/battle-cleanup.ts)) ends battles stuck past their deadline, deletes ended battles after 7 days and abandoned ones after 3, deletes open lobbies after a day and closed rooms after a week. RTDB rules index `battles` by `meta/createdAt` for it.
+- **Battle screen** – `public/conditions` ([`battle-conditions.ts`](src/lib/battle-conditions.ts)) lists weather / terrain / rooms, each side's screens, hazards and pending effects, and each active Pokémon's visible conditions; both battle screens render it.
+
+**Deploy notes:** set `CRON_SECRET` in Vercel; deploy the RTDB rules (`firebase deploy --only database`) for the new `rematch` node and the `meta/createdAt` index.
 
 ### Recently hardened (Wave 1–2)
 
@@ -202,7 +210,8 @@ Total per battle:       ~80 writes, 100 reads
 
 ### Automated Testing
 - [x] Unit tests for canonical turn execution (see [`battle-real-moves.test.ts`](src/lib/__tests__/battle-real-moves.test.ts), [`battle-mechanics.test.ts`](src/lib/__tests__/battle-mechanics.test.ts))
-- [ ] Expand RTDB integration coverage for submit + resolve
+- [x] RTDB client integration coverage ([`rtdb-integration.test.ts`](src/lib/__tests__/rtdb-integration.test.ts): real `rtdbService` + `FirebaseRTDBBattleEngine` against an in-memory RTDB fake)
+- [ ] Integration coverage for server submit + `resolveTurn`
 - [ ] Playwright E2E for full lobby-to-battle flow (see [`tests/playwright/`](tests/playwright/))
 - [ ] Load testing (simulate many concurrent battles)
 

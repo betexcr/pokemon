@@ -12,7 +12,7 @@ import {
   type BattleTeam,
   type BattleAction,
 } from '../team-battle-engine';
-import { createBattleRng } from '../battle-rng';
+import { createBattleRng, createBattleRngFromBattleKey } from '../battle-rng';
 import { createFieldState, EMPTY_HAZARDS } from '../team-battle-types';
 import {
   getMoveDataMissCount,
@@ -114,7 +114,7 @@ function makeBattle(overrides: Partial<BattleState> = {}): BattleState {
     field: createFieldState(),
     battleLog: [],
     actionQueue: [],
-    rng: createBattleRng('real-move-test'),
+    rng: createBattleRngFromBattleKey('real-move-test', 1),
     isComplete: false,
     phase: 'choice',
     ...overrides,
@@ -293,7 +293,7 @@ describe('ability wave (download, frisk, unnerve)', () => {
         ],
         weight: 100,
         abilities: [],
-      } as BattlePokemon['pokemon'],
+      } as unknown as BattlePokemon['pokemon'],
       level: 50,
       currentHp: 100,
       maxHp: 100,
@@ -328,11 +328,11 @@ describe('ability wave (download, frisk, unnerve)', () => {
         ],
         weight: 100,
         abilities: [],
-      } as BattlePokemon['pokemon'],
+      } as unknown as BattlePokemon['pokemon'],
     });
     const st: BattleState = {
-      player: { pokemon: [incoming], currentIndex: 0, faintedCount: 0, sideConditions: {} },
-      opponent: { pokemon: [opp], currentIndex: 0, faintedCount: 0, sideConditions: {} },
+      player: { pokemon: [incoming], currentIndex: 0, faintedCount: 0, sideConditions: { screens: {}, hazards: { stealthRock: false, spikes: 0, toxicSpikes: 0, stickyWeb: false } } },
+      opponent: { pokemon: [opp], currentIndex: 0, faintedCount: 0, sideConditions: { screens: {}, hazards: { stealthRock: false, spikes: 0, toxicSpikes: 0, stickyWeb: false } } },
       turn: 1,
       rng: createBattleRng(1),
       battleLog: [],
@@ -350,8 +350,8 @@ describe('ability wave (download, frisk, unnerve)', () => {
     const incoming = entryMon('duskull', 'frisk', { heldItem: undefined });
     const opp = entryMon('snorlax', 'thick-fat', { heldItem: 'leftovers' });
     const st: BattleState = {
-      player: { pokemon: [incoming], currentIndex: 0, faintedCount: 0, sideConditions: {} },
-      opponent: { pokemon: [opp], currentIndex: 0, faintedCount: 0, sideConditions: {} },
+      player: { pokemon: [incoming], currentIndex: 0, faintedCount: 0, sideConditions: { screens: {}, hazards: { stealthRock: false, spikes: 0, toxicSpikes: 0, stickyWeb: false } } },
+      opponent: { pokemon: [opp], currentIndex: 0, faintedCount: 0, sideConditions: { screens: {}, hazards: { stealthRock: false, spikes: 0, toxicSpikes: 0, stickyWeb: false } } },
       turn: 1,
       rng: createBattleRng(1),
       battleLog: [],
@@ -368,8 +368,8 @@ describe('ability wave (download, frisk, unnerve)', () => {
     const incoming = entryMon('hydreigon', 'unnerve', { heldItem: undefined });
     const opp = entryMon('rattata', 'run-away', { heldItem: undefined });
     const st: BattleState = {
-      player: { pokemon: [incoming], currentIndex: 0, faintedCount: 0, sideConditions: {} },
-      opponent: { pokemon: [opp], currentIndex: 0, faintedCount: 0, sideConditions: {} },
+      player: { pokemon: [incoming], currentIndex: 0, faintedCount: 0, sideConditions: { screens: {}, hazards: { stealthRock: false, spikes: 0, toxicSpikes: 0, stickyWeb: false } } },
+      opponent: { pokemon: [opp], currentIndex: 0, faintedCount: 0, sideConditions: { screens: {}, hazards: { stealthRock: false, spikes: 0, toxicSpikes: 0, stickyWeb: false } } },
       turn: 1,
       rng: createBattleRng(1),
       battleLog: [],
@@ -392,7 +392,7 @@ describe('validateServerBattleAction', () => {
       pokemon: [active, { ...active, pokemon: { ...active.pokemon, name: 'b' }, currentHp: 0 }],
       currentIndex: 0,
       faintedCount: 0,
-      sideConditions: {},
+      sideConditions: { screens: {}, hazards: { stealthRock: false, spikes: 0, toxicSpikes: 0, stickyWeb: false } },
     };
     expect(validateServerBattleAction(team, { type: 'move', moveId: 'struggle' })).toBe('illegal_struggle');
     expect(validateServerBattleAction(team, { type: 'switch', switchIndex: 0 })).toBe('switch_same_slot');
@@ -412,7 +412,7 @@ describe('normalizeServerBattleAction', () => {
       pokemon: [active],
       currentIndex: 0,
       faintedCount: 0,
-      sideConditions: {},
+      sideConditions: { screens: {}, hazards: { stealthRock: false, spikes: 0, toxicSpikes: 0, stickyWeb: false } },
     };
     const r = normalizeServerBattleAction(team, { type: 'move', moveId: 'unknown', target: 'opponent' }, 'simplified');
     expect(r.normalized).toBe(true);

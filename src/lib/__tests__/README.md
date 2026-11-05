@@ -21,7 +21,7 @@ This directory contains comprehensive unit tests for the Firebase Realtime Datab
 
 - **`rtdb-test-utils.ts`** - Utility functions and mock helpers for tests
 - **`rtdb-test-runner.ts`** - Comprehensive test runner with all test categories
-- **`rtdb-test-config.ts`** - Vitest configuration for RTDB tests
+- Vitest configuration lives in the repo-root `vitest.config.mts` (the old `rtdb-test-config.ts` was never wired up and was removed)
 - **`rtdb-test-setup.ts`** - Global test setup and mocks
 - **`rtdb-test-scripts.ts`** - Command-line test execution scripts
 

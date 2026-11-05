@@ -116,7 +116,7 @@ export default function AppHeader({
                   <div className={`p-1 sm:p-2 rounded-lg flex-shrink-0 ${iconConfig.bgColor} ${iconConfig.color} ${iconConfig.darkBgColor} ${iconConfig.darkColor}`} suppressHydrationWarning>
                     {/* Icon is purely decorative */}
                     <span suppressHydrationWarning>
-                      <IconComponent className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" suppressHydrationWarning />
+                      <IconComponent className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" />
                     </span>
                   </div>
                 </Tooltip>

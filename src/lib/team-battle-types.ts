@@ -19,6 +19,10 @@ type FieldRooms = {
   trickRoom?: { turns: number };
   wonderRoom?: { turns: number };
   magicRoom?: { turns: number };
+  /** Grounds every Pokémon and boosts accuracy (x5/3) for 5 turns. */
+  gravity?: { turns: number };
+  /** Fairy Lock: nobody can switch out during the next turn. */
+  fairyLock?: { turns: number };
 };
 
 export type FieldSideScreens = {
@@ -27,6 +31,8 @@ export type FieldSideScreens = {
   auroraVeil?: { turns: number };
   safeguard?: { turns: number };
   tailwind?: { turns: number };
+  /** Mist: the side's stats cannot be lowered by foes. */
+  mist?: { turns: number };
 };
 
 export type SideHazards = {

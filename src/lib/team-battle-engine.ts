@@ -1,3 +1,13 @@
+import { getForcedBattleMoveId } from './battle-multiturn';
+import { effectiveItem } from './battle-item-access';
+import { revertTransform } from './team-battle-transform';
+import { SOUND_MOVES, isTrapped, rollMoveFirst, speciesItemSpeedMultiplier } from './team-battle-held-items';
+import { changeStatStage } from './team-battle-stat-stages';
+import { paradoxMultiplier } from './team-battle-paradox';
+import { abilitySpeedMultiplier, abilityTurnOrder } from './team-battle-gen9-abilities';
+import { rawStat } from './battle-stats';
+import type { EvSpread } from './battle-evs';
+export { effectiveItem } from './battle-item-access';
 import { Pokemon, Move } from '@/types/pokemon';
 import { CompiledMove } from './adapters/pokeapiMoveAdapter';
 import { getMove, getCachedMove } from './moveCache';
@@ -34,7 +44,8 @@ export type BattlePokemon = {
     encore?: { move: string; turns: number };
     taunt?: { turns: number };
     disable?: { move: string; turns: number };
-    protect?: { counter: number; active?: boolean };
+    /** Protect family; `kind` is the move used (King's Shield, Spiky Shield, Endure, ...). */
+    protect?: { counter: number; active?: boolean; kind?: string };
     perishSong?: { turns: number };
     flinched?: boolean;
     binding?: { kind: string; turnsLeft: number; fraction: number };
@@ -59,6 +70,95 @@ export type BattlePokemon = {
     twoTurn?: { move: string; kind: 'charging' | 'pending' };
     /** Semi-invulnerable while charging Dig/Fly/etc. Stores the move id. */
     semiInvulnerable?: string;
+    /** Move actions taken since entering the field, including the current one (Fake Out / First Impression gate). */
+    moveActionsSinceEntry?: number;
+    /** HP damage taken from an opposing attack this turn (Counter / Mirror Coat / Metal Burst). Cleared each turn. */
+    lastDamageTaken?: { amount: number; category: 'Physical' | 'Special' };
+    /** Held item has no effect (Magic Room). Synced from the field by `syncItemSuppression`. */
+    itemSuppressed?: boolean;
+    /** Berry eaten earlier (Harvest restores it). */
+    lastConsumedBerry?: string;
+    /** Protosynthesis / Quark Drive boost (field-driven or from Booster Energy until switch-out). */
+    paradoxBoost?: { stat: 'attack' | 'defense' | 'specialAttack' | 'specialDefense' | 'speed'; source: 'field' | 'booster' };
+    /** Destiny Bond: if KO'd by the foe before the user's next move, the attacker faints too. */
+    destinyBond?: boolean;
+    /** Ghost-type Curse: loses 1/4 max HP each end of turn. */
+    cursed?: boolean;
+    /** Salt Cure: loses 1/8 max HP each end of turn (1/4 for Water / Steel). */
+    saltCure?: boolean;
+    /** Gravity grounds everyone. Synced from the field. */
+    gravityGrounded?: boolean;
+    /** Transform / Imposter: originals restored on switch-out. */
+    transform?: { pokemon: unknown; moves: unknown; ability?: string; into: string };
+    /** Illusion: shown to the foe as this species until a damaging hit breaks it. */
+    illusion?: { species: string; dexId?: number | null; types?: string[] };
+    /** Protean / Libero already changed type since entering. */
+    proteanUsed?: boolean;
+    /** Types before a temporary type change (Protean / Libero), restored on switch-out. */
+    typeChange?: Pokemon['types'];
+    /** Form change (Stance Change, Zen Mode, Schooling): original data restored on switch-out. */
+    formChange?: { form: string; types: Pokemon['types']; stats: Pokemon['stats'] };
+    /** Eject Pack: stats were lowered; the holder switches out once the move settles. */
+    ejectPackPending?: boolean;
+    /** Raw stat replacements (Power / Guard Split, Speed Swap, Power Trick). */
+    statOverrides?: Partial<Record<'attack' | 'defense' | 'special-attack' | 'special-defense' | 'speed', number>>;
+    /** Moves used since entering (Last Resort). */
+    movesUsedSinceEntry?: string[];
+    /** The user's last move failed, missed or was blocked (Stomping Tantrum, Temper Flare). */
+    lastMoveFailed?: boolean;
+    /** A stat was lowered this turn (Lash Out). */
+    statsLoweredThisTurn?: boolean;
+    /** A stat was raised this turn (Burning Jealousy, Alluring Voice). */
+    statsRaisedThisTurn?: boolean;
+    stockpile?: { count: number; def: number; spd: number };
+    /** Trapped by Mean Look / Block (released when the trapper leaves). */
+    trapped?: { by: 'player' | 'opponent' };
+    /** Jaw Lock: neither Pokémon can switch while both stay in. */
+    jawLock?: { by: 'player' | 'opponent' };
+    noRetreat?: boolean;
+    /** Mirrors Fairy Lock from the field. */
+    fairyLocked?: boolean;
+    infatuated?: { by: 'player' | 'opponent' };
+    torment?: boolean;
+    /** This Pokémon used Imprison. */
+    imprisoning?: boolean;
+    /** Moves sealed by the foe's Imprison. */
+    imprisonedMoves?: string[];
+    throatChop?: { turns: number };
+    syrupBomb?: { turns: number };
+    /** Next move cannot miss (Lock-On), turns left. */
+    lockOn?: number;
+    /** Glaive Rush: incoming moves can't miss and deal double damage until the user moves again. */
+    glaiveRush?: boolean;
+    smackedDown?: boolean;
+    /** Tar Shot: Fire moves are super effective (x2) against this Pokémon. */
+    tarShot?: boolean;
+    /** Beak Blast charging: contact attackers get burned. */
+    beakBlast?: boolean;
+    /** This move ignores the target's ability (Sunsteel Strike, Moongeist Beam, Photon Geyser). */
+    moldBreakerMove?: boolean;
+    /** Morpeko (Hunger Switch) Hangry Mode. */
+    hangry?: boolean;
+    rollout?: { count: number };
+    defenseCurl?: boolean;
+    /** Consecutive successful Fury Cutter hits. */
+    furyCutter?: number;
+    /** Electromorphosis / Wind Power: the next Electric move has double power. */
+    charged?: boolean;
+    /** Slow Start turns left. */
+    slowStart?: number;
+    /** Cud Chew: eat this berry again at the end of the next turn. */
+    cudChew?: { berry: string; turns: number };
+    /** An item was used up this turn (Pickup). */
+    consumedThisTurn?: boolean;
+    /** Metronome (item): consecutive uses of the same move. */
+    metronomeStreak?: number;
+    /** Micle Berry: next move's accuracy x1.2. */
+    micleBoost?: boolean;
+    /** Lansat Berry: +2 critical-hit stages. */
+    critBoost?: number;
+    /** Stat boosts gained during the current action (Mirror Herb copies the foe's). */
+    recentBoosts?: Partial<Record<'attack' | 'defense' | 'specialAttack' | 'specialDefense' | 'speed' | 'accuracy' | 'evasion', number>>;
   };
   // Ability system
   currentAbility?: string;
@@ -74,19 +174,63 @@ export type BattlePokemon = {
     evasion: number;
   };
   heldItem?: string;
+  /** Tera Type (lowercase type id); defaults to the species' primary type. */
+  teraType?: string;
+  /** True once this Pokémon has Terastallized (lasts the rest of the battle). */
+  terastallized?: boolean;
+  /** Types before Terastallizing (STAB still counts them). */
+  originalTypes?: Pokemon['types'];
+  /** Form set by a held item for the whole battle (Zacian / Zamazenta Crowned, Arceus Plate type). */
+  itemForm?: string;
+  /** Unknown unless the team records it (Attract checks it when known). */
+  gender?: 'male' | 'female' | 'genderless';
+  /** Effort values from the team slot (IVs are always 31). */
+  evs?: EvSpread;
+  /** Stellar Tera: move types whose one-time boost was used. */
+  stellarBoostedTypes?: string[];
+  /** Has eaten a Berry this battle (Belch). */
+  ateBerry?: boolean;
+  /** Last held item used up (Recycle restores it). */
+  consumedItem?: string;
+  /** Once-per-battle entry abilities already used (Intrepid Sword, Dauntless Shield, Supersweet Syrup). */
+  intrepidUsed?: boolean;
+  dauntlessUsed?: boolean;
+  syrupUsed?: boolean;
+  /** Disguise / Ice Face: already used up (Disguise stays busted for the battle). */
+  disguiseBusted?: boolean;
+  iceFaceBroken?: boolean;
 };
 
 export type BattleTeam = {
   pokemon: BattlePokemon[];
   currentIndex: number;
   faintedCount: number;
+  /** Terastallization is once per battle per side. */
+  teraUsed?: boolean;
   // Side conditions
   sideConditions: {
     screens: FieldSideScreens;
     hazards: SideHazards;
     tailwind?: { turns: number };
     luckyChant?: { turns: number };
+    /** Healing Wish / Lunar Dance waiting for the next Pokémon to come in. */
+    healingWish?: 'healing-wish' | 'lunar-dance';
+    /** Future Sight / Doom Desire landing on this side at the end of a later turn. */
+    futureAttack?: {
+      move: 'future-sight' | 'doom-desire';
+      turns: number;
+      user: string;
+      level: number;
+      attackStat: number;
+      attackerTypes: string[];
+      power: number;
+      type: string;
+    };
   };
+  /** Turn number (state.turn) on which a member of this team last fainted (Retaliate). */
+  lastFaintTurn?: number;
+  /** Fainted members counted at the last end of turn. */
+  faintTally?: number;
 };
 
 export type BattleLogEntry = {
@@ -119,6 +263,11 @@ export type BattleState = {
     switchIndex?: number;
     priority: number;
     speed: number;
+    terastallize?: boolean;
+    /** Quick Claw / Custap Berry: acts first within its priority bracket this turn. */
+    moveFirst?: 'quick-claw' | 'custap-berry' | 'quick-draw';
+    /** Stall / Mycelium Might: acts last within its priority bracket. */
+    moveLast?: boolean;
   }>;
   // Field state
   field: FieldState;
@@ -142,6 +291,52 @@ export type BattleState = {
   currentTurn?: 'host' | 'guest';
   /** Feature-gate scaffold for future mechanics (Tera/doubles). */
   featureFlags?: BattleFeatureFlags;
+  /**
+   * Set while a turn is paused for a player to pick the Pokémon a pivot move (U-turn, Volt Switch,
+   * Flip Turn, Parting Shot, Baton Pass) sends in. Resume with `resumeBattleTurnAfterSwitch`.
+   */
+  pendingSwitch?: PendingSwitchRequest;
+  /** Sides whose pivot replacements a player chooses; other sides send in the next healthy bench Pokémon. */
+  manualSwitchSides?: Array<'player' | 'opponent'>;
+  /**
+   * Set when a finished turn left a player-controlled side with a fainted active Pokémon and a real
+   * choice of replacement. Both sides pick at once; apply with `applyFaintReplacements`.
+   */
+  pendingReplacements?: PendingReplacement[];
+  /** Transient: true while queued actions run (entry-time picks may pause the turn). */
+  resolvingActions?: boolean;
+  /** Last move used by any Pokémon (Copycat). */
+  lastMoveInBattle?: string;
+  /** Transient: last move used this turn (Fusion Flare / Fusion Bolt). */
+  lastMoveThisTurn?: string;
+  /** Transient: the action being resolved (target-moved-first checks). */
+  currentAction?: BattleState['actionQueue'][number];
+  /** Transient: HP damage the last executed move dealt (Chloroblast, Rollout, Fury Cutter). */
+  lastHitDamage?: number;
+  /**
+   * Offline only: picks the Pokémon an automatic side sends in (faint replacements, pivots) instead of
+   * the next healthy one. Not serialized; multiplayer never sets it.
+   */
+  autoSwitchPicker?: (state: BattleState, side: 'player' | 'opponent', candidates: number[]) => number;
+  /** Multiplayer: HP lost per side over the battle (end-of-battle stats). */
+  battleStats?: { p1: { damageTaken: number }; p2: { damageTaken: number } };
+};
+
+/** Why a turn paused mid-way for a player's pick. */
+export type PendingSwitchReason = 'pivot' | 'baton-pass' | 'shed-tail' | 'revival-blessing';
+
+/** End-of-turn replacement for a fainted active Pokémon that a player picks. */
+export type PendingReplacement = { side: 'player' | 'opponent'; options: number[] };
+
+export type PendingSwitchRequest = {
+  side: 'player' | 'opponent';
+  reason: PendingSwitchReason;
+  /** Bench indexes the player may send in. */
+  options: number[];
+  /** Actions of this turn still to run after the switch. */
+  remainingQueue?: BattleState['actionQueue'];
+  /** Active indexes when the turn started (a Pokémon switched in mid-turn does not use its predecessor's move). */
+  activeAtTurnStart?: { player: number; opponent: number };
 };
 
 export type BattleAction = {
@@ -149,6 +344,8 @@ export type BattleAction = {
   moveId?: string;
   target?: 'player' | 'opponent';
   switchIndex?: number;
+  /** Terastallize at the start of this turn before moving. */
+  terastallize?: boolean;
 };
 
 export type BattleRuleProfile = 'simplified' | 'cart_like';
@@ -165,10 +362,6 @@ export type NormalizedServerActionResult = {
   errorCode?: string;
 };
 
-// Helper functions
-function calculateHp(baseHp: number, level: number): number {
-  return Math.floor(((2 * baseHp + 31) * level) / 100) + level + 10;
-}
 
 /** Moves that restore HP (used by Triage priority). */
 const TRIAGE_HEALING_MOVES = new Set([
@@ -190,22 +383,36 @@ const FALLBACK_PRIORITY: Record<string, number> = {
   'quick-attack': 1,
   'extreme-speed': 2,
   'fake-out': 3,
+  'first-impression': 2,
   'sucker-punch': 1,
+  'thunderclap': 1,
+  'counter': -5,
+  'mirror-coat': -5,
   'bullet-punch': 1,
   'ice-shard': 1,
   'shadow-sneak': 1,
   'mach-punch': 1,
   'vacuum-wave': 1,
   'trick-room': -6,
+  'roar': -6,
+  'focus-punch': -3,
+  'beak-blast': -3,
+  'teleport': -6,
+  'upper-hand': 3,
+  'whirlwind': -6,
+  'dragon-tail': -6,
+  'circle-throw': -6,
   'wonder-room': -6,
   'magic-room': -6,
 };
 
 // Calculate move priority (higher number = higher priority); prefers cached move metadata when available
-export function getMovePriority(moveId: string, pokemon?: BattlePokemon): number {
+export function getMovePriority(moveId: string, pokemon?: BattlePokemon, field?: { terrain?: { kind?: string } }): number {
   const id = moveId.toLowerCase();
   const cached = getCachedMove(id);
   let priority = cached?.priority ?? FALLBACK_PRIORITY[id] ?? 0;
+  // Grassy Glide: +1 priority on Grassy Terrain for a grounded user
+  if (id === 'grassy-glide' && field?.terrain?.kind === 'grassy' && pokemon && isGroundedForPriority(pokemon)) priority += 1;
 
   const ability = pokemon?.currentAbility?.toLowerCase();
   if (!ability || !pokemon) return priority;
@@ -237,17 +444,8 @@ export function getEffectiveSpeed(
   tailwindActive = false,
   field?: { weather?: { kind?: string }; terrain?: { kind?: string } }
 ): number {
-  const baseSpeed = pokemon.pokemon.stats?.find((stat: any) => (stat.stat?.name || stat.name) === 'speed')?.base_stat || 50;
-  let calculatedSpeed = calculateStat(baseSpeed, pokemon.level);
-  // Apply nature: +10% to increased stat, -10% to decreased stat
-  try {
-    if (pokemon.nature) {
-      const { getNature } = require('@/data/natures') as typeof import('@/data/natures');
-      const n = getNature(pokemon.nature);
-      if (n.increasedStat === 'speed') calculatedSpeed = Math.floor(calculatedSpeed * 1.1);
-      if (n.decreasedStat === 'speed') calculatedSpeed = Math.floor(calculatedSpeed * 0.9);
-    }
-  } catch (e) { console.warn('Failed to load natures for speed calc:', e); }
+  // Raw Speed: EVs and nature included; Speed Swap replaces it while the Pokémon stays in
+  const calculatedSpeed = rawStat(pokemon, 'speed');
   let finalSpeed = applyStatModifier(calculatedSpeed, pokemon.statModifiers?.speed || 0);
 
   const ability = pokemon.currentAbility?.toLowerCase();
@@ -259,17 +457,21 @@ export function getEffectiveSpeed(
   if (ability === 'slush-rush' && weather === 'snow') finalSpeed = Math.floor(finalSpeed * 2);
   if (ability === 'surge-surfer' && terrain === 'electric') finalSpeed = Math.floor(finalSpeed * 2);
 
-  const item = pokemon.heldItem?.toLowerCase();
+  const item = effectiveItem(pokemon);
   if (item === 'choice-scarf') finalSpeed = Math.floor(finalSpeed * 1.5);
   if (item === 'iron-ball') finalSpeed = Math.floor(finalSpeed * 0.5);
   if (pokemon.volatile.unburdenActive) finalSpeed = Math.floor(finalSpeed * 2);
+  finalSpeed = Math.floor(finalSpeed * paradoxMultiplier(pokemon, 'speed'));
+  finalSpeed = Math.floor(finalSpeed * speciesItemSpeedMultiplier(pokemon));
 
   // Tailwind doubles speed (Gen IV+)
   if (tailwindActive) {
     finalSpeed = Math.floor(finalSpeed * 2);
   }
+  // Quick Feet (x1.5 when statused, ignores the paralysis drop) / Slow Start
+  finalSpeed = Math.floor(finalSpeed * abilitySpeedMultiplier(pokemon));
   // Paralysis halves speed (Gen 7+)
-  if (pokemon.status === 'paralyzed') {
+  if (pokemon.status === 'paralyzed' && ability !== 'quick-feet') {
     finalSpeed = Math.floor(finalSpeed * 0.5);
   }
   return finalSpeed;
@@ -354,8 +556,8 @@ export function canUseMove(
     if (move.disabled) return { canUse: false, reason: 'disabled' };
   }
 
-  // Check status conditions
-  if (pokemon.status === 'asleep') {
+  // Check status conditions (Sleep Talk and Snore are used while asleep)
+  if (pokemon.status === 'asleep' && idLower !== 'sleep-talk' && idLower !== 'snore') {
     return { canUse: false, reason: 'fast asleep' };
   }
   if (pokemon.status === 'frozen') {
@@ -375,11 +577,9 @@ export function canUseMove(
     }
     if (rngRollChance(rng, 1 / 3)) {
       const basePower = 40;
-      const baseAtk = pokemon.pokemon.stats?.find((s: any) => (s.stat?.name || s.name) === 'attack')?.base_stat ?? 50;
-      const baseDef = pokemon.pokemon.stats?.find((s: any) => (s.stat?.name || s.name) === 'defense')?.base_stat ?? 50;
       const level = pokemon.level ?? 50;
-      let atkStat = applyStatModifier(calculateStat(baseAtk, level), pokemon.statModifiers?.attack || 0);
-      const defStat = applyStatModifier(calculateStat(baseDef, level), pokemon.statModifiers?.defense || 0);
+      let atkStat = applyStatModifier(rawStat(pokemon, 'attack'), pokemon.statModifiers?.attack || 0);
+      const defStat = applyStatModifier(rawStat(pokemon, 'defense'), pokemon.statModifiers?.defense || 0);
       if (pokemon.status === 'burned') atkStat = Math.floor(atkStat * 0.5);
       const confusionDmg = Math.max(1, Math.floor(((2 * level / 5 + 2) * basePower * atkStat / defStat) / 50 + 2));
       pokemon.currentHp = Math.max(0, pokemon.currentHp - confusionDmg);
@@ -401,8 +601,19 @@ export function canUseMove(
     }
   }
 
+  // Torment: not the same move twice in a row; Imprison: moves the foe also knows; Throat Chop: sound moves
+  if (pokemon.volatile.torment && pokemon.volatile.lastMoveUsed?.toLowerCase() === idLower && idLower !== 'struggle') {
+    return { canUse: false, reason: 'tormented' };
+  }
+  if (pokemon.volatile.imprisonedMoves?.includes(idLower)) {
+    return { canUse: false, reason: 'unable to use its sealed move' };
+  }
+  if (pokemon.volatile.throatChop && pokemon.volatile.throatChop.turns > 0 && SOUND_MOVES.has(idLower)) {
+    return { canUse: false, reason: 'unable to use sound moves after Throat Chop' };
+  }
+
   // Assault Vest: cannot select status moves
-  if (pokemon.heldItem?.toLowerCase() === 'assault-vest' && idLower !== 'struggle') {
+  if (effectiveItem(pokemon) === 'assault-vest' && idLower !== 'struggle') {
     const fullMove = getCachedMove(moveId);
     if (fullMove?.category === 'Status') {
       return { canUse: false, reason: 'assault vest' };
@@ -435,7 +646,9 @@ export function validateServerBattleAction(team: BattleTeam, action: BattleActio
 export function normalizeServerBattleAction(
   team: BattleTeam,
   action: BattleAction,
-  profile: BattleRuleProfile = 'simplified'
+  profile: BattleRuleProfile = 'simplified',
+  /** The opposing active Pokémon (Shadow Tag / Arena Trap / Magnet Pull). */
+  foeActive?: BattlePokemon,
 ): NormalizedServerActionResult {
   if (action.type === 'switch') {
     const mon = getCurrentPokemon(team);
@@ -447,6 +660,7 @@ export function normalizeServerBattleAction(
     if (idx < 0 || idx >= team.pokemon.length) return { action, normalized: false, errorCode: 'switch_out_of_range' };
     if (idx === team.currentIndex) return { action, normalized: false, errorCode: 'switch_same_slot' };
     if (team.pokemon[idx].currentHp <= 0) return { action, normalized: false, errorCode: 'switch_to_fainted' };
+    if (isTrapped(mon, foeActive)) return { action, normalized: false, errorCode: 'switch_trapped' };
     return { action, normalized: false };
   }
 
@@ -456,14 +670,8 @@ export function normalizeServerBattleAction(
     const mon = getCurrentPokemon(team);
     const idLower = moveId.toLowerCase();
 
-    const forced =
-      mon.volatile.mustRecharge
-        ? '__recharge__'
-        : mon.volatile.twoTurn?.kind === 'pending'
-          ? mon.volatile.twoTurn.move
-          : mon.volatile.rampage && mon.volatile.rampage.turnsLeft > 0
-            ? mon.volatile.rampage.move
-            : null;
+    // Recharge, pending two-turn moves, rampages and Rollout lock the choice
+    const forced = getForcedBattleMoveId(mon);
     if (forced && idLower !== forced) {
       return {
         action: { type: 'move', moveId: forced, target: action.target },
@@ -542,6 +750,28 @@ export function normalizeServerBattleAction(
   return { action, normalized: false, errorCode: 'unknown_action' };
 }
 
+function isGroundedForPriority(mon: BattlePokemon): boolean {
+  if (mon.volatile.gravityGrounded || mon.volatile.smackedDown) return true;
+  const types = (mon.pokemon.types ?? []).map((t: any) => String(typeof t === 'string' ? t : t?.type?.name ?? '').toLowerCase());
+  return !types.includes('flying') && mon.currentAbility?.toLowerCase() !== 'levitate' && effectiveItem(mon) !== 'air-balloon';
+}
+
+function moveFirstField(
+  mon: BattlePokemon,
+  foe: BattlePokemon,
+  state: BattleState,
+  moveId?: string,
+): { moveFirst?: 'quick-claw' | 'custap-berry' | 'quick-draw'; moveLast?: boolean } {
+  const foeAbility = foe.currentAbility?.toLowerCase();
+  const berriesBlocked = (foeAbility === 'unnerve' || foeAbility === 'as-one-glastrier' || foeAbility === 'as-one-spectrier') && foe.currentHp > 0;
+  const source = rollMoveFirst(mon, state.rng, berriesBlocked);
+  if (source) return { moveFirst: source };
+  const order = abilityTurnOrder(mon, moveId ? getCachedMove(moveId)?.category : undefined, state.rng);
+  if (order === 'first') return { moveFirst: 'quick-draw' };
+  if (order === 'last') return { moveLast: true };
+  return {};
+}
+
 // Build and order action queue (Gen-8/9 style)
 export function buildActionQueue(state: BattleState, playerAction: BattleAction, opponentAction: BattleAction): BattleState['actionQueue'] {
   const queue: BattleState['actionQueue'] = [];
@@ -584,7 +814,9 @@ export function buildActionQueue(state: BattleState, playerAction: BattleAction,
       user: 'player',
       moveId: playerAction.moveId,
       target: playerAction.target,
-      priority: getMovePriority(playerAction.moveId || '', getCurrentPokemon(state.player)),
+      ...(playerAction.terastallize ? { terastallize: true } : {}),
+      ...moveFirstField(getCurrentPokemon(state.player), getCurrentPokemon(state.opponent), state, playerAction.moveId),
+      priority: getMovePriority(playerAction.moveId || '', getCurrentPokemon(state.player), state.field),
       speed: getEffectiveSpeed(getCurrentPokemon(state.player), isTailwindActive(state.player), state.field)
     });
   }
@@ -603,7 +835,9 @@ export function buildActionQueue(state: BattleState, playerAction: BattleAction,
       user: 'opponent',
       moveId: opponentAction.moveId,
       target: opponentAction.target,
-      priority: getMovePriority(opponentAction.moveId || '', getCurrentPokemon(state.opponent)),
+      ...(opponentAction.terastallize ? { terastallize: true } : {}),
+      ...moveFirstField(getCurrentPokemon(state.opponent), getCurrentPokemon(state.player), state, opponentAction.moveId),
+      priority: getMovePriority(opponentAction.moveId || '', getCurrentPokemon(state.opponent), state.field),
       speed: getEffectiveSpeed(getCurrentPokemon(state.opponent), isTailwindActive(state.opponent), state.field)
     });
   }
@@ -625,6 +859,14 @@ export function buildActionQueue(state: BattleState, playerAction: BattleAction,
     // Within same class, order by priority (higher first)
     if (a.priority !== b.priority) {
       return b.priority - a.priority;
+    }
+
+    // Quick Claw / Custap Berry act first within the bracket (Trick Room does not reverse this)
+    if (!!a.moveFirst !== !!b.moveFirst) {
+      return a.moveFirst ? -1 : 1;
+    }
+    if (!!a.moveLast !== !!b.moveLast) {
+      return a.moveLast ? 1 : -1;
     }
 
     // Within same priority, order by speed
@@ -650,19 +892,6 @@ export function calculateStat(baseStat: number, level: number): number {
 function applyStatModifier(baseStat: number, modifier: number): number {
   const multiplier = modifier >= 0 ? (2 + modifier) / 2 : 2 / (2 - modifier);
   return Math.floor(baseStat * multiplier);
-}
-
-function mapStatName(stat: "atk" | "def" | "spa" | "spd" | "spe" | "acc" | "eva"): keyof BattlePokemon['statModifiers'] {
-  const mapping: Record<"atk" | "def" | "spa" | "spd" | "spe" | "acc" | "eva", keyof BattlePokemon['statModifiers']> = {
-    'atk': 'attack',
-    'def': 'defense',
-    'spa': 'specialAttack',
-    'spd': 'specialDefense',
-    'spe': 'speed',
-    'acc': 'accuracy',
-    'eva': 'evasion'
-  };
-  return mapping[stat];
 }
 
 // Apply effects for status moves (stat changes, etc.)
@@ -738,89 +967,21 @@ export async function applyStatusMoveEffects(
     'laser-focus': { changes: [{ stat: 'accuracy', stages: 2 }], target: 'self' },
   };
 
-  const SELF_STAT_DROP_MOVES = new Set([
-    'close-combat', 'superpower', 'overheat', 'draco-meteor', 'leaf-storm',
-    'v-create', 'hammer-arm', 'psycho-boost', 'shell-smash', 'fleur-cannon',
-    'hyperspace-fury', 'clanging-scales',
-  ]);
-
-  // Check for stat changes from PokeAPI data first
+  // Moves with PokeAPI stat changes are applied once by applyMoveSecondaryStatChanges in the turn
+  // pipeline; only the hard-coded fallback tables below run here.
   if (compiledMove.statChanges && compiledMove.statChanges.length > 0) {
-    const selfDrop = SELF_STAT_DROP_MOVES.has(compiledMove.name?.toLowerCase?.() ?? '');
-    for (const statChange of compiledMove.statChanges) {
-      // Check if the effect triggers
-      const effectRng = battleState.rng || createBattleRng(Date.now());
-      if (rngRollChance(effectRng, (statChange.chance ?? 100) / 100)) {
-        const target = selfDrop ? attacker : (statChange.stages > 0 ? attacker : defender);
-        const statName = mapStatName(statChange.stat);
-        const oldValue = target.statModifiers[statName];
+    return;
+  }
 
-        // Apply stat change (clamp between -6 and +6)
-        target.statModifiers[statName] = Math.max(-6, Math.min(6, oldValue + statChange.stages));
-
-        const newValue = target.statModifiers[statName];
-        const change = newValue - oldValue;
-
-        if (change !== 0) {
-          const statDisplayName = {
-            attack: 'Attack',
-            defense: 'Defense',
-            specialAttack: 'Special Attack',
-            specialDefense: 'Special Defense',
-            speed: 'Speed',
-            accuracy: 'Accuracy',
-            evasion: 'Evasion'
-          }[statName];
-
-          const direction = change > 0 ? 'rose' : 'fell';
-          const targetName = target.pokemon.name;
-
-          battleState.battleLog.push({
-            type: 'status_effect',
-            message: `${targetName}'s ${statDisplayName} ${direction}!`,
-            pokemon: String(targetName)
-          });
-        }
-      }
-    }
-  } else {
-    // Fallback to hardcoded stat changes for moves not in PokeAPI
-    const reductionEntry = statReductionMoves[moveName];
-    const boostEntry = statBoostingMoves[moveName];
-
-    const statDisplayNames: Record<string, string> = {
-      attack: 'Attack', defense: 'Defense', specialAttack: 'Special Attack',
-      specialDefense: 'Special Defense', speed: 'Speed', accuracy: 'Accuracy', evasion: 'Evasion',
-    };
-
-    if (reductionEntry) {
-      const target = reductionEntry.target === 'self' ? attacker : defender;
-      const oldValue = target.statModifiers[reductionEntry.stat];
-      target.statModifiers[reductionEntry.stat] = Math.max(-6, Math.min(6, oldValue + reductionEntry.stages));
-      const change = target.statModifiers[reductionEntry.stat] - oldValue;
-      if (change !== 0) {
-        const targetName = target.pokemon.name;
-        battleState.battleLog.push({
-          type: 'status_effect',
-          message: `${targetName}'s ${statDisplayNames[reductionEntry.stat]} ${change > 0 ? 'rose' : 'fell'}!`,
-          pokemon: String(targetName),
-        });
-      }
-    } else if (boostEntry) {
-      const target = boostEntry.target === 'self' ? attacker : defender;
-      const targetName = target.pokemon.name;
-      for (const { stat, stages } of boostEntry.changes) {
-        const oldValue = target.statModifiers[stat];
-        target.statModifiers[stat] = Math.max(-6, Math.min(6, oldValue + stages));
-        const change = target.statModifiers[stat] - oldValue;
-        if (change !== 0) {
-          battleState.battleLog.push({
-            type: 'status_effect',
-            message: `${targetName}'s ${statDisplayNames[stat]} ${change > 0 ? 'rose' : 'fell'}!`,
-            pokemon: String(targetName),
-          });
-        }
-      }
+  const reductionEntry = statReductionMoves[moveName];
+  const boostEntry = statBoostingMoves[moveName];
+  if (reductionEntry) {
+    const target = reductionEntry.target === 'self' ? attacker : defender;
+    changeStatStage(battleState, target, reductionEntry.stat, reductionEntry.stages, { source: attacker });
+  } else if (boostEntry) {
+    const target = boostEntry.target === 'self' ? attacker : defender;
+    for (const { stat, stages } of boostEntry.changes) {
+      changeStatStage(battleState, target, stat, stages, { source: attacker });
     }
   }
 }
@@ -874,8 +1035,62 @@ export function switchToPokemon(team: BattleTeam, index: number): void {
   }
 }
 
-/** Regenerator heal 1/3 and Natural Cure status clear on voluntary switch-out. */
+/** Mirror Magic Room onto every Pokémon so item checks without `state` access can honour it. */
+export function syncItemSuppression(state: BattleState): void {
+  const suppressed = !!state.field.rooms?.magicRoom;
+  for (const team of [state.player, state.opponent]) {
+    for (const mon of team.pokemon) {
+      if (!mon.volatile) mon.volatile = {};
+      if (suppressed) mon.volatile.itemSuppressed = true;
+      else delete mon.volatile.itemSuppressed;
+    }
+  }
+}
+
+const ZERO_STAT_STAGES: BattlePokemon['statModifiers'] = {
+  attack: 0,
+  defense: 0,
+  specialAttack: 0,
+  specialDefense: 0,
+  speed: 0,
+  accuracy: 0,
+  evasion: 0,
+};
+
+/**
+ * Leaving the field clears stat stages and volatile conditions (confusion, Substitute, Encore,
+ * Taunt, choice lock, Leech Seed, toxic counter, ...). Status, consumed-item flags and Wish persist.
+ */
+export function resetOnSwitchOut(pokemon: BattlePokemon): void {
+  // Undo temporary changes to the Pokémon's own data before clearing volatiles
+  revertTransform(pokemon);
+  const v = pokemon.volatile ?? {};
+  if (v.formChange) {
+    pokemon.pokemon = { ...pokemon.pokemon, types: v.formChange.types, stats: v.formChange.stats };
+  }
+  if (v.typeChange && !pokemon.terastallized) {
+    pokemon.pokemon = { ...pokemon.pokemon, types: v.typeChange };
+  }
+  // Skill Swap / Gastro Acid / Entrainment / Worry Seed last until the Pokémon leaves
+  if (pokemon.abilityChanged) {
+    pokemon.currentAbility = pokemon.originalAbility;
+    pokemon.abilityChanged = undefined;
+  }
+  const kept: BattlePokemon['volatile'] = {};
+  if (v.focusSashUsed) kept.focusSashUsed = v.focusSashUsed;
+  if (v.lastConsumedBerry) kept.lastConsumedBerry = v.lastConsumedBerry;
+  if (v.wish) kept.wish = v.wish;
+  if (v.itemSuppressed) kept.itemSuppressed = v.itemSuppressed;
+  pokemon.volatile = kept;
+  pokemon.statModifiers = { ...ZERO_STAT_STAGES };
+}
+
+/**
+ * Switch-out hook: clears stat stages / volatiles, then Regenerator heal 1/3 and Natural Cure status clear.
+ * Used for voluntary switches, pivots, Baton Pass (after capturing what it passes) and forced switches.
+ */
 export function applySwitchOutAbilities(pokemon: BattlePokemon): void {
+  resetOnSwitchOut(pokemon);
   if (pokemon.currentHp <= 0) return;
   // Leaving the field cancels multi-turn locks (no fatigue confusion on voluntary switch)
   pokemon.volatile.rampage = undefined;

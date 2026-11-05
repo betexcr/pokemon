@@ -1,3 +1,4 @@
+import { effectiveItem } from './battle-item-access';
 import { BattlePokemon } from './team-battle-engine';
 import { SideHazards } from './team-battle-types';
 import { calculateTypeEffectiveness, TypeName } from './damage-calculator';
@@ -16,12 +17,15 @@ function stealthRockDamage(pokemon: BattlePokemon): number {
 }
 
 export function isGrounded(pokemon: BattlePokemon): boolean {
+  if (pokemon.volatile?.gravityGrounded || pokemon.volatile?.smackedDown) return true;
+  if (effectiveItem(pokemon) === 'iron-ball') return true;
   const isFlying = pokemon.pokemon.types.some(typeEntry => {
     const type = typeof typeEntry === 'string' ? typeEntry : typeEntry.type?.name || '';
     return type.toLowerCase() === 'flying';
   });
   const hasLevitate = pokemon.currentAbility?.toLowerCase() === 'levitate';
-  return !isFlying && !hasLevitate;
+  const hasAirBalloon = effectiveItem(pokemon) === 'air-balloon';
+  return !isFlying && !hasLevitate && !hasAirBalloon;
 }
 
 function spikesDamage(pokemon: BattlePokemon, layers: number): number {
@@ -49,7 +53,7 @@ export function applyEntryHazards(pokemon: BattlePokemon, hazards: SideHazards):
   let applyStickyWeb = false;
 
   // Heavy-Duty Boots skip all entry hazards
-  const item = pokemon.heldItem?.toLowerCase();
+  const item = effectiveItem(pokemon);
   if (item === 'heavy-duty-boots') {
     return { damage: 0 };
   }

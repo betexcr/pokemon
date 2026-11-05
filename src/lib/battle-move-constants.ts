@@ -104,3 +104,8 @@ export const TWO_TURN_WEATHER_SKIP: Readonly<Record<string, string>> = {
   'solar-blade': 'sun',
   'electro-shot': 'rain',
 };
+
+/** Moves Gravity prevents (all involve leaving the ground). */
+export const GRAVITY_BLOCKED_MOVES: ReadonlySet<string> = new Set([
+  'fly', 'bounce', 'sky-drop', 'high-jump-kick', 'jump-kick', 'splash', 'magnet-rise', 'telekinesis', 'flying-press', 'floaty-fall',
+]);

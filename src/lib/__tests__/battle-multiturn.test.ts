@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { BattlePokemon, BattleState, BattleTeam, BattleAction } from '../team-battle-engine';
 import { buildActionQueue, getCurrentPokemon, consumePpForMove } from '../team-battle-engine';
 import { runBattleTurnFromQueue } from '../team-battle-engine-additional';
-import { createBattleRng } from '../battle-rng';
+import { createBattleRng, createBattleRngFromBattleKey } from '../battle-rng';
 import { createFieldState, EMPTY_HAZARDS } from '../team-battle-types';
 import { getForcedBattleMoveId, RECHARGE_MOVE_ID } from '../battle-multiturn';
 
@@ -85,7 +85,7 @@ function makeState(player: BattlePokemon, opponent: BattlePokemon): BattleState 
     field: createFieldState(),
     battleLog: [],
     actionQueue: [],
-    rng: createBattleRng('multiturn-test'),
+    rng: createBattleRngFromBattleKey('multiturn-test', 1),
     isComplete: false,
     phase: 'choice',
   } as BattleState;

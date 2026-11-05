@@ -45,7 +45,7 @@ const rules = JSON.parse(
 const battle = (rules.battles as RuleNode).$bid as RuleNode;
 const node = (path: string): RuleNode =>
   path.split('/').reduce<RuleNode>((acc, key) => acc[key] as RuleNode, rules);
-const rule = (path: string, op: '.read' | '.write' | '.validate'): Rule => node(path)[op];
+const rule = (path: string, op: '.read' | '.write' | '.validate'): Rule => node(path)[op] as Rule;
 
 const IS_PARTICIPANT =
   "root.child('battles/'+$bid+'/meta/players/p1/uid').val() == auth.uid || root.child('battles/'+$bid+'/meta/players/p2/uid').val() == auth.uid";

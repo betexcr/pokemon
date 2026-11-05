@@ -17,6 +17,9 @@ import {
   FirestoreError
 } from 'firebase/firestore'
 import { DEFAULT_NATURE, NatureName } from '@/data/natures'
+import { sanitizeBattleItem } from '@/lib/battle-items-catalog'
+import { isTeraType, type TeraType } from '@/lib/team-battle-tera'
+import { sanitizeEvs, type EvSpread } from '@/lib/battle-evs'
 import { getDb as getClientDb, hasFirebaseClientConfig } from './firebase/client'
 import { firebaseErrorLogger } from './firebaseErrorLogger'
 import { reportApiError } from './errorReporting'
@@ -38,6 +41,23 @@ export interface TeamSlot {
   moves: MoveData[];
   nature: NatureName;
   isShiny?: boolean;
+  /** Tera Type for battles; omitted means the species' primary type. */
+  teraType?: TeraType;
+  /** Held item id (see battle-items-catalog.ts); omitted means no item. */
+  item?: string;
+  /** Effort values (252 per stat, 510 total); omitted means none. IVs are always 31. */
+  evs?: EvSpread;
+  /** Omitted means unknown (Attract / Cute Charm / Rivalry only act on known genders). */
+  gender?: 'male' | 'female' | 'genderless';
+  /** PokeAPI ability id (regular or hidden); omitted means the species' first regular ability. */
+  ability?: string;
+}
+
+const ABILITY_ID_RE = /^[a-z0-9-]{1,40}$/;
+export function sanitizeSlotAbility(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const id = value.trim().toLowerCase();
+  return ABILITY_ID_RE.test(id) ? id : undefined;
 }
 
 type StoredTeamSlot = Omit<TeamSlot, 'nature'> & { nature?: NatureName };
@@ -79,7 +99,17 @@ function normalizeSlot(slot: StoredTeamSlot | null | undefined): TeamSlot {
     moves: Array.isArray(normalized.moves) ? normalized.moves : [],
     nature: normalized.nature ?? DEFAULT_NATURE,
     isShiny: normalized.isShiny ?? false,
+    // Only stored when chosen: Firestore rejects undefined fields
+    ...(isTeraType(normalized.teraType) ? { teraType: normalized.teraType.toLowerCase() as TeraType } : {}),
+    ...(sanitizeBattleItem(normalized.item) ? { item: sanitizeBattleItem(normalized.item) } : {}),
+    ...(sanitizeEvs(normalized.evs) ? { evs: sanitizeEvs(normalized.evs) } : {}),
+    ...(isSlotGender(normalized.gender) ? { gender: normalized.gender } : {}),
+    ...(sanitizeSlotAbility(normalized.ability) ? { ability: sanitizeSlotAbility(normalized.ability) } : {}),
   };
+}
+
+export function isSlotGender(value: unknown): value is NonNullable<TeamSlot['gender']> {
+  return value === 'male' || value === 'female' || value === 'genderless';
 }
 
 // Convert Firestore document to SavedTeam

@@ -22,6 +22,7 @@ const STATUS_CURE_PHRASE: Record<NonNullable<BattlePokemon['status']>, string> =
   'badly-poisoned': 'poison',
   asleep: 'sleep',
   frozen: 'freeze',
+  confused: 'confusion',
 };
 
 export function formatStatusCurePhrase(status: NonNullable<BattlePokemon['status']>): string {

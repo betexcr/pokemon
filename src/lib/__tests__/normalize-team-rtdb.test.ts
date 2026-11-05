@@ -76,3 +76,38 @@ describe('normalizeTeamForRTDB', () => {
     ).rejects.toThrow(/Failed to hydrate stats/i);
   });
 });
+
+describe('normalizeTeamForRTDB team-builder fields', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('keeps legal abilities, EVs and gender; drops illegal abilities and over-limit EVs', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({
+        ok: true,
+        json: async () => ({
+          name: 'gyarados',
+          weight: 2350,
+          types: [{ type: { name: 'water' } }, { type: { name: 'flying' } }],
+          abilities: [
+            { ability: { name: 'intimidate' }, is_hidden: false, slot: 1 },
+            { ability: { name: 'moxie' }, is_hidden: true, slot: 3 },
+          ],
+          stats: ['hp', 'attack', 'defense', 'special-attack', 'special-defense', 'speed'].map((n) => ({ stat: { name: n }, base_stat: 95 })),
+        }),
+      })),
+    );
+    const [legal, illegal] = await normalizeTeamForRTDB([
+      { id: 130, moves: ['waterfall'], ability: 'moxie', evs: { attack: 252, speed: 252, hp: 252 }, gender: 'female' },
+      { id: 130, moves: ['waterfall'], ability: 'huge-power' },
+    ]);
+    expect(legal.ability).toBe('moxie');
+    expect(legal.evs).toEqual({ hp: 252, attack: 252, speed: 6 });
+    expect(legal.gender).toBe('female');
+    // HP EVs raise max HP: floor((190 + 31 + 63) * 50 / 100) + 60
+    expect(legal.maxHp).toBe(202);
+    expect(illegal.ability).toBeUndefined();
+  });
+});

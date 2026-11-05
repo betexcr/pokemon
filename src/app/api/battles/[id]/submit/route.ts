@@ -1,3 +1,4 @@
+import { allRequiredChoicesPresent } from '@/lib/battle-pending-switch';
 import { NextRequest, NextResponse } from 'next/server';
 import { getRtdbOps, verifyAuthToken } from '@/lib/rtdb-access';
 import { resolveTurn, enforceTurnDeadline } from '@/lib/battle-resolution';
@@ -49,7 +50,7 @@ export async function POST(
         }
 
         const body = await request.json();
-        const { action, moveId, target, switchToIndex, clientVersion } = body;
+        const { action, moveId, target, switchToIndex, clientVersion, terastallize } = body;
 
         if (!['move', 'switch', 'forfeit'].includes(action)) {
             return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
@@ -120,10 +121,35 @@ export async function POST(
             return NextResponse.json({ error: `Not in choosing phase (current: ${metaAfter.phase})` }, { status: 400 });
         }
 
-        // Peek existing choices before writing — both present ⇒ re-resolve without version gate
+        // Turn paused for a pivot pick: only that player may answer, and only with a switch
+        if (metaAfter.pendingSwitch?.uid) {
+            if (uid !== metaAfter.pendingSwitch.uid) {
+                return NextResponse.json(
+                    { error: 'Waiting for your opponent to choose a Pokémon', pendingSwitch: true },
+                    { status: 409 }
+                );
+            }
+            if (action !== 'switch') {
+                return NextResponse.json({ error: 'Choose a Pokémon to send in', pendingSwitch: true }, { status: 400 });
+            }
+        }
+
+        // Faint replacements: listed players may only send in a Pokémon; others wait
+        if (metaAfter.pendingReplacement?.uids?.length) {
+            if (!metaAfter.pendingReplacement.uids.includes(uid)) {
+                return NextResponse.json(
+                    { error: 'Waiting for your opponent to choose a Pokémon', pendingSwitch: true },
+                    { status: 409 }
+                );
+            }
+            if (action !== 'switch') {
+                return NextResponse.json({ error: 'Choose your next Pokémon', pendingSwitch: true }, { status: 400 });
+            }
+        }
+
+        // Peek existing choices before writing — all required present ⇒ re-resolve without version gate
         const choicesPeek = (await ops.get(`battles/${battleId}/turns/${metaAfter.turn}/choices`)) || {};
-        const bothAlready =
-            !!choicesPeek[metaAfter.players.p1.uid] && !!choicesPeek[metaAfter.players.p2.uid];
+        const bothAlready = allRequiredChoicesPresent(metaAfter, choicesPeek);
 
         if (shouldSkipClientVersionForResolve(metaAfter.phase, bothAlready)) {
             try {
@@ -155,6 +181,8 @@ export async function POST(
             if (action === 'move') {
                 payload.moveId = moveId;
                 if (target !== undefined) payload.target = target;
+                // Eligibility (once per battle, Tera Type set) is checked when the turn resolves
+                if (terastallize === true) payload.terastallize = true;
             } else if (action === 'switch') {
                 payload.switchToIndex = switchToIndex;
             }
@@ -168,10 +196,8 @@ export async function POST(
         }
 
         const choices = await ops.get(`battles/${battleId}/turns/${metaAfter.turn}/choices`) || {};
-        const p1Submitted = choices[metaAfter.players.p1.uid];
-        const p2Submitted = choices[metaAfter.players.p2.uid];
 
-        if (p1Submitted && p2Submitted) {
+        if (allRequiredChoicesPresent(metaAfter, choices)) {
             try {
                 await resolveTurn(battleId, token);
             } catch (err: unknown) {

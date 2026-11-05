@@ -302,7 +302,7 @@ describe('RTDB Performance Tests', () => {
       
       // Simulate network delay
       const originalSet = rtdbService.updatePresence;
-      rtdbService.updatePresence = vi.fn().mockImplementation(async (...args) => {
+      rtdbService.updatePresence = vi.fn().mockImplementation(async (...args: Parameters<typeof originalSet>) => {
         await new Promise(resolve => setTimeout(resolve, 100)); // 100ms delay
         return originalSet.apply(rtdbService, args);
       });
@@ -341,7 +341,7 @@ describe('RTDB Performance Tests', () => {
       
       // Simulate some operations failing
       const originalSet = rtdbService.updatePresence;
-      rtdbService.updatePresence = vi.fn().mockImplementation(async (...args) => {
+      rtdbService.updatePresence = vi.fn().mockImplementation(async (...args: Parameters<typeof originalSet>) => {
         if (Math.random() < 0.5) {
           throw new Error('Network error');
         }

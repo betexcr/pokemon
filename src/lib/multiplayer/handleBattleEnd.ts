@@ -3,63 +3,39 @@ import type { RTDBBattleMeta } from '@/lib/firebase-rtdb-service';
 
 type EndReason = 'victory' | 'forfeit' | 'timeout' | 'resolution_failed';
 
-/**
- * Resolve RTDB ops: use provided ops, try server-side ops, or return null
- * (caller will fall back to client SDK).
- */
+// This module is shared by API routes and client hooks, so it must not import firebase-admin or
+// rtdb-access (Turbopack pulls their Node-only dependencies into client bundles). Server callers pass
+// their RtdbOps; with the Admin SDK those ops also update Firestore (`markFirestoreBattleEnded`).
+
+/** Provided ops (server), or null so the caller falls back to the client SDK. */
 function resolveOps(provided?: RtdbOps): RtdbOps | null {
-  if (provided) return provided;
-  try {
-    // Dynamic require to avoid pulling rtdb-access (and firebase-admin) into client bundles
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { getRtdbOps } = require('@/lib/rtdb-access') as typeof import('@/lib/rtdb-access');
-    return getRtdbOps();
-  } catch {
-    return null;
-  }
+  return provided ?? null;
 }
 
 /**
- * Update Firestore battle + room documents.
- * Prefers firebase-admin (server), falls back to client services.
+ * Update Firestore battle + room documents: through the Admin SDK when the ops offer it,
+ * otherwise through the client services.
  */
 async function updateFirestore(
   battleId: string,
   winner: 'player' | 'opponent' | undefined,
   winnerUid: string | undefined,
   endReason: EndReason,
+  ops?: RtdbOps | null,
 ): Promise<void> {
-  try {
-    const admin = require('firebase-admin') as typeof import('firebase-admin');
-    if (admin.apps.length > 0) {
-      const db = admin.firestore();
-      const snap = await db.collection('battles').doc(battleId).get();
-      if (!snap.exists) {
-        console.warn(`handleBattleEnd: no Firestore battle for ${battleId}`);
-        return;
-      }
-      const data = snap.data()!;
-      await snap.ref.update({
+  if (ops?.markFirestoreBattleEnded) {
+    try {
+      const result = await ops.markFirestoreBattleEnded(battleId, {
         status: 'completed',
         winner: winner ?? null,
         winnerUid: winnerUid ?? null,
         endReason,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
-      if (data.roomId) {
-        try {
-          await db.collection('battle_rooms').doc(data.roomId).update({
-            status: 'finished',
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          });
-        } catch (roomErr) {
-          console.warn(`handleBattleEnd: failed to update room ${data.roomId}:`, roomErr);
-        }
-      }
+      if (result === 'missing') console.warn(`handleBattleEnd: no Firestore battle for ${battleId}`);
       return;
+    } catch (err) {
+      console.warn('handleBattleEnd: Admin Firestore update failed, trying the client path:', err);
     }
-  } catch {
-    // Admin SDK not available — fall through to client path
   }
 
   // Client path: lazy-require to avoid pulling client SDK into server bundles
@@ -128,7 +104,7 @@ export async function handleBattleEnd(
 
     // RTDB already ended (atomic victory write) — sync Firestore only
     if (meta.phase === 'ended') {
-      await updateFirestore(battleId, winner, winnerUid, endReason);
+      await updateFirestore(battleId, winner, winnerUid, endReason, serverOps);
       return;
     }
 
@@ -166,7 +142,7 @@ export async function handleBattleEnd(
     if (rtdbAlreadyEnded) {
       console.warn(`handleBattleEnd: battle ${battleId} already ended in RTDB; syncing Firestore`);
     }
-    await updateFirestore(battleId, winner, winnerUid, endReason);
+    await updateFirestore(battleId, winner, winnerUid, endReason, serverOps);
   } catch (error) {
     console.error('Failed to handle battle end:', error);
     throw error;

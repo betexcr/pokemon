@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Pokemon } from '@/types/pokemon'
-import { getPokemonList, getPokemon, getMovesBatched } from '@/lib/api'
+import { getPokemonList, getPokemon, getMovesBatched, getPokemonSpecies } from '@/lib/api'
 import { formatPokemonName, getShowdownAnimatedSprite } from '@/lib/utils'
 import Image from 'next/image'
 import TypeBadgeWithTooltip from '@/components/TypeBadgeWithTooltip'
@@ -19,12 +19,18 @@ import {
   type TeamSlot,
   type MoveData
 } from '@/lib/userTeams'
-import { updateTeamInFirebase } from '@/lib/userTeams'
+import { updateTeamInFirebase, isSlotGender, sanitizeSlotAbility } from '@/lib/userTeams'
+import { EV_STATS, EV_STAT_LABEL, MAX_EVS_PER_STAT, MAX_EVS_TOTAL, evTotal, fixedGenderForRate, sanitizeEvs, slotStats } from '@/lib/battle-evs'
 import AuthModal from '@/components/auth/AuthModal'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import AppHeader from '@/components/AppHeader'
 import PokemonSelector from '@/components/PokemonSelector'
 import { DEFAULT_NATURE, NATURES, type NatureName, type NatureStat } from '@/data/natures'
+import { getBattleItem, itemsForSpecies, sanitizeBattleItem, type BattleItemCategory } from '@/lib/battle-items-catalog'
+const ITEM_CATEGORIES: BattleItemCategory[] = ['Species items', 'Choice & power', 'Recovery & defense', 'Field & utility', 'Berries', 'Type boost', 'Gems']
+import { TERA_TYPES, isTeraType, resolveTeraType } from '@/lib/team-battle-tera'
+
+const formatTeraLabel = (t: string) => t.charAt(0).toUpperCase() + t.slice(1)
 import { analyzeTeam, type TeamAnalysis } from '@/lib/team/engine'
 import { convertTeamSlotsToSimple } from '@/lib/team/converter'
 import TypeRadar from '@/components/team/TypeRadar'
@@ -58,7 +64,12 @@ const normalizeTeamSlots = (slots?: Array<Partial<TeamSlot>> | null): TeamSlot[]
       level: clampedLevel,
       moves,
       nature: slot.nature ?? DEFAULT_NATURE,
-      isShiny: slot.isShiny ?? false
+      isShiny: slot.isShiny ?? false,
+      ...(isTeraType(slot.teraType) ? { teraType: slot.teraType } : {}),
+      ...(sanitizeBattleItem(slot.item) ? { item: sanitizeBattleItem(slot.item) } : {}),
+      ...(sanitizeEvs(slot.evs) ? { evs: sanitizeEvs(slot.evs) } : {}),
+      ...(isSlotGender(slot.gender) ? { gender: slot.gender } : {}),
+      ...(sanitizeSlotAbility(slot.ability) ? { ability: sanitizeSlotAbility(slot.ability) } : {})
     }
   })
 }
@@ -399,6 +410,42 @@ export default function TeamBuilderPage() {
     }
   }, [])
 
+  // Species gender ratios (PokeAPI gender_rate) for slots, to lock single-gender / genderless species
+  const [genderRateById, setGenderRateById] = useState<Record<number, number>>({})
+  const slotSpeciesKey = teamSlots.map((s) => s.id ?? '').join(',')
+  useEffect(() => {
+    const missing = Array.from(new Set(teamSlots.map((s) => s.id).filter((id): id is number => typeof id === 'number' && !(id in genderRateById))))
+    if (missing.length === 0) return
+    let cancelled = false
+    void Promise.all(missing.map(async (id) => {
+      try {
+        const species = await getPokemonSpecies(id)
+        return [id, typeof species?.gender_rate === 'number' ? species.gender_rate : 4] as const
+      } catch {
+        return [id, 4] as const // unknown: leave the choice to the player
+      }
+    })).then((entries) => {
+      if (!cancelled) setGenderRateById((prev) => ({ ...prev, ...Object.fromEntries(entries) }))
+    })
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slotSpeciesKey])
+  useEffect(() => {
+    // Species that always have one gender (or none) get it set automatically
+    setTeamSlots((prev) => {
+      let changed = false
+      const next = prev.map((s) => {
+        const fixed = typeof s.id === 'number' ? fixedGenderForRate(genderRateById[s.id]) : undefined
+        if (!fixed || s.gender === fixed) return s
+        changed = true
+        return { ...s, gender: fixed }
+      })
+      if (!changed) return prev
+      persistCurrentTeam(next)
+      return next
+    })
+  }, [genderRateById, slotSpeciesKey, persistCurrentTeam])
+
   // Persist display Pokemon cache to localStorage
   const persistDisplayPokemon = useCallback((pokemonCache: Record<number, Pokemon>) => {
     try {
@@ -662,6 +709,10 @@ export default function TeamBuilderPage() {
       const merged = { ...s, ...patch }
       if (isPokemonChange) {
         merged.moves = [] as MoveData[]
+        // A Tera Type, gender or ability chosen for the previous species does not carry over
+        delete merged.teraType
+        delete merged.gender
+        delete merged.ability
       }
       // If removing Pokémon, normalize level and clear moves
       if (patch.id === null) {
@@ -1498,6 +1549,168 @@ export default function TeamBuilderPage() {
                             {' / '}
                             <span className="text-red-500">-{NATURE_STAT_LABEL[nature.decreasedStat!]}</span>
                           </span>
+                        )
+                      })()}
+                    </div>
+                  )}
+
+                  {/* Held Item Selector */}
+                  {poke && (
+                    <div className="mb-3 flex items-center gap-3">
+                      <label htmlFor={`held-item-${idx}`} className="text-xs font-medium text-muted flex-shrink-0">Item</label>
+                      <select
+                        id={`held-item-${idx}`}
+                        value={slot.item ?? ''}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => setSlot(idx, { item: sanitizeBattleItem(e.target.value) })}
+                        className="px-2 py-1 border border-border rounded text-xs bg-surface text-text max-w-[14rem]"
+                        data-testid={`held-item-${idx}`}
+                      >
+                        <option value="">No item</option>
+                        {ITEM_CATEGORIES.map((category) => {
+                          // Species-specific items only appear for the species that can use them
+                          const options = itemsForSpecies(poke.name).filter((i) => i.category === category)
+                          if (options.length === 0) return null
+                          return (
+                            <optgroup key={category} label={category}>
+                              {options.map((i) => (
+                                <option key={i.id} value={i.id}>{i.label}</option>
+                              ))}
+                            </optgroup>
+                          )
+                        })}
+                      </select>
+                      {getBattleItem(slot.item) && (
+                        <span className="text-xs text-muted truncate">{getBattleItem(slot.item)!.effect}</span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Tera Type Selector */}
+                  {poke && (
+                    <div className="mb-3 flex items-center gap-3">
+                      <label htmlFor={`tera-type-${idx}`} className="text-xs font-medium text-muted flex-shrink-0">Tera Type</label>
+                      <select
+                        id={`tera-type-${idx}`}
+                        value={slot.teraType ?? ''}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => {
+                          const value = e.target.value
+                          setSlot(idx, { teraType: isTeraType(value) ? value : undefined })
+                        }}
+                        className="px-2 py-1 border border-border rounded text-xs bg-surface text-text capitalize"
+                        data-testid={`tera-type-${idx}`}
+                      >
+                        <option value="">
+                          Default ({formatTeraLabel(resolveTeraType(undefined, (poke as any).types) ?? 'normal')})
+                        </option>
+                        {TERA_TYPES.map((t) => (
+                          <option key={t} value={t}>{formatTeraLabel(t)}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Ability (regular or hidden) */}
+                  {poke && Array.isArray(poke.abilities) && poke.abilities.length > 0 && (
+                    <div className="mb-3 flex items-center gap-3">
+                      <label htmlFor={`ability-${idx}`} className="text-xs font-medium text-muted flex-shrink-0">Ability</label>
+                      <select
+                        id={`ability-${idx}`}
+                        value={slot.ability ?? ''}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => setSlot(idx, { ability: sanitizeSlotAbility(e.target.value) })}
+                        className="px-2 py-1 border border-border rounded text-xs bg-surface text-text capitalize"
+                        data-testid={`ability-${idx}`}
+                      >
+                        <option value="">Default</option>
+                        {[...poke.abilities]
+                          .sort((a, b) => Number(a.is_hidden) - Number(b.is_hidden) || a.slot - b.slot)
+                          .map((a) => (
+                            <option key={a.ability.name} value={a.ability.name}>
+                              {a.ability.name.replace(/-/g, ' ')}{a.is_hidden ? ' (Hidden)' : ''}
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Gender (Attract, Cute Charm, Rivalry); fixed for single-gender and genderless species */}
+                  {poke && (() => {
+                    const fixed = typeof slot.id === 'number' ? fixedGenderForRate(genderRateById[slot.id]) : undefined
+                    return (
+                      <div className="mb-3 flex items-center gap-3">
+                        <label htmlFor={`gender-${idx}`} className="text-xs font-medium text-muted flex-shrink-0">Gender</label>
+                        <select
+                          id={`gender-${idx}`}
+                          value={fixed ?? slot.gender ?? ''}
+                          disabled={!!fixed}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => setSlot(idx, { gender: isSlotGender(e.target.value) ? e.target.value : undefined })}
+                          className="px-2 py-1 border border-border rounded text-xs bg-surface text-text disabled:opacity-70"
+                          data-testid={`gender-${idx}`}
+                        >
+                          <option value="">Unspecified</option>
+                          {(!fixed || fixed === 'male') && <option value="male">Male</option>}
+                          {(!fixed || fixed === 'female') && <option value="female">Female</option>}
+                          {fixed === 'genderless' && <option value="genderless">Genderless</option>}
+                        </select>
+                      </div>
+                    )
+                  })()}
+
+                  {/* EV spread */}
+                  {poke && (
+                    <div className="mb-3" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-medium text-muted">EVs</span>
+                        <span
+                          className={`text-xs ${evTotal(slot.evs) > MAX_EVS_TOTAL ? 'text-red-500' : 'text-muted'}`}
+                          data-testid={`ev-total-${idx}`}
+                        >
+                          {evTotal(slot.evs)} / {MAX_EVS_TOTAL}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-3 sm:grid-cols-6 gap-1">
+                        {EV_STATS.map((stat) => (
+                          <label key={stat} className="flex flex-col items-center text-[10px] text-muted">
+                            {EV_STAT_LABEL[stat]}
+                            <input
+                              type="number"
+                              min={0}
+                              max={MAX_EVS_PER_STAT}
+                              step={4}
+                              inputMode="numeric"
+                              value={slot.evs?.[stat] ?? 0}
+                              onChange={(e) => {
+                                const value = Math.max(0, Math.min(MAX_EVS_PER_STAT, Math.floor(Number(e.target.value) || 0)))
+                                const others = evTotal(slot.evs) - (slot.evs?.[stat] ?? 0)
+                                // Never exceed the 510 total: cap this stat at what is left
+                                const capped = Math.min(value, MAX_EVS_TOTAL - others)
+                                setSlot(idx, { evs: sanitizeEvs({ ...(slot.evs ?? {}), [stat]: capped }) })
+                              }}
+                              className="w-full px-1 py-0.5 border border-border rounded text-xs bg-surface text-text text-center"
+                              aria-label={`${EV_STAT_LABEL[stat]} EVs`}
+                              data-testid={`ev-${stat}-${idx}`}
+                            />
+                          </label>
+                        ))}
+                      </div>
+                      {/* Battle stats with this level, nature and EVs (31 IVs) */}
+                      {Array.isArray(poke.stats) && poke.stats.length > 0 && (() => {
+                        const stats = slotStats(poke.stats as never, slot.level, slot.nature, slot.evs)
+                        const nature = NATURES.find((n) => n.value === slot.nature)
+                        return (
+                          <div className="grid grid-cols-3 sm:grid-cols-6 gap-1 mt-1" data-testid={`stats-${idx}`}>
+                            {EV_STATS.map((stat) => (
+                              <span
+                                key={stat}
+                                className={`text-center text-[11px] font-medium ${nature?.increasedStat === stat ? 'text-green-600' : nature?.decreasedStat === stat ? 'text-red-500' : 'text-text'}`}
+                              >
+                                {stats[stat]}
+                              </span>
+                            ))}
+                          </div>
                         )
                       })()}
                     </div>

@@ -20,6 +20,8 @@ export default function OptimizedLink({
   ...props
 }: OptimizedLinkProps) {
   const router = useRouter()
+  // Router methods take a string; Link also accepts URL objects
+  const hrefString = typeof href === 'string' ? href : `${href.pathname ?? ''}${href.search ?? ''}${href.hash ?? ''}`
   const linkRef = useRef<HTMLAnchorElement>(null)
   const prefetchedRef = useRef(false)
 
@@ -35,7 +37,7 @@ export default function OptimizedLink({
       
       // Debounce prefetch to avoid unnecessary requests
       hoverTimeout = setTimeout(() => {
-        router.prefetch(href)
+        router.prefetch(hrefString)
         prefetchedRef.current = true
       }, 150) // 150ms delay before prefetching
     }
@@ -61,7 +63,7 @@ export default function OptimizedLink({
   // Preload high-priority routes immediately
   useEffect(() => {
     if (priority && prefetch && !prefetchedRef.current) {
-      router.prefetch(href)
+      router.prefetch(hrefString)
       prefetchedRef.current = true
     }
   }, [href, router, prefetch, priority])
@@ -80,7 +82,7 @@ export default function OptimizedLink({
     }
 
     // Use direct navigation for fastest response
-    router.push(href)
+    router.push(hrefString)
   }
 
   return (

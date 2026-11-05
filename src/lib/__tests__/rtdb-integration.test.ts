@@ -1,488 +1,333 @@
-import { describe, it, expect, beforeEach, afterEach, vi, Mock } from 'vitest';
-import { rtdbService } from '../firebase-rtdb-service';
-import { FirebaseRTDBBattleEngine } from '../battle-engine-rtdb';
-import { BattleFlowEngine } from '../battle-engine-rtdb';
+/**
+ * RTDB integration tests: the real `rtdbService` and `FirebaseRTDBBattleEngine`
+ * running against an in-memory fake of `firebase/database`.
+ *
+ * Unlike `battle-engine-rtdb.test.ts` (which mocks `rtdbService` entirely), these
+ * tests exercise the service's actual paths, listener wiring and duplicate /
+ * permission handling, and check that two clients see a consistent battle.
+ */
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-// Mock Firebase RTDB
+type Listener = { path: string; cb: (snap: FakeSnapshot) => void };
+type FakeSnapshot = { val: () => unknown; exists: () => boolean };
+
+const fake = vi.hoisted(() => {
+  const state = {
+    root: {} as Record<string, unknown>,
+    listeners: [] as Listener[],
+    /** Paths whose next `set` rejects with this error message. */
+    failSet: new Map<string, string>(),
+    writes: [] as string[],
+  };
+
+  const split = (path: string) => path.split('/').filter(Boolean);
+  const clone = <T>(v: T): T => (v === undefined ? v : JSON.parse(JSON.stringify(v)));
+
+  const read = (path: string): unknown => {
+    let node: unknown = state.root;
+    for (const key of split(path)) {
+      if (node === null || typeof node !== 'object') return undefined;
+      node = (node as Record<string, unknown>)[key];
+    }
+    return node;
+  };
+
+  const write = (path: string, value: unknown) => {
+    const keys = split(path);
+    let node = state.root as Record<string, unknown>;
+    for (const key of keys.slice(0, -1)) {
+      if (node[key] === null || typeof node[key] !== 'object') node[key] = {};
+      node = node[key] as Record<string, unknown>;
+    }
+    const last = keys[keys.length - 1];
+    if (value === null || value === undefined) delete node[last];
+    else node[last] = clone(value);
+  };
+
+  const snapshot = (path: string): FakeSnapshot => {
+    const v = clone(read(path));
+    return { val: () => (v === undefined ? null : v), exists: () => v !== undefined && v !== null };
+  };
+
+  const notify = (changed: string) => {
+    for (const l of [...state.listeners]) {
+      if (changed.startsWith(l.path) || l.path.startsWith(changed)) l.cb(snapshot(l.path));
+    }
+  };
+
+  return { state, read, write, snapshot, notify };
+});
+
 vi.mock('firebase/database', () => ({
-  ref: vi.fn(),
-  set: vi.fn(),
-  get: vi.fn(),
-  remove: vi.fn(),
-  update: vi.fn(),
-  onValue: vi.fn(),
+  ref: (_db: unknown, path: string) => ({ path }),
+  get: async (r: { path: string }) => fake.snapshot(r.path),
+  set: async (r: { path: string }, value: unknown) => {
+    const failure = fake.state.failSet.get(r.path);
+    if (failure) {
+      fake.state.failSet.delete(r.path);
+      throw new Error(failure);
+    }
+    fake.write(r.path, value);
+    fake.state.writes.push(r.path);
+    fake.notify(r.path);
+  },
+  update: async (r: { path: string }, values: Record<string, unknown>) => {
+    for (const [k, v] of Object.entries(values)) fake.write(`${r.path}/${k}`, v);
+    fake.state.writes.push(r.path);
+    fake.notify(r.path);
+  },
+  remove: async (r: { path: string }) => {
+    fake.write(r.path, null);
+    fake.notify(r.path);
+  },
+  onValue: (r: { path: string }, cb: (snap: FakeSnapshot) => void) => {
+    const listener = { path: r.path, cb };
+    fake.state.listeners.push(listener);
+    cb(fake.snapshot(r.path));
+    return () => {
+      fake.state.listeners = fake.state.listeners.filter((l) => l !== listener);
+    };
+  },
   off: vi.fn(),
   push: vi.fn(),
-  serverTimestamp: vi.fn(() => ({ '.sv': 'timestamp' }))
+  serverTimestamp: () => 1_700_000_000_000,
 }));
 
-// Mock Firebase app
+const authState = vi.hoisted(() => ({ currentUser: { uid: 'player1' } as { uid: string } | null }));
+
 vi.mock('../firebase', () => ({
-  rtdb: {
-    ref: vi.fn(),
-    child: vi.fn(),
-    set: vi.fn(),
-    get: vi.fn(),
-    remove: vi.fn(),
-    update: vi.fn(),
-    on: vi.fn(),
-    off: vi.fn()
-  }
+  rtdb: { fake: true },
+  get auth() {
+    return authState;
+  },
 }));
+
+import { rtdbService } from '../firebase-rtdb-service';
+import { FirebaseRTDBBattleEngine } from '../battle-engine-rtdb';
+
+const slot = (name: string, type: string, moves: string[] = ['tackle']) => ({
+  pokemon: { name, types: [{ type: { name: type } }] },
+  level: 50,
+  currentHp: 100,
+  maxHp: 100,
+  moves: moves.map((id) => ({ id, name: id })),
+  statModifiers: { attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0, accuracy: 0, evasion: 0 },
+});
+
+const p1Team = [slot('pikachu', 'electric', ['thunderbolt']), slot('bulbasaur', 'grass', ['vine-whip'])];
+const p2Team = [slot('charmander', 'fire', ['flamethrower']), slot('squirtle', 'water', ['water-gun'])];
+
+async function createBattle(id = 'battle-123') {
+  await rtdbService.createBattle(id, 'player1', 'Player 1', p1Team, 'player2', 'Player 2', p2Team);
+  return id;
+}
+
+async function engineFor(uid: string, battleId: string) {
+  authState.currentUser = { uid };
+  const engine = new FirebaseRTDBBattleEngine(battleId);
+  const states: Array<ReturnType<FirebaseRTDBBattleEngine['convertToBattleState']>> = [];
+  const phases: string[] = [];
+  await engine.initialize((s) => states.push(s), (p) => phases.push(p));
+  return { engine, states, phases };
+}
 
 describe('RTDB Integration Tests', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    fake.state.root = {};
+    fake.state.listeners = [];
+    fake.state.failSet.clear();
+    fake.state.writes = [];
+    authState.currentUser = { uid: 'player1' };
   });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
+  describe('Battle creation', () => {
+    it('writes meta, participants, public and per-player private nodes', async () => {
+      const id = await createBattle();
+
+      const meta = fake.read(`battles/${id}/meta`) as Record<string, any>;
+      expect(meta.phase).toBe('choosing');
+      expect(meta.turn).toBe(1);
+      expect(meta.players.p1.uid).toBe('player1');
+      expect(meta.players.p2.uid).toBe('player2');
+      expect(meta.battleRng).toBeDefined();
+
+      const pub = fake.read(`battles/${id}/public`) as Record<string, any>;
+      expect(pub.p1.active.species).toBe('pikachu');
+      expect(pub.p2.active.species).toBe('charmander');
+      expect(pub.p1.benchPublic).toHaveLength(1);
+      expect(pub.p2.benchPublic[0].species).toBe('squirtle');
+
+      const p1Private = fake.read(`battles/${id}/private/player1`) as Record<string, any>;
+      const p2Private = fake.read(`battles/${id}/private/player2`) as Record<string, any>;
+      expect(p1Private.team).toHaveLength(2);
+      expect(p2Private.team[0].pokemon.name).toBe('charmander');
+
+      const participants = fake.read(`battles/${id}/participants`) as Record<string, any>;
+      expect(participants.player1.role).toBe('p1');
+      expect(participants.player2.role).toBe('p2');
+    });
+
+    it('keeps each player team private: public data exposes only species and revealed moves', async () => {
+      const id = await createBattle();
+      const pub = fake.read(`battles/${id}/public`) as Record<string, any>;
+      expect(pub.p2.benchPublic[0]).toEqual({ species: 'squirtle', fainted: false, revealedMoves: ['water-gun'] });
+      expect(JSON.stringify(pub)).not.toContain('statModifiers');
+    });
   });
 
-  describe('Complete Battle Flow Integration', () => {
-    it('should handle full battle lifecycle from lobby to completion', async () => {
-      // Mock RTDB operations
-      (rtdbService as any).rtdb = { ref: vi.fn() };
+  describe('Client engines', () => {
+    it('both players get a consistent battle state from their own perspective', async () => {
+      const id = await createBattle();
+      const a = await engineFor('player1', id);
+      const b = await engineFor('player2', id);
 
-      // Step 1: Join lobby
-      await rtdbService.joinLobby('player1', 'us-central1', {
-        format: 'singles',
-        minRating: 1000
+      const aState = a.states.at(-1)!;
+      const bState = b.states.at(-1)!;
+      expect(aState.turn).toBe(1);
+      expect(bState.turn).toBe(1);
+      expect(aState.player.pokemon[aState.player.currentIndex].pokemon.name).toBe('pikachu');
+      expect(aState.opponent.pokemon[0].pokemon.name).toBe('charmander');
+      expect(bState.player.pokemon[bState.player.currentIndex].pokemon.name).toBe('charmander');
+      expect(bState.opponent.pokemon[0].pokemon.name).toBe('pikachu');
+      expect(a.phases.at(-1)).toBe('choosing');
+
+      a.engine.destroy();
+      b.engine.destroy();
+    });
+
+    it('submitted choices land under turns/{turn}/choices/{uid} with the current meta version', async () => {
+      const id = await createBattle();
+      const a = await engineFor('player1', id);
+      const b = await engineFor('player2', id);
+
+      await a.engine.submitChoice({ type: 'move', moveId: 'thunderbolt', target: 'opponent' });
+      await b.engine.submitChoice({ type: 'switch', switchIndex: 1 });
+
+      const choices = fake.read(`battles/${id}/turns/1/choices`) as Record<string, any>;
+      expect(choices.player1).toMatchObject({
+        action: 'move',
+        payload: { moveId: 'thunderbolt', target: 'opponent' },
+        clientVersion: 1,
       });
+      expect(choices.player2).toMatchObject({ action: 'switch', payload: { switchToIndex: 1 }, clientVersion: 1 });
 
-      await rtdbService.joinLobby('player2', 'us-central1', {
-        format: 'singles',
-        minRating: 1000
-      });
+      a.engine.destroy();
+      b.engine.destroy();
+    });
 
-      // Step 2: Create battle (simulated by matchmaking)
-      const battleId = 'battle-123';
-      const p1Team = [
-        {
-          pokemon: { name: 'Pikachu', types: [{ type: { name: 'electric' } }] },
-          level: 50,
-          currentHp: 100,
-          maxHp: 100,
-          statModifiers: { attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0, accuracy: 0, evasion: 0 }
-        }
-      ];
+    it('ignores a second submission for the same turn (choices are write-once)', async () => {
+      const id = await createBattle();
+      const a = await engineFor('player1', id);
 
-      const p2Team = [
-        {
-          pokemon: { name: 'Charmander', types: [{ type: { name: 'fire' } }] },
-          level: 50,
-          currentHp: 100,
-          maxHp: 100,
-          statModifiers: { attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0, accuracy: 0, evasion: 0 }
-        }
-      ];
+      await a.engine.submitChoice({ type: 'move', moveId: 'thunderbolt', target: 'opponent' });
+      await a.engine.submitChoice({ type: 'move', moveId: 'quick-attack', target: 'opponent' });
 
-      await rtdbService.createBattle(
-        battleId,
-        'player1',
-        'Player 1',
-        p1Team,
-        'player2',
-        'Player 2',
-        p2Team
+      const choice = fake.read(`battles/${id}/turns/1/choices/player1`) as Record<string, any>;
+      expect(choice.payload.moveId).toBe('thunderbolt');
+      a.engine.destroy();
+    });
+
+    it('treats PERMISSION_DENIED on choice write as a no-op (rules closed the window)', async () => {
+      const id = await createBattle();
+      const a = await engineFor('player1', id);
+      fake.state.failSet.set(`battles/${id}/turns/1/choices/player1`, 'PERMISSION_DENIED: write rejected');
+
+      await expect(
+        a.engine.submitChoice({ type: 'move', moveId: 'thunderbolt', target: 'opponent' }),
+      ).resolves.toBeUndefined();
+      expect(fake.read(`battles/${id}/turns/1/choices/player1`)).toBeUndefined();
+      a.engine.destroy();
+    });
+
+    it('surfaces other write errors to the caller', async () => {
+      const id = await createBattle();
+      const a = await engineFor('player1', id);
+      fake.state.failSet.set(`battles/${id}/turns/1/choices/player1`, 'network down');
+
+      await expect(
+        a.engine.submitChoice({ type: 'move', moveId: 'thunderbolt', target: 'opponent' }),
+      ).rejects.toThrow('network down');
+      a.engine.destroy();
+    });
+
+    it('rejects choices once the server moves the battle out of the choosing phase', async () => {
+      const id = await createBattle();
+      const a = await engineFor('player1', id);
+
+      await rtdbService.updateBattleMeta(id, { phase: 'resolving' } as any);
+      expect(a.phases.at(-1)).toBe('resolving');
+      await expect(
+        a.engine.submitChoice({ type: 'move', moveId: 'thunderbolt', target: 'opponent' }),
+      ).rejects.toThrow('Not in choosing phase');
+      a.engine.destroy();
+    });
+
+    it('propagates server-side turn advances and public HP changes to every client', async () => {
+      const id = await createBattle();
+      const a = await engineFor('player1', id);
+      const b = await engineFor('player2', id);
+
+      await rtdbService.updatePublicState(id, {
+        p2: { ...(fake.read(`battles/${id}/public/p2`) as any), active: { ...(fake.read(`battles/${id}/public/p2/active`) as any), hp: { cur: 40, max: 100 } } },
+      } as any);
+      await rtdbService.updateBattleMeta(id, { turn: 2, phase: 'choosing' } as any);
+
+      expect(a.states.at(-1)!.turn).toBe(2);
+      expect(b.states.at(-1)!.turn).toBe(2);
+      expect(a.states.at(-1)!.opponent.pokemon[0].currentHp).toBe(40);
+
+      // Turn 2 choices go to the new turn node.
+      await a.engine.submitChoice({ type: 'move', moveId: 'thunderbolt', target: 'opponent' });
+      expect(fake.read(`battles/${id}/turns/2/choices/player1`)).toBeDefined();
+      expect(fake.read(`battles/${id}/turns/1/choices/player1`)).toBeUndefined();
+
+      a.engine.destroy();
+      b.engine.destroy();
+    });
+
+    it('destroy() detaches every listener', async () => {
+      const id = await createBattle();
+      const a = await engineFor('player1', id);
+      const b = await engineFor('player2', id);
+      expect(fake.state.listeners).toHaveLength(6);
+
+      a.engine.destroy();
+      expect(fake.state.listeners).toHaveLength(3);
+      b.engine.destroy();
+      expect(fake.state.listeners).toHaveLength(0);
+    });
+
+    it('keeps concurrent battles isolated', async () => {
+      const ids = await Promise.all(['b-0', 'b-1', 'b-2'].map((id) => createBattle(id)));
+      const engines = [];
+      for (const id of ids) engines.push(await engineFor('player1', id));
+
+      await Promise.all(
+        engines.map(({ engine }) => engine.submitChoice({ type: 'move', moveId: 'thunderbolt', target: 'opponent' })),
       );
 
-      // Step 3: Initialize battle engines for both players
-      const p1Engine = new FirebaseRTDBBattleEngine(battleId);
-      const p2Engine = new FirebaseRTDBBattleEngine(battleId);
-
-      const mockUnsubscribe = vi.fn();
-      (rtdbService.onBattleMeta as Mock).mockReturnValue(mockUnsubscribe);
-      (rtdbService.onBattlePublic as Mock).mockReturnValue(mockUnsubscribe);
-      (rtdbService.onBattlePrivate as Mock).mockReturnValue(mockUnsubscribe);
-
-      await p1Engine.initialize();
-      await p2Engine.initialize();
-
-      // Step 4: Submit choices
-      await p1Engine.submitChoice({
-        type: 'move',
-        moveId: 'thunderbolt',
-        target: 'opponent'
-      });
-
-      await p2Engine.submitChoice({
-        type: 'move',
-        moveId: 'flamethrower',
-        target: 'opponent'
-      });
-
-      // Step 5: Simulate turn resolution (would be handled by Cloud Functions)
-      // This would update the battle state in RTDB
-
-      // Step 6: Clean up
-      p1Engine.destroy();
-      p2Engine.destroy();
-
-      expect(rtdbService.joinLobby).toHaveBeenCalledTimes(2);
-      expect(rtdbService.createBattle).toHaveBeenCalledTimes(1);
-      expect(rtdbService.submitChoice).toHaveBeenCalledTimes(2);
-    });
-
-    it('should handle multiple concurrent battles', async () => {
-      (rtdbService as any).rtdb = { ref: vi.fn() };
-
-      // Create multiple battles
-      const battles = Array.from({ length: 5 }, (_, i) => ({
-        id: `battle-${i}`,
-        p1: `player1-${i}`,
-        p2: `player2-${i}`
-      }));
-
-      // Initialize all battles
-      const engines = battles.map(battle => new FirebaseRTDBBattleEngine(battle.id));
-
-      const mockUnsubscribe = vi.fn();
-      (rtdbService.onBattleMeta as Mock).mockReturnValue(mockUnsubscribe);
-      (rtdbService.onBattlePublic as Mock).mockReturnValue(mockUnsubscribe);
-      (rtdbService.onBattlePrivate as Mock).mockReturnValue(mockUnsubscribe);
-
-      // Initialize all engines concurrently
-      await Promise.all(engines.map(engine => engine.initialize()));
-
-      // Submit choices for all battles
-      const choicePromises = engines.map(engine => 
-        engine.submitChoice({
-          type: 'move',
-          moveId: 'thunderbolt',
-          target: 'opponent'
-        })
-      );
-
-      await Promise.all(choicePromises);
-
-      // Clean up all engines
-      engines.forEach(engine => engine.destroy());
-
-      expect(rtdbService.submitChoice).toHaveBeenCalledTimes(5);
-    });
-  });
-
-  describe('Real-time Synchronization', () => {
-    it('should synchronize state changes across multiple clients', async () => {
-      const mockUnsubscribe = vi.fn();
-      (rtdbService.onBattleMeta as Mock).mockReturnValue(mockUnsubscribe);
-      (rtdbService.onBattlePublic as Mock).mockReturnValue(mockUnsubscribe);
-      (rtdbService.onBattlePrivate as Mock).mockReturnValue(mockUnsubscribe);
-
-      const engine1 = new FirebaseRTDBBattleEngine('battle-123');
-      const engine2 = new FirebaseRTDBBattleEngine('battle-123');
-
-      await engine1.initialize();
-      await engine2.initialize();
-
-      // Simulate state change from server
-      const mockStateChange = vi.fn();
-      const mockPhaseChange = vi.fn();
-
-      // Mock the callbacks
-      const mockInitialize = vi.spyOn(engine1, 'initialize');
-      mockInitialize.mockImplementation((onStateChange, onPhaseChange) => {
-        mockStateChange.mockImplementation(onStateChange);
-        mockPhaseChange.mockImplementation(onPhaseChange);
-        return Promise.resolve();
-      });
-
-      // Simulate state update
-      mockStateChange({
-        player: { pokemon: [], currentIndex: 0, faintedCount: 0, sideConditions: {} },
-        opponent: { pokemon: [], currentIndex: 0, faintedCount: 0, sideConditions: {} },
-        turn: 1,
-        rng: 12345,
-        battleLog: [],
-        isComplete: false,
-        phase: 'choice',
-        actionQueue: [],
-        field: {}
-      });
-
-      mockPhaseChange('choosing');
-
-      // Both engines should receive the same state
-      expect(mockStateChange).toHaveBeenCalled();
-      expect(mockPhaseChange).toHaveBeenCalled();
-
-      engine1.destroy();
-      engine2.destroy();
-    });
-
-    it('should handle rapid state changes', async () => {
-      const mockUnsubscribe = vi.fn();
-      (rtdbService.onBattleMeta as Mock).mockReturnValue(mockUnsubscribe);
-      (rtdbService.onBattlePublic as Mock).mockReturnValue(mockUnsubscribe);
-      (rtdbService.onBattlePrivate as Mock).mockReturnValue(mockUnsubscribe);
-
-      const engine = new FirebaseRTDBBattleEngine('battle-123');
-      await engine.initialize();
-
-      // Simulate rapid state changes
-      const stateChanges = Array.from({ length: 10 }, (_, i) => ({
-        player: { pokemon: [], currentIndex: 0, faintedCount: 0, sideConditions: {} },
-        opponent: { pokemon: [], currentIndex: 0, faintedCount: 0, sideConditions: {} },
-        turn: i + 1,
-        rng: 12345,
-        battleLog: [],
-        isComplete: false,
-        phase: 'choice',
-        actionQueue: [],
-        field: {}
-      }));
-
-      // Apply all state changes
-      stateChanges.forEach(state => {
-        engine['meta'] = {
-          phase: 'choosing',
-          turn: state.turn,
-          version: 1,
-          players: { p1: { uid: 'p1', name: 'P1' }, p2: { uid: 'p2', name: 'P2' } },
-          createdAt: Date.now(),
-          format: 'singles',
-          ruleSet: 'gen9-no-weather',
-          region: 'global',
-          deadlineAt: Date.now() + 30000
-        };
-      });
-
-      // Should handle all changes without errors
-      expect(() => engine.convertToBattleState()).not.toThrow();
-
-      engine.destroy();
-    });
-  });
-
-  describe('Data Consistency', () => {
-    it('should maintain data consistency across operations', async () => {
-      (rtdbService as any).rtdb = { ref: vi.fn() };
-
-      // Create battle
-      const battleId = 'battle-123';
-      const team = [
-        {
-          pokemon: { name: 'Pikachu', types: [{ type: { name: 'electric' } }] },
-          level: 50,
-          currentHp: 100,
-          maxHp: 100,
-          statModifiers: { attack: 0, defense: 0, specialAttack: 0, specialDefense: 0, speed: 0, accuracy: 0, evasion: 0 }
-        }
-      ];
-
-      await rtdbService.createBattle(
-        battleId,
-        'player1',
-        'Player 1',
-        team,
-        'player2',
-        'Player 2',
-        team
-      );
-
-      // Submit multiple choices
-      const choices = [
-        { action: 'move', payload: { moveId: 'thunderbolt', target: 'opponent' } },
-        { action: 'switch', payload: { switchToIndex: 1 } },
-        { action: 'move', payload: { moveId: 'quick-attack', target: 'opponent' } }
-      ];
-
-      for (const choice of choices) {
-        await rtdbService.submitChoice(battleId, 1, 'player1', choice);
+      for (const id of ids) {
+        const choices = fake.read(`battles/${id}/turns/1/choices`) as Record<string, unknown>;
+        expect(Object.keys(choices)).toEqual(['player1']);
       }
-
-      // All operations should complete successfully
-      expect(rtdbService.createBattle).toHaveBeenCalledTimes(1);
-      expect(rtdbService.submitChoice).toHaveBeenCalledTimes(3);
-    });
-
-    it('should handle data validation errors gracefully', async () => {
-      (rtdbService as any).rtdb = { ref: vi.fn() };
-
-      // Test invalid data
-      await expect(rtdbService.createBattle('', 'player1', 'Player 1', [], 'player2', 'Player 2', []))
-        .rejects.toThrow('Invalid battle ID');
-
-      await expect(rtdbService.submitChoice('battle-123', 1, 'player1', null as any))
-        .rejects.toThrow('Invalid choice data');
+      engines.forEach(({ engine }) => engine.destroy());
     });
   });
 
-  describe('Error Recovery', () => {
-    it('should recover from temporary failures', async () => {
-      let attemptCount = 0;
-      const maxRetries = 3;
+  describe('Lobby and presence', () => {
+    it('joinLobby / leaveLobby write and clear the queue entry', async () => {
+      await rtdbService.joinLobby('player1', 'us-central1', { format: 'singles', minRating: 1000 } as any);
+      expect(fake.read('lobbies/us-central1/queue/player1')).toMatchObject({ prefs: { format: 'singles' } });
 
-      // Mock RTDB with retry logic
-      (rtdbService as any).rtdb = {
-        ref: vi.fn().mockImplementation(() => {
-          attemptCount++;
-          if (attemptCount < maxRetries) {
-            throw new Error('Temporary failure');
-          }
-          return { set: vi.fn().mockResolvedValue(undefined) };
-        })
-      };
-
-      // Retry logic
-      let success = false;
-      for (let i = 0; i < maxRetries; i++) {
-        try {
-          await rtdbService.updatePresence('test-uid', true);
-          success = true;
-          break;
-        } catch (error) {
-          if (i === maxRetries - 1) {
-            throw error;
-          }
-        }
-      }
-
-      expect(success).toBe(true);
-      expect(attemptCount).toBe(maxRetries);
+      await rtdbService.leaveLobby('player1', 'us-central1');
+      expect(fake.read('lobbies/us-central1/queue/player1')).toBeUndefined();
     });
 
-    it('should handle partial system failures', async () => {
-      // Mock partial failure
-      (rtdbService as any).rtdb = {
-        ref: vi.fn().mockImplementation((path) => {
-          if (path.includes('presence')) {
-            throw new Error('Presence service unavailable');
-          }
-          return { set: vi.fn().mockResolvedValue(undefined) };
-        })
-      };
-
-      // Some operations should fail, others should succeed
-      await expect(rtdbService.updatePresence('test-uid', true))
-        .rejects.toThrow('Presence service unavailable');
-
-      await expect(rtdbService.joinLobby('test-uid', 'us-central1', {}))
-        .resolves.not.toThrow();
-    });
-  });
-
-  describe('Performance Under Load', () => {
-    it('should handle high-frequency operations', async () => {
-      (rtdbService as any).rtdb = { ref: vi.fn() };
-
-      const startTime = performance.now();
-
-      // Simulate high-frequency operations
-      const operations = Array.from({ length: 100 }, (_, i) => 
-        rtdbService.updatePresence(`user-${i}`, true)
-      );
-
-      await Promise.all(operations);
-
-      const endTime = performance.now();
-      const totalTime = endTime - startTime;
-
-      expect(totalTime).toBeLessThan(1000); // Should complete in under 1 second
-    });
-
-    it('should handle large data transfers', async () => {
-      (rtdbService as any).rtdb = { ref: vi.fn() };
-
-      const startTime = performance.now();
-
-      // Create large team data
-      const largeTeam = Array.from({ length: 50 }, (_, i) => ({
-        pokemon: {
-          name: `Pokemon${i}`,
-          types: [{ type: { name: 'normal' } }],
-          stats: Array.from({ length: 6 }, (_, j) => ({
-            stat: { name: `stat-${j}` },
-            base_stat: 100
-          }))
-        },
-        level: 50,
-        currentHp: 100,
-        maxHp: 100,
-        statModifiers: {
-          attack: 0, defense: 0, specialAttack: 0,
-          specialDefense: 0, speed: 0, accuracy: 0, evasion: 0
-        }
-      }));
-
-      await rtdbService.createBattle(
-        'battle-123',
-        'player1',
-        'Player 1',
-        largeTeam,
-        'player2',
-        'Player 2',
-        largeTeam
-      );
-
-      const endTime = performance.now();
-      const totalTime = endTime - startTime;
-
-      expect(totalTime).toBeLessThan(2000); // Should complete in under 2 seconds
-    });
-  });
-
-  describe('Concurrent Access', () => {
-    it('should handle concurrent access to same battle', async () => {
-      const mockUnsubscribe = vi.fn();
-      (rtdbService.onBattleMeta as Mock).mockReturnValue(mockUnsubscribe);
-      (rtdbService.onBattlePublic as Mock).mockReturnValue(mockUnsubscribe);
-      (rtdbService.onBattlePrivate as Mock).mockReturnValue(mockUnsubscribe);
-
-      const battleId = 'battle-123';
-      const engines = Array.from({ length: 5 }, () => 
-        new FirebaseRTDBBattleEngine(battleId)
-      );
-
-      // Initialize all engines concurrently
-      await Promise.all(engines.map(engine => engine.initialize()));
-
-      // Submit choices concurrently
-      const choicePromises = engines.map(engine => 
-        engine.submitChoice({
-          type: 'move',
-          moveId: 'thunderbolt',
-          target: 'opponent'
-        })
-      );
-
-      await Promise.all(choicePromises);
-
-      // Clean up
-      engines.forEach(engine => engine.destroy());
-
-      expect(rtdbService.submitChoice).toHaveBeenCalledTimes(5);
-    });
-
-    it('should handle concurrent access to different battles', async () => {
-      const mockUnsubscribe = vi.fn();
-      (rtdbService.onBattleMeta as Mock).mockReturnValue(mockUnsubscribe);
-      (rtdbService.onBattlePublic as Mock).mockReturnValue(mockUnsubscribe);
-      (rtdbService.onBattlePrivate as Mock).mockReturnValue(mockUnsubscribe);
-
-      const battles = Array.from({ length: 10 }, (_, i) => 
-        new FirebaseRTDBBattleEngine(`battle-${i}`)
-      );
-
-      // Initialize all battles concurrently
-      await Promise.all(battles.map(battle => battle.initialize()));
-
-      // Submit choices concurrently
-      const choicePromises = battles.map(battle => 
-        battle.submitChoice({
-          type: 'move',
-          moveId: 'thunderbolt',
-          target: 'opponent'
-        })
-      );
-
-      await Promise.all(choicePromises);
-
-      // Clean up
-      battles.forEach(battle => battle.destroy());
-
-      expect(rtdbService.submitChoice).toHaveBeenCalledTimes(10);
+    it('updatePresence records connection state', async () => {
+      await rtdbService.updatePresence('player1', true);
+      expect(fake.read('presence/player1')).toMatchObject({ connected: true });
+      await rtdbService.updatePresence('player1', false);
+      expect(fake.read('presence/player1')).toMatchObject({ connected: false });
     });
   });
 });

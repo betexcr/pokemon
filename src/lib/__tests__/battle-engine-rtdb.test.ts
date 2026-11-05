@@ -212,7 +212,7 @@ describe('FirebaseRTDBBattleEngine', () => {
             level: 50,
             types: ['electric'],
             hp: { cur: 100, max: 100 },
-            status: null,
+            status: undefined,
             boosts: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0, acc: 0, eva: 0 }
           },
           benchPublic: []
@@ -223,7 +223,7 @@ describe('FirebaseRTDBBattleEngine', () => {
             level: 50,
             types: ['fire'],
             hp: { cur: 100, max: 100 },
-            status: null,
+            status: undefined,
             boosts: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0, acc: 0, eva: 0 }
           },
           benchPublic: []
@@ -455,8 +455,8 @@ describe('BattleFlowEngine', () => {
       mockInitialize.mockResolvedValue(undefined);
 
       const mockBattleState: BattleState = {
-        player: { pokemon: [], currentIndex: 0, faintedCount: 0, sideConditions: {} },
-        opponent: { pokemon: [], currentIndex: 0, faintedCount: 0, sideConditions: {} },
+        player: { pokemon: [], currentIndex: 0, faintedCount: 0, sideConditions: { screens: {}, hazards: { stealthRock: false, spikes: 0, toxicSpikes: 0, stickyWeb: false } } },
+        opponent: { pokemon: [], currentIndex: 0, faintedCount: 0, sideConditions: { screens: {}, hazards: { stealthRock: false, spikes: 0, toxicSpikes: 0, stickyWeb: false } } },
         turn: 1,
         rng: createBattleRng(1),
         battleLog: [],

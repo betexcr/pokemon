@@ -34,5 +34,5 @@ global.process = {
     heapUsed: 1024 * 1024 * 25,
     external: 1024 * 1024 * 10,
     arrayBuffers: 1024 * 1024 * 5
-  }))
+  })) as unknown as NodeJS.MemoryUsageFn
 };

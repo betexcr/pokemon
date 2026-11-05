@@ -1,3 +1,4 @@
+import { effectiveItem } from './battle-item-access';
 import { BattleState, getCurrentPokemon, BattleTeam } from './team-battle-engine';
 import { FieldState, FieldSideScreens } from './team-battle-types';
 import { getPokemonTypes, isGrounded } from './team-battle-hazards';
@@ -21,10 +22,12 @@ export function decrementFieldTimers(field: FieldState, screens: { player: Field
   }
 
   if (!field.rooms) field.rooms = {};
-  if (field.rooms.trickRoom) {
-    field.rooms.trickRoom.turns -= 1;
-    if (field.rooms.trickRoom.turns <= 0) {
-      delete field.rooms.trickRoom;
+  for (const room of ['trickRoom', 'magicRoom', 'wonderRoom', 'gravity', 'fairyLock'] as const) {
+    const active = field.rooms[room];
+    if (!active) continue;
+    active.turns -= 1;
+    if (active.turns <= 0) {
+      delete field.rooms[room];
     }
   }
 
@@ -49,6 +52,10 @@ export function decrementFieldTimers(field: FieldState, screens: { player: Field
       side.tailwind.turns -= 1;
       if (side.tailwind.turns <= 0) delete side.tailwind;
     }
+    if (side.mist) {
+      side.mist.turns -= 1;
+      if (side.mist.turns <= 0) delete side.mist;
+    }
   };
 
   decrementScreens(screens.player);
@@ -61,9 +68,9 @@ export function applyWeatherResidual(state: BattleState): void {
     [state.player, state.opponent].forEach(team => {
       const pokemon = getCurrentPokemon(team);
       if (pokemon.currentHp <= 0) return;
-      const types = getPokemonTypes(pokemon);
+      const types = getPokemonTypes(pokemon).map((t) => String(t).toLowerCase());
       const ability = pokemon.currentAbility?.toLowerCase();
-      const item = pokemon.heldItem?.toLowerCase();
+      const item = effectiveItem(pokemon);
       const immune =
         types.includes('rock') ||
         types.includes('ground') ||
@@ -129,7 +136,9 @@ export function applyLeechSeed(state: BattleState): void {
     if (damage <= 0) return;
 
     targetPokemon.currentHp = Math.max(0, targetPokemon.currentHp - damage);
-    seeder.currentHp = Math.min(seeder.maxHp, seeder.currentHp + damage);
+    // Big Root boosts the seeder's recovery by 30%
+    const heal = effectiveItem(seeder) === 'big-root' ? Math.floor(damage * 1.3) : damage;
+    seeder.currentHp = Math.min(seeder.maxHp, seeder.currentHp + heal);
 
     state.battleLog.push({
       type: 'status_damage',

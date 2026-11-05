@@ -370,7 +370,7 @@ describe('Battle State Conversion Tests', () => {
           benchPublic: [
             { species: 'Charmander', level: 50, types: ['fire'], hp: { cur: 100, max: 100 }, boosts: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0, acc: 0, eva: 0 } },
             { species: 'Squirtle', level: 50, types: ['water'], hp: { cur: 100, max: 100 }, boosts: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0, acc: 0, eva: 0 } }
-          ]
+          ] as never
         },
         p2: {
           active: {

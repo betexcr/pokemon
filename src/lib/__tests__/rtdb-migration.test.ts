@@ -156,9 +156,9 @@ describe('RTDB Migration Tests', () => {
 
       // Migrate choice submission
       const choice = {
-        type: 'move',
+        type: 'move' as const,
         moveId: 'thunderbolt',
-        target: 'opponent'
+        target: 'opponent' as const
       };
 
       await oldEngine.submitChoice(choice);
@@ -246,7 +246,7 @@ describe('RTDB Migration Tests', () => {
           ],
           currentIndex: 0,
           faintedCount: 0,
-          sideConditions: {}
+          sideConditions: { screens: {}, hazards: { stealthRock: false, spikes: 0, toxicSpikes: 0, stickyWeb: false } }
         },
         opponent: {
           pokemon: [
@@ -260,7 +260,7 @@ describe('RTDB Migration Tests', () => {
           ],
           currentIndex: 0,
           faintedCount: 0,
-          sideConditions: {}
+          sideConditions: { screens: {}, hazards: { stealthRock: false, spikes: 0, toxicSpikes: 0, stickyWeb: false } }
         },
         turn: 1,
         rng: 12345,

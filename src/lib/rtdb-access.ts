@@ -114,6 +114,31 @@ export interface RtdbOps {
     path: string,
     transform: (current: any) => any
   ): Promise<{ committed: boolean; snapshot: any }>;
+  /**
+   * Admin only: mark the Firestore battle (and its room) finished. Lives here so shared modules such as
+   * handleBattleEnd never import firebase-admin (it would be pulled into client bundles).
+   */
+  markFirestoreBattleEnded?(battleId: string, fields: Record<string, unknown>): Promise<'updated' | 'missing'>;
+}
+
+async function adminMarkFirestoreBattleEnded(battleId: string, fields: Record<string, unknown>): Promise<'updated' | 'missing'> {
+  const admin = require('firebase-admin') as typeof import('firebase-admin');
+  const db = admin.firestore();
+  const snap = await db.collection('battles').doc(battleId).get();
+  if (!snap.exists) return 'missing';
+  const data = snap.data()!;
+  await snap.ref.update({ ...fields, updatedAt: admin.firestore.FieldValue.serverTimestamp() });
+  if (data.roomId) {
+    try {
+      await db.collection('battle_rooms').doc(data.roomId).update({
+        status: 'finished',
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    } catch (roomErr) {
+      console.warn(`markFirestoreBattleEnded: failed to update room ${data.roomId}:`, roomErr);
+    }
+  }
+  return 'updated';
 }
 
 export type GetRtdbOpsOptions = {
@@ -135,6 +160,7 @@ export function getRtdbOps(authToken?: string, options?: GetRtdbOpsOptions): Rtd
       update: adminUpdate,
       updateMulti: adminUpdateMulti,
       transaction: adminTransaction,
+      markFirestoreBattleEnded: adminMarkFirestoreBattleEnded,
     };
   }
 
@@ -178,6 +204,28 @@ export async function verifyAuthToken(idToken: string): Promise<string> {
   const data = await res.json();
   if (data.error) throw new Error(data.error.message);
   return data.users?.[0]?.localId;
+}
+
+/** Admin only: battles created before `cutoff`, oldest first (uses the `meta/createdAt` index). */
+export async function adminListBattlesCreatedBefore(
+  cutoff: number,
+  limit: number,
+): Promise<Array<{ id: string; meta: { phase?: string; createdAt?: number; deadlineAt?: number } | null }>> {
+  if (!ensureAdmin()) throw new Error('Firebase Admin SDK required');
+  const snap = await getAdminDb().ref('battles').orderByChild('meta/createdAt').endAt(cutoff).limitToFirst(limit).once('value');
+  const out: Array<{ id: string; meta: { phase?: string; createdAt?: number; deadlineAt?: number } | null }> = [];
+  snap.forEach((child) => {
+    const meta = child.child('meta').val();
+    out.push({ id: child.key as string, meta: meta ? { phase: meta.phase, createdAt: meta.createdAt, deadlineAt: meta.deadlineAt } : null });
+    return false;
+  });
+  return out;
+}
+
+/** Admin only: delete a battle and everything under it. */
+export async function adminDeleteBattle(battleId: string): Promise<void> {
+  if (!ensureAdmin()) throw new Error('Firebase Admin SDK required');
+  await getAdminDb().ref(`battles/${battleId}`).remove();
 }
 
 /** Firestore Admin helpers for API routes. */

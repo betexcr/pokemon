@@ -1,5 +1,7 @@
 "use client";
 
+import { pickPrompt } from '@/components/battle/pickPrompt';
+import { TeraToggle } from '@/components/battle/TeraToggle';
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useOfflineBattleState, type OfflineBattleConfig } from '@/hooks/useOfflineBattleState';
 import Tooltip from '@/components/Tooltip';
@@ -9,6 +11,8 @@ import { BattleSprite, BattleSpriteRef } from '@/components/battle/BattleSprite'
 import Image from 'next/image';
 import { BattleEndScreen } from '@/components/multiplayer/BattleEndScreen';
 import { BattleTextBox } from '@/components/battle/BattleTextBox';
+import BattleConditionsBar from '@/components/battle/BattleConditionsBar';
+import type { BattleConditions } from '@/lib/battle-conditions';
 import { trackEvent } from '@/lib/analytics';
 import { useReducedMotionPref } from '@/hooks/useReducedMotionPref';
 
@@ -31,8 +35,9 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
 }) => {
   const {
     loading, error, meta, pub, me, meUid, oppUid,
-    legalMoves, legalSwitchIndexes, chooseMove, chooseSwitch, forfeit,
+    legalMoves, legalSwitchIndexes, chooseMove, chooseSwitch, forfeit, tera,
   } = useOfflineBattleState(config);
+  const [teraArmed, setTeraArmed] = useState(false);
 
   const [moveInfo, setMoveInfo] = useState<Record<string, any>>({});
   const [pendingAction, setPendingAction] = useState<{ turn: number; type: 'move' | 'switch'; id: string | number } | null>(null);
@@ -131,12 +136,13 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
     if (!meta || waitingForResolution) return;
     setPendingAction({ turn: meta.turn, type: 'move', id: moveId });
     try {
-      await chooseMove(moveId);
+      await chooseMove(moveId, { terastallize: teraArmed && tera.available });
+      setTeraArmed(false);
     } catch (e: unknown) {
       console.error('Move selection failed:', e);
     }
     setPendingAction(null);
-  }, [meta, waitingForResolution, chooseMove]);
+  }, [meta, waitingForResolution, chooseMove, teraArmed, tera.available]);
 
   const handlePokemonSwitch = useCallback(async (idx: number) => {
     if (!meta || waitingForResolution) return;
@@ -247,6 +253,9 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
         </div>
       </div>
 
+      {/* Weather, terrain, screens, hazards and each side's active conditions */}
+      <BattleConditionsBar conditions={(pub as { conditions?: BattleConditions } | null)?.conditions} mySide="p1" />
+
       {/* Battle Field */}
       <div className="relative flex-1 p-3 sm:p-6">
         <div className="grid grid-cols-2 gap-4 sm:gap-8 h-full">
@@ -304,7 +313,20 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
       {meta.phase !== 'ended' && (
         <div className="border-t border-border bg-surface/90 backdrop-blur p-3 sm:p-4">
           <div>
-            <h3 className="text-lg font-semibold mb-4">Choose Your Action</h3>
+            <h3 className="text-lg font-semibold mb-4">
+              {meta.pendingSwitch ? pickPrompt(meta.pendingSwitch.reason).heading : 'Choose Your Action'}
+            </h3>
+
+            {meta.pendingSwitch && (
+              <div
+                role="status"
+                aria-live="polite"
+                className="mb-4 rounded-md border border-primary/40 bg-primary/10 px-3 py-2 text-sm text-primary"
+                data-testid="pivot-prompt"
+              >
+                {pickPrompt(meta.pendingSwitch.reason).hint}
+              </div>
+            )}
 
             {waitingForResolution && (
               <div
@@ -317,8 +339,16 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
               </div>
             )}
 
-            {/* Move Selection */}
+            {/* Move Selection (hidden while picking a pivot replacement) */}
+            {!meta.pendingSwitch && (
             <div className="mb-6">
+              <TeraToggle
+                available={tera.available}
+                teraType={tera.type}
+                armed={teraArmed}
+                disabled={waitingForResolution}
+                onToggle={setTeraArmed}
+              />
               <h4 className="font-medium mb-3">Moves</h4>
               <div className="grid grid-cols-2 gap-3">
                 {legalMoves.map((move, index) => {
@@ -366,6 +396,8 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
               </div>
             </div>
 
+            )}
+
             {/* Pokemon Switch */}
             <div className="mb-4">
               <h4 className="font-medium mb-3">Switch Pokemon</h4>
@@ -375,7 +407,10 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
                   const hpCur = pokemon.hp?.cur ?? 0;
                   const hpMax = pokemon.hp?.max ?? pokemon.stats?.hp ?? 0;
                   const isPending = pendingAction?.type === 'switch' && pendingAction.id === index;
-                  const switchDisabled = pokemon.fainted || index === (me?.currentIndex ?? 0) || !legalSwitchIndexes.includes(index) || waitingForResolution;
+                  // During a pick the options decide (Revival Blessing offers fainted Pokémon)
+                  const switchDisabled = meta.pendingSwitch
+                    ? !legalSwitchIndexes.includes(index) || waitingForResolution
+                    : pokemon.fainted || index === (me?.currentIndex ?? 0) || !legalSwitchIndexes.includes(index) || waitingForResolution;
                   return (
                     <button
                       type="button"
@@ -427,7 +462,7 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
           winner={meta.winnerUid === meUid ? 'player' : meta.winnerUid === oppUid ? 'opponent' : null}
           playerName="You"
           opponentName={meta.players.p2.name || 'Opponent'}
-          endReason={meta.endedReason}
+          endReason={meta.endedReason === 'forfeit' || meta.endedReason === 'timeout' ? meta.endedReason : 'victory'}
           battleStats={{ turns: meta.turn }}
           returnTo={{ path: '/battle', label: 'Back to Battles' }}
         />

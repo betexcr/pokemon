@@ -1,3 +1,6 @@
+import { useRouter } from 'next/navigation';
+import BattleConditionsBar from '@/components/battle/BattleConditionsBar';
+import type { BattleConditions } from '@/lib/battle-conditions';
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useBattleState } from '@/hooks/useBattleState';
 import Tooltip from '@/components/Tooltip';
@@ -13,6 +16,8 @@ import { BattleTurnManager } from '@/components/multiplayer/BattleTurnManager';
 import { BattleEndScreen } from '@/components/multiplayer/BattleEndScreen';
 import { useForfeit } from '@/hooks/useMultiplayerBattle';
 import { BattleTextBox } from '@/components/battle/BattleTextBox';
+import { TeraToggle } from '@/components/battle/TeraToggle';
+import { pickPrompt, type PickReason } from '@/components/battle/pickPrompt';
 import { trackEvent } from '@/lib/analytics';
 import { shouldClearPendingAction } from '@/lib/battle-private-volatiles';
 import { useReducedMotionPref } from '@/hooks/useReducedMotionPref';
@@ -57,8 +62,35 @@ const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
     legalSwitchIndexes,
     chooseMove,
     chooseSwitch,
-    forfeit
+    forfeit,
+    tera,
+    myChoiceSubmitted,
+    reconnectedAt,
+    rematch,
+    requestRematch,
+    auditWarning,
   } = useBattleState(battleId);
+  const router = useRouter();
+  const [rematchBusy, setRematchBusy] = useState(false);
+  const [rematchError, setRematchError] = useState<string | null>(null);
+  // Both players asked for a rematch: go back to the room (reset to ready with the same teams)
+  useEffect(() => {
+    if (rematch.roomId) router.push(`/lobby/${rematch.roomId}`);
+  }, [rematch.roomId, router]);
+  const onRequestRematch = useCallback(async () => {
+    setRematchBusy(true);
+    setRematchError(null);
+    try {
+      const result = await requestRematch();
+      if (result.status === 'ready' && result.roomId) router.push(`/lobby/${result.roomId}`);
+      else if (result.status === 'unavailable') setRematchError(result.reason ?? 'A rematch is not available.');
+    } catch (err) {
+      setRematchError(err instanceof Error ? err.message : 'Failed to request a rematch');
+    } finally {
+      setRematchBusy(false);
+    }
+  }, [requestRematch, router]);
+  const [teraArmed, setTeraArmed] = useState(false);
 
   // duplicate state/effects removed (using direct imports below)
 
@@ -106,8 +138,10 @@ const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
   const waitingForResolution = useMemo(() => {
     if (!meta) return false;
     if (pendingAction && pendingAction.turn === meta.turn) return true;
+    // My choice is stored server-side (e.g. after a reload): wait for the opponent
+    if (myChoiceSubmitted) return true;
     return meta.phase === 'resolving';
-  }, [meta?.phase, meta?.turn, pendingAction]);
+  }, [meta?.phase, meta?.turn, pendingAction, myChoiceSubmitted]);
   const validationNotice = useMemo(() => {
     const v = (pub as any)?.lastValidation;
     if (!v) return null;
@@ -117,9 +151,10 @@ const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
   }, [pub]);
   const battleLogWithValidation = useMemo(() => {
     const base = (pub?.battleLog as any[] | undefined) ?? [];
-    if (!validationNotice) return base;
-    return [...base, { type: 'engine_warning', message: validationNotice }];
-  }, [pub?.battleLog, validationNotice]);
+    const notices = [validationNotice, auditWarning && `Action check: ${auditWarning}`].filter(Boolean) as string[];
+    if (!notices.length) return base;
+    return [...base, ...notices.map((message) => ({ type: 'engine_warning', message }))];
+  }, [pub?.battleLog, validationNotice, auditWarning]);
 
   const activePhase: 'choosing' | 'resolving' = waitingForResolution ? 'resolving' : 'choosing';
 
@@ -216,11 +251,14 @@ const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- fire once when battle becomes ready
   }, [Boolean(meta && pub && !loading), battleId]);
 
+  // Show "connection recovered" only after an actual drop and reconnect, for a few seconds
   useEffect(() => {
-    if (connectionStatus === 'online' && meta?.turn && recoveredTurn !== meta.turn) {
-      setRecoveredTurn(meta.turn);
-    }
-  }, [connectionStatus, meta?.turn, recoveredTurn]);
+    if (!reconnectedAt || !meta?.turn) return;
+    setRecoveredTurn(meta.turn);
+    const t = window.setTimeout(() => setRecoveredTurn(null), 6000);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reconnectedAt]);
 
 const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | 'p2') => {
     try {
@@ -252,12 +290,13 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
         }
       }
       
-      await chooseMove(moveId, target);
+      await chooseMove(moveId, target, { terastallize: teraArmed && !!tera?.available });
+      setTeraArmed(false);
     } catch (err) {
       console.error('Failed to submit move:', err);
       setPendingAction(null);
     }
-  }, [meta, waitingForResolution, pendingAction, viewMode, moveInfo, chooseMove]);
+  }, [meta, waitingForResolution, pendingAction, viewMode, moveInfo, chooseMove, teraArmed, tera?.available]);
 
   // Listen for custom move events from E2E testing
   useEffect(() => {
@@ -430,6 +469,16 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
   }
   if (!meta || !pub) return <div className="p-8 text-center" role="status">Waiting for battle data...</div>;
 
+  // Mid-turn pivot pick (U-turn, Baton Pass, ...): who is choosing?
+  // Switch-only picks: mid-turn pivot (one player) or end-of-turn faint replacements (one or both)
+  const replacementUids = meta.pendingReplacement?.uids ?? [];
+  const pickPending = !!meta.pendingSwitch || replacementUids.length > 0;
+  const myPivotPick = meta.pendingSwitch
+    ? meta.pendingSwitch.uid === meUid
+    : !!meUid && replacementUids.includes(meUid);
+  const opponentPivotPick = pickPending && !myPivotPick;
+  const pickReason: PickReason | null = meta.pendingSwitch?.reason ?? (replacementUids.length ? 'faint' : null);
+
   // Reuse early-computed side keys for active Pokemon lookup
   const mySide = mySideEarly;
   const oppSide = oppSideEarly;
@@ -523,6 +572,9 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
         )}
       </div>
 
+      {/* Weather, terrain, screens, hazards and each side's active conditions */}
+      <BattleConditionsBar conditions={(pub as { conditions?: BattleConditions } | null)?.conditions} mySide={mySideEarly ?? 'p1'} />
+
       {/* Battle Field */}
       <div className="relative flex-1 p-3 sm:p-6">
         <div className="grid grid-cols-2 gap-4 sm:gap-8 h-full">
@@ -590,7 +642,31 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
       {meta.phase !== 'ended' && (
         <div className="border-t border-border bg-surface/90 backdrop-blur p-3 sm:p-4">
           <div>
-            <h3 className="text-lg font-semibold mb-4">Choose Your Action</h3>
+            <h3 className="text-lg font-semibold mb-4">
+              {myPivotPick ? pickPrompt(pickReason).heading : 'Choose Your Action'}
+            </h3>
+
+            {myPivotPick && (
+              <div
+                role="status"
+                aria-live="polite"
+                className="mb-4 rounded-md border border-primary/40 bg-primary/10 px-3 py-2 text-sm text-primary"
+                data-testid="pivot-prompt"
+              >
+                {pickPrompt(pickReason).hint}
+              </div>
+            )}
+            {opponentPivotPick && (
+              <div
+                role="status"
+                aria-live="polite"
+                className="mb-4 flex items-center justify-center gap-2 text-sm text-muted"
+                data-testid="pivot-waiting"
+              >
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                Waiting for opponent to choose a Pokémon…
+              </div>
+            )}
 
             {waitingForResolution && (
               <div
@@ -609,8 +685,16 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
               </div>
             )}
 
-          {/* Move Selection */}
+          {/* Move Selection (hidden while a pivot replacement is being picked) */}
+          {!pickPending && (
           <div className="mb-6">
+            <TeraToggle
+              available={!!tera?.available}
+              teraType={tera?.type}
+              armed={teraArmed}
+              disabled={waitingForResolution}
+              onToggle={setTeraArmed}
+            />
             <h4 className="font-medium mb-3">Moves</h4>
             <div className="grid grid-cols-2 gap-3">
               {legalMoves.map((move, index) => {
@@ -702,7 +786,10 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
             </div>
           </div>
 
+          )}
+
           {/* Pokemon Switch */}
+          {!opponentPivotPick && (
           <div className="mb-4">
             <h4 className="font-medium mb-3">Switch Pokemon</h4>
             <div className="grid grid-cols-3 gap-2">
@@ -729,7 +816,10 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
                       : '—';
                 const isPendingSwitch = pendingAction?.type === 'switch' && pendingAction.turn === meta?.turn && pendingAction.id === index;
                 const currentIndex = typeof me?.currentIndex === 'number' ? me.currentIndex : 0;
-                const switchDisabled = pokemon?.fainted || index === currentIndex || !legalSwitchIndexes.includes(index) || waitingForResolution;
+                // During a pick the options decide (Revival Blessing offers fainted Pokémon)
+                const switchDisabled = myPivotPick
+                  ? !legalSwitchIndexes.includes(index) || waitingForResolution
+                  : pokemon?.fainted || index === currentIndex || !legalSwitchIndexes.includes(index) || waitingForResolution;
 
                 return (
                   <button
@@ -771,6 +861,8 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
               })}
             </div>
           </div>
+
+          )}
 
           {/* Forfeit Button */}
           <div className="text-center">
@@ -815,12 +907,20 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
       {showEndScreen && meta && (
         <BattleEndScreen
           winner={meta.winnerUid === meUid ? 'player' : meta.winnerUid === oppUid ? 'opponent' : null}
-          playerName={meta.players?.p1?.uid === meUid ? meta.players.p1.name : meta.players?.p2?.name || 'You'}
-          opponentName={meta.players?.p1?.uid === oppUid ? meta.players.p1.name : meta.players?.p2?.name || 'Opponent'}
-          endReason={meta.endedReason}
+          playerName={(meta.players?.p1?.uid === meUid ? meta.players.p1.name : meta.players?.p2?.name) || 'You'}
+          opponentName={(meta.players?.p1?.uid === oppUid ? meta.players.p1.name : meta.players?.p2?.name) || 'Opponent'}
+          endReason={meta.endedReason ?? undefined}
           battleStats={{
-            turns: meta.turn
+            turns: meta.turn,
+            ...(mySideEarly && (pub as any)?.stats?.[mySideEarly] ? {
+              kos: (pub as any).stats[mySideEarly].kos,
+              remaining: (pub as any).stats[mySideEarly].remaining,
+              teamSize: (pub as any).stats[mySideEarly].teamSize,
+              damageDealtPct: (pub as any).stats[mySideEarly].damageDealtPct,
+              damageTakenPct: (pub as any).stats[mySideEarly].damageTakenPct,
+            } : {}),
           }}
+          rematch={{ ...rematch, onRequest: onRequestRematch, busy: rematchBusy, error: rematchError }}
         />
       )}
     </div>

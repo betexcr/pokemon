@@ -13,7 +13,9 @@ import {
   type DataSnapshot
 } from 'firebase/database';
 import { rtdb } from './firebase';
+import type { FieldState } from './team-battle-types';
 import { createBattleRng, battleRngToStored } from './battle-rng';
+import { hpFromBase, sanitizeEvs } from './battle-evs';
 
 export interface RTDBBattleMeta {
   createdAt: number;
@@ -34,6 +36,10 @@ export interface RTDBBattleMeta {
   battleRng?: { seed: number; state: number; calls: number };
   /** Behavior profile for legality/edge rules. */
   ruleProfile?: 'simplified' | 'cart_like';
+  /** Turn paused for this player to pick a pivot replacement (see battle-pending-switch.ts). */
+  pendingSwitch?: { uid: string; reason: 'pivot' | 'baton-pass' | 'shed-tail' | 'revival-blessing'; options?: number[] } | null;
+  /** Players who must pick a replacement for a fainted active Pokémon before the turn's choices. */
+  pendingReplacement?: { uids: string[] } | null;
 }
 
 export interface RTDBBattlePublic {
@@ -46,6 +52,8 @@ export interface RTDBBattlePublic {
       p1: { reflect: number; lightScreen: number };
       p2: { reflect: number; lightScreen: number };
     };
+    weather?: FieldState['weather'];
+    terrain?: FieldState['terrain'];
   };
   p1: {
     active: {
@@ -106,6 +114,8 @@ export interface RTDBBattlePrivate {
     moveId?: string;
     turnsLeft?: number;
   };
+  /** Terastallization already used this battle. */
+  teraUsed?: boolean;
 }
 
 export interface RTDBChoice {
@@ -114,6 +124,8 @@ export interface RTDBChoice {
     moveId?: string;
     target?: string;
     switchToIndex?: number;
+    /** Terastallize before this move (once per battle). */
+    terastallize?: boolean;
   };
   committedAt: number;
   clientVersion: number;
@@ -135,8 +147,8 @@ export interface RTDBResolution {
     rngAfter?: { seed: number; state: number; calls: number };
   };
   validation?: {
-    p1?: string;
-    p2?: string;
+    p1?: string | null;
+    p2?: string | null;
     normalized?: boolean;
   };
   metrics?: {
@@ -311,9 +323,8 @@ class FirebaseRTDBService {
       const baseHp = typeof hpStat?.base_stat === 'number' ? hpStat.base_stat : 
                      typeof hpStat === 'number' ? hpStat : 50;
       
-      // Pokemon HP formula: floor(((2 * Base + IV + floor(EV/4)) * Level) / 100) + Level + 10
-      // Assuming max IVs (31) and no EVs for simplicity
-      maxHp = Math.floor(((2 * baseHp + 31) * level) / 100) + level + 10;
+      // HP formula with 31 IVs and the slot's HP EVs
+      maxHp = hpFromBase(baseHp, level, sanitizeEvs(pokemon.evs)?.hp ?? 0);
     } else {
       maxHp = 100; // Fallback
     }

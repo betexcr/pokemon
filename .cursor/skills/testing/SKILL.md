@@ -12,7 +12,7 @@ description: >-
 
 | Runner | Config | Scope |
 |--------|--------|-------|
-| **Vitest** | defaults + `src/lib/__tests__/rtdb-test-config.ts` | Unit, integration, component |
+| **Vitest** | `vitest.config.mts` | Unit, integration, component |
 | **Playwright** | `playwright.config.ts` | E2E browser tests |
 | **ESLint** | `eslint.config.mjs` | Lint (`npm run lint`, `--max-warnings=0`) |
 

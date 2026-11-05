@@ -107,7 +107,7 @@ export function usePmdAnimations(pokemonId: number): { anims: AnimMeta[] | null;
 						setError(null)
 					} else {
 						setList(null)
-						setError(e.message || 'Failed to load animations')
+						setError((e instanceof Error ? e.message : '') || 'Failed to load animations')
 					}
 				}
 			}
