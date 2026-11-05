@@ -1,6 +1,6 @@
 import { isTrapped } from "@/lib/team-battle-held-items";
 import { GRAVITY_BLOCKED_MOVES } from "@/lib/battle-move-constants";
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { onValue, ref as dbRef } from "firebase/database";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { rtdb, auth } from "@/lib/firebase";
@@ -23,6 +23,8 @@ type Meta = {
   pendingSwitch?: { uid: string; reason: "pivot" | "baton-pass" | "shed-tail" | "revival-blessing"; options?: number[] } | null;
   /** Players who must pick a replacement for a fainted active Pokémon before choosing moves. */
   pendingReplacement?: { uids: string[] } | null;
+  /** Set while the server resolves a turn; a resolution older than ~60s is stale and recoverable. */
+  resolvingStartedAt?: number | null;
 };
 
 type PublicVolatiles = {
@@ -108,7 +110,18 @@ type UseBattleState = {
   forfeit: () => Promise<void>;
   /** Whether I can Terastallize this turn (UI hint; the server re-checks), and into what. */
   tera: { available: boolean; type: string | null };
+  /** My choice for the current turn is stored (survives reloads): waiting for the opponent. */
+  myChoiceSubmitted: boolean;
+  /** When the connection last came back after a drop (null if it never dropped). */
+  reconnectedAt: number | null;
+  /** Ask the server to unstick the battle (deadline passed, stuck resolution). Throttled unless forced. */
+  syncNow: (force?: boolean) => Promise<void>;
 };
+
+const SYNC_MIN_INTERVAL_MS = 10_000;
+const WATCHDOG_INTERVAL_MS = 4_000;
+const DEADLINE_GRACE_MS = 3_000;
+const RESOLVING_STUCK_MS = 65_000;
 
 function isChoosing(meta: Meta | null) {
   return !!meta && meta.phase === "choosing";
@@ -131,8 +144,6 @@ export function useBattleState(battleId: string): UseBattleState {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [connectionStatus, setConnectionStatus] = useState<"online" | "reconnecting" | "offline">("online");
-  const [lastMetaUpdateAt, setLastMetaUpdateAt] = useState<number>(Date.now());
-  const [lastPubUpdateAt, setLastPubUpdateAt] = useState<number>(Date.now());
 
   const meUid = user?.uid ?? null;
   const oppUid = useMemo(() => {
@@ -187,7 +198,6 @@ export function useBattleState(battleId: string): UseBattleState {
       dbRef(database, `/battles/${battleId}/meta`), 
       s => {
         setMeta(s.val() ?? null);
-        setLastMetaUpdateAt(Date.now());
       },
       e => {
         console.error('useBattleState: Meta listener error:', e);
@@ -199,7 +209,6 @@ export function useBattleState(battleId: string): UseBattleState {
       dbRef(database, `/battles/${battleId}/public`), 
       s => {
         setPub(s.val() ?? null);
-        setLastPubUpdateAt(Date.now());
       },
       e => {
         console.error('useBattleState: Public listener error:', e);
@@ -218,36 +227,60 @@ export function useBattleState(battleId: string): UseBattleState {
     return () => { unsubs.forEach(u => u()); };
   }, [battleId, meUid, authLoading]);
 
+  // Connection state from the Realtime Database itself (`.info/connected`), plus the browser's offline flag.
+  // A drop followed by a reconnect bumps `reconnectedAt` so the UI can say it re-synced and the watchdog
+  // below can ask the server to unstick the battle.
+  const wasConnectedRef = useRef(false);
+  const hasConnectedOnceRef = useRef(false);
+  const [reconnectedAt, setReconnectedAt] = useState<number | null>(null);
   useEffect(() => {
-    const updateFromNavigator = () => {
-      if (typeof navigator !== "undefined" && !navigator.onLine) {
-        setConnectionStatus("offline");
-      } else {
-        setConnectionStatus("online");
-      }
+    const database = rtdb;
+    const browserOffline = () => typeof navigator !== "undefined" && !navigator.onLine;
+    const onBrowserChange = () => {
+      if (browserOffline()) setConnectionStatus("offline");
     };
-    updateFromNavigator();
-    window.addEventListener("online", updateFromNavigator);
-    window.addEventListener("offline", updateFromNavigator);
+    window.addEventListener("online", onBrowserChange);
+    window.addEventListener("offline", onBrowserChange);
+    let unsub: (() => void) | undefined;
+    if (database) {
+      unsub = onValue(dbRef(database, "/.info/connected"), (s) => {
+        const connected = s.val() === true;
+        if (connected) {
+          if (wasConnectedRef.current === false && hasConnectedOnceRef.current) setReconnectedAt(Date.now());
+          hasConnectedOnceRef.current = true;
+          setConnectionStatus("online");
+        } else {
+          setConnectionStatus(browserOffline() ? "offline" : "reconnecting");
+        }
+        wasConnectedRef.current = connected;
+      });
+    }
     return () => {
-      window.removeEventListener("online", updateFromNavigator);
-      window.removeEventListener("offline", updateFromNavigator);
+      window.removeEventListener("online", onBrowserChange);
+      window.removeEventListener("offline", onBrowserChange);
+      unsub?.();
     };
   }, []);
 
+  // My own stored choice for the current turn (readable only by me): after a reload or reconnect the UI
+  // knows the move is in and shows "waiting for opponent" instead of asking again.
+  const [myChoiceTurn, setMyChoiceTurn] = useState<number | null>(null);
   useEffect(() => {
-    if (typeof navigator !== "undefined" && !navigator.onLine) {
-      setConnectionStatus("offline");
-      return;
-    }
-    const now = Date.now();
-    const staleForMs = now - Math.min(lastMetaUpdateAt, lastPubUpdateAt);
-    if (staleForMs > 8000) {
-      setConnectionStatus("reconnecting");
-    } else {
-      setConnectionStatus("online");
-    }
-  }, [lastMetaUpdateAt, lastPubUpdateAt, meta?.turn, meta?.phase, pub?.lastResultSummary]);
+    const database = rtdb;
+    if (!database || !meUid || !meta || typeof meta.turn !== "number") return;
+    const isParticipant = meta.players?.p1?.uid === meUid || meta.players?.p2?.uid === meUid;
+    if (!isParticipant) return;
+    const turn = meta.turn;
+    const unsub = onValue(
+      dbRef(database, `/battles/${battleId}/turns/${turn}/choices/${meUid}`),
+      (s) => setMyChoiceTurn(s.exists() ? turn : null),
+      () => setMyChoiceTurn(null),
+    );
+    return () => unsub();
+    // Re-subscribe per turn and whenever the meta version changes (choices are cleared on soft fails)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [battleId, meUid, meta?.turn, meta?.version]);
+  const myChoiceSubmitted = !!meta && myChoiceTurn === meta.turn && meta.phase === "choosing";
 
   // Late-bind private subscription only after we know meta and user membership
   useEffect(() => {
@@ -503,6 +536,50 @@ export function useBattleState(battleId: string): UseBattleState {
     await writeChoice({ action: "forfeit", payload: {}, clientVersion: meta.version });
   }, [writeChoice, meta]);
 
+  // Watchdog: ask the server to unstick the battle when the deadline has passed, a resolution looks
+  // stuck, after a reconnect, or when the tab becomes visible again. Throttled; the server is idempotent.
+  const lastSyncAtRef = useRef(0);
+  const syncNow = useCallback(async (force = false) => {
+    if (!meUid || !battleId) return;
+    const now = Date.now();
+    if (!force && now - lastSyncAtRef.current < SYNC_MIN_INTERVAL_MS) return;
+    lastSyncAtRef.current = now;
+    try {
+      const tokenHeader = await getIdTokenHeader();
+      if (!tokenHeader) return;
+      await fetch(`/api/battles/${battleId}/sync`, { method: 'POST', headers: { Authorization: tokenHeader } });
+    } catch (err) {
+      console.warn('useBattleState: sync failed', err);
+    }
+  }, [battleId, meUid, getIdTokenHeader]);
+
+  const metaRef = useRef(meta);
+  metaRef.current = meta;
+  useEffect(() => {
+    if (!meUid || !battleId) return;
+    const tick = () => {
+      const m = metaRef.current;
+      if (!m || m.phase === 'ended') return;
+      const now = Date.now() + serverOffsetMs;
+      const pastDeadline = m.phase === 'choosing' && typeof m.deadlineAt === 'number' && now > m.deadlineAt + DEADLINE_GRACE_MS;
+      const stuckResolving = m.phase === 'resolving' && (typeof m.resolvingStartedAt !== 'number' || now - m.resolvingStartedAt > RESOLVING_STUCK_MS);
+      if (pastDeadline || stuckResolving) void syncNow();
+    };
+    const id = window.setInterval(tick, WATCHDOG_INTERVAL_MS);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void syncNow();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      window.clearInterval(id);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [battleId, meUid, serverOffsetMs, syncNow]);
+
+  useEffect(() => {
+    if (reconnectedAt) void syncNow(true);
+  }, [reconnectedAt, syncNow]);
+
   return {
     loading, error, meta, pub, me, meUid, oppUid,
     connectionStatus,
@@ -514,5 +591,8 @@ export function useBattleState(battleId: string): UseBattleState {
     chooseSwitch,
     forfeit,
     tera,
+    myChoiceSubmitted,
+    reconnectedAt,
+    syncNow,
   };
 }

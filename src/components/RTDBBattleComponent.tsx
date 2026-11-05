@@ -61,6 +61,8 @@ const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
     chooseSwitch,
     forfeit,
     tera,
+    myChoiceSubmitted,
+    reconnectedAt,
   } = useBattleState(battleId);
   const [teraArmed, setTeraArmed] = useState(false);
 
@@ -110,8 +112,10 @@ const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
   const waitingForResolution = useMemo(() => {
     if (!meta) return false;
     if (pendingAction && pendingAction.turn === meta.turn) return true;
+    // My choice is stored server-side (e.g. after a reload): wait for the opponent
+    if (myChoiceSubmitted) return true;
     return meta.phase === 'resolving';
-  }, [meta?.phase, meta?.turn, pendingAction]);
+  }, [meta?.phase, meta?.turn, pendingAction, myChoiceSubmitted]);
   const validationNotice = useMemo(() => {
     const v = (pub as any)?.lastValidation;
     if (!v) return null;
@@ -220,11 +224,14 @@ const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- fire once when battle becomes ready
   }, [Boolean(meta && pub && !loading), battleId]);
 
+  // Show "connection recovered" only after an actual drop and reconnect, for a few seconds
   useEffect(() => {
-    if (connectionStatus === 'online' && meta?.turn && recoveredTurn !== meta.turn) {
-      setRecoveredTurn(meta.turn);
-    }
-  }, [connectionStatus, meta?.turn, recoveredTurn]);
+    if (!reconnectedAt || !meta?.turn) return;
+    setRecoveredTurn(meta.turn);
+    const t = window.setTimeout(() => setRecoveredTurn(null), 6000);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reconnectedAt]);
 
 const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | 'p2') => {
     try {

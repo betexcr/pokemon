@@ -206,6 +206,28 @@ export async function verifyAuthToken(idToken: string): Promise<string> {
   return data.users?.[0]?.localId;
 }
 
+/** Admin only: battles created before `cutoff`, oldest first (uses the `meta/createdAt` index). */
+export async function adminListBattlesCreatedBefore(
+  cutoff: number,
+  limit: number,
+): Promise<Array<{ id: string; meta: { phase?: string; createdAt?: number; deadlineAt?: number } | null }>> {
+  if (!ensureAdmin()) throw new Error('Firebase Admin SDK required');
+  const snap = await getAdminDb().ref('battles').orderByChild('meta/createdAt').endAt(cutoff).limitToFirst(limit).once('value');
+  const out: Array<{ id: string; meta: { phase?: string; createdAt?: number; deadlineAt?: number } | null }> = [];
+  snap.forEach((child) => {
+    const meta = child.child('meta').val();
+    out.push({ id: child.key as string, meta: meta ? { phase: meta.phase, createdAt: meta.createdAt, deadlineAt: meta.deadlineAt } : null });
+    return false;
+  });
+  return out;
+}
+
+/** Admin only: delete a battle and everything under it. */
+export async function adminDeleteBattle(battleId: string): Promise<void> {
+  if (!ensureAdmin()) throw new Error('Firebase Admin SDK required');
+  await getAdminDb().ref(`battles/${battleId}`).remove();
+}
+
 /** Firestore Admin helpers for API routes. */
 export function getAdminFirestore() {
   if (!ensureAdmin()) {

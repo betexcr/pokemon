@@ -23,6 +23,7 @@
     },
 
     "battles": {
+      ".indexOn": ["meta/createdAt"],
       "$bid": {
         "meta": {
           ".read": "auth != null && (root.child('battles/'+$bid+'/meta/players/p1/uid').val() == auth.uid || root.child('battles/'+$bid+'/meta/players/p2/uid').val() == auth.uid)",
