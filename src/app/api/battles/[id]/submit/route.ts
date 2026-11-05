@@ -134,6 +134,19 @@ export async function POST(
             }
         }
 
+        // Faint replacements: listed players may only send in a Pokémon; others wait
+        if (metaAfter.pendingReplacement?.uids?.length) {
+            if (!metaAfter.pendingReplacement.uids.includes(uid)) {
+                return NextResponse.json(
+                    { error: 'Waiting for your opponent to choose a Pokémon', pendingSwitch: true },
+                    { status: 409 }
+                );
+            }
+            if (action !== 'switch') {
+                return NextResponse.json({ error: 'Choose your next Pokémon', pendingSwitch: true }, { status: 400 });
+            }
+        }
+
         // Peek existing choices before writing — all required present ⇒ re-resolve without version gate
         const choicesPeek = (await ops.get(`battles/${battleId}/turns/${metaAfter.turn}/choices`)) || {};
         const bothAlready = allRequiredChoicesPresent(metaAfter, choicesPeek);

@@ -14,6 +14,7 @@ import { BattleEndScreen } from '@/components/multiplayer/BattleEndScreen';
 import { useForfeit } from '@/hooks/useMultiplayerBattle';
 import { BattleTextBox } from '@/components/battle/BattleTextBox';
 import { TeraToggle } from '@/components/battle/TeraToggle';
+import { pickPrompt, type PickReason } from '@/components/battle/pickPrompt';
 import { trackEvent } from '@/lib/analytics';
 import { shouldClearPendingAction } from '@/lib/battle-private-volatiles';
 import { useReducedMotionPref } from '@/hooks/useReducedMotionPref';
@@ -435,8 +436,14 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
   if (!meta || !pub) return <div className="p-8 text-center" role="status">Waiting for battle data...</div>;
 
   // Mid-turn pivot pick (U-turn, Baton Pass, ...): who is choosing?
-  const myPivotPick = !!meta.pendingSwitch && meta.pendingSwitch.uid === meUid;
-  const opponentPivotPick = !!meta.pendingSwitch && meta.pendingSwitch.uid !== meUid;
+  // Switch-only picks: mid-turn pivot (one player) or end-of-turn faint replacements (one or both)
+  const replacementUids = meta.pendingReplacement?.uids ?? [];
+  const pickPending = !!meta.pendingSwitch || replacementUids.length > 0;
+  const myPivotPick = meta.pendingSwitch
+    ? meta.pendingSwitch.uid === meUid
+    : !!meUid && replacementUids.includes(meUid);
+  const opponentPivotPick = pickPending && !myPivotPick;
+  const pickReason: PickReason | null = meta.pendingSwitch?.reason ?? (replacementUids.length ? 'faint' : null);
 
   // Reuse early-computed side keys for active Pokemon lookup
   const mySide = mySideEarly;
@@ -599,7 +606,7 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
         <div className="border-t border-border bg-surface/90 backdrop-blur p-3 sm:p-4">
           <div>
             <h3 className="text-lg font-semibold mb-4">
-              {myPivotPick ? 'Choose a Pokémon to send in' : 'Choose Your Action'}
+              {myPivotPick ? pickPrompt(pickReason).heading : 'Choose Your Action'}
             </h3>
 
             {myPivotPick && (
@@ -609,9 +616,7 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
                 className="mb-4 rounded-md border border-primary/40 bg-primary/10 px-3 py-2 text-sm text-primary"
                 data-testid="pivot-prompt"
               >
-                {meta.pendingSwitch?.reason === 'baton-pass'
-                  ? 'Baton Pass: pick who receives the stat changes.'
-                  : 'Pick which Pokémon comes in to finish the turn.'}
+                {pickPrompt(pickReason).hint}
               </div>
             )}
             {opponentPivotPick && (
@@ -644,7 +649,7 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
             )}
 
           {/* Move Selection (hidden while a pivot replacement is being picked) */}
-          {!meta.pendingSwitch && (
+          {!pickPending && (
           <div className="mb-6">
             <TeraToggle
               available={!!tera?.available}
@@ -774,7 +779,10 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
                       : '—';
                 const isPendingSwitch = pendingAction?.type === 'switch' && pendingAction.turn === meta?.turn && pendingAction.id === index;
                 const currentIndex = typeof me?.currentIndex === 'number' ? me.currentIndex : 0;
-                const switchDisabled = pokemon?.fainted || index === currentIndex || !legalSwitchIndexes.includes(index) || waitingForResolution;
+                // During a pick the options decide (Revival Blessing offers fainted Pokémon)
+                const switchDisabled = myPivotPick
+                  ? !legalSwitchIndexes.includes(index) || waitingForResolution
+                  : pokemon?.fainted || index === currentIndex || !legalSwitchIndexes.includes(index) || waitingForResolution;
 
                 return (
                   <button

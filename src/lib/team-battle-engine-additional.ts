@@ -1818,8 +1818,12 @@ export type RunBattleTurnFromQueueOptions = {
   manualSwitchSides?: Array<'player' | 'opponent'>;
 };
 
-/** `awaiting-switch`: paused for `state.pendingSwitch`; call `resumeBattleTurnAfterSwitch` with the pick. */
-export type TurnOutcome = 'complete' | 'awaiting-switch';
+/**
+ * `awaiting-switch`: paused mid-turn for `state.pendingSwitch`; call `resumeBattleTurnAfterSwitch`.
+ * `awaiting-replacement`: the turn finished but fainted actives need picks (`state.pendingReplacements`);
+ * call `applyFaintReplacements` before the next turn.
+ */
+export type TurnOutcome = 'complete' | 'awaiting-switch' | 'awaiting-replacement';
 
 async function autoReplaceFaintedActive(state: BattleState, side: 'player' | 'opponent'): Promise<void> {
   const team = side === 'player' ? state.player : state.opponent;
@@ -1851,6 +1855,7 @@ export async function runBattleTurnFromQueue(
   }
   state.manualSwitchSides = options?.manualSwitchSides;
   state.pendingSwitch = undefined;
+  state.pendingReplacements = undefined;
   state.actionQueue = queue;
 
   await processStartOfTurn(state);
@@ -1933,9 +1938,64 @@ async function runQueuedActions(
 
   await processEndOfTurn(state);
 
-  await autoReplaceFaintedActive(state, 'player');
-  await autoReplaceFaintedActive(state, 'opponent');
-  return 'complete';
+  return requestFaintReplacements(state);
+}
+
+/**
+ * End-of-turn replacements. A player-controlled side with two or more healthy options gets to pick
+ * (both sides pick simultaneously); otherwise the next healthy Pokémon comes in automatically.
+ * No prompt once either team is out of Pokémon (the battle is over).
+ */
+async function requestFaintReplacements(state: BattleState): Promise<TurnOutcome> {
+  const battleOver = isTeamDefeated(state.player) || isTeamDefeated(state.opponent);
+  const pending: NonNullable<BattleState['pendingReplacements']> = [];
+  for (const side of ['player', 'opponent'] as const) {
+    const team = side === 'player' ? state.player : state.opponent;
+    if (getCurrentPokemon(team).currentHp > 0) continue;
+    const options = getSwitchCandidates(team);
+    if (!battleOver && options.length >= 2 && state.manualSwitchSides?.includes(side)) {
+      pending.push({ side, options });
+    } else {
+      await autoReplaceFaintedActive(state, side);
+    }
+  }
+  if (pending.length === 0) return 'complete';
+  state.pendingReplacements = pending;
+  return 'awaiting-replacement';
+}
+
+/**
+ * Send in the picked replacements for `state.pendingReplacements` (faster side's entry effects first).
+ * Throws when a pending side has no legal pick.
+ */
+export async function applyFaintReplacements(
+  state: BattleState,
+  picks: Partial<Record<'player' | 'opponent', number>>,
+): Promise<TurnOutcome> {
+  const pending = state.pendingReplacements ?? [];
+  for (const req of pending) {
+    const pick = picks[req.side];
+    if (typeof pick !== 'number' || !req.options.includes(pick)) {
+      throw new Error(`Illegal replacement for ${req.side}: ${String(pick)}`);
+    }
+  }
+  const ordered = [...pending].sort((a, b) => {
+    const speed = (side: 'player' | 'opponent') => {
+      const team = side === 'player' ? state.player : state.opponent;
+      return getEffectiveSpeed(team.pokemon[picks[side]!], isTailwindActive(team), state.field);
+    };
+    return speed(b.side) - speed(a.side);
+  });
+  state.pendingReplacements = undefined;
+  for (const req of ordered) {
+    const team = req.side === 'player' ? state.player : state.opponent;
+    team.currentIndex = picks[req.side]!;
+    const incoming = getCurrentPokemon(team);
+    state.battleLog.push({ type: 'pokemon_sent_out', message: `Go! ${incoming.pokemon.name}!`, pokemon: incoming.pokemon.name });
+    await runEntrySequence(state, req.side, incoming);
+  }
+  // Entry hazards can knock out the newcomer: pick again
+  return requestFaintReplacements(state);
 }
 
 // Process end-of-turn effects

@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import type {
-  BattleState, BattlePokemon, BattleTeam, BattleAction, BattleLogEntry,
+  BattleState, BattlePokemon, BattleTeam, BattleAction, BattleLogEntry, PendingSwitchReason,
 } from '@/lib/team-battle-engine';
 import {
   buildActionQueue,
@@ -11,7 +11,7 @@ import {
   allMovesOutOfPp,
   encoredMoveHasNoPp,
 } from '@/lib/team-battle-engine';
-import { resumeBattleTurnAfterSwitch, runBattleTurnFromQueue, type TurnOutcome } from '@/lib/team-battle-engine-additional';
+import { applyFaintReplacements, resumeBattleTurnAfterSwitch, runBattleTurnFromQueue, type TurnOutcome } from '@/lib/team-battle-engine-additional';
 import { createBattleRng } from '@/lib/battle-rng';
 import { createFieldState, EMPTY_HAZARDS } from '@/lib/team-battle-types';
 import { sanitizeBattleItem } from '@/lib/battle-items-catalog';
@@ -58,7 +58,7 @@ type Meta = {
   endedReason: null | 'forfeit' | string;
   ruleProfile?: 'simplified' | 'cart_like';
   /** Turn paused for this player to pick the Pokémon a pivot move (U-turn, Baton Pass, ...) sends in. */
-  pendingSwitch?: { uid: string; reason: 'pivot' | 'baton-pass' } | null;
+  pendingSwitch?: { uid: string; reason: PendingSwitchReason | 'faint'; options?: number[] } | null;
 };
 
 type MoveEntry = { id: string; pp: number; maxPp?: number; disabled?: boolean; reason?: string };
@@ -438,14 +438,36 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
   // ---------------------------------------------------------------------------
 
   /** Publish engine state after a turn slice: either paused for the player's pivot pick or finished. */
-  const publishTurnOutcome = useCallback((state: BattleState, currentMeta: Meta, outcome: TurnOutcome) => {
+  const publishTurnOutcome = useCallback((
+    state: BattleState,
+    currentMeta: Meta,
+    outcome: TurnOutcome,
+    opts: { turnAlreadyAdvanced?: boolean } = {},
+  ) => {
+    const playerReplacement = state.pendingReplacements?.find((r) => r.side === 'player');
+    if (outcome === 'awaiting-replacement' && playerReplacement) {
+      // Turn is over; the player picks the next Pokémon before the next turn starts
+      const pickMeta: Meta = {
+        ...currentMeta,
+        turn: opts.turnAlreadyAdvanced ? currentMeta.turn : currentMeta.turn + 1,
+        phase: 'choosing',
+        version: currentMeta.version + 1,
+        pendingSwitch: { uid: PLAYER_UID, reason: 'faint', options: playerReplacement.options },
+        deadlineAt: Date.now() + 120_000,
+      };
+      setBattleState({ ...state });
+      setMeta(pickMeta);
+      setPub(projectPublic(state));
+      setMe(projectPrivate(state.player));
+      return;
+    }
     if (outcome === 'awaiting-switch' && state.pendingSwitch) {
       // Same turn continues once the player picks; bump version so the UI treats it as a fresh choice
       const pausedMeta: Meta = {
         ...currentMeta,
         phase: 'choosing',
         version: currentMeta.version + 1,
-        pendingSwitch: { uid: PLAYER_UID, reason: state.pendingSwitch.reason },
+        pendingSwitch: { uid: PLAYER_UID, reason: state.pendingSwitch.reason, options: state.pendingSwitch.options },
         deadlineAt: Date.now() + 120_000,
       };
       setBattleState({ ...state });
@@ -468,7 +490,7 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
 
     const updatedMeta: Meta = {
       ...currentMeta,
-      turn: currentMeta.turn + 1,
+      turn: opts.turnAlreadyAdvanced ? currentMeta.turn : currentMeta.turn + 1,
       version: currentMeta.version + 1,
       phase: state.isComplete ? 'ended' : 'choosing',
       winnerUid: state.isComplete ? (state.winner === 'player' ? PLAYER_UID : AI_UID) : null,
@@ -513,6 +535,22 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
     }
   }, [publishTurnOutcome]);
 
+  /** Send in the player's pick for a fainted active Pokémon (the turn already ended). */
+  const applyReplacementLocally = useCallback(async (state: BattleState, currentMeta: Meta, switchIndex: number) => {
+    if (resolving.current) return;
+    resolving.current = true;
+    try {
+      state.battleLog = [];
+      const outcome = await applyFaintReplacements(state, { player: switchIndex });
+      publishTurnOutcome(state, currentMeta, outcome, { turnAlreadyAdvanced: true });
+    } catch (err: unknown) {
+      console.error('Offline replacement error:', err);
+      setError(err instanceof Error ? err.message : 'Battle resolution failed');
+    } finally {
+      resolving.current = false;
+    }
+  }, [publishTurnOutcome]);
+
   /** Continue a turn paused for the player's U-turn / Baton Pass replacement. */
   const resumeTurnLocally = useCallback(async (state: BattleState, currentMeta: Meta, switchIndex: number) => {
     if (resolving.current) return;
@@ -535,7 +573,7 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
 
   const chooseMove = useCallback(async (moveId: string, options?: { terastallize?: boolean }) => {
     if (!battleState || !meta || meta.phase !== 'choosing') return;
-    if (battleState.pendingSwitch) return; // only a switch can answer a pivot prompt
+    if (battleState.pendingSwitch || battleState.pendingReplacements?.length) return; // only a switch answers a pick prompt
     const terastallize = !!options?.terastallize && canTerastallize(battleState, battleState.player);
     const action: BattleAction = { type: 'move', moveId, target: 'opponent', ...(terastallize ? { terastallize } : {}) };
     await resolveTurnLocally(battleState, meta, action);
@@ -543,13 +581,17 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
 
   const chooseSwitch = useCallback(async (idx: number) => {
     if (!battleState || !meta || meta.phase !== 'choosing') return;
+    if (battleState.pendingReplacements?.length) {
+      await applyReplacementLocally(battleState, meta, idx);
+      return;
+    }
     if (battleState.pendingSwitch) {
       await resumeTurnLocally(battleState, meta, idx);
       return;
     }
     const action: BattleAction = { type: 'switch', switchIndex: idx, target: 'opponent' };
     await resolveTurnLocally(battleState, meta, action);
-  }, [battleState, meta, resolveTurnLocally, resumeTurnLocally]);
+  }, [battleState, meta, resolveTurnLocally, resumeTurnLocally, applyReplacementLocally]);
 
   const forfeit = useCallback(async () => {
     if (!meta) return;
@@ -562,7 +604,7 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
 
   const legalMoves = useMemo(() => {
     if (!battleState) return [];
-    if (battleState.pendingSwitch) return [];
+    if (battleState.pendingSwitch || battleState.pendingReplacements?.length) return [];
     const active = getCurrentPokemon(battleState.player);
     const forced = getForcedBattleMoveId(active);
     if (forced) {
@@ -584,6 +626,8 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
   const legalSwitchIndexes = useMemo(() => {
     if (!battleState) return [];
     if (battleState.pendingSwitch) return battleState.pendingSwitch.options;
+    const replacement = battleState.pendingReplacements?.find((r) => r.side === 'player');
+    if (replacement) return replacement.options;
     const active = getCurrentPokemon(battleState.player);
     if (getForcedBattleMoveId(active)) return [];
     return battleState.player.pokemon
@@ -593,7 +637,9 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
   }, [battleState]);
 
   const tera = useMemo(() => {
-    if (!battleState || battleState.pendingSwitch) return { available: false, type: null as string | null };
+    if (!battleState || battleState.pendingSwitch || battleState.pendingReplacements?.length) {
+      return { available: false, type: null as string | null };
+    }
     const active = getCurrentPokemon(battleState.player);
     return { available: canTerastallize(battleState, battleState.player), type: active.teraType ?? null };
   }, [battleState]);

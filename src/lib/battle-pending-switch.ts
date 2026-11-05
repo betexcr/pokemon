@@ -7,15 +7,18 @@
 // of the stored options. The rest of the turn (hidden from clients, since it holds the other
 // player's queued action) waits under the Admin-only `battles/{id}/server/pendingTurn`.
 
-import type { BattleAction, BattleState } from './team-battle-engine';
+import type { BattleAction, BattleState, PendingSwitchReason } from './team-battle-engine';
 
-export type PendingSwitchMeta = { uid: string; reason: 'pivot' | 'baton-pass' };
+export type PendingSwitchMeta = { uid: string; reason: PendingSwitchReason; options?: number[] };
+
+/** End-of-turn faint replacements: every listed player picks (simultaneously) before choosing moves. */
+export type PendingReplacementMeta = { uids: string[] };
 
 /** Server-only snapshot of a paused turn. */
 export type StoredPendingTurn = {
   turn: number;
   side: 'player' | 'opponent';
-  reason: 'pivot' | 'baton-pass';
+  reason: PendingSwitchReason;
   options: number[];
   remainingQueue: BattleState['actionQueue'];
   activeAtTurnStart?: { player: number; opponent: number };
@@ -29,12 +32,19 @@ export type StoredPendingTurn = {
 type MetaLike = {
   players: { p1: { uid: string }; p2: { uid: string } };
   pendingSwitch?: PendingSwitchMeta | null;
+  pendingReplacement?: PendingReplacementMeta | null;
 };
 
 /** UIDs whose choice this turn (or turn segment) needs before it can resolve. */
 export function requiredChoiceUids(meta: MetaLike): string[] {
   if (meta.pendingSwitch?.uid) return [meta.pendingSwitch.uid];
+  if (meta.pendingReplacement?.uids?.length) return [...meta.pendingReplacement.uids];
   return [meta.players.p1.uid, meta.players.p2.uid];
+}
+
+/** True while the battle waits on a switch-only pick (pivot or faint replacement). */
+export function hasPendingPick(meta: MetaLike): boolean {
+  return !!meta.pendingSwitch?.uid || !!meta.pendingReplacement?.uids?.length;
 }
 
 export function allRequiredChoicesPresent(meta: MetaLike, choices: Record<string, unknown> | null | undefined): boolean {

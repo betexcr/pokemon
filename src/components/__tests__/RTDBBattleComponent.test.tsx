@@ -350,6 +350,28 @@ describe('RTDBBattleComponent', () => {
       expect(screen.getByTestId('pivot-prompt')).toHaveTextContent('Baton Pass');
     });
 
+    it('asks for the next Pokémon after a faint', () => {
+      setHook({ meta: { pendingReplacement: { uids: [ME] } }, legalMoves: [] });
+      renderBattle();
+      expect(screen.getByText('Choose your next Pokémon')).toBeInTheDocument();
+      expect(screen.getByTestId('pivot-prompt')).toHaveTextContent('Your Pokémon fainted');
+      expect(screen.queryByText('Moves')).not.toBeInTheDocument();
+    });
+
+    it('waits while only the opponent replaces a fainted Pokémon', () => {
+      setHook({ meta: { pendingReplacement: { uids: [OPP] } }, legalMoves: [], legalSwitchIndexes: [] });
+      renderBattle();
+      expect(screen.getByTestId('pivot-waiting')).toBeInTheDocument();
+    });
+
+    it('lets me pick a fainted Pokémon for Revival Blessing', () => {
+      setHook({ meta: { pendingSwitch: { uid: ME, reason: 'revival-blessing', options: [2] } }, legalMoves: [], legalSwitchIndexes: [2] });
+      renderBattle();
+      expect(screen.getByText('Choose a Pokémon to revive')).toBeInTheDocument();
+      expect(screen.getByTestId('switch-squirtle-2')).not.toBeDisabled();
+      expect(screen.getByTestId('switch-bulbasaur-1')).toBeDisabled();
+    });
+
     it('shows a waiting state while the opponent picks', () => {
       setHook({ meta: { pendingSwitch: { uid: OPP, reason: 'pivot' } }, legalMoves: [], legalSwitchIndexes: [] });
       renderBattle();

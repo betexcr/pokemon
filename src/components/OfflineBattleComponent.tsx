@@ -1,5 +1,6 @@
 "use client";
 
+import { pickPrompt } from '@/components/battle/pickPrompt';
 import { TeraToggle } from '@/components/battle/TeraToggle';
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useOfflineBattleState, type OfflineBattleConfig } from '@/hooks/useOfflineBattleState';
@@ -308,7 +309,7 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
         <div className="border-t border-border bg-surface/90 backdrop-blur p-3 sm:p-4">
           <div>
             <h3 className="text-lg font-semibold mb-4">
-              {meta.pendingSwitch ? 'Choose a Pokémon to send in' : 'Choose Your Action'}
+              {meta.pendingSwitch ? pickPrompt(meta.pendingSwitch.reason).heading : 'Choose Your Action'}
             </h3>
 
             {meta.pendingSwitch && (
@@ -318,9 +319,7 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
                 className="mb-4 rounded-md border border-primary/40 bg-primary/10 px-3 py-2 text-sm text-primary"
                 data-testid="pivot-prompt"
               >
-                {meta.pendingSwitch.reason === 'baton-pass'
-                  ? 'Baton Pass: pick who receives the stat changes.'
-                  : 'Pick which Pokémon comes in to finish the turn.'}
+                {pickPrompt(meta.pendingSwitch.reason).hint}
               </div>
             )}
 
@@ -403,7 +402,10 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
                   const hpCur = pokemon.hp?.cur ?? 0;
                   const hpMax = pokemon.hp?.max ?? pokemon.stats?.hp ?? 0;
                   const isPending = pendingAction?.type === 'switch' && pendingAction.id === index;
-                  const switchDisabled = pokemon.fainted || index === (me?.currentIndex ?? 0) || !legalSwitchIndexes.includes(index) || waitingForResolution;
+                  // During a pick the options decide (Revival Blessing offers fainted Pokémon)
+                  const switchDisabled = meta.pendingSwitch
+                    ? !legalSwitchIndexes.includes(index) || waitingForResolution
+                    : pokemon.fainted || index === (me?.currentIndex ?? 0) || !legalSwitchIndexes.includes(index) || waitingForResolution;
                   return (
                     <button
                       type="button"

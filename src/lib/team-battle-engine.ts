@@ -172,11 +172,22 @@ export type BattleState = {
   pendingSwitch?: PendingSwitchRequest;
   /** Sides whose pivot replacements a player chooses; other sides send in the next healthy bench Pokémon. */
   manualSwitchSides?: Array<'player' | 'opponent'>;
+  /**
+   * Set when a finished turn left a player-controlled side with a fainted active Pokémon and a real
+   * choice of replacement. Both sides pick at once; apply with `applyFaintReplacements`.
+   */
+  pendingReplacements?: PendingReplacement[];
 };
+
+/** Why a turn paused mid-way for a player's pick. */
+export type PendingSwitchReason = 'pivot' | 'baton-pass' | 'shed-tail' | 'revival-blessing';
+
+/** End-of-turn replacement for a fainted active Pokémon that a player picks. */
+export type PendingReplacement = { side: 'player' | 'opponent'; options: number[] };
 
 export type PendingSwitchRequest = {
   side: 'player' | 'opponent';
-  reason: 'pivot' | 'baton-pass';
+  reason: PendingSwitchReason;
   /** Bench indexes the player may send in. */
   options: number[];
   /** Actions of this turn still to run after the switch. */

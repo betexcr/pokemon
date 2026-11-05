@@ -35,7 +35,9 @@ export interface RTDBBattleMeta {
   /** Behavior profile for legality/edge rules. */
   ruleProfile?: 'simplified' | 'cart_like';
   /** Turn paused for this player to pick a pivot replacement (see battle-pending-switch.ts). */
-  pendingSwitch?: { uid: string; reason: 'pivot' | 'baton-pass' } | null;
+  pendingSwitch?: { uid: string; reason: 'pivot' | 'baton-pass' | 'shed-tail' | 'revival-blessing'; options?: number[] } | null;
+  /** Players who must pick a replacement for a fainted active Pokémon before the turn's choices. */
+  pendingReplacement?: { uids: string[] } | null;
 }
 
 export interface RTDBBattlePublic {

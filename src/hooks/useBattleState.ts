@@ -18,7 +18,9 @@ type Meta = {
   endedReason: null | "forfeit" | "timeout";
   ruleProfile?: "simplified" | "cart_like";
   /** Turn paused for this player to pick a pivot replacement (U-turn, Baton Pass, ...). */
-  pendingSwitch?: { uid: string; reason: "pivot" | "baton-pass" } | null;
+  pendingSwitch?: { uid: string; reason: "pivot" | "baton-pass" | "shed-tail" | "revival-blessing"; options?: number[] } | null;
+  /** Players who must pick a replacement for a fainted active Pokémon before choosing moves. */
+  pendingReplacement?: { uids: string[] } | null;
 };
 
 type PublicVolatiles = {
@@ -344,7 +346,7 @@ export function useBattleState(battleId: string): UseBattleState {
   const legalMoves = useMemo(() => {
     if (!myPrivateActive) return [];
     // Mid-turn pivot pick (U-turn, Baton Pass, ...): only a switch is legal, and only for that player
-    if (meta?.pendingSwitch) return [];
+    if (meta?.pendingSwitch || meta?.pendingReplacement?.uids?.length) return [];
     let list = (myPrivateActive.moves ?? [])
       .map(normalizeMoveEntry)
       .filter((m): m is ReturnType<typeof normalizeMoveEntry> & { id: string; pp: number; maxPp: number } => Boolean(m));
@@ -382,10 +384,13 @@ export function useBattleState(battleId: string): UseBattleState {
     });
 
     return mapped;
-  }, [myPrivateActive, me?.choiceLock, me?.disable, me?.encoreMoveId, myPublicV.taunt, myPublicV.recharge, meta?.ruleProfile, meta?.pendingSwitch]);
+  }, [myPrivateActive, me?.choiceLock, me?.disable, me?.encoreMoveId, myPublicV.taunt, myPublicV.recharge, meta?.ruleProfile, meta?.pendingSwitch, meta?.pendingReplacement]);
 
   const legalSwitchIndexes = useMemo(() => {
     if (meta?.pendingSwitch && meta.pendingSwitch.uid !== meUid) return [];
+    // My pick: the server's options decide (Revival Blessing offers fainted Pokémon)
+    if (meta?.pendingSwitch?.options) return meta.pendingSwitch.options;
+    if (meta?.pendingReplacement?.uids?.length && (!meUid || !meta.pendingReplacement.uids.includes(meUid))) return [];
     const team = me?.team ?? [];
     const currentIndex = typeof me?.currentIndex === 'number' ? me.currentIndex : 0;
     const res: number[] = [];
@@ -403,7 +408,7 @@ export function useBattleState(battleId: string): UseBattleState {
       if (!fainted) res.push(i);
     }
     return res;
-  }, [me?.team, me?.currentIndex, meta?.pendingSwitch, meUid]);
+  }, [me?.team, me?.currentIndex, meta?.pendingSwitch, meta?.pendingReplacement, meUid]);
 
   const getIdTokenHeader = useCallback(async (): Promise<string> => {
     if (auth?.currentUser) {
@@ -466,9 +471,9 @@ export function useBattleState(battleId: string): UseBattleState {
   const tera = useMemo(() => {
     const active = myPrivateActive;
     const type = active?.teraType ?? null;
-    const available = !!type && !me?.teraUsed && !active?.terastallized && !meta?.pendingSwitch;
+    const available = !!type && !me?.teraUsed && !active?.terastallized && !meta?.pendingSwitch && !meta?.pendingReplacement?.uids?.length;
     return { available, type };
-  }, [myPrivateActive, me?.teraUsed, meta?.pendingSwitch]);
+  }, [myPrivateActive, me?.teraUsed, meta?.pendingSwitch, meta?.pendingReplacement]);
 
   const chooseMove = useCallback(async (moveId: string, target: "p1" | "p2" = "p2", options?: { terastallize?: boolean }) => {
     if (!meta) throw new Error("No meta");

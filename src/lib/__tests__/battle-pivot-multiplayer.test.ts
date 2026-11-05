@@ -230,3 +230,54 @@ describe('resolveTurn with Terastallization', () => {
     expect(db.get(`battles/${BID}/public/p2/active`)).toMatchObject({ terastallized: true, teraType: 'normal' });
   });
 });
+
+describe('resolveTurn with faint replacement picks', () => {
+  async function knockOutP1Lead() {
+    const p1 = db.get(`battles/${BID}/private/${P1}`);
+    p1.team[0].currentHp = 5;
+    db.set(`battles/${BID}/private/${P1}`, p1);
+    choose(P1, { action: 'move', payload: { moveId: 'tackle' }, clientVersion: 1 });
+    choose(P2, { action: 'move', payload: { moveId: 'tackle' }, clientVersion: 1 });
+    await resolveTurn(BID);
+  }
+
+  it('ends the turn and asks only the player whose Pokémon fainted', async () => {
+    await knockOutP1Lead();
+    expect(meta()).toMatchObject({ phase: 'choosing', turn: 2, pendingReplacement: { uids: [P1] } });
+    expect(db.get(`battles/${BID}/turns/1/resolution`)).not.toBeNull();
+    expect(db.get(`battles/${BID}/private/${P1}`).currentIndex).toBe(0);
+  });
+
+  it('applies the pick on the same turn number, then normal choices resume', async () => {
+    await knockOutP1Lead();
+    const versionBefore = meta().version;
+    choose(P1, { action: 'switch', payload: { switchToIndex: 2 }, clientVersion: versionBefore }, 2);
+    await resolveTurn(BID);
+
+    expect(meta()).toMatchObject({ phase: 'choosing', turn: 2, version: versionBefore + 1 });
+    expect(meta().pendingReplacement ?? null).toBeNull();
+    expect(db.get(`battles/${BID}/private/${P1}`).currentIndex).toBe(2);
+    expect(db.get(`battles/${BID}/turns/2/choices`)).toBeNull();
+    expect(db.get(`battles/${BID}/public`).battleLog.map((e: any) => e.message)).toContain('Go! p-bench-2!');
+
+    // Turn 2 now needs both players again
+    choose(P1, { action: 'move', payload: { moveId: 'tackle' }, clientVersion: versionBefore + 1 }, 2);
+    await resolveTurn(BID);
+    expect(meta().turn).toBe(2);
+  });
+
+  it('rejects a move or a fainted pick while replacing', async () => {
+    await knockOutP1Lead();
+    choose(P1, { action: 'switch', payload: { switchToIndex: 0 }, clientVersion: meta().version }, 2);
+    await resolveTurn(BID);
+    expect(meta()).toMatchObject({ turn: 2, pendingReplacement: { uids: [P1] } });
+    expect(db.get(`battles/${BID}/public/lastValidation`)).toMatchObject({ p1: 'illegal_replacement' });
+  });
+
+  it('a timeout while replacing forfeits only that player', async () => {
+    await knockOutP1Lead();
+    db.set(`battles/${BID}/meta/deadlineAt`, Date.now() - 1);
+    expect(await enforceTurnDeadline(BID)).toBe(true);
+    expect(meta()).toMatchObject({ phase: 'ended', winnerSide: 'opponent' });
+  });
+});
