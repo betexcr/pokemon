@@ -470,3 +470,22 @@ describe('RTDBBattleComponent reconnect and post-battle', () => {
     await waitFor(() => expect(routerPush).toHaveBeenCalledWith('/lobby/room-7'));
   });
 });
+
+describe('RTDBBattleComponent conditions bar', () => {
+  it('shows field and side conditions from the public state', () => {
+    setHook({
+      pub: {
+        conditions: {
+          field: [{ id: 'weather-rain', label: 'Rain', tone: 'neutral', turns: 3 }],
+          p1: [{ id: 'reflect', label: 'Reflect', tone: 'good', turns: 4 }],
+          p2: [{ id: 'stealth-rock', label: 'Stealth Rock', tone: 'bad' }],
+        },
+      },
+    });
+    renderBattle();
+    expect(screen.getByTestId('conditions-field').textContent).toContain('Rain');
+    expect(screen.getByTestId('conditions-mine').textContent).toContain('Reflect');
+    expect(screen.getByTestId('conditions-foe').textContent).toContain('Stealth Rock');
+  });
+});
+

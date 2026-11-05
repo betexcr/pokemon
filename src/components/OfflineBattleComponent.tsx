@@ -11,6 +11,8 @@ import { BattleSprite, BattleSpriteRef } from '@/components/battle/BattleSprite'
 import Image from 'next/image';
 import { BattleEndScreen } from '@/components/multiplayer/BattleEndScreen';
 import { BattleTextBox } from '@/components/battle/BattleTextBox';
+import BattleConditionsBar from '@/components/battle/BattleConditionsBar';
+import type { BattleConditions } from '@/lib/battle-conditions';
 import { trackEvent } from '@/lib/analytics';
 import { useReducedMotionPref } from '@/hooks/useReducedMotionPref';
 
@@ -250,6 +252,9 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Weather, terrain, screens, hazards and each side's active conditions */}
+      <BattleConditionsBar conditions={(pub as { conditions?: BattleConditions } | null)?.conditions} mySide="p1" />
 
       {/* Battle Field */}
       <div className="relative flex-1 p-3 sm:p-6">

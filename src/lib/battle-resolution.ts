@@ -48,6 +48,7 @@ import {
 import { applyEngineExtras, captureEngineExtras, type EngineExtras } from './battle-engine-extras';
 import { maxHpFor, sanitizeEvs } from './battle-evs';
 import { accumulateBattleTotals, hpSnapshot, publicBattleStats } from './battle-summary-stats';
+import { describeBattleConditions } from './battle-conditions';
 
 export { RecoverableResolutionError, isRecoverableResolutionFailure };
 
@@ -740,6 +741,8 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
                 benchPublic: makeBenchPublic(currentState.opponent)
             },
             stats: publicBattleStats(currentState),
+            // Everything in effect, for the battle screen (public information only)
+            conditions: describeBattleConditions(currentState),
             lastResultSummary: currentState.battleLog.length > 0
                 ? currentState.battleLog.map(l => l.message).join(' ')
                 : '',

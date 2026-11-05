@@ -1,4 +1,6 @@
 import { useRouter } from 'next/navigation';
+import BattleConditionsBar from '@/components/battle/BattleConditionsBar';
+import type { BattleConditions } from '@/lib/battle-conditions';
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useBattleState } from '@/hooks/useBattleState';
 import Tooltip from '@/components/Tooltip';
@@ -569,6 +571,9 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
           </div>
         )}
       </div>
+
+      {/* Weather, terrain, screens, hazards and each side's active conditions */}
+      <BattleConditionsBar conditions={(pub as { conditions?: BattleConditions } | null)?.conditions} mySide={mySideEarly ?? 'p1'} />
 
       {/* Battle Field */}
       <div className="relative flex-1 p-3 sm:p-6">

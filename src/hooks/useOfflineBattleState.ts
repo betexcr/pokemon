@@ -26,6 +26,7 @@ import type { GYM_CHAMPIONS } from '@/lib/gym_champions';
 import { getForcedBattleMoveId, RECHARGE_MOVE_ID } from '@/lib/battle-multiturn';
 import { maxHpFor, sanitizeEvs, type EvSpread } from '@/lib/battle-evs';
 import { CHAMPION_SETS } from '@/data/champion-sets';
+import { describeBattleConditions, type BattleConditions } from '@/lib/battle-conditions';
 
 // ---------------------------------------------------------------------------
 // Types that mirror what useBattleState returns
@@ -46,6 +47,7 @@ type PublicMon = {
 type PublicState = Record<string, any> & {
   field: { hazards: Record<string, any>; screens: Record<string, any> };
   battleLog?: any[];
+  conditions?: BattleConditions;
   lastResultSummary?: string;
 };
 
@@ -247,6 +249,7 @@ function projectPublic(state: BattleState): PublicState {
       screens: { p1: state.player.sideConditions.screens, p2: state.opponent.sideConditions.screens },
     },
     battleLog: state.battleLog,
+    conditions: describeBattleConditions(state),
     lastResultSummary: state.battleLog.map(l => l.message).join(' '),
     p1: { active: makePublicActive(p1Active), benchPublic: makeBench(state.player) },
     p2: { active: makePublicActive(p2Active), benchPublic: makeBench(state.opponent) },
