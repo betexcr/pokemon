@@ -25,6 +25,7 @@ import PokedexScrollbar from '@/components/PokedexScrollbar'
 import RecentlyViewedSection from '@/components/RecentlyViewedSection'
 import { LEGENDARY_POKEMON, MYTHICAL_POKEMON, ULTRA_BEAST_POKEMON } from '@/lib/pokemon-categories'
 import { loadUiState, saveUiState } from '@/lib/uiState'
+import { useKeyboardScrollFocus } from '@/hooks/useKeyboardScrollFocus'
 
 interface ModernPokedexLayoutProps {
   pokemonList: Pokemon[]
@@ -90,6 +91,7 @@ export default function ModernPokedexLayout({
   
   // Scroll position persistence
   const scrollContainerRef = useRef<HTMLDivElement>(null)
+  useKeyboardScrollFocus(scrollContainerRef)
   const SCROLL_POSITION_KEY = 'pokedex.scrollPosition'
   
   // Advanced filters state
@@ -1735,10 +1737,11 @@ export default function ModernPokedexLayout({
 
       {/* Desktop Menu Drawer disabled: header has inline controls */}
 
-      {/* Collapsible Search and Filters Section */}
-      <div className="sticky top-0 border-b border-border bg-surface relative z-20">
-        {/* Toggle Row — extra end padding keeps Expand clear of overlay scrollbars */}
-        <div className="w-full pl-4 pr-6 sm:pr-8 py-2 flex items-center gap-2 relative z-20">
+      {/* Collapsible Search and Filters Section. pr-10 keeps every control clear of the Pokédex
+          scrollbar fixed to the right edge (its thumb is 28px wide) */}
+      <div className="sticky top-0 border-b border-border bg-surface relative z-20 pr-10">
+        {/* Toggle Row */}
+        <div className="w-full pl-4 pr-4 py-2 flex items-center gap-2 relative z-20">
           {/* Advanced Filters button — always visible */}
           <Tooltip content="Open advanced filters" position="bottom">
             <button type="button"
@@ -2052,9 +2055,12 @@ export default function ModernPokedexLayout({
         <div 
           ref={scrollContainerRef}
           data-main-scroll
-          className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scroll-stable scrollbar-hide relative"
+          // Focusable so ↑ / ↓ / Page Up / Page Down scroll the Pokédex from the start
+          tabIndex={-1}
+          className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scroll-stable scrollbar-hide relative outline-none"
         >
-          <div className="px-2 sm:px-4 lg:px-6 min-h-full w-full max-w-full pt-4 relative">
+          {/* pr-10: same gutter as the search panel, so the last card column clears the scrollbar */}
+          <div className="pl-2 sm:pl-4 lg:pl-6 pr-10 min-h-full w-full max-w-full pt-4 relative">
             {/* Pokémon Grid */}
             
         {isInitialLoading ? (

@@ -2,7 +2,8 @@
 
 import { SiteFooter } from '@/components/SiteFooter'
 import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
+import { useKeyboardScrollFocus } from '@/hooks/useKeyboardScrollFocus'
 import AppHeader from '@/components/AppHeader'
 import PokemonDetails from '@/components/PokemonDetails'
 import { Pokemon } from '@/types/pokemon'
@@ -16,6 +17,8 @@ interface PokemonPageClientProps {
 }
 
 export default function PokemonPageClient({ pokemon }: PokemonPageClientProps) {
+  const mainRef = useRef<HTMLElement>(null)
+  useKeyboardScrollFocus(mainRef, pokemon.id)
   const router = useRouter()
   const { addRecentlyViewed } = useRecentlyViewed()
 
@@ -64,7 +67,8 @@ export default function PokemonPageClient({ pokemon }: PokemonPageClientProps) {
         showToolbar={true}
         onBackClick={handleBack}
       />
-      <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+      {/* Focusable so ↑ / ↓ / Page Up / Page Down scroll the page from the start */}
+      <main ref={mainRef} tabIndex={-1} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden outline-none">
           <div className="mx-auto w-full max-w-6xl px-4 pb-8 pt-4 sm:px-6 lg:px-8">
           <PokemonDetails pokemon={pokemon} />
         </div>

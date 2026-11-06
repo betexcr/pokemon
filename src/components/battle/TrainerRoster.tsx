@@ -4,6 +4,7 @@ import { useMemo, useState, useRef, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { getTrainerSpriteUrl } from '@/lib/trainerSprites'
 import type { Champion } from '@/lib/gym_champions'
+import PokemonSpriteImg from '@/components/PokemonSpriteImg'
 
 interface TrainerRosterProps {
   champions: Champion[]
@@ -72,9 +73,8 @@ function TrainerTooltip({ champion, anchorEl }: { champion: Champion; anchorEl: 
         {champion.team.slots.map((slot, i) => (
           <li key={i} className="flex items-center justify-between text-xs">
             <span className="flex items-center gap-1.5 font-medium text-text">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${slot.id}.png`}
+              <PokemonSpriteImg
+                id={slot.id}
                 alt={slot.name || `#${slot.id}`}
                 width={24}
                 height={24}

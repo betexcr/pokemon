@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 const TypeTooltip = dynamic(() => import('@/components/type/TypeTooltip'), { ssr: false });
 import Image from 'next/image';
 import type { PokemonMeta } from '@/lib/meta/types';
+import PokemonSpriteImg from '@/components/PokemonSpriteImg'
 
 export default function MetaPodium({ top3 }: { top3: PokemonMeta[] }) {
   const reduce = useReducedMotion();
@@ -29,8 +30,8 @@ export default function MetaPodium({ top3 }: { top3: PokemonMeta[] }) {
             </TypeTooltip>
             <div className="mt-2 text-center text-sm">
               <div className="flex items-center justify-center gap-2 font-semibold">
-                <Image
-                  src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`}
+                <PokemonSpriteImg
+                  id={p.id}
                   alt={p.name}
                   width={28}
                   height={28}
