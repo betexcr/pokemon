@@ -8,6 +8,7 @@ import { Pokemon } from "@/types/pokemon";
 import AbilityBadge from "@/components/AbilityBadge";
 import Tooltip from './Tooltip'
 import { getPokemonJapaneseName } from '@/lib/japaneseNames'
+import { shouldIgnoreArrowNavigation } from '@/lib/keyboardNav'
 import TypeBadgeWithTooltip from "@/components/TypeBadgeWithTooltip";
 
 import { getBestPokemonDBSprite } from "@/lib/pokemonDbSprites";
@@ -496,6 +497,22 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
     }
   };
 
+  // ←/→ go to the previous / next Pokémon (same order and bounds as the buttons), unless the key
+  // already means something where the focus is (fields, tabs, sliders, open dialogs, Alt+← Back)
+  const arrowNavRef = useRef({ prev: goToPrevious, next: goToNext });
+  arrowNavRef.current = { prev: goToPrevious, next: goToNext };
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const dialogOpen = !!document.querySelector('[aria-modal="true"],[role="dialog"]');
+      if (shouldIgnoreArrowNavigation(e, e.target as HTMLElement | null, dialogOpen)) return;
+      e.preventDefault();
+      if (e.key === 'ArrowLeft') arrowNavRef.current.prev();
+      else arrowNavRef.current.next();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
+
   // Helper function to check if a sprite is available for a specific generation
   const isSpriteAvailable = (gen: string, pokemonName: string, orientation: 'front' | 'back', shiny: boolean, gender: 'male' | 'female'): boolean => {
     const pokemonId = pokemon.id;
@@ -795,8 +812,9 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
               onClick={goToPrevious}
               disabled={pokemon.id <= 1}
               className="group flex items-center justify-center w-12 h-12 rounded-full border border-border bg-surface hover:bg-surface/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-105 disabled:hover:scale-100"
-              title={`Previous Pokémon (#${String(pokemon.id - 1).padStart(4, "0")})`}
+              title={`Previous Pokémon (#${String(pokemon.id - 1).padStart(4, "0")}) — ← key`}
               aria-label={`Previous Pokémon (#${String(pokemon.id - 1).padStart(4, "0")})`}
+              aria-keyshortcuts="ArrowLeft"
             >
               <ChevronLeft className="h-6 w-6 text-muted group-hover:text-text transition-colors" />
             </button>
@@ -809,8 +827,9 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
               onClick={goToPrevious}
               disabled={pokemon.id <= 1}
               className="lg:hidden group flex items-center justify-center w-10 h-10 rounded-full border border-border bg-surface hover:bg-surface/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-105 disabled:hover:scale-100 flex-shrink-0"
-              title={`Previous Pokémon (#${String(pokemon.id - 1).padStart(4, "0")})`}
+              title={`Previous Pokémon (#${String(pokemon.id - 1).padStart(4, "0")}) — ← key`}
               aria-label={`Previous Pokémon (#${String(pokemon.id - 1).padStart(4, "0")})`}
+              aria-keyshortcuts="ArrowLeft"
             >
               <ChevronLeft className="h-5 w-5 text-muted group-hover:text-text transition-colors" />
             </button>
@@ -849,8 +868,9 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
               onClick={goToNext}
               disabled={allIdsRef.current.length > 0 ? allIdsRef.current.indexOf(pokemon.id) >= allIdsRef.current.length - 1 : pokemon.id >= 1025}
               className="lg:hidden group flex items-center justify-center w-10 h-10 rounded-full border border-border bg-surface hover:bg-surface/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-105 disabled:hover:scale-100 flex-shrink-0"
-              title="Next Pokémon"
+              title="Next Pokémon — → key"
               aria-label="Next Pokémon"
+              aria-keyshortcuts="ArrowRight"
             >
               <ChevronRight className="h-5 w-5 text-muted group-hover:text-text transition-colors" />
             </button>
@@ -1209,8 +1229,9 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
               onClick={goToNext}
               disabled={allIdsRef.current.length > 0 ? allIdsRef.current.indexOf(pokemon.id) >= allIdsRef.current.length - 1 : pokemon.id >= 1025}
               className="group flex items-center justify-center w-12 h-12 rounded-full border border-border bg-surface hover:bg-surface/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-105 disabled:hover:scale-100"
-              title="Next Pokémon"
+              title="Next Pokémon — → key"
               aria-label="Next Pokémon"
+              aria-keyshortcuts="ArrowRight"
             >
               <ChevronRight className="h-6 w-6 text-muted group-hover:text-text transition-colors" />
             </button>
