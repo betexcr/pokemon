@@ -4,6 +4,9 @@
 export type BattleItemCategory =
   | 'Choice & power' | 'Recovery & defense' | 'Berries' | 'Field & utility' | 'Type boost' | 'Gems' | 'Species items';
 
+/** Category order used by the team builder's item picker. */
+export const ITEM_CATEGORIES: BattleItemCategory[] = ['Species items', 'Choice & power', 'Recovery & defense', 'Field & utility', 'Berries', 'Type boost', 'Gems'];
+
 export type BattleItemInfo = {
   id: string;
   label: string;
@@ -184,4 +187,13 @@ export function getBattleItem(id: unknown): BattleItemInfo | undefined {
 /** Normalized item id when it is one the engine supports, else undefined. */
 export function sanitizeBattleItem(id: unknown): string | undefined {
   return getBattleItem(id)?.id;
+}
+
+// PokeAPI names a few item sprites after an older item name
+const ITEM_SPRITE_ALIASES: Record<string, string> = { leek: 'stick' };
+
+/** Bag icon for a held item (PokeAPI item sprites; every catalogue item has one). */
+export function itemSpriteUrl(id: string): string {
+  const name = ITEM_SPRITE_ALIASES[id] ?? id;
+  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${name}.png`;
 }

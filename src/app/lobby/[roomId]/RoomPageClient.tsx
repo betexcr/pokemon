@@ -1,5 +1,6 @@
 'use client'
 
+import { SiteFooter } from '@/components/SiteFooter'
 import { useEffect, useMemo, useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2, CheckCircle2, Users, AlertCircle, LogOut, PlayCircle, Trash2 } from 'lucide-react'
@@ -503,7 +504,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
 
   if (!user) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center text-text">
+      <div data-own-footer className="fixed inset-0 flex items-center justify-center text-text">
         <div className="text-center space-y-4 px-4">
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
           <p className="text-lg font-semibold">You must be signed in to view battle rooms.</p>
@@ -514,7 +515,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
 
   if (loading) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center text-text">
+      <div data-own-footer className="fixed inset-0 flex items-center justify-center text-text">
         <div className="flex flex-col items-center space-y-4">
           <Loader2 className="w-10 h-10 animate-spin text-poke-blue" />
           <p className="text-muted">Loading battle room…</p>
@@ -525,7 +526,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
 
   if (error || !room) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center text-text">
+      <div data-own-footer className="fixed inset-0 flex items-center justify-center text-text">
         <div className="text-center space-y-4 px-4">
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
           <p className="text-lg font-semibold">{error || 'Battle room not found.'}</p>
@@ -544,7 +545,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
   const bothReady = room.hostReady && room.guestReady
 
   return (
-    <div className="fixed inset-0 flex flex-col text-text overflow-hidden">
+    <div data-own-footer className="fixed inset-0 flex flex-col text-text overflow-hidden">
       <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
         <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         <button
@@ -694,6 +695,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
           </p>
         </section>
         </div>
+        <SiteFooter />
       </main>
     </div>
   )

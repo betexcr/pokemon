@@ -1,5 +1,6 @@
 'use client'
 
+import { SiteFooter } from '@/components/SiteFooter'
 import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
 import LinkWithTransition from '@/components/LinkWithTransition'
@@ -160,7 +161,7 @@ export default function ComparePage() {
   }
 
   return (
-    <div className="h-screen root-full w-screen flex flex-col overflow-hidden">
+    <div data-own-footer className="h-screen root-full w-screen flex flex-col overflow-hidden">
       <OfflineBanner cachedMessage="You're offline. Only previously viewed Pokemon are available for comparison." />
       {/* Header */}
       <AppHeader
@@ -433,6 +434,7 @@ export default function ComparePage() {
             </div>
           </div>
         )}
+        <SiteFooter />
       </main>
     </div>
   )

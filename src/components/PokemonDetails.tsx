@@ -192,7 +192,7 @@ export default function PokemonDetails({ pokemon, showHeader = true, className =
       case 'moves':
         return loadingMoves ? <MovesSectionSkeleton /> : <MovesSection moves={moves} pokemonTypes={pokemon.types.map(t => t.type.name)} />
       case 'evolution':
-        return loadingEvolution ? <EvolutionSectionSkeleton /> : <EvolutionSection chain={evolutionChain} />
+        return loadingEvolution ? <EvolutionSectionSkeleton /> : <EvolutionSection chain={evolutionChain} currentId={pokemon.id} />
       case 'matchups':
         return loadingMatchups ? <MatchupsSectionSkeleton /> : <MatchupsSection groups={typeMatchups} />
       default:

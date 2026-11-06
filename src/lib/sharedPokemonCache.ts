@@ -60,7 +60,8 @@ class SharedPokemonCache {
   }
   
   /**
-   * Mark a request as failed to prevent repeated attempts
+   * Remember (for 5 minutes) that a Pokémon doesn't exist. Only for real not-founds, never for
+   * transient failures: the detail page treats a marked ID as "Not Found".
    */
   markFailed(id: number): void {
     this.failedRequests.add(id)
@@ -162,8 +163,10 @@ class SharedPokemonCache {
           this.set(id, pokemon)
         } catch (error) {
           console.warn(`Failed to preload Pokemon ${id}:`, error)
-          // Mark as failed to prevent repeated attempts
-          this.markFailed(id)
+          // Only a real "doesn't exist" is remembered. Marking rate-limited preloads as failed made
+          // the next visit to that Pokémon's page render (and cache) "Not Found".
+          const { isPokemonNotFoundError } = await import('@/lib/api')
+          if (isPokemonNotFoundError(error)) this.markFailed(id)
         } finally {
           this.inFlightFetches.delete(id)
         }
@@ -256,10 +259,15 @@ export const cacheUtils = {
       sharedPokemonCache.set(id, pokemon)
       return pokemon
     } catch (error) {
-      console.warn(`Failed to fetch Pokemon ${id}:`, error)
-      // Mark as failed to prevent repeated attempts
-      sharedPokemonCache.markFailed(id)
-      return null
+      const { isPokemonNotFoundError } = await import('@/lib/api')
+      if (isPokemonNotFoundError(error)) {
+        // Genuinely missing: remember it briefly so repeated visits don't refetch
+        sharedPokemonCache.markFailed(id)
+        return null
+      }
+      // Transient (rate limit, timeout, 5xx): don't turn it into "not found"; let the caller fail
+      // the request so ISR keeps serving the last good page instead of caching a 404
+      throw error
     }
   },
   

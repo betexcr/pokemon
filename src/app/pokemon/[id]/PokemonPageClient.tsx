@@ -1,5 +1,6 @@
 'use client'
 
+import { SiteFooter } from '@/components/SiteFooter'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import AppHeader from '@/components/AppHeader'
@@ -52,7 +53,7 @@ export default function PokemonPageClient({ pokemon }: PokemonPageClientProps) {
   }
 
   return (
-    <div className="flex flex-col h-[100dvh] overflow-hidden">
+    <div data-own-footer className="flex flex-col h-[100dvh] overflow-hidden">
       <AppHeader
         title={pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)}
         subtitle={getSubtitle()}
@@ -67,6 +68,7 @@ export default function PokemonPageClient({ pokemon }: PokemonPageClientProps) {
           <div className="mx-auto w-full max-w-6xl px-4 pb-8 pt-4 sm:px-6 lg:px-8">
           <PokemonDetails pokemon={pokemon} />
         </div>
+        <SiteFooter />
       </main>
     </div>
   )

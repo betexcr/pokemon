@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { formatPokemonName } from '@/lib/utils';
 import { battleLogToDisplayLines, type BattleLogDisplayLine } from '@/lib/battle-log-display';
 
@@ -44,10 +44,22 @@ export function BattleTextBox({
   const prevLengthRef = useRef(0);
   const prevAnnouncedLengthRef = useRef(0);
 
-  const lines: BattleLogDisplayLine[] = useMemo(
+  // The battle state only carries the latest turn's messages, so earlier turns are kept here:
+  // when a new turn's log arrives (not just more lines of the same turn) the previous one is
+  // committed to history, and the box shows the whole battle.
+  const current: BattleLogDisplayLine[] = useMemo(
     () => battleLogToDisplayLines(battleLog as unknown[] | undefined),
     [battleLog]
   );
+  const [history, setHistory] = useState<BattleLogDisplayLine[]>([]);
+  const prevCurrentRef = useRef<BattleLogDisplayLine[]>([]);
+  useEffect(() => {
+    const prev = prevCurrentRef.current;
+    const sameTurn = prev.length <= current.length && prev.every((l, i) => l.message === current[i]?.message);
+    if (!sameTurn && prev.length) setHistory((h) => [...h, ...prev].slice(-300));
+    prevCurrentRef.current = current;
+  }, [current]);
+  const lines: BattleLogDisplayLine[] = useMemo(() => [...history, ...current], [history, current]);
 
   useEffect(() => {
     if (onDisplayedLogIndexChange && lines.length > prevLengthRef.current) {
@@ -56,16 +68,25 @@ export function BattleTextBox({
     prevLengthRef.current = lines.length;
   }, [lines.length, onDisplayedLogIndexChange]);
 
+  // Follow new lines, unless the player has scrolled up to read earlier turns
+  const stickToBottomRef = useRef(true);
   useEffect(() => {
+    if (!stickToBottomRef.current) return;
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: 'smooth' });
   }, [displayedLogIndex, lines.length]);
+  const onLogScroll = () => {
+    const el = logRef.current;
+    if (!el) return;
+    stickToBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 24;
+  };
 
   useEffect(() => {
     prevAnnouncedLengthRef.current = lines.length;
   }, [lines.length]);
 
-  const absoluteStart = Math.max(0, lines.length - 3);
-  const visibleLines = lines.length > 0 ? lines.slice(absoluteStart) : [];
+  // The whole battle stays in the log; the box scrolls (newest at the bottom)
+  const absoluteStart = 0;
+  const visibleLines = lines;
   const newestIndex = lines.length - 1;
   const isNewFaint =
     lines.length > prevAnnouncedLengthRef.current &&
@@ -90,7 +111,9 @@ export function BattleTextBox({
           aria-live={isNewFaint ? 'assertive' : 'polite'}
           aria-relevant="additions"
           aria-label="Battle log"
-          className="relative px-5 py-3 min-h-[3.5rem] max-h-28 overflow-y-auto"
+          tabIndex={0}
+          onScroll={onLogScroll}
+          className="relative px-5 py-3 min-h-[3.5rem] max-h-48 overflow-y-auto overscroll-contain"
         >
           {visibleLines.length > 0 ? (
             <div className="space-y-1">

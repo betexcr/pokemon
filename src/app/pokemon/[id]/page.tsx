@@ -76,18 +76,11 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
       }
     }
   } catch (error) {
+    // Transient PokeAPI failure: the page render fails too (and isn't cached), so keep a neutral title
     console.error('Failed to generate metadata for Pokemon:', pokemonId, error)
-    // Log the error for debugging in production
-    if (process.env.NODE_ENV === 'production') {
-      console.error('Production metadata error details:', {
-        pokemonId,
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
-      })
-    }
     return {
-      title: 'Pokémon Not Found',
-      description: 'The requested Pokémon could not be found.'
+      title: 'Pokémon Details',
+      description: 'Pokémon details, stats, moves and evolutions.'
     }
   }
 }
@@ -100,32 +93,17 @@ export default async function PokemonPage(props: { params: Promise<{ id: string 
     notFound()
   }
 
-  try {
-    // The Pokemon data should already be cached from generateMetadata
-    // This will be a cache hit, making it much faster
-    const pokemon = await cacheUtils.getOrFetchPokemon(pokemonId)
-    
-    if (!pokemon) {
-      notFound()
-    }
-
-    // Preload surrounding Pokemon for better navigation UX
-    cacheUtils.preloadForDetailPage(pokemonId)
-    
-    // Preload evolution chain Pokemon for faster navigation
-    preloadEvolutionChain(pokemon)
-    
-    return <Suspense><PokemonPageClient pokemon={pokemon} /></Suspense>
-  } catch (error) {
-    console.error('Failed to load Pokemon:', pokemonId, error)
-    // Log the error for debugging in production
-    if (process.env.NODE_ENV === 'production') {
-      console.error('Production error details:', {
-        pokemonId,
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
-      })
-    }
+  // null only when the Pokémon doesn't exist. A transient PokeAPI failure (rate limit, timeout,
+  // 5xx) throws instead: the request fails, ISR keeps serving the last good page, and no
+  // "Not Found" page is cached for a Pokémon that exists.
+  const pokemon = await cacheUtils.getOrFetchPokemon(pokemonId)
+  if (!pokemon) {
     notFound()
   }
+
+  // Preload surrounding Pokemon and the evolution chain for faster navigation
+  cacheUtils.preloadForDetailPage(pokemonId).catch(() => {})
+  preloadEvolutionChain(pokemon)
+
+  return <Suspense><PokemonPageClient pokemon={pokemon} /></Suspense>
 }

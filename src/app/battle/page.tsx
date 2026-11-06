@@ -1,5 +1,6 @@
 "use client";
 
+import { SiteFooter } from '@/components/SiteFooter'
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Swords } from "lucide-react";
@@ -186,7 +187,7 @@ function BattlePage() {
   };
 
   return (
-    <div className="fixed inset-0 text-text flex flex-col overflow-hidden">
+    <div data-own-footer className="fixed inset-0 text-text flex flex-col overflow-hidden">
       <OfflineBanner cachedMessage="You're offline. AI battles work offline with cached Pokemon data." />
       <AppHeader
         title="AI Battle"
@@ -350,6 +351,7 @@ function BattlePage() {
           </div>
         )}
         </div>
+        <SiteFooter />
       </main>
     </div>
   );

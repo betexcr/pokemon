@@ -22,6 +22,8 @@ export type EngineExtras = {
   lastMoveInBattle?: string;
   /** HP lost per side (end-of-battle stats). */
   battleStats?: { p1: { damageTaken: number }; p2: { damageTaken: number } };
+  /** Leads' entry effects already ran (they run once, at the start of turn 1's resolution). */
+  leadsEntered?: boolean;
 };
 
 /** RTDB rejects `undefined`: keep only defined keys. */
@@ -50,6 +52,7 @@ export function captureEngineExtras(state: BattleState): EngineExtras {
     fairyLock: state.field.rooms?.fairyLock?.turns,
     lastMoveInBattle: state.lastMoveInBattle,
     battleStats: state.battleStats,
+    leadsEntered: state.leadsEntered || undefined,
   });
 }
 
@@ -76,6 +79,7 @@ export function applyEngineExtras(state: BattleState, extras: EngineExtras | nul
     state.field.rooms.fairyLock = { turns: extras.fairyLock };
   }
   if (extras.lastMoveInBattle) state.lastMoveInBattle = extras.lastMoveInBattle;
+  if (extras.leadsEntered) state.leadsEntered = true;
   if (extras.battleStats?.p1 && extras.battleStats?.p2) {
     state.battleStats = {
       p1: { damageTaken: Number(extras.battleStats.p1.damageTaken) || 0 },

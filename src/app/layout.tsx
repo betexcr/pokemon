@@ -19,6 +19,7 @@ import AnalyticsProvider from '@/components/AnalyticsProvider'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { SITE_URL, SITE_NAME, FAN_SITE_DISCLAIMER } from '@/lib/site/siteUrl'
+import { SiteFooter } from '@/components/SiteFooter'
 
 
 const SITE_TITLE = `${SITE_NAME} – Unofficial Pokédex & Battle Simulator`
@@ -186,9 +187,7 @@ export default function RootLayout({
                   <div className="relative z-10 min-h-screen">
                     <OfflineIndicator />
                     {children}
-                    <footer className="px-4 pb-6 pt-10 text-center text-xs text-gray-500 dark:text-gray-400">
-                      <p className="mx-auto max-w-3xl">{FAN_SITE_DISCLAIMER}</p>
-                    </footer>
+                    <SiteFooter className="layout-footer" />
                     <GlobalErrorCatcher />
                     <HelpAssistant />
                     <ErrorTip />

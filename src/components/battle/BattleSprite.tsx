@@ -3,6 +3,7 @@
 import { forwardRef, useMemo } from 'react'
 import Image from 'next/image'
 import { formatPokemonName, getBattleSpriteSources } from '@/lib/utils'
+import { statusInfo } from '@/lib/battle-display'
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface BattleSpriteRef {}
@@ -18,10 +19,12 @@ interface BattleSpriteProps {
   shiny?: boolean
   /** National dex / form ID when known — improves PokeAPI sprite fallbacks. */
   dexId?: number | null
+  /** Confused (a volatile condition shown next to the main status). */
+  confused?: boolean
 }
 
 export const BattleSprite = forwardRef<BattleSpriteRef, BattleSpriteProps>(function BattleSprite(
-  { species, level, hp, status, types = [], side = 'player', className = '', shiny = false, dexId = null },
+  { species, level, hp, status, types = [], side = 'player', className = '', shiny = false, dexId = null, confused = false },
   _ref
 ) {
   // Animated sprites like the team builder: your Pokémon from the back, the opponent from the front
@@ -29,6 +32,9 @@ export const BattleSprite = forwardRef<BattleSpriteRef, BattleSpriteProps>(funct
   const sources = useMemo(() => getBattleSpriteSources(species, dexId, shiny, variant), [species, dexId, shiny, variant])
 
   const hpPercentage = Math.max(0, Math.min(100, Math.round((hp.cur / Math.max(1, hp.max)) * 100)))
+  // Same icons and wording as the battle guide
+  const mainStatus = statusInfo(status)
+  const confusion = confused ? statusInfo('confused') : null
 
   return (
     <div className={`flex w-full max-w-xs flex-col items-center gap-3 rounded-2xl border border-border bg-surface/80 p-4 shadow-lg ${className}`}>
@@ -74,12 +80,30 @@ export const BattleSprite = forwardRef<BattleSpriteRef, BattleSpriteProps>(funct
         </div>
         <p className="mt-1 text-xs text-muted" data-testid={`hp-bar-${side}`}>
           {hp.cur} / {hp.max} HP · {types.join(' / ') || 'Unknown type'}
-          {status ? ` · Status ${status}` : ''}
         </p>
-        {status && (
-          <span className="mt-2 inline-flex items-center rounded-full border border-yellow-500/60 bg-yellow-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-500" data-testid={`status-icon-${status}`}>
-            {status}
-          </span>
+        {(status || confusion) && (
+          <div className="mt-2 flex flex-wrap justify-center gap-1">
+            {status && (
+              <span
+                className="inline-flex items-center gap-1 rounded-full border border-amber-500/50 bg-amber-500/10 px-2 py-0.5 text-xs font-semibold text-amber-800 dark:text-amber-200"
+                data-testid={`status-icon-${status}`}
+                title={mainStatus?.effect}
+              >
+                <span aria-hidden>{mainStatus?.icon ?? '⚠️'}</span>
+                {mainStatus?.name ?? status}
+              </span>
+            )}
+            {confusion && (
+              <span
+                className="inline-flex items-center gap-1 rounded-full border border-purple-500/50 bg-purple-500/10 px-2 py-0.5 text-xs font-semibold text-purple-800 dark:text-purple-200"
+                data-testid="status-icon-confused"
+                title={confusion.effect}
+              >
+                <span aria-hidden>{confusion.icon}</span>
+                {confusion.name}
+              </span>
+            )}
+          </div>
         )}
       </div>
     </div>

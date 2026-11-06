@@ -1,4 +1,5 @@
 import { methodToText } from '@/lib/evo/normalize';
+import { methodIcon } from '@/lib/evo/method';
 
 // Simple legend explaining method badges. Server component.
 export default function EvoLegend() {
@@ -19,13 +20,7 @@ export default function EvoLegend() {
           role="img"
           aria-label={methodToText(m as any)}
         >
-          <span aria-hidden>
-            {m.kind === 'stone' && '💎'}
-            {m.kind === 'trade' && '🔁'}
-            {m.kind === 'friendship' && '💖'}
-            {m.kind === 'location' && '📍'}
-            {m.kind === 'special' && '✨'}
-          </span>
+          <span aria-hidden>{methodIcon(m.kind)}</span>
           <span>{methodToText(m as any)}</span>
         </span>
       ))}

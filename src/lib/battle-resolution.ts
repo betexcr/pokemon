@@ -18,6 +18,7 @@ import {
     getSwitchCandidates,
     resumeBattleTurnAfterSwitch,
     runBattleTurnFromQueue,
+    runLeadEntries,
     type TurnOutcome,
 } from './team-battle-engine-additional';
 import {
@@ -612,9 +613,19 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
                 normalized: !!(n1.normalized || n2.normalized || t1.dropped || t2.dropped),
             };
 
+            // Leads' entry effects (Drizzle, Intimidate, Electric Surge, ...) act before turn 1's moves.
+            // Battle creation doesn't run the engine, so they run here once (leadsEntered is persisted);
+            // battles already past turn 1 when this shipped are left alone.
+            let leadEntryLog: BattleState['battleLog'] = [];
+            if (meta.turn === 1 && !currentState.leadsEntered) {
+                currentState.battleLog = [];
+                await runLeadEntries(currentState);
+                leadEntryLog = [...currentState.battleLog];
+            }
             const queue = buildActionQueue(battleState, p1Action, p2Action);
             // Both players pick their own pivot replacements (the turn pauses; see battle-pending-switch.ts)
             outcome = await runBattleTurnFromQueue(currentState, queue, { clearBattleLog: true, manualSwitchSides: BOTH_SIDES });
+            if (leadEntryLog.length) currentState.battleLog.unshift(...leadEntryLog);
         }
 
         const playerDefeated = isTeamDefeated(currentState.player);

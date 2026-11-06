@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion, useReducedMotion } from 'framer-motion';
 import type { NormalizedEvoGraph, NormalizedFamily } from '@/lib/evo/types';
 import { methodToText, normalizeEvoGraph } from '@/lib/evo/normalize';
+import { methodIcon } from '@/lib/evo/method';
 import type { EvoFilters } from '@/lib/evo/types';
 import EvoCard from './EvoCard';
 import EvoSkeleton from './EvoSkeleton';
@@ -401,20 +402,3 @@ const FamilyEdges = React.memo(function FamilyEdges({
 
   return <div className="flex flex-col">{rows}</div>;
 });
-
-function methodIcon(kind: string) {
-  switch (kind) {
-    case 'stone':
-      return '💎';
-    case 'trade':
-      return '🔁';
-    case 'friendship':
-      return '💖';
-    case 'location':
-      return '📍';
-    case 'special':
-      return '✨';
-    default:
-      return '⬡';
-  }
-}
