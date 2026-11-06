@@ -231,6 +231,28 @@ describe('resolveTurn with Terastallization', () => {
   });
 });
 
+describe('resolveTurn with shiny Pokémon', () => {
+  it('keeps the team builder\'s shiny choice across turns and shows it publicly', async () => {
+    const p1 = db.get(`battles/${BID}/private/${P1}`);
+    p1.team[0].shiny = true;
+    db.set(`battles/${BID}/private/${P1}`, p1);
+
+    choose(P1, { action: 'move', payload: { moveId: 'tackle' }, clientVersion: 1 });
+    choose(P2, { action: 'move', payload: { moveId: 'tackle' }, clientVersion: 1 });
+    await resolveTurn(BID);
+
+    expect(db.get(`battles/${BID}/private/${P1}`).team[0].shiny).toBe(true);
+    expect(db.get(`battles/${BID}/public/p1/active`).shiny).toBe(true);
+    expect(db.get(`battles/${BID}/public/p2/active`).shiny).toBeUndefined();
+
+    // A non-shiny teammate switching in shows its own colouring
+    choose(P1, { action: 'switch', payload: { switchToIndex: 1 }, clientVersion: 2 }, 2);
+    choose(P2, { action: 'move', payload: { moveId: 'tackle' }, clientVersion: 2 }, 2);
+    await resolveTurn(BID);
+    expect(db.get(`battles/${BID}/public/p1/active`).shiny).toBeUndefined();
+  });
+});
+
 describe('resolveTurn with faint replacement picks', () => {
   async function knockOutP1Lead() {
     const p1 = db.get(`battles/${BID}/private/${P1}`);

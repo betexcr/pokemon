@@ -91,7 +91,7 @@ export type BattlePokemon = {
     /** Transform / Imposter: originals restored on switch-out. */
     transform?: { pokemon: unknown; moves: unknown; ability?: string; into: string };
     /** Illusion: shown to the foe as this species until a damaging hit breaks it. */
-    illusion?: { species: string; dexId?: number | null; types?: string[] };
+    illusion?: { species: string; dexId?: number | null; types?: string[]; shiny?: boolean };
     /** Protean / Libero already changed type since entering. */
     proteanUsed?: boolean;
     /** Types before a temporary type change (Protean / Libero), restored on switch-out. */
@@ -184,6 +184,8 @@ export type BattlePokemon = {
   itemForm?: string;
   /** Unknown unless the team records it (Attract checks it when known). */
   gender?: 'male' | 'female' | 'genderless';
+  /** Shiny colouring chosen in the team builder (display only). */
+  shiny?: boolean;
   /** Effort values from the team slot (IVs are always 31). */
   evs?: EvSpread;
   /** Stellar Tera: move types whose one-time boost was used. */

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { CompiledMove } from '../adapters/pokeapiMoveAdapter';
 import { resumeBattleTurnAfterSwitch, runBattleTurnFromQueue } from '../team-battle-engine-additional';
-import { displayTypes, publicBenchEntries } from '../team-battle-illusion';
+import { displayShiny, displayTypes, publicBenchEntries } from '../team-battle-illusion';
 import {
   buildActionQueue,
   getCurrentPokemon,
@@ -228,6 +228,17 @@ describe('remaining simplifications', () => {
     const bench = publicBenchEntries(s.opponent).map((b) => b.species);
     expect(bench).toEqual(['o-bench', 'zoroark']);
     expect(bench).not.toContain('decoy');
+  });
+
+  it('Illusion: the foe sees the disguise\'s shiny colouring, then the real one once it breaks', async () => {
+    const zoroark = { ...makeMon('zoroark', { speed: 30, ability: 'illusion' }), shiny: false };
+    const s = makeBattle(makeMon('p', { speed: 150 }), zoroark);
+    s.opponent.pokemon.push({ ...makeMon('decoy'), shiny: true });
+    await play(s, mv('calm-mind'));
+    expect(displayShiny(O(s))).toBe(true);
+    await play(s, mv('tackle'));
+    expect(O(s).volatile.illusion).toBeUndefined();
+    expect(displayShiny(O(s))).toBe(false);
   });
 
   it('Ice Face: Noice Face stats after the hit, Ice Face stats again when snow restores it', async () => {

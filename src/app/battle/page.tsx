@@ -119,7 +119,8 @@ function BattlePage() {
         ...((slot as any).item ? { heldItem: (slot as any).item } : {}),
         ...((slot as any).evs ? { evs: (slot as any).evs } : {}),
         ...((slot as any).gender ? { gender: (slot as any).gender } : {}),
-        ...((slot as any).ability ? { ability: (slot as any).ability } : {})
+        ...((slot as any).ability ? { ability: (slot as any).ability } : {}),
+        ...((slot as any).isShiny ? { shiny: true } : {})
       }));
       localStorage.setItem('pokemon-current-team', JSON.stringify(currentTeamData));
     } catch (error) {

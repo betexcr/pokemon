@@ -552,7 +552,7 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
                 status={myActive.status}
                 types={myActive.types || []}
                 side="player"
-                shiny={Boolean((myActive as any)?.shiny || (myActive as any)?.isShiny)}
+                shiny={!!myActive.shiny}
                 className="transform scale-110"
               />
             )}
@@ -575,7 +575,7 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
                 status={oppActive.status}
                 types={oppActive.types || []}
                 side="opponent"
-                shiny={Boolean((oppActive as any)?.shiny || (oppActive as any)?.isShiny)}
+                shiny={!!oppActive.shiny}
                 className="transform scale-110"
               />
             )}
@@ -793,7 +793,7 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
                     <div className="flex items-center gap-2">
                       <BattleSpriteImage
                         species={speciesName}
-                        shiny={Boolean((pokemon as any)?.shiny || (pokemon as any)?.isShiny)}
+                        shiny={!!(pokemon as { shiny?: boolean }).shiny}
                         size={32}
                         className="w-8 h-8 object-contain"
                       />

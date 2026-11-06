@@ -234,6 +234,7 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
                 ref={playerSpriteRef}
                 species={myActive.species}
                 dexId={(myActive as { dexId?: number | null }).dexId ?? null}
+                shiny={!!myActive.shiny}
                 level={myActive.level}
                 hp={myActive.hp}
                 status={myActive.status as any}
@@ -254,6 +255,7 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
                 ref={opponentSpriteRef}
                 species={oppActive.species}
                 dexId={(oppActive as { dexId?: number | null }).dexId ?? null}
+                shiny={!!oppActive.shiny}
                 level={oppActive.level}
                 hp={oppActive.hp}
                 status={oppActive.status as any}
@@ -390,6 +392,7 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
                         <BattleSpriteImage
                           species={speciesName}
                           dexId={(pokemon as { dexId?: number | null }).dexId ?? null}
+                          shiny={!!pokemon.shiny}
                           size={32}
                           className="w-8 h-8 object-contain"
                         />

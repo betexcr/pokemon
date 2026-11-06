@@ -75,6 +75,7 @@ function createPublicPokemonData(pokemon: any) {
     },
     itemKnown: false,
     abilityKnown: false,
+    ...(pokemon.shiny === true ? { shiny: true } : {}),
   };
 }
 

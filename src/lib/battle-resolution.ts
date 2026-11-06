@@ -1,4 +1,4 @@
-import { displaySpecies, displayTypes, publicBenchEntries } from './team-battle-illusion';
+import { displayShiny, displaySpecies, displayTypes, publicBenchEntries } from './team-battle-illusion';
 import { canTerastallize, resolveTeraType } from './team-battle-tera';
 import { resolveBattleAbility } from './battle-default-ability';
 import { getRtdbOps, type RtdbOps } from './rtdb-access';
@@ -185,6 +185,7 @@ async function hydrateTeam(team: any[], stats?: HydrationStats): Promise<BattleP
             originalTypes: Array.isArray(p.originalTypes) ? p.originalTypes : undefined,
             originalAbility: p.originalAbility || resolveBattleAbility({ ability: p.ability }, pokemon.abilities),
             gender: p.gender === 'male' || p.gender === 'female' || p.gender === 'genderless' ? p.gender : undefined,
+            shiny: p.shiny === true || undefined,
             evs,
             stellarBoostedTypes: Array.isArray(p.stellarBoostedTypes) ? p.stellarBoostedTypes : undefined,
             ateBerry: p.ateBerry === true || undefined,
@@ -659,6 +660,7 @@ export async function resolveTurn(battleId: string, authToken?: string): Promise
             },
             // Tera is public once it happens (types above already show the Tera Type)
             ...(mon.terastallized && mon.teraType ? { terastallized: true, teraType: mon.teraType } : {}),
+            ...(displayShiny(mon) ? { shiny: true } : {}),
         });
 
         // Illusion-aware: the disguised slot shows the real user

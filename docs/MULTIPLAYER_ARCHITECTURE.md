@@ -104,6 +104,9 @@ Player A (Host)                RTDB                    Player B (Guest)
   ├─ guestName: string
   ├─ guestTeam: array
   ├─ guestReady: boolean
+  │    (each team slot: id, level, moves, nature, plus the team builder's
+  │     teraType, item, evs, gender, ability and shiny; re-validated by
+  │     normalizeTeamForRTDB when the battle is created)
   ├─ status: "waiting" | "ready" | "battling" | "finished"
   ├─ battleId: string (reference)
   └─ createdAt: timestamp
