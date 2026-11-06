@@ -160,7 +160,7 @@ export default function ComparePage() {
   }
 
   return (
-    <div className="h-screen root-full w-screen bg-gradient-to-br from-slate-900 via-slate-950 to-[#0b1120] flex flex-col overflow-hidden">
+    <div className="h-screen root-full w-screen flex flex-col overflow-hidden">
       <OfflineBanner cachedMessage="You're offline. Only previously viewed Pokemon are available for comparison." />
       {/* Header */}
       <AppHeader

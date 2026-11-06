@@ -41,7 +41,7 @@ export default function PokemonCardFrame({
   // Calculate card styling based on density
   const getCardClasses = () => {
     const baseClasses = `
-      group relative bg-surface border border-border ${(density !== '9cols' && density !== '12cols') ? 'overflow-hidden' : 'overflow-visible'}
+      group relative bg-white/70 dark:bg-gray-900/50 border border-border ${(density !== '9cols' && density !== '12cols') ? 'overflow-hidden' : 'overflow-visible'}
       transition-all duration-200 hover:shadow-lg focus:outline-none
       focus:ring-2 focus:ring-poke-blue focus:ring-offset-2 focus:ring-offset-bg
       w-full h-full ml-0 p-0 cq-card

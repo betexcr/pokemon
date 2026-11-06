@@ -16,7 +16,7 @@ export default function PokemonError({
   }, [error])
 
   return (
-    <div className="min-h-screen bg-bg text-text flex items-center justify-center">
+    <div className="min-h-screen text-text flex items-center justify-center">
       <div className="text-center max-w-md mx-auto px-4">
         <div className="text-6xl mb-4">⚠️</div>
         <h1 className="text-2xl font-bold mb-4 text-red-600 dark:text-red-400">

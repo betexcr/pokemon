@@ -208,7 +208,7 @@ function LobbyPage() {
   };
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-bg text-text overflow-hidden">
+    <div className="fixed inset-0 flex flex-col text-text overflow-hidden">
       <OfflineBanner requiresNetwork blockedMessage="Multiplayer lobby requires an internet connection. Try AI battles instead!" />
       <AppHeader
         title="Battle Lobby"

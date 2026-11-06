@@ -1188,7 +1188,7 @@ export default function TeamBuilderPage() {
   }
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-bg text-text">
+    <div className="min-h-screen flex items-center justify-center text-text">
       <div className="text-center">
         <img 
           src="/loading.gif" 
@@ -1202,11 +1202,11 @@ export default function TeamBuilderPage() {
     </div>
   )
   if (error) return (
-    <div className="min-h-screen flex items-center justify-center bg-bg text-red-600">{error}</div>
+    <div className="min-h-screen flex items-center justify-center text-red-600">{error}</div>
   )
 
   return (
-    <div className="min-h-screen bg-bg text-text overflow-x-hidden">
+    <div className="min-h-screen text-text overflow-x-hidden">
       <AppHeader
         title="Team Builder"
         backLink="/"

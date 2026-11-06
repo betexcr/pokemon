@@ -329,7 +329,7 @@ function ChampionshipDetailContent({ championshipId }: Props) {
 
   if (loading) {
     return (
-      <div className="fixed inset-0 flex flex-col bg-bg text-text">
+      <div className="fixed inset-0 flex flex-col text-text">
         <AppHeader title="Championship" backLink="/championship" showToolbar={false} />
         <div className="flex-1 flex items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-yellow-500" />
@@ -340,7 +340,7 @@ function ChampionshipDetailContent({ championshipId }: Props) {
 
   if (!c) {
     return (
-      <div className="fixed inset-0 flex flex-col bg-bg text-text">
+      <div className="fixed inset-0 flex flex-col text-text">
         <AppHeader title="Championship" backLink="/championship" showToolbar={false} />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
