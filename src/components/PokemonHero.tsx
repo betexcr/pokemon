@@ -283,7 +283,10 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
     const currentQuery = searchParams.toString();
     if (nextQuery === currentQuery) return;
 
-    router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
+    // Native history update: Next.js keeps useSearchParams in sync without a navigation. router.replace
+    // re-requested the page from the server on every art / shiny change, and the new `pokemon` object it
+    // returned made the whole details section reload instead of just swapping the image.
+    window.history.replaceState(window.history.state, '', nextQuery ? `${pathname}?${nextQuery}` : pathname);
   }, [
     hydratedArtQueryKey,
     currentArtQueryKey,
