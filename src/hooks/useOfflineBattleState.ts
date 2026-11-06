@@ -16,7 +16,7 @@ import { createBattleRng } from '@/lib/battle-rng';
 import { createFieldState, EMPTY_HAZARDS } from '@/lib/team-battle-types';
 import { sanitizeBattleItem } from '@/lib/battle-items-catalog';
 import { isTrapped } from '@/lib/team-battle-held-items';
-import { displayTypes, publicBenchEntries } from '@/lib/team-battle-illusion';
+import { displayShiny, displayTypes, publicBenchEntries } from '@/lib/team-battle-illusion';
 import { canTerastallize, resolveTeraType } from '@/lib/team-battle-tera';
 import { getCachedMove } from '@/lib/moveCache';
 import { legalSlotAbility, resolveBattleAbility } from '@/lib/battle-default-ability';
@@ -42,6 +42,7 @@ type PublicMon = {
   volatiles?: Record<string, unknown>;
   terastallized?: boolean;
   teraType?: string;
+  shiny?: boolean;
 };
 
 type PublicState = Record<string, any> & {
@@ -78,6 +79,7 @@ type TeamMon = {
   hp?: { cur: number; max: number };
   teraType?: string | null;
   terastallized?: boolean;
+  shiny?: boolean;
 };
 
 type PrivateState = { team: TeamMon[]; currentIndex?: number; teraUsed?: boolean };
@@ -183,6 +185,7 @@ async function hydrateSlot(raw: any): Promise<BattlePokemon> {
     originalAbility: resolveBattleAbility({ ability: chosenAbility }, abilities),
     ...(evs ? { evs } : {}),
     ...(raw.gender === 'male' || raw.gender === 'female' || raw.gender === 'genderless' ? { gender: raw.gender } : {}),
+    ...(raw.shiny === true ? { shiny: true } : {}),
   };
 }
 
@@ -209,6 +212,7 @@ function makePublicActive(mon: BattlePokemon): PublicMon {
     },
     // Tera is public once it happens
     ...(mon.terastallized && mon.teraType ? { terastallized: true, teraType: mon.teraType } : {}),
+    ...(displayShiny(mon) ? { shiny: true } : {}),
   };
 }
 
@@ -234,6 +238,7 @@ function projectPrivate(team: BattleTeam): PrivateState {
         hp: { cur: Math.max(0, p.currentHp), max: p.maxHp },
         teraType: p.teraType ?? null,
         terastallized: !!p.terastallized,
+        ...(p.shiny ? { shiny: true } : {}),
       };
     }),
     teraUsed: !!team.teraUsed,
@@ -286,6 +291,7 @@ export type OfflineTeamSlot = {
   evs?: EvSpread;
   gender?: 'male' | 'female' | 'genderless';
   ability?: string;
+  shiny?: boolean;
 };
 
 function storedSlot(s: any): OfflineTeamSlot {
@@ -304,6 +310,8 @@ function storedSlot(s: any): OfflineTeamSlot {
     ...(evs ? { evs } : {}),
     ...(s.gender === 'male' || s.gender === 'female' || s.gender === 'genderless' ? { gender: s.gender } : {}),
     ...(typeof s.ability === 'string' && s.ability ? { ability: s.ability } : {}),
+    // The team builder saves isShiny; battle setup passes shiny
+    ...(s.shiny === true || s.isShiny === true ? { shiny: true } : {}),
   };
 }
 
@@ -370,7 +378,7 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
             return hydrateSlot({
               id: slot.id, level: slot.level || 50, moves, nature: slot.nature,
               teraType: slot.teraType, heldItem: slot.heldItem, evs: slot.evs, gender: slot.gender,
-              ability: slot.ability,
+              ability: slot.ability, shiny: slot.shiny,
             });
           }),
         );

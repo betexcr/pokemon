@@ -100,9 +100,12 @@ describe('normalizeTeamForRTDB team-builder fields', () => {
       })),
     );
     const [legal, illegal] = await normalizeTeamForRTDB([
-      { id: 130, moves: ['waterfall'], ability: 'moxie', evs: { attack: 252, speed: 252, hp: 252 }, gender: 'female' },
-      { id: 130, moves: ['waterfall'], ability: 'huge-power' },
+      { id: 130, moves: ['waterfall'], ability: 'moxie', evs: { attack: 252, speed: 252, hp: 252 }, gender: 'female', shiny: true },
+      { id: 130, moves: ['waterfall'], ability: 'huge-power', isShiny: false },
     ]);
+    // Shiny colouring from the team builder (isShiny) or the lobby (shiny)
+    expect(legal.shiny).toBe(true);
+    expect(illegal.shiny).toBeUndefined();
     expect(legal.ability).toBe('moxie');
     expect(legal.evs).toEqual({ hp: 252, attack: 252, speed: 6 });
     expect(legal.gender).toBe('female');

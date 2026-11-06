@@ -42,6 +42,7 @@ type PublicMon = {
   status: null | "PAR" | "PSN" | "BRN" | "SLP" | "FRZ";
   boosts: IdMap<number>;
   volatiles?: PublicVolatiles;
+  shiny?: boolean;
 };
 
 type PublicState = {
@@ -76,6 +77,7 @@ type Pokemon = {
   maxHp?: number;
   teraType?: string;
   terastallized?: boolean;
+  shiny?: boolean;
 };
 
 type PrivateState = {

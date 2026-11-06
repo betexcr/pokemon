@@ -102,6 +102,9 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
         const maxHp = typeof (slot as any).maxHp === 'number' ? (slot as any).maxHp : undefined
         const currentHp = typeof (slot as any).currentHp === 'number' ? (slot as any).currentHp : undefined
         const pokemon = (slot as any).pokemon && typeof (slot as any).pokemon === 'object' ? (slot as any).pokemon : undefined
+        // Team-builder choices; the server re-validates each one when the battle is created
+        const s = slot as any
+        const item = typeof (s.item ?? s.heldItem) === 'string' ? (s.item ?? s.heldItem) : undefined
 
         return {
           id,
@@ -112,6 +115,12 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
           maxHp,
           currentHp,
           pokemon,
+          ...(typeof s.teraType === 'string' && s.teraType ? { teraType: s.teraType } : {}),
+          ...(item ? { item } : {}),
+          ...(s.evs && typeof s.evs === 'object' ? { evs: s.evs } : {}),
+          ...(s.gender === 'male' || s.gender === 'female' || s.gender === 'genderless' ? { gender: s.gender } : {}),
+          ...(typeof s.ability === 'string' && s.ability ? { ability: s.ability } : {}),
+          ...(s.isShiny === true || s.shiny === true ? { shiny: true } : {}),
         }
       })
       .filter(Boolean) as StoredSlot[]
@@ -222,6 +231,13 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
       if (typeof slot.maxHp === 'number') base.maxHp = slot.maxHp
       if (typeof slot.currentHp === 'number') base.currentHp = slot.currentHp
       if (slot.pokemon) base.pokemon = slot.pokemon
+      // Firestore rejects undefined, so only set what the slot has
+      if (slot.teraType) base.teraType = slot.teraType
+      if (slot.item) base.item = slot.item
+      if (slot.evs) base.evs = slot.evs
+      if (slot.gender) base.gender = slot.gender
+      if (slot.ability) base.ability = slot.ability
+      if (slot.shiny) base.shiny = true
 
       return base
     })
@@ -236,6 +252,12 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
     maxHp?: number
     currentHp?: number
     pokemon?: Record<string, unknown>
+    teraType?: string
+    item?: string
+    evs?: Record<string, number>
+    gender?: 'male' | 'female' | 'genderless'
+    ability?: string
+    shiny?: boolean
   }
 
   useEffect(() => {

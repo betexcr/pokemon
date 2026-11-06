@@ -5,12 +5,12 @@ import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { useBattleState } from '@/hooks/useBattleState';
 import Tooltip from '@/components/Tooltip';
 import { getMove } from '@/lib/moveCache';
-import { getPokemonIdFromSpecies, getPokemonBattleImageWithFallback, formatPokemonName, getShowdownAnimatedSprite } from '@/lib/utils';
+import { formatPokemonName } from '@/lib/utils';
 import StatusPopups, { StatusEvent } from '@/components/battle/StatusPopups';
 import AttackAnimator from '@/components/battle/AttackAnimator';
 import { FxKind } from '@/components/battle/fx/MoveFX.types';
 import { BattleSprite, BattleSpriteRef } from '@/components/battle/BattleSprite';
-import Image from 'next/image';
+import { BattleSpriteImage } from '@/components/battle/BattleSpriteImage';
 import Link from 'next/link';
 import { BattleTurnManager } from '@/components/multiplayer/BattleTurnManager';
 import { BattleEndScreen } from '@/components/multiplayer/BattleEndScreen';
@@ -46,7 +46,6 @@ const RTDBBattleComponent: React.FC<RTDBBattleComponentProps> = ({
   viewMode = 'classic'
 }) => {
   const reduceMotion = useReducedMotionPref();
-  const spriteMode = reduceMotion || viewMode !== 'animated' ? 'static' : 'animated';
   const {
 
     loading,
@@ -397,48 +396,6 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
     }
   }, [oppHpCur]);
 
-  const renderSpriteImage = useCallback(
-    (
-      species: string | null | undefined,
-      {
-        variant,
-        shiny = false,
-        animatedPreferred = false,
-        size = 48,
-        className,
-        dexId = null,
-      }: { variant: 'front' | 'back'; shiny?: boolean; animatedPreferred?: boolean; size?: number; className?: string; dexId?: number | null }
-    ) => {
-      const normalizedShiny = !!shiny;
-      const speciesId = dexId ?? getPokemonIdFromSpecies(species || '') ?? null;
-      const staticSprite = getPokemonBattleImageWithFallback(speciesId, variant, normalizedShiny, species);
-      const shouldAnimate = animatedPreferred && spriteMode === 'animated';
-      const animatedSprite = shouldAnimate ? getShowdownAnimatedSprite(species || undefined, variant, normalizedShiny) : null;
-      const sources = [animatedSprite, ...staticSprite.chain, '/placeholder-pokemon.png']
-        .filter((src, index, arr): src is string => !!src && arr.indexOf(src) === index);
-
-      return (
-        <Image
-          src={sources[0]}
-          alt={formatPokemonName(species)}
-          width={size}
-          height={size}
-          className={className ?? 'object-contain'}
-          unoptimized
-          onError={(event) => {
-            const target = event.currentTarget;
-            const fallbackIndex = Number(target.dataset.fallbackIndex || '0') + 1;
-            if (fallbackIndex < sources.length) {
-              target.dataset.fallbackIndex = String(fallbackIndex);
-              target.src = sources[fallbackIndex];
-            }
-          }}
-        />
-      );
-    },
-    [spriteMode]
-  );
-
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8" role="status" aria-live="polite">
@@ -595,9 +552,8 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
                 status={myActive.status}
                 types={myActive.types || []}
                 side="player"
-                shiny={Boolean((myActive as any)?.shiny || (myActive as any)?.isShiny)}
+                shiny={!!myActive.shiny}
                 className="transform scale-110"
-                spriteMode={spriteMode}
               />
             )}
           </div>
@@ -619,9 +575,8 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
                 status={oppActive.status}
                 types={oppActive.types || []}
                 side="opponent"
-                shiny={Boolean((oppActive as any)?.shiny || (oppActive as any)?.isShiny)}
+                shiny={!!oppActive.shiny}
                 className="transform scale-110"
-                spriteMode={spriteMode}
               />
             )}
           </div>
@@ -836,13 +791,12 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
                     data-testid={`switch-${speciesName || 'unknown'}-${index}`}
                   >
                     <div className="flex items-center gap-2">
-                      {renderSpriteImage(speciesName, {
-                        variant: 'front',
-                        shiny: Boolean((pokemon as any)?.shiny || (pokemon as any)?.isShiny),
-                        animatedPreferred: false,
-                        size: 32,
-                        className: 'w-8 h-8 object-contain'
-                      })}
+                      <BattleSpriteImage
+                        species={speciesName}
+                        shiny={!!(pokemon as { shiny?: boolean }).shiny}
+                        size={32}
+                        className="w-8 h-8 object-contain"
+                      />
                       <div className="text-sm font-medium capitalize truncate">
                         {formatPokemonName(speciesName)}
                       </div>

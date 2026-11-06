@@ -2,7 +2,7 @@
 
 import { forwardRef, useMemo } from 'react'
 import Image from 'next/image'
-import { getPokemonBattleImageWithFallback, formatPokemonName, getPokemonIdFromSpecies, getShowdownAnimatedSprite } from '@/lib/utils'
+import { formatPokemonName, getBattleSpriteSources } from '@/lib/utils'
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface BattleSpriteRef {}
@@ -15,30 +15,18 @@ interface BattleSpriteProps {
   types?: string[]
   side?: 'player' | 'opponent'
   className?: string
-  spriteMode?: 'animated' | 'static'
   shiny?: boolean
   /** National dex / form ID when known — improves PokeAPI sprite fallbacks. */
   dexId?: number | null
 }
 
 export const BattleSprite = forwardRef<BattleSpriteRef, BattleSpriteProps>(function BattleSprite(
-  { species, level, hp, status, types = [], side = 'player', className = '', spriteMode = 'static', shiny = false, dexId = null },
+  { species, level, hp, status, types = [], side = 'player', className = '', shiny = false, dexId = null },
   _ref
 ) {
-  const speciesId = dexId ?? getPokemonIdFromSpecies(species)
+  // Animated sprites like the team builder: your Pokémon from the back, the opponent from the front
   const variant: 'front' | 'back' = side === 'player' ? 'back' : 'front'
-  const staticSprite = useMemo(
-    () => getPokemonBattleImageWithFallback(speciesId, variant, shiny, species),
-    [speciesId, variant, shiny, species]
-  )
-  const animatedSprite = useMemo(() => spriteMode === 'animated'
-    ? getShowdownAnimatedSprite(species, variant, shiny)
-    : null, [species, variant, shiny, spriteMode])
-
-  const sources = useMemo(() => {
-    const list = [animatedSprite, ...staticSprite.chain, '/placeholder-pokemon.png']
-    return list.filter((src, index, arr): src is string => !!src && arr.indexOf(src) === index)
-  }, [animatedSprite, staticSprite.chain])
+  const sources = useMemo(() => getBattleSpriteSources(species, dexId, shiny, variant), [species, dexId, shiny, variant])
 
   const hpPercentage = Math.max(0, Math.min(100, Math.round((hp.cur / Math.max(1, hp.max)) * 100)))
 
@@ -46,11 +34,13 @@ export const BattleSprite = forwardRef<BattleSpriteRef, BattleSpriteProps>(funct
     <div className={`flex w-full max-w-xs flex-col items-center gap-3 rounded-2xl border border-border bg-card/80 p-4 shadow-lg ${className}`}>
       <div className="relative h-28 w-28 overflow-hidden rounded-xl bg-gradient-to-b from-white/10 to-black/20">
         <Image
+          // Remount on a new Pokémon so a previous image's fallback position doesn't carry over
+          key={sources[0]}
           src={sources[0]}
           alt={formatPokemonName(species)}
           width={160}
           height={160}
-          unoptimized={Boolean(animatedSprite) || sources[0]?.includes('pokemonshowdown.com')}
+          unoptimized
           className="h-full w-full object-contain"
           onError={(event) => {
             const target = event.currentTarget

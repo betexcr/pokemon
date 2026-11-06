@@ -173,6 +173,7 @@ export async function normalizeTeamForRTDB(
         ...(sanitizeBattleItem(slot.item ?? slot.heldItem) ? { heldItem: sanitizeBattleItem(slot.item ?? slot.heldItem) } : {}),
         ...(evs ? { evs } : {}),
         ...(gender ? { gender } : {}),
+        ...(slot.shiny === true || slot.isShiny === true ? { shiny: true } : {}),
         // Chosen ability only when the species can have it (hidden abilities included)
         ...(legalSlotAbility(slot.ability, abilities as never) ? { ability: legalSlotAbility(slot.ability, abilities as never) } : {}),
         statModifiers: {},

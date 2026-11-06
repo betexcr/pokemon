@@ -43,6 +43,7 @@ export function startIllusion(state: BattleState, side: 'player' | 'opponent', m
     species: disguise.pokemon.name,
     dexId: typeof disguise.pokemon.id === 'number' ? disguise.pokemon.id : null,
     types: (disguise.pokemon.types ?? []).map((t: any) => String(typeof t === 'string' ? t : t?.type?.name ?? 'normal')),
+    ...(disguise.shiny ? { shiny: true } : {}),
   };
   // The "Go! X!" line that announced this Pokémon was written just before its entry sequence
   const log = state.battleLog;
@@ -66,6 +67,11 @@ export function breakIllusion(state: BattleState, mon: BattlePokemon): void {
 /** Name the foe sees for this Pokémon. */
 export function displaySpecies(mon: BattlePokemon): string {
   return mon.volatile?.illusion?.species ?? mon.pokemon.name;
+}
+
+/** Whether the foe sees this Pokémon as shiny (the disguise's colouring while Illusion holds). */
+export function displayShiny(mon: BattlePokemon): boolean {
+  return mon.volatile?.illusion ? mon.volatile.illusion.shiny === true : mon.shiny === true;
 }
 
 /** Types the foe sees for this Pokémon (the disguise's while Illusion holds). */
