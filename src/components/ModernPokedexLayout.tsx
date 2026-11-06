@@ -6,7 +6,7 @@ import { Pokemon, FilterState } from '@/types/pokemon'
 import { formatPokemonName, typeColors } from '@/lib/utils'
 import { useSearch } from '@/hooks/useSearch'
 import { useRouter } from 'next/navigation'
-import { getPokemonByGeneration, getPokemonByType, getPokemon, getPokemonWithPagination, getPokemonTotalCount, getPokemonList, fetchAllPokemonIds } from '@/lib/api'
+import { getPokemonByGeneration, getPokemonByType, getPokemon, getPokemonWithPagination, getPokemonTotalCount, getPokemonList, fetchAllPokemonIds, getPokemonIndex } from '@/lib/api'
 import ThemeToggle from './ThemeToggle'
 import VirtualizedPokemonGrid from './VirtualizedPokemonGrid'
 import AdvancedFilters from './AdvancedFilters'
@@ -895,6 +895,14 @@ export default function ModernPokedexLayout({
             setHasMorePokemon(false) // Disable infinite scroll for filtered results
             
             try {
+              // One small request for every Pokémon's name / types / stats / height / weight
+              // (public/data/pokemon-index.json). Before, this fetched ~1,350 full records, which made
+              // the first sort by stats very slow.
+              const index = await getPokemonIndex();
+              if (cancelled) return
+              if (index && index.length > 0) {
+                results = index;
+              } else {
               const totalCount = await getPokemonTotalCount();
               if (cancelled) return
               
@@ -915,6 +923,7 @@ export default function ModernPokedexLayout({
               }
               
               results = allPokemon;
+              }
               
             } catch (error) {
               
@@ -1887,7 +1896,11 @@ export default function ModernPokedexLayout({
                 {/* Favorites Filter Toggle */}
                 {favoritesList.length > 0 && (
                   <button type="button"
-                    onClick={() => setShowFavoritesOnly(prev => !prev)}
+                    onClick={() => {
+                      setShowFavoritesOnly(prev => !prev)
+                      // Bring the list back to the top so the (now short) list of favorites is in view
+                      scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+                    }}
                     disabled={isFiltering}
                     className={`px-3 py-1.5 text-sm font-semibold rounded-lg border-2 transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-105 flex items-center gap-2 ${
                       showFavoritesOnly 

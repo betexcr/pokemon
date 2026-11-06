@@ -54,6 +54,8 @@ See [docs/CACHING_ARCHITECTURE.md](../../docs/CACHING_ARCHITECTURE.md) for full 
 2. **Report errors** via `errorReporting.ts` helpers (`reportApiError`, `reportNetworkError`).
 3. **404 on Pokémon** is expected for invalid IDs — do not surface as critical errors (global catcher skips 404).
 4. **Server-only secrets**: `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` — never in client code.
+5. **Whole-dex sorts / filters use the static index**, not per-Pokémon fetches: `getPokemonIndex()` reads `public/data/pokemon-index.json` (id, name, types, base stats, height, weight for every species and form, ~27 KB gzipped). Sorting by stats used to fetch ~1,350 full records (106 s on a cold cache; now under a second). Regenerate with `node scripts/generate-pokemon-index.mjs` when PokeAPI adds Pokémon; `pokemon-index.test.ts` checks it covers #1–#1025.
+6. **Only remember real not-founds**: transient PokeAPI failures (429 / 5xx / timeouts) must not be negative-cached or turned into `notFound()` (see `isPokemonNotFoundError`).
 
 ## Env vars
 

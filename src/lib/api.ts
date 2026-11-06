@@ -1355,6 +1355,45 @@ export function generateAllPokemonSkeletons(count: number): Pokemon[] {
   }))
 }
 
+// Compact index of every Pokémon (id, name, types, base stats, height, weight) in
+// public/data/pokemon-index.json, built by scripts/generate-pokemon-index.mjs. Lets the Pokédex sort by
+// stats / name and filter by height / weight with one small request instead of ~1,350 full records.
+type PokemonIndexFile = { version: number; fields: string[]; rows: Array<[number, string, string, number, number, ...number[]]> }
+const INDEX_STATS = ['hp', 'attack', 'defense', 'special-attack', 'special-defense', 'speed'] as const
+let pokemonIndexPromise: Promise<Pokemon[] | null> | null = null
+
+/** Every Pokémon with name, types, base stats, height and weight (no moves / abilities); null if unavailable. */
+export function getPokemonIndex(): Promise<Pokemon[] | null> {
+  if (pokemonIndexPromise) return pokemonIndexPromise
+  pokemonIndexPromise = (async () => {
+    try {
+      const res = await fetch('/data/pokemon-index.json')
+      if (!res.ok) return null
+      const data = (await res.json()) as PokemonIndexFile
+      if (data.version !== 1 || !Array.isArray(data.rows)) return null
+      const skeletons = generatePokemonSkeletonsForIds(data.rows.map((r) => r[0]))
+      return data.rows.map((row, i) => {
+        const [id, name, types, height, weight, ...stats] = row
+        return {
+          ...skeletons[i],
+          id,
+          name,
+          height,
+          weight,
+          types: types.split('/').filter(Boolean).map((t, slot) => ({ slot: slot + 1, type: { name: t, url: `${DEFAULT_POKEAPI}/type/${t}/` } })),
+          stats: INDEX_STATS.map((stat, k) => ({ base_stat: stats[k] ?? 0, effort: 0, stat: { name: stat, url: '' } })),
+        } as Pokemon
+      })
+    } catch {
+      return null
+    }
+  })().then((result) => {
+    if (!result) pokemonIndexPromise = null // allow a retry later
+    return result
+  })
+  return pokemonIndexPromise
+}
+
 export function generatePokemonSkeletonsForIds(ids: number[]): Pokemon[] {
   return ids.map(id => ({
     id,
