@@ -3,6 +3,7 @@ import Image from 'next/image';
 import UsagePagination from './UsagePagination';
 import SortableHeader from './UsageTableHeaderClient';
 import ClickableRow from './UsageTableRowClient';
+import PokemonSpriteImg from '@/components/PokemonSpriteImg'
 
 // Server component renders initial table markup. Pagination controls are client-enhanced.
 export default function UsageTable({ rows, page = 1, pageSize = 10, sort = 'usage' as 'usage' | 'winrate' }: { rows: PokemonMeta[]; page?: number; pageSize?: number; sort?: 'usage' | 'winrate' }) {
@@ -29,8 +30,8 @@ export default function UsageTable({ rows, page = 1, pageSize = 10, sort = 'usag
               <td className="p-2">{start + idx + 1}</td>
               <td className="p-2 font-medium">
                 <div className="flex items-center gap-2">
-                  <Image
-                    src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`}
+                  <PokemonSpriteImg
+                    id={p.id}
                     alt={p.name}
                     width={32}
                     height={32}

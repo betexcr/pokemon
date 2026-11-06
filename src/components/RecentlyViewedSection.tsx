@@ -5,6 +5,7 @@ import { Clock, X } from 'lucide-react'
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed'
 import { formatPokemonName } from '@/lib/utils'
 import Image from 'next/image'
+import PokemonSpriteImg from '@/components/PokemonSpriteImg'
 
 export default function RecentlyViewedSection() {
   const router = useRouter()
@@ -51,12 +52,12 @@ export default function RecentlyViewedSection() {
                 <X className="w-3 h-3" />
               </button>
               <div className="w-12 h-12 relative">
-                <Image
-                  src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${item.id}.png`}
+                <PokemonSpriteImg
+                  id={item.id}
                   alt={item.name}
                   width={48}
                   height={48}
-                  className="object-contain"
+                  className="h-12 w-12 object-contain"
                 />
               </div>
               <span className="text-xs font-medium text-center">

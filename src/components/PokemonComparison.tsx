@@ -6,6 +6,7 @@ import { getShowdownAnimatedSprite } from '@/lib/utils'
 import RadarChart from './RadarChart'
 import { X, Plus, BarChart3, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react'
 import { useTheme } from './ThemeProvider'
+import PokemonSpriteImg from '@/components/PokemonSpriteImg'
 
 interface PokemonComparisonProps {
   pokemonList: Pokemon[]
@@ -337,11 +338,10 @@ export default function PokemonComparison({ pokemonList, className = '' }: Pokem
                         className="w-full text-left py-2 px-2 hover:bg-gray-50 dark:hover:bg-gray-800/50 flex items-center gap-3"
                         onClick={() => { addPokemon(p); setShowSelector(false); setSearch('') }}
                       >
-                        <img
-                          src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`}
+                        <PokemonSpriteImg
+                          id={p.id}
                           alt={p.name}
                           className="w-8 h-8 object-contain"
-                          loading="lazy"
                         />
                         <div className="flex-1 min-w-0">
                           <div className="font-medium truncate capitalize">{p.name}{p.id !== 0 ? `#${p.id}` : ''}</div>

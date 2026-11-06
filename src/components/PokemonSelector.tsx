@@ -5,6 +5,7 @@ import { Pokemon } from '@/types/pokemon'
 import { getPokemon, getPokemonList, getPokemonFallbackImage } from '@/lib/api'
 import { formatPokemonName } from '@/lib/utils'
 import TypeBadge from '@/components/TypeBadge'
+import PokemonSpriteImg from '@/components/PokemonSpriteImg'
 
 interface PokemonSelectorProps {
   selectedPokemon: Pokemon[]
@@ -322,17 +323,13 @@ export default function PokemonSelector({
       style={{ height: `${DROPDOWN_ROW_HEIGHT}px` }}
     >
       <div className="relative w-8 h-8 flex-shrink-0 bg-gray-100 dark:bg-gray-800 rounded overflow-hidden">
-        <img
-          src={getShowdownSprite(pokemon.name)}
+        <PokemonSpriteImg
+          id={pokemon.id}
+          first={getShowdownSprite(pokemon.name)}
           alt={pokemon.name}
           width={32}
           height={32}
-          loading="lazy"
           className="w-full h-full object-contain"
-          onError={(e) => {
-            const target = e.currentTarget as HTMLImageElement
-            target.src = getPokemonFallbackImage(pokemon.id)
-          }}
         />
       </div>
       <div className="flex-1 min-w-0">
@@ -446,16 +443,13 @@ export default function PokemonSelector({
               key={`${pokemon.id}-${idx}`}
               className="flex items-center gap-2 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 px-3 py-2 rounded-xl text-sm"
             >
-              <img
-                src={getShowdownSprite(pokemon.name)}
+              <PokemonSpriteImg
+                id={pokemon.id}
+                first={getShowdownSprite(pokemon.name)}
                 alt={pokemon.name}
                 width={24}
                 height={24}
                 className="w-6 h-6 object-contain"
-                onError={(e) => {
-                  const target = e.currentTarget as HTMLImageElement
-                  target.src = getPokemonFallbackImage(pokemon.id)
-                }}
               />
               <div className="flex flex-col">
                 <span className="capitalize leading-4">{formatPokemonName(pokemon.name)}</span>

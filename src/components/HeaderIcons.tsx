@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { triggerViewTransition } from './ViewTransitions'
-import TransitionLink, { PokedexLink } from './TransitionLink'
 import OptimizedLink from './OptimizedLink'
 import { Sparkles } from 'lucide-react'
 import Tooltip from '@/components/Tooltip'
@@ -82,7 +81,8 @@ export default function HeaderIcons({
 			onMouseLeave={scheduleCloseInsightsMenu}
 		>
         <Tooltip content="Access insights and analytics including Top 50, Trends, Type Matchups, Evolutions, Checklist, and Meta data" position="bottom">
-          <PokedexLink
+          {/* Plain navigation (the "pokedex-swipe" page transition was removed from this link) */}
+          <OptimizedLink
             href="/insights"
             className={`group relative w-8 h-8 sm:w-12 sm:h-12 md:w-12 md:h-12 lg:w-14 lg:h-14 xl:w-16 xl:h-16 overflow-hidden aspect-square rounded-xl border-2 shadow-sm transition-all duration-300 ease-in-out flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 touch-manipulation 
               ${openInsights ? 'border-poke-blue ring-2 ring-poke-blue/30' : 'border-gray-300 dark:border-gray-600'} 
@@ -95,7 +95,7 @@ export default function HeaderIcons({
             <span className="absolute inset-0 pointer-events-none rounded-xl bg-gradient-to-br from-poke-blue/10 via-poke-red/10 to-amber-300/10 opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="absolute inset-1 rounded-lg bg-white/90 dark:bg-white/5" />
             <span suppressHydrationWarning><Sparkles className="relative z-10 h-4 w-4 sm:h-6 sm:w-6 text-poke-blue dark:text-blue-300 group-hover:scale-110 transition-transform" /></span>
-          </PokedexLink>
+          </OptimizedLink>
         </Tooltip>
 			{openInsights && (
 				<div role="menu" className="absolute right-0 mt-2 min-w-64 rounded-xl border bg-white/95 shadow-xl z-50 dark:bg-gray-900/95 dark:border-gray-700 backdrop-blur-sm p-2" onMouseEnter={openInsightsMenu} onMouseLeave={scheduleCloseInsightsMenu}>
@@ -118,9 +118,7 @@ export default function HeaderIcons({
             <Tooltip content="View competitive usage statistics and tier rankings for different battle formats" position="right">
               <OptimizedLink role="menuitem" href="/usage" className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-800 dark:text-gray-100 whitespace-nowrap rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/30" onClick={() => setOpenInsights(false)}>Usage Meta</OptimizedLink>
             </Tooltip>
-            <Tooltip content="Experience Pokémon Contests with kawaii design, Pokéblock feeding, and talent rounds" position="right">
-              <OptimizedLink role="menuitem" href="/contests" className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-800 dark:text-gray-100 whitespace-nowrap rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/30" onClick={() => setOpenInsights(false)}>Contests</OptimizedLink>
-            </Tooltip>
+            {/* Contests is hidden until it's finished (the /contests route still exists) */}
           </div>
         </div>
         )}

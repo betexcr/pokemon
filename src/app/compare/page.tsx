@@ -12,6 +12,7 @@ import MultiPokemonRadarChart from '@/components/MultiPokemonRadarChart'
 import AppHeader from '@/components/AppHeader'
 import PokemonSelector from '@/components/PokemonSelector'
 import OfflineBanner from '@/components/OfflineBanner'
+import PokemonSpriteImg from '@/components/PokemonSpriteImg'
 
 // Static export for Next.js 15 compatibility
 export const dynamic = 'force-dynamic'
@@ -260,8 +261,8 @@ export default function ComparePage() {
                       <td className="py-3 px-4">
                         <div className="flex items-center space-x-3">
                           <LinkWithTransition href={`/pokemon/${pokemon.id}`} transitionType="shared-element">
-                            <img
-                              src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`}
+                            <PokemonSpriteImg
+                              id={pokemon.id}
                               alt={formatPokemonName(pokemon.name)}
                               className="w-16 h-16 object-contain cursor-pointer hover:scale-110 transition-transform"
                             />
@@ -341,8 +342,8 @@ export default function ComparePage() {
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-3">
                       <LinkWithTransition href={`/pokemon/${pokemon.id}`} transitionType="shared-element">
-                        <img
-                          src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`}
+                        <PokemonSpriteImg
+                          id={pokemon.id}
                           alt={formatPokemonName(pokemon.name)}
                           className="w-20 h-20 object-contain cursor-pointer hover:scale-110 transition-transform"
                         />

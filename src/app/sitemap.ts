@@ -23,7 +23,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/compare',
     '/lobby',
     '/championship',
-    '/contests',
     '/insights',
   ]
 
