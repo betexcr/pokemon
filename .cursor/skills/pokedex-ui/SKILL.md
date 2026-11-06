@@ -66,6 +66,7 @@ Key doc: [docs/POKEDEX_PERFORMANCE_QUICK_START.md](../../docs/POKEDEX_PERFORMANC
 - `next/image` with global `unoptimized: true`
 - PMD assets: `public/assets/pmd/{id}/`
 - Showdown animated sprites via `getShowdownAnimatedSprite()` in `utils.ts`
+- Battle screens always use the animated sprites (your Pokémon from the back, the opponent from the front, switch lists from the front) through `getBattleSpriteSources()` — used by `BattleSprite` and `BattleSpriteImage`, offline and multiplayer
 - Fallback chain on image error (PokeAPI sprites)
 
 ## Error UX

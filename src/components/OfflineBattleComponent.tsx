@@ -6,15 +6,14 @@ import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { useOfflineBattleState, type OfflineBattleConfig } from '@/hooks/useOfflineBattleState';
 import Tooltip from '@/components/Tooltip';
 import { getMove } from '@/lib/moveCache';
-import { getPokemonIdFromSpecies, getPokemonBattleImageWithFallback, formatPokemonName, getShowdownAnimatedSprite } from '@/lib/utils';
+import { formatPokemonName } from '@/lib/utils';
 import { BattleSprite, BattleSpriteRef } from '@/components/battle/BattleSprite';
-import Image from 'next/image';
+import { BattleSpriteImage } from '@/components/battle/BattleSpriteImage';
 import { BattleEndScreen } from '@/components/multiplayer/BattleEndScreen';
 import { BattleTextBox } from '@/components/battle/BattleTextBox';
 import BattleConditionsBar from '@/components/battle/BattleConditionsBar';
 import type { BattleConditions } from '@/lib/battle-conditions';
 import { trackEvent } from '@/lib/analytics';
-import { useReducedMotionPref } from '@/hooks/useReducedMotionPref';
 
 const formatMoveLabel = (rawId: string): string => {
   if (!rawId) return 'Unknown Move';
@@ -31,7 +30,6 @@ interface OfflineBattleComponentProps {
 const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
   config,
   onBattleComplete,
-  viewMode = 'animated',
 }) => {
   const {
     loading, error, meta, pub, me, meUid, oppUid,
@@ -44,8 +42,6 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
   const [showEndScreen, setShowEndScreen] = useState(false);
   const playerSpriteRef = useRef<BattleSpriteRef>(null);
   const opponentSpriteRef = useRef<BattleSpriteRef>(null);
-  const reduceMotion = useReducedMotionPref();
-  const spriteMode = reduceMotion || viewMode !== 'animated' ? 'static' : 'animated';
 
   const waitingForResolution = useMemo(() => {
     if (!meta) return false;
@@ -165,37 +161,6 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
     return mon?.species || mon?.pokemon?.name || 'unknown';
   };
 
-  const renderSpriteImage = (species: string | undefined, opts: { variant?: string; shiny?: boolean; animatedPreferred?: boolean; size?: number; className?: string; dexId?: number | null } = {}) => {
-    if (!species) return null;
-    const variant: 'front' | 'back' = opts.variant === 'back' ? 'back' : 'front';
-    const normalizedShiny = !!opts.shiny;
-    const speciesId = opts.dexId ?? getPokemonIdFromSpecies(species) ?? null;
-    const staticSprite = getPokemonBattleImageWithFallback(speciesId, variant, normalizedShiny, species);
-    const shouldAnimate = !!opts.animatedPreferred && spriteMode === 'animated';
-    const animatedSprite = shouldAnimate ? getShowdownAnimatedSprite(species, variant, normalizedShiny) : null;
-    const sources = [animatedSprite, ...staticSprite.chain, '/placeholder-pokemon.png']
-      .filter((src, index, arr): src is string => !!src && arr.indexOf(src) === index);
-    if (!sources.length) return null;
-    return (
-      <Image
-        src={sources[0]}
-        alt={formatPokemonName(species)}
-        width={opts.size || 48}
-        height={opts.size || 48}
-        className={opts.className || 'w-12 h-12 object-contain'}
-        unoptimized
-        onError={(event) => {
-          const target = event.currentTarget;
-          const fallbackIndex = Number(target.dataset.fallbackIndex || '0') + 1;
-          if (fallbackIndex < sources.length) {
-            target.dataset.fallbackIndex = String(fallbackIndex);
-            target.src = sources[fallbackIndex];
-          }
-        }}
-      />
-    );
-  };
-
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
@@ -275,7 +240,6 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
                 types={myActive.types || []}
                 side="player"
                 className="transform scale-110"
-                spriteMode={spriteMode}
               />
             )}
           </div>
@@ -296,7 +260,6 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
                 types={oppActive.types || []}
                 side="opponent"
                 className="transform scale-110"
-                spriteMode={spriteMode}
               />
             )}
           </div>
@@ -424,12 +387,12 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
                       data-testid={`switch-${speciesName}-${index}`}
                     >
                       <div className="flex items-center gap-2">
-                        {renderSpriteImage(speciesName, {
-                          variant: 'front',
-                          size: 32,
-                          className: 'w-8 h-8 object-contain',
-                          dexId: (pokemon as { dexId?: number | null }).dexId ?? null,
-                        })}
+                        <BattleSpriteImage
+                          species={speciesName}
+                          dexId={(pokemon as { dexId?: number | null }).dexId ?? null}
+                          size={32}
+                          className="w-8 h-8 object-contain"
+                        />
                         <div className="text-sm font-medium capitalize truncate">{formatPokemonName(speciesName)}</div>
                       </div>
                       <div className="text-xs text-muted">HP: {hpCur} / {hpMax}</div>

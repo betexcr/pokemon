@@ -414,6 +414,32 @@ export function getPokemonBattleImageWithFallback(
   };
 }
 
+/**
+ * Image sources for a Pokémon on the battle screen, in the order to try them. Battles always show the
+ * animated Showdown sprites the team builder uses (back for your own Pokémon, front for the opponent);
+ * PokeAPI's copy of those GIFs and then static sprites are only fallbacks for when one fails to load.
+ */
+export function getBattleSpriteSources(
+  species: string | null | undefined,
+  dexId: number | null = null,
+  shiny: boolean = false,
+  variant: 'front' | 'back' = 'front'
+): string[] {
+  const placeholder = '/placeholder-pokemon.png';
+  const id = dexId ?? (species ? getPokemonIdFromSpecies(species) : null) ?? null;
+  const pokeApiAnimated = (s: boolean) => id
+    ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/${variant === 'back' ? 'back/' : ''}${s ? 'shiny/' : ''}${id}.gif`
+    : null;
+  const sources = [
+    getShowdownAnimatedSprite(species, variant, shiny),
+    shiny ? getShowdownAnimatedSprite(species, variant, false) : null,
+    pokeApiAnimated(shiny),
+    shiny ? pokeApiAnimated(false) : null,
+    ...getPokemonBattleImageWithFallback(id, variant, shiny, species).chain,
+  ].filter((src, index, arr): src is string => !!src && src !== placeholder && arr.indexOf(src) === index);
+  return [...sources, placeholder];
+}
+
 // Get Pokemon image with comprehensive fallback chain
 export function getPokemonImageWithFallbacks(pokemonId: number | null, species: string | null | undefined, variant: 'front' | 'back' = 'front', shiny: boolean = false): {
   primary: string;
