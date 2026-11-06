@@ -1164,8 +1164,43 @@ export default function ModernPokedexLayout({
     }
   }, [comparisonList, displayPokemon, pokemonList])
 
+  // Favorites filter. With no other filter active it shows every favorite (fetching any not loaded
+  // yet, since the list loads in pages); with other filters it narrows the current results.
+  const otherFiltersActive = activeFilterCount - (showFavoritesOnly ? 1 : 0) > 0
+  useEffect(() => {
+    if (!showFavoritesOnly || otherFiltersActive || favoritesList.length === 0) return
+    const known = new Set<number>([...displayPokemon.map(p => p.id), ...pokemonList.map(p => p.id), ...detailsCache.keys()])
+    const missing = favoritesList.filter(id => !known.has(id))
+    if (missing.length === 0) return
+    let cancelled = false
+    Promise.allSettled(missing.map(id => getPokemon(id))).then(results => {
+      if (cancelled) return
+      const fetched = results.flatMap(r => (r.status === 'fulfilled' && r.value ? [r.value as Pokemon] : []))
+      if (fetched.length) {
+        setDetailsCache(prev => {
+          const next = new Map(prev)
+          for (const p of fetched) next.set(p.id, p)
+          return next
+        })
+      }
+    })
+    return () => { cancelled = true }
+  }, [showFavoritesOnly, otherFiltersActive, favoritesList, displayPokemon, pokemonList, detailsCache])
+
+  const listForDisplay = useMemo(() => {
+    if (!showFavoritesOnly) return displayPokemon
+    const favorites = new Set(favoritesList)
+    if (otherFiltersActive) return displayPokemon.filter(p => favorites.has(p.id))
+    const byId = new Map<number, Pokemon>()
+    for (const p of pokemonList) byId.set(p.id, p)
+    for (const p of displayPokemon) byId.set(p.id, p)
+    for (const [id, p] of detailsCache) if (!byId.has(id)) byId.set(id, p)
+    return favoritesList.map(id => byId.get(id)).filter((p): p is Pokemon => Boolean(p))
+  }, [showFavoritesOnly, otherFiltersActive, favoritesList, displayPokemon, pokemonList, detailsCache])
+
   // Sort filtered results efficiently (compute sort key once per item)
   const sortedPokemon = useMemo(() => {
+    const displayPokemon = listForDisplay
     if (!displayPokemon || displayPokemon.length === 0) return [] as Pokemon[]
 
     // Use getPokemonWithData if available to get loaded data
@@ -1216,7 +1251,7 @@ export default function ModernPokedexLayout({
     })
 
     return itemsWithKey.map(item => item.p)
-  }, [displayPokemon, sortBy, sortOrder, detailsCache, getPokemonWithData])
+  }, [listForDisplay, sortBy, sortOrder, detailsCache, getPokemonWithData])
 
   // Viewport-based hydration: load data for visible cards and hydrate items before rendering
   const {

@@ -33,6 +33,8 @@ export default function Home() {
     }
   }, [])
   const [comparisonList, setComparisonList] = useState<number[]>([])
+  const comparisonListRef = useRef<number[]>([])
+  useEffect(() => { comparisonListRef.current = comparisonList }, [comparisonList])
   const [selectedPokemon, setSelectedPokemon] = useState<Pokemon | null>(null)
 
   const [filters, setFilters] = useState<FilterState>({
@@ -414,16 +416,18 @@ export default function Home() {
     }
   }, [])
 
+  // Builds on the latest list (functional update): Pokédex cards are memoised and can call an older
+  // copy of this function, which used to see a stale list and replace it with a single Pokémon
   const toggleComparison = (id: number, setShowSidebar?: (show: boolean) => void) => {
-    const isAdding = !comparisonList.includes(id)
-    const newComparison = isAdding
-      ? [...comparisonList, id]
-      : comparisonList.filter(compId => compId !== id)
-    
-    setComparisonList(newComparison)
-    localStorage.setItem('pokemon-comparison', JSON.stringify(newComparison))
-    
-    // If adding a team for comparison and advanced filters is closed, open it
+    const isAdding = !comparisonListRef.current.includes(id)
+    setComparisonList(prev => {
+      const next = prev.includes(id) ? prev.filter(compId => compId !== id) : [...prev, id]
+      comparisonListRef.current = next
+      try { localStorage.setItem('pokemon-comparison', JSON.stringify(next)) } catch {}
+      return next
+    })
+
+    // If adding a Pokémon for comparison and the sidebar is closed, open it
     if (isAdding && setShowSidebar) {
       setShowSidebar(true)
     }

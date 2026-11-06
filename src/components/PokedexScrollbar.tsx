@@ -299,10 +299,13 @@ export default function PokedexScrollbar({
       className="fixed -right-px top-14 sm:top-16 lg:top-[4.5rem] xl:top-20 bottom-0 w-24 flex flex-col items-center gap-2 z-40 bg-transparent pointer-events-none"
       style={{ opacity: isEnabled ? 1 : 0.5 }}
     >
-      <div className="flex-1 w-full pr-2 flex flex-col items-end pt-4 pb-2" style={{ pointerEvents: isEnabled ? 'auto' : 'none' }}>
+      {/* Only the track (and its thumb) takes clicks; the rest of this 96px strip lets clicks through
+          to what's underneath (the Random button, favourite / compare buttons on cards) */}
+      <div className="flex-1 w-full pr-2 flex flex-col items-end pt-4 pb-2 pointer-events-none">
         {/* Scrollbar Track */}
         <div
           ref={trackRef}
+          style={{ pointerEvents: isEnabled ? 'auto' : 'none' }}
           onClick={handleTrackClick}
           onMouseEnter={() => {
             if (hoverPercentage === null) {
