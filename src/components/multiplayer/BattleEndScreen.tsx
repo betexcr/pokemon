@@ -92,7 +92,7 @@ export function BattleEndScreen({
   // Determine title and message based on outcome
   let title = 'Draw';
   let message = 'The battle ended in a draw.';
-  let iconColor = 'text-gray-500';
+  let iconColor = 'text-gray-600 dark:text-gray-300';
   let bgColor = 'bg-gray-500/20';
   
   if (isWinner) {
@@ -106,7 +106,7 @@ export function BattleEndScreen({
       title = 'Victory!';
       message = `You defeated ${opponentName}!`;
     }
-    iconColor = 'text-yellow-500';
+    iconColor = 'text-yellow-600 dark:text-yellow-400';
     bgColor = 'bg-yellow-500/20';
   } else if (!isDraw) {
     if (endReason === 'forfeit') {
@@ -119,7 +119,7 @@ export function BattleEndScreen({
       title = 'Defeat';
       message = `${opponentName} won the battle.`;
     }
-    iconColor = 'text-gray-400';
+    iconColor = 'text-gray-600 dark:text-gray-300';
     bgColor = 'bg-gray-500/20';
   }
   
@@ -131,7 +131,7 @@ export function BattleEndScreen({
         aria-modal="true"
         aria-labelledby="battle-end-title"
         aria-describedby="battle-end-message"
-        className="bg-card border border-border rounded-lg p-8 max-w-md w-full mx-4 text-center space-y-6"
+        className="bg-surface text-text border border-border rounded-lg shadow-2xl p-8 max-w-md w-full mx-4 text-center space-y-6"
       >
         {/* Trophy/Medal Icon */}
         <div className={`mx-auto w-24 h-24 rounded-full flex items-center justify-center ${bgColor}`}>
@@ -147,51 +147,51 @@ export function BattleEndScreen({
           <h2 id="battle-end-title" className={`text-3xl font-bold mb-2 ${iconColor}`}>
             {title}
           </h2>
-          <p id="battle-end-message" className="text-muted-foreground">
+          <p id="battle-end-message" className="text-muted">
             {message}
           </p>
         </div>
         
         {/* Battle Stats */}
         {battleStats && (
-          <div className="bg-muted rounded-lg p-4 space-y-2 text-sm">
+          <div className="bg-bg border border-border rounded-lg p-4 space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Turns:</span>
+              <span className="text-muted">Turns:</span>
               <span className="font-semibold">{battleStats.turns}</span>
             </div>
             {battleStats.damageDealt !== undefined && (
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Damage Dealt:</span>
+                <span className="text-muted">Damage Dealt:</span>
                 <span className="font-semibold">{battleStats.damageDealt}</span>
               </div>
             )}
             {battleStats.damageTaken !== undefined && (
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Damage Taken:</span>
+                <span className="text-muted">Damage Taken:</span>
                 <span className="font-semibold">{battleStats.damageTaken}</span>
               </div>
             )}
             {battleStats.kos !== undefined && (
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Knockouts:</span>
+                <span className="text-muted">Knockouts:</span>
                 <span className="font-semibold" data-testid="end-kos">{battleStats.kos}</span>
               </div>
             )}
             {battleStats.remaining !== undefined && battleStats.teamSize !== undefined && (
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Pokémon left:</span>
+                <span className="text-muted">Pokémon left:</span>
                 <span className="font-semibold">{battleStats.remaining} / {battleStats.teamSize}</span>
               </div>
             )}
             {battleStats.damageDealtPct !== undefined && (
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Damage dealt:</span>
+                <span className="text-muted">Damage dealt:</span>
                 <span className="font-semibold">{battleStats.damageDealtPct}% of their team&apos;s HP</span>
               </div>
             )}
             {battleStats.damageTakenPct !== undefined && (
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Damage taken:</span>
+                <span className="text-muted">Damage taken:</span>
                 <span className="font-semibold">{battleStats.damageTakenPct}% of your team&apos;s HP</span>
               </div>
             )}
@@ -199,13 +199,13 @@ export function BattleEndScreen({
         )}
         
         {/* Match Info */}
-        <div className="bg-muted rounded-lg p-4 text-sm space-y-1">
+        <div className="bg-bg border border-border rounded-lg p-4 text-sm space-y-1">
           <div className="flex justify-between">
-            <span className="text-muted-foreground">You:</span>
+            <span className="text-muted">You:</span>
             <span className="font-semibold">{playerName}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Opponent:</span>
+            <span className="text-muted">Opponent:</span>
             <span className="font-semibold">{opponentName}</span>
           </div>
         </div>
@@ -228,7 +228,7 @@ export function BattleEndScreen({
                 type="button"
                 onClick={rematch.onRequest}
                 disabled={rematch.mine || rematch.busy}
-                className="w-full px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
+                className="w-full px-4 py-2 bg-bg text-text border border-border rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
                 data-testid="rematch-button"
               >
                 <RotateCcw className="w-4 h-4" />
@@ -239,7 +239,7 @@ export function BattleEndScreen({
                     : 'Request rematch'}
               </button>
               {!rematch.mine && rematch.theirs && (
-                <p className="text-xs text-muted-foreground">{opponentName} wants a rematch.</p>
+                <p className="text-xs text-muted">{opponentName} wants a rematch.</p>
               )}
               {rematch.error && <p className="text-xs text-red-500" role="alert">{rematch.error}</p>}
             </>

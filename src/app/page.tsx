@@ -432,7 +432,7 @@ export default function Home() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-bg">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-600 mb-4">{error}</p>
           <button 
@@ -483,7 +483,7 @@ export default function Home() {
   if (theme === 'red') {
     if (loading) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-bg">
+        <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
             <img src="/loading.gif" width={100} height={100} alt="Loading" className="mx-auto mb-4" />
             <p className="text-muted">Loading Pokémon...</p>
@@ -507,7 +507,7 @@ export default function Home() {
   if (theme === 'gold') {
     if (loading) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-bg">
+        <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
             <img src="/loading.gif" width={100} height={100} alt="Loading" className="mx-auto mb-4" />
             <p className="text-muted">Loading Pokémon...</p>
@@ -531,7 +531,7 @@ export default function Home() {
   if (theme === 'ruby') {
     if (loading) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-bg">
+        <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
             <img src="/loading.gif" width={100} height={100} alt="Loading" className="mx-auto mb-4" />
             <p className="text-muted">Loading Pokémon...</p>

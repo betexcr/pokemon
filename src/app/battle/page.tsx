@@ -186,7 +186,7 @@ function BattlePage() {
   };
 
   return (
-    <div className="fixed inset-0 bg-bg text-text flex flex-col overflow-hidden">
+    <div className="fixed inset-0 text-text flex flex-col overflow-hidden">
       <OfflineBanner cachedMessage="You're offline. AI battles work offline with cached Pokemon data." />
       <AppHeader
         title="AI Battle"

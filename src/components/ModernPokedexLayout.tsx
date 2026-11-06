@@ -1426,7 +1426,7 @@ export default function ModernPokedexLayout({
 
 
   return (
-    <div className="h-screen root-full w-full max-w-full bg-bg text-text flex flex-col mx-auto">
+    <div className="h-screen root-full w-full max-w-full text-text flex flex-col mx-auto">
       {/* Unified App Header (desktop style across breakpoints) */}
       <AppHeader
         title="PokéDex"

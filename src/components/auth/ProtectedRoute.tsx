@@ -30,7 +30,7 @@ export default function ProtectedRoute({ children, fallback }: ProtectedRoutePro
     }
 
     return (
-      <div className="min-h-screen flex items-center justify-center bg-bg">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-6">
           <h1 className="text-3xl font-bold text-text mb-4">Authentication Required</h1>
           <p className="text-muted mb-6">

@@ -102,7 +102,8 @@ flowchart TB
 8. **RTDB rules source of truth** is `src/lib/firebase-rtdb-rules.json` (see `firebase.json`). Deploy with `firebase deploy --only database,firestore:rules`. Battle create is Admin-only (`POST /api/battles/create`).
 9. **Commits must be authored by GitHub user `betexcr`** (`betomunozcr@gmail.com` or `121463215+betexcr@users.noreply.github.com`). The Vercel project is on a Hobby plan (account `albmunmu`) and blocks deployments authored by anyone else, including `alberto@atreyus.ai` and AI-agent identities like `noreply@anthropic.com`. Agents connected to GitHub as `betexcr` should commit through the GitHub API (MCP `push_files`), which authors and signs as `betexcr`; otherwise set the repo identity from `gh auth` first. See [docs/VERCEL_DEPLOYMENT.md](docs/VERCEL_DEPLOYMENT.md).
 10. **Vercel deploys run `npm ci` + `next build`** (see [docs/VERCEL_DEPLOYMENT.md](docs/VERCEL_DEPLOYMENT.md)): keep `package-lock.json` in sync (add deps only via `npm install`), never commit bun/yarn/pnpm lockfiles, and never make `next build` depend on network calls (PokeAPI/Smogon) — use fallbacks or on-demand ISR instead of large `generateStaticParams`. The build must pass offline with no env vars.
-11. **Open production gaps:** see [docs/MULTIPLAYER_STATUS.md](docs/MULTIPLAYER_STATUS.md) and [docs/battle_mechanics_coverage.md](docs/battle_mechanics_coverage.md).
+11. **Themes: only light and dark are supported.** The gold, red and ruby themes (`theme-gold` / `theme-red` / `theme-ruby` in `globals.css`, `ThemeProvider.tsx`) are unimplemented and ignored for now: don't build, fix or test UI for them, and don't add theme-specific CSS for them.
+12. **Open production gaps:** see [docs/MULTIPLAYER_STATUS.md](docs/MULTIPLAYER_STATUS.md) and [docs/battle_mechanics_coverage.md](docs/battle_mechanics_coverage.md).
 
 ## Where to work
 

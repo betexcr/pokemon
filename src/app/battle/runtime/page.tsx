@@ -101,7 +101,7 @@ function BattleRuntimePage() {
   // Show error if AI battle champion was not found
   if (aiBattleError) {
     return (
-      <div className="fixed inset-0 bg-bg text-text flex items-center justify-center">
+      <div className="fixed inset-0 text-text flex items-center justify-center">
         <div className="text-center px-4">
           <p className="text-red-500 text-lg font-semibold mb-2">Battle Error</p>
           <p className="text-muted mb-4">{aiBattleError}</p>
@@ -114,7 +114,7 @@ function BattleRuntimePage() {
   // Show loading state (AI battles skip auth check)
   if ((!isAIBattle && authLoading) || !battleTypeDetermined || (isAIBattle && !opponentChampion)) {
     return (
-      <div className="fixed inset-0 bg-bg text-text flex items-center justify-center">
+      <div className="fixed inset-0 text-text flex items-center justify-center">
         <div className="text-center px-4">
           <img src="/loading.gif" alt="Loading battle" width={128} height={128} className="mx-auto mb-4" />
           <p className="text-muted">Loading battle...</p>
@@ -126,7 +126,7 @@ function BattleRuntimePage() {
   // Show error if no user (only for multiplayer battles)
   if (!user && !isAIBattle) {
     return (
-      <div className="fixed inset-0 bg-bg text-text flex items-center justify-center">
+      <div className="fixed inset-0 text-text flex items-center justify-center">
         <div className="text-center px-4">
           <p className="text-red-500 mb-4">You must be logged in to view battles</p>
           <button
@@ -144,7 +144,7 @@ function BattleRuntimePage() {
   // Show error if no battle ID (only for multiplayer battles)
   if (!urlBattleId && !isAIBattle) {
     return (
-      <div className="fixed inset-0 bg-bg text-text flex items-center justify-center">
+      <div className="fixed inset-0 text-text flex items-center justify-center">
         <div className="text-center px-4">
           <p className="text-red-500 mb-4">No battle ID provided</p>
           <button
@@ -161,7 +161,7 @@ function BattleRuntimePage() {
 
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-bg text-text overflow-hidden">
+    <div className="fixed inset-0 flex flex-col text-text overflow-hidden">
       <header className="flex-shrink-0 z-50 border-b border-border bg-surface">
         <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14 sm:h-16">

@@ -148,7 +148,7 @@ function ChampionshipHubPage() {
   const sizeOptions: ChampionshipSize[] = [4, 8, 16, 32];
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-bg text-text overflow-hidden">
+    <div className="fixed inset-0 flex flex-col text-text overflow-hidden">
       <OfflineBanner requiresNetwork blockedMessage="Championships require an internet connection." />
       <AppHeader
         title="Championships"

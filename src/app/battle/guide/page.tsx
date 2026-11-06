@@ -24,7 +24,7 @@ export default function BattleGuidePage() {
   const [active, setActive] = useState<Section>('Type Effectiveness')
 
   return (
-    <div className="min-h-screen bg-bg text-text">
+    <div className="min-h-screen text-text">
       <AppHeader
         title="Battle Guide"
         subtitle="Everything you need to know about Pokemon battles"

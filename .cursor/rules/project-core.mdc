@@ -13,6 +13,7 @@ Read [AGENTS.md](../../AGENTS.md) for architecture, gotchas, and skill index.
 - Dev server: port **3002** (`npm run dev`)
 - Business logic in `src/lib/`; UI in `src/components/`; routes in `src/app/`
 - Canonical prod URL: `https://pokebattles.vercel.app` — not `pokemon.ultharcr.com`
+- Themes: build and test **light and dark only**. Gold / red / ruby themes are unimplemented and ignored for now — no work or theme-specific CSS for them
 
 ## File placement
 

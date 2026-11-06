@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 
 export default function Top50Page() {
   return (
-    <div className="min-h-screen bg-bg text-text">
+    <div className="min-h-screen text-text">
       <Script
         id="jsonld-top50-itemlist"
         type="application/ld+json"
