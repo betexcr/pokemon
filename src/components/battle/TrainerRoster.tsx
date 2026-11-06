@@ -121,7 +121,7 @@ export default function TrainerRoster({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
-        <label className="text-sm font-medium text-muted-foreground" htmlFor="champion-generation-filter">
+        <label className="text-sm font-medium text-muted" htmlFor="champion-generation-filter">
           Filter by generation
         </label>
         <select
@@ -157,11 +157,11 @@ export default function TrainerRoster({
               onClick={() => onChampionSelect?.(champion.id)}
               onMouseEnter={() => onTrainerHover?.(champion.id)}
               onMouseLeave={() => onTrainerHover?.(null)}
-              className={`group relative flex flex-col items-center justify-center rounded-xl border border-border bg-card p-3 transition-all duration-150 hover:-translate-y-1 hover:shadow-lg ${
+              className={`group relative flex flex-col items-center justify-center rounded-xl border border-border bg-surface p-3 transition-all duration-150 hover:-translate-y-1 hover:shadow-lg ${
                 isSelected ? 'ring-2 ring-poke-blue' : ''
               }`}
             >
-              <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-lg bg-muted">
+              <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-lg bg-muted/20">
                 {spriteUrl ? (
                   <img src={spriteUrl} alt={champion.name} className="h-full w-full object-contain" />
                 ) : (
@@ -182,7 +182,7 @@ export default function TrainerRoster({
         })}
 
         {filteredChampions.length === 0 && (
-          <div className="col-span-full rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+          <div className="col-span-full rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted">
             No champions found for this filter.
           </div>
         )}

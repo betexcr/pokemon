@@ -314,9 +314,9 @@ export default function VirtualizedPokemonGrid({
           className="w-full py-4"
           style={{ height: 60 }} // Fixed height for header
         >
-          <div className="w-full bg-background border-y border-border">
+          <div className="w-full bg-bg border-y border-border">
             <div className="flex items-center justify-center py-3">
-              <h3 className="text-sm font-medium text-muted-foreground">
+              <h3 className="text-sm font-medium text-muted">
                 ⭐ Special Forms & Variants
               </h3>
             </div>
@@ -826,9 +826,9 @@ export default function VirtualizedPokemonGrid({
       {/* Special Forms Header */}
       {specialFormsPokemon.length > 0 && (
         <div className="w-full py-4">
-          <div className="w-full bg-background border-y border-border">
+          <div className="w-full bg-bg border-y border-border">
             <div className="flex items-center justify-center py-3">
-              <h3 className="text-sm font-medium text-muted-foreground">
+              <h3 className="text-sm font-medium text-muted">
                 ⭐ Special Forms & Variants
               </h3>
             </div>

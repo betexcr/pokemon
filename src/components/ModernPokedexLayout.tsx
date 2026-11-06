@@ -1771,7 +1771,7 @@ export default function ModernPokedexLayout({
                     }
                   }}
                   placeholder="#"
-                  className="w-20 h-10 rounded-xl border border-poke-blue/30 bg-white dark:bg-gray-800 px-2 text-sm text-center font-semibold text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-poke-blue/50"
+                  className="w-20 h-10 rounded-xl border border-poke-blue/30 bg-white dark:bg-gray-800 px-2 text-sm text-center font-semibold text-text placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-poke-blue/50"
                   title="Jump to Pokédex number"
                 />
                 <button type="button"

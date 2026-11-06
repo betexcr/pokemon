@@ -517,7 +517,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
       <div className="fixed inset-0 flex items-center justify-center text-text">
         <div className="flex flex-col items-center space-y-4">
           <Loader2 className="w-10 h-10 animate-spin text-poke-blue" />
-          <p className="text-muted-foreground">Loading battle room…</p>
+          <p className="text-muted">Loading battle room…</p>
         </div>
       </div>
     )
@@ -550,14 +550,14 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
         <button
           type="button"
           onClick={() => router.push('/lobby')}
-          className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          className="text-sm text-muted hover:text-text transition-colors"
         >
           ← Back to lobby
         </button>
 
         <header className="space-y-2">
           <h1 className="text-3xl font-bold">Battle Room</h1>
-          <p className="text-muted-foreground">Room ID: <code className="text-sm bg-muted px-2 py-1 rounded">{roomId}</code></p>
+          <p className="text-muted">Room ID: <code className="text-sm bg-muted/20 px-2 py-1 rounded">{roomId}</code></p>
         </header>
 
         {actionMessage && (
@@ -573,7 +573,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
         )}
 
         <section className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold">Host</h2>
               {room.hostReady ? (
@@ -581,15 +581,15 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
                   <CheckCircle2 className="w-4 h-4" /> Ready
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 text-sm text-muted-foreground">
+                <span className="inline-flex items-center gap-1 text-sm text-muted">
                   <AlertCircle className="w-4 h-4" /> Not ready
                 </span>
               )}
             </div>
-            <p className="text-muted-foreground">{room.hostName || 'Waiting for host…'}</p>
+            <p className="text-muted">{room.hostName || 'Waiting for host…'}</p>
           </div>
 
-          <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold">Guest</h2>
               {room.guestId ? (
@@ -598,20 +598,20 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
                     <CheckCircle2 className="w-4 h-4" /> Ready
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 text-sm text-muted-foreground">
+                  <span className="inline-flex items-center gap-1 text-sm text-muted">
                     <AlertCircle className="w-4 h-4" /> Not ready
                   </span>
                 )
               ) : (
-                <span className="text-sm text-muted-foreground">Waiting for opponent…</span>
+                <span className="text-sm text-muted">Waiting for opponent…</span>
               )}
             </div>
-            <p className="text-muted-foreground">{room.guestName || 'No guest yet'}</p>
+            <p className="text-muted">{room.guestName || 'No guest yet'}</p>
           </div>
         </section>
 
-        <section className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-4">
-          <div className="flex items-center gap-2 text-muted-foreground">
+        <section className="rounded-xl border border-border bg-surface p-6 shadow-sm space-y-4">
+          <div className="flex items-center gap-2 text-muted">
             <Users className="w-4 h-4" />
             <span>
               {room.currentPlayers}/{room.maxPlayers} trainers in room · Status: <strong className="capitalize">{room.status}</strong>
@@ -639,7 +639,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
               type="button"
               onClick={handleLeaveRoom}
               disabled={busy}
-              className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors bg-muted hover:bg-muted/80 ${busy ? 'opacity-60 cursor-not-allowed' : ''}`}
+              className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors bg-muted/15 hover:bg-muted/25 ${busy ? 'opacity-60 cursor-not-allowed' : ''}`}
             >
               <LogOut className="w-4 h-4" /> Leave Room
             </button>
@@ -658,7 +658,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
           {isHost && (
             <div className="rounded-lg border border-dashed border-border p-4">
               <h3 className="text-sm font-semibold mb-2">Host Controls</h3>
-              <p className="text-sm text-muted-foreground mb-3">
+              <p className="text-sm text-muted mb-3">
                 Wait until both trainers are ready, then start the match.
               </p>
               <div className="flex flex-wrap gap-3">
@@ -667,7 +667,7 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
                   onClick={handleStartBattle}
                   disabled={!bothReady || busy}
                   className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
-                    bothReady ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-muted text-muted-foreground cursor-not-allowed'
+                    bothReady ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-muted/20 text-muted cursor-not-allowed'
                   } ${busy ? 'opacity-60' : ''}`}
                 >
                   <PlayCircle className="w-4 h-4" />
@@ -687,8 +687,8 @@ export default function RoomPageClient({ roomId }: RoomPageClientProps) {
           )}
         </section>
 
-        <section className="rounded-xl border border-dashed border-border bg-card/40 p-4 sm:p-6 text-sm text-muted-foreground space-y-2">
-          <h3 className="text-base font-semibold text-foreground">Team Selection</h3>
+        <section className="rounded-xl border border-dashed border-border bg-surface/40 p-4 sm:p-6 text-sm text-muted space-y-2">
+          <h3 className="text-base font-semibold text-text">Team Selection</h3>
           <p>
             Team selection UI has moved. Use the main lobby page to set your team before entering the room. Your chosen roster automatically syncs to the battle document when the host starts the match.
           </p>

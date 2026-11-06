@@ -138,7 +138,7 @@ export default function AdvancedFilters({
                   setShowSidebar(false);
                 }}
                 aria-label="Close advanced filters"
-                className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                className="text-muted hover:text-text transition-colors p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -158,9 +158,9 @@ export default function AdvancedFilters({
               >
                 <h3 className="text-lg font-semibold">Advanced Filters</h3>
                 {isFiltersExpanded ? (
-                  <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                  <ChevronUp className="h-5 w-5 text-muted" />
                 ) : (
-                  <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                  <ChevronDown className="h-5 w-5 text-muted" />
                 )}
               </button>
               
@@ -344,9 +344,9 @@ export default function AdvancedFilters({
                   Comparison ({comparisonList.length})
                 </h3>
                 {isComparisonExpanded ? (
-                  <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                  <ChevronUp className="h-5 w-5 text-muted" />
                 ) : (
-                  <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                  <ChevronDown className="h-5 w-5 text-muted" />
                 )}
               </button>
               

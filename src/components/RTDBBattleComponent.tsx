@@ -510,10 +510,10 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
 
       <div className="border-b border-border bg-surface/80">
         <div className="py-2 flex items-center justify-center gap-3">
-          <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold transition-colors ${activePhase === 'choosing' ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'}`}>
+          <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold transition-colors ${activePhase === 'choosing' ? 'bg-primary/20 text-primary' : 'bg-muted/20 text-muted'}`}>
             Selection Phase
           </span>
-          <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold transition-colors ${activePhase === 'resolving' ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'}`}>
+          <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold transition-colors ${activePhase === 'resolving' ? 'bg-primary/20 text-primary' : 'bg-muted/20 text-muted'}`}>
             Resolution Phase
           </span>
         </div>
