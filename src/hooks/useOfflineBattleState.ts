@@ -11,7 +11,7 @@ import {
   allMovesOutOfPp,
   encoredMoveHasNoPp,
 } from '@/lib/team-battle-engine';
-import { applyFaintReplacements, isBlockedByGravity, resumeBattleTurnAfterSwitch, runBattleTurnFromQueue, type TurnOutcome } from '@/lib/team-battle-engine-additional';
+import { applyFaintReplacements, isBlockedByGravity, resumeBattleTurnAfterSwitch, runBattleTurnFromQueue, runLeadEntries, type TurnOutcome } from '@/lib/team-battle-engine-additional';
 import { createBattleRng } from '@/lib/battle-rng';
 import { createFieldState, EMPTY_HAZARDS } from '@/lib/team-battle-types';
 import { sanitizeBattleItem } from '@/lib/battle-items-catalog';
@@ -449,6 +449,10 @@ export function useOfflineBattleState(config: OfflineBattleConfig | null): UseOf
           actionQueue: [],
           field: createFieldState(),
         };
+
+        // Leads switch in: entry abilities and items act before the first choice
+        await runLeadEntries(state);
+        if (cancelled) return;
 
         const metaObj: Meta = {
           createdAt: Date.now(),

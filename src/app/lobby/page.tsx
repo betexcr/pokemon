@@ -1,5 +1,6 @@
 'use client';
 
+import { SiteFooter } from '@/components/SiteFooter'
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Swords, Filter, X } from 'lucide-react';
@@ -208,7 +209,7 @@ function LobbyPage() {
   };
 
   return (
-    <div className="fixed inset-0 flex flex-col text-text overflow-hidden">
+    <div data-own-footer className="fixed inset-0 flex flex-col text-text overflow-hidden">
       <OfflineBanner requiresNetwork blockedMessage="Multiplayer lobby requires an internet connection. Try AI battles instead!" />
       <AppHeader
         title="Battle Lobby"
@@ -480,6 +481,7 @@ function LobbyPage() {
           )}
         </div>
         </div>
+        <SiteFooter />
       </main>
     </div>
   );

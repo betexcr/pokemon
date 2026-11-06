@@ -32,7 +32,7 @@ import { isBlockedByGravity, processEndOfTurn, restoreIceFaces, syncGravity } fr
 
 // Moved to focused modules; re-exported so existing imports keep working
 export { moveFlinchChance } from './team-battle-move-helpers';
-export { getSwitchCandidates, runEntrySequence, applyAutoSwitchInEffects } from './team-battle-switching';
+export { getSwitchCandidates, runEntrySequence, runLeadEntries, applyAutoSwitchInEffects } from './team-battle-switching';
 export { processEndOfTurn, isBlockedByGravity } from './team-battle-end-of-turn';
 
 // Process start-of-turn effects

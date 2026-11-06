@@ -1,5 +1,6 @@
 'use client'
 
+import { SiteFooter } from '@/components/SiteFooter'
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Pokemon, FilterState } from '@/types/pokemon'
 import { formatPokemonName, typeColors } from '@/lib/utils'
@@ -1426,7 +1427,7 @@ export default function ModernPokedexLayout({
 
 
   return (
-    <div className="h-screen root-full w-full max-w-full text-text flex flex-col mx-auto">
+    <div data-own-footer className="h-screen root-full w-full max-w-full text-text flex flex-col mx-auto">
       {/* Unified App Header (desktop style across breakpoints) */}
       <AppHeader
         title="PokéDex"
@@ -2175,6 +2176,7 @@ export default function ModernPokedexLayout({
 
           </>
         )}
+          <SiteFooter />
           </div>
 
         </div>

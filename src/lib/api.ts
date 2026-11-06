@@ -8,6 +8,9 @@ import { browserCache, getCacheKey, CACHE_TTL } from '@/lib/memcached'
 import { normalizePokemonId } from '@/lib/utils'
 import { analyticsManager } from '@/lib/requestAnalytics'
 import { getGenerationExclusiveDexRange } from '@/lib/pokemon/nationalDexByGeneration'
+import { mapMethod } from '@/lib/evo/method'
+import { methodToText } from '@/lib/evo/normalize'
+import type { Method } from '@/lib/evo/types'
 
 interface PokemonSpeciesData {
   id: number
@@ -409,9 +412,13 @@ async function performFetchWithRetry<T>(
           throw new Error(`API request failed: ${response.status} - The Pokémon database is temporarily unavailable. Please try again in a moment.`)
         }
 
-        // Cache failed requests to prevent repeated attempts
+        // Remember only deterministic answers. Rate limits (429) and server errors are transient:
+        // caching them made one failed request keep failing for 5 minutes (and ISR then cached a
+        // "Not Found" detail page for a Pokémon that exists).
         const errorMessage = `HTTP error! status: ${response.status}`
-        setNegativeCache(absoluteUrl, errorMessage, response.status === 404 ? 600 : 300) // 404s cached longer
+        if (response.status === 404 || response.status === 400) {
+          setNegativeCache(absoluteUrl, errorMessage, 600)
+        }
 
         // Provide more specific error messages for common status codes
         if (response.status === 400) {
@@ -460,11 +467,6 @@ async function performFetchWithRetry<T>(
             maxAttempts
           })
         }
-      }
-
-      if (!isClientOffline()) {
-        const errorMessage = error instanceof Error ? error.message : 'Network error'
-        setNegativeCache(absoluteUrl, errorMessage, 300)
       }
 
       throw error
@@ -580,6 +582,15 @@ export async function getAllValidPokemonIds(): Promise<number[]> {
 }
 
 // Individual Pokémon functions
+/**
+ * True when an error from getPokemon means the Pokémon does not exist (PokeAPI 400/404, or an ID
+ * past the species count), as opposed to a transient failure (rate limit, timeout, 5xx).
+ */
+export function isPokemonNotFoundError(error: unknown): boolean {
+  const msg = error instanceof Error ? error.message : String(error)
+  return /Not Found \(404\)|Bad Request \(400\)|does not exist|status: 40[04]\b/.test(msg)
+}
+
 export async function getPokemon(id: number | string, signal?: AbortSignal): Promise<Pokemon> {
   // Ensure we always use numeric ID for API calls, removing any zero-padding
   const numericId = normalizePokemonId(id)
@@ -688,7 +699,18 @@ export async function getEvolutionChain(id: number | string): Promise<EvolutionC
 }
 
 // Transform evolution chain data into the format expected by EvolutionSection
-export async function getEvolutionChainNodes(pokemonId: number | string): Promise<Array<{ id: number; name: string; types: string[]; condition?: string }>> {
+/** One species in an evolution family: its parent (null for the base) and how it evolves from it. */
+export type EvolutionChainNode = {
+  id: number
+  name: string
+  types: string[]
+  /** Readable method, same wording as /evolutions/ */
+  condition?: string
+  parentId?: number | null
+  method?: Method
+}
+
+export async function getEvolutionChainNodes(pokemonId: number | string): Promise<EvolutionChainNode[]> {
   try {
     // Get the species data first to find the evolution chain ID
     const species = await getPokemonSpecies(pokemonId)
@@ -704,9 +726,10 @@ export async function getEvolutionChainNodes(pokemonId: number | string): Promis
     const evolutionChain = await getEvolutionChain(evolutionChainId)
 
     // Transform the chain data into nodes
-    const nodes: Array<{ id: number; name: string; types: string[]; condition?: string }> = []
+    const nodes: EvolutionChainNode[] = []
 
-    const processChain = async (chain: any, condition?: string) => {
+    const processChain = async (chain: any, parentId: number | null, method?: Method) => {
+      const condition = method ? methodToText(method) : undefined
       if (!chain?.species) return
 
       try {
@@ -721,7 +744,9 @@ export async function getEvolutionChainNodes(pokemonId: number | string): Promis
           id: speciesPokemonId,
           name: chain.species.name,
           types,
-          condition
+          condition,
+          parentId,
+          method,
         })
       } catch (pokemonError) {
         console.warn(`Failed to get Pokemon data for species ${chain.species.name}:`, pokemonError)
@@ -730,42 +755,22 @@ export async function getEvolutionChainNodes(pokemonId: number | string): Promis
           id: 0,
           name: chain.species.name,
           types: ['unknown'],
-          condition
+          condition,
+          parentId,
+          method,
         })
       }
 
       // Process evolution details for conditions
       if (chain.evolves_to && chain.evolves_to.length > 0) {
         for (const evolution of chain.evolves_to) {
-          let evolutionCondition = undefined
-
-          // Extract evolution conditions
-          if (evolution.evolution_details && evolution.evolution_details.length > 0) {
-            const details = evolution.evolution_details[0]
-            const conditions = []
-
-            if (details.min_level) conditions.push(`Lv. ${details.min_level}`)
-            if (details.item) conditions.push(`Item: ${details.item.name.replace('-', ' ')}`)
-            if (details.time_of_day) conditions.push(details.time_of_day)
-            if (details.known_move) conditions.push(`Knows ${details.known_move.name.replace('-', ' ')}`)
-            if (details.known_move_type) conditions.push(`Knows ${details.known_move_type.name}-type move`)
-            if (details.min_happiness) conditions.push(`Friendship: ${details.min_happiness}`)
-            if (details.min_beauty) conditions.push(`Beauty: ${details.min_beauty}`)
-            if (details.trigger?.name === 'trade') {
-              if (details.held_item) conditions.push(`Trade with ${details.held_item.name.replace('-', ' ')}`)
-              else conditions.push('Trade')
-            }
-            if (details.trigger?.name === 'level-up' && !details.min_level) conditions.push('Level up')
-
-            evolutionCondition = conditions.join(', ') || 'Level up'
-          }
-
-          await processChain(evolution, evolutionCondition)
+          const selfId = parseInt(chain.species.url.split('/').slice(-2, -1)[0])
+          await processChain(evolution, selfId, mapMethod(evolution.evolution_details?.[0]))
         }
       }
     }
 
-    await processChain(evolutionChain.chain)
+    await processChain(evolutionChain.chain, null)
     return nodes
 
   } catch (error) {

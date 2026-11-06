@@ -1,5 +1,6 @@
 'use client';
 
+import { SiteFooter } from '@/components/SiteFooter'
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -148,7 +149,7 @@ function ChampionshipHubPage() {
   const sizeOptions: ChampionshipSize[] = [4, 8, 16, 32];
 
   return (
-    <div className="fixed inset-0 flex flex-col text-text overflow-hidden">
+    <div data-own-footer className="fixed inset-0 flex flex-col text-text overflow-hidden">
       <OfflineBanner requiresNetwork blockedMessage="Championships require an internet connection." />
       <AppHeader
         title="Championships"
@@ -516,6 +517,7 @@ function ChampionshipHubPage() {
             )}
           </div>
         </div>
+        <SiteFooter />
       </main>
     </div>
   );

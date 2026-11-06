@@ -1,5 +1,6 @@
 'use client';
 
+import { SiteFooter } from '@/components/SiteFooter'
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -329,7 +330,7 @@ function ChampionshipDetailContent({ championshipId }: Props) {
 
   if (loading) {
     return (
-      <div className="fixed inset-0 flex flex-col text-text">
+      <div data-own-footer className="fixed inset-0 flex flex-col text-text">
         <AppHeader title="Championship" backLink="/championship" showToolbar={false} />
         <div className="flex-1 flex items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-yellow-500" />
@@ -340,7 +341,7 @@ function ChampionshipDetailContent({ championshipId }: Props) {
 
   if (!c) {
     return (
-      <div className="fixed inset-0 flex flex-col text-text">
+      <div data-own-footer className="fixed inset-0 flex flex-col text-text">
         <AppHeader title="Championship" backLink="/championship" showToolbar={false} />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
@@ -359,7 +360,7 @@ function ChampionshipDetailContent({ championshipId }: Props) {
       : c.status.charAt(0).toUpperCase() + c.status.slice(1);
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-bg text-text overflow-hidden">
+    <div data-own-footer className="fixed inset-0 flex flex-col text-text overflow-hidden">
       <OfflineBanner requiresNetwork blockedMessage="Championships require an internet connection." />
       <AppHeader
         title={c.name}
@@ -718,6 +719,7 @@ function ChampionshipDetailContent({ championshipId }: Props) {
             </div>
           )}
         </div>
+        <SiteFooter />
       </main>
     </div>
   );

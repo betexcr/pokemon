@@ -12,6 +12,8 @@ import { BattleSpriteImage } from '@/components/battle/BattleSpriteImage';
 import { BattleEndScreen } from '@/components/multiplayer/BattleEndScreen';
 import { BattleTextBox } from '@/components/battle/BattleTextBox';
 import BattleConditionsBar from '@/components/battle/BattleConditionsBar';
+import FieldIndicator from '@/components/battle/FieldIndicator';
+import { hasConfusion } from '@/lib/battle-display';
 import type { BattleConditions } from '@/lib/battle-conditions';
 import { trackEvent } from '@/lib/analytics';
 
@@ -196,8 +198,10 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
     );
   }
 
+  const battleConditions = (pub as { conditions?: BattleConditions } | null)?.conditions;
+
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col min-h-full">
       {/* Battle Header */}
       <div className="sticky top-0 z-40 border-b border-border bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/80 px-3 py-2 sm:p-4">
         <div className="flex items-center justify-between">
@@ -219,10 +223,14 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
       </div>
 
       {/* Weather, terrain, screens, hazards and each side's active conditions */}
-      <BattleConditionsBar conditions={(pub as { conditions?: BattleConditions } | null)?.conditions} mySide="p1" />
+      <BattleConditionsBar conditions={battleConditions} mySide="p1" />
 
       {/* Battle Field */}
       <div className="relative flex-1 p-3 sm:p-6">
+        {/* Current weather and terrain (always visible) */}
+        <div className="mb-3">
+          <FieldIndicator conditions={battleConditions} />
+        </div>
         <div className="grid grid-cols-2 gap-4 sm:gap-8 h-full">
           {/* Player Side */}
           <div className="flex flex-col justify-center items-center">
@@ -240,6 +248,7 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
                 status={myActive.status as any}
                 types={myActive.types || []}
                 side="player"
+                confused={hasConfusion(battleConditions, 'p1')}
                 className="transform scale-110"
               />
             )}
@@ -261,6 +270,7 @@ const OfflineBattleComponent: React.FC<OfflineBattleComponentProps> = ({
                 status={oppActive.status as any}
                 types={oppActive.types || []}
                 side="opponent"
+                confused={hasConfusion(battleConditions, 'p2')}
                 className="transform scale-110"
               />
             )}

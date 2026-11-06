@@ -6,6 +6,7 @@ import TypeBadge from '@/components/TypeBadge'
 import { TYPES } from '@/lib/type/data'
 import { calcEffectiveness } from '@/lib/type/utils'
 import { NATURES } from '@/data/natures'
+import { STATUS_CONDITIONS, WEATHER_INFO, TERRAIN_INFO } from '@/lib/battle-display'
 
 const SECTIONS = [
   'Type Effectiveness',
@@ -131,15 +132,8 @@ function TypeEffectivenessSection() {
 }
 
 function StatusConditionsSection() {
-  const statuses = [
-    { name: 'Burn', icon: '🔥', effect: 'Halves physical attack. Deals 1/16 max HP damage each turn. Fire-types are immune.' },
-    { name: 'Paralysis', icon: '⚡', effect: 'Halves speed. 25% chance of being unable to move each turn. Electric-types are immune.' },
-    { name: 'Poison', icon: '☠️', effect: 'Deals 1/8 max HP damage each turn. Poison and Steel-types are immune.' },
-    { name: 'Badly Poisoned', icon: '💀', effect: 'Damage increases each turn (1/16, 2/16, 3/16...). Resets on switch. Poison and Steel-types are immune.' },
-    { name: 'Sleep', icon: '💤', effect: 'Cannot move for 1-3 turns. Some moves (Sleep Talk, Snore) can still be used.' },
-    { name: 'Freeze', icon: '❄️', effect: 'Cannot move. 20% chance to thaw each turn. Fire moves and Scald thaw the user. Ice-types are immune.' },
-    { name: 'Confusion', icon: '💫', effect: 'Volatile condition (1-4 turns). 33% chance to hit self for 40 base power typeless physical damage.' },
-  ]
+  // Same icons as the battle screen
+  const statuses = STATUS_CONDITIONS
 
   return (
     <Card title="Status Conditions">
@@ -163,19 +157,9 @@ function StatusConditionsSection() {
 }
 
 function WeatherTerrainSection() {
-  const weathers = [
-    { name: 'Sun (Harsh Sunlight)', effect: 'Fire moves 1.5x, Water moves 0.5x. Solar Beam charges instantly. Abilities: Drought, Chlorophyll, Solar Power.' },
-    { name: 'Rain', effect: 'Water moves 1.5x, Fire moves 0.5x. Thunder and Hurricane never miss. Abilities: Drizzle, Swift Swim, Rain Dish.' },
-    { name: 'Sandstorm', effect: 'Rock-types get 1.5x Sp.Def. Deals 1/16 chip to non-Rock/Ground/Steel. Abilities: Sand Stream, Sand Rush.' },
-    { name: 'Snow', effect: 'Ice-types get 1.5x Defense. Blizzard never misses. Abilities: Snow Warning, Slush Rush, Ice Body.' },
-  ]
-
-  const terrains = [
-    { name: 'Electric Terrain', effect: 'Grounded Pokemon cannot fall asleep. Electric moves 1.3x for grounded Pokemon.' },
-    { name: 'Grassy Terrain', effect: 'Grounded Pokemon heal 1/16 HP each turn. Grass moves 1.3x, Earthquake/Bulldoze/Magnitude halved.' },
-    { name: 'Psychic Terrain', effect: 'Grounded Pokemon are immune to priority moves. Psychic moves 1.3x for grounded Pokemon.' },
-    { name: 'Misty Terrain', effect: 'Grounded Pokemon cannot be statused or confused. Dragon moves halved on grounded targets.' },
-  ]
+  // Same icons as the battle screen
+  const weathers = WEATHER_INFO
+  const terrains = TERRAIN_INFO
 
   return (
     <Card title="Weather & Terrain">
@@ -183,7 +167,7 @@ function WeatherTerrainSection() {
       <div className="grid gap-3 sm:grid-cols-2 mb-6">
         {weathers.map(w => (
           <div key={w.name} className="rounded-lg border border-border p-3">
-            <span className="font-semibold text-sm block mb-1">{w.name}</span>
+            <span className="font-semibold text-sm block mb-1"><span className="mr-1.5" aria-hidden>{w.icon}</span>{w.name}</span>
             <p className="text-xs text-muted">{w.effect}</p>
           </div>
         ))}
@@ -192,7 +176,7 @@ function WeatherTerrainSection() {
       <div className="grid gap-3 sm:grid-cols-2">
         {terrains.map(t => (
           <div key={t.name} className="rounded-lg border border-border p-3">
-            <span className="font-semibold text-sm block mb-1">{t.name}</span>
+            <span className="font-semibold text-sm block mb-1"><span className="mr-1.5" aria-hidden>{t.icon}</span>{t.name}</span>
             <p className="text-xs text-muted">{t.effect}</p>
           </div>
         ))}

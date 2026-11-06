@@ -66,7 +66,8 @@ battles/{id}/turns/{n}/resolution     — turn result (written by server)
 1. Load player team from config or localStorage
 2. `hydrateSlot()` fetches Pokémon stats/moves via `getPokemon()` when needed
 3. Champion slots hydrated from `gym_champions.ts`; moves backfilled from API if only tackle
-4. Local `BattleState` runs engine + `chooseAIAction()` each turn
+4. `runLeadEntries()` switches both leads in (entry abilities / items such as Drizzle, Intimidate, Air Balloon) before the first choice. Multiplayer runs the same helper at the start of turn 1's resolution; any new battle setup path must call it too
+5. Local `BattleState` runs engine + `chooseAIAction()` each turn
 
 ## Testing after changes
 
@@ -84,6 +85,8 @@ battles/{id}/turns/{n}/resolution     — turn result (written by server)
 - Forgetting to hydrate moves/stats before engine runs (see `hydrateSlot` in `useOfflineBattleState.ts` and `battle-resolution.ts`) — hydration **throws** when stats are missing (no placeholder 50s)
 - Wiring damage modifiers only in unused helpers — live battles use `executeMoveAction` → `calculateComprehensiveDamage`
 - Mismatched battle log types: display lines are `{ message, isEngineWarning }`, not raw strings
+- Battle state carries only the latest turn's log (`battleLog` is cleared each turn); `BattleTextBox` keeps the earlier turns itself
+- Status / weather / terrain names and icons come from `src/lib/battle-display.ts` (shared with the battle guide); don't redefine them in components
 
 ## Additional resources
 

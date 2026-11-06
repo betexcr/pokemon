@@ -2,7 +2,7 @@
 // Eject Pack, and the switch-in sequence (hazards, entry abilities, items). Split out of
 // team-battle-engine-additional.ts.
 
-import { BattleState, BattlePokemon, BattleTeam, getCurrentPokemon, switchToPokemon, isTeamDefeated, getNextAvailableBenchPokemon, applySwitchOutAbilities, effectiveItem } from './team-battle-engine';
+import { BattleState, BattlePokemon, BattleTeam, getCurrentPokemon, switchToPokemon, isTeamDefeated, getNextAvailableBenchPokemon, applySwitchOutAbilities, effectiveItem, getEffectiveSpeed, isTailwindActive } from './team-battle-engine';
 import { applyEntryHazards } from './team-battle-hazards';
 import { handleOnEntryAbilities } from './team-battle-abilities';
 import { clearStatus } from './team-battle-status';
@@ -251,6 +251,26 @@ export async function forceTargetSwitch(
 }
 
 // Run on-entry sequence for a Pokemon (switchingSide = the side whose Pokemon is switching in)
+/**
+ * Battle start: both leads "switch in", faster one first (player first on a speed tie), so entry
+ * abilities and items act before the first turn: Drizzle / Drought / Sand Stream / Snow Warning,
+ * terrain setters, Intimidate, Air Balloon, ... Runs once per battle (state.leadsEntered).
+ */
+export async function runLeadEntries(state: BattleState): Promise<void> {
+  if (state.leadsEntered) return;
+  state.leadsEntered = true;
+  const player = getCurrentPokemon(state.player);
+  const opponent = getCurrentPokemon(state.opponent);
+  if (!player || !opponent) return;
+  const playerSpeed = getEffectiveSpeed(player, isTailwindActive(state.player), state.field);
+  const opponentSpeed = getEffectiveSpeed(opponent, isTailwindActive(state.opponent), state.field);
+  const order: Array<'player' | 'opponent'> = opponentSpeed > playerSpeed ? ['opponent', 'player'] : ['player', 'opponent'];
+  for (const side of order) {
+    const mon = getCurrentPokemon(side === 'player' ? state.player : state.opponent);
+    if (mon && mon.currentHp > 0) await runEntrySequence(state, side, mon);
+  }
+}
+
 export async function runEntrySequence(state: BattleState, switchingSide: 'player' | 'opponent', incomingPokemon: BattlePokemon): Promise<void> {
   incomingPokemon.volatile.moveActionsSinceEntry = 0;
   incomingPokemon.volatile.lastDamageTaken = undefined;

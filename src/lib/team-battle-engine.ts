@@ -322,6 +322,8 @@ export type BattleState = {
   autoSwitchPicker?: (state: BattleState, side: 'player' | 'opponent', candidates: number[]) => number;
   /** Multiplayer: HP lost per side over the battle (end-of-battle stats). */
   battleStats?: { p1: { damageTaken: number }; p2: { damageTaken: number } };
+  /** Both leads' entry effects (Drizzle, Intimidate, Electric Surge, Air Balloon, ...) have run. */
+  leadsEntered?: boolean;
 };
 
 /** Why a turn paused mid-way for a player's pick. */

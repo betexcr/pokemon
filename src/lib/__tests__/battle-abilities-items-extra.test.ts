@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { CompiledMove } from '../adapters/pokeapiMoveAdapter';
-import { resumeBattleTurnAfterSwitch, runBattleTurnFromQueue } from '../team-battle-engine-additional';
+import { resumeBattleTurnAfterSwitch, runBattleTurnFromQueue, runLeadEntries } from '../team-battle-engine-additional';
 import { displayShiny, displayTypes, publicBenchEntries } from '../team-battle-illusion';
 import {
   buildActionQueue,
@@ -286,5 +286,29 @@ describe('remaining simplifications', () => {
     log = await play(s, SPLASH, mv('fly'));
     expect(log).toContain("bird can't use fly because of gravity!");
     expect(log).toContain("p can't use splash because of gravity!");
+  });
+});
+
+describe('battle start: leads switch in', () => {
+  it('a Drizzle lead makes it rain before the first turn, once', async () => {
+    const s = makeBattle(makeMon('politoed', { speed: 70, ability: 'drizzle' }), makeMon('o', { speed: 30 }));
+    await runLeadEntries(s);
+    expect(s.field.weather?.kind).toBe('rain');
+    expect(s.leadsEntered).toBe(true);
+    const lines = s.battleLog.length;
+    await runLeadEntries(s);
+    expect(s.battleLog.length).toBe(lines);
+  });
+
+  it('the faster lead acts first: a slower Drought lead overrides a faster Drizzle', async () => {
+    const s = makeBattle(makeMon('politoed', { speed: 150, ability: 'drizzle' }), makeMon('torkoal', { speed: 20, ability: 'drought' }));
+    await runLeadEntries(s);
+    expect(s.field.weather?.kind).toBe('sun');
+  });
+
+  it('an Intimidate lead lowers the foe\'s Attack before any move', async () => {
+    const s = makeBattle(makeMon('p', { speed: 50 }), makeMon('gyarados', { speed: 80, ability: 'intimidate' }));
+    await runLeadEntries(s);
+    expect(P(s).statModifiers.attack).toBe(-1);
   });
 });

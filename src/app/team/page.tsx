@@ -27,7 +27,6 @@ import AppHeader from '@/components/AppHeader'
 import PokemonSelector from '@/components/PokemonSelector'
 import { DEFAULT_NATURE, NATURES, type NatureName, type NatureStat } from '@/data/natures'
 import { getBattleItem, itemsForSpecies, sanitizeBattleItem, type BattleItemCategory } from '@/lib/battle-items-catalog'
-const ITEM_CATEGORIES: BattleItemCategory[] = ['Species items', 'Choice & power', 'Recovery & defense', 'Field & utility', 'Berries', 'Type boost', 'Gems']
 import { TERA_TYPES, isTeraType, resolveTeraType } from '@/lib/team-battle-tera'
 
 const formatTeraLabel = (t: string) => t.charAt(0).toUpperCase() + t.slice(1)
@@ -38,6 +37,7 @@ import WeaknessMatrix from '@/components/team/WeaknessMatrix'
 import OffenseMatrix from '@/components/team/OffenseMatrix'
 import Suggestions from '@/components/team/Suggestions'
 import SynergyPanel from '@/components/team/SynergyPanel'
+import { AbilityPicker, ItemPicker, NaturePicker } from '@/components/team/SlotPickers'
 
 // Types are now imported from userTeams.ts
 
@@ -1522,67 +1522,30 @@ export default function TeamBuilderPage() {
                     </div>
                   )}
                   
-                  {/* Nature Selector */}
+                  {/* Nature: every option shows what it raises / lowers */}
                   {poke && (
                     <div className="mb-3 flex items-center gap-3">
-                      <label className="text-xs font-medium text-muted flex-shrink-0">Nature</label>
-                      <select
+                      <label htmlFor={`nature-${idx}`} className="text-xs font-medium text-muted flex-shrink-0 w-14">Nature</label>
+                      <NaturePicker
+                        id={`nature-${idx}`}
                         value={slot.nature}
-                        onClick={(e) => e.stopPropagation()}
-                        onChange={(e) => setSlot(idx, { nature: e.target.value as NatureName })}
-                        className="px-2 py-1 border border-border rounded text-xs bg-surface text-text"
-                      >
-                        {NATURES.map(n => (
-                          <option key={n.value} value={n.value}>
-                            {n.label}{n.increasedStat && n.decreasedStat
-                              ? ` (+${NATURE_STAT_LABEL[n.increasedStat]} / -${NATURE_STAT_LABEL[n.decreasedStat]})`
-                              : ' (Neutral)'}
-                          </option>
-                        ))}
-                      </select>
-                      {(() => {
-                        const nature = NATURES.find(n => n.value === slot.nature)
-                        if (!nature || !nature.increasedStat) return null
-                        return (
-                          <span className="text-xs text-muted">
-                            <span className="text-green-600">+{NATURE_STAT_LABEL[nature.increasedStat]}</span>
-                            {' / '}
-                            <span className="text-red-500">-{NATURE_STAT_LABEL[nature.decreasedStat!]}</span>
-                          </span>
-                        )
-                      })()}
+                        onChange={(nature) => setSlot(idx, { nature })}
+                        testId={`nature-${idx}`}
+                      />
                     </div>
                   )}
 
-                  {/* Held Item Selector */}
+                  {/* Held item: bag icon and effect for every option */}
                   {poke && (
                     <div className="mb-3 flex items-center gap-3">
-                      <label htmlFor={`held-item-${idx}`} className="text-xs font-medium text-muted flex-shrink-0">Item</label>
-                      <select
+                      <label htmlFor={`held-item-${idx}`} className="text-xs font-medium text-muted flex-shrink-0 w-14">Item</label>
+                      <ItemPicker
                         id={`held-item-${idx}`}
-                        value={slot.item ?? ''}
-                        onClick={(e) => e.stopPropagation()}
-                        onChange={(e) => setSlot(idx, { item: sanitizeBattleItem(e.target.value) })}
-                        className="px-2 py-1 border border-border rounded text-xs bg-surface text-text max-w-[14rem]"
-                        data-testid={`held-item-${idx}`}
-                      >
-                        <option value="">No item</option>
-                        {ITEM_CATEGORIES.map((category) => {
-                          // Species-specific items only appear for the species that can use them
-                          const options = itemsForSpecies(poke.name).filter((i) => i.category === category)
-                          if (options.length === 0) return null
-                          return (
-                            <optgroup key={category} label={category}>
-                              {options.map((i) => (
-                                <option key={i.id} value={i.id}>{i.label}</option>
-                              ))}
-                            </optgroup>
-                          )
-                        })}
-                      </select>
-                      {getBattleItem(slot.item) && (
-                        <span className="text-xs text-muted truncate">{getBattleItem(slot.item)!.effect}</span>
-                      )}
+                        species={poke.name}
+                        value={slot.item}
+                        onChange={(item) => setSlot(idx, { item })}
+                        testId={`held-item-${idx}`}
+                      />
                     </div>
                   )}
 
@@ -1611,27 +1574,17 @@ export default function TeamBuilderPage() {
                     </div>
                   )}
 
-                  {/* Ability (regular or hidden) */}
+                  {/* Ability (regular or hidden), each with its description */}
                   {poke && Array.isArray(poke.abilities) && poke.abilities.length > 0 && (
                     <div className="mb-3 flex items-center gap-3">
-                      <label htmlFor={`ability-${idx}`} className="text-xs font-medium text-muted flex-shrink-0">Ability</label>
-                      <select
+                      <label htmlFor={`ability-${idx}`} className="text-xs font-medium text-muted flex-shrink-0 w-14">Ability</label>
+                      <AbilityPicker
                         id={`ability-${idx}`}
-                        value={slot.ability ?? ''}
-                        onClick={(e) => e.stopPropagation()}
-                        onChange={(e) => setSlot(idx, { ability: sanitizeSlotAbility(e.target.value) })}
-                        className="px-2 py-1 border border-border rounded text-xs bg-surface text-text capitalize"
-                        data-testid={`ability-${idx}`}
-                      >
-                        <option value="">Default</option>
-                        {[...poke.abilities]
-                          .sort((a, b) => Number(a.is_hidden) - Number(b.is_hidden) || a.slot - b.slot)
-                          .map((a) => (
-                            <option key={a.ability.name} value={a.ability.name}>
-                              {a.ability.name.replace(/-/g, ' ')}{a.is_hidden ? ' (Hidden)' : ''}
-                            </option>
-                          ))}
-                      </select>
+                        abilities={poke.abilities as never}
+                        value={slot.ability}
+                        onChange={(value) => setSlot(idx, { ability: sanitizeSlotAbility(value) })}
+                        testId={`ability-${idx}`}
+                      />
                     </div>
                   )}
 

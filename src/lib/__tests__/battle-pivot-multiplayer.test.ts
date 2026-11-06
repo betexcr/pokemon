@@ -231,6 +231,32 @@ describe('resolveTurn with Terastallization', () => {
   });
 });
 
+describe('resolveTurn: leads switch in on turn 1', () => {
+  it("a Drizzle lead's rain is in effect from turn 1 and is announced once", async () => {
+    const p1 = db.get(`battles/${BID}/private/${P1}`);
+    p1.team[0].currentAbility = 'drizzle';
+    db.set(`battles/${BID}/private/${P1}`, p1);
+
+    choose(P1, { action: 'move', payload: { moveId: 'tackle' }, clientVersion: 1 });
+    choose(P2, { action: 'move', payload: { moveId: 'tackle' }, clientVersion: 1 });
+    await resolveTurn(BID);
+
+    expect(db.get(`battles/${BID}/public/field`).weather).toMatchObject({ kind: 'rain' });
+    const log1 = db.get(`battles/${BID}/public`).battleLog.map((l: { message: string }) => l.message);
+    const rainLines = log1.filter((m: string) => /rain/i.test(m));
+    expect(rainLines.length).toBeGreaterThan(0);
+    // Announced before the first move
+    expect(log1.findIndex((m: string) => /rain/i.test(m))).toBeLessThan(log1.findIndex((m: string) => /used tackle/.test(m)));
+    expect(db.get(`battles/${BID}/server/engineExtras`).leadsEntered).toBe(true);
+
+    choose(P1, { action: 'move', payload: { moveId: 'tackle' }, clientVersion: 2 }, 2);
+    choose(P2, { action: 'move', payload: { moveId: 'tackle' }, clientVersion: 2 }, 2);
+    await resolveTurn(BID);
+    const log2 = db.get(`battles/${BID}/public`).battleLog.map((l: { message: string }) => l.message);
+    expect(log2.some((m: string) => /made it rain|started to rain|began to rain/i.test(m))).toBe(false);
+  });
+});
+
 describe('resolveTurn with shiny Pokémon', () => {
   it('keeps the team builder\'s shiny choice across turns and shows it publicly', async () => {
     const p1 = db.get(`battles/${BID}/private/${P1}`);

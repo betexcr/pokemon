@@ -1,5 +1,7 @@
 import { useRouter } from 'next/navigation';
 import BattleConditionsBar from '@/components/battle/BattleConditionsBar';
+import FieldIndicator from '@/components/battle/FieldIndicator';
+import { hasConfusion } from '@/lib/battle-display';
 import type { BattleConditions } from '@/lib/battle-conditions';
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useBattleState } from '@/hooks/useBattleState';
@@ -463,6 +465,8 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
 
   // (refs declared above)
 
+  const battleConditions = (pub as { conditions?: BattleConditions } | null)?.conditions;
+
   return (
     <div className="w-full text-text">
       {/* Headless turn resolution manager (host only) */}
@@ -530,10 +534,14 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
       </div>
 
       {/* Weather, terrain, screens, hazards and each side's active conditions */}
-      <BattleConditionsBar conditions={(pub as { conditions?: BattleConditions } | null)?.conditions} mySide={mySideEarly ?? 'p1'} />
+      <BattleConditionsBar conditions={battleConditions} mySide={mySideEarly ?? 'p1'} />
 
       {/* Battle Field */}
       <div className="relative flex-1 p-3 sm:p-6">
+        {/* Current weather and terrain (always visible) */}
+        <div className="mb-3">
+          <FieldIndicator conditions={battleConditions} />
+        </div>
         <div className="grid grid-cols-2 gap-4 sm:gap-8 h-full">
           {/* Player Side */}
           <div className="flex flex-col justify-center items-center">
@@ -552,6 +560,7 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
                 status={myActive.status}
                 types={myActive.types || []}
                 side="player"
+                confused={hasConfusion(battleConditions, (mySideEarly ?? 'p1'))}
                 shiny={!!myActive.shiny}
                 className="transform scale-110"
               />
@@ -575,6 +584,7 @@ const handleMoveSelection = useCallback(async (moveId: string, target?: 'p1' | '
                 status={oppActive.status}
                 types={oppActive.types || []}
                 side="opponent"
+                confused={hasConfusion(battleConditions, (mySideEarly === 'p2' ? 'p1' : 'p2'))}
                 shiny={!!oppActive.shiny}
                 className="transform scale-110"
               />
