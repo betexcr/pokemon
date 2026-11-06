@@ -336,12 +336,41 @@ export default function Tooltip({
 
   const marginPx = 12
 
+  /** Pinned tooltips stay open (text selectable) until the × button, Escape, or a click elsewhere. */
+  const closePinned = () => {
+    latchedRef.current = false
+    setIsOpen(false)
+    setIsLatched(false)
+    wasDismissedByClickRef.current = true
+  }
+  // Click pins the tooltip, also when hover already opened it (that click used to close it);
+  // a click on a pinned tooltip's anchor unpins and closes it.
+  // React events from the tooltip bubble to the anchor through the portal; those aren't anchor clicks
+  // (selecting text or pressing inside a pinned tooltip must not close it)
+  const fromTooltip = (e: { target: EventTarget | null }) => !!tipRef.current && tipRef.current.contains(e.target as Node)
+  const handleAnchorClick = (e: React.MouseEvent) => {
+    if (fromTooltip(e)) return
+    if (touchEndedRecentlyRef.current) return
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current)
+      hoverTimerRef.current = null
+    }
+    if (latchedRef.current || isLatched) {
+      closePinned()
+      return
+    }
+    latchedRef.current = true
+    if (!isOpen) setFixedCoords(null)
+    setIsOpen(true)
+    setIsLatched(true)
+  }
+
   const tipElement = (
       <div 
         ref={tipRef}
         id={tooltipId}
         role="tooltip"
-        className={`pointer-events-auto ${containViewport ? 'fixed' : 'absolute'} z-[2147483647] ${!containViewport ? positionClasses[resolvedPosition] : ''} ${maxWidth} rounded-2xl p-5 text-sm leading-relaxed shadow-2xl ring-1 ${getRingColor()} ${openOpacityClass} ${hoverOpacityClass} ${visibilityClass} transition-opacity duration-200 ease-in-out ${getTypeBackground()} ${getTypeAccent()} ${getTextColor()} ${!containViewport && variant==='move' ? 'left-1/2 -translate-x-1/2' : ''}`}
+        className={`pointer-events-auto select-text ${isLatched ? 'pr-10' : ''} ${containViewport ? 'fixed' : 'absolute'} z-[2147483647] ${!containViewport ? positionClasses[resolvedPosition] : ''} ${maxWidth} rounded-2xl p-5 text-sm leading-relaxed shadow-2xl ring-1 ${getRingColor()} ${openOpacityClass} ${hoverOpacityClass} ${visibilityClass} transition-opacity duration-200 ease-in-out ${getTypeBackground()} ${getTypeAccent()} ${getTextColor()} ${!containViewport && variant==='move' ? 'left-1/2 -translate-x-1/2' : ''}`}
         style={containViewport && fixedCoords ? { 
           ...getTypeOverlay(), 
           top: fixedCoords.top, 
@@ -354,6 +383,17 @@ export default function Tooltip({
           left: containViewport ? -9999 : undefined as unknown as number 
         }}
       >
+        {isLatched && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); closePinned() }}
+            aria-label="Close"
+            title="Close"
+            className={`absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full text-base leading-none transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-poke-blue/60 ${isDarkMode ? 'text-gray-300 hover:bg-white/10 hover:text-white' : 'text-gray-500 hover:bg-black/5 hover:text-gray-900'}`}
+          >
+            <span aria-hidden>×</span>
+          </button>
+        )}
         <div className="space-y-3">
           {variant !== 'default' && variant !== 'japanese' && (
             <div className={`flex items-center gap-3 pb-2 border-b border-gray-100 dark:border-gray-700`}
@@ -498,21 +538,7 @@ export default function Tooltip({
     },
     onMouseEnter: handleMouseEnter,
     onMouseLeave: handleMouseLeave,
-    onClick: () => {
-      if (touchEndedRecentlyRef.current) return
-      setIsOpen(prev => {
-        const next = !prev
-        if (next) {
-          latchedRef.current = true
-          setFixedCoords(null)
-        } else {
-          latchedRef.current = false
-          wasDismissedByClickRef.current = true
-        }
-        return next
-      })
-      setIsLatched(prev => !prev ? true : false)
-    }
+    onClick: handleAnchorClick
   } : {
     className: `relative inline-block align-baseline group ${className}`,
     ref: anchorRef as unknown as React.RefObject<HTMLSpanElement>,
@@ -563,22 +589,9 @@ export default function Tooltip({
     },
     onMouseEnter: handleMouseEnter,
     onMouseLeave: handleMouseLeave,
-    onClick: () => {
-      if (touchEndedRecentlyRef.current) return
-      setIsOpen(prev => {
-        const next = !prev
-        if (next) {
-          latchedRef.current = true
-          setFixedCoords(null)
-        } else {
-          latchedRef.current = false
-          wasDismissedByClickRef.current = true
-        }
-        return next
-      })
-      setIsLatched(prev => !prev ? true : false)
-    },
+    onClick: handleAnchorClick,
     onTouchStart: (e: React.TouchEvent<HTMLSpanElement>) => {
+      if (fromTooltip(e)) return
       isTouchingRef.current = true
       longPressActiveRef.current = false
       if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current)
@@ -591,7 +604,8 @@ export default function Tooltip({
         }
       }, 350)
     },
-    onTouchEnd: () => {
+    onTouchEnd: (e: React.TouchEvent<HTMLSpanElement>) => {
+      if (fromTooltip(e)) return
       isTouchingRef.current = false
       touchEndedRecentlyRef.current = true
       if (touchEndTimerRef.current) window.clearTimeout(touchEndTimerRef.current)
