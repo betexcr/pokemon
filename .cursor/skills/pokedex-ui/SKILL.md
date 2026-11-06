@@ -30,12 +30,14 @@ Themes applied via `<html>` classes:
 | Class | Theme |
 |-------|-------|
 | `dark` | Dark mode |
-| `theme-gold` | Pokémon Gold |
-| `theme-red` | Pokémon Red |
-| `theme-ruby` | Pokémon Ruby |
+| `theme-gold` | Pokémon Gold (unimplemented, ignored for now) |
+| `theme-red` | Pokémon Red (unimplemented, ignored for now) |
+| `theme-ruby` | Pokémon Ruby (unimplemented, ignored for now) |
 
 - Persist preference in localStorage
-- **Tailwind only** — semantic tokens: `bg`, `surface`, `border`, `text`, `muted`, `poke.*`, `type.*`
+- **Tailwind only** — semantic tokens: `bg`, `surface`, `border`, `text`, `muted`, `primary`, `poke.*`, `type.*`
+- Opacity modifiers work on every token (`bg-surface/80`, `border-primary/40`) through the `cssVar()` helper in `tailwind.config.ts`; add new colour tokens with it, never as a plain `"var(--x)"` string (Tailwind 3 silently drops their `/NN` variants)
+- shadcn names do **not** exist here and generate no CSS: use `surface` not `card`, `text` not `foreground`, `muted` not `muted-foreground`, `bg` not `background`. `muted` is a grey *text* colour; as a background use a tint (`bg-muted/20`)
 - No custom CSS files beyond `globals.css` + `tokens.css`
 
 ## Search & filters

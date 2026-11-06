@@ -18,21 +18,21 @@ export default function HPBar({ current, value, max, label, className = '' }: HP
 
   return (
     <div className={`w-full space-y-1 ${className}`}>
-      {label && <p className="text-xs font-medium text-muted-foreground">{label}</p>}
+      {label && <p className="text-xs font-medium text-muted">{label}</p>}
       <div
         role="progressbar"
         aria-valuemin={0}
         aria-valuemax={safeMax}
         aria-valuenow={Math.max(0, Math.min(safeMax, hp))}
         aria-label={label ? `${label} HP` : 'HP'}
-        className="h-3 w-full rounded-full bg-muted"
+        className="h-3 w-full rounded-full bg-muted/20"
       >
         <div
           className={`h-full rounded-full transition-all duration-300 ${color}`}
           style={{ width: `${percentage}%` }}
         />
       </div>
-      <p className="text-right text-[10px] font-mono text-muted-foreground" aria-hidden="true">
+      <p className="text-right text-[10px] font-mono text-muted" aria-hidden="true">
         {hp} / {max}
       </p>
     </div>

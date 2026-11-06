@@ -6,7 +6,6 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Pokemon } from "@/types/pokemon";
 import AbilityBadge from "@/components/AbilityBadge";
-import { useReducedMotionPref } from "@/hooks/useReducedMotionPref";
 import Tooltip from './Tooltip'
 import { getPokemonJapaneseName } from '@/lib/japaneseNames'
 import TypeBadgeWithTooltip from "@/components/TypeBadgeWithTooltip";
@@ -139,9 +138,7 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const vtName = `pokemon-sprite-${pokemon.id}`;
-  const reduce = useReducedMotionPref();
   const [hydratedArtQueryKey, setHydratedArtQueryKey] = useState<string>('');
-  const [showAura, setShowAura] = useState(false);
   const [isShiny, setIsShiny] = useState(false);
   const [gender, setGender] = useState<'male' | 'female'>('male');
   const [style, setStyle] = useState<'official' | 'sprite' | 'portrait' | 'pmd' | 'fallback'>('official');
@@ -472,7 +469,6 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
   }, [showPortraitDropdown, showPmdDropdown]);
 
   // Get primary type for background color
-  const primaryType = pokemon.types[0]?.type.name || 'normal';
 
   // Navigation functions
   const navigateToPokemon = (id: number) => {
@@ -665,15 +661,6 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
     }
   };
 
-  // Trigger aura pulse on mount
-  useEffect(() => {
-    if (!reduce) {
-      setShowAura(true);
-      const timer = setTimeout(() => setShowAura(false), 200);
-      return () => clearTimeout(timer);
-    }
-  }, [reduce]);
-
   // Determine availability of front/back based on current selections
   const female = gender === 'female';
   const shiny = isShiny;
@@ -797,24 +784,7 @@ export default function PokemonHero({ pokemon, abilities, flavorText, genus, has
   }, [style, generation, pokemon.name, orientation, isShiny, gender]);
   
   return (
-    <header 
-      className="relative mb-3 rounded-2xl border border-border bg-surface p-4 overflow-visible"
-      style={{ 
-        '--type-color': `var(--type-${primaryType}-color, #60a5fa)` 
-      } as React.CSSProperties}
-    >
-      {/* Type aura background pulse */}
-      <motion.div 
-        className="pointer-events-none absolute inset-0 opacity-30 blur-2xl"
-        aria-hidden
-        style={{ 
-          background: `radial-gradient(40% 40% at 50% 50%, var(--type-color) 0%, transparent 60%)` 
-        }}
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={showAura ? { scale: 1.2, opacity: 0.6 } : { scale: 1, opacity: 0.3 }}
-        transition={{ duration: 0.2, ease: "easeOut" }}
-      />
-      
+    <header className="relative mb-3 rounded-2xl border border-border bg-surface p-4 overflow-visible">
       <div className="relative space-y-3">
         {/* Pokemon Header - Responsive Layout */}
         <div className="flex flex-col lg:flex-row items-center lg:items-start gap-4">

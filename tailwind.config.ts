@@ -1,5 +1,16 @@
 import type { Config } from "tailwindcss";
 
+/**
+ * A colour from a CSS variable that also works with opacity modifiers (`bg-surface/80`).
+ * A plain "var(--x)" string makes Tailwind 3 drop every `/NN` variant without a warning.
+ * Tailwind 3 accepts colour functions at runtime, but its types only allow strings.
+ */
+const cssVar = (name: string): string =>
+  (({ opacityValue }: { opacityValue?: string }) =>
+    opacityValue === undefined
+      ? `var(${name})`
+      : `color-mix(in srgb, var(${name}) calc(${opacityValue} * 100%), transparent)`) as unknown as string;
+
 export default {
   darkMode: "class",
   content: [
@@ -9,71 +20,72 @@ export default {
   theme: {
     extend: {
       colors: {
-        bg: "var(--color-bg)",
-        surface: "var(--color-surface)",
-        border: "var(--color-border)",
-        text: "var(--color-text)",
-        muted: "var(--color-muted)",
+        bg: cssVar("--color-bg"),
+        primary: cssVar("--color-primary"),
+        surface: cssVar("--color-surface"),
+        border: cssVar("--color-border"),
+        text: cssVar("--color-text"),
+        muted: cssVar("--color-muted"),
         input: {
-          bg: "var(--color-input-bg)",
-          text: "var(--color-input-text)",
-          placeholder: "var(--color-input-placeholder)",
+          bg: cssVar("--color-input-bg"),
+          text: cssVar("--color-input-text"),
+          placeholder: cssVar("--color-input-placeholder"),
         },
         google: {
-          bg: "var(--color-google-bg)",
-          border: "var(--color-google-border)",
-          text: "var(--color-google-text)",
+          bg: cssVar("--color-google-bg"),
+          border: cssVar("--color-google-border"),
+          text: cssVar("--color-google-text"),
         },
         signup: {
-          bg: "var(--color-signup-bg)",
-          text: "var(--color-signup-text)",
-          hover: "var(--color-signup-hover)",
+          bg: cssVar("--color-signup-bg"),
+          text: cssVar("--color-signup-text"),
+          hover: cssVar("--color-signup-hover"),
         },
         poke: {
-          red: "var(--color-poke-red)",
-          yellow: "var(--color-poke-yellow)",
-          blue: "var(--color-poke-blue)",
+          red: cssVar("--color-poke-red"),
+          yellow: cssVar("--color-poke-yellow"),
+          blue: cssVar("--color-poke-blue"),
         },
         gold: {
-          accent: "var(--color-accent)",
-          "accent-dark": "var(--color-accent-dark)",
-          highlight: "var(--color-highlight)",
-          shadow: "var(--color-shadow)",
+          accent: cssVar("--color-accent"),
+          "accent-dark": cssVar("--color-accent-dark"),
+          highlight: cssVar("--color-highlight"),
+          shadow: cssVar("--color-shadow"),
         },
         red: {
-          accent: "var(--color-accent)",
-          "accent-dark": "var(--color-accent-dark)",
-          highlight: "var(--color-highlight)",
-          shadow: "var(--color-shadow)",
+          accent: cssVar("--color-accent"),
+          "accent-dark": cssVar("--color-accent-dark"),
+          highlight: cssVar("--color-highlight"),
+          shadow: cssVar("--color-shadow"),
         },
         ruby: {
-          accent: "var(--color-accent)",
-          "accent-dark": "var(--color-accent-dark)",
-          highlight: "var(--color-highlight)",
-          shadow: "var(--color-shadow)",
-          panel: "var(--color-ruby-panel)",
-          text: "var(--color-ruby-text)",
-          tab: "var(--color-ruby-tab)",
+          accent: cssVar("--color-accent"),
+          "accent-dark": cssVar("--color-accent-dark"),
+          highlight: cssVar("--color-highlight"),
+          shadow: cssVar("--color-shadow"),
+          panel: cssVar("--color-ruby-panel"),
+          text: cssVar("--color-ruby-text"),
+          tab: cssVar("--color-ruby-tab"),
         },
         type: {
-          normal: "var(--type-normal)",
-          fire: "var(--type-fire)",
-          water: "var(--type-water)",
-          electric: "var(--type-electric)",
-          grass: "var(--type-grass)",
-          ice: "var(--type-ice)",
-          fighting: "var(--type-fighting)",
-          poison: "var(--type-poison)",
-          ground: "var(--type-ground)",
-          flying: "var(--type-flying)",
-          psychic: "var(--type-psychic)",
-          bug: "var(--type-bug)",
-          rock: "var(--type-rock)",
-          ghost: "var(--type-ghost)",
-          dragon: "var(--type-dragon)",
-          dark: "var(--type-dark)",
-          steel: "var(--type-steel)",
-          fairy: "var(--type-fairy)",
+          normal: cssVar("--type-normal"),
+          fire: cssVar("--type-fire"),
+          water: cssVar("--type-water"),
+          electric: cssVar("--type-electric"),
+          grass: cssVar("--type-grass"),
+          ice: cssVar("--type-ice"),
+          fighting: cssVar("--type-fighting"),
+          poison: cssVar("--type-poison"),
+          ground: cssVar("--type-ground"),
+          flying: cssVar("--type-flying"),
+          psychic: cssVar("--type-psychic"),
+          bug: cssVar("--type-bug"),
+          rock: cssVar("--type-rock"),
+          ghost: cssVar("--type-ghost"),
+          dragon: cssVar("--type-dragon"),
+          dark: cssVar("--type-dark"),
+          steel: cssVar("--type-steel"),
+          fairy: cssVar("--type-fairy"),
         },
       },
       spacing: {
